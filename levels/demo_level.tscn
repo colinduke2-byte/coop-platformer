@@ -138,39 +138,39 @@ size = Vector2(100, 2300)
 
 [node name="Crates" type="Node2D" parent="Blocks"]
 
-[node name="WoodCrate1" type="AnimatableBody2D" parent="Crates"]
+[node name="WoodCrate1" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(4330, 600)
 script = ExtResource("14")
 size = 64.0
 lums = 3
 
-[node name="WoodCrate2" type="AnimatableBody2D" parent="Crates"]
+[node name="WoodCrate2" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(4420, 600)
 script = ExtResource("14")
 size = 64.0
 lums = 3
 
-[node name="WoodCrate3" type="AnimatableBody2D" parent="Crates"]
+[node name="WoodCrate3" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(4420, 536)
 script = ExtResource("14")
 size = 64.0
 lums = 3
 
-[node name="IronCrate1" type="AnimatableBody2D" parent="Crates"]
+[node name="IronCrate1" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(4560, 600)
 script = ExtResource("14")
 size = 64.0
 lums = 5
 reinforced = true
 
-[node name="IronGate" type="AnimatableBody2D" parent="Crates"]
+[node name="IronGate" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(4790, 600)
 script = ExtResource("14")
 size = 210.0
 lums = 8
 reinforced = true
 
-[node name="SummitVault" type="AnimatableBody2D" parent="Crates"]
+[node name="SummitVault" type="AnimatableBody2D" parent="Blocks/Crates"]
 position = Vector2(7000, -500)
 script = ExtResource("14")
 size = 110.0

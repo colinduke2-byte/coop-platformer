@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 fail=0
 
 scan() {  # print engine/script errors, ignore harmless exit-time leak reports
-	grep -E "SCRIPT ERROR|ERROR:|Parse Error|Compile Error" | grep -v "leaked at exit" || true
+	grep -E "SCRIPT ERROR|ERROR:|Parse Error|Compile Error|has vanished when instantiating|Node not found" | grep -v "leaked at exit" || true
 }
 
 echo "== 1/3 import (parse every script and scene) =="

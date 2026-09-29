@@ -3,8 +3,22 @@
     "allow": [
       "Bash(bash tools/check.sh)",
       "Bash(./tools/check.sh)",
+      "Bash(bash tools/shots.sh:*)",
       "Bash(godot:*)",
       "Bash($GODOT:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/tools/cloud_setup.sh\"",
+            "timeout": 300
+          }
+        ]
+      }
     ]
   }
 }

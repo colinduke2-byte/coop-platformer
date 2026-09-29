@@ -9,9 +9,33 @@ const ARENA := "res://tests/test_arena.tscn"
 var _failures: Array[String] = []
 var _current := ""
 var _arena: Node
+var _errors := ErrorCatcher.new()
+
+
+## Collects engine/script errors so a test that crashes mid-way (SCRIPT ERROR
+## aborts the coroutine and call() just returns) is reported as FAIL, not PASS.
+class ErrorCatcher extends Logger:
+	var _mutex := Mutex.new()
+	var _messages: Array[String] = []
+
+	func _log_error(function: String, file: String, line: int, code: String, rationale: String,
+			_editor_notify: bool, error_type: int, _backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		_mutex.lock()
+		_messages.append("%s (%s:%d %s)" % [rationale if rationale != "" else code, file.get_file(), line, function])
+		_mutex.unlock()
+
+	func take() -> Array[String]:
+		_mutex.lock()
+		var m := _messages.duplicate()
+		_messages.clear()
+		_mutex.unlock()
+		return m
 
 
 func _ready() -> void:
+	OS.add_logger(_errors)
 	_run.call_deferred()
 
 
@@ -24,12 +48,16 @@ func _run() -> void:
 	for n in names:
 		_current = n
 		await _setup_arena()
+		_errors.take()
 		await call(n)
+		for e in _errors.take():
+			_failures.append("%s: engine/script error: %s" % [n, e])
 		_teardown_arena()
 		print(("PASS  " if not _failures.any(func(f: String) -> bool: return f.begins_with(n)) else "FAIL  ") + n)
 	print("\n%d tests, %d failures" % [names.size(), _failures.size()])
 	for f in _failures:
 		print("  - " + f)
+	OS.remove_logger(_errors)
 	get_tree().quit(1 if _failures.size() > 0 else 0)
 
 
