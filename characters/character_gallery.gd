@@ -9,7 +9,10 @@ const CHARACTERS: Array[CharacterDef] = [
 	preload("res://characters/tootle.tres"),
 	preload("res://characters/gribble.tres"),
 ]
-const STATES: Array[StringName] = [&"Ground", &"Idle", &"Run", &"Jump", &"Fall", &"Glide", &"WallSlide", &"Punch", &"Bubble"]
+const STATES: Array[StringName] = [
+	&"Ground", &"Idle", &"Run", &"Sprint", &"Skid", &"Jump", &"Fall", &"Glide", &"WallSlide",
+	&"LedgeHang", &"Crouch", &"Slide", &"Punch", &"Uppercut", &"GroundPound", &"Bubble",
+]
 const SPACING := 260.0
 const DISPLAY_SCALE := 2.0
 const SECONDS_PER_STATE := 1.8
@@ -108,15 +111,32 @@ func _process(delta: float) -> void:
 			vel.y = 600.0
 		&"Glide":
 			vel.y = 110.0
+		&"Sprint", &"Skid":
+			state = &"Ground"
+			vel.x = PREVIEW_RUN_SPEED * 1.4
+		&"Uppercut":
+			state = &"Punch"
+		&"Slide":
+			vel.x = 500.0
 	# Punch: charge up for 0.6 s, then throw a full-power punch.
 	var punch_t := fmod(_timer, 0.9)
-	var punching := shown == &"Punch" and punch_t > 0.6
-	var charge := clampf(punch_t / 0.6, 0.0, 1.0) if shown == &"Punch" and not punching else 0.0
+	var is_punch := shown in [&"Punch", &"Uppercut"]
+	var punching := is_punch and punch_t > 0.6
+	var charge := clampf(punch_t / 0.6, 0.0, 1.0) if is_punch and not punching else 0.0
+	# Ground pound: spin, dive, thud on a loop.
+	var pound_t := fmod(_timer, 0.9)
 	for rig in _rigs:
+		rig.sprint = 1.0 if shown == &"Sprint" else 0.0
+		rig.skidding = shown == &"Skid"
+		rig.punch_up = shown == &"Uppercut"
+		rig.ledge_climb = clampf(fmod(_timer, 1.8) - 1.0, 0.0, 1.0) if shown == &"LedgeHang" else 0.0
+		rig.pound_phase = (0 if pound_t < 0.3 else (1 if pound_t < 0.5 else 2)) if shown == &"GroundPound" else -1
+		rig.pound_spin = clampf(pound_t / 0.3, 0.0, 1.0)
+		rig.rotation = rig.spin_angle()
 		rig.gliding = shown == &"Glide"
 		rig.idle_quirk_delay = 0.2 if shown == &"Idle" else 1000.0  # quirks only on the Idle page
 		rig.punching = punching
 		rig.punch_charge = charge
 		rig.punch_power = 1.0 if punching else 0.0
-		rig.punch_target = Vector2(72.0 * 1.6, -30.0)
-		rig.update_pose(state, vel, shown in [&"Ground", &"Idle", &"Run", &"Punch"], PREVIEW_RUN_SPEED, delta)
+		rig.punch_target = Vector2(8.0, -30.0 - 72.0 * 1.6) if shown == &"Uppercut" else Vector2(72.0 * 1.6, -30.0)
+		rig.update_pose(state, vel, shown in [&"Ground", &"Idle", &"Run", &"Sprint", &"Skid", &"Punch", &"Crouch", &"Slide"], PREVIEW_RUN_SPEED, delta)

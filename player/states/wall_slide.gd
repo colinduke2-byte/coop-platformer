@@ -24,12 +24,18 @@ func physics_update(delta: float) -> void:
 		player.control_lock_timer = t.wall_jump_lock_time
 		player.squash(t.jump_stretch)
 		player.arm_glide_after_launch()
+		player.uppercut_used = false
 		EventBus.player_jumped.emit(player)
+		EventBus.player_wall_jumped.emit(player)
 		machine.transition_to(&"Jump")
 		return
 	if player.is_on_floor():
 		machine.transition_to(&"Ground")
 		return
-	if player.touching_wall_dir() != _wall_dir or not player.wants_wall_grab(_wall_dir):
+	if player.input.attack_pressed():
+		player.facing = -_wall_dir  # punch away from the wall
+		machine.transition_to(&"Punch")
+		return
+	if player.touching_wall_dir() != _wall_dir or not player.wants_wall_grab(_wall_dir) or player.input.down_held():
 		machine.transition_to(&"Fall")
 		return

@@ -30,6 +30,19 @@ func move_y() -> float:
 	return Input.get_axis(_p + "move_up", _p + "move_down")
 
 
+## Mostly-down on the stick (diagonal down-forward on a keyboard counts too):
+## crouch, slide, ground pound, drop through ledges, fast fall.
+func down_held() -> bool:
+	var y := move_y()
+	return y > 0.6 and y >= absf(move_x()) * 0.9
+
+
+## Mostly-up: uppercut.
+func up_held() -> bool:
+	var y := move_y()
+	return y < -0.6 and -y >= absf(move_x()) * 0.9
+
+
 func jump_pressed() -> bool:
 	return is_active() and Input.is_action_just_pressed(_p + "jump")
 

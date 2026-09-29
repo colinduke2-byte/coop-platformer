@@ -10,11 +10,19 @@ extends Resource
 @export var ground_accel := 3400.0          ## px/s^2
 @export var ground_decel := 3800.0
 @export var turn_boost := 1.8               ## accel multiplier when reversing direction
+@export var sprint_speed := 610.0           ## px/s top speed after running flat out for a while
+@export var sprint_build_time := 0.8        ## s of flat-out running before the sprint kicks in
+@export var sprint_ramp_time := 0.4         ## s to grow from run speed to sprint speed
+@export var skid_speed := 260.0             ## reversing faster than this on the ground = skid (visual + dust)
 
 @export_group("Air")
 @export var air_accel := 2400.0
 @export var air_decel := 1100.0
 @export var max_fall_speed := 1150.0
+@export var fast_fall_gravity_multiplier := 1.4  ## hold DOWN while falling to drop faster
+@export var fast_fall_max_speed := 1500.0
+@export var corner_correction := 16.0       ## px: clip a ceiling corner by this much and you slide round it
+@export var ledge_bump := 16.0              ## px: feet clip a ledge top by this much and you pop up onto it
 
 @export_group("Jump")
 @export var jump_height := 190.0            ## px, full-hold jump
@@ -48,6 +56,36 @@ enum GlideMode {
 @export var wall_jump_cuttable := false     ## false = releasing jump early doesn't shorten wall jumps
 @export var wall_auto_grab := true          ## stick to walls you touch while falling (no need to push in); push away to let go
 
+@export_group("Ledge grab")
+@export var ledge_grab := true              ## catch ledges you just miss; hold toward = climb, jump = hop up
+@export var ledge_grab_high := 80.0         ## px above the feet: highest ledge you can catch
+@export var ledge_grab_low := 34.0          ## px above the feet: lowest ledge you catch (lower = ledge_bump)
+@export var ledge_hang_offset := 70.0       ## px from ledge top down to the feet while hanging (arms up)
+@export var ledge_grab_max_rise := 260.0    ## can't grab while rising faster than this
+@export var ledge_climb_time := 0.2         ## s to pull up onto the ledge
+@export var ledge_min_hang := 0.07          ## s you hang before an auto-climb (lets the grab read)
+@export var ledge_regrab_delay := 0.3       ## s after dropping before you can grab again
+
+@export_group("Crouch & slide")
+@export var crouch_height := 34.0           ## px collision height while crouched / sliding (standing = 60)
+@export var crawl_speed := 150.0
+@export var slide_min_speed := 280.0        ## run faster than this + DOWN = belly slide instead of crouch
+@export var slide_boost := 90.0             ## px/s added when a slide starts
+@export var slide_max_speed := 700.0
+@export var slide_friction := 520.0         ## px/s^2
+@export var long_jump_speed := 640.0        ## jump out of a slide = long jump at least this fast
+@export var long_jump_height_multiplier := 0.8
+@export var drop_through_time := 0.25       ## s one-way ledges ignore you after DOWN + JUMP
+
+@export_group("Ground pound")
+@export var ground_pound_hang := 0.13       ## s of spin in midair before the dive
+@export var ground_pound_speed := 1550.0
+@export var ground_pound_steer := 140.0     ## px/s sideways control while diving
+@export var ground_pound_recovery := 0.16
+@export var ground_pound_power := 0.5       ## punch power vs breakables (iron crates need 0.6)
+@export var ground_pound_radius := 110.0    ## px shockwave that hits grounded enemies on landing
+@export var ground_pound_jump_multiplier := 1.25  ## jump right after landing = higher "pound jump"
+
 @export_group("Punch")
 @export var punch_windup := 0.05
 @export var punch_active := 0.12
@@ -62,6 +100,7 @@ enum GlideMode {
 @export var punch_charged_hitbox_multiplier := 1.4
 @export var punch_charged_knockback_multiplier := 1.8
 @export var punch_charge_move_scale := 0.2  ## run speed fraction while charging on the ground
+@export var uppercut_lift := 430.0          ## UP + punch in the air: upward kick, once per airtime
 
 @export_group("Bubble / revive")
 @export var bubble_steer_speed := 160.0
@@ -73,6 +112,9 @@ enum GlideMode {
 @export var squash_return_speed := 14.0
 @export var jump_stretch := Vector2(0.82, 1.2)
 @export var land_squash := Vector2(1.22, 0.8)
+@export var hard_land_speed := 950.0        ## falling faster than this = big squash + dust + shake
+@export var hard_land_squash := Vector2(1.4, 0.65)
+@export var crouch_squash := Vector2(1.1, 0.85)
 
 
 func jump_velocity() -> float:

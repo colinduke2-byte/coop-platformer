@@ -14,6 +14,7 @@ var _dead := false
 
 
 func _ready() -> void:
+	add_to_group(&"enemies")
 	$Hitbox.body_entered.connect(_on_hitbox_body_entered)
 
 

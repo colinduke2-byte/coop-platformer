@@ -533,3 +533,237 @@ func test_updraft_lifts_a_glider() -> void:
 	check(_is_gliding(p), "should be gliding")
 	check(p.velocity.y < 0.0, "updraft should push a glider upward (vy %.0f)" % p.velocity.y)
 	check(p.global_position.y < -400.0, "glider should have risen above its start")
+
+
+# --- Movement overhaul ----------------------------------------------------------
+
+func _add_block(pos: Vector2, size: Vector2, one_way := false) -> Block:
+	var b: Block = load("res://world/block.tscn").instantiate()
+	b.position = pos
+	b.size = size
+	b.one_way = one_way
+	_arena.add_child(b)
+	return b
+
+
+func _state(p: Player) -> StringName:
+	return p.state_machine.current_name()
+
+
+func test_sprint_builds_after_running_flat_out() -> void:
+	var p := add_player(0, Vector2(-1800, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.5)
+	check(p.velocity.x <= p.tuning.max_run_speed + 1.0, "no sprint yet after 0.5 s (vx %.0f)" % p.velocity.x)
+	await seconds(p.tuning.sprint_build_time + p.tuning.sprint_ramp_time + 0.3)
+	check(p.velocity.x > p.tuning.max_run_speed * 1.2, "should be sprinting by now (vx %.0f)" % p.velocity.x)
+	release(0, "move_right")
+	await seconds(0.4)
+	check(p.sprint == 0.0 and absf(p.velocity.x) < 1.0, "letting go should stop and end the sprint")
+
+
+func test_corner_correction_slides_past_ceiling_edge() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	_add_block(Vector2(p.global_position.x + 10.0, -260), Vector2(200, 40))  # clips our head by 8 px
+	await frames(1)
+	var x0 := p.global_position.x
+	var peak := 0.0
+	press(0, "jump")
+	for i in 60:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	release(0, "jump")
+	check(peak < -175.0, "head should slide round the ceiling corner (peak %.0f)" % peak)
+	check(p.global_position.x < x0 - 6.0, "should have been nudged left off the corner")
+
+
+func test_ledge_bump_pops_onto_platform() -> void:
+	_add_block(Vector2(100, -120), Vector2(300, 120))
+	var p := add_player(0, Vector2(78, -110))  # feet 10 px below the platform top, 4 px from its side
+	await frames(1)
+	p.velocity = Vector2(400, 0)
+	press(0, "move_right")
+	await seconds(0.4)
+	release(0, "move_right")
+	check(p.global_position.x > 110.0 and absf(p.global_position.y + 120.0) < 3.0,
+			"should pop up onto the platform, at %s" % p.global_position)
+
+
+func _ledge_setup() -> Player:
+	_add_block(Vector2(100, -300), Vector2(300, 300))
+	var p := add_player(0, Vector2(100 - 19, -300 + 60))
+	await frames(1)
+	p.velocity = Vector2.ZERO
+	return p
+
+
+func test_ledge_grab_hang_and_climb() -> void:
+	var p: Player = await _ledge_setup()
+	await seconds(0.2)
+	check(_state(p) == &"LedgeHang", "should catch the ledge (got %s)" % _state(p))
+	await seconds(0.5)
+	check(_state(p) == &"LedgeHang", "should keep hanging with no input")
+	press(0, "move_right")
+	await seconds(0.5)
+	release(0, "move_right")
+	check(p.global_position.x > 110.0 and absf(p.global_position.y + 300.0) < 3.0,
+			"holding toward the ledge should climb onto it, at %s" % p.global_position)
+
+
+func test_ledge_hang_jump_and_drop() -> void:
+	var p: Player = await _ledge_setup()
+	await seconds(0.2)
+	press(0, "jump")
+	await frames(3)
+	check(_state(p) == &"Jump" and p.velocity.y < 0.0, "jump from a hang should hop up")
+	release(0, "jump")
+	var q: Player = p
+	await seconds(1.2)  # lands back on the floor
+	q.global_position = Vector2(100 - 19, -300 + 60)
+	q.velocity = Vector2.ZERO
+	q.state_machine.transition_to(&"Fall")
+	await seconds(0.2)
+	check(_state(q) == &"LedgeHang", "should catch the ledge again")
+	press(0, "move_down")
+	await frames(3)
+	release(0, "move_down")
+	check(_state(q) == &"Fall", "DOWN should let go of the ledge")
+
+
+func test_crouch_crawls_under_low_gap() -> void:
+	_add_block(Vector2(100, -300), Vector2(300, 255))  # 45 px gap above the floor
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "move_down")
+	press(0, "move_right")
+	await seconds(1.2)
+	check(_state(p) == &"Crouch", "should be crouching (got %s)" % _state(p))
+	check(p.global_position.x > 110.0, "should crawl into the gap (x %.0f)" % p.global_position.x)
+	release(0, "move_down")
+	await frames(10)
+	check(_state(p) == &"Crouch", "can't stand up under the low ceiling")
+	await seconds(2.5)
+	release(0, "move_right")
+	check(p.global_position.x > 420.0, "should crawl all the way through (x %.0f)" % p.global_position.x)
+	await frames(10)
+	check(_state(p) == &"Ground", "should stand up once out of the gap")
+
+
+func test_slide_then_long_jump() -> void:
+	var p := add_player(0, Vector2(-1800, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.6)
+	press(0, "move_down")
+	await frames(4)
+	check(_state(p) == &"Slide", "fast + DOWN should belly slide (got %s)" % _state(p))
+	check(p.velocity.x > p.tuning.max_run_speed, "a slide should start with a boost")
+	check(p.crouched, "slide should use the low hitbox")
+	release(0, "move_down")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(_state(p) == &"Jump" and p.velocity.x >= p.tuning.long_jump_speed - 30.0,
+			"jumping out of a slide should long-jump (vx %.0f)" % p.velocity.x)
+	release(0, "move_right")
+
+
+func test_drop_through_one_way_ledge() -> void:
+	_add_block(Vector2(-150, -200), Vector2(300, 20), true)
+	var p := add_player(0, Vector2(0, -205))
+	await settle(p)
+	check(absf(p.global_position.y + 200.0) < 3.0, "should stand on the one-way ledge")
+	press(0, "move_down")
+	await frames(3)
+	press(0, "jump")
+	await seconds(0.3)
+	release(0, "jump")
+	release(0, "move_down")
+	check(p.global_position.y > -170.0, "DOWN + JUMP should drop through (y %.0f)" % p.global_position.y)
+
+
+func _ground_pound() -> void:
+	press(0, "move_down")
+	await frames(2)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	release(0, "move_down")
+
+
+func test_ground_pound_smashes_crate_below() -> void:
+	var crate := _add_crate(0.0, false)
+	var p := add_player(0, Vector2(0, -400))
+	await frames(10)
+	await _ground_pound()
+	check(_state(p) == &"GroundPound", "DOWN + ATTACK in the air should ground pound")
+	await seconds(1.0)
+	check(not is_instance_valid(crate) or crate.collision_layer == 0, "pound should smash the wooden crate")
+	check(p.is_on_floor() and absf(p.global_position.y) < 3.0, "should end up on the floor")
+
+
+func test_ground_pound_jump_is_higher() -> void:
+	var p := add_player(0, Vector2(0, -300))
+	await frames(10)
+	await _ground_pound()
+	for i in 120:
+		await get_tree().physics_frame
+		if p.rig.pound_phase == 2:
+			break
+	check(p.rig.pound_phase == 2, "should land the pound")
+	var y0 := p.global_position.y
+	var peak := y0
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	release(0, "jump")
+	check(y0 - peak > p.tuning.jump_height * 1.15, "pound jump should beat a normal jump (%.0f px)" % (y0 - peak))
+
+
+func test_ground_pound_defeats_grunt() -> void:
+	var grunt: Node2D = load("res://enemies/grunt.tscn").instantiate()
+	grunt.position = Vector2(0, 0)
+	_arena.add_child(grunt)
+	var p := add_player(0, Vector2(0, -350))
+	await frames(10)
+	await _ground_pound()
+	await seconds(0.8)
+	check(not is_instance_valid(grunt) or grunt.collision_layer == 0, "ground pound should defeat the grunt")
+	check(not p.is_bubbled(), "pounding an enemy must not hurt you")
+
+
+func test_uppercut_hits_crate_overhead() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var crate := _add_crate(p.global_position.x, false)
+	crate.position.y = -100.0
+	await frames(2)
+	press(0, "move_up")
+	await frames(2)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	release(0, "move_up")
+	await seconds(0.3)
+	check(crate.collision_layer == 0, "UP + punch should uppercut the crate overhead")
+
+
+func test_air_uppercut_lifts_once() -> void:
+	var p := add_player(0, Vector2(0, -600))
+	await seconds(0.3)
+	press(0, "move_up")
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await frames(8)
+	check(p.velocity.y < 0.0, "air uppercut should kick you upward (vy %.0f)" % p.velocity.y)
+	await seconds(0.4)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await frames(8)
+	release(0, "move_up")
+	check(p.velocity.y > 0.0, "second uppercut in the same airtime gives no lift (vy %.0f)" % p.velocity.y)

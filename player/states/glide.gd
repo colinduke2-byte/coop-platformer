@@ -28,7 +28,9 @@ func physics_update(delta: float) -> void:
 		machine.transition_to(&"Fall")
 		return
 	if player.input.attack_pressed():
-		machine.transition_to(&"Punch")
+		machine.transition_to(player.air_attack_state())
+		return
+	if player.try_ledge_grab():
 		return
 	if player.is_pushing_into_wall():
 		machine.transition_to(&"WallSlide")

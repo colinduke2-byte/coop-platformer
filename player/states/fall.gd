@@ -1,6 +1,6 @@
 extends PlayerState
 ## Airborne and moving down. Handles coyote jumps, starting a glide,
-## and grabbing walls.
+## grabbing ledges and walls.
 
 var _hold_time := 0.0  ## HOLD_THROUGH: seconds jump has stayed held past the apex
 
@@ -40,15 +40,17 @@ func physics_update(delta: float) -> void:
 		machine.transition_to(&"Glide")
 		return
 	if player.input.attack_pressed():
-		machine.transition_to(&"Punch")
+		machine.transition_to(player.air_attack_state())
 		return
 
 	player.apply_gravity(delta)
-	player.apply_horizontal(delta, t.air_accel, t.air_decel, t.max_run_speed)
+	player.apply_horizontal(delta, t.air_accel, t.air_decel, player.current_max_speed())
 
 	if player.is_on_floor():
 		machine.transition_to(&"Ground")
 		return
-	if player.velocity.y > 0.0 and player.wants_wall_grab(player.touching_wall_dir()):
+	if player.try_ledge_grab():
+		return
+	if player.velocity.y > 0.0 and not player.input.down_held() and player.wants_wall_grab(player.touching_wall_dir()):
 		machine.transition_to(&"WallSlide")
 		return

@@ -1,5 +1,5 @@
 extends PlayerState
-## Standing / running on the floor.
+## Standing / running on the floor. DOWN crouches (or belly-slides when fast).
 
 
 func enter(previous: StringName) -> void:
@@ -11,7 +11,7 @@ func enter(previous: StringName) -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
-	player.apply_horizontal(delta, t.ground_accel, t.ground_decel, t.max_run_speed)
+	player.apply_horizontal(delta, t.ground_accel, t.ground_decel, player.current_max_speed())
 	player.apply_gravity(delta)
 
 	if player.wants_jump():
@@ -23,4 +23,7 @@ func physics_update(delta: float) -> void:
 		return
 	if not player.is_on_floor():
 		machine.transition_to(&"Fall")
+		return
+	if player.input.down_held():
+		machine.transition_to(&"Slide" if absf(player.velocity.x) >= t.slide_min_speed else &"Crouch")
 		return

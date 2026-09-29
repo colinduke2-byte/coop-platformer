@@ -49,6 +49,13 @@ var punching := false             ## punch is in its active (extended) phase
 var punch_charge := 0.0           ## 0..1 while holding a charge punch
 var punch_power := 0.0            ## 0..1 power of the current / last punch
 var punch_target := Vector2(72.0, -30.0)
+var punch_up := false             ## current punch is an uppercut
+var sprint := 0.0                 ## 0..1 sprint amount (arms sweep back, big lean)
+var skidding := false             ## digging heels in to turn around
+var ledge_climb := 0.0            ## 0 = hanging, 0..1 = pulling up
+var ledge_lip := -70.0            ## y of the ledge top while hanging (feet = 0)
+var pound_phase := -1             ## ground pound: -1 off, 0 spin, 1 dive, 2 landed
+var pound_spin := 0.0             ## 0..1 through the pre-dive somersault
 var idle_quirk_delay := IDLE_QUIRK_DELAY
 var top_y := -80.0                ## highest point of the rig (for name tags)
 
@@ -284,6 +291,11 @@ func impact() -> void:
 	tw.tween_callback(star.queue_free)
 
 
+## Whole-body rotation the owner should apply (somersault before a ground pound).
+func spin_angle() -> float:
+	return TAU * pound_spin if pound_phase == 0 else 0.0
+
+
 # --- Pose -----------------------------------------------------------------------
 
 func update_pose(state: StringName, vel: Vector2, on_floor: bool, max_speed: float, delta: float) -> void:
@@ -324,16 +336,33 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 	}
 	match state:
 		&"Ground":
-			if speed_t > 0.05:
+			if skidding:
+				# Heels dug in, leaning back, arms windmilling forward.
+				p[&"foot_f"] = Vector2(16, 0)
+				p[&"foot_b"] = Vector2(2, 0)
+				p[&"hand_f"] = Vector2(sx + 14, s_y - 6 + sin(t * 30.0) * 4.0)
+				p[&"hand_b"] = Vector2(sx + 6, s_y - 10 + cos(t * 30.0) * 4.0)
+				p[&"lean"] = -0.3
+				p[&"bob"] = 2.0
+				p[&"brow_raise"] = -2.5
+			elif speed_t > 0.05:
 				var ph := _run_phase
-				var stride := 2.0 + STRIDE * speed_t
-				p[&"foot_f"] = Vector2(3 + sin(ph) * stride, -maxf(0.0, cos(ph)) * STEP_LIFT * speed_t)
-				p[&"foot_b"] = Vector2(-3 - sin(ph) * stride, -maxf(0.0, -cos(ph)) * STEP_LIFT * speed_t)
+				var stride := 2.0 + (STRIDE + 5.0 * sprint) * speed_t
+				p[&"foot_f"] = Vector2(3 + sin(ph) * stride, -maxf(0.0, cos(ph)) * (STEP_LIFT + 4.0 * sprint) * speed_t)
+				p[&"foot_b"] = Vector2(-3 - sin(ph) * stride, -maxf(0.0, -cos(ph)) * (STEP_LIFT + 4.0 * sprint) * speed_t)
 				p[&"hand_f"] = Vector2(sx + 3 - sin(ph) * 10.0 * speed_t, s_y + 13)
 				p[&"hand_b"] = Vector2(-sx - 3 + sin(ph) * 10.0 * speed_t, s_y + 13)
 				p[&"bob"] = -absf(sin(ph)) * RUN_BOB * speed_t
 				p[&"lean"] = RUN_LEAN * speed_t
 				p[&"brow_tilt"] = 0.3 * speed_t
+				if sprint > 0.0:
+					# Full-tilt dash: arms swept straight back, head down, big lean.
+					var sw := Vector2(-sx - 18, s_y + 2 + sin(ph * 2.0) * 1.5)
+					p[&"hand_f"] = (p[&"hand_f"] as Vector2).lerp(sw + Vector2(4, 2), sprint)
+					p[&"hand_b"] = (p[&"hand_b"] as Vector2).lerp(sw + Vector2(-4, -3), sprint)
+					p[&"lean"] = lerpf(RUN_LEAN, 0.34, sprint)
+					p[&"head_tilt"] = 0.1 * sprint
+					p[&"brow_tilt"] = lerpf(0.3, 1.0, sprint)
 			else:
 				p[&"bob"] = sin(t * 2.2) * 1.0
 				p[&"head_tilt"] = sin(t * 1.1) * 0.04
@@ -372,7 +401,15 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 		&"Punch":
 			p[&"brow_tilt"] = 1.0
 			p[&"hand_b"] = Vector2(-sx - 8, s_y + 10)
-			if punching:
+			if punching and punch_up:
+				p[&"hand_f"] = punch_target
+				p[&"hand_scale"] = PUNCH_FIST_SCALE + CHARGED_FIST_BONUS * punch_power
+				p[&"arm_thick"] = PUNCH_ARM_THICKNESS + 0.6 * punch_power
+				p[&"lean"] = -0.1
+				p[&"bob"] = -4.0
+				p[&"hand_b"] = Vector2(-sx - 10, s_y + 12)
+				p[&"brow_raise"] = -2.0
+			elif punching:
 				p[&"hand_f"] = punch_target
 				p[&"hand_scale"] = PUNCH_FIST_SCALE + CHARGED_FIST_BONUS * punch_power
 				p[&"arm_thick"] = PUNCH_ARM_THICKNESS + 0.6 * punch_power
@@ -382,12 +419,70 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 				# Windup / charge: fist pulled back, trembling as it charges.
 				var shake := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * CHARGE_SHAKE * punch_charge
 				p[&"hand_f"] = Vector2(-sx - 4 - 8 * punch_charge, s_y + 6) + shake
+				if punch_up:
+					p[&"hand_f"] = Vector2(sx + 2, s_y + 22) + shake  # fist low, ready to swing up
 				p[&"hand_scale"] = 1.2 + CHARGED_FIST_BONUS * punch_charge
 				p[&"lean"] = -0.1 - 0.12 * punch_charge
 				p[&"bob"] = 3.0 * punch_charge
 			if on_floor:
 				p[&"foot_f"] = Vector2(11, 0)
 				p[&"foot_b"] = Vector2(-9, 0)
+		&"Crouch":
+			var crawl := speed_t > 0.05
+			var ph := _time * 12.0
+			p[&"bob"] = 11.0
+			p[&"lean"] = 0.32
+			p[&"foot_f"] = Vector2(10 + (sin(ph) * 4.0 if crawl else 0.0), 0)
+			p[&"foot_b"] = Vector2(-10 - (sin(ph) * 4.0 if crawl else 0.0), 0)
+			p[&"hand_f"] = Vector2(sx + 12 + (cos(ph) * 4.0 if crawl else 0.0), -2)
+			p[&"hand_b"] = Vector2(sx + 2 - (cos(ph) * 4.0 if crawl else 0.0), -1)
+			p[&"head_tilt"] = -0.2
+			p[&"brow_raise"] = -1.0
+		&"Slide":
+			# Feet-first slide on the backside, one arm up for balance.
+			p[&"bob"] = 12.0
+			p[&"lean"] = -0.55
+			p[&"foot_f"] = Vector2(24, -2)
+			p[&"foot_b"] = Vector2(16, 0)
+			p[&"hand_b"] = Vector2(-sx - 14, -3)
+			p[&"hand_f"] = Vector2(sx - 4, s_y - 12 + sin(t * 20.0) * 2.0)
+			p[&"head_tilt"] = 0.25
+			p[&"brow_tilt"] = 0.6
+		&"LedgeHang":
+			# Arms stretched up, hands gripping the lip.
+			var lip := ledge_lip
+			var c := ledge_climb
+			p[&"hand_f"] = Vector2(14, lip + 1).lerp(Vector2(10, -4), c)
+			p[&"hand_b"] = Vector2(6, lip).lerp(Vector2(2, -2), c)
+			p[&"foot_f"] = Vector2(4 + sin(t * 3.0) * 2.0, 2).lerp(Vector2(12, -18), minf(c * 2.0, 1.0))
+			p[&"foot_b"] = Vector2(-3 + cos(t * 3.0) * 2.0, 4).lerp(Vector2(0, -6), minf(c * 2.0, 1.0))
+			p[&"lean"] = lerpf(-0.12, 0.3, c)
+			p[&"bob"] = lerpf(-6.0, 4.0, c)
+			p[&"head_tilt"] = -0.15
+			p[&"brow_raise"] = -2.0
+			p[&"brow_tilt"] = 0.5 * c
+		&"GroundPound":
+			match pound_phase:
+				0:  # tucked somersault
+					p[&"foot_f"] = Vector2(8, -L * 0.9)
+					p[&"foot_b"] = Vector2(-2, -L * 0.8)
+					p[&"hand_f"] = Vector2(sx + 8, s_y + 16)
+					p[&"hand_b"] = Vector2(sx, s_y + 18)
+					p[&"bob"] = -4.0
+					p[&"brow_tilt"] = 1.0
+				1:  # rocket down: feet together, arms up
+					p[&"foot_f"] = Vector2(2, 2)
+					p[&"foot_b"] = Vector2(-2, 2)
+					p[&"hand_f"] = Vector2(8, -L - h - r * 2.2)
+					p[&"hand_b"] = Vector2(-8, -L - h - r * 2.1)
+					p[&"brow_tilt"] = 1.2
+				_:  # thud: crouched, arms flung wide
+					p[&"bob"] = 8.0
+					p[&"foot_f"] = Vector2(13, 0)
+					p[&"foot_b"] = Vector2(-13, 0)
+					p[&"hand_f"] = Vector2(sx + 20, s_y + 2)
+					p[&"hand_b"] = Vector2(-sx - 20, s_y + 2)
+					p[&"brow_tilt"] = 1.0
 		&"Bubble":
 			p[&"foot_f"] = Vector2(5, -L - 2)
 			p[&"foot_b"] = Vector2(-5, -L)
@@ -513,13 +608,15 @@ func _update_punch_fx(state: StringName) -> void:
 	_trail.points = pts
 	# Speed lines streak behind the fist while the punch is out.
 	var fist := _hands[1].position
+	var fwd := Vector2.UP if punch_up else Vector2.RIGHT
+	var side := fwd.orthogonal()
 	for i in _speed_lines.size():
 		var sl := _speed_lines[i]
 		sl.visible = state == &"Punch" and punching
 		if sl.visible:
-			var y := (float(i) - 1.0) * (9.0 + 5.0 * punch_power)
+			var off := side * (float(i) - 1.0) * (9.0 + 5.0 * punch_power)
 			var line_len := 22.0 + 30.0 * punch_power + 6.0 * float(i % 2)
-			sl.points = PackedVector2Array([fist + Vector2(-14.0 - line_len, y), fist + Vector2(-14.0, y)])
+			sl.points = PackedVector2Array([fist + off - fwd * (14.0 + line_len), fist + off - fwd * 14.0])
 	_trail.width = HAND_RADIUS * (2.4 + 1.5 * punch_power)
 
 

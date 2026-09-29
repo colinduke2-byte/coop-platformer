@@ -16,13 +16,15 @@ func physics_update(delta: float) -> void:
 		_cut = true
 
 	player.apply_gravity(delta)
-	player.apply_horizontal(delta, t.air_accel, t.air_decel, t.max_run_speed)
+	player.apply_horizontal(delta, t.air_accel, t.air_decel, player.current_max_speed())
 
 	if player.input.attack_pressed():
-		machine.transition_to(&"Punch")
+		machine.transition_to(player.air_attack_state())
 		return
 	if player.is_on_ceiling() and player.velocity.y < 0.0:
 		player.velocity.y = 0.0
+	if player.try_ledge_grab():
+		return
 	if player.velocity.y >= 0.0:
 		machine.transition_to(&"Fall")
 		return
