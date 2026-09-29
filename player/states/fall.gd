@@ -31,6 +31,8 @@ func _glide_requested(delta: float) -> bool:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
+	if player.try_environment_states():
+		return
 
 	if player.wants_jump() and player.can_coyote_jump():
 		player.do_jump()

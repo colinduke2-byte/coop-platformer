@@ -27,7 +27,7 @@ func exit() -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
-	player.velocity.x = move_toward(player.velocity.x, 0.0, t.slide_friction * delta)
+	player.velocity.x = move_toward(player.velocity.x, 0.0, t.slide_friction * player.floor_friction() * delta)
 	player.apply_gravity(delta)
 	player.hit_with_punch_area(Vector2(_dir * t.punch_knockback.x, t.punch_knockback.y), _already_hit)
 

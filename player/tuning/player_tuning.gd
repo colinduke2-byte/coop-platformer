@@ -77,6 +77,23 @@ enum GlideMode {
 @export var swing_release_up := 420.0       ## extra upward kick when you jump off
 @export var swing_regrab_delay := 0.35      ## s before you can grab a ring again
 
+@export_group("Swim")
+@export var swim_speed := 300.0             ## px/s cruising in any direction
+@export var swim_accel := 1400.0
+@export var swim_sink := 45.0               ## px/s drift down when not steering
+@export var swim_stroke := 380.0            ## JUMP underwater: burst of speed
+@export var swim_stroke_cooldown := 0.3
+@export var swim_leap_multiplier := 1.0     ## jump out at the surface (x jump velocity)
+@export var swim_enter_depth := 36.0        ## feet this far under the surface = swimming
+
+@export_group("Climb")
+@export var climb_speed := 230.0            ## px/s on vines and nets
+@export var climb_jump_multiplier := 0.9    ## jump off (x jump velocity)
+@export var climb_regrab_delay := 0.3
+
+@export_group("Surfaces")
+@export var ice_friction := 0.12            ## accel/decel multiplier on slippery blocks
+
 @export_group("Crouch & slide")
 @export var crouch_height := 34.0           ## px collision height while crouched / sliding (standing = 60)
 @export var crawl_speed := 150.0

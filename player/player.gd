@@ -39,6 +39,14 @@ var ledge_regrab_timer := 0.0
 var ledge_dir := 0
 var ledge_top := 0.0
 var ledge_body: Node2D
+## Environment: set every frame by Water / Climbable / WindZone / BarrelCannon.
+var water: Node2D                ## the Water we're in (null = dry)
+var climbable: Node2D            ## the vine / net we're touching
+var climb_regrab_timer := 0.0
+var wind_push := Vector2.ZERO    ## px/s added to this frame's motion by wind
+var cannon: Node2D               ## the barrel we're sitting in
+var _water_timer := 0.0
+var _climb_timer := 0.0
 ## Set by SwingRing.grab for the Swing state.
 var swing_anchor: Node2D
 var swing_regrab_timer := 0.0
@@ -110,10 +118,27 @@ func _physics_process(delta: float) -> void:
 	_update_sprint(delta)
 	if not is_bubbled():
 		_correct_corners(delta)
-	move_and_slide()
+	_move_with_wind()
 	_check_head_bounce()
 	_track_landing()
 	_update_visual(delta)
+
+
+## move_and_slide(), plus this frame's wind push (not kept as momentum).
+func _move_with_wind() -> void:
+	var push := wind_push
+	wind_push = Vector2.ZERO
+	if push == Vector2.ZERO or is_bubbled() or state_machine.current_name() in [&"LedgeHang", &"Cannon"]:
+		move_and_slide()
+		return
+	if state_machine.current_name() == &"Glide":
+		push *= 1.6  # gliders catch the wind
+	velocity += push
+	move_and_slide()
+	if not is_on_wall():
+		velocity.x -= push.x
+	if not (is_on_floor() or is_on_ceiling()):
+		velocity.y -= push.y
 
 
 # --- Shared movement helpers (used by states) --------------------------------
@@ -149,6 +174,42 @@ func apply_horizontal(delta: float, accel: float, decel: float, max_speed: float
 ## Run speed right now: grows toward sprint_speed while sprinting.
 func current_max_speed() -> float:
 	return lerpf(tuning.max_run_speed, tuning.sprint_speed, sprint)
+
+
+## Floor grip: 1 normally, tuning.ice_friction on slippery blocks.
+func floor_friction() -> float:
+	if not is_on_floor():
+		return 1.0
+	for i in get_slide_collision_count():
+		var c := get_slide_collision(i)
+		if c.get_normal().y < -0.7:
+			var b := c.get_collider()
+			if b is Block and b.slippery:
+				return tuning.ice_friction
+	return 1.0
+
+
+## Enter Swim / Climb if the environment calls for it. States call this first.
+func try_environment_states(allow_climb := true) -> bool:
+	if is_submerged():
+		state_machine.transition_to(&"Swim")
+		return true
+	if allow_climb and can_grab_climb():
+		state_machine.transition_to(&"Climb")
+		return true
+	return false
+
+
+func is_submerged() -> bool:
+	return water != null and global_position.y > water.surface_y() + tuning.swim_enter_depth
+
+
+func can_grab_climb() -> bool:
+	if climbable == null or climb_regrab_timer > 0.0 or crouched:
+		return false
+	if is_on_floor():
+		return input.up_held()
+	return input.up_held() or velocity.y > 0.0 or climbable.auto_grab
 
 
 func wants_jump() -> bool:
@@ -534,6 +595,23 @@ func punch_hit(target: Node2D) -> void:
 	EventBus.punch_landed.emit(self, target, punch_power)
 
 
+## Called every physics frame by Water / Climbable areas we're inside.
+func touch_water(w: Node2D) -> void:
+	water = w
+	_water_timer = UPDRAFT_GRACE
+
+
+func touch_climbable(c: Node2D) -> void:
+	climbable = c
+	_climb_timer = UPDRAFT_GRACE
+
+
+## Called by a BarrelCannon when we touch it.
+func enter_cannon(c: Node2D) -> void:
+	cannon = c
+	state_machine.transition_to(&"Cannon")
+
+
 ## Called every physics frame by an Updraft we're inside.
 func apply_updraft(speed: float) -> void:
 	updraft_speed = speed
@@ -596,6 +674,14 @@ func _update_timers(delta: float) -> void:
 	invulnerable_timer = maxf(invulnerable_timer - delta, 0.0)
 	ledge_regrab_timer = maxf(ledge_regrab_timer - delta, 0.0)
 	swing_regrab_timer = maxf(swing_regrab_timer - delta, 0.0)
+	climb_regrab_timer = maxf(climb_regrab_timer - delta, 0.0)
+	# Environment areas re-register every physics frame; forget stale ones.
+	_water_timer -= delta
+	if _water_timer <= 0.0:
+		water = null
+	_climb_timer -= delta
+	if _climb_timer <= 0.0:
+		climbable = null
 	_updraft_timer = maxf(_updraft_timer - delta, 0.0)
 	if _updraft_timer <= 0.0:
 		updraft_speed = 0.0

@@ -21,14 +21,34 @@ const OUTLINE_W := 4.0
 	set(value):
 		lip = value
 		queue_redraw()
+@export var slippery := false:              ## ice: low grip (PlayerTuning.ice_friction)
+	set(value):
+		slippery = value
+		queue_redraw()
+@export var conveyor_speed := 0.0:          ## px/s: carries whatever stands on it (+ = right)
+	set(value):
+		conveyor_speed = value
+		constant_linear_velocity = Vector2(value, 0)
+		set_process(value != 0.0)
+		queue_redraw()
 @export var theme_override: LevelTheme:     ## use a different palette for just this block
 	set(value):
 		theme_override = value
 		queue_redraw()
 
 
+var _belt := 0.0
+
+
 func _ready() -> void:
 	_rebuild()
+	constant_linear_velocity = Vector2(conveyor_speed, 0)
+	set_process(conveyor_speed != 0.0)
+
+
+func _process(delta: float) -> void:
+	_belt = fmod(_belt + conveyor_speed * delta, 40.0)
+	queue_redraw()
 
 
 func _rebuild() -> void:
@@ -51,8 +71,12 @@ func _draw() -> void:
 	var th := _theme()
 	if one_way:
 		_draw_ledge(th)
+	elif slippery:
+		_draw_ice(th)
 	else:
 		_draw_solid(th)
+	if conveyor_speed != 0.0:
+		_draw_belt(th)
 
 
 func _draw_solid(th: LevelTheme) -> void:
@@ -128,6 +152,32 @@ func _draw_ledge(th: LevelTheme) -> void:
 	# Little support brackets underneath.
 	for x: float in [14.0, size.x - 14.0]:
 		Art.shape(self, PackedVector2Array([Vector2(x - 6, h), Vector2(x + 6, h), Vector2(x, h + 10)]), th.ledge_dark, th.outline, 2.0)
+
+
+func _draw_ice(th: LevelTheme) -> void:
+	var ice := Color("bfe9ff")
+	draw_rect(Rect2(Vector2.ZERO, size), ice)
+	draw_rect(Rect2(0, size.y * 0.55, size.x, size.y * 0.45), ice.darkened(0.1))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector2i(global_position))
+	for i in int(size.x / 60.0) + 1:
+		var x := rng.randf_range(10, maxf(size.x - 30, 11))
+		draw_line(Vector2(x, 8), Vector2(x + 20, 8 + minf(26.0, size.y - 12)), Color(1, 1, 1, 0.7), 3.0)
+	draw_rect(Rect2(3, 3, size.x - 6, 5), Color(1, 1, 1, 0.8))
+	draw_rect(Rect2(Vector2.ZERO, size), th.outline, false, OUTLINE_W)
+
+
+func _draw_belt(th: LevelTheme) -> void:
+	# Rolling chevrons along the top show which way it carries you.
+	var d := signf(conveyor_speed)
+	draw_rect(Rect2(0, -2, size.x, 12), Color("3b3548"))
+	var x := _belt - 40.0
+	while x < size.x:
+		if x > 4.0 and x < size.x - 12.0:
+			draw_polyline(PackedVector2Array([Vector2(x, 0), Vector2(x + 8 * d, 4), Vector2(x, 8)]), Color("ffd23f"), 3.0)
+		x += 40.0
+	for cx: float in [8.0, size.x - 8.0]:
+		draw_circle(Vector2(cx, 4), 6.0, th.outline)
 
 
 ## Clip a polygon to the block rect (for patterns).

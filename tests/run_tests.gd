@@ -1149,3 +1149,186 @@ func test_king_grumblo_slam_daze_and_stomp() -> void:
 	p.state_machine.transition_to(&"Fall")
 	await seconds(0.5)
 	check(k.health == h - 1, "stomping him while dazed should hurt him")
+
+
+# --- Environments & obstacles -------------------------------------------------------
+
+func test_water_swim_and_leap_out() -> void:
+	var w := Water.new()
+	w.position = Vector2(-400, -400)
+	w.size = Vector2(800, 400)
+	_arena.add_child(w)
+	var p := add_player(0, Vector2(0, -500))
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	check(_state(p) == &"Swim", "falling into water should start swimming (got %s)" % _state(p))
+	await seconds(0.5)
+	check(p.velocity.y < 400.0, "should sink slowly, not fall (vy %.0f)" % p.velocity.y)
+	press(0, "move_up")
+	await seconds(1.2)
+	release(0, "move_up")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(_state(p) == &"Jump" and p.velocity.y < -500.0, "JUMP at the surface should leap out (%s)" % _state(p))
+
+
+func test_vine_climb_and_jump_off() -> void:
+	var v := Climbable.new()
+	v.position = Vector2(-20, -600)
+	v.size = Vector2(40, 560)
+	_arena.add_child(v)
+	var p := add_player(0, Vector2(-120, -2))
+	await settle(p)
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		if _state(p) == &"Climb":
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	check(_state(p) == &"Climb", "jumping into a vine should grab it (got %s)" % _state(p))
+	var y0 := p.global_position.y
+	press(0, "move_up")
+	await seconds(0.6)
+	release(0, "move_up")
+	check(p.global_position.y < y0 - 80.0, "UP should climb (moved %.0f)" % (y0 - p.global_position.y))
+	check(absf(p.global_position.x) < 6.0, "should be centred on the vine")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(_state(p) == &"Jump", "JUMP should leap off the vine")
+
+
+func test_barrel_cannon_fires_player() -> void:
+	var c := BarrelCannon.new()
+	c.position = Vector2(0, -300)
+	c.rotation_degrees = 45.0
+	_arena.add_child(c)
+	var p := add_player(0, Vector2(0, -250))
+	for i in 60:
+		await get_tree().physics_frame
+		if _state(p) == &"Cannon":
+			break
+	check(_state(p) == &"Cannon", "touching a barrel should load you in")
+	await seconds(0.3)
+	check(_state(p) == &"Cannon", "should wait inside for JUMP")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(p.velocity.x > 500.0 and p.velocity.y < -500.0, "should fire up-right (v %s)" % p.velocity)
+
+
+func test_wind_pushes_player() -> void:
+	var wz := WindZone.new()
+	wz.position = Vector2(-300, -300)
+	wz.size = Vector2(1200, 300)
+	wz.wind = Vector2(300, 0)
+	_arena.add_child(wz)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var x0 := p.global_position.x
+	await seconds(1.0)
+	check(p.global_position.x - x0 > 150.0, "wind should push you along (moved %.0f)" % (p.global_position.x - x0))
+
+
+func test_conveyor_carries_and_ice_is_slippery() -> void:
+	var belt := _add_block(Vector2(-300, -100), Vector2(600, 40))
+	belt.conveyor_speed = 200.0
+	var p := add_player(0, Vector2(0, -105))
+	await settle(p)
+	var x0 := p.global_position.x
+	await seconds(0.8)
+	check(p.global_position.x - x0 > 100.0, "conveyor should carry you (moved %.0f)" % (p.global_position.x - x0))
+	# Ice: stopping takes much longer than on normal ground.
+	var stops: Array[float] = []
+	for slippery in [false, true]:
+		var floor_b := _add_block(Vector2(-1900, -300 if slippery else -600), Vector2(1400, 40))
+		floor_b.slippery = slippery
+		p.global_position = Vector2(-1800, floor_b.position.y - 2)
+		p.velocity = Vector2.ZERO
+		await settle(p)
+		press(0, "move_right")
+		await seconds(0.8)
+		release(0, "move_right")
+		var xs := p.global_position.x
+		await seconds(1.2)
+		stops.append(p.global_position.x - xs)
+	check(stops[1] > stops[0] * 3.0, "ice should slide much further (%.0f vs %.0f)" % [stops[1], stops[0]])
+
+
+func test_bumper_knocks_player_away() -> void:
+	var b := Bumper.new()
+	b.position = Vector2(0, -200)
+	_arena.add_child(b)
+	var p := add_player(0, Vector2(30, -120))
+	var launched := false
+	for i in 30:
+		await get_tree().physics_frame
+		if p.velocity.length() > 600.0:
+			launched = true
+			break
+	check(launched, "bumper should launch you")
+	check(p.velocity.x > 0.0, "away from its centre (v %s)" % p.velocity)
+
+
+func test_spike_ball_and_crusher_hurt() -> void:
+	var sb := SpikeBall.new()
+	sb.position = Vector2(-600, -40)
+	sb.radius = 0.0
+	sb.speed = 0.0
+	_arena.add_child(sb)
+	var a := add_player(0, Vector2(-600, -2))
+	await seconds(0.3)
+	check(a.is_bubbled(), "touching a spike ball should bubble you")
+	var cr := Crusher.new()
+	cr.position = Vector2(200, -500)
+	_arena.add_child(cr)
+	var b := add_player(1, Vector2(264, -2))
+	await settle(b)
+	var squashed := false
+	for i in 180:
+		await get_tree().physics_frame
+		squashed = squashed or b.is_bubbled()  # (everyone-bubbled respawn revives them after)
+	check(squashed, "standing under a crusher should get you squashed")
+
+
+func test_breakable_block_and_secret_area() -> void:
+	var wall := BreakableBlock.new()
+	wall.position = Vector2(60, -128)
+	_arena.add_child(wall)
+	var secret := SecretArea.new()
+	secret.position = Vector2(130, -300)
+	secret.size = Vector2(300, 300)
+	_arena.add_child(secret)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	await _punch()
+	await seconds(0.3)
+	check(wall.collision_layer == 0, "punching a breakable wall should smash it")
+	press(0, "move_right")
+	await seconds(0.8)
+	release(0, "move_right")
+	check(secret.found, "walking into the secret area should reveal it")
+
+
+func test_rising_lava_rises_and_resets() -> void:
+	var lava := RisingHazard.new()
+	lava.position = Vector2(-1000, 200)
+	lava.width = 2000.0
+	lava.speed = 400.0
+	lava.rise_distance = 600.0
+	_arena.add_child(lava)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	await seconds(0.3)
+	check(not p.is_bubbled(), "lava is idle until triggered")
+	lava.set_active(true)
+	await seconds(1.0)
+	check(p.is_bubbled(), "rising lava should catch you")
+	EventBus.level_reset.emit()
+	await frames(2)
+	check(is_equal_approx(lava.position.y, 200.0) and not lava.active, "lava should reset on respawn")

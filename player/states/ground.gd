@@ -11,7 +11,10 @@ func enter(previous: StringName) -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
-	player.apply_horizontal(delta, t.ground_accel, t.ground_decel, player.current_max_speed())
+	if player.try_environment_states():
+		return
+	var grip := player.floor_friction()
+	player.apply_horizontal(delta, t.ground_accel * grip, t.ground_decel * grip, player.current_max_speed())
 	player.apply_gravity(delta)
 
 	if player.wants_jump():

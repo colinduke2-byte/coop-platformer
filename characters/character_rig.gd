@@ -57,6 +57,8 @@ var ledge_lip := -70.0            ## y of the ledge top while hanging (feet = 0)
 var pound_phase := -1             ## ground pound: -1 off, 0 spin, 1 dive, 2 landed
 var pound_spin := 0.0             ## 0..1 through the pre-dive somersault
 var swing_speed := 0.0            ## rad/s while swinging (legs trail behind)
+var swim_kick := 0.0              ## 0..1 strength of the last swim stroke
+var climb_phase := 0.0            ## advances as you climb (hand over hand)
 var idle_quirk_delay := IDLE_QUIRK_DELAY
 var top_y := -80.0                ## highest point of the rig (for name tags)
 
@@ -495,6 +497,25 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 			p[&"bob"] = -3.0
 			p[&"head_tilt"] = -0.1
 			p[&"brow_raise"] = -2.0
+		&"Swim":
+			# Breaststroke arms, frog-kick legs (body is tilted by the Player).
+			var sw := t * 5.0 + swim_kick * 3.0
+			var reach := 8.0 + swim_kick * 10.0
+			p[&"hand_f"] = Vector2(sx + 10 + sin(sw) * reach, s_y - 4 + cos(sw) * 6.0)
+			p[&"hand_b"] = Vector2(sx + 4 + sin(sw + 0.6) * reach, s_y + 2 + cos(sw + 0.6) * 6.0)
+			p[&"foot_f"] = Vector2(-4 - sin(sw) * 6.0, 2 + cos(sw) * 3.0)
+			p[&"foot_b"] = Vector2(-10 - sin(sw + 1.0) * 6.0, 4)
+			p[&"head_tilt"] = -0.2
+			p[&"brow_raise"] = -1.0
+		&"Climb":
+			var ph := climb_phase
+			var up_f := sin(ph) * 8.0
+			p[&"hand_f"] = Vector2(6, -70 + up_f)
+			p[&"hand_b"] = Vector2(-4, -70 - up_f)
+			p[&"foot_f"] = Vector2(6, -2 - maxf(0.0, -up_f))
+			p[&"foot_b"] = Vector2(-4, -2 - maxf(0.0, up_f))
+			p[&"lean"] = 0.0
+			p[&"brow_raise"] = -1.0
 		&"Bubble":
 			p[&"foot_f"] = Vector2(5, -L - 2)
 			p[&"foot_b"] = Vector2(-5, -L)

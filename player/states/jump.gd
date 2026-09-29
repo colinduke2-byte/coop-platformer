@@ -12,6 +12,8 @@ func enter(previous: StringName) -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
+	if player.try_environment_states():
+		return
 	if not _cut and not player.input.jump_held() and player.velocity.y < 0.0:
 		player.velocity.y *= t.jump_cut_multiplier
 		_cut = true

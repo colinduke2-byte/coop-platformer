@@ -13,6 +13,8 @@ func exit() -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
+	if player.try_environment_states():
+		return
 	player.apply_horizontal(delta, t.glide_accel, t.air_decel, t.glide_max_speed)
 	# Ease toward the glide fall speed (brakes hard if we were falling fast),
 	# or rise if an Updraft is holding us up.

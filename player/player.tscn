@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2"]
@@ -16,6 +16,9 @@
 [ext_resource type="Script" path="res://player/states/ledge_hang.gd" id="14"]
 [ext_resource type="Script" path="res://player/states/ground_pound.gd" id="15"]
 [ext_resource type="Script" path="res://player/states/swing.gd" id="16"]
+[ext_resource type="Script" path="res://player/states/swim.gd" id="17"]
+[ext_resource type="Script" path="res://player/states/climb.gd" id="18"]
+[ext_resource type="Script" path="res://player/states/cannon.gd" id="19"]
 
 [sub_resource type="RectangleShape2D" id="body_shape"]
 size = Vector2(36, 60)
@@ -111,3 +114,12 @@ script = ExtResource("15")
 
 [node name="Swing" type="Node" parent="StateMachine"]
 script = ExtResource("16")
+
+[node name="Swim" type="Node" parent="StateMachine"]
+script = ExtResource("17")
+
+[node name="Climb" type="Node" parent="StateMachine"]
+script = ExtResource("18")
+
+[node name="Cannon" type="Node" parent="StateMachine"]
+script = ExtResource("19")

@@ -44,6 +44,9 @@ func _ready() -> void:
 	EventBus.enemy_spawned.connect(_on_enemy_spawned)
 	EventBus.projectile_reflected.connect(_on_reflected)
 	EventBus.pad_bounced.connect(_on_pad_bounced)
+	EventBus.player_splashed.connect(_on_splashed)
+	EventBus.cannon_fired.connect(_on_cannon_fired)
+	EventBus.secret_found.connect(_on_secret_found)
 
 
 # --- Public ----------------------------------------------------------------------
@@ -88,15 +91,16 @@ func ring(pos: Vector2, radius: float, color := RING, life := 0.3, width := 5.0)
 	if layer == null:
 		return
 	var l := Line2D.new()
-	l.points = _ellipse(1.0, 1.0, 24)
 	l.closed = true
 	l.width = width
 	l.default_color = color
 	l.position = pos
-	l.scale = Vector2.ONE * radius * 0.25
 	layer.add_child(l)
+	# Animate the radius (not the node scale, which would fatten the line too).
+	var set_r := func(r: float) -> void: l.points = _ellipse(r, r, 24)
+	set_r.call(radius * 0.25)
 	var tw := l.create_tween().set_parallel()
-	tw.tween_property(l, ^"scale", Vector2.ONE * radius, life).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_method(set_r, radius * 0.25, radius, life).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(l, ^"width", 0.5, life)
 	tw.tween_property(l, ^"modulate:a", 0.0, life).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(l.queue_free)
@@ -283,6 +287,23 @@ func _on_pad_bounced(_p: Player, pad: Node2D, pounding: bool) -> void:
 	ring(top, 70.0 if pounding else 45.0, Color(1, 1, 1, 0.8), 0.25, 5.0)
 	if pounding:
 		shake(0.3)
+
+
+func _on_splashed(_p: Player, pos: Vector2) -> void:
+	puff(pos, 10, Color(0.75, 0.9, 1.0, 0.9), Vector2.UP, PI * 0.7, Vector2(30, 80), Vector2(4, 8), 0.45)
+	ring(pos, 50.0, Color(1, 1, 1, 0.8), 0.3, 4.0)
+
+
+func _on_cannon_fired(c: Node2D, _p: Player) -> void:
+	var muzzle := c.global_position + Vector2.UP.rotated(c.global_rotation) * 50.0
+	puff(muzzle, 10, Color(1, 1, 1, 0.9), Vector2.UP.rotated(c.global_rotation), 1.0, Vector2(30, 90), Vector2(8, 14), 0.4)
+	ring(muzzle, 50.0, SPARK, 0.2, 5.0)
+
+
+func _on_secret_found(s: Node2D) -> void:
+	var at := s.global_position + Vector2(s.size.x * 0.5, s.size.y * 0.5) if "size" in s else s.global_position
+	confetti(at, 30)
+	sparkle(at, 8, LUM_GLOW, 80.0)
 
 
 func _on_lum_collected(_slot: int, pos: Vector2) -> void:

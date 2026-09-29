@@ -278,3 +278,74 @@ func scn_enemies() -> void:
 	await frames(4)
 	_capturing = true
 	await frames(6)
+
+
+func scn_env() -> void:
+	var w := Water.new()
+	w.position = Vector2(-900, -260)
+	w.size = Vector2(500, 260)
+	_arena.add_child(w)
+	var vine := Climbable.new()
+	vine.position = Vector2(-300, -560)
+	vine.size = Vector2(40, 520)
+	_arena.add_child(vine)
+	var net := Climbable.new()
+	net.position = Vector2(-200, -560)
+	net.size = Vector2(180, 250)
+	_arena.add_child(net)
+	var c := BarrelCannon.new()
+	c.position = Vector2(80, -250)
+	c.rotation_degrees = 50.0
+	c.sweep_degrees = 20.0
+	_arena.add_child(c)
+	var belt := block(Vector2(150, -120), Vector2(260, 40))
+	belt.conveyor_speed = 150.0
+	var ice := block(Vector2(-380, -40), Vector2(0, 0))
+	ice.queue_free()
+	var bump := Bumper.new()
+	bump.position = Vector2(480, -420)
+	_arena.add_child(bump)
+	var sb := SpikeBall.new()
+	sb.position = Vector2(300, -500)
+	sb.count = 2
+	sb.radius = 110.0
+	_arena.add_child(sb)
+	var cr := Crusher.new()
+	cr.position = Vector2(470, -600)
+	cr.auto_period = 1.5
+	_arena.add_child(cr)
+	var wall := BreakableBlock.new()
+	wall.position = Vector2(-460, -128)
+	_arena.add_child(wall)
+	var wheel := PlatformWheel.new()
+	wheel.position = Vector2(-620, -620)
+	wheel.radius = 150.0
+	_arena.add_child(wheel)
+	var lava := RisingHazard.new()
+	lava.position = Vector2(600, -10)
+	lava.width = 400.0
+	_arena.add_child(lava)
+	var wz := WindZone.new()
+	wz.position = Vector2(-900, -900)
+	wz.size = Vector2(1400, 200)
+	_arena.add_child(wz)
+	var p := add_player(0, Vector2(-800, -500), 1)
+	await frames(10)
+	_cam.zoom = Vector2.ONE * 0.8
+	_cam.global_position = Vector2(-150, -380)
+	_capturing = true
+	await seconds(1.0)
+	press(0, "move_right")
+	await seconds(0.5)
+	release(0, "move_right")
+	press(0, "move_up")
+	await seconds(0.8)
+	press(0, "jump")
+	await frames(4)
+	release(0, "jump")
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_up")
+	await seconds(0.8)
+	release(0, "move_right")
+	await seconds(1.0)
