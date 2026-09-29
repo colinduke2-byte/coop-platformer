@@ -15,32 +15,20 @@
 [ext_resource type="Resource" path="res://characters/gribble.tres" id="13"]
 [ext_resource type="Script" path="res://world/crate.gd" id="14"]
 [ext_resource type="Script" path="res://world/updraft.gd" id="15"]
+[ext_resource type="Script" path="res://world/backdrop.gd" id="16"]
+[ext_resource type="Resource" path="res://world/themes/meadow.tres" id="17"]
+[ext_resource type="Script" path="res://decor/signpost.gd" id="18"]
 
 [sub_resource type="RectangleShape2D" id="kill_shape"]
 size = Vector2(8400, 200)
 
 [node name="DemoLevel" type="Node2D"]
 script = ExtResource("1")
+level_theme = ExtResource("17")
 
-[node name="Background" type="Node2D" parent="."]
-
-[node name="FarHills" type="Parallax2D" parent="Background"]
-scroll_scale = Vector2(0.3, 0.3)
-repeat_size = Vector2(2400, 0)
-repeat_times = 6
-
-[node name="Hills" type="Polygon2D" parent="Background/FarHills"]
-color = Color(0.62, 0.78, 0.86, 1)
-polygon = PackedVector2Array(0, 1400, 0, 420, 300, 260, 650, 380, 1000, 220, 1400, 400, 1800, 250, 2150, 360, 2400, 420, 2400, 1400)
-
-[node name="NearHills" type="Parallax2D" parent="Background"]
-scroll_scale = Vector2(0.6, 0.6)
-repeat_size = Vector2(1800, 0)
-repeat_times = 7
-
-[node name="Hills" type="Polygon2D" parent="Background/NearHills"]
-color = Color(0.45, 0.66, 0.6, 1)
-polygon = PackedVector2Array(0, 1400, 0, 560, 400, 430, 800, 540, 1200, 400, 1600, 520, 1800, 560, 1800, 1400)
+[node name="Backdrop" type="Node2D" parent="."]
+script = ExtResource("16")
+horizon_y = 600.0
 
 [node name="Updrafts" type="Node2D" parent="."]
 
@@ -310,129 +298,79 @@ position = Vector2(6720, -500)
 
 [node name="Signs" type="Node2D" parent="."]
 
-[node name="Sign0" type="Label" parent="Signs"]
-offset_left = -560
-offset_top = 220
-offset_right = -560640
-offset_bottom = 340
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign0" type="Node2D" parent="Signs"]
+position = Vector2(-260, 390)
+script = ExtResource("18")
 text = "WARDROBE
 stand on a statue + press UP
 (stand still to see their quirks)"
+width = 460.0
 
-[node name="Sign1" type="Label" parent="Signs"]
-offset_left = 620
-offset_top = 200
-offset_right = 1260
-offset_bottom = 320
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign1" type="Node2D" parent="Signs"]
+position = Vector2(920, 370)
+script = ExtResource("18")
 text = "1. JUMP
 tap = little hop, hold = full height"
+width = 460.0
 
-[node name="Sign2" type="Label" parent="Signs"]
-offset_left = 1300
-offset_top = 330
-offset_right = 1940
-offset_bottom = 450
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign2" type="Node2D" parent="Signs"]
+position = Vector2(1600, 500)
+script = ExtResource("18")
 text = "2. COYOTE
 jump just after the edge"
+width = 460.0
 
-[node name="Sign3" type="Label" parent="Signs"]
-offset_left = 1760
-offset_top = 130
-offset_right = 2400
-offset_bottom = 250
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign3" type="Node2D" parent="Signs"]
+position = Vector2(2060, 300)
+script = ExtResource("18")
 text = "3. ONE-WAY LEDGES
 jump up through them"
+width = 460.0
 
-[node name="Sign4" type="Label" parent="Signs"]
-offset_left = 2150
-offset_top = -280
-offset_right = 2790
-offset_bottom = -280120
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign4" type="Node2D" parent="Signs"]
+position = Vector2(2450, -110)
+script = ExtResource("18")
 text = "4. WALL JUMP
 grab a wall, then tap jump to zig-zag up"
+width = 460.0
 
-[node name="Sign5" type="Label" parent="Signs"]
-offset_left = 2760
-offset_top = -170
-offset_right = 3400
-offset_bottom = -170120
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign5" type="Node2D" parent="Signs"]
+position = Vector2(3060, 0)
+script = ExtResource("18")
 text = "5. GLIDE (bottom-left, F1)
 let go + press jump again to re-glide
 ...psst: a secret wind blows up there"
+width = 460.0
 
-[node name="Sign6" type="Label" parent="Signs"]
-offset_left = 4200
-offset_top = 170
-offset_right = 4960
-offset_bottom = 290
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign6" type="Node2D" parent="Signs"]
+position = Vector2(4500, 340)
+script = ExtResource("18")
 text = "6. PUNCH
 tap = quick jab   HOLD = charge a MEGA punch
 iron crates only break to a charged punch"
+width = 460.0
 
-[node name="Sign7" type="Label" parent="Signs"]
-offset_left = 4960
-offset_top = 250
-offset_right = 5600
-offset_bottom = 370
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign7" type="Node2D" parent="Signs"]
+position = Vector2(5260, 420)
+script = ExtResource("18")
 text = "7. STOMP & PUNCH
 land on them (hold jump to bounce higher)"
+width = 460.0
 
-[node name="Sign8" type="Label" parent="Signs"]
-offset_left = 5560
-offset_top = -330
-offset_right = 6200
-offset_bottom = -330120
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign8" type="Node2D" parent="Signs"]
+position = Vector2(5860, -160)
+script = ExtResource("18")
 text = "8. UPDRAFTS
 glide into the wind to ride it up"
+width = 460.0
 
-[node name="Sign9" type="Label" parent="Signs"]
-offset_left = 6680
-offset_top = -800
-offset_right = 7320
-offset_bottom = -800120
-theme_override_colors/font_color = Color(0.17, 0.13, 0.2, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 28
+[node name="Sign9" type="Node2D" parent="Signs"]
+position = Vector2(6980, -630)
+script = ExtResource("18")
 text = "YOU MADE IT!
 charge-punch the vault for a treat
 Esc / Start: pick another dreamer"
+width = 460.0
 
 [node name="KillZone" type="Area2D" parent="."]
 position = Vector2(3250, 1150)

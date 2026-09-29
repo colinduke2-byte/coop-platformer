@@ -1,21 +1,30 @@
 @tool
 class_name Block
 extends StaticBody2D
-## Grey-box level geometry. Drop one in, set `size` in the Inspector.
-## Origin is the TOP-LEFT corner. `one_way` = jump up through it (Rayman ledges).
+## Level geometry. Drop one in, set `size` in the Inspector.
+## Origin is the TOP-LEFT corner. `one_way` = jump up through it (drawn as a
+## wooden ledge). Colours come from the level's LevelTheme; `lip` draws the
+## grass / snow / frosting edge on top.
+
+const LIP_HEIGHT := 14.0
+const OUTLINE_W := 4.0
 
 @export var size := Vector2(256, 64):
 	set(value):
 		size = value
 		_rebuild()
-@export var color := Color("4a3f5c"):
-	set(value):
-		color = value
-		_rebuild()
 @export var one_way := false:
 	set(value):
 		one_way = value
 		_rebuild()
+@export var lip := true:                    ## grassy top edge
+	set(value):
+		lip = value
+		queue_redraw()
+@export var theme_override: LevelTheme:     ## use a different palette for just this block
+	set(value):
+		theme_override = value
+		queue_redraw()
 
 
 func _ready() -> void:
@@ -31,6 +40,97 @@ func _rebuild() -> void:
 	col.shape = shape
 	col.position = size / 2.0
 	col.one_way_collision = one_way
-	var poly: Polygon2D = $Polygon2D
-	poly.color = color.lightened(0.25) if one_way else color
-	poly.polygon = PackedVector2Array([Vector2.ZERO, Vector2(size.x, 0), size, Vector2(0, size.y)])
+	queue_redraw()
+
+
+func _theme() -> LevelTheme:
+	return theme_override if theme_override else LevelTheme.find(self)
+
+
+func _draw() -> void:
+	var th := _theme()
+	if one_way:
+		_draw_ledge(th)
+	else:
+		_draw_solid(th)
+
+
+func _draw_solid(th: LevelTheme) -> void:
+	var r := Rect2(Vector2.ZERO, size)
+	draw_rect(r, th.ground)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector2i(global_position)) ^ hash(Vector2i(size))
+	var top := LIP_HEIGHT if lip else 0.0
+	# Soft darker band along the bottom and sides for depth.
+	draw_rect(Rect2(0, size.y - minf(18.0, size.y * 0.3), size.x, minf(18.0, size.y * 0.3)), th.ground_dark)
+	match th.pattern:
+		1:  # pebbles
+			var n := int(size.x * size.y / 2600.0)
+			for i in n:
+				var p := Vector2(rng.randf_range(8, size.x - 8), rng.randf_range(top + 10, size.y - 8))
+				var rr := rng.randf_range(3.0, 7.0)
+				draw_colored_polygon(Art.ellipse(p, rr * 1.4, rr, 10), th.ground_dark)
+				draw_colored_polygon(Art.ellipse(p + Vector2(-1, -1), rr * 0.6, rr * 0.4, 8), th.ground.lightened(0.15))
+		2:  # bricks
+			var bh := 26.0
+			var row := 0
+			var y := top + 4.0
+			while y < size.y - 4.0:
+				var bw := 52.0
+				var x := -bw * 0.5 if row % 2 == 1 else 0.0
+				while x < size.x:
+					var a := Vector2(maxf(x + 3.0, 3.0), y + 2.0)
+					var b := Vector2(minf(x + bw - 3.0, size.x - 3.0), minf(y + bh - 2.0, size.y - 3.0))
+					if b.x - a.x > 6.0 and b.y - a.y > 6.0:
+						draw_rect(Rect2(a, b - a), th.ground_dark.lerp(th.ground, rng.randf_range(0.2, 0.6)))
+					x += bw
+				y += bh
+				row += 1
+		3:  # candy stripes
+			var w := 34.0
+			var x := -size.y
+			while x < size.x:
+				var pts := PackedVector2Array([Vector2(x, size.y), Vector2(x + w * 0.5, size.y), Vector2(x + w * 0.5 + size.y, 0), Vector2(x + size.y, 0)])
+				draw_colored_polygon(_clip(pts), th.ground_dark)
+				x += w
+	# Outline.
+	draw_rect(r, th.outline, false, OUTLINE_W)
+	if lip:
+		_draw_lip(th, rng)
+
+
+## Grass / snow / icing edge with a scalloped underside and tufts.
+func _draw_lip(th: LevelTheme, rng: RandomNumberGenerator) -> void:
+	var pts := PackedVector2Array([Vector2(-4, -2), Vector2(size.x + 4, -2)])
+	var bumps := maxi(int(size.x / 22.0), 2)
+	var w := (size.x + 8.0) / bumps
+	for i in range(bumps, -1, -1):
+		var x := -4.0 + i * w
+		pts.append(Vector2(x, LIP_HEIGHT + (4.0 if i % 2 == 0 else -1.0)))
+	Art.shape(self, pts, th.top, th.outline, 3.0)
+	draw_rect(Rect2(-2, 2, size.x + 4, 4), th.top.lightened(0.2))
+	# Tufts poking up.
+	var n := int(size.x / 40.0)
+	for i in n:
+		var x := rng.randf_range(10, size.x - 10)
+		var h := rng.randf_range(6, 12)
+		draw_colored_polygon(PackedVector2Array([Vector2(x - 5, 0), Vector2(x - 2, -h), Vector2(x, -2), Vector2(x + 3, -h * 0.8), Vector2(x + 5, 0)]), th.top_dark)
+
+
+func _draw_ledge(th: LevelTheme) -> void:
+	var h := size.y
+	Art.shape(self, Art.rounded_rect(Vector2(0, 0), Vector2(size.x, h), 5.0), th.ledge, th.outline, 3.0)
+	draw_rect(Rect2(3, 2, size.x - 6, minf(5.0, h * 0.3)), th.ledge.lightened(0.25))
+	var planks := maxi(int(size.x / 56.0), 1)
+	for i in range(1, planks):
+		var x := i * size.x / planks
+		draw_line(Vector2(x, 3), Vector2(x, h - 2), th.ledge_dark, 2.0)
+	# Little support brackets underneath.
+	for x: float in [14.0, size.x - 14.0]:
+		Art.shape(self, PackedVector2Array([Vector2(x - 6, h), Vector2(x + 6, h), Vector2(x, h + 10)]), th.ledge_dark, th.outline, 2.0)
+
+
+## Clip a polygon to the block rect (for patterns).
+func _clip(pts: PackedVector2Array) -> PackedVector2Array:
+	var res := Geometry2D.intersect_polygons(pts, Art.rect(Vector2(2, 2), size - Vector2(2, 2)))
+	return res[0] if res.size() > 0 else PackedVector2Array()

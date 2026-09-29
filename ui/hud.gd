@@ -6,6 +6,9 @@ extends CanvasLayer
 
 
 func _ready() -> void:
+	for l: Label in [_lums, _hint]:
+		l.add_theme_color_override(&"font_outline_color", Color("1d1726"))
+		l.add_theme_constant_override(&"outline_size", 8)
 	EventBus.lums_changed.connect(func(total: int) -> void: _lums.text = "Lums: %d" % total)
 	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_hint())
 	_lums.text = "Lums: %d" % GameManager.lums

@@ -20,7 +20,8 @@ func _ready() -> void:
 	_info.add_theme_color_override(&"font_color", Color.WHITE)
 	_info.add_theme_color_override(&"font_outline_color", Color("1d1726"))
 	_info.add_theme_constant_override(&"outline_size", 6)
-	_info.position = Vector2(30, 900)
+	_info.position = Vector2(30, 990)
+	_info.add_theme_font_size_override(&"font_size", 18)
 	layer.add_child(_info)
 	_refresh_info()
 
