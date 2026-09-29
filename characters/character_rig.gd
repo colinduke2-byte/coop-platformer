@@ -526,6 +526,14 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 			p[&"foot_b"] = Vector2(-4, -2 - maxf(0.0, up_f))
 			p[&"lean"] = 0.0
 			p[&"brow_raise"] = -1.0
+		&"Victory":
+			var w := sin(t * 10.0) * 6.0
+			p[&"hand_f"] = Vector2(sx + 10 + w, -L - h - r * 2.0)
+			p[&"hand_b"] = Vector2(-sx - 10 - w, -L - h - r * 1.9)
+			p[&"foot_f"] = Vector2(8, -4 if not on_floor else 0)
+			p[&"foot_b"] = Vector2(-8, -6 if not on_floor else 0)
+			p[&"brow_raise"] = -3.0
+			p[&"head_tilt"] = sin(t * 5.0) * 0.1
 		&"Bubble":
 			p[&"foot_f"] = Vector2(5, -L - 2)
 			p[&"foot_b"] = Vector2(-5, -L)

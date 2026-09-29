@@ -349,3 +349,20 @@ func scn_env() -> void:
 	await seconds(0.8)
 	release(0, "move_right")
 	await seconds(1.0)
+
+
+## Use with --level=res://levels/demo_level.tscn
+func scn_results() -> void:
+	var p := add_player(0, Vector2(150, 580), 0)
+	add_player(1, Vector2(250, 580), 3)
+	await frames(30)
+	for c in _arena.find_children("*", "Camera2D", true, false):
+		c.set_physics_process(true)
+		c.make_current()
+	_capturing = true
+	for i in 7:
+		EventBus.lum_collected.emit(i % 2, p.global_position)
+	EventBus.gem_collected.emit(0, 0, p.global_position)
+	await seconds(1.0)
+	GameManager.complete_level()
+	await seconds(2.5)

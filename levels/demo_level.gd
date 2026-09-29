@@ -1,7 +1,7 @@
 extends Level
 ## Movement playground reached from the character select screen. Sections:
 ## wardrobe, jump heights, coyote gap, one-way ledges, wall-jump shaft, glide
-## canyon, punch & stomp arena. Any player's PAUSE returns to character select.
+## canyon, punch & stomp arena. PAUSE opens the pause menu (every Level has one).
 ## F1 cycles PlayerTuning.glide_mode (dev toggle for this demo only; the change
 ## lives in memory and isn't saved to player_default.tres).
 
@@ -34,14 +34,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_refresh_info()
 
 
-func _process(_delta: float) -> void:
-	for p: Player in GameManager.players.values():
-		if is_instance_valid(p) and p.input.pause_pressed():
-			set_process(false)
-			get_tree().change_scene_to_file.call_deferred(GameManager.CHARACTER_SELECT)
-			return
-
-
 func _refresh_info() -> void:
 	var mode: String = PlayerTuning.GlideMode.keys()[_tuning.glide_mode]
 	var how := {
@@ -51,4 +43,4 @@ func _refresh_info() -> void:
 	}
 	_info.text = ("Glide mode: %s  (%s)   [F1 to change]\n" % [mode, how[mode]]
 			+ "Move: WASD / arrows / stick    Jump: Space / Enter / A    Punch: F / Shift / X    "
-			+ "Back to character select: Esc / Backspace / Start")
+			+ "Pause: Esc / Backspace / Start")

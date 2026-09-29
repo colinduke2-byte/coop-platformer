@@ -1451,3 +1451,85 @@ func test_tap_stomp_bounce_is_still_decent() -> void:
 		await get_tree().physics_frame
 		peak = minf(peak, p.global_position.y)
 	check(y0 - peak > 70.0, "a tap stomp bounce should still pop you up (%.0f px)" % (y0 - peak))
+
+
+# --- Game loop ---------------------------------------------------------------------
+
+func test_goal_completes_level_and_records_results() -> void:
+	var goal := LevelGoal.new()
+	goal.position = Vector2(300, 0)
+	_arena.add_child(goal)
+	var got := {}
+	var cb := func(r: Dictionary) -> void: got.merge(r)
+	EventBus.level_completed.connect(cb)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	EventBus.lum_collected.emit(0, Vector2.ZERO)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	EventBus.level_completed.disconnect(cb)
+	check(gm().level_complete, "reaching the goal should complete the level")
+	check(got.get("lums", -1) == 1, "results should include the Lum count")
+	check(_state(p) == &"Victory", "players should celebrate")
+	var results := _arena.get_node_or_null(^"Results")
+	check(results != null, "every level gets a results screen")
+
+
+func test_gem_pickup_is_tracked() -> void:
+	var gem := DreamGem.new()
+	gem.gem_index = 1
+	gem.position = Vector2(80, -30)
+	_arena.add_child(gem)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.4)
+	release(0, "move_right")
+	check(gm().gems[1] and not gm().gems[0], "collecting gem 1 should mark only gem 1")
+
+
+func test_pause_menu_pauses_and_resumes() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var pm = _arena.get_node(^"PauseMenu")
+	press(0, "pause")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	release(0, "pause")
+	check(get_tree().paused and pm.is_open(), "PAUSE should open the menu and pause the game")
+	await get_tree().process_frame
+	press(0, "jump")  # "Resume" is the first item
+	await get_tree().process_frame
+	await get_tree().process_frame
+	release(0, "jump")
+	check(not get_tree().paused and not pm.is_open(), "choosing Resume should unpause")
+
+
+func test_drop_out_removes_player() -> void:
+	var a := add_player(0, Vector2(0, -2))
+	var b := add_player(1, Vector2(100, -2))
+	await frames(3)
+	gm().drop_player(1)
+	await frames(2)
+	check(not is_instance_valid(b) and not gm().players.has(1), "dropped player should be removed")
+	check(not router().get_bound_slots().has(1), "their slot should be free to rejoin")
+	check(is_instance_valid(a), "other players stay")
+
+
+func test_level_select_builds() -> void:
+	var ls: Control = load("res://ui/level_select.tscn").instantiate()
+	_arena.add_child(ls)
+	await frames(3)
+	check(ls.get_child_count() > 3, "level select should build its cards")
+	ls.queue_free()
+
+
+func test_lums_drift_toward_nearby_players() -> void:
+	var lum: Lum = load("res://collectibles/lum.tscn").instantiate()
+	lum.position = Vector2(70, -40)
+	_arena.add_child(lum)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	await seconds(0.5)
+	check(not is_instance_valid(lum) or lum.is_queued_for_deletion() or lum._taken, "a Lum this close should fly to you")

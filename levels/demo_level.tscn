@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://world/backdrop.gd" id="16"]
 [ext_resource type="Resource" path="res://world/themes/meadow.tres" id="17"]
 [ext_resource type="Script" path="res://decor/signpost.gd" id="18"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="19"]
 
 [sub_resource type="RectangleShape2D" id="kill_shape"]
 size = Vector2(8400, 200)
@@ -25,6 +26,7 @@ size = Vector2(8400, 200)
 [node name="DemoLevel" type="Node2D"]
 script = ExtResource("1")
 level_theme = ExtResource("17")
+level_name = "Dreamer's Playground"
 
 [node name="Backdrop" type="Node2D" parent="."]
 script = ExtResource("16")
@@ -381,6 +383,10 @@ script = ExtResource("7")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
 shape = SubResource("kill_shape")
+
+[node name="Goal" type="Area2D" parent="."]
+position = Vector2(7110, -500)
+script = ExtResource("19")
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(150, 590)

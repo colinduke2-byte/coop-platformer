@@ -12,6 +12,8 @@ const CHARACTERS: Array[CharacterDef] = [
 ]
 const RESPAWN_DELAY := 1.0
 const CHARACTER_SELECT := "res://ui/character_select.tscn"
+const LEVEL_SELECT := "res://ui/level_select.tscn"
+const GEMS_PER_LEVEL := 3
 
 var players: Dictionary = {}  ## slot -> Player
 var chosen_characters: Dictionary = {}  ## slot -> CharacterDef (set by character select)
@@ -19,6 +21,13 @@ var lums := 0
 var lums_by_slot: Dictionary = {}  ## slot -> Lums that player grabbed (results screen)
 var checkpoint := Vector2.ZERO
 var level: Level
+## Per-level run stats (reset when a level registers).
+var level_time := 0.0
+var gems: Array[bool] = [false, false, false]
+var secrets_found := 0
+var secrets_total := 0
+var level_complete := false
+var last_results: Dictionary = {}
 
 var _respawning := false
 
@@ -28,12 +37,28 @@ func _ready() -> void:
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.lum_collected.connect(_on_lum_collected)
 	EventBus.checkpoint_reached.connect(_on_checkpoint_reached)
+	EventBus.gem_collected.connect(_on_gem_collected)
+	EventBus.secret_found.connect(func(_s: Node2D) -> void: secrets_found += 1)
+	EventBus.device_lost.connect(_on_device_lost)
+
+
+func _physics_process(delta: float) -> void:
+	if level != null and not level_complete:
+		level_time += delta
 
 
 func register_level(new_level: Level) -> void:
 	level = new_level
 	players.clear()
 	checkpoint = level.get_spawn_position()
+	lums = 0
+	lums_by_slot.clear()
+	level_time = 0.0
+	gems = [false, false, false]
+	secrets_found = 0
+	secrets_total = level.find_children("*", "SecretArea", true, false).size()
+	level_complete = false
+	EventBus.lums_changed.emit(0)
 	for slot in InputRouter.get_bound_slots():
 		spawn_player(slot)
 
@@ -113,6 +138,62 @@ func _on_lum_collected(slot: int, _pos: Vector2) -> void:
 	lums += 1
 	lums_by_slot[slot] = lums_by_slot.get(slot, 0) + 1
 	EventBus.lums_changed.emit(lums)
+
+
+func _on_gem_collected(index: int, _slot: int, _pos: Vector2) -> void:
+	if index >= 0 and index < gems.size():
+		gems[index] = true
+
+
+func _on_device_lost(slot: int) -> void:
+	if level and players.has(slot):
+		EventBus.pause_requested.emit(slot, "P%d's controller disconnected - reconnect it, or choose Leave." % (slot + 1))
+
+
+# --- Level flow --------------------------------------------------------------------
+
+## A LevelGoal was reached: freeze play, record results, show the results screen.
+func complete_level() -> void:
+	if level_complete or level == null:
+		return
+	level_complete = true
+	for p: Player in players.values():
+		if is_instance_valid(p):
+			p.celebrate()
+	var path := level.scene_file_path
+	var i := LevelCatalog.index_of(path)
+	var id: String = LevelCatalog.LEVELS[i]["id"] if i != -1 else path.get_file().get_basename()
+	var news := SaveData.submit(id, level_time, lums, gems)
+	last_results = {
+		"id": id, "name": level.level_name, "time": level_time, "lums": lums,
+		"lums_by_slot": lums_by_slot.duplicate(), "gems": gems.duplicate(),
+		"secrets": secrets_found, "secrets_total": secrets_total, "new": news,
+		"next": LevelCatalog.next_after(path),
+	}
+	EventBus.level_completed.emit(last_results)
+
+
+func goto_scene(path: String) -> void:
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file.call_deferred(path)
+
+
+func restart_level() -> void:
+	if level:
+		goto_scene(level.scene_file_path)
+
+
+## Remove a player from the game (drop out). Their slot becomes free to rejoin.
+func drop_player(slot: int) -> void:
+	if players.has(slot):
+		var p: Player = players[slot]
+		players.erase(slot)
+		if is_instance_valid(p):
+			p.queue_free()
+	chosen_characters.erase(slot)
+	InputRouter.unbind_slot(slot)
+	EventBus.player_left.emit(slot)
 
 
 func _on_checkpoint_reached(pos: Vector2) -> void:

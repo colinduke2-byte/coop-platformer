@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://player/states/climb.gd" id="18"]
 [ext_resource type="Script" path="res://player/states/cannon.gd" id="19"]
 [ext_resource type="Script" path="res://player/states/wall_run.gd" id="20"]
+[ext_resource type="Script" path="res://player/states/victory.gd" id="21"]
 
 [sub_resource type="RectangleShape2D" id="body_shape"]
 size = Vector2(36, 60)
@@ -128,3 +129,6 @@ script = ExtResource("19")
 
 [node name="WallRun" type="Node" parent="StateMachine"]
 script = ExtResource("20")
+
+[node name="Victory" type="Node" parent="StateMachine"]
+script = ExtResource("21")

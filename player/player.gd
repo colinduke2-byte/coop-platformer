@@ -577,6 +577,13 @@ func revive(pop := true) -> void:
 	EventBus.player_revived.emit(self)
 
 
+## Level complete: cheer (ignores input from now on).
+func celebrate() -> void:
+	if is_bubbled():
+		revive(false)
+	state_machine.transition_to(&"Victory")
+
+
 func is_bubbled() -> bool:
 	return state_machine != null and state_machine.current_name() == &"Bubble"
 

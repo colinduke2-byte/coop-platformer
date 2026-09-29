@@ -1,22 +1,133 @@
 extends CanvasLayer
-## Minimal HUD: Lum counter + join hint. Listens only to EventBus.
+## In-level HUD: Lum counter (bumps on pickup), each player's colour + Lums,
+## Dream Gems, run timer, join hint, and the level name when a level starts.
+## Listens only to EventBus / reads GameManager stats.
 
-@onready var _lums: Label = $Margin/VBox/Lums
-@onready var _hint: Label = $Margin/VBox/JoinHint
+var _lums: Label
+var _lum_box: Control
+var _players_row: HBoxContainer
+var _gems: Array[GemIcon] = []
+var _timer: Label
+var _hint: Label
+var _banner: Label
+var _bump := 0.0
 
 
 func _ready() -> void:
-	for l: Label in [_lums, _hint]:
-		l.add_theme_color_override(&"font_outline_color", Color("1d1726"))
-		l.add_theme_constant_override(&"outline_size", 8)
-	EventBus.lums_changed.connect(func(total: int) -> void: _lums.text = "Lums: %d" % total)
-	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_hint())
-	_lums.text = "Lums: %d" % GameManager.lums
-	_refresh_hint()
+	# Build everything in code (old scenes had Margin/VBox children).
+	for c in get_children():
+		c.queue_free()
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
+
+	var top_left := VBoxContainer.new()
+	top_left.position = Vector2(32, 20)
+	root.add_child(top_left)
+	var lum_row := HBoxContainer.new()
+	lum_row.add_theme_constant_override(&"separation", 12)
+	top_left.add_child(lum_row)
+	_lum_box = _LumGlyph.new()
+	lum_row.add_child(_lum_box)
+	_lums = UIStyle.label("0", 48, Color.WHITE, 10)
+	lum_row.add_child(_lums)
+	_players_row = HBoxContainer.new()
+	_players_row.add_theme_constant_override(&"separation", 18)
+	top_left.add_child(_players_row)
+
+	var top_right := HBoxContainer.new()
+	top_right.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	top_right.position = Vector2(-330, 24)
+	top_right.add_theme_constant_override(&"separation", 8)
+	root.add_child(top_right)
+	for i in GameManager.GEMS_PER_LEVEL:
+		var g := GemIcon.new(i, false, 40.0)
+		_gems.append(g)
+		top_right.add_child(g)
+	_timer = UIStyle.label("0:00.00", 34, Color.WHITE, 8)
+	_timer.custom_minimum_size.x = 160
+	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	top_right.add_child(_timer)
+
+	_hint = UIStyle.label("", 24, Color.WHITE, 8)
+	_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_hint.position = Vector2(-500, -118)
+	_hint.custom_minimum_size.x = 1000
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_hint)
+
+	_banner = UIStyle.label("", 64, Color.WHITE, 14)
+	_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_banner.position = Vector2(-700, 160)
+	_banner.custom_minimum_size.x = 1400
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_banner)
+
+	EventBus.lums_changed.connect(_on_lums)
+	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_players.call_deferred())
+	EventBus.player_left.connect(func(_s: int) -> void: _refresh_players.call_deferred())
+	EventBus.gem_collected.connect(func(i: int, _s: int, _p: Vector2) -> void:
+		if i < _gems.size(): _gems[i].filled = true)
+	_on_lums(GameManager.lums)
+	_refresh_players.call_deferred()
+	_show_banner.call_deferred()
 
 
-func _refresh_hint() -> void:
+func _show_banner() -> void:
+	var lvl := GameManager.level
+	if lvl == null or lvl.level_name == "":
+		return
+	_banner.text = lvl.level_name
+	_banner.modulate.a = 0.0
+	var tw := create_tween()
+	tw.tween_property(_banner, ^"modulate:a", 1.0, 0.4)
+	tw.tween_interval(2.0)
+	tw.tween_property(_banner, ^"modulate:a", 0.0, 0.8)
+
+
+func _on_lums(total: int) -> void:
+	_lums.text = str(total)
+	_bump = 1.0
+	_refresh_players()
+
+
+func _process(delta: float) -> void:
+	_bump = maxf(_bump - delta * 5.0, 0.0)
+	_lums.scale = Vector2.ONE * (1.0 + 0.3 * _bump)
+	_lums.pivot_offset = _lums.size * 0.5
+	_timer.text = UIStyle.fmt_time(GameManager.level_time)
 	var n := InputRouter.get_bound_slots().size()
 	_hint.visible = n < InputRouter.MAX_PLAYERS
-	_hint.text = ("Press SPACE (WASD), ENTER (arrows) or A (gamepad) to join"
-			if n == 0 else "%d/4 players - more can join anytime" % n)
+	_hint.text = ("Press SPACE (WASD), ENTER (arrows) or A (gamepad) to join" if n == 0
+			else "More friends can join anytime: SPACE / ENTER / A")
+	_hint.modulate.a = 1.0 if n == 0 else 0.55
+
+
+func _refresh_players() -> void:
+	if _players_row == null:
+		return
+	for c in _players_row.get_children():
+		c.queue_free()
+	var slots := GameManager.players.keys()
+	slots.sort()
+	for slot: int in slots:
+		var p: Player = GameManager.players[slot]
+		if not is_instance_valid(p):
+			continue
+		var l := UIStyle.label("P%d %d" % [slot + 1, GameManager.lums_by_slot.get(slot, 0)], 24, p.player_color.lightened(0.35), 8)
+		_players_row.add_child(l)
+
+
+class _LumGlyph extends Control:
+	func _init() -> void:
+		custom_minimum_size = Vector2(52, 52)
+
+	func _draw() -> void:
+		var c := size * 0.5
+		draw_circle(c, 24.0, Color(1, 0.9, 0.3, 0.3))
+		draw_colored_polygon(PackedVector2Array([c + Vector2(-6, -4), c + Vector2(-22, -16), c + Vector2(-18, 0)]), Color(1, 1, 1, 0.9))
+		draw_colored_polygon(PackedVector2Array([c + Vector2(6, -4), c + Vector2(22, -16), c + Vector2(18, 0)]), Color(1, 1, 1, 0.9))
+		draw_circle(c, 14.0, UIStyle.OUTLINE)
+		draw_circle(c, 11.0, Color("ffe45c"))
+		draw_circle(c + Vector2(-4, -4), 4.0, Color(1, 1, 1, 0.9))
