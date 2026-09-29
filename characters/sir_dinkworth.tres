@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://characters/character_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Sir Dinkworth"
+blurb = "A very small knight in a very large helmet. Has never once seen where he is going."
+main_color = Color(0.247059, 0.498039, 0.85098, 1)
+accent_color = Color(0.878431, 0.254902, 0.227451, 1)
+trim_color = Color(0.721569, 0.760784, 0.8, 1)
+skin_color = Color(0.960784, 0.815686, 0.662745, 1)
+hand_color = Color(0.721569, 0.760784, 0.8, 1)
+head_radius = 19.0
+body_width = 30.0
+body_height = 22.0
+leg_length = 14.0
+headwear = 1
+idle_quirk = 2

@@ -1,0 +1,507 @@
+extends Node
+## Headless feel/regression tests. Run (from the project folder):
+##   godot --headless --path . res://tests/test_runner.tscn
+## Exit code 0 = all passed. Add a test: write `func test_<name>() -> void`
+## (it may await) and use check(). Each test gets a fresh arena.
+
+const ARENA := "res://tests/test_arena.tscn"
+
+var _failures: Array[String] = []
+var _current := ""
+var _arena: Node
+
+
+func _ready() -> void:
+	_run.call_deferred()
+
+
+func _run() -> void:
+	var names: Array[String] = []
+	for m in get_method_list():
+		if String(m.name).begins_with("test_"):
+			names.append(m.name)
+	names.sort()
+	for n in names:
+		_current = n
+		await _setup_arena()
+		await call(n)
+		_teardown_arena()
+		print(("PASS  " if not _failures.any(func(f: String) -> bool: return f.begins_with(n)) else "FAIL  ") + n)
+	print("\n%d tests, %d failures" % [names.size(), _failures.size()])
+	for f in _failures:
+		print("  - " + f)
+	get_tree().quit(1 if _failures.size() > 0 else 0)
+
+
+# --- helpers ------------------------------------------------------------------
+
+func check(cond: bool, msg: String) -> void:
+	if not cond:
+		_failures.append("%s: %s" % [_current, msg])
+
+
+func gm() -> Node:
+	return GameManager
+
+
+func router() -> Node:
+	return InputRouter
+
+
+func frames(n: int) -> void:
+	for i in n:
+		await get_tree().physics_frame
+
+
+func seconds(s: float) -> void:
+	await frames(int(ceil(s * Engine.physics_ticks_per_second)))
+
+
+func press(slot: int, action: String) -> void:
+	Input.action_press("p%d_%s" % [slot, action])
+
+
+func release(slot: int, action: String) -> void:
+	Input.action_release("p%d_%s" % [slot, action])
+
+
+func add_player(slot: int, pos: Vector2) -> Player:
+	assert(slot < 2, "tests bind keyboard layouts; use slot 0 or 1")
+	router().bind_slot(slot, 0 if slot == 0 else 1)
+	var p: Player = gm().spawn_player(slot)
+	p.global_position = pos
+	return p
+
+
+func settle(p: Player) -> void:
+	for i in 240:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.state_machine.current_name() == &"Ground":
+			return
+
+
+func _setup_arena() -> void:
+	await frames(1)  # let the previous arena finish freeing
+	gm().chosen_characters.clear()
+	for s in router().get_bound_slots():
+		router().unbind_slot(s)
+	_arena = load(ARENA).instantiate()
+	get_tree().root.add_child(_arena)
+	await frames(2)
+
+
+func _teardown_arena() -> void:
+	for s in router().get_bound_slots():
+		for a in router().ACTIONS:
+			Input.action_release(router().action_name(s, a))
+	_arena.queue_free()
+	_arena = null
+
+
+# --- tests --------------------------------------------------------------------
+
+func test_full_jump_reaches_tuned_height() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var start_y := p.global_position.y
+	var peak := start_y
+	press(0, "jump")
+	for i in 180:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	release(0, "jump")
+	var height := start_y - peak
+	var target := p.tuning.jump_height
+	check(height > target * 0.9 and height < target * 1.25,
+			"jump height %.0f px, expected about %.0f" % [height, target])
+
+
+func test_tap_jump_is_lower_than_full_jump() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var start_y := p.global_position.y
+	var peak := start_y
+	press(0, "jump")
+	await frames(2)
+	release(0, "jump")
+	for i in 120:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	var height := start_y - peak
+	check(height < p.tuning.jump_height * 0.6, "tap jump too high: %.0f px" % height)
+	check(height > 10.0, "tap jump barely left the ground: %.0f px" % height)
+
+
+const GM := PlayerTuning.GlideMode
+
+
+func add_player_mode(slot: int, pos: Vector2, mode: PlayerTuning.GlideMode) -> Player:
+	var p := add_player(slot, pos)
+	p.tuning = p.tuning.duplicate() as PlayerTuning  # don't leak the mode into the shared resource
+	p.tuning.glide_mode = mode
+	return p
+
+
+func _is_gliding(p: Player) -> bool:
+	return p.state_machine.current_name() == &"Glide"
+
+
+func _check_glide_speed(p: Player, label: String) -> void:
+	check(_is_gliding(p), "%s: expected Glide, got %s" % [label, p.state_machine.current_name()])
+	check(p.velocity.y <= p.tuning.glide_fall_speed + 1.0,
+			"%s: glide fall speed %.0f > %.0f" % [label, p.velocity.y, p.tuning.glide_fall_speed])
+
+
+func test_glide_hold_through() -> void:
+	var p := add_player_mode(0, Vector2(0, -2), GM.HOLD_THROUGH)
+	await settle(p)
+	press(0, "jump")
+	await seconds(1.0)
+	_check_glide_speed(p, "HOLD_THROUGH")
+	release(0, "jump")
+	await frames(2)
+	check(not _is_gliding(p), "HOLD_THROUGH: releasing jump should end the glide")
+
+
+func test_glide_second_press() -> void:
+	var p := add_player_mode(0, Vector2(0, -2000), GM.SECOND_PRESS)
+	await seconds(0.4)  # falling fast now
+	press(0, "jump")
+	await seconds(0.5)
+	_check_glide_speed(p, "SECOND_PRESS")
+	release(0, "jump")
+	await frames(2)
+	check(not _is_gliding(p), "SECOND_PRESS: releasing jump should end the glide")
+
+
+func test_glide_separate_button() -> void:
+	var p := add_player_mode(0, Vector2(0, -2000), GM.SEPARATE_BUTTON)
+	await seconds(0.4)
+	press(0, "jump")
+	await seconds(0.3)
+	check(not _is_gliding(p), "SEPARATE_BUTTON: jump must not glide")
+	release(0, "jump")
+	press(0, "glide")
+	await seconds(0.3)
+	_check_glide_speed(p, "SEPARATE_BUTTON")
+	release(0, "glide")
+	await frames(2)
+	check(not _is_gliding(p), "SEPARATE_BUTTON: releasing glide should end the glide")
+
+
+func test_hold_through_tap_jump_never_glides() -> void:
+	var p := add_player_mode(0, Vector2(0, -2), GM.HOLD_THROUGH)
+	await settle(p)
+	press(0, "jump")
+	await frames(2)
+	release(0, "jump")
+	var glided := false
+	for i in 120:
+		await get_tree().physics_frame
+		glided = glided or _is_gliding(p)
+	check(not glided, "HOLD_THROUGH: a tap jump must never glide")
+	# Also: holding jump AFTER a tap (re-press held) without a fresh launch must not glide.
+	check(p.is_on_floor(), "tap jump should have landed by now")
+
+
+func test_hold_through_held_jump_glides_after_apex() -> void:
+	var p := add_player_mode(0, Vector2(0, -2), GM.HOLD_THROUGH)
+	await settle(p)
+	press(0, "jump")
+	var glided_early := false
+	var reached_apex := false
+	for i in 120:
+		await get_tree().physics_frame
+		if p.velocity.y >= 0.0:
+			reached_apex = true
+		if not reached_apex and _is_gliding(p):
+			glided_early = true
+	check(not glided_early, "HOLD_THROUGH: must not glide before the apex")
+	check(reached_apex, "jump never reached its apex")
+	await seconds(p.tuning.glide_hold_delay + 0.1)
+	check(_is_gliding(p), "HOLD_THROUGH: held jump should glide after the apex")
+
+
+func test_hold_through_landing_while_holding_does_not_rearm_glide() -> void:
+	var p := add_player_mode(0, Vector2(0, -2), GM.HOLD_THROUGH)
+	await settle(p)
+	press(0, "jump")
+	await seconds(3.5)  # jump, glide, land, all while still holding
+	check(p.is_on_floor(), "should have landed while still holding jump")
+	p.state_machine.transition_to(&"Fall")  # as if walking off a ledge with jump still held
+	p.global_position.y -= 100.0
+	p.velocity = Vector2.ZERO
+	p.coyote_timer = 0.0
+	await seconds(0.3)
+	check(not _is_gliding(p), "HOLD_THROUGH: holding jump since before a ledge must not glide")
+
+func _check_wall_jump(mode: PlayerTuning.GlideMode) -> void:
+	var p := add_player_mode(0, Vector2(560, -700), mode)
+	press(0, "move_right")
+	await seconds(0.4)
+	check(p.state_machine.current_name() == &"WallSlide",
+			"mode %d: expected WallSlide, got %s" % [mode, p.state_machine.current_name()])
+	check(p.velocity.y <= p.tuning.wall_slide_speed + 1.0, "sliding too fast: %.0f" % p.velocity.y)
+	press(0, "jump")
+	await frames(3)
+	check(p.velocity.x < 0.0 and p.velocity.y < 0.0, "mode %d: wall jump should launch up and away" % mode)
+
+
+## Coyote jump (just left the ledge) and stomp bounce must work in every mode.
+func _check_coyote_and_bounce(mode: PlayerTuning.GlideMode) -> void:
+	var p := add_player_mode(0, Vector2(0, -2), mode)
+	await settle(p)
+	p.global_position.y -= 40.0
+	p.velocity = Vector2.ZERO
+	p.coyote_timer = p.tuning.coyote_time
+	p.state_machine.transition_to(&"Fall")
+	press(0, "jump")
+	await frames(3)
+	check(p.velocity.y < 0.0 and p.state_machine.current_name() == &"Jump",
+			"mode %d: coyote jump failed (%s, vy %.0f)" % [mode, p.state_machine.current_name(), p.velocity.y])
+	release(0, "jump")
+	await seconds(0.3)
+	p.bounce()
+	await frames(2)
+	check(p.velocity.y < 0.0 and p.state_machine.current_name() == &"Jump",
+			"mode %d: stomp bounce failed" % mode)
+
+
+func test_wall_jump_hold_through() -> void:
+	await _check_wall_jump(GM.HOLD_THROUGH)
+
+
+func test_wall_jump_second_press() -> void:
+	await _check_wall_jump(GM.SECOND_PRESS)
+
+
+func test_wall_jump_separate_button() -> void:
+	await _check_wall_jump(GM.SEPARATE_BUTTON)
+
+
+func test_coyote_and_bounce_hold_through() -> void:
+	await _check_coyote_and_bounce(GM.HOLD_THROUGH)
+
+
+func test_coyote_and_bounce_second_press() -> void:
+	await _check_coyote_and_bounce(GM.SECOND_PRESS)
+
+
+func test_coyote_and_bounce_separate_button() -> void:
+	await _check_coyote_and_bounce(GM.SEPARATE_BUTTON)
+
+func test_bubbled_player_revived_by_touch() -> void:
+	var a := add_player(0, Vector2(0, -2))
+	var b := add_player(1, Vector2(300, -2))
+	await settle(a)
+	await settle(b)
+	b.hurt()
+	await frames(2)
+	check(b.is_bubbled(), "hurt() should bubble the player")
+	b.global_position = a.global_position + Vector2(0, -30)
+	await frames(6)
+	check(not b.is_bubbled(), "touching a teammate should pop the bubble")
+
+
+func test_everyone_bubbled_respawns_at_checkpoint() -> void:
+	var a := add_player(0, Vector2(-200, -2))
+	await settle(a)
+	gm().checkpoint = Vector2(100, -2)
+	a.hurt()
+	await seconds(gm().RESPAWN_DELAY + 0.2)
+	check(not a.is_bubbled(), "player should respawn when nobody is left alive")
+	check(a.global_position.distance_to(Vector2(100, -2)) < 80.0,
+			"respawned at %s, expected checkpoint" % a.global_position)
+
+
+func test_each_slot_gets_a_distinct_character() -> void:
+	var a := add_player(0, Vector2(0, -2))
+	var b := add_player(1, Vector2(200, -2))
+	await frames(2)
+	check(a.character != b.character, "P1 and P2 should be different characters")
+	check(a.rig.get_child_count() > 5 and b.rig.get_child_count() > 5, "rigs should be built")
+
+
+func test_all_characters_build_and_animate() -> void:
+	for def: CharacterDef in gm().CHARACTERS:
+		var rig := CharacterRig.new()
+		_arena.add_child(rig)
+		rig.build(def)
+		for s: StringName in [&"Ground", &"Jump", &"Fall", &"Glide", &"WallSlide", &"Punch", &"Bubble"]:
+			rig.gliding = s == &"Glide"
+			rig.punching = s == &"Punch"
+			rig.update_pose(s, Vector2(300, 200), s == &"Ground", 430.0, 1.0 / 60.0)
+		check(rig.top_y < -60.0, "%s: top_y %.0f looks wrong" % [def.display_name, rig.top_y])
+		check(def.display_name != "Dreamer", "character missing a name")
+		rig.queue_free()
+
+func test_chosen_character_is_used_on_spawn() -> void:
+	var gribble: CharacterDef = gm().CHARACTERS[3]
+	gm().chosen_characters[0] = gribble
+	var p := add_player(0, Vector2(0, -2))
+	await frames(2)
+	check(p.character == gribble, "spawned as %s, expected Gribble" % p.character.display_name)
+
+
+func test_wardrobe_pedestal_swaps_character() -> void:
+	var tootle: CharacterDef = gm().CHARACTERS[2]
+	var pedestal := WardrobePedestal.new()
+	pedestal.character = tootle
+	pedestal.position = Vector2(200, 0)
+	_arena.add_child(pedestal)
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	check(p.character != tootle, "should not start as Tootle")
+	press(0, "move_up")
+	await frames(3)
+	release(0, "move_up")
+	check(p.character == tootle, "pressing UP on the pedestal should swap to Tootle")
+	check(p.rig.def == tootle, "rig should be rebuilt for the new character")
+
+
+func test_character_select_pick_ready_and_lock() -> void:
+	var sel: CharacterSelect = load("res://ui/character_select.tscn").instantiate()
+	sel.auto_start = false
+	_arena.add_child(sel)
+	router().bind_slot(0, 0)
+	router().bind_slot(1, 1)
+	router().join_requested.emit(0)
+	router().join_requested.emit(1)
+	await seconds(sel.JOIN_GRACE + 0.05)
+	var start := sel.card_index(0)
+	press(0, "move_right")
+	await frames(2)
+	release(0, "move_right")
+	await frames(2)
+	check(sel.card_index(0) != start, "left/right should change the pick")
+	press(0, "jump")
+	await frames(2)
+	release(0, "jump")
+	check(sel.is_card_ready(0), "jump should lock in the pick")
+	check(not sel.is_everyone_ready(), "P2 isn't ready yet")
+	# P2 must skip over P1's locked character while browsing.
+	var locked := sel.card_index(0)
+	for i in gm().CHARACTERS.size():
+		press(1, "move_right")
+		await frames(2)
+		release(1, "move_right")
+		await frames(2)
+		check(sel.card_index(1) != locked, "P2 landed on P1's locked character")
+	press(1, "jump")
+	await frames(2)
+	release(1, "jump")
+	check(sel.is_everyone_ready(), "both players ready")
+	sel.queue_free()
+
+
+func test_demo_level_loads_and_spawns_players() -> void:
+	router().bind_slot(0, 0)
+	gm().chosen_characters[0] = gm().CHARACTERS[1]
+	var demo: Level = load("res://levels/demo_level.tscn").instantiate()
+	_arena.add_child(demo)
+	await frames(5)
+	var p: Player = gm().players.get(0)
+	check(p != null and is_instance_valid(p), "demo level should spawn joined players")
+	if p:
+		check(p.character == gm().CHARACTERS[1], "demo should use the chosen character")
+		check(p.get_parent() == demo.players_root, "player should be in the demo level")
+	demo.queue_free()
+	await frames(1)
+
+## Two walls 160 px apart (like the demo shaft). After the first grab, just tap
+## jump: auto-grab should carry you wall to wall and you must gain real height.
+func test_wall_jump_shaft_climb_by_tapping() -> void:
+	var wall: Node2D = load("res://world/block.tscn").instantiate()
+	wall.position = Vector2(380, -1400)
+	wall.size = Vector2(60, 1300)
+	_arena.add_child(wall)
+	var p := add_player(0, Vector2(520, -300))
+	press(0, "move_right")
+	for i in 60:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"WallSlide":
+			break
+	release(0, "move_right")
+	check(p.state_machine.current_name() == &"WallSlide", "never grabbed the first wall")
+	var start_y := p.global_position.y
+	var best_y := start_y
+	var sides := {}
+	for jump in 5:
+		for i in 60:
+			await get_tree().physics_frame
+			if p.state_machine.current_name() == &"WallSlide":
+				break
+		sides[p.touching_wall_dir()] = true
+		press(0, "jump")
+		await frames(4)
+		release(0, "jump")  # a tap: wall jumps must not be cut short
+		for i in 30:
+			await get_tree().physics_frame
+			best_y = minf(best_y, p.global_position.y)
+	check(sides.size() == 2, "should have bounced between both walls")
+	check(start_y - best_y > 400.0, "only climbed %.0f px in 5 tapped wall jumps" % (start_y - best_y))
+
+func test_hold_through_reglide_after_letting_go() -> void:
+	var p := add_player_mode(0, Vector2(0, -2), GM.HOLD_THROUGH)
+	await settle(p)
+	p.global_position.y -= 600.0  # plenty of air to work with
+	press(0, "jump")
+	await seconds(0.9)
+	check(_is_gliding(p), "should glide by holding through the apex")
+	release(0, "jump")
+	await seconds(0.2)
+	check(not _is_gliding(p), "letting go should end the glide")
+	press(0, "jump")
+	await seconds(p.tuning.glide_hold_delay + p.tuning.jump_buffer_time + 0.1)
+	check(_is_gliding(p), "pressing jump again in the air should restart the glide")
+
+
+func _add_crate(x: float, iron: bool) -> Crate:
+	var crate := Crate.new()
+	crate.reinforced = iron
+	crate.position = Vector2(x, 0)
+	_arena.add_child(crate)
+	return crate
+
+
+func test_tap_punch_reaches_and_breaks_wood_crate() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var crate := _add_crate(p.global_position.x + 90.0, false)  # beyond the old 46 px reach
+	await frames(2)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await seconds(0.3)
+	check(crate.collision_layer == 0, "a tap punch should reach and smash a wooden crate 90 px away")
+
+
+func test_iron_crate_needs_charged_punch() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var crate := _add_crate(p.global_position.x + 90.0, true)
+	await frames(2)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await seconds(0.4)
+	check(crate.collision_layer != 0, "a tap punch must not break an iron crate")
+	press(0, "attack")
+	await seconds(p.tuning.punch_charge_time + 0.2)
+	check(p.state_machine.current_name() == &"Punch", "holding attack should keep charging")
+	release(0, "attack")
+	await seconds(0.3)
+	check(crate.collision_layer == 0, "a fully charged punch should smash the iron crate")
+
+
+func test_updraft_lifts_a_glider() -> void:
+	var draft := Updraft.new()
+	draft.position = Vector2(-100, -1200)
+	draft.size = Vector2(200, 1000)
+	_arena.add_child(draft)
+	var p := add_player_mode(0, Vector2(0, -400), GM.SEPARATE_BUTTON)
+	press(0, "glide")
+	await seconds(0.8)
+	check(_is_gliding(p), "should be gliding")
+	check(p.velocity.y < 0.0, "updraft should push a glider upward (vy %.0f)" % p.velocity.y)
+	check(p.global_position.y < -400.0, "glider should have risen above its start")

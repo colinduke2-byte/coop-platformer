@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://characters/character_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Gribble"
+blurb = "A bandit who only steals things nobody wanted. Wears the mask so people know it's him."
+main_color = Color(0.878431, 0.482353, 0.223529, 1)
+accent_color = Color(0.909804, 0.329412, 0.478431, 1)
+trim_color = Color(0.352941, 0.231373, 0.164706, 1)
+skin_color = Color(0.552941, 0.352941, 0.231373, 1)
+hand_color = Color(0.552941, 0.352941, 0.231373, 1)
+head_radius = 16.0
+body_width = 38.0
+body_height = 26.0
+leg_length = 12.0
+headwear = 3
+has_mask = true
+idle_quirk = 4

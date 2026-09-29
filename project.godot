@@ -1,0 +1,49 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Co-op Platformer"
+config/description="Local co-op 2D platformer framework (Rayman Legends-style feel)."
+run/main_scene="res://ui/character_select.tscn"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+EventBus="*res://core/event_bus.gd"
+InputRouter="*res://core/input_router.gd"
+GameManager="*res://core/game_manager.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/window_width_override=1600
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[layer_names]
+
+2d_physics/layer_1="world"
+2d_physics/layer_2="players"
+2d_physics/layer_3="enemies"
+2d_physics/layer_4="pickups"
+2d_physics/layer_5="bubbles"
+2d_physics/layer_6="triggers"
+
+[physics]
+
+common/physics_ticks_per_second=120
+common/max_physics_steps_per_frame=12
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.56, 0.8, 0.9, 1)

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://characters/character_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Tootle"
+blurb = "A travelling bard who knows one song. It is about himself, and it is going very well."
+main_color = Color(0.247059, 0.682353, 0.352941, 1)
+accent_color = Color(0.94902, 0.756863, 0.305882, 1)
+trim_color = Color(0.85098, 0.282353, 0.231373, 1)
+skin_color = Color(0.788235, 0.545098, 0.384314, 1)
+hand_color = Color(0.788235, 0.545098, 0.384314, 1)
+head_radius = 17.0
+body_width = 32.0
+body_height = 26.0
+leg_length = 14.0
+headwear = 2
+has_scarf = true
+idle_quirk = 3

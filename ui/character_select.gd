@@ -1,0 +1,234 @@
+class_name CharacterSelect
+extends Node2D
+## Lobby. Players join with their join button, pick with left/right, press JUMP
+## to lock in and ATTACK to un-ready (or leave if not ready). When everyone who
+## joined is ready, the picks go to GameManager.chosen_characters and
+## next_scene loads. A character locked in by one player can't be taken.
+
+const CARD_SIZE := Vector2(420, 640)
+const CARD_TOP := 250.0
+const RIG_SCALE := 2.4
+const JOIN_GRACE := 0.25   ## s of ignored input after joining (the join key is also jump)
+const STICK_FLICK := 0.6   ## stick deflection that counts as one left/right step
+const START_DELAY := 0.8   ## s after everyone is ready before the level loads
+const PANEL := Color(1, 1, 1, 0.55)
+const PANEL_EMPTY := Color(1, 1, 1, 0.2)
+const PANEL_READY := Color(0.85, 1, 0.85, 0.8)
+const INK := Color("2b2233")
+
+@export_file("*.tscn") var next_scene := "res://levels/demo_level.tscn"
+@export var auto_start := true   ## tests turn this off
+
+var _cards: Array[Card] = []
+var _start_timer := 0.0
+var _footer: Label
+
+
+class Card:
+	var slot := 0
+	var joined := false
+	var ready := false
+	var index := 0
+	var grace := 0.0
+	var prev_x := 0.0
+	var input: PlayerInput
+	var panel: Polygon2D
+	var rig: CharacterRig
+	var title: Label
+	var name_label: Label
+	var blurb: Label
+	var status: Label
+	var arrows: Label
+
+
+func _ready() -> void:
+	var w := 1920.0
+	_label("Choose your dreamer", 64, Vector2(0, 50), w)
+	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)      Left / Right: pick      Jump: ready      Attack: back / leave",
+			22, Vector2(0, 150), w)
+	_footer = _label("", 28, Vector2(0, 950), w)
+	for slot in InputRouter.MAX_PLAYERS:
+		_cards.append(_make_card(slot, 240.0 + slot * 480.0))
+	for slot in InputRouter.get_bound_slots():
+		_join(slot)
+	InputRouter.join_requested.connect(_join)
+
+
+func _exit_tree() -> void:
+	if InputRouter.join_requested.is_connected(_join):
+		InputRouter.join_requested.disconnect(_join)
+
+
+# --- Public (used by tests) -----------------------------------------------------
+
+func card_index(slot: int) -> int:
+	return _cards[slot].index
+
+
+func is_card_ready(slot: int) -> bool:
+	return _cards[slot].ready
+
+
+func is_everyone_ready() -> bool:
+	var any := false
+	for c in _cards:
+		if c.joined:
+			any = true
+			if not c.ready:
+				return false
+	return any
+
+
+# --- Flow -----------------------------------------------------------------------
+
+func _process(delta: float) -> void:
+	for c in _cards:
+		if not c.joined:
+			continue
+		c.grace -= delta
+		if c.grace <= 0.0:
+			_handle_input(c)
+		if c.joined:
+			c.rig.update_pose(&"Jump" if c.ready else &"Ground", Vector2.ZERO, not c.ready, 1.0, delta)
+
+	if is_everyone_ready():
+		_footer.text = "Everyone's ready!"
+		_start_timer += delta
+		if auto_start and _start_timer >= START_DELAY:
+			_start()
+	else:
+		_start_timer = 0.0
+		_footer.text = "Waiting for players..." if _cards.all(func(c: Card) -> bool: return not c.joined) \
+				else "Press JUMP when you're happy with your pick"
+
+
+func _handle_input(c: Card) -> void:
+	var x := c.input.move_x()
+	var dir := 0
+	if x > STICK_FLICK and c.prev_x <= STICK_FLICK:
+		dir = 1
+	elif x < -STICK_FLICK and c.prev_x >= -STICK_FLICK:
+		dir = -1
+	c.prev_x = x
+
+	if not c.ready and dir != 0:
+		c.index = _next_free(c.index, dir, c.slot)
+		_refresh(c)
+	if c.input.jump_pressed():
+		if not c.ready and not _taken_by_other(c.index, c.slot):
+			c.ready = true
+			_refresh(c)
+	elif c.input.attack_pressed():
+		if c.ready:
+			c.ready = false
+			_refresh(c)
+		else:
+			_leave(c)
+
+
+func _join(slot: int) -> void:
+	var c := _cards[slot]
+	if c.joined:
+		return
+	c.joined = true
+	c.ready = false
+	c.grace = JOIN_GRACE
+	c.prev_x = 0.0
+	c.input = PlayerInput.new(slot)
+	var chars := GameManager.CHARACTERS
+	var preferred := chars.find(GameManager.character_for(slot))
+	c.index = preferred if preferred != -1 else slot % chars.size()
+	if _taken_by_other(c.index, slot):
+		c.index = _next_free(c.index, 1, slot)
+	_refresh(c)
+
+
+func _leave(c: Card) -> void:
+	c.joined = false
+	c.ready = false
+	GameManager.chosen_characters.erase(c.slot)
+	InputRouter.unbind_slot(c.slot)
+	EventBus.player_left.emit(c.slot)
+	_refresh(c)
+
+
+func _start() -> void:
+	set_process(false)
+	for c in _cards:
+		if c.joined:
+			GameManager.chosen_characters[c.slot] = GameManager.CHARACTERS[c.index]
+	get_tree().change_scene_to_file.call_deferred(next_scene)
+
+
+func _taken_by_other(index: int, slot: int) -> bool:
+	for c in _cards:
+		if c.slot != slot and c.joined and c.ready and c.index == index:
+			return true
+	return false
+
+
+func _next_free(index: int, dir: int, slot: int) -> int:
+	var n := GameManager.CHARACTERS.size()
+	for i in n:
+		index = wrapi(index + dir, 0, n)
+		if not _taken_by_other(index, slot):
+			return index
+	return index
+
+
+# --- Visuals --------------------------------------------------------------------
+
+func _make_card(slot: int, center_x: float) -> Card:
+	var c := Card.new()
+	c.slot = slot
+	var half := CARD_SIZE.x * 0.5
+	c.panel = Polygon2D.new()
+	c.panel.polygon = PackedVector2Array([
+		Vector2(center_x - half, CARD_TOP), Vector2(center_x + half, CARD_TOP),
+		Vector2(center_x + half, CARD_TOP + CARD_SIZE.y), Vector2(center_x - half, CARD_TOP + CARD_SIZE.y)])
+	add_child(c.panel)
+	c.title = _label("P%d" % (slot + 1), 36, Vector2(center_x - half, CARD_TOP + 16), CARD_SIZE.x)
+	c.rig = CharacterRig.new()
+	c.rig.position = Vector2(center_x, CARD_TOP + 390)
+	c.rig.scale = Vector2.ONE * RIG_SCALE
+	add_child(c.rig)
+	c.arrows = _label("<                                    >", 40, Vector2(center_x - half, CARD_TOP + 210), CARD_SIZE.x)
+	c.name_label = _label("", 36, Vector2(center_x - half, CARD_TOP + 410), CARD_SIZE.x)
+	c.blurb = _label("", 20, Vector2(center_x - half + 30, CARD_TOP + 465), CARD_SIZE.x - 60, true)
+	c.status = _label("", 24, Vector2(center_x - half, CARD_TOP + 580), CARD_SIZE.x)
+	_refresh(c)
+	return c
+
+
+func _refresh(c: Card) -> void:
+	c.rig.visible = c.joined
+	c.arrows.visible = c.joined and not c.ready
+	c.name_label.visible = c.joined
+	c.blurb.visible = c.joined
+	if not c.joined:
+		c.panel.color = PANEL_EMPTY
+		c.status.text = "Press jump to join"
+		return
+	var def: CharacterDef = GameManager.CHARACTERS[c.index]
+	if c.rig.def != def:
+		c.rig.build(def)
+	c.panel.color = PANEL_READY if c.ready else PANEL
+	c.name_label.text = def.display_name
+	c.name_label.add_theme_color_override(&"font_color", def.main_color.darkened(0.25))
+	c.blurb.text = def.blurb
+	c.status.text = "READY!  (attack to change)" if c.ready else "Jump: ready   Attack: leave"
+
+
+func _label(text: String, font_size: int, pos: Vector2, width: float, wrap := false) -> Label:
+	var l := Label.new()
+	if wrap:
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.custom_minimum_size.x = width
+	l.text = text
+	l.position = pos
+	l.size.x = width
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override(&"font_size", font_size)
+	l.add_theme_color_override(&"font_color", INK)
+	add_child(l)
+	return l

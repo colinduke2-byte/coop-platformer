@@ -1,0 +1,93 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://player/player.gd" id="1"]
+[ext_resource type="Script" path="res://player/state_machine.gd" id="2"]
+[ext_resource type="Script" path="res://player/states/ground.gd" id="3"]
+[ext_resource type="Script" path="res://player/states/jump.gd" id="4"]
+[ext_resource type="Script" path="res://player/states/fall.gd" id="5"]
+[ext_resource type="Script" path="res://player/states/glide.gd" id="6"]
+[ext_resource type="Script" path="res://player/states/wall_slide.gd" id="7"]
+[ext_resource type="Script" path="res://player/states/punch.gd" id="8"]
+[ext_resource type="Script" path="res://player/states/bubble.gd" id="9"]
+[ext_resource type="Resource" path="res://player/tuning/player_default.tres" id="10"]
+[ext_resource type="Script" path="res://characters/character_rig.gd" id="11"]
+
+[sub_resource type="RectangleShape2D" id="body_shape"]
+size = Vector2(36, 60)
+
+[sub_resource type="RectangleShape2D" id="punch_shape"]
+size = Vector2(44, 34)
+
+[sub_resource type="CircleShape2D" id="bubble_shape"]
+radius = 52.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 8.0
+script = ExtResource("1")
+tuning = ExtResource("10")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -30)
+shape = SubResource("body_shape")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Rig" type="Node2D" parent="Visual"]
+script = ExtResource("11")
+
+[node name="BubbleShell" type="Polygon2D" parent="Visual"]
+visible = false
+color = Color(0.75, 0.95, 1, 0.35)
+polygon = PackedVector2Array(52.0, -32.0, 49.5, -15.9, 42.1, -1.4, 30.6, 10.1, 16.1, 17.5, 0.0, 20.0, -16.1, 17.5, -30.6, 10.1, -42.1, -1.4, -49.5, -15.9, -52.0, -32.0, -49.5, -48.1, -42.1, -62.6, -30.6, -74.1, -16.1, -81.5, -0.0, -84.0, 16.1, -81.5, 30.6, -74.1, 42.1, -62.6, 49.5, -48.1)
+
+[node name="Tag" type="Label" parent="Visual"]
+offset_left = -20.0
+offset_top = -96.0
+offset_right = 20.0
+offset_bottom = -73.0
+pivot_offset = Vector2(20, 11)
+text = "P1"
+horizontal_alignment = 1
+
+[node name="PunchArea" type="Area2D" parent="."]
+position = Vector2(46, -30)
+collision_layer = 0
+collision_mask = 20
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PunchArea"]
+shape = SubResource("punch_shape")
+
+[node name="BubbleArea" type="Area2D" parent="."]
+position = Vector2(0, -32)
+collision_layer = 16
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BubbleArea"]
+shape = SubResource("bubble_shape")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="Ground" type="Node" parent="StateMachine"]
+script = ExtResource("3")
+
+[node name="Jump" type="Node" parent="StateMachine"]
+script = ExtResource("4")
+
+[node name="Fall" type="Node" parent="StateMachine"]
+script = ExtResource("5")
+
+[node name="Glide" type="Node" parent="StateMachine"]
+script = ExtResource("6")
+
+[node name="WallSlide" type="Node" parent="StateMachine"]
+script = ExtResource("7")
+
+[node name="Punch" type="Node" parent="StateMachine"]
+script = ExtResource("8")
+
+[node name="Bubble" type="Node" parent="StateMachine"]
+script = ExtResource("9")
