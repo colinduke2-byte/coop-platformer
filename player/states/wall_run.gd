@@ -42,7 +42,11 @@ func physics_update(delta: float) -> void:
 		player.body_rotation = 0.0
 		player.launch(Vector2(_dir * 220.0, -420.0))
 		return
+	if k > 0.5 and player.try_ledge_grab():
+		player.body_rotation = 0.0
+		return
 	if player.is_on_ceiling() or k >= 1.0:
 		player.velocity.y = 0.0
+		player.body_rotation = 0.0
 		machine.transition_to(&"WallSlide")
 		return

@@ -62,7 +62,7 @@ enum GlideMode {
 @export var wall_run := true                ## sprint into a wall and run up it (once per airtime)
 @export var wall_run_min_speed := 500.0     ## horizontal speed needed when you hit the wall
 @export var wall_run_speed := 620.0         ## px/s up the wall at the start (eases off)
-@export var wall_run_time := 0.34           ## s of running up before you slide
+@export var wall_run_time := 0.4            ## s of running up before you slide
 
 @export_group("Ledge grab")
 @export var ledge_grab := true              ## catch ledges you just miss; hold toward = climb, jump = hop up

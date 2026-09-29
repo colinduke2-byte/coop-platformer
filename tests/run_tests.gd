@@ -1533,3 +1533,171 @@ func test_lums_drift_toward_nearby_players() -> void:
 	await settle(p)
 	await seconds(0.5)
 	check(not is_instance_valid(lum) or lum.is_queued_for_deletion() or lum._taken, "a Lum this close should fly to you")
+
+
+# --- Demo level playthrough bots (prove the key sections are makeable) --------------
+
+var _demo: Level
+
+
+func _load_demo() -> Player:
+	router().bind_slot(0, 0)
+	_demo = load("res://levels/demo_level.tscn").instantiate()
+	_arena.add_child(_demo)
+	await frames(3)
+	return gm().players.get(0)
+
+
+func _place(p: Player, pos: Vector2) -> void:
+	p.global_position = pos
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	await settle(p)
+
+
+## Hold `dir` until the player's x passes `x` (or time runs out).
+func _run_to(p: Player, x: float, dir := "move_right", max_s := 6.0) -> void:
+	press(0, dir)
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		if (dir == "move_right" and p.global_position.x >= x) or (dir == "move_left" and p.global_position.x <= x):
+			return
+
+
+func _finish_demo() -> void:
+	for a in router().ACTIONS:
+		Input.action_release(router().action_name(0, a))
+	_demo.queue_free()
+	await frames(2)
+
+
+func test_demo_sprint_gap_is_makeable() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(2300, -2))
+	await _run_to(p, 3860)
+	press(0, "jump")
+	await seconds(1.2)
+	check(p.global_position.x > 4260 and p.global_position.y < 10.0, "sprint jump should clear the gap (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_wall_run_step_is_makeable() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(5750, -702))
+	await _run_to(p, 6430)
+	press(0, "jump")
+	await seconds(1.5)
+	check(p.global_position.y < -1015.0 and p.global_position.x > 6555.0, "sprint + wall run should get on top (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_glide_canyon_is_makeable() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(7150, -1022))
+	await _run_to(p, 7420)
+	press(0, "jump")
+	await seconds(4.0)
+	check(p.global_position.x > 8360 and not p.is_bubbled() and p.global_position.y < -900.0,
+			"gliding should cross the canyon (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_pound_chamber_pad_returns_you() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(11400, -1100))
+	press(0, "jump")
+	await frames(20)
+	release(0, "jump")
+	press(0, "move_down")
+	await frames(2)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	release(0, "move_down")
+	var lowest := -9999.0
+	for i in 72:
+		await get_tree().physics_frame
+		lowest = maxf(lowest, p.global_position.y)
+	check(lowest > -700.0, "pound should break into the chamber (lowest y %.0f)" % lowest)
+	# The pad sends you back up; steer onto the right-hand floor.
+	await seconds(0.3)
+	await _run_to(p, 11560, "move_right", 2.0)
+	await seconds(1.0)
+	check(p.global_position.y < -955.0 and p.global_position.x > 11500.0, "pad should launch you back up (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_cannons_carry_you_across() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(18300, -1562))
+	await _run_to(p, 18400)
+	release(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Cannon":
+			break
+	check(_state(p) == &"Cannon", "should hop into the first barrel")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	await seconds(3.0)
+	check(p.global_position.x > 19360 and p.global_position.y < -1500.0 and not p.is_bubbled(),
+			"two barrels should land you across (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_wind_gap_is_makeable() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(21200, -1262))
+	await _run_to(p, 21430)
+	press(0, "jump")
+	var landed := false
+	for i in 360:
+		await get_tree().physics_frame
+		if p.global_position.x > 22110 and p.is_on_floor():
+			landed = true
+			break
+	check(landed and not p.is_bubbled(), "glide + wind should cross (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_mound_is_climbable() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(23440, -1262))
+	await _run_to(p, 23460)
+	press(0, "jump")
+	await seconds(0.5)
+	release(0, "jump")
+	await seconds(0.3)
+	press(0, "jump")
+	await seconds(1.5)
+	check(p.global_position.x > 24160 or p.global_position.y < -1500.0, "should get up and over the mound (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_pad_reaches_swing_rings() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(8700, -962))
+	await _run_to(p, 8800, "move_right", 2.0)
+	release(0, "move_right")
+	press(0, "jump")  # hold for the big bounce
+	await seconds(0.5)
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "jump")
+	check(p.global_position.y < -1290.0, "the mushroom should get you onto the ledge (at %s)" % p.global_position)
+	await _place(p, Vector2(9060, -1302))
+	press(0, "move_right")
+	press(0, "jump")
+	var swung := false
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swing":
+			swung = true
+			break
+	check(swung, "jumping off the ledge should reach the first ring (at %s)" % p.global_position)
+	await _finish_demo()
