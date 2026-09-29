@@ -39,6 +39,9 @@ var ledge_regrab_timer := 0.0
 var ledge_dir := 0
 var ledge_top := 0.0
 var ledge_body: Node2D
+## Set by SwingRing.grab for the Swing state.
+var swing_anchor: Node2D
+var swing_regrab_timer := 0.0
 var _updraft_timer := 0.0
 var _sprint_build := 0.0
 var _drop_timer := 0.0
@@ -47,6 +50,12 @@ var _was_on_floor := false
 var _fall_speed := 0.0     ## fastest downward speed since leaving the ground
 
 var _squash := Vector2.ONE
+## Extra whole-body rotation set by states (swinging), applied about body_pivot.
+var body_rotation := 0.0
+var body_pivot := Vector2(0.0, -30.0)
+## False after launches (pads, rings, wall jumps) so letting go of jump
+## doesn't cut them short. Read by the Jump state.
+var jump_cuttable := true
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var visual: Node2D = $Visual
@@ -157,10 +166,25 @@ func consume_jump() -> void:
 
 func do_jump(multiplier := 1.0) -> void:
 	consume_jump()
+	jump_cuttable = true
 	velocity.y = tuning.jump_velocity() * multiplier
 	squash(tuning.jump_stretch)
 	arm_glide_after_launch()
 	EventBus.player_jumped.emit(self)
+
+
+## Fling the player (bounce pads, swing release, cannons). Not cut short by
+## releasing jump; `lock` seconds of ignored steering keep sideways launches true.
+func launch(vel: Vector2, lock := 0.0) -> void:
+	velocity = vel
+	jump_cuttable = false
+	uppercut_used = false
+	control_lock_timer = maxf(control_lock_timer, lock)
+	if absf(vel.x) > tuning.max_run_speed:
+		sprint = 1.0  # keep the air speed cap high enough to carry it
+	squash(tuning.jump_stretch)
+	arm_glide_after_launch()
+	state_machine.transition_to(&"Jump" if vel.y < 0.0 else &"Fall")
 
 
 ## Call after any launch (jump, wall jump, stomp bounce). Only HOLD_THROUGH lets
@@ -336,6 +360,23 @@ func body_fits_at(feet: Vector2, size := BODY_SIZE) -> bool:
 	return true
 
 
+# --- Swinging ------------------------------------------------------------------
+
+## Hands position while hanging from something (rings, ropes).
+const GRIP_OFFSET := Vector2(0.0, -72.0)
+
+
+## Can a SwingRing grab us right now?
+func can_grab_swing() -> bool:
+	return swing_regrab_timer <= 0.0 and not is_on_floor() and not crouched \
+			and state_machine.current_name() in [&"Jump", &"Fall", &"Glide"]
+
+
+func grab_swing(anchor: Node2D) -> void:
+	swing_anchor = anchor
+	state_machine.transition_to(&"Swing")
+
+
 # --- Crouch & drop-through ------------------------------------------------------
 
 func set_crouched(on: bool) -> void:
@@ -385,6 +426,7 @@ func bounce(multiplier := -1.0) -> void:
 		multiplier = tuning.stomp_bounce_multiplier
 	velocity.y = tuning.jump_velocity() * multiplier
 	squash(tuning.jump_stretch)
+	jump_cuttable = true
 	uppercut_used = false
 	arm_glide_after_launch()
 	state_machine.transition_to(&"Jump")
@@ -453,6 +495,12 @@ func hit_with_punch_area(knockback: Vector2, already: Array[Node]) -> Array[Node
 			hit.append(body)
 			punch_hit(body)
 	for area in punch_area.get_overlapping_areas():
+		if area.has_method("take_hit") and not area in already:
+			area.take_hit(self, knockback)  # switches and other punchable areas
+			already.append(area)
+			hit.append(area)
+			punch_hit(area)
+			continue
 		var target := area.get_parent()
 		if target is Player and target != self and target.is_bubbled():
 			target.revive()
@@ -496,8 +544,8 @@ func _update_visual(delta: float) -> void:
 	_squash = _squash.lerp(Vector2.ONE, clampf(tuning.squash_return_speed * delta, 0.0, 1.0))
 	var s := _squash * (tuning.crouch_squash if crouched else Vector2.ONE)
 	visual.scale = Vector2(s.x * facing, s.y)
-	var spin := rig.spin_angle() * facing
-	var pivot := Vector2(0.0, -BODY_SIZE.y * 0.5)
+	var spin := rig.spin_angle() * facing + body_rotation
+	var pivot := body_pivot if body_rotation != 0.0 else Vector2(0.0, -BODY_SIZE.y * 0.5)
 	visual.rotation = spin
 	visual.position = pivot - pivot.rotated(spin)
 	$Visual/Tag.rotation = -spin * facing  # name tag stays upright while we flip
@@ -547,6 +595,7 @@ func _update_timers(delta: float) -> void:
 	control_lock_timer = maxf(control_lock_timer - delta, 0.0)
 	invulnerable_timer = maxf(invulnerable_timer - delta, 0.0)
 	ledge_regrab_timer = maxf(ledge_regrab_timer - delta, 0.0)
+	swing_regrab_timer = maxf(swing_regrab_timer - delta, 0.0)
 	_updraft_timer = maxf(_updraft_timer - delta, 0.0)
 	if _updraft_timer <= 0.0:
 		updraft_speed = 0.0

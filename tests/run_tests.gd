@@ -794,3 +794,154 @@ func test_juice_effects_spawn_and_clean_up() -> void:
 	check(layer != null and layer.get_child_count() > 0, "jumping should puff dust into the level")
 	await seconds(1.5)
 	check(layer == null or layer.get_child_count() == 0, "effects should free themselves")
+
+
+# --- World toys -------------------------------------------------------------------
+
+func test_bounce_pad_launches_and_hold_jump_goes_higher() -> void:
+	var p := add_player(0, Vector2(0, -300))
+	await frames(2)
+	var pad := BouncePad.new()
+	_arena.add_child(pad)
+	var peaks: Array[float] = []
+	for hold in [false, true]:
+		p.global_position = Vector2(0, -300)
+		p.velocity = Vector2.ZERO
+		p.state_machine.transition_to(&"Fall")
+		var peak := 0.0
+		var bounced := false
+		for i in 150:
+			await get_tree().physics_frame
+			if hold and not bounced and p.global_position.y > -140.0:
+				press(0, "jump")  # hold jump as you land on the pad
+			if p.velocity.y < -500.0:
+				bounced = true
+			if bounced:
+				peak = minf(peak, p.global_position.y)
+			if bounced and p.velocity.y > 0.0:
+				break
+		release(0, "jump")
+		check(bounced, "pad should launch the player (hold=%s)" % hold)
+		peaks.append(-peak)
+	check(peaks[0] > pad.launch_height * 0.9, "plain bounce reached %.0f px" % peaks[0])
+	check(peaks[1] > peaks[0] + 60.0, "holding jump should bounce higher (%.0f vs %.0f)" % [peaks[1], peaks[0]])
+
+
+func test_swing_ring_grab_pump_and_release() -> void:
+	var ring := SwingRing.new()
+	ring.position = Vector2(0, -500)
+	_arena.add_child(ring)
+	var p := add_player(0, Vector2(-60, -500 + 60))
+	await frames(1)
+	p.velocity = Vector2(300, -200)
+	p.state_machine.transition_to(&"Jump")
+	for i in 30:
+		await get_tree().physics_frame
+		if _state(p) == &"Swing":
+			break
+	check(_state(p) == &"Swing", "flying into a ring should grab it (got %s)" % _state(p))
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	var d := (p.global_position + Player.GRIP_OFFSET).distance_to(ring.global_position)
+	check(absf(d - p.tuning.swing_length) < 12.0, "hands should stay on the rope length (%.0f)" % d)
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(_state(p) in [&"Jump", &"Fall"] and p.velocity.y < 0.0, "jump should fling you off the ring upward")
+
+
+func test_moving_platform_carries_rider() -> void:
+	var plat := MovingPlatform.new()
+	plat.position = Vector2(-100, -200)
+	plat.size = Vector2(200, 32)
+	plat.waypoints = PackedVector2Array([Vector2(500, 0)])
+	plat.speed = 200.0
+	plat.wait_time = 0.0
+	_arena.add_child(plat)
+	var p := add_player(0, Vector2(0, -205))
+	await settle(p)
+	var x0 := p.global_position.x
+	await seconds(1.0)
+	check(p.global_position.x - x0 > 150.0, "rider should be carried along (moved %.0f)" % (p.global_position.x - x0))
+	check(p.is_on_floor(), "rider should still be standing on it")
+
+
+func test_crumble_platform_breaks_and_returns() -> void:
+	var c := CrumblePlatform.new()
+	c.position = Vector2(-72, -200)
+	c.respawn_time = 1.0
+	_arena.add_child(c)
+	var p := add_player(0, Vector2(0, -205))
+	await settle(p)
+	await seconds(c.crumble_delay + 0.3)
+	check(c.collision_layer == 0, "should crumble after being stood on")
+	await seconds(0.5)
+	check(p.global_position.y > -150.0, "player should fall once it crumbles")
+	await seconds(1.5)
+	check(c.collision_layer == 1, "should come back after respawn_time")
+
+
+func test_spikes_bubble_players() -> void:
+	var s := Spikes.new()
+	s.position = Vector2(-100, 0)
+	s.length = 200.0
+	_arena.add_child(s)
+	var p := add_player(0, Vector2(0, -100))
+	await seconds(0.5)
+	check(p.is_bubbled(), "landing on spikes should bubble you")
+
+
+func test_punch_switch_opens_gate() -> void:
+	var gate := Gate.new()
+	gate.name = "Gate"
+	gate.position = Vector2(300, -192)
+	_arena.add_child(gate)
+	var sw := PunchSwitch.new()
+	sw.position = Vector2(60, 0)
+	_arena.add_child(sw)
+	sw.targets = [sw.get_path_to(gate)]
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var y0 := gate.position.y
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await seconds(0.8)
+	check(sw.on, "punching the switch should flip it on")
+	check(gate.is_open() and gate.position.y < y0 - 100.0, "gate should slide open")
+
+
+func test_pressure_plate_needs_two_players() -> void:
+	var gate := Gate.new()
+	gate.position = Vector2(400, -192)
+	gate.stay_open = false
+	_arena.add_child(gate)
+	var plate := PressurePlate.new()
+	plate.position = Vector2(0, 0)
+	plate.required = 2
+	_arena.add_child(plate)
+	plate.targets = [plate.get_path_to(gate)]
+	var a := add_player(0, Vector2(-10, -2))
+	await settle(a)
+	await frames(5)
+	check(not plate.on and not gate.is_open(), "one player shouldn't be enough")
+	var b := add_player(1, Vector2(10, -2))
+	await settle(b)
+	await frames(5)
+	check(plate.on and gate.is_open(), "two players on the plate should open the gate")
+	b.global_position.x = 300.0
+	await frames(5)
+	check(not plate.on and not gate.is_open(), "stepping off should close it again (no latch)")
+
+
+func test_lum_line_spawns_lums() -> void:
+	var line := LumLine.new()
+	line.count = 7
+	line.end = Vector2(300, 0)
+	line.arc_height = 80.0
+	_arena.add_child(line)
+	await frames(1)
+	var lums := line.get_children().filter(func(c: Node) -> bool: return c is Lum)
+	check(lums.size() == 7, "LumLine should spawn 7 lums, got %d" % lums.size())
+	check((lums[3] as Node2D).position.y < -70.0, "middle lum should be raised by the arc")

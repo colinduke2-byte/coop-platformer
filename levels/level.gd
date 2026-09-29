@@ -3,6 +3,9 @@ extends Node2D
 ## Root script for every level. Required children: SpawnPoint (Marker2D),
 ## Players (Node2D). Copy levels/test_level.tscn as a starting template.
 
+## Palette every block / platform / toy in this level draws with.
+@export var level_theme: LevelTheme
+
 @onready var players_root: Node2D = $Players
 @onready var spawn_point: Marker2D = $SpawnPoint
 

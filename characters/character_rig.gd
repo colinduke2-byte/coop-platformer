@@ -56,6 +56,7 @@ var ledge_climb := 0.0            ## 0 = hanging, 0..1 = pulling up
 var ledge_lip := -70.0            ## y of the ledge top while hanging (feet = 0)
 var pound_phase := -1             ## ground pound: -1 off, 0 spin, 1 dive, 2 landed
 var pound_spin := 0.0             ## 0..1 through the pre-dive somersault
+var swing_speed := 0.0            ## rad/s while swinging (legs trail behind)
 var idle_quirk_delay := IDLE_QUIRK_DELAY
 var top_y := -80.0                ## highest point of the rig (for name tags)
 
@@ -483,6 +484,17 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 					p[&"hand_f"] = Vector2(sx + 20, s_y + 2)
 					p[&"hand_b"] = Vector2(-sx - 20, s_y + 2)
 					p[&"brow_tilt"] = 1.0
+		&"Swing":
+			# Both arms straight up to the ring; legs trail the swing.
+			var trail := clampf(-swing_speed * 0.12, -1.0, 1.0) * 10.0
+			p[&"hand_f"] = Vector2(4, -72)
+			p[&"hand_b"] = Vector2(-4, -71)
+			p[&"foot_f"] = Vector2(6 + trail, 2)
+			p[&"foot_b"] = Vector2(-4 + trail * 1.3, 4)
+			p[&"lean"] = 0.0
+			p[&"bob"] = -3.0
+			p[&"head_tilt"] = -0.1
+			p[&"brow_raise"] = -2.0
 		&"Bubble":
 			p[&"foot_f"] = Vector2(5, -L - 2)
 			p[&"foot_b"] = Vector2(-5, -L)

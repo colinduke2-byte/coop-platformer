@@ -6,7 +6,8 @@ var _cut := false
 
 func enter(previous: StringName) -> void:
 	# Marking the jump as already cut disables the early-release cut.
-	_cut = previous == &"WallSlide" and not player.tuning.wall_jump_cuttable
+	_cut = not player.jump_cuttable or (previous == &"WallSlide" and not player.tuning.wall_jump_cuttable)
+	player.jump_cuttable = true
 
 
 func physics_update(delta: float) -> void:

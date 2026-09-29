@@ -24,6 +24,9 @@ signal checkpoint_reached(position: Vector2)
 signal level_reset
 signal device_lost(slot: int)
 signal player_head_bounced(top: Player, bottom: Player)
+signal pad_bounced(player: Player, pad: Node2D, pounding: bool)
+signal player_swung(player: Player)
+signal switch_toggled(switch: Node2D, on: bool)
 ## Juice requests (anyone may emit; CoopCamera / Vfx listen).
 signal screen_shake(amount: float)
 signal hit_stop(duration: float)

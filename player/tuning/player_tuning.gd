@@ -67,6 +67,16 @@ enum GlideMode {
 @export var ledge_min_hang := 0.07          ## s you hang before an auto-climb (lets the grab read)
 @export var ledge_regrab_delay := 0.3       ## s after dropping before you can grab again
 
+@export_group("Swing")
+@export var swing_length := 92.0            ## px from ring to hands
+@export var swing_gravity := 2600.0         ## px/s^2 pulling the pendulum down
+@export var swing_push := 1500.0            ## px/s^2 of pumping with left/right
+@export var swing_damping := 0.35           ## 1/s speed loss
+@export var swing_max_angle := 1.45         ## rad either side of straight down
+@export var swing_release_boost := 1.15     ## tangential speed x this on release
+@export var swing_release_up := 420.0       ## extra upward kick when you jump off
+@export var swing_regrab_delay := 0.35      ## s before you can grab a ring again
+
 @export_group("Crouch & slide")
 @export var crouch_height := 34.0           ## px collision height while crouched / sliding (standing = 60)
 @export var crawl_speed := 150.0

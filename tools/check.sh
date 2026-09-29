@@ -12,8 +12,12 @@ scan() {  # print engine/script errors, ignore harmless exit-time leak reports
 	grep -E "SCRIPT ERROR|ERROR:|Parse Error|Compile Error|has vanished when instantiating|Node not found" | grep -v "leaked at exit" || true
 }
 
-echo "== 1/3 import (parse every script and scene) =="
+echo "== 1/3 import + parse every script =="
 errs=$("$GODOT" --headless --path . --import 2>&1 | scan)
+# --import only compiles scripts something references; load every one explicitly.
+out=$("$GODOT" --headless --path . res://tools/parse_all.tscn 2>&1)
+errs="$errs$(echo "$out" | scan)$(echo "$out" | grep "PARSE FAIL")"
+errs=$(echo "$errs" | sed '/^$/d')
 if [ -n "$errs" ]; then echo "$errs"; fail=1; else echo "ok"; fi
 
 echo "== 2/3 boot main scene for 4 seconds =="

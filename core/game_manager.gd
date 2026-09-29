@@ -88,9 +88,11 @@ func _on_player_died(_player: Player) -> void:
 	if _respawning or not living_players().is_empty():
 		return
 	_respawning = true
+	var for_level := level
 	await get_tree().create_timer(RESPAWN_DELAY).timeout
-	respawn_all_at_checkpoint()
 	_respawning = false
+	if level == for_level and level != null:  # the level may have changed meanwhile
+		respawn_all_at_checkpoint()
 
 
 func respawn_all_at_checkpoint() -> void:
