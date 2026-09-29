@@ -13,6 +13,7 @@ enum Mode { WALK, CROUCH, AIR, DAZED }
 @export var crouch_time := 0.55
 @export var daze_time := 1.6
 @export var minion_scene: PackedScene = preload("res://enemies/grunt.tscn")
+@export var asleep := false                 ## snoozes (invulnerable, still) until set_active(true)
 
 const BODY := Color("7a4bc4")
 const BELLY := Color("d9c8f5")
@@ -36,7 +37,19 @@ func _setup() -> void:
 	_max_health = health
 
 
+## Wake up (a ZoneTrigger at the arena entrance usually does this).
+func set_active(on: bool) -> void:
+	asleep = not on
+	if on:
+		_timer = 1.0
+		squash(Vector2(0.8, 1.25))
+		EventBus.screen_shake.emit(0.3)
+
+
 func _behave(delta: float) -> void:
+	if asleep:
+		velocity.x = 0.0
+		return
 	_timer -= delta
 	match _mode:
 		Mode.WALK:
@@ -88,11 +101,11 @@ func _slam() -> void:
 
 ## Armoured unless dazed.
 func blocks_hit(_by: Player, _kind: HitKind) -> bool:
-	return not is_stunned()
+	return asleep or not is_stunned()
 
 
 func _on_stomped(by: Player) -> void:
-	if is_stunned():
+	if is_stunned() and not asleep:
 		damage(by, HitKind.STOMP, Vector2.ZERO)
 		stun_timer = 0.0  # wakes up angry
 		_mode = Mode.WALK
@@ -117,9 +130,14 @@ func _draw_body(ci: CanvasItem) -> void:
 	Art.shape(ci, Art.ellipse(Vector2(26 - step, -10), 20, 12), BODY.darkened(0.3), OUTLINE)
 	Art.shape(ci, Art.ellipse(Vector2(0, -54), 64, 52), BODY, OUTLINE, 4.0)
 	Art.shape(ci, Art.ellipse(Vector2(10, -38), 40, 28), BELLY, OUTLINE, 0.0)
-	var dazed := is_stunned()
+	var dazed := is_stunned() or asleep
 	Enemy.draw_eye(ci, Vector2(8, -76), 11.0, Vector2(1, 0), 0.0 if dazed else 1.0, dazed)
 	Enemy.draw_eye(ci, Vector2(36, -74), 10.0, Vector2(1, 0), 0.0 if dazed else -1.0, dazed)
+	if asleep:
+		for i in 3:
+			var k := fmod(anim_time * 0.6 + i / 3.0, 1.0)
+			ci.draw_string(ThemeDB.fallback_font, Vector2(50 + k * 40, -110 - k * 60), "Z",
+					HORIZONTAL_ALIGNMENT_LEFT, -1, int(20 + k * 16), Color(1, 1, 1, 1.0 - k))
 	ci.draw_line(Vector2(10, -44), Vector2(50, -48), OUTLINE, 4.0)
 	for x: float in [20.0, 38.0]:
 		Art.shape(ci, PackedVector2Array([Vector2(x - 5, -46), Vector2(x + 5, -47), Vector2(x, -58)]), EYE_WHITE, OUTLINE, 2.0)

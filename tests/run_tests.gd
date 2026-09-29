@@ -1801,3 +1801,116 @@ func test_candy_switch_puzzle_opens_gate() -> void:
 	var gate: Gate = _demo.find_children("*", "Gate", true, false).filter(func(g: Node) -> bool: return g.position.x > 9000.0)[0]
 	check(gate.is_open(), "punching the switch should open the gate")
 	await _finish_demo()
+
+
+func test_sunset_crumble_bridge_is_crossable() -> void:
+	var p: Player = await _load_demo("res://levels/sunset_gusts.tscn")
+	await _place(p, Vector2(1100, -2))
+	press(0, "move_right")
+	var crossed := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_on_floor():
+			press(0, "jump")
+		elif p.velocity.y > 0.0:
+			release(0, "jump")
+		if p.global_position.x > 2330 and p.is_on_floor():
+			crossed = true
+			break
+	check(crossed and not p.is_bubbled(), "hopping along should cross the crumbling bridge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_sunset_cannons_cross_the_canyon() -> void:
+	var p: Player = await _load_demo("res://levels/sunset_gusts.tscn")
+	await _place(p, Vector2(4450, -2))
+	await _run_to(p, 4580)
+	release(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Cannon":
+			break
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	await seconds(3.0)
+	check(p.global_position.x > 5530 and not p.is_bubbled(), "cannons should land you across (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_sunset_arena_locks_and_unlocks() -> void:
+	var p: Player = await _load_demo("res://levels/sunset_gusts.tscn")
+	await _place(p, Vector2(8100, -2))
+	p.invulnerable_timer = 999.0
+	await seconds(0.5)
+	var gates := _demo.find_children("*", "Gate", true, false)
+	var entry: Gate = gates.filter(func(g: Node) -> bool: return absf(g.position.x - 7840.0) < 1.0)[0]
+	var exit_g: Gate = gates.filter(func(g: Node) -> bool: return absf(g.position.x - 8800.0) < 1.0)[0]
+	check(not entry.is_open(), "the entry gate should slam shut once everyone is inside")
+	check(not exit_g.is_open(), "the exit stays shut while enemies live")
+	for k in 12:
+		for e in get_tree().get_nodes_in_group(&"enemies"):
+			if e is Enemy and not e.dead and e.global_position.x > 7850 and e.global_position.x < 8800:
+				e.damage(null, Enemy.HitKind.HAZARD, Vector2.ZERO)
+				e.damage(null, Enemy.HitKind.HAZARD, Vector2.ZERO)
+		await seconds(0.4)
+	check(exit_g.is_open(), "beating every enemy (and the flapjack wave) should open the exit")
+	await _finish_demo()
+
+
+func test_glacier_slide_long_jump_clears_the_gap() -> void:
+	var p: Player = await _load_demo("res://levels/glacier_grotto.tscn")
+	await _place(p, Vector2(7150, -602))
+	press(0, "move_right")
+	await frames(20)
+	press(0, "move_down")
+	var jumped := false
+	for i in 400:
+		await get_tree().physics_frame
+		if not jumped and p.global_position.x > 8200:
+			release(0, "move_down")
+			press(0, "jump")
+			jumped = true
+		if jumped and p.is_on_floor() and p.global_position.x > 8300:
+			break
+	check(p.global_position.x > 8620 and not p.is_bubbled(), "slide + long jump should clear the gap (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_glacier_lake_exit() -> void:
+	var p: Player = await _load_demo("res://levels/glacier_grotto.tscn")
+	p.global_position = Vector2(4150, 800)
+	await seconds(0.3)
+	press(0, "move_right")
+	press(0, "move_up")
+	await seconds(1.2)
+	release(0, "move_up")
+	press(0, "jump")
+	await seconds(1.0)
+	release(0, "jump")
+	await seconds(0.5)
+	check(p.global_position.x > 4400 and p.global_position.y < 605 and p.is_on_floor(), "should leap out onto the far shore (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_glacier_boss_sleeps_wakes_and_unlocks_exit() -> void:
+	var p: Player = await _load_demo("res://levels/glacier_grotto.tscn")
+	var king: KingGrumblo = _demo.find_children("*", "KingGrumblo", true, false)[0]
+	await seconds(0.5)
+	check(king.asleep and absf(king.global_position.x - 9900.0) < 5.0, "the King should be asleep in his arena")
+	await _place(p, Vector2(9500, -2))
+	p.invulnerable_timer = 999.0
+	await seconds(0.5)
+	check(not king.asleep, "entering the arena should wake him")
+	var exit_g: Gate = _demo.find_children("*", "Gate", true, false).filter(func(g: Node) -> bool: return g.position.x > 10000.0)[0]
+	check(not exit_g.is_open(), "exit shut during the fight")
+	for k in 40:
+		for e in get_tree().get_nodes_in_group(&"enemies"):
+			if e is Enemy and not e.dead:
+				e.stun_timer = 1.0  # (dazed, so hits land)
+				e.damage(null, Enemy.HitKind.STOMP, Vector2.ZERO)
+		await seconds(0.25)
+		if exit_g.is_open():
+			break
+	check(exit_g.is_open(), "beating the King (and his minions) should open the exit")
+	await _finish_demo()

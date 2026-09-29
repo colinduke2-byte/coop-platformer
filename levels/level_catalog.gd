@@ -7,6 +7,10 @@ const LEVELS: Array[Dictionary] = [
 		"blurb": "Learn every move in a sunny meadow.", "theme": "res://world/themes/meadow.tres"},
 	{"id": "candy", "name": "Candy Canopy", "scene": "res://levels/candy_canopy.tscn",
 		"blurb": "Bouncy mushrooms, Boingo chains, a soda lake... and a syrup flood!", "theme": "res://world/themes/candy.tres"},
+	{"id": "sunset", "name": "Sunset Gusts", "scene": "res://levels/sunset_gusts.tscn",
+		"blurb": "Crumbling bridges, gusty cliffs, cannons and a locked arena.", "theme": "res://world/themes/sunset.tres"},
+	{"id": "glacier", "name": "Glacier Grotto", "scene": "res://levels/glacier_grotto.tscn",
+		"blurb": "Slide the glacier, swim the frozen lake... and wake KING GRUMBLO.", "theme": "res://world/themes/glacier.tres"},
 ]
 
 

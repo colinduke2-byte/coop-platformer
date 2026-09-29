@@ -204,10 +204,12 @@ class LevelKit:
         """DefeatTrigger with enemy children: [(kind, x, y, props), ...] (world coords)."""
         path = self._tool("Logic", "Arena", "Node2D", "defeat_trigger", x, y)
         self._set_last("targets", [self.rel(path, t) for t in targets])
+        self.arena_children = []
         for kind, ex, ey, props in enemies:
             p = {"position": V(ex - x, ey - y)}
             p.update(props)
-            self.s.node(kind.capitalize(), None, path, p, instance=self.s.scene(ENEMIES[kind]))
+            name = self.s.node(kind.capitalize().replace("_", ""), None, path, p, instance=self.s.scene(ENEMIES[kind]))
+            self.arena_children.append(name)
         return path
 
     def spawner(self, parent_path, x, y, kind="grunt", total=4, alive=2, interval=1.2, active=False, facing=-1,
