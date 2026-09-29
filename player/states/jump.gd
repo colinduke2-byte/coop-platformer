@@ -15,7 +15,7 @@ func physics_update(delta: float) -> void:
 	if player.try_environment_states():
 		return
 	if not _cut and not player.input.jump_held() and player.velocity.y < 0.0:
-		player.velocity.y *= t.jump_cut_multiplier
+		player.velocity.y *= player.cut_multiplier if player.cut_multiplier >= 0.0 else t.jump_cut_multiplier
 		_cut = true
 
 	player.apply_gravity(delta)
@@ -26,7 +26,7 @@ func physics_update(delta: float) -> void:
 		return
 	if player.is_on_ceiling() and player.velocity.y < 0.0:
 		player.velocity.y = 0.0
-	if player.try_ledge_grab():
+	if player.try_wall_run() or player.try_ledge_grab():
 		return
 	if player.velocity.y >= 0.0:
 		machine.transition_to(&"Fall")

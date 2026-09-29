@@ -171,6 +171,8 @@ func _physics_process(delta: float) -> void:
 				puff(feet + Vector2(signf(p.velocity.x) * 14.0, -4.0), 2, DUST, Vector2(signf(p.velocity.x), -1).normalized(), 0.8, Vector2(10, 28))
 			elif state == &"Ground" and p.is_sprinting() and absf(p.velocity.x) > p.tuning.max_run_speed:
 				puff(feet + Vector2(-p.facing * 12.0, -4.0), 2, DUST, Vector2(-p.facing, -0.8).normalized(), 0.7, Vector2(14, 34), Vector2(5, 10))
+			elif state == &"WallRun":
+				puff(feet + Vector2(p.facing * 18.0, -30.0), 2, DUST, Vector2(-p.facing, 0.6).normalized(), 0.7, Vector2(10, 26), Vector2(4, 8))
 			elif state == &"WallSlide" and p.velocity.y > 60.0:
 				t = trail_interval * 2.0
 				puff(feet + Vector2(-p.facing * 20.0, -50.0), 1, DUST, Vector2(p.facing, -0.4).normalized(), 0.6, Vector2(6, 16), Vector2(3, 6))

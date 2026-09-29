@@ -11,7 +11,7 @@ func enter(_previous: StringName) -> void:
 	player.set_crouched(true)
 	_dir = int(signf(player.velocity.x)) if player.velocity.x != 0.0 else player.facing
 	player.facing = _dir
-	player.velocity.x = _dir * minf(absf(player.velocity.x) + t.slide_boost, t.slide_max_speed)
+	player.velocity.x = _dir * minf(maxf(absf(player.velocity.x), t.crawl_speed * 1.5) + t.slide_boost, t.slide_max_speed)
 	player.squash(Vector2(1.25, 0.8))
 	_already_hit.clear()
 	# Low kick hitbox at the feet.
@@ -27,7 +27,12 @@ func exit() -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
-	player.velocity.x = move_toward(player.velocity.x, 0.0, t.slide_friction * player.floor_friction() * delta)
+	var n := player.get_floor_normal() if player.is_on_floor() else Vector2.UP
+	if n.x * _dir > 0.1:
+		# Downhill: pick up speed instead of slowing down.
+		player.velocity.x = move_toward(player.velocity.x, _dir * t.slide_max_speed * 1.3, t.slope_slide_accel * absf(n.x) * delta)
+	else:
+		player.velocity.x = move_toward(player.velocity.x, 0.0, t.slide_friction * player.floor_friction() * delta)
 	player.apply_gravity(delta)
 	player.hit_with_punch_area(Vector2(_dir * t.punch_knockback.x, t.punch_knockback.y), _already_hit)
 

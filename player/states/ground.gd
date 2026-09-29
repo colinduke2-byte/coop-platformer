@@ -24,9 +24,12 @@ func physics_update(delta: float) -> void:
 	if player.input.attack_pressed():
 		machine.transition_to(&"Punch")
 		return
+	if player.try_wall_run():
+		return
 	if not player.is_on_floor():
 		machine.transition_to(&"Fall")
 		return
 	if player.input.down_held():
-		machine.transition_to(&"Slide" if absf(player.velocity.x) >= t.slide_min_speed else &"Crouch")
+		var downhill := player.get_floor_normal().x * player.facing > 0.2
+		machine.transition_to(&"Slide" if absf(player.velocity.x) >= t.slide_min_speed or downhill else &"Crouch")
 		return

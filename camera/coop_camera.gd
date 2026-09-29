@@ -10,12 +10,17 @@ extends Camera2D
 @export var follow_speed := 6.0
 @export var zoom_speed := 2.5
 @export var offscreen_grace := 1.5            ## s before a straggler is bubbled
+@export var look_ahead := 170.0               ## px the view leads in the group's running direction
+@export var look_ahead_speed := 1.8
+@export var vertical_deadzone := 110.0        ## px the group can jump before the camera follows up/down
 @export var shake_max_offset := 28.0          ## px at full trauma
 @export var shake_max_roll := 0.025           ## rad at full trauma
 @export var shake_decay := 2.2                ## trauma lost per second
 
 var _offscreen_time: Dictionary = {}
 var _trauma := 0.0
+var _lead := 0.0
+var _anchor_y := NAN
 
 
 func _ready() -> void:
@@ -30,7 +35,7 @@ func _physics_process(delta: float) -> void:
 	if targets.is_empty():
 		return
 	var rect := _bounds(targets)
-	var desired := rect.get_center() + Vector2(0.0, vertical_bias)
+	var desired := _framing(targets, rect, delta)
 	global_position = global_position.lerp(desired, clampf(follow_speed * delta, 0.0, 1.0))
 	var z := _zoom_for(rect)
 	zoom = zoom.lerp(Vector2(z, z), clampf(zoom_speed * delta, 0.0, 1.0))
@@ -56,10 +61,31 @@ func snap() -> void:
 	if targets.is_empty():
 		return
 	var rect := _bounds(targets)
+	_anchor_y = rect.get_center().y
+	_lead = 0.0
 	global_position = rect.get_center() + Vector2(0.0, vertical_bias)
 	var z := _zoom_for(rect)
 	zoom = Vector2(z, z)
 	reset_smoothing()
+
+
+## Where the camera wants to be: group centre, leading in the running
+## direction, and only moving vertically when someone lands or leaves the deadzone.
+func _framing(targets: Array, rect: Rect2, delta: float) -> Vector2:
+	var c := rect.get_center()
+	var vx := 0.0
+	var grounded := false
+	for p: Node in targets:
+		vx += (p as CharacterBody2D).velocity.x
+		grounded = grounded or (p as CharacterBody2D).is_on_floor()
+	vx /= targets.size()
+	var want := clampf(vx / 430.0, -1.0, 1.0) * look_ahead
+	_lead = lerpf(_lead, want, clampf(look_ahead_speed * delta, 0.0, 1.0))
+	if is_nan(_anchor_y) or grounded:
+		_anchor_y = c.y if is_nan(_anchor_y) else lerpf(_anchor_y, c.y, clampf(8.0 * delta, 0.0, 1.0))
+	elif absf(c.y - _anchor_y) > vertical_deadzone:
+		_anchor_y = c.y - signf(c.y - _anchor_y) * vertical_deadzone
+	return Vector2(c.x + _lead, _anchor_y + vertical_bias)
 
 
 func _targets() -> Array:

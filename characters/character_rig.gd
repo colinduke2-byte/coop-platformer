@@ -59,6 +59,7 @@ var pound_spin := 0.0             ## 0..1 through the pre-dive somersault
 var swing_speed := 0.0            ## rad/s while swinging (legs trail behind)
 var swim_kick := 0.0              ## 0..1 strength of the last swim stroke
 var climb_phase := 0.0            ## advances as you climb (hand over hand)
+var wall_run_phase := 0.0         ## run cycle while running up a wall
 var idle_quirk_delay := IDLE_QUIRK_DELAY
 var top_y := -80.0                ## highest point of the rig (for name tags)
 
@@ -507,6 +508,15 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 			p[&"foot_b"] = Vector2(-10 - sin(sw + 1.0) * 6.0, 4)
 			p[&"head_tilt"] = -0.2
 			p[&"brow_raise"] = -1.0
+		&"WallRun":
+			# Sprinting (the Player tips the whole body so this runs "up" the wall).
+			var ph := wall_run_phase
+			p[&"foot_f"] = Vector2(3 + sin(ph) * 13.0, -maxf(0.0, cos(ph)) * 9.0)
+			p[&"foot_b"] = Vector2(-3 - sin(ph) * 13.0, -maxf(0.0, -cos(ph)) * 9.0)
+			p[&"hand_f"] = Vector2(-sx - 16, s_y + 4)
+			p[&"hand_b"] = Vector2(-sx - 20, s_y)
+			p[&"lean"] = 0.3
+			p[&"brow_tilt"] = 1.0
 		&"Climb":
 			var ph := climb_phase
 			var up_f := sin(ph) * 8.0

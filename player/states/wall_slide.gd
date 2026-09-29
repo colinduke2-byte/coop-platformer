@@ -18,16 +18,7 @@ func physics_update(delta: float) -> void:
 	player.velocity.x = _wall_dir * 20.0  # keep contact with the wall
 
 	if player.wants_jump():
-		player.consume_jump()
-		player.velocity = Vector2(-_wall_dir * t.wall_jump_velocity.x, t.wall_jump_velocity.y)
-		player.facing = -_wall_dir
-		player.control_lock_timer = t.wall_jump_lock_time
-		player.squash(t.jump_stretch)
-		player.arm_glide_after_launch()
-		player.uppercut_used = false
-		EventBus.player_jumped.emit(player)
-		EventBus.player_wall_jumped.emit(player)
-		machine.transition_to(&"Jump")
+		player.do_wall_jump(_wall_dir)
 		return
 	if player.is_on_floor():
 		machine.transition_to(&"Ground")
@@ -37,5 +28,7 @@ func physics_update(delta: float) -> void:
 		machine.transition_to(&"Punch")
 		return
 	if player.touching_wall_dir() != _wall_dir or not player.wants_wall_grab(_wall_dir) or player.input.down_held():
+		player.wall_coyote_timer = t.wall_coyote_time
+		player.wall_coyote_dir = _wall_dir
 		machine.transition_to(&"Fall")
 		return

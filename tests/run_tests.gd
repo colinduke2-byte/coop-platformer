@@ -1332,3 +1332,122 @@ func test_rising_lava_rises_and_resets() -> void:
 	EventBus.level_reset.emit()
 	await frames(2)
 	check(is_equal_approx(lava.position.y, 200.0) and not lava.active, "lava should reset on respawn")
+
+
+# --- Movement refinement ------------------------------------------------------------
+
+func test_wall_run_up_a_wall_when_sprinting() -> void:
+	var p := add_player(0, Vector2(-1200, -2))
+	await settle(p)
+	press(0, "move_right")
+	var ran := false
+	var best := 0.0
+	for i in 600:
+		await get_tree().physics_frame
+		if _state(p) == &"WallRun":
+			ran = true
+		best = minf(best, p.global_position.y)
+	release(0, "move_right")
+	check(ran, "sprinting into the arena wall should wall-run")
+	check(best < -120.0, "a wall run should carry you well up the wall (%.0f)" % best)
+
+
+func test_no_wall_run_at_walking_speed() -> void:
+	var p := add_player(0, Vector2(400, -2))
+	await settle(p)
+	press(0, "move_right")
+	var ran := false
+	for i in 90:
+		await get_tree().physics_frame
+		ran = ran or _state(p) == &"WallRun"
+	release(0, "move_right")
+	check(not ran, "just walking into a wall must not wall-run")
+
+
+func test_wall_coyote_jump_after_letting_go() -> void:
+	var p := add_player(0, Vector2(560, -700))
+	press(0, "move_right")
+	await seconds(0.4)
+	release(0, "move_right")
+	check(_state(p) == &"WallSlide", "should be sliding on the wall")
+	press(0, "move_left")
+	await frames(3)  # pushing away lets go of the wall
+	check(_state(p) == &"Fall", "pushing away should let go")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	release(0, "move_left")
+	check(_state(p) == &"Jump" and p.velocity.x < -200.0 and p.velocity.y < -500.0,
+			"a jump just after letting go should still be a wall jump (v %s)" % p.velocity)
+
+
+func test_walk_up_slope_and_slide_down_faster() -> void:
+	var s := Slope.new()
+	s.position = Vector2(0, 0)
+	s.size = Vector2(300, 150)
+	_arena.add_child(s)
+	_add_block(Vector2(300, -150), Vector2(260, 150))
+	var p := add_player(0, Vector2(-200, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(1.2)
+	release(0, "move_right")
+	check(p.global_position.y < -140.0, "should walk up the slope onto the block (y %.0f)" % p.global_position.y)
+	check(not p.is_on_wall() or _state(p) == &"Ground", "slope must not count as a wall")
+	# Slide back down: faster at the bottom than at the top.
+	p.global_position = Vector2(240, -125)  # on the slope near the top
+	p.velocity = Vector2.ZERO
+	await settle(p)
+	press(0, "move_left")
+	await frames(6)
+	press(0, "move_down")
+	await frames(2)
+	check(_state(p) == &"Slide", "DOWN on a downhill slope should slide even when slow (got %s)" % _state(p))
+	var top_speed := absf(p.velocity.x)
+	await seconds(0.45)
+	var low_speed := absf(p.velocity.x)
+	release(0, "move_down")
+	release(0, "move_left")
+	check(low_speed > top_speed + 100.0, "belly slide should speed up downhill (%.0f -> %.0f)" % [top_speed, low_speed])
+
+
+func _jump_distance(p: Player, run_frames: int) -> float:
+	press(0, "move_right")
+	await frames(run_frames)
+	var x0 := p.global_position.x
+	press(0, "jump")
+	var left := false
+	for i in 300:
+		await get_tree().physics_frame
+		if i == 45:
+			release(0, "jump")
+		if not p.is_on_floor():
+			left = true
+		elif left:
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	return p.global_position.x - x0
+
+
+func test_sprint_jump_carries_momentum() -> void:
+	var p := add_player(0, Vector2(-1900, -2))
+	await settle(p)
+	var run := await _jump_distance(p, 40)
+	await seconds(0.5)
+	p.global_position = Vector2(-1900, -2)
+	await settle(p)
+	var sprint := await _jump_distance(p, 200)
+	check(sprint > run * 1.25, "sprint jumps should go much further (%.0f vs %.0f)" % [sprint, run])
+
+
+func test_tap_stomp_bounce_is_still_decent() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var y0 := p.global_position.y
+	p.bounce()
+	var peak := y0
+	for i in 90:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	check(y0 - peak > 70.0, "a tap stomp bounce should still pop you up (%.0f px)" % (y0 - peak))

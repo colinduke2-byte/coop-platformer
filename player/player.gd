@@ -58,12 +58,18 @@ var _was_on_floor := false
 var _fall_speed := 0.0     ## fastest downward speed since leaving the ground
 
 var _squash := Vector2.ONE
+var speed_before_move := Vector2.ZERO  ## velocity going into this frame's move (before collisions zeroed it)
+var wall_coyote_timer := 0.0
+var wall_coyote_dir := 0
+var wall_run_used := false
 ## Extra whole-body rotation set by states (swinging), applied about body_pivot.
 var body_rotation := 0.0
 var body_pivot := Vector2(0.0, -30.0)
 ## False after launches (pads, rings, wall jumps) so letting go of jump
 ## doesn't cut them short. Read by the Jump state.
 var jump_cuttable := true
+## Jump-cut multiplier for the current launch (-1 = tuning.jump_cut_multiplier).
+var cut_multiplier := -1.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var visual: Node2D = $Visual
@@ -118,6 +124,7 @@ func _physics_process(delta: float) -> void:
 	_update_sprint(delta)
 	if not is_bubbled():
 		_correct_corners(delta)
+	speed_before_move = velocity
 	_move_with_wind()
 	_check_head_bounce()
 	_track_landing()
@@ -158,6 +165,8 @@ func apply_horizontal(delta: float, accel: float, decel: float, max_speed: float
 	if control_lock_timer > 0.0:
 		return  # keep wall-jump momentum
 	var dir := input.move_x()
+	if not is_on_floor() and absf(velocity.y) < tuning.apex_speed_threshold * 2.0:
+		accel *= tuning.apex_air_control  # a touch more steering at the top of the arc
 	if absf(dir) > 0.1:
 		var target := dir * max_speed
 		var a := accel
@@ -228,6 +237,7 @@ func consume_jump() -> void:
 func do_jump(multiplier := 1.0) -> void:
 	consume_jump()
 	jump_cuttable = true
+	cut_multiplier = -1.0
 	velocity.y = tuning.jump_velocity() * multiplier
 	squash(tuning.jump_stretch)
 	arm_glide_after_launch()
@@ -274,9 +284,52 @@ func is_pushing_into_wall() -> bool:
 ## is_on_wall() this works with zero horizontal speed (e.g. after bumping a wall).
 func touching_wall_dir() -> int:
 	for d: int in [1, -1]:
-		if test_move(global_transform, Vector2(d * WALL_PROBE, 0.0)):
+		var col := move_and_collide(Vector2(d * WALL_PROBE, 0.0), true, 0.08, true)
+		# Only near-vertical surfaces count (not slopes you're brushing against).
+		if col and absf(col.get_normal().x) > 0.85:
 			return d
 	return 0
+
+
+## Kick off the wall on side `wall_dir` (+1 = wall on our right).
+func do_wall_jump(wall_dir: int) -> void:
+	var t := tuning
+	consume_jump()
+	wall_coyote_timer = 0.0
+	velocity = Vector2(-wall_dir * t.wall_jump_velocity.x, t.wall_jump_velocity.y)
+	facing = -wall_dir
+	control_lock_timer = t.wall_jump_lock_time
+	squash(t.jump_stretch)
+	jump_cuttable = t.wall_jump_cuttable
+	uppercut_used = false
+	arm_glide_after_launch()
+	EventBus.player_jumped.emit(self)
+	EventBus.player_wall_jumped.emit(self)
+	state_machine.transition_to(&"Jump")
+
+
+## Fell off / let go of a wall a moment ago: a jump still counts as a wall jump.
+func try_wall_coyote_jump() -> bool:
+	if wants_jump() and wall_coyote_timer > 0.0 and wall_coyote_dir != 0:
+		do_wall_jump(wall_coyote_dir)
+		return true
+	return false
+
+
+## Hit a wall at sprint speed: run up it (Rayman-style).
+func try_wall_run() -> bool:
+	var t := tuning
+	if not t.wall_run or wall_run_used or crouched:
+		return false
+	var dir := int(signf(speed_before_move.x))
+	if dir == 0 or absf(speed_before_move.x) < t.wall_run_min_speed or input.move_x() * dir < 0.5:
+		return false
+	if touching_wall_dir() != dir:
+		return false
+	wall_run_used = true
+	ledge_dir = dir
+	state_machine.transition_to(&"WallRun")
+	return true
 
 
 ## Should we grab the wall on side `dir` (see touching_wall_dir)?
@@ -302,7 +355,8 @@ func _update_sprint(delta: float) -> void:
 			_sprint_build += delta
 			if _sprint_build >= t.sprint_build_time:
 				sprint = move_toward(sprint, 1.0, delta / maxf(t.sprint_ramp_time, 0.01))
-		elif state != &"Slide":
+		elif state in [&"Ground", &"Crouch", &"Punch"]:
+			# (Not on takeoff frames: Jump starts while still "on floor".)
 			_sprint_build = 0.0
 			sprint = 0.0
 	elif push * velocity.x < 0.0:
@@ -488,6 +542,7 @@ func bounce(multiplier := -1.0) -> void:
 	velocity.y = tuning.jump_velocity() * multiplier
 	squash(tuning.jump_stretch)
 	jump_cuttable = true
+	cut_multiplier = tuning.stomp_cut_multiplier  # tapping still gives a decent bounce
 	uppercut_used = false
 	arm_glide_after_launch()
 	state_machine.transition_to(&"Jump")
@@ -673,6 +728,9 @@ func _update_timers(delta: float) -> void:
 	control_lock_timer = maxf(control_lock_timer - delta, 0.0)
 	invulnerable_timer = maxf(invulnerable_timer - delta, 0.0)
 	ledge_regrab_timer = maxf(ledge_regrab_timer - delta, 0.0)
+	wall_coyote_timer = maxf(wall_coyote_timer - delta, 0.0)
+	if is_on_floor():
+		wall_run_used = false
 	swing_regrab_timer = maxf(swing_regrab_timer - delta, 0.0)
 	climb_regrab_timer = maxf(climb_regrab_timer - delta, 0.0)
 	# Environment areas re-register every physics frame; forget stale ones.

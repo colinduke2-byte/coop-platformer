@@ -18,6 +18,7 @@ extends Resource
 @export_group("Air")
 @export var air_accel := 2400.0
 @export var air_decel := 1100.0
+@export var apex_air_control := 1.35        ## air steering x this near the top of a jump (precise landings)
 @export var max_fall_speed := 1150.0
 @export var fast_fall_gravity_multiplier := 1.4  ## hold DOWN while falling to drop faster
 @export var fast_fall_max_speed := 1500.0
@@ -28,12 +29,13 @@ extends Resource
 @export var jump_height := 190.0            ## px, full-hold jump
 @export var jump_time_to_peak := 0.38       ## s
 @export var jump_time_to_fall := 0.30       ## s, shorter = snappier fall
-@export var jump_cut_multiplier := 0.45     ## upward speed kept when jump released early
+@export var jump_cut_multiplier := 0.5      ## upward speed kept when jump released early
 @export var apex_speed_threshold := 70.0    ## |vy| under this counts as "apex"
 @export var apex_gravity_multiplier := 0.5  ## floaty hang at top while jump held
 @export var coyote_time := 0.10             ## s after leaving a ledge you can still jump
 @export var jump_buffer_time := 0.12        ## s a jump press is remembered before landing
-@export var stomp_bounce_multiplier := 0.8  ## bounce off enemies, fraction of jump velocity
+@export var stomp_bounce_multiplier := 1.0  ## bounce off enemies (hold jump), fraction of jump velocity
+@export var stomp_cut_multiplier := 0.72    ## tap bounce keeps this much speed (normal jumps cut harder)
 @export var teammate_bounce_multiplier := 0.9  ## land on a teammate's head: boing
 
 enum GlideMode {
@@ -56,6 +58,11 @@ enum GlideMode {
 @export var wall_jump_lock_time := 0.16     ## s of ignored steering after a wall jump
 @export var wall_jump_cuttable := false     ## false = releasing jump early doesn't shorten wall jumps
 @export var wall_auto_grab := true          ## stick to walls you touch while falling (no need to push in); push away to let go
+@export var wall_coyote_time := 0.1         ## s after leaving a wall you can still wall jump
+@export var wall_run := true                ## sprint into a wall and run up it (once per airtime)
+@export var wall_run_min_speed := 500.0     ## horizontal speed needed when you hit the wall
+@export var wall_run_speed := 620.0         ## px/s up the wall at the start (eases off)
+@export var wall_run_time := 0.34           ## s of running up before you slide
 
 @export_group("Ledge grab")
 @export var ledge_grab := true              ## catch ledges you just miss; hold toward = climb, jump = hop up
@@ -101,6 +108,7 @@ enum GlideMode {
 @export var slide_boost := 90.0             ## px/s added when a slide starts
 @export var slide_max_speed := 700.0
 @export var slide_friction := 520.0         ## px/s^2
+@export var slope_slide_accel := 1500.0     ## px/s^2 a belly slide gains going downhill (x slope steepness)
 @export var long_jump_speed := 640.0        ## jump out of a slide = long jump at least this fast
 @export var long_jump_height_multiplier := 0.8
 @export var drop_through_time := 0.25       ## s one-way ledges ignore you after DOWN + JUMP
@@ -128,7 +136,7 @@ enum GlideMode {
 @export var punch_charged_hitbox_multiplier := 1.4
 @export var punch_charged_knockback_multiplier := 1.8
 @export var punch_charge_move_scale := 0.2  ## run speed fraction while charging on the ground
-@export var uppercut_lift := 430.0          ## UP + punch in the air: upward kick, once per airtime
+@export var uppercut_lift := 560.0          ## UP + punch in the air: upward kick, once per airtime
 
 @export_group("Bubble / revive")
 @export var bubble_steer_speed := 160.0
