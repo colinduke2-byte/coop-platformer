@@ -168,9 +168,20 @@ class LevelKit:
                           rise_distance=float(rise), speed=float(speed), active=active or None)
 
     # --- logic --------------------------------------------------------------------
-    def gate(self, x, y, w=48, h=192, open_offset=None, stay_open=True):
+    def gate(self, x, y, w=48, h=192, open_offset=None, stay_open=True, start_open=False):
         return self._tool("Logic", "Gate", "AnimatableBody2D", "gate", x, y, size=V(w, h),
-                          open_offset=V(*(open_offset or (0, -h))), stay_open=None if stay_open else False)
+                          open_offset=V(*(open_offset or (0, -h))), stay_open=None if stay_open else False,
+                          start_open=start_open or None)
+
+    def pit_kill(self, x0, x1, y):
+        """Kill strip under a pit so falls end quickly (instead of the level-wide one)."""
+        from tscn import V as _V
+        path = self.s.node("PitKill", "Area2D", "Hazards", {"script": self.s.script(RES + "world/kill_zone.gd"),
+                                                           "position": _V((x0 + x1) / 2, y), "collision_layer": 32,
+                                                           "collision_mask": 2, "monitorable": False})
+        shape = self.s.sub_res("RectangleShape2D", {"size": _V(x1 - x0 + 200, 60)})
+        self.s.node("Shape", "CollisionShape2D", path, {"shape": shape})
+        return path
 
     def switch(self, x, y, targets, mode=1, duration=None):
         path = self._tool("Logic", "Switch", "Area2D", "punch_switch", x, y, mode=mode, timed_duration=duration)
@@ -183,9 +194,9 @@ class LevelKit:
         self._set_last("targets", [self.rel(path, t) for t in targets])
         return path
 
-    def zone(self, x, y, w, h, targets, everyone=False):
+    def zone(self, x, y, w, h, targets, everyone=False, send_on=True):
         path = self._tool("Logic", "Zone", "Area2D", "zone_trigger", x, y, size=V(w, h),
-                          need_everyone=everyone or None)
+                          need_everyone=everyone or None, send_on=None if send_on else False)
         self._set_last("targets", [self.rel(path, t) for t in targets])
         return path
 

@@ -1,7 +1,7 @@
 class_name Boingo
 extends Enemy
-## BOINGO: a puffed-up balloon blowfish that bobs in the air. Its sides are
-## prickly, but bounce on its head for a HUGE boost (it pops, then puffs back
+## BOINGO: a puffed-up balloon blowfish that bobs in the air. Harmless to
+## bump into - bounce on its head for a HUGE boost (it pops, then puffs back
 ## up after `respawn_time`). Chain them over pits for bouncy traversal.
 
 @export var bob_height := 24.0
@@ -22,6 +22,7 @@ func _init() -> void:
 	body_size = Vector2(52, 50)
 	uses_gravity = false
 	lum_drop = 0
+	contact_hurts = false  # a bouncy helper, not a hazard
 
 
 func _setup() -> void:

@@ -1540,9 +1540,12 @@ func test_lums_drift_toward_nearby_players() -> void:
 var _demo: Level
 
 
-func _load_demo() -> Player:
+func _load_demo(path := "res://levels/demo_level.tscn") -> Player:
 	router().bind_slot(0, 0)
-	_demo = load("res://levels/demo_level.tscn").instantiate()
+	for n in [^"Floor", ^"Wall"]:  # the test arena's own geometry would get in the way
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	_demo = load(path).instantiate()
 	_arena.add_child(_demo)
 	await frames(3)
 	return gm().players.get(0)
@@ -1700,4 +1703,101 @@ func test_demo_pad_reaches_swing_rings() -> void:
 			swung = true
 			break
 	check(swung, "jumping off the ledge should reach the first ring (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+## Jump from where we stand to land on the platform whose top is at (x, y).
+func _hop_to(p: Player, x: float, y: float, max_s := 2.0) -> bool:
+	var dir := "move_right" if x > p.global_position.x else "move_left"
+	press(0, "jump")
+	var left := false
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		var dx := x - p.global_position.x
+		if absf(dx) > 24.0:
+			release(0, "move_left" if dx > 0.0 else "move_right")
+			press(0, "move_right" if dx > 0.0 else "move_left")
+		else:
+			release(0, "move_right")
+			release(0, "move_left")
+		if i == 48:
+			release(0, "jump")
+		if not p.is_on_floor():
+			left = true
+		elif left and absf(p.global_position.y - y) < 6.0:
+			release(0, "move_right")
+			release(0, "move_left")
+			release(0, "jump")
+			await frames(4)
+			return true
+	release(0, "move_right")
+	release(0, "move_left")
+	release(0, "jump")
+	return false
+
+
+func test_candy_boingo_chain_crosses_the_pool() -> void:
+	var p: Player = await _load_demo("res://levels/candy_canopy.tscn")
+	await _place(p, Vector2(1440, -2))
+	await _run_to(p, 1480)
+	press(0, "jump")
+	var crossed := false
+	for i in 600:
+		await get_tree().physics_frame
+		if i == 45:
+			release(0, "jump")  # drop onto the first Boingo...
+		if i > 45 and p.velocity.y < -500.0:
+			press(0, "jump")    # ...and hold jump for big bounces
+		if p.global_position.x > 2230 and p.is_on_floor() and p.global_position.y < 5.0:
+			crossed = true
+			break
+	check(crossed, "bouncing on the Boingos should cross the pool (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_candy_syrup_shaft_is_climbable_in_time() -> void:
+	var p: Player = await _load_demo("res://levels/candy_canopy.tscn")
+	await _place(p, Vector2(9380, -2))
+	await _run_to(p, 9640)
+	release(0, "move_right")
+	await settle(p)
+	var ledges := []
+	for i in 10:
+		ledges.append([9660 if i % 2 == 0 else 10000, -140 * (i + 1)])
+	for l in ledges:
+		var ok: bool = await _hop_to(p, l[0], l[1])
+		if not ok or p.is_bubbled():
+			break
+	check(not p.is_bubbled(), "the syrup should not catch a steady climber")
+	var ok2: bool = await _hop_to(p, 10300, -1250, 3.0)
+	check(ok2 and p.global_position.x > 10200, "should hop out onto the summit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_candy_switch_puzzle_opens_gate() -> void:
+	var p: Player = await _load_demo("res://levels/candy_canopy.tscn")
+	await _place(p, Vector2(8380, -2))
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()  # just the puzzle, please
+	await _run_to(p, 8420)
+	release(0, "move_right")
+	press(0, "jump")
+	for i in 240:
+		await get_tree().physics_frame
+		if p.global_position.y < -300.0 and p.global_position.x < 8650.0:
+			press(0, "move_right")
+		else:
+			release(0, "move_right")
+		if p.is_on_floor() and p.global_position.y < -400.0:
+			break
+	release(0, "move_right")
+	release(0, "jump")
+	check(p.global_position.y < -410.0, "the mushroom should reach the switch ledge (at %s)" % p.global_position)
+	p.global_position.x = 8630.0
+	p.facing = 1
+	await frames(2)
+	await _punch()
+	await seconds(1.0)
+	var gate: Gate = _demo.find_children("*", "Gate", true, false).filter(func(g: Node) -> bool: return g.position.x > 9000.0)[0]
+	check(gate.is_open(), "punching the switch should open the gate")
 	await _finish_demo()

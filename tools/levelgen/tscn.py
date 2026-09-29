@@ -59,6 +59,8 @@ def value(v):
         return _num(v)
     if isinstance(v, str):
         return '"' + v.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+    if isinstance(v, tuple) and len(v) == 2 and all(isinstance(x, (int, float)) for x in v):
+        return str(V(*v))  # (x, y) tuples are Vector2s
     if isinstance(v, (list, tuple)):
         if v and all(isinstance(x, V) for x in v):
             return "PackedVector2Array(%s)" % ", ".join(f"{_num(p.x)}, {_num(p.y)}" for p in v)

@@ -18,6 +18,7 @@ signal triggered
 @export var need_everyone := false
 @export var once := true
 @export var send_on := true                 ## value passed to set_active()
+@export var reset_on_respawn := true        ## everyone respawned at a checkpoint: undo + re-arm
 
 var _fired := false
 var _col: CollisionShape2D
@@ -28,6 +29,15 @@ func _ready() -> void:
 	collision_mask = 2
 	monitorable = false
 	_rebuild()
+	if not Engine.is_editor_hint():
+		EventBus.level_reset.connect(_on_level_reset)
+
+
+## e.g. a chase: the gate that slammed shut behind you opens again, the zone re-arms.
+func _on_level_reset() -> void:
+	if reset_on_respawn and _fired:
+		_fired = false
+		Activation.send(self, targets, not send_on)
 
 
 func _rebuild() -> void:

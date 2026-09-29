@@ -5,6 +5,8 @@ class_name LevelCatalog
 const LEVELS: Array[Dictionary] = [
 	{"id": "demo", "name": "Dreamer's Playground", "scene": "res://levels/demo_level.tscn",
 		"blurb": "Learn every move in a sunny meadow.", "theme": "res://world/themes/meadow.tres"},
+	{"id": "candy", "name": "Candy Canopy", "scene": "res://levels/candy_canopy.tscn",
+		"blurb": "Bouncy mushrooms, Boingo chains, a soda lake... and a syrup flood!", "theme": "res://world/themes/candy.tres"},
 ]
 
 

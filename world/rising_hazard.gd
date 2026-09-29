@@ -23,7 +23,7 @@ var _auto_active := false
 
 
 func _ready() -> void:
-	z_index = 18
+	z_index = -1  # behind blocks: it can start hidden under the floor
 	_start = position
 	_auto_active = active
 	if not Engine.is_editor_hint():

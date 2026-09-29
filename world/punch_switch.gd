@@ -28,11 +28,12 @@ func _ready() -> void:
 	collision_layer = 4   # punchable (the punch hitbox scans the enemies layer)
 	collision_mask = 0
 	monitoring = false
-	var shape := CircleShape2D.new()
-	shape.radius = 26.0
+	# Tall hitbox (post + button) so any normal punch connects.
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(56, 100)
 	var col := CollisionShape2D.new()
 	col.shape = shape
-	col.position = Vector2(0, -70)
+	col.position = Vector2(0, -50)
 	add_child(col, false, Node.INTERNAL_MODE_FRONT)
 	if not Engine.is_editor_hint() and on:
 		Activation.send.call_deferred(self, targets, true)

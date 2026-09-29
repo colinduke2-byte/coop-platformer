@@ -80,21 +80,26 @@ func _draw() -> void:
 
 
 func _draw_solid(th: LevelTheme) -> void:
+	draw_ground(self, size, th, lip, hash(Vector2i(global_position)) ^ hash(Vector2i(size)))
+
+
+## Solid themed ground in a rect of `size` at the origin (Blocks, SecretArea fake walls).
+static func draw_ground(ci: CanvasItem, size: Vector2, th: LevelTheme, lip := true, seed_value := 0) -> void:
 	var r := Rect2(Vector2.ZERO, size)
-	draw_rect(r, th.ground)
+	ci.draw_rect(r, th.ground)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(Vector2i(global_position)) ^ hash(Vector2i(size))
+	rng.seed = seed_value
 	var top := LIP_HEIGHT if lip else 0.0
-	# Soft darker band along the bottom and sides for depth.
-	draw_rect(Rect2(0, size.y - minf(18.0, size.y * 0.3), size.x, minf(18.0, size.y * 0.3)), th.ground_dark)
+	# Soft darker band along the bottom for depth.
+	ci.draw_rect(Rect2(0, size.y - minf(18.0, size.y * 0.3), size.x, minf(18.0, size.y * 0.3)), th.ground_dark)
 	match th.pattern:
 		1:  # pebbles
 			var n := int(size.x * size.y / 2600.0)
 			for i in n:
 				var p := Vector2(rng.randf_range(8, size.x - 8), rng.randf_range(top + 10, size.y - 8))
 				var rr := rng.randf_range(3.0, 7.0)
-				draw_colored_polygon(Art.ellipse(p, rr * 1.4, rr, 10), th.ground_dark)
-				draw_colored_polygon(Art.ellipse(p + Vector2(-1, -1), rr * 0.6, rr * 0.4, 8), th.ground.lightened(0.15))
+				ci.draw_colored_polygon(Art.ellipse(p, rr * 1.4, rr, 10), th.ground_dark)
+				ci.draw_colored_polygon(Art.ellipse(p + Vector2(-1, -1), rr * 0.6, rr * 0.4, 8), th.ground.lightened(0.15))
 		2:  # bricks
 			var bh := 26.0
 			var row := 0
@@ -106,39 +111,40 @@ func _draw_solid(th: LevelTheme) -> void:
 					var a := Vector2(maxf(x + 3.0, 3.0), y + 2.0)
 					var b := Vector2(minf(x + bw - 3.0, size.x - 3.0), minf(y + bh - 2.0, size.y - 3.0))
 					if b.x - a.x > 6.0 and b.y - a.y > 6.0:
-						draw_rect(Rect2(a, b - a), th.ground_dark.lerp(th.ground, rng.randf_range(0.2, 0.6)))
+						ci.draw_rect(Rect2(a, b - a), th.ground_dark.lerp(th.ground, rng.randf_range(0.2, 0.6)))
 					x += bw
 				y += bh
 				row += 1
 		3:  # candy stripes
 			var w := 34.0
 			var x := -size.y
+			var clip := Art.rect(Vector2(2, 2), size - Vector2(2, 2))
 			while x < size.x:
 				var pts := PackedVector2Array([Vector2(x, size.y), Vector2(x + w * 0.5, size.y), Vector2(x + w * 0.5 + size.y, 0), Vector2(x + size.y, 0)])
-				draw_colored_polygon(_clip(pts), th.ground_dark)
+				for piece in Geometry2D.intersect_polygons(pts, clip):
+					ci.draw_colored_polygon(piece, th.ground_dark)
 				x += w
-	# Outline.
-	draw_rect(r, th.outline, false, OUTLINE_W)
+	ci.draw_rect(r, th.outline, false, OUTLINE_W)
 	if lip:
-		_draw_lip(th, rng)
+		_draw_lip_on(ci, size, th, rng)
 
 
 ## Grass / snow / icing edge with a scalloped underside and tufts.
-func _draw_lip(th: LevelTheme, rng: RandomNumberGenerator) -> void:
+static func _draw_lip_on(ci: CanvasItem, size: Vector2, th: LevelTheme, rng: RandomNumberGenerator) -> void:
 	var pts := PackedVector2Array([Vector2(-4, -2), Vector2(size.x + 4, -2)])
 	var bumps := maxi(int(size.x / 22.0), 2)
 	var w := (size.x + 8.0) / bumps
 	for i in range(bumps, -1, -1):
 		var x := -4.0 + i * w
 		pts.append(Vector2(x, LIP_HEIGHT + (4.0 if i % 2 == 0 else -1.0)))
-	Art.shape(self, pts, th.top, th.outline, 3.0)
-	draw_rect(Rect2(-2, 2, size.x + 4, 4), th.top.lightened(0.2))
+	Art.shape(ci, pts, th.top, th.outline, 3.0)
+	ci.draw_rect(Rect2(-2, 2, size.x + 4, 4), th.top.lightened(0.2))
 	# Tufts poking up.
 	var n := int(size.x / 40.0)
 	for i in n:
 		var x := rng.randf_range(10, size.x - 10)
 		var h := rng.randf_range(6, 12)
-		draw_colored_polygon(PackedVector2Array([Vector2(x - 5, 0), Vector2(x - 2, -h), Vector2(x, -2), Vector2(x + 3, -h * 0.8), Vector2(x + 5, 0)]), th.top_dark)
+		ci.draw_colored_polygon(PackedVector2Array([Vector2(x - 5, 0), Vector2(x - 2, -h), Vector2(x, -2), Vector2(x + 3, -h * 0.8), Vector2(x + 5, 0)]), th.top_dark)
 
 
 func _draw_ledge(th: LevelTheme) -> void:
@@ -178,9 +184,3 @@ func _draw_belt(th: LevelTheme) -> void:
 		x += 40.0
 	for cx: float in [8.0, size.x - 8.0]:
 		draw_circle(Vector2(cx, 4), 6.0, th.outline)
-
-
-## Clip a polygon to the block rect (for patterns).
-func _clip(pts: PackedVector2Array) -> PackedVector2Array:
-	var res := Geometry2D.intersect_polygons(pts, Art.rect(Vector2(2, 2), size - Vector2(2, 2)))
-	return res[0] if res.size() > 0 else PackedVector2Array()
