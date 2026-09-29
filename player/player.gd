@@ -102,6 +102,7 @@ func _physics_process(delta: float) -> void:
 	if not is_bubbled():
 		_correct_corners(delta)
 	move_and_slide()
+	_check_head_bounce()
 	_track_landing()
 	_update_visual(delta)
 
@@ -387,6 +388,25 @@ func bounce(multiplier := -1.0) -> void:
 	uppercut_used = false
 	arm_glide_after_launch()
 	state_machine.transition_to(&"Jump")
+
+
+## Land on a teammate's head: boing! You bounce, they get squashed (harmless).
+func _check_head_bounce() -> void:
+	if velocity.y <= 0.0 or is_on_floor() or is_bubbled():
+		return
+	if not state_machine.current_name() in [&"Fall", &"Glide", &"GroundPound"]:
+		return
+	for body in bubble_area.get_overlapping_bodies():
+		var other := body as Player
+		if other == null or other == self or other.is_bubbled():
+			continue
+		var head_y := other.global_position.y - other.body_shape.shape.get_rect().size.y
+		if absf(global_position.x - other.global_position.x) < BODY_SIZE.x \
+				and global_position.y >= head_y - 6.0 and global_position.y <= head_y + 18.0:
+			other.squash(tuning.hard_land_squash)
+			bounce(tuning.teammate_bounce_multiplier)
+			EventBus.player_head_bounced.emit(self, other)
+			return
 
 
 func revive(pop := true) -> void:

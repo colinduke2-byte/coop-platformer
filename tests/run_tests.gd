@@ -36,6 +36,7 @@ class ErrorCatcher extends Logger:
 
 func _ready() -> void:
 	OS.add_logger(_errors)
+	Vfx.hit_stop_enabled = false  # keep test timing deterministic
 	_run.call_deferred()
 
 
@@ -767,3 +768,29 @@ func test_air_uppercut_lifts_once() -> void:
 	await frames(8)
 	release(0, "move_up")
 	check(p.velocity.y > 0.0, "second uppercut in the same airtime gives no lift (vy %.0f)" % p.velocity.y)
+
+
+func test_head_bounce_on_teammate() -> void:
+	var a := add_player(0, Vector2(0, -2))
+	await settle(a)
+	var b := add_player(1, Vector2(0, -300))
+	var bounced := false
+	for i in 120:
+		await get_tree().physics_frame
+		if b.velocity.y < 0.0:
+			bounced = true
+			break
+	check(bounced, "falling onto a teammate's head should bounce you")
+	check(not a.is_bubbled() and not b.is_bubbled(), "head bounces are harmless")
+
+
+func test_juice_effects_spawn_and_clean_up() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	var layer := _arena.get_node_or_null(^"VfxLayer")
+	check(layer != null and layer.get_child_count() > 0, "jumping should puff dust into the level")
+	await seconds(1.5)
+	check(layer == null or layer.get_child_count() == 0, "effects should free themselves")

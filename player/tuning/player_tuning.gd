@@ -34,6 +34,7 @@ extends Resource
 @export var coyote_time := 0.10             ## s after leaving a ledge you can still jump
 @export var jump_buffer_time := 0.12        ## s a jump press is remembered before landing
 @export var stomp_bounce_multiplier := 0.8  ## bounce off enemies, fraction of jump velocity
+@export var teammate_bounce_multiplier := 0.9  ## land on a teammate's head: boing
 
 enum GlideMode {
 	HOLD_THROUGH,     ## keep holding jump past the apex -> glide (no second press)

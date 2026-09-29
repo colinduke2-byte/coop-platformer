@@ -16,6 +16,7 @@ const CHARACTER_SELECT := "res://ui/character_select.tscn"
 var players: Dictionary = {}  ## slot -> Player
 var chosen_characters: Dictionary = {}  ## slot -> CharacterDef (set by character select)
 var lums := 0
+var lums_by_slot: Dictionary = {}  ## slot -> Lums that player grabbed (results screen)
 var checkpoint := Vector2.ZERO
 var level: Level
 
@@ -104,8 +105,9 @@ func respawn_all_at_checkpoint() -> void:
 	EventBus.level_reset.emit()
 
 
-func _on_lum_collected(_slot: int) -> void:
+func _on_lum_collected(slot: int, _pos: Vector2) -> void:
 	lums += 1
+	lums_by_slot[slot] = lums_by_slot.get(slot, 0) + 1
 	EventBus.lums_changed.emit(lums)
 
 

@@ -23,7 +23,7 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if not body is Player or body.is_bubbled():
 		return
-	EventBus.lum_collected.emit(body.slot)
+	EventBus.lum_collected.emit(body.slot, global_position)
 	set_deferred(&"monitoring", false)
 	var tw := create_tween()
 	tw.tween_property(self, ^"scale", Vector2(1.8, 1.8), 0.08)

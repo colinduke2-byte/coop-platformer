@@ -10,12 +10,18 @@ extends Camera2D
 @export var follow_speed := 6.0
 @export var zoom_speed := 2.5
 @export var offscreen_grace := 1.5            ## s before a straggler is bubbled
+@export var shake_max_offset := 28.0          ## px at full trauma
+@export var shake_max_roll := 0.025           ## rad at full trauma
+@export var shake_decay := 2.2                ## trauma lost per second
 
 var _offscreen_time: Dictionary = {}
+var _trauma := 0.0
 
 
 func _ready() -> void:
+	ignore_rotation = false
 	EventBus.level_reset.connect(snap)
+	EventBus.screen_shake.connect(add_trauma)
 	EventBus.player_joined.connect(func(_p: Player) -> void: _offscreen_time.clear())
 
 
@@ -29,6 +35,19 @@ func _physics_process(delta: float) -> void:
 	var z := _zoom_for(rect)
 	zoom = zoom.lerp(Vector2(z, z), clampf(zoom_speed * delta, 0.0, 1.0))
 	_check_stragglers(delta)
+
+
+## Shake the screen. Trauma stacks (capped at 1); the shake is trauma squared,
+## so small bumps stay subtle and big hits really rattle.
+func add_trauma(amount: float) -> void:
+	_trauma = clampf(_trauma + amount, 0.0, 1.0)
+
+
+func _process(delta: float) -> void:
+	_trauma = maxf(_trauma - shake_decay * delta, 0.0)
+	var s := _trauma * _trauma
+	offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * shake_max_offset * s
+	rotation = randf_range(-1.0, 1.0) * shake_max_roll * s
 
 
 ## Jump straight to the target framing (after respawn / level load).
