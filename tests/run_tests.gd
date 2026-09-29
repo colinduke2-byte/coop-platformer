@@ -97,8 +97,8 @@ func release(slot: int, action: String) -> void:
 func add_player(slot: int, pos: Vector2) -> Player:
 	assert(slot < 2, "tests bind keyboard layouts; use slot 0 or 1")
 	router().bind_slot(slot, 0 if slot == 0 else 1)
-	var p: Player = gm().spawn_player(slot)
-	p.global_position = pos
+	var p: Player = gm().spawn_player(slot, pos)
+	p.global_position = pos  # (already spawned players are just moved)
 	return p
 
 
@@ -945,3 +945,207 @@ func test_lum_line_spawns_lums() -> void:
 	var lums := line.get_children().filter(func(c: Node) -> bool: return c is Lum)
 	check(lums.size() == 7, "LumLine should spawn 7 lums, got %d" % lums.size())
 	check((lums[3] as Node2D).position.y < -70.0, "middle lum should be raised by the arc")
+
+
+# --- Enemies -------------------------------------------------------------------------
+
+func _spawn_enemy(path: String, pos: Vector2, facing := -1) -> Enemy:
+	var e: Enemy = load(path).instantiate()
+	e.position = pos
+	e.start_facing = facing
+	_arena.add_child(e)
+	return e
+
+
+func _punch(slot := 0, hold := 2) -> void:
+	press(slot, "attack")
+	await frames(hold)
+	release(slot, "attack")
+
+
+func test_stomp_defeats_grumblet_and_bounces() -> void:
+	var g := _spawn_enemy("res://enemies/grunt.tscn", Vector2(0, 0))
+	g.walk_speed = 0.0
+	g.sight = 0.0
+	var p := add_player(0, Vector2(0, -200))
+	var bounced := false
+	for i in 90:
+		await get_tree().physics_frame
+		if p.velocity.y < -300.0:
+			bounced = true
+	check(bounced, "stomping should bounce you")
+	check(not is_instance_valid(g) or g.dead, "stomp should defeat a Grumblet")
+	check(not p.is_bubbled(), "stomping must not hurt")
+
+
+func test_grumblet_touch_bubbles_player() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	_spawn_enemy("res://enemies/grunt.tscn", Vector2(120, 0), -1)
+	await seconds(1.5)
+	check(p.is_bubbled(), "walking into a Grumblet should bubble you")
+
+
+func test_spikeroo_hurts_stompers_but_punch_works() -> void:
+	var s := _spawn_enemy("res://enemies/spikeroo.tscn", Vector2(0, 0))
+	s.walk_speed = 0.0
+	var p := add_player(0, Vector2(0, -200))
+	await seconds(0.6)
+	check(p.is_bubbled(), "stomping a Spikeroo should hurt you")
+	check(not s.dead, "and it survives")
+	var q := add_player(1, Vector2(-90, -2))
+	await settle(q)
+	await _punch(1)
+	await seconds(0.3)
+	check(not is_instance_valid(s) or s.dead, "a punch should defeat it")
+
+
+func test_shieldbug_blocks_front_but_charged_punch_breaks_shield() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var b := _spawn_enemy("res://enemies/shieldbug.tscn", Vector2(85, 0), -1) as Shieldbug
+	b.walk_speed = 0.0
+	await frames(3)
+	await _punch()
+	await seconds(0.3)
+	check(b.has_shield and b.health == 2, "a tap punch should clank off the shield")
+	p.global_position = Vector2(0, -2)
+	b.global_position = Vector2(85, 0)
+	b.facing = -1
+	await frames(2)
+	press(0, "attack")
+	await seconds(p.tuning.punch_charge_time + 0.1)
+	release(0, "attack")
+	await seconds(0.3)
+	check(not b.has_shield, "a charged punch should smash the shield")
+	check(not b.dead, "breaking the shield doesn't defeat it yet")
+
+
+func test_spitpod_shot_can_be_punched_back() -> void:
+	var pod := _spawn_enemy("res://enemies/spitpod.tscn", Vector2(500, 0)) as Spitpod
+	pod.fire_interval = 0.2
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0  # we only care about the reflect here
+	var shot: Projectile = null
+	for i in 480:
+		await get_tree().physics_frame
+		shot = null
+		for c in _arena.get_children():
+			if c is Projectile and (shot == null or c.global_position.x < shot.global_position.x):
+				shot = c
+		if shot and shot.global_position.x < p.global_position.x + 110.0:
+			break
+	check(shot != null, "Spitpod should spit at a player in range")
+	if shot:
+		pod.fire_interval = 100.0
+		await _punch()
+		await frames(10)
+		check(is_instance_valid(shot) and shot.friendly, "punching the seed should reflect it")
+		await seconds(1.5)
+		check(not is_instance_valid(pod) or pod.dead, "the reflected seed should knock out the Spitpod")
+
+
+func test_bonkhorn_charges_into_wall_and_gets_dizzy() -> void:
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var b := _spawn_enemy("res://enemies/bonkhorn.tscn", Vector2(400, 0), -1) as Bonkhorn
+	await frames(3)
+	p.global_position = Vector2(560, -2)  # get behind it so it charges into the wall
+	b.facing = 1
+	var dizzy := false
+	for i in 360:
+		await get_tree().physics_frame
+		if b.is_stunned():
+			dizzy = true
+			break
+	check(dizzy, "charging into the wall should make it dizzy")
+
+
+func test_bonkhorn_armour_blocks_front_punch() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var b := _spawn_enemy("res://enemies/bonkhorn.tscn", Vector2(90, 0), -1) as Bonkhorn
+	b.sight = 0.0
+	b.walk_speed = 0.0
+	await frames(3)
+	await _punch()
+	await seconds(0.3)
+	check(b.health == 2, "front punches should bounce off an awake Bonkhorn")
+
+
+func test_uppercut_downs_flapjack() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var f := _spawn_enemy("res://enemies/flapjack.tscn", Vector2(p.global_position.x + 10.0, -110)) as Flapjack
+	f.mode = Flapjack.Mode.HOVER
+	f.bob_height = 0.0
+	await frames(10)
+	press(0, "move_up")
+	await _punch()
+	release(0, "move_up")
+	await seconds(0.3)
+	check(not is_instance_valid(f) or f.dead, "an uppercut should knock the Flapjack out of the sky")
+
+
+func test_boingo_stomp_gives_big_bounce_and_respawns() -> void:
+	var b := _spawn_enemy("res://enemies/boingo.tscn", Vector2(0, -150)) as Boingo
+	b.bob_height = 0.0
+	b.respawn_time = 0.5
+	var p := add_player(0, Vector2(0, -400))
+	var best := 0.0
+	for i in 120:
+		await get_tree().physics_frame
+		best = minf(best, p.velocity.y)
+	check(best < p.tuning.jump_velocity() * 1.2, "Boingo bounce should beat a normal jump (vy %.0f)" % best)
+	check(not p.is_bubbled(), "bouncing on Boingo's head is safe")
+	check(b.visible, "it should have puffed back up")
+
+
+func test_spawner_and_defeat_trigger_open_arena_gate() -> void:
+	var gate := Gate.new()
+	gate.position = Vector2(300, -192)
+	_arena.add_child(gate)
+	var lock := DefeatTrigger.new()
+	_arena.add_child(lock)
+	var sp := EnemySpawner.new()
+	sp.total = 2
+	sp.max_alive = 2
+	sp.interval = 0.1
+	sp.active = true
+	sp.position = Vector2(-300, 0)
+	lock.add_child(sp)
+	lock.targets = [lock.get_path_to(gate)]
+	await seconds(0.8)
+	var spawned := get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e is Grunt)
+	check(spawned.size() == 2, "spawner should make 2 enemies, made %d" % spawned.size())
+	check(not gate.is_open(), "gate stays shut while enemies live")
+	for e: Enemy in spawned:
+		e.damage(null, Enemy.HitKind.HAZARD, Vector2.ZERO)
+	await seconds(0.8)
+	check(gate.is_open(), "beating every enemy should open the gate")
+
+
+func test_king_grumblo_slam_daze_and_stomp() -> void:
+	var k := _spawn_enemy("res://enemies/king_grumblo.tscn", Vector2(0, 0)) as KingGrumblo
+	var p := add_player(0, Vector2(-400, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var waves := false
+	for i in 600:
+		await get_tree().physics_frame
+		for c in _arena.get_children():
+			if c is Shockwave:
+				waves = true
+		if k.is_stunned():
+			break
+	check(waves, "the slam should send shockwaves")
+	check(k.is_stunned(), "he should be dazed after slamming")
+	var h := k.health
+	p.global_position = k.global_position + Vector2(0, -180)
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	await seconds(0.5)
+	check(k.health == h - 1, "stomping him while dazed should hurt him")

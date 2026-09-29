@@ -256,3 +256,25 @@ func scn_toys() -> void:
 	await seconds(1.5)
 	release(0, "move_right")
 	await seconds(0.5)
+
+
+func scn_enemies() -> void:
+	var names := ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo"]
+	for i in names.size():
+		var e: Enemy = load("res://enemies/%s.tscn" % names[i]).instantiate()
+		e.position = Vector2(-900 + i * 190, -120 if names[i] in ["flapjack", "boingo"] else 0)
+		e.set_script(e.get_script())
+		_arena.add_child(e)
+		e.set_physics_process(false)
+		e.visual.scale = Vector2(-1, 1)
+		e.visual.queue_redraw()
+	var k: Enemy = load("res://enemies/king_grumblo.tscn").instantiate()
+	k.position = Vector2(450, 0)
+	_arena.add_child(k)
+	k.set_physics_process(false)
+	k.visual.scale = Vector2(-1, 1)
+	_cam.zoom = Vector2.ONE * 1.25
+	_cam.global_position = Vector2(-280, -90)
+	await frames(4)
+	_capturing = true
+	await frames(6)

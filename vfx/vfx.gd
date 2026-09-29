@@ -40,6 +40,10 @@ func _ready() -> void:
 	EventBus.lum_collected.connect(_on_lum_collected)
 	EventBus.checkpoint_reached.connect(_on_checkpoint)
 	EventBus.hit_stop.connect(hit_stop)
+	EventBus.enemy_blocked.connect(_on_enemy_blocked)
+	EventBus.enemy_spawned.connect(_on_enemy_spawned)
+	EventBus.projectile_reflected.connect(_on_reflected)
+	EventBus.pad_bounced.connect(_on_pad_bounced)
 
 
 # --- Public ----------------------------------------------------------------------
@@ -256,6 +260,29 @@ func _on_breakable_broken(b: Node2D, _by: Player) -> void:
 		return
 	puff(b.global_position + Vector2(0, -30), 8, Color(0.85, 0.72, 0.55, 0.9), Vector2.UP, TAU, Vector2(20, 60), Vector2(5, 10), 0.4)
 	shake(0.15)
+
+
+func _on_enemy_blocked(e: Node2D, _by: Player) -> void:
+	if is_instance_valid(e):
+		sparkle(e.global_position + Vector2(0, -30), 4, Color("d9dde8"), 30.0)
+		ring(e.global_position + Vector2(0, -30), 30.0, Color("d9dde8"), 0.15, 4.0)
+		shake(0.1)
+
+
+func _on_enemy_spawned(e: Node2D) -> void:
+	puff(e.global_position + Vector2(0, -20), 10, Color(1, 1, 1, 0.95), Vector2.UP, TAU, Vector2(20, 50), Vector2(8, 14), 0.4)
+
+
+func _on_reflected(p: Node2D, _by: Player) -> void:
+	ring(p.global_position, 36.0, SPARK, 0.18, 4.0)
+	hit_stop(0.05)
+
+
+func _on_pad_bounced(_p: Player, pad: Node2D, pounding: bool) -> void:
+	var top := pad.global_position + Vector2.UP.rotated(pad.global_rotation) * 50.0
+	ring(top, 70.0 if pounding else 45.0, Color(1, 1, 1, 0.8), 0.25, 5.0)
+	if pounding:
+		shake(0.3)
 
 
 func _on_lum_collected(_slot: int, pos: Vector2) -> void:

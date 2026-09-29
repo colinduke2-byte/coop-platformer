@@ -38,15 +38,17 @@ func register_level(new_level: Level) -> void:
 		spawn_player(slot)
 
 
-func spawn_player(slot: int) -> Player:
+## `at` = where to put them (default: next to a living teammate, or the checkpoint).
+func spawn_player(slot: int, at := Vector2.INF) -> Player:
 	if level == null:
 		return null
 	if players.has(slot) and is_instance_valid(players[slot]):
 		return players[slot]
 	var p: Player = PLAYER_SCENE.instantiate()
 	p.setup(slot, character_for(slot))
+	# Position BEFORE entering the tree so physics never sees it at the old spot.
+	p.position = level.players_root.to_local(_join_position() if at == Vector2.INF else at)
 	level.players_root.add_child(p)
-	p.global_position = _join_position()
 	players[slot] = p
 	EventBus.player_joined.emit(p)
 	return p

@@ -1,43 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://enemies/grunt.gd" id="1"]
 
-[sub_resource type="RectangleShape2D" id="body_shape"]
-size = Vector2(44, 40)
-
-[sub_resource type="RectangleShape2D" id="hit_shape"]
-size = Vector2(48, 46)
-
 [node name="Grunt" type="CharacterBody2D"]
-collision_layer = 4
-collision_mask = 1
-floor_snap_length = 8.0
 script = ExtResource("1")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -20)
-shape = SubResource("body_shape")
-
-[node name="Visual" type="Node2D" parent="."]
-
-[node name="Body" type="Polygon2D" parent="Visual"]
-color = Color(0.55, 0.25, 0.6, 1)
-polygon = PackedVector2Array(-22, 0, -24, -28, -12, -42, 12, -42, 24, -28, 22, 0)
-
-[node name="Eye" type="Polygon2D" parent="Visual"]
-color = Color(1, 0.9, 0.2, 1)
-polygon = PackedVector2Array(-16, -32, -6, -32, -6, -24, -16, -24)
-
-[node name="LedgeRay" type="RayCast2D" parent="."]
-position = Vector2(-26, -4)
-target_position = Vector2(0, 30)
-collision_mask = 1
-
-[node name="Hitbox" type="Area2D" parent="."]
-collision_layer = 0
-collision_mask = 2
-monitorable = false
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(0, -22)
-shape = SubResource("hit_shape")

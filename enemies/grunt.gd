@@ -1,63 +1,57 @@
 class_name Grunt
-extends CharacterBody2D
-## Basic patrolling enemy. Turns at walls and ledges. Punch it or stomp it;
-## touch it any other way and you get bubbled.
+extends Enemy
+## GRUMBLET: grumpy purple blob that stomps back and forth. Spot a player in
+## front of it and it does a little "!" hop, then charges for a moment.
+## Stomp it, punch it, slide into it. The basic enemy - use lots.
 
-@export var speed := 110.0
-@export var health := 1
-@export var gravity := 2400.0
+@export var walk_speed := 90.0
+@export var chase_speed := 190.0
+@export var sight := 300.0                  ## px it notices players ahead
+@export var chase_time := 1.4
 
-var _dir := -1
-var _dead := false
+const BODY := Color("8a5cc7")
+const BELLY := Color("c9b3f0")
 
-@onready var _ledge_ray: RayCast2D = $LedgeRay
-
-
-func _ready() -> void:
-	add_to_group(&"enemies")
-	$Hitbox.body_entered.connect(_on_hitbox_body_entered)
+var _alert := 0.0      ## > 0: surprised hop in progress
+var _chase := 0.0
 
 
-func _physics_process(delta: float) -> void:
-	if _dead:
+func _init() -> void:
+	body_size = Vector2(44, 40)
+
+
+func _behave(delta: float) -> void:
+	if _alert > 0.0:
+		_alert -= delta
+		velocity.x = 0.0
+		if _alert <= 0.0:
+			_chase = chase_time
 		return
-	velocity.y = minf(velocity.y + gravity * delta, 1200.0)
-	if is_on_floor() and (is_on_wall() or not _ledge_ray.is_colliding()):
-		_dir = -_dir
-	_ledge_ray.position.x = 26.0 * _dir
-	velocity.x = speed * _dir
-	move_and_slide()
-	$Visual.scale.x = -_dir
-
-
-func take_hit(by: Player, knockback: Vector2) -> void:
-	if _dead:
+	if _chase > 0.0:
+		_chase -= delta
+		patrol(chase_speed)
 		return
-	health -= 1
-	velocity = knockback
-	if health <= 0:
-		_die(by)
+	patrol(walk_speed)
+	var p := nearest_player(sight, 60.0)
+	if p and is_on_floor() and signf(p.global_position.x - global_position.x) == facing:
+		_alert = 0.35
+		velocity.y = -380.0
+		squash(Vector2(0.8, 1.25))
 
 
-func _die(by: Player) -> void:
-	_dead = true
-	EventBus.enemy_defeated.emit(self, by)
-	$Hitbox.set_deferred(&"monitoring", false)
-	set_deferred(&"collision_layer", 0)
-	var tw := create_tween()
-	tw.tween_property(self, ^"scale", Vector2(1.4, 0.2), 0.12)
-	tw.tween_callback(queue_free)
-
-
-func _on_hitbox_body_entered(body: Node2D) -> void:
-	if _dead or not body is Player:
-		return
-	var p := body as Player
-	if p.is_bubbled():
-		return
-	var stomping := p.velocity.y > 0.0 and p.global_position.y < global_position.y - 20.0
-	if stomping:
-		take_hit(p, Vector2.ZERO)
-		p.bounce()
-	else:
-		p.hurt()
+func _draw_body(ci: CanvasItem) -> void:
+	var walk := anim_time * (16.0 if _chase > 0.0 else 9.0)
+	var step := sin(walk) * 5.0 if is_on_floor() and absf(velocity.x) > 1.0 else 0.0
+	Enemy.draw_foot(ci, Vector2(-9 + step, -4), BODY.darkened(0.4))
+	Enemy.draw_foot(ci, Vector2(9 - step, -4), BODY.darkened(0.3))
+	var bob := absf(sin(walk)) * -2.0
+	Art.shape(ci, Art.ellipse(Vector2(0, -22 + bob), 25, 21), BODY, OUTLINE)
+	Art.shape(ci, Art.ellipse(Vector2(5, -15 + bob), 15, 11), BELLY, OUTLINE, 0.0)
+	var angry := 1.0 if _chase > 0.0 or _alert > 0.0 else 0.5
+	Enemy.draw_eye(ci, Vector2(4, -30 + bob), 5.5, Vector2(1, 0), angry)
+	Enemy.draw_eye(ci, Vector2(16, -29 + bob), 5.0, Vector2(1, 0), -angry)
+	# Underbite with one tooth.
+	ci.draw_line(Vector2(6, -17 + bob), Vector2(22, -19 + bob), OUTLINE, 2.5)
+	Art.shape(ci, PackedVector2Array([Vector2(15, -19 + bob), Vector2(19, -19.5 + bob), Vector2(17, -25 + bob)]), EYE_WHITE, OUTLINE, 1.5)
+	if _alert > 0.0:
+		ci.draw_string(ThemeDB.fallback_font, Vector2(-6, -60), "!", HORIZONTAL_ALIGNMENT_CENTER, -1, 30, Color("ffd23f"))
