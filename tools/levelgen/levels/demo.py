@@ -52,7 +52,7 @@ L.deco("rock", 3800, 0, 0.8)
 
 # ---- S4 crouch / slide tunnel (4250..5000) -----------------------------------------------
 L.checkpoint(4320, 0)
-L.sign(4420, 0, "5. Hold DOWN to crawl.\nRunning + DOWN = belly slide!", 380)
+L.sign(4520, 0, "5. Hold DOWN to crawl.\nRunning + DOWN = belly slide!", 380)
 L.block(4600, -320, 400, 275)          # 45 px gap underneath
 L.lums(4640, -22, 4960, -22, 5)
 L.deco("bush", 5050, 0)
@@ -68,13 +68,13 @@ L.gem(5460, -770)                      # on top of the pillar
 L.checkpoint(5760, -700)
 
 # ---- S6 wall run (cliff top -700, 5650..6900) ------------------------------------------------
-L.sign(5950, -700, "8. SPRINT, jump at the wall\nand RUN UP IT!", 380)
+L.sign(6030, -700, "8. SPRINT, jump at the wall\nand RUN UP IT!", 380)
 L.block(6550, -1020, 900, 320)         # 320 high step: sprint + wall run
 L.lums(6500, -800, 6500, -1000, 3)
 L.deco("tree", 6150, -700, 0.9)
 
 # ---- S7 glide canyon (6550..8400) -------------------------------------------------------------
-L.checkpoint(7050, -1020)
+L.checkpoint(6620, -1020)
 L.sign(7200, -1020, "9. GLIDE: keep holding JUMP after the top of a jump.\nLet go + press JUMP again to re-glide.\nWind lifts gliders!", 520)
 kz(7450, 8350, -380)
 L.updraft(7820, -1500, 160, 1100, 380)
@@ -83,8 +83,8 @@ L.lums(7900, -1350, 7900, -1500, 3)
 L.ground(8350, 9000, -960)
 
 # ---- S8 bounce pads + swing rings (8350..10000) ------------------------------------------------
-L.checkpoint(8430, -960)
-L.sign(8600, -960, "10. Bounce on mushrooms (hold JUMP = higher).\nFly into flower rings to SWING,\nJUMP to let go.", 460)
+L.checkpoint(8370, -960)
+L.sign(8600, -960, "10. Bounce on mushrooms\n(hold JUMP = higher).\nFly into flower rings to SWING,\nJUMP to let go.", 380)
 L.pad(8820, -960)
 L.ledge(8900, -1300, 180)             # the mushroom bounces you up here
 for i, (x, y) in enumerate([(9230, -1400), (9470, -1380), (9710, -1400), (9950, -1380)]):
@@ -96,8 +96,8 @@ L.lums(9230, -1300, 9950, -1300, 6, -40)
 L.ground(10000, 11060, -960)
 
 # ---- S9 punch + crates + uppercut (10000..11050) --------------------------------------------------
-L.checkpoint(10060, -960)
-L.sign(10250, -960, "11. PUNCH: tap = jab, HOLD = charged punch\n(iron crates need a charged one).\nUP + punch = uppercut", 460)
+L.checkpoint(10020, -960)
+L.sign(10250, -960, "11. PUNCH: tap = jab,\nHOLD = charged punch (breaks iron).\nUP + punch = uppercut", 380)
 L.crate(10450, -960); L.crate(10560, -960); L.crate(10560, -1024)
 L.crate(10700, -960, iron=True, lums=5)
 L.crate(10840, -1080, lums=4)         # overhead: uppercut it
@@ -116,27 +116,27 @@ L.sign(11130, -960, "12. GROUND POUND: DOWN + punch in the air.\nSmash the crack
 L.crate(11700, -960); L.crate(11700, -1024)
 
 # ---- S11 enemy zoo (11800..14030) ---------------------------------------------------------------------
-L.checkpoint(11850, -960)
-L.sign(12050, -960, "GRUMBLET: stomp it or punch it.", 360)
-L.enemy("grunt", 12300, -960)
-L.sign(12650, -960, "SPIKEROO: don't stomp!\nPunch it or slide into it.", 360)
-L.enemy("spikeroo", 12850, -960)
-L.checkpoint(13050, -960)
-L.sign(13250, -960, "SHIELDBUG: hit it from behind, stomp it,\nor CHARGED punch the shield.", 420)
-L.enemy("shieldbug", 13450, -960)
-L.block(13620, -1040, 110, 80)
-L.enemy("spitpod", 13675, -1040)
-L.sign(13560, -1040, "SPITPOD: punch its seeds back!", 360)
+L.checkpoint(11790, -960)
+L.sign(12000, -960, "GRUMBLET:\nstomp it or punch it.", 300)
+L.enemy("grunt", 12250, -960)
+L.sign(12550, -960, "SPIKEROO: don't stomp!\nPunch it or slide into it.", 300)
+L.enemy("spikeroo", 12750, -960)
+L.checkpoint(12950, -960)
+L.sign(13150, -960, "SHIELDBUG: hit it from behind,\nstomp it, or CHARGED punch\nthe shield.", 320)
+L.enemy("shieldbug", 13380, -960)
+L.block(13560, -1040, 110, 80)
+L.enemy("spitpod", 13615, -1040)
+L.sign(13615, -1040, "SPITPOD: punch\nits seeds back!", 240)
 L.enemy("bonkhorn", 13900, -960)
 L.block(14030, -1060, 60, 560)        # bonk wall (jump over it)
-L.sign(13850, -960, "BONKHORN: dodge the charge -\nit gets dizzy on walls. Then pound it!", 420)
+L.sign(13890, -960, "BONKHORN: dodge the charge -\ndizzy on walls? POUND it!", 280)
 
 # ---- S12 switch + moving + crumble + plate/gate (14030..16000) ---------------------------------------------
 L.ground(14090, 14450, -960, 460)
-L.checkpoint(14150, -960)
+L.checkpoint(14110, -960)
 plat = L.moving(14460, -980, 192, 32, waypoints=((300, 0),), speed=150, wait=0.5, active=False)
 L.switch(14350, -960, [plat], mode=1)
-L.sign(14230, -960, "13. PUNCH the switch\nto start the platform", 320)
+L.sign(14260, -960, "13. PUNCH the switch\nto start the platform", 260)
 kz(14450, 15450, -380)
 L.crumble(15020, -1000, 130); L.crumble(15230, -1000, 130)
 L.lums(14520, -1060, 15300, -1100, 7, 40)
@@ -144,26 +144,26 @@ L.ground(15450, 16350, -960, 460)
 gate = L.gate(15950, -1152, 48, 192)
 L.plate(15700, -960, [gate], required=1, latch=True)
 L.sign(15550, -960, "14. Pressure plates open gates.\n(Some need TWO friends!)", 380)
-L.checkpoint(16100, -960)
+L.checkpoint(16020, -960)
 
 # ---- S13 water (16300..17400) -----------------------------------------------------------------------------------
 L.block(16350, -560, 900, 120)        # pool bottom
 L.water(16350, -960, 900, 400)
 L.ground(17250, 17800, -960, 460)
-L.sign(16250, -960, "15. SWIM: steer anywhere,\nJUMP = stroke, JUMP at the surface = leap out", 420)
+L.sign(16250, -960, "15. SWIM: steer anywhere,\nJUMP = stroke,\nJUMP at the surface = leap out", 360)
 L.lums(16450, -800, 17150, -800, 8, -80)
 L.spikeball(16800, -760, count=2, radius=110, speed=60)
 L.gem(17170, -610)
 L.deco("reeds", 16340, -960, 1.0, front=True); L.deco("reeds", 17260, -960, 1.0, front=True)
 
 # ---- S14 vine + cannons (17250..19000) ---------------------------------------------------------------------------
-L.checkpoint(17350, -960)
+L.checkpoint(17290, -960)
 L.block(17800, -1560, 700, 1060)       # cliff
 L.vine(17760, -1560, 600)
 L.sign(17500, -960, "16. Climb vines: UP / DOWN,\nJUMP to leap off", 340)
 L.lums(17760, -1100, 17760, -1500, 4)
 L.checkpoint(17950, -1560)
-L.sign(18150, -1560, "17. Hop in a barrel, JUMP to FIRE!", 380)
+L.sign(18190, -1560, "17. Hop in a barrel, JUMP to FIRE!", 380)
 L.cannon(18430, -1610, rotation=60)
 L.cannon(18880, -1610, rotation=60, auto=0.35)
 kz(18500, 19350, -900)
@@ -171,8 +171,8 @@ L.lums(18520, -1720, 19250, -1720, 7, 80)
 L.ground(19350, 19900, -1560, 460)
 
 # ---- S15 slope + ice + conveyor + wind (19350..22100) ---------------------------------------------------------------
-L.checkpoint(19450, -1560)
-L.sign(19600, -1560, "18. Slide down slopes: DOWN = belly slide.\nIt gets FAST!", 420)
+L.checkpoint(19395, -1560)
+L.sign(19660, -1560, "18. Slide down slopes:\nDOWN = belly slide. It gets FAST!", 400)
 L.slope(19900, -1260, 600, 300, rising_right=False, fill_below=400)
 L.lums(19950, -1560, 20450, -1300, 6)
 L.block(20500, -1260, 500, 400, slippery=True)
