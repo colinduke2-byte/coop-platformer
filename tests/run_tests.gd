@@ -3122,3 +3122,141 @@ func test_w1_4_last_zipline_to_the_goal_tree() -> void:
 	release(0, "move_right")
 	check(landed, "the long zipline should reach the goal tree (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+# --- World 1-5 Millstream Rush bots ---------------------------------------------------
+
+const W1_5 := "res://levels/w1_5_millstream_rush.tscn"
+
+
+func test_w1_5_rafts_cross_the_river() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	await _place(p, Vector2(1150, -2))
+	# Wait for a raft near the bank, hop on, ride, hop off at the far bank.
+	var rafts := _demo.find_children("*", "LogRaft", true, false)
+	var on_raft: LogRaft = null
+	for i in 900:
+		await get_tree().physics_frame
+		for r in rafts:
+			var lr := r as LogRaft
+			if lr.global_position.x > 1280.0 and lr.global_position.x < 1380.0 and lr.modulate.a > 0.9 and lr.global_position.y < 200.0:
+				on_raft = lr
+		if on_raft:
+			break
+	check(on_raft != null, "a raft should drift past the bank")
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 60:
+		await get_tree().physics_frame
+		if p.global_position.x > on_raft.global_position.x - 10.0:
+			release(0, "move_right")
+	release(0, "jump")
+	release(0, "move_right")
+	for i in 2400:
+		await get_tree().physics_frame
+		if on_raft.global_position.x > 2800.0:
+			break
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(40)
+	release(0, "jump")
+	await seconds(0.8)
+	release(0, "move_right")
+	check(p.global_position.x > 3010.0 and p.global_position.y < 10.0, "riding a raft should get you across dry (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_water_wheel_to_the_mill_roof() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	var wheel: Node2D = _demo.find_children("*", "PlatformWheel", true, false)[0]
+	await _place(p, Vector2(4080, -2))
+	# Hop onto whichever platform comes low on the left, then ride to the top.
+	var rode := false
+	for i in 1800:
+		await get_tree().physics_frame
+		if not rode and p.is_on_floor() and p.global_position.y < -60.0:
+			rode = true
+		if not rode and i % 60 == 0:
+			press(0, "jump")
+			await frames(4)
+			release(0, "jump")
+		if rode and p.global_position.y < wheel.global_position.y - 220.0 and p.global_position.x > wheel.global_position.x + 30.0:
+			break  # at the top, just past the apex
+	check(rode, "you should be able to board the wheel")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(30)
+	release(0, "jump")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(p.global_position.y < -540.0 and p.global_position.x > 4520.0, "the wheel should lift you onto the mill roof (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_rock_hops_over_the_rapids() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	await _place(p, Vector2(5180, -2))
+	for target in [5485.0, 5795.0, 6115.0, 6435.0, 6755.0, 7000.0]:
+		press(0, "move_right")
+		press(0, "jump")
+		for i in 120:
+			await get_tree().physics_frame
+			if p.global_position.x >= target - 40.0:
+				release(0, "move_right")
+			if p.is_on_floor() and absf(p.global_position.x - target) < 70.0 and i > 10:
+				break
+		release(0, "jump")
+		release(0, "move_right")
+		await frames(4)
+		# The geyser on the second rock may toss you up: wait until you're down.
+		for i in 300:
+			if p.is_on_floor():
+				break
+			await get_tree().physics_frame
+	check(p.global_position.x > 6920.0 and p.global_position.y < 10.0, "hopping the rocks should get you over the rapids (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_net_climb_beside_the_falls() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	await _place(p, Vector2(7405, -2))
+	press(0, "move_up")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -1060.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(20)
+	release(0, "jump")
+	await seconds(0.8)
+	release(0, "move_right")
+	check(p.global_position.y < -1090.0 and p.global_position.x > 7440.0, "the net should take you up to the top of the falls (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_dam_zipline_to_the_goal() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	await _place(p, Vector2(10080, -1272))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var ok := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 10920.0:
+			ok = true
+			break
+	release(0, "move_right")
+	check(ok, "the dam zipline should reach the goal island (at %s)" % p.global_position)
+	await _finish_demo()

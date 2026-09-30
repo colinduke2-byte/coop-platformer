@@ -114,6 +114,24 @@ func _bake() -> ArrayMesh:
 					mp.draw_polyline(pts2, th.ground_dark, 2.5)
 				x += rng.randf_range(22, 40)
 			continue
+		if th.pattern == 2:
+			# Stone blocks (same look as Block's brick pattern), only where they fit inside.
+			var bh := 26.0
+			var bw := 52.0
+			var row := 0
+			var y := box.position.y + 4.0
+			while y < box.end.y - 4.0:
+				var x := box.position.x - (bw * 0.5 if row % 2 == 1 else 0.0)
+				while x < box.end.x:
+					var a := Vector2(x + 3.0, y + 2.0)
+					var b := Vector2(x + bw - 3.0, y + bh - 2.0)
+					if Geometry2D.is_point_in_polygon(a, inner) and Geometry2D.is_point_in_polygon(b, inner) \
+							and Geometry2D.is_point_in_polygon(Vector2(a.x, b.y), inner) and Geometry2D.is_point_in_polygon(Vector2(b.x, a.y), inner):
+						mp.draw_rect(Rect2(a, b - a), th.ground_dark.lerp(th.ground, rng.randf_range(0.2, 0.6)))
+					x += bw
+				y += bh
+				row += 1
+			continue
 		# Pebbles inside the core.
 		var n := int(box.get_area() / 2800.0)
 		for i in mini(n, 900):

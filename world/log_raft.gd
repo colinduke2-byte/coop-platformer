@@ -30,7 +30,7 @@ func _ready() -> void:
 	collision_layer = 1
 	collision_mask = 0
 	sync_to_physics = false
-	z_index = 2  # above the water it floats on
+	z_index = 16  # above the water's tint (water is 15)
 	_home = position
 	_dist = start_offset * travel
 	_t = start_offset * 10.0
