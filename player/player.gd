@@ -215,7 +215,7 @@ func floor_friction() -> float:
 		var c := get_slide_collision(i)
 		if c.get_normal().y < -0.7:
 			var b := c.get_collider()
-			if b is Block and b.slippery:
+			if (b is Block or b is Terrain) and b.slippery:
 				return tuning.ice_friction
 	return 1.0
 

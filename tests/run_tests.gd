@@ -3604,3 +3604,282 @@ func test_grumblefrost_is_dazed_by_his_own_boulder_punched_back() -> void:
 	b._on_stomped(p)
 	check(b.health == hp - 1, "a dazed yeti can be stomped (hp %d -> %d)" % [hp, b.health])
 	check(not b.blocks_hit(p, Enemy.HitKind.PROJECTILE), "boulders always get through")
+
+
+# --- World 2 bots -------------------------------------------------------------------------
+
+## Hold right (sprinting if asked); tap JUMP each time x passes one of `jump_at`.
+## Stops at `end_x` or after `max_s`. Returns true if it got there without bubbling.
+func _hop_run(p: Player, jump_at: Array, end_x: float, sprint := false, max_s := 12.0) -> bool:
+	press(0, "move_right")
+	if sprint:
+		press(0, "sprint")
+	var k := 0
+	var held := 0
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		if held > 0:
+			held -= 1
+			if held == 0:
+				release(0, "jump")
+		if k < jump_at.size() and p.global_position.x >= float(jump_at[k]):
+			press(0, "jump")
+			held = 24
+			k += 1
+		if p.global_position.x >= end_x and p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "sprint")
+	release(0, "jump")
+	return p.global_position.x >= end_x and not p.is_bubbled()
+
+
+func _nodes_of(script_class: String) -> Array[Node]:
+	return _demo.find_children("*", script_class, true, false)
+
+
+const W2_1 := "res://levels/w2_1_snowball_slopes.tscn"
+
+
+func test_w2_1_first_snowball_bowls_the_line_of_grumblets() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(1440, -2))
+	var pile: SnowPile = null
+	for n in _nodes_of("SnowPile"):
+		if absf(n.global_position.x - 1560.0) < 10.0:
+			pile = n
+	pile.take_hit(p, Vector2.RIGHT)
+	await seconds(4.0)
+	var alive := 0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Grunt and not e.dead and e.global_position.x > 1900.0 and e.global_position.x < 2300.0:
+			alive += 1
+	check(alive == 0, "the snowball should flatten all three Grumblets (%d left)" % alive)
+	var wall_broken := true
+	for b in _nodes_of("BreakableBlock"):
+		if absf(b.global_position.x - 2700.0) < 5.0 and b.collision_layer != 0:
+			wall_broken = false
+	check(wall_broken, "...and burst through the cracked wall")
+	await _finish_demo()
+
+
+func test_w2_1_big_snowball_smashes_the_ice_gate() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4740, -2))
+	for n in _nodes_of("SnowPile"):
+		if absf(n.global_position.x - 4800.0) < 10.0:
+			n.take_hit(p, Vector2.RIGHT)
+	var broken := false
+	for i in 900:
+		await get_tree().physics_frame
+		for b in _nodes_of("BreakableBlock"):
+			if absf(b.global_position.x - 6560.0) < 5.0 and b.collision_layer == 0:
+				broken = true
+		if broken:
+			break
+	check(broken, "a snowball rolled down the big slope should smash the packed-ice gate")
+	await _finish_demo()
+
+
+func test_w2_1_ski_jump_is_makeable_with_a_sprint() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	for b in _nodes_of("BreakableBlock"):
+		b.take_hit(null, Vector2.ZERO)
+	await _place(p, Vector2(7150, 638))
+	var ok := await _hop_run(p, [7600], 8100, true, 6.0)
+	check(ok, "a sprint jump off the kicker should clear the gap (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_1_pit_mushroom_returns_you_to_the_kicker() -> void:
+	var p: Player = await _load_demo(W2_1)
+	await _place(p, Vector2(7800, 998))
+	await _run_to(p, 7720, "move_left", 2.0)
+	var ok := false
+	for i in 360:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.y < 700.0:
+			release(0, "move_left")
+			ok = true
+			break
+	release(0, "move_left")
+	check(ok, "the mushroom in the pit should send you back up (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_1_drifts_can_be_hopped_to_the_goal() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(8560, 638))
+	var ok := await _hop_run(p, [8650, 9170, 9700, 10240], 10500, false, 10.0)
+	check(ok, "the floating drifts should be hoppable (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W2_2 := "res://levels/w2_2_cablecar_cliffs.tscn"
+
+
+## Stand on the chair at `board`, ride to the top, then walk off right to x > `off_x`.
+func _ride_lift(p: Player, board: Vector2, off_x: float, top_y: float) -> bool:
+	await _place(p, board)
+	for i in 1800:
+		await get_tree().physics_frame
+		if p.global_position.x >= off_x - 260.0 and absf(p.global_position.y - top_y) < 6.0:
+			break
+	await _run_to(p, off_x + 40.0, "move_right", 2.0)
+	release(0, "move_right")
+	await seconds(0.3)
+	return p.is_on_floor() and absf(p.global_position.y - top_y) < 10.0 and p.global_position.x > off_x
+
+
+func test_w2_2_first_chairlift_reaches_the_station() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	var ok := await _ride_lift(p, Vector2(1320, -4), 2560.0, -600.0)
+	check(ok, "the first chairlift should carry you up to the gusty ledges (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_crumbling_ledges_in_the_headwind() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(2900, -602))
+	var ok := await _hop_run(p, [2990, 3240, 3500, 3750], 3900, true, 8.0)
+	check(ok, "the crumbling ledges should be crossable in the wind (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_second_chairlift_reaches_the_upper_station() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	var ok := await _ride_lift(p, Vector2(4570, -624), 5720.0, -1250.0)
+	check(ok, "the second chairlift should reach the upper station (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_ice_staircase_climbs_to_the_summit_deck() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6300, -1252))
+	var ok := await _hop_run(p, [6370, 6730, 7130, 7530], 7800, false, 8.0)
+	check(ok, "the icy steps should lead up to the summit deck (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_zipline_goes_down_to_the_goal() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(8550, -1852))
+	var ok := await _hop_run(p, [8640], 9900, false, 8.0)
+	check(ok, "the zipline should carry you down to the bottom station (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W2_3 := "res://levels/w2_3_crystal_caverns.tscn"
+
+
+## Jump from where you stand toward `dir` (holding it), until you land. Returns the landing spot.
+func _leap(p: Player, dir: String, hold := 30) -> Vector2:
+	press(0, dir)
+	press(0, "jump")
+	await frames(hold)
+	release(0, "jump")
+	for i in 240:
+		await get_tree().physics_frame
+		if p.is_on_floor() and i > 4:
+			break
+	release(0, dir)
+	await frames(6)
+	return p.global_position
+
+
+func test_w2_3_icicle_corridor_can_be_run_through() -> void:
+	var p: Player = await _load_demo(W2_3)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Yetling:
+			e.queue_free()
+	await _place(p, Vector2(1800, -2))
+	var ok := await _hop_run(p, [], 3150, true, 6.0)
+	check(ok, "sprinting through the icicle corridor should be safe (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()
+
+
+func test_w2_3_slide_and_lake_lead_to_the_far_shore() -> void:
+	var p: Player = await _load_demo(W2_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(3150, -2))
+	press(0, "move_right")
+	var ok := false
+	for i in 1800:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"Swim" and i % 30 == 0:
+			press(0, "jump")
+		elif i % 30 == 10:
+			release(0, "jump")
+		if p.global_position.x > 6720.0 and p.is_on_floor():
+			ok = true
+			break
+	release(0, "move_right")
+	release(0, "jump")
+	check(ok, "slide down, swim the lake and climb out the far side (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_3_crystal_ledges_climb_to_the_top() -> void:
+	var p: Player = await _load_demo(W2_3)
+	p.invulnerable_timer = 100.0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Snowl:
+			e.queue_free()
+	await _place(p, Vector2(6900, 478))
+	var steps := [["move_right", 340.0], ["move_right", 200.0], ["move_left", 60.0], ["move_right", -80.0], ["move_left", -220.0],
+			["move_right", -360.0], ["move_right", -400.0]]
+	for s in steps:
+		var at: Vector2 = await _leap(p, s[0], 50)
+		if absf(at.y - float(s[1])) > 8.0:
+			check(false, "the crystal climb should reach y %.0f (landed at %s)" % [s[1], at])
+			await _finish_demo()
+			return
+	check(p.global_position.x > 7650.0, "the climb should end on the upper tunnel (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_3_crushers_can_be_outrun() -> void:
+	var p: Player = await _load_demo(W2_3)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Slidgewick:
+			e.queue_free()
+	await _place(p, Vector2(8700, -402))
+	var ok := await _hop_run(p, [], 9800, true, 5.0)
+	check(ok, "sprinting under the crushers should get you through (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()
+
+
+const W2_4 := "res://levels/w2_4_avalanche_alley.tscn"
+
+
+func test_w2_4_the_avalanche_can_be_outrun_to_the_bottom() -> void:
+	var p: Player = await _load_demo(W2_4)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()  # the bot doesn't fight; it just runs
+	var ava: Avalanche = _nodes_of("Avalanche")[0]
+	await _place(p, Vector2(1200, -2))
+	var ok := await _hop_run(p, [2975, 5175, 7375, 9490], 10000, true, 40.0)
+	check(ava.active or ava._done, "crossing the valley should set off the avalanche")
+	check(ok, "sprinting and hopping the crevasses should outrun the avalanche (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()
+
+
+func test_w2_4_avalanche_restarts_behind_a_mid_chase_checkpoint() -> void:
+	var p: Player = await _load_demo(W2_4)
+	var ava: Avalanche = _nodes_of("Avalanche")[0]
+	gm().checkpoint = Vector2(4280, 404)
+	EventBus.level_reset.emit()
+	await frames(2)
+	check(not ava.active and absf(ava.front_x() - (4280.0 - ava.respawn_lead)) < 2.0, "it waits behind the checkpoint")
+	await seconds(ava.restart_delay + 0.3)
+	check(ava.active, "...then comes again by itself")
+	await _finish_demo()

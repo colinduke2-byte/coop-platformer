@@ -12,7 +12,10 @@ extends Node2D
 @export var height := 900.0           ## how tall the wave is (drawn and deadly), up from the origin
 @export var depth := 600.0            ## how far below the origin it reaches
 @export var active := false
-@export var respawn_lead := 900.0     ## after a restart it waits this far behind the checkpoint
+@export var respawn_lead := 900.0     ## after a restart it waits this far behind the checkpoint...
+@export var restart_delay := 2.0      ## ...and starts again after this many seconds
+@export var catchup_gap := 850.0      ## farther behind the last player than this, it surges...
+@export var catchup_boost := 1.5      ## ...at this times its speed
 
 const SNOW := Color("f4fbff")
 const SHADE := Color("c7dcef")
@@ -32,13 +35,19 @@ func _ready() -> void:
 	_auto = active
 	if not Engine.is_editor_hint():
 		EventBus.level_reset.connect(_reset)
+		visible = active  # it appears when it starts (surprise!)
 
 
 func set_active(on: bool) -> void:
 	if on and not active and not _done:
 		Audio.play("boss_slam", -4.0, 0.6)
 		EventBus.screen_shake.emit(0.6)
+		if View.rect.size.x > 0.0:
+			Vfx.text(View.rect.get_center() + Vector2(0, -View.rect.size.y * 0.25), "AVALANCHE!  RUN!", Color("ff5d5d"), 56)
 	active = on and not _done
+	if active:
+		visible = true
+		modulate.a = 1.0
 
 
 func front_x() -> float:
@@ -48,13 +57,19 @@ func front_x() -> float:
 func _reset() -> void:
 	_done = false
 	active = _auto
+	visible = _auto
+	modulate.a = 1.0
 	_travel = 0.0
 	position = _start
 	var cp := GameManager.checkpoint
 	var back := cp.x - respawn_lead - global_position.x
 	if back > 0.0 and back < distance:
+		# Respawned mid-chase: wait a moment, then come thundering again.
 		_travel = back
 		position.x = _start.x + back
+		get_tree().create_timer(restart_delay).timeout.connect(func() -> void:
+			if not _done and _travel == back:
+				set_active(true))
 
 
 func _physics_process(delta: float) -> void:
@@ -63,7 +78,13 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or _done:
 		return
 	if active:
-		var step := speed * delta
+		# Rubber band: if everyone is far ahead it surges to stay on screen (drama!).
+		var gap := INF
+		for n in get_tree().get_nodes_in_group(&"players"):
+			if not (n as Player).is_bubbled():
+				gap = minf(gap, (n as Player).global_position.x - global_position.x)
+		var v := speed * (catchup_boost if gap < INF and gap > catchup_gap else 1.0)
+		var step := v * delta
 		_travel += step
 		position.x += step
 		if fmod(_t, 0.5) < delta:

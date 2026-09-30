@@ -26,12 +26,17 @@ extends StaticBody2D
 	set(v):
 		seed_value = v
 		_rebuild()
+@export var slippery := false:               ## ice: low grip (PlayerTuning.ice_friction), glassy blue top
+	set(v):
+		slippery = v
+		_rebuild()
 @export var theme_override: LevelTheme:
 	set(v):
 		theme_override = v
 		_rebuild()
 
 const LIP := 14.0
+const ICE := Color("bfe9ff")
 const MIN_UP := 0.55   ## edge normal.y below -this = "faces up" (gets grass)
 
 var _mesh: ArrayMesh
@@ -289,13 +294,23 @@ func _draw_lip(mp: MeshPainter, run: PackedVector2Array, th: LevelTheme, rng: Ra
 	var rev := bottom.duplicate()
 	rev.reverse()
 	band.append_array(rev)
-	mp.draw_colored_polygon(band, th.top)
+	var top_col := ICE if slippery else th.top
+	mp.draw_colored_polygon(band, top_col)
 	mp.draw_polyline(bottom, th.outline, 2.5)
 	var hi := PackedVector2Array()
 	for p in top:
 		hi.append(p + Vector2(0, 4))
-	mp.draw_polyline(hi, th.top.lightened(0.2), 4.0)
+	mp.draw_polyline(hi, top_col.lightened(0.2), 4.0)
 	mp.draw_polyline(top, th.outline, 3.0)
+	if slippery:
+		# Glassy ice: diagonal glints instead of tufts.
+		var g := rng.randf_range(20.0, 60.0)
+		while g < total - 20.0:
+			var p := _along(run, g)
+			mp.draw_line(p + Vector2(-6, 10), p + Vector2(4, 2), Color(1, 1, 1, 0.85), 3.0)
+			mp.draw_line(p + Vector2(4, 11), p + Vector2(9, 6), Color(1, 1, 1, 0.6), 2.0)
+			g += rng.randf_range(50.0, 120.0)
+		return
 	# Tufts poking up.
 	var tufts := int(total / 40.0)
 	for i in tufts:

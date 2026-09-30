@@ -85,7 +85,7 @@ class LevelKit:
         return self.block(x0, top, x1 - x0, depth, **kw)
 
     # --- Freeform terrain -------------------------------------------------------------
-    def terrain(self, points, rounding=14.0, lip=True, group="Blocks"):
+    def terrain(self, points, rounding=14.0, lip=True, group="Blocks", slippery=False):
         """Any polygon (list of (x, y)) as themed ground with grass on up-facing edges."""
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
@@ -94,7 +94,7 @@ class LevelKit:
         return self.s.node("Terrain", "StaticBody2D", group, {
             "script": self.s.script(RES + "world/terrain.gd"),
             "polygon": [V(*p) for p in points], "rounding": float(rounding) if rounding != 14.0 else None,
-            "lip": None if lip else False, "seed_value": len(self.s.nodes)})
+            "lip": None if lip else False, "seed_value": len(self.s.nodes), "slippery": slippery or None})
 
     def land(self, profile, bottom=1400.0, **kw):
         """Ground from a top profile [(x, y), ...] (left to right) down to `bottom`.
@@ -271,10 +271,10 @@ class LevelKit:
         return self._tool("Toys", "SnowPile", "Area2D", "snow_pile", x, y, regrow=regrow,
                           ball_speed=speed, ball_max_radius=max_radius)
 
-    def avalanche(self, x, y, distance=6000.0, speed=None, height=None, active=False):
+    def avalanche(self, x, y, distance=6000.0, speed=None, height=None, depth=None, active=False):
         """Chase: a wall of snow sweeping right from x (start it with a zone)."""
         return self._tool("Hazards", "Avalanche", "Node2D", "avalanche", x, y, distance=float(distance),
-                          speed=speed, height=height, active=active or None)
+                          speed=speed, height=height, depth=depth, active=active or None)
 
     def gondola(self, x, y, waypoints=((800, -300),), w=200, speed=150.0, wait=0.8, offset=0.0, rider=False):
         """Ski-lift chair on a cable (a MovingPlatform with a wire and pylons)."""
