@@ -3260,3 +3260,118 @@ func test_w1_5_dam_zipline_to_the_goal() -> void:
 	release(0, "move_right")
 	check(ok, "the dam zipline should reach the goal island (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+# --- Baron Bristleback + World 1-6 -----------------------------------------------------
+
+func test_baron_rolls_into_wall_gets_dazed_and_can_be_stomped() -> void:
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var b := _spawn_enemy("res://enemies/baron_bristleback.tscn", Vector2(-200, 0), 1) as BaronBristleback
+	await frames(3)
+	b.set_active(true)
+	b.st = BaronBristleback.St.CURL
+	b._timer = 0.1
+	b.facing = 1
+	p.global_position = Vector2(520, -2)  # between him and the wall: he rolls at us, into the wall
+	await frames(2)
+	var dazed := false
+	for i in 600:
+		await get_tree().physics_frame
+		if b.st == BaronBristleback.St.DAZED and b.stun_timer > 0.0:
+			dazed = true
+			break
+	check(dazed, "rolling into the wall should flip him over, dazed (st %d)" % b.st)
+	var hp := b.health
+	p.invulnerable_timer = 0.0
+	p.global_position = b.global_position + Vector2(0, -260)
+	p.velocity = Vector2.ZERO
+	for i in 90:
+		await get_tree().physics_frame
+		if b.health < hp:
+			break
+	check(b.health == hp - 1, "a stomp on his belly should hurt him (%d -> %d)" % [hp, b.health])
+	check(not p.is_bubbled(), "stomping a dazed Baron is safe")
+
+
+func test_baron_upright_stomp_hurts_you() -> void:
+	var b := _spawn_enemy("res://enemies/baron_bristleback.tscn", Vector2(0, 0)) as BaronBristleback
+	await frames(3)
+	var p := add_player(0, Vector2(0, -320))
+	await seconds(0.8)
+	check(p.is_bubbled(), "his quills should hurt anyone who stomps him upright")
+	check(b.health == 6, "and he takes no damage")
+
+
+const W1_6 := "res://levels/w1_6_thornwood_keep.tscn"
+
+
+func test_w1_6_boss_fight_can_be_won() -> void:
+	var p: Player = await _load_demo(W1_6)
+	var baron: BaronBristleback = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is BaronBristleback:
+			baron = e
+		elif e.global_position.x < 4800.0:
+			e.queue_free()
+	check(baron != null and baron.asleep, "the Baron should be asleep in his arena")
+	await _place(p, Vector2(5200, -1402))
+	await frames(10)
+	check(not baron.asleep, "walking into the arena should wake him")
+	var gates := _demo.find_children("*", "Gate", true, false)
+	for round in 12:
+		if baron == null or not is_instance_valid(baron) or baron.dead:
+			break
+		p.invulnerable_timer = 100.0
+		# Force a roll into the far wall, then stomp the dazed Baron.
+		baron.st = BaronBristleback.St.CURL
+		baron._timer = 0.05
+		for i in 600:
+			await get_tree().physics_frame
+			if not is_instance_valid(baron) or (baron.st == BaronBristleback.St.DAZED and baron.stun_timer > 0.5):
+				break
+		if not is_instance_valid(baron):
+			break
+		p.invulnerable_timer = 0.0
+		p.global_position = baron.global_position + Vector2(0, -300)
+		p.velocity = Vector2.ZERO
+		await seconds(0.8)
+	check(baron == null or not is_instance_valid(baron) or baron.dead, "six belly-stomps should defeat the Baron (hp %d)" % (baron.health if is_instance_valid(baron) else 0))
+	await seconds(1.5)
+	var exit_open := false
+	for g in gates:
+		if g.global_position.x > 6000.0 and g.is_open():
+			exit_open = true
+	check(exit_open, "beating him should open the exit gate")
+	await _finish_demo()
+
+
+func test_w1_6_tower_climb_reaches_the_roof() -> void:
+	var p: Player = await _load_demo(W1_6)
+	await _clear_enemies()
+	for n in _demo.find_children("*", "SpikeBall", true, false):
+		n.queue_free()
+	# Up the lift, then the zigzag ledges.
+	await _place(p, Vector2(4040, -82))
+	var lift: Node2D = _demo.find_children("*", "MovingPlatform", true, false)[0]
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -600.0:
+			break
+	check(p.global_position.y < -600.0, "the lift should carry you up (at %s)" % p.global_position)
+	for target in [Vector2(4320, -700), Vector2(4570, -860), Vector2(4320, -1020), Vector2(4570, -1180), Vector2(4670, -1340), Vector2(4780, -1400)]:
+		var dir := "move_right" if target.x > p.global_position.x else "move_left"
+		press(0, dir)
+		press(0, "jump")
+		for i in 120:
+			await get_tree().physics_frame
+			if (dir == "move_right" and p.global_position.x >= target.x - 30.0) or (dir == "move_left" and p.global_position.x <= target.x + 30.0):
+				release(0, dir)
+			if p.is_on_floor() and i > 12:
+				break
+		release(0, "jump")
+		release(0, dir)
+		await frames(6)
+	check(p.global_position.y < -1390.0 and p.global_position.x > 4700.0, "you should reach the roof (at %s)" % p.global_position)
+	await _finish_demo()

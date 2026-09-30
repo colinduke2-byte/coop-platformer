@@ -16,7 +16,8 @@ RES = "res://"
 BLOCK = RES + "world/block.tscn"
 ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
            ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo",
-            "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet"]}
+            "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
+            "baron_bristleback"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
@@ -313,6 +314,9 @@ class LevelKit:
         if color:
             props["color"] = color
         return self.s.node("Glow", "PointLight2D", "Decor", props)
+
+    def backwall(self, x, y, w, h, shade=0.45):
+        return self._tool("Decor", "BackWall", "Node2D", "back_wall", x, y, size=V(w, h), shade=float(shade))
 
     def door(self, x, y, locked=False):
         return self._tool("Logic", "Door", "Area2D", "door", x, y, locked=locked or None)

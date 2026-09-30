@@ -31,6 +31,7 @@ signal breakable_broken(breakable: Node2D, by: Player)
 signal checkpoint_reached(position: Vector2)
 signal gem_collected(index: int, slot: int, position: Vector2)
 signal snoozling_rescued(position: Vector2)   ## a caged Snoozling was freed
+signal boss_changed(boss_name: String, health: int, max_health: int, active: bool)  ## drives the HUD boss bar
 signal level_completed(results: Dictionary)
 signal pause_requested(slot: int, message: String)
 signal level_reset

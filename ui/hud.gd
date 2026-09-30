@@ -11,6 +11,9 @@ var _timer: Label
 var _hint: Label
 var _banner: Label
 var _bump := 0.0
+var _boss_box: Control
+var _boss_name: Label
+var _boss_bar: BossBar
 
 
 func _ready() -> void:
@@ -63,6 +66,23 @@ func _ready() -> void:
 	_banner.custom_minimum_size.x = 1400
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_banner)
+
+	# Boss health bar (hidden until a boss wakes up).
+	_boss_box = VBoxContainer.new()
+	_boss_box.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_boss_box.position = Vector2(-360, -120)
+	_boss_box.custom_minimum_size.x = 720
+	_boss_box.visible = false
+	root.add_child(_boss_box)
+	_boss_name = UIStyle.label("", 30, Color.WHITE, 8)
+	_boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_boss_box.add_child(_boss_name)
+	_boss_bar = BossBar.new()
+	_boss_box.add_child(_boss_bar)
+	EventBus.boss_changed.connect(func(n: String, hp: int, mx: int, active: bool) -> void:
+		_boss_box.visible = active
+		_boss_name.text = n
+		_boss_bar.set_health(hp, mx))
 
 	EventBus.lums_changed.connect(_on_lums)
 	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_players.call_deferred())
@@ -131,3 +151,37 @@ class _LumGlyph extends Control:
 		draw_circle(c, 14.0, UIStyle.OUTLINE)
 		draw_circle(c, 11.0, Color("ffe45c"))
 		draw_circle(c + Vector2(-4, -4), 4.0, Color(1, 1, 1, 0.9))
+
+
+
+## Chunky segmented health bar for bosses.
+class BossBar extends Control:
+	var hp := 1
+	var max_hp := 1
+	var _shown := 1.0
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(720, 34)
+
+	func set_health(h: int, m: int) -> void:
+		hp = h
+		max_hp = maxi(m, 1)
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		var target := float(hp) / max_hp
+		if absf(_shown - target) > 0.001:
+			_shown = move_toward(_shown, target, delta * 0.8)
+			queue_redraw()
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, size)
+		draw_rect(r, Color(0.1, 0.06, 0.14, 0.85))
+		var w := size.x - 8.0
+		draw_rect(Rect2(4, 4, w * _shown, size.y - 8), Color("ff9ec0"))
+		draw_rect(Rect2(4, 4, w * float(hp) / max_hp, size.y - 8), Color("ff3d6a"))
+		draw_rect(Rect2(4, 4, w * float(hp) / max_hp, 6), Color(1, 1, 1, 0.35))
+		for i in range(1, max_hp):
+			var x := 4.0 + w * i / max_hp
+			draw_line(Vector2(x, 4), Vector2(x, size.y - 4), Color(0.1, 0.06, 0.14), 3.0)
+		draw_rect(r, UIStyle.OUTLINE, false, 4.0)
