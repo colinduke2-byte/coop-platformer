@@ -78,6 +78,7 @@ give it a `world` value, a `map` position and a `music` track.
 `cannon(rotation, auto, sweep)` · `wind` · `updraft` · `bumper` · `zipline` ·
 `balloon` · `door` + `link_doors` · `dandelion` (parachute) · `geyser` ·
 `seesaw` · `bridge(x, y, ex, ey, broken=())` (sagging rope bridge) ·
+`snowpile(x, y, max_radius=)` (punch it: a growing snowball rolls out) · `gondola(x, y, waypoints, rider=True)` (ski-lift chair) ·
 `bell(x, y, duration=10)` (Dream Bell: touch or punch it for a Lum Rush, when every Lum counts double; put one just before a long Lum trail) ·
 `pendulum(rope, width, spiked=False)` · `leaf` (sinks under you) · `raft`
 (drifts on water with the current).
@@ -85,7 +86,10 @@ give it a `world` value, a `map` position and a `music` track.
 ### Hazards
 `spikes` · `pop_spikes` · `spikeball` · `saw` · `crusher` · `flame(steam=)` ·
 `stalactite` · `lava` (rising, chase) · `brambles(x, y, w, h)` (thorn tangle) ·
-`acorns(x, y, interval)` (acorn dropper) · `pit_kill(x0, x1, y)`.
+`acorns(x, y, interval)` (acorn dropper) · `pit_kill(x0, x1, y)` ·
+`avalanche(x, y, distance, speed, height, depth)` (chase; start it with a `zone`, it
+rubber-bands to stay on screen and restarts behind mid-chase checkpoints).
+Icy ground: `terrain(..., slippery=True)` or `block(..., slippery=True)`.
 
 ### Logic
 `gate` · `switch(targets)` · `plate(targets, required)` ·
@@ -104,8 +108,8 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice` |
 | `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow` |
 | `glow(x, y, color, radius)` | Soft light (for dark levels). |
-| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern |
-| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn |
+| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis |
+| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave |
 | `extra(path, **props)` | Any other scene or script (e.g. `world/waterfall.gd`). |
 
 ## Enemy catalogue (`L.enemy(kind, x, y, facing=-1, **props)`)
@@ -126,6 +130,10 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | `prickleroll` | Prickleroll | Hedgehog. Curls and rolls, so jump it. Dizzy after a wall. |
 | `puffcap` | Puffcap | Mushroom spore ring on a timer. Use `phase` to ripple a row. |
 | `wispet` | Wispet | Ghost that moves only while your back is turned. Face it, then punch. |
+| `slidgewick` | Slidgewick | Penguin: flaps (tell), then toboggans at you. Stomp stops it; a front punch clanks. |
+| `snowl` | Snowl | Snowy owl gliding overhead; drops snowballs on anyone below (punch them back). |
+| `yetling` | Yetling | Little yeti lobbing snowballs in arcs; keeps its distance; 2 hits. |
+| `grumblefrost` | Grumblefrost | World 2 boss: boulders (punch them back to knock him down), belly-slide charge, bellow + icicle rain, leap slam. |
 | `king_grumblo` | King Grumblo | Boss (bonus levels): slam shockwaves. |
 | `baron_bristleback` | Baron Bristleback | World 1 boss. Rolls (bounces off walls, count = phase), quill volley, leap slam, acorn rain. Stomp him while he's DAZED. |
 

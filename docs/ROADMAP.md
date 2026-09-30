@@ -21,7 +21,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Phase 3 — Game loop ✅
 - [x] Hit feedback: hit-stop, camera shake, dust/puff/star particles, stomp chains (x2 x3 pops)
-- [x] 14 enemies + 2 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
+- [x] 17 enemies + 3 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
 - [x] Hazards and toys: spikes, saws, crushers, moving/crumbling platforms, bounce pads, and ~40 more
 - [x] Level goal + results screen (time, Lums, gems, Snoozling, records)
 - [x] Hidden collectibles: 3 gems + 1 caged Snoozling per level
@@ -42,7 +42,16 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] 1-6 Thornwood Keep (castle, haunted tower, boss: Baron Bristleback)
 - [ ] Playtest: difficulty curve, is 1-5's rapids section too long? is the Baron too hard with 1 player?
 - [ ] More secrets per level (a second cracked wall / hidden room in 1-1 and 1-2)
-- [ ] World 2 (ideas: Candy Clouds or Glacier Grotto, expanded from the bonus levels)
+- [x] World 2 (see below)
+- [x] Dream Bell in every level: a Lum Rush (Lums worth double for 10 s)
+
+## World 2 — Frostwhistle Peaks ✅ (needs Colin's playtest)
+- [x] New pieces: snow piles + growing snowballs (bowl enemies, smash packed ice), ski-lift gondolas, avalanche chase (rubber-banded to stay on screen), slippery icy terrain
+- [x] New enemies: Slidgewick (tobogganing penguin), Snowl (drops snowballs), Yetling (lobs snowballs), boss Grumblefrost (punch his boulders back!)
+- [x] 2-1 Snowball Slopes, 2-2 Cablecar Cliffs, 2-3 Crystal Caverns, 2-4 Avalanche Alley, 2-5 Hot Spring Hollow, 2-6 Grumblefrost's Summit
+- [x] Snowy world map + gondola gate from World 1 (opens after the Baron)
+- [ ] Playtest: is Avalanche Alley too scary for new players? (`Avalanche.speed` 450, `catchup_gap` 850)
+- [ ] World 3 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
 
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)

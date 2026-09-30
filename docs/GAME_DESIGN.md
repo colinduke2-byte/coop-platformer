@@ -61,8 +61,12 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
 - **World 1 - The Lullaby Woods**: 1-1 Pillow Meadow, 1-2 Dandelion Drift,
   1-3 Mossy Hollow, 1-4 Bramble Bridges, 1-5 Millstream Rush, 1-6 Thornwood Keep
   (boss: **Baron Bristleback**, a giant hedgehog knight).
+- **World 2 - Frostwhistle Peaks**: 2-1 Snowball Slopes, 2-2 Cablecar Cliffs,
+  2-3 Crystal Caverns, 2-4 Avalanche Alley (chase), 2-5 Hot Spring Hollow,
+  2-6 Grumblefrost's Summit (boss: **Grumblefrost**, the Snowball King yeti).
+  Reached by the gondola at the end of World 1's map once the Baron is beaten.
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
-- Level types so far: standard, dark cave, river/water, boss. TODO: chase/escape, music levels.
+- Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.
 
 ## Collectibles & progression
