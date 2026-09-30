@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Co-op Platformer"
 config/description="Local co-op 2D platformer framework (Rayman Legends-style feel)."
-run/main_scene="res://ui/character_select.tscn"
+run/main_scene="res://ui/title.tscn"
 config/features=PackedStringArray("4.7")
 
 [autoload]

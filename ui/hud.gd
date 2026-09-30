@@ -91,6 +91,8 @@ func _ready() -> void:
 	_boss_bar = BossBar.new()
 	_boss_box.add_child(_boss_bar)
 	EventBus.boss_changed.connect(func(n: String, hp: int, mx: int, active: bool) -> void:
+		if active and not _boss_box.visible:
+			_boss_entrance(n)
 		_boss_box.visible = active
 		_boss_name.text = n
 		_boss_bar.set_health(hp, mx))
@@ -115,11 +117,29 @@ func _show_banner() -> void:
 	if lvl == null or lvl.level_name == "":
 		return
 	_banner.text = lvl.level_name
+	var idx := LevelCatalog.index_of(lvl.scene_file_path)
+	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] == "w1":
+		var n := LevelCatalog.levels_in("w1").find(LevelCatalog.LEVELS[idx]) + 1
+		_banner.text = "World 1-%d\n%s" % [n, lvl.level_name]
 	_banner.modulate.a = 0.0
 	var tw := create_tween()
 	tw.tween_property(_banner, ^"modulate:a", 1.0, 0.4)
 	tw.tween_interval(2.0)
 	tw.tween_property(_banner, ^"modulate:a", 0.0, 0.8)
+
+
+## A boss wakes up: big name card.
+func _boss_entrance(boss_name: String) -> void:
+	_banner.text = boss_name
+	_banner.modulate = Color(1, 0.55, 0.5, 0.0)
+	_banner.scale = Vector2(1.6, 1.6)
+	_banner.pivot_offset = _banner.size * 0.5
+	var tw := create_tween()
+	tw.tween_property(_banner, ^"modulate:a", 1.0, 0.25)
+	tw.parallel().tween_property(_banner, ^"scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(1.8)
+	tw.tween_property(_banner, ^"modulate:a", 0.0, 0.6)
+	tw.tween_callback(func() -> void: _banner.modulate = Color.WHITE; _banner.modulate.a = 0.0)
 
 
 func _on_lums(total: int) -> void:

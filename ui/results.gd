@@ -101,6 +101,12 @@ func _build() -> void:
 	if _results.get("secrets_total", 0) > 0:
 		_add(v, UIStyle.label("Secrets  %d / %d" % [_results.get("secrets", 0), _results.get("secrets_total", 0)], 26))
 	var info := LevelCatalog.by_id(_results.get("id", ""))
+	var world_levels := LevelCatalog.levels_in(info.get("world", ""))
+	if info.get("world", "") == "w1" and not world_levels.is_empty() and world_levels[-1]["id"] == info["id"]:
+		var t := SaveData.world_totals("w1")
+		_add(v, UIStyle.label("WORLD 1 COMPLETE!", 44, Color("ffd23f"), 10, UIStyle.OUTLINE))
+		_add(v, UIStyle.label("Snoozlings rescued %d / %d     Dream Gems %d / %d" % [
+				t["snoozlings"], t["levels"], t["gems"], t["gems_total"]], 24))
 	if info.get("world", "") == "w1":
 		var freed: bool = _results.get("snoozling", false)
 		var s_text := "Snoozling rescued!" if freed else ("Snoozling already safe" if SaveData.has_snoozling(info["id"]) else "The Snoozling is still caged somewhere...")

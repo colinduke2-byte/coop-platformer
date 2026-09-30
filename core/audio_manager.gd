@@ -181,6 +181,14 @@ func _connect_events() -> void:
 		stop_music()
 		play("victory", -2.0, 1.0, 0.0))
 	E.level_started.connect(_on_level_started)
+	# Boss fights get their own track; back to the level's music afterwards.
+	E.boss_changed.connect(func(_n: String, _hp: int, _mx: int, active: bool) -> void:
+		if active:
+			play_music("boss")
+		elif GameManager.level:
+			var th := LevelTheme.find(GameManager.level)
+			if th.music:
+				play_music(th.music))
 
 
 func _on_broken(b: Node2D, _by: Player) -> void:
