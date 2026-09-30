@@ -44,7 +44,8 @@ L.ceiling([(-300, -520), (300, -600), (700, -540), (1100, -620), (1300, -560), (
 # ---- S0 the glowing entrance (x -300..1300) ---------------------------------------------------
 L.sign(60, 0, "MOSSY HOLLOW. It's dark down here -\nstick together and follow the glow.", 420)
 shroom(260, 0, PINK)
-shroom(980, -30, TEAL, 0.8)
+shroom(900, -30, TEAL, 0.8)
+L.bell(1120, -30)                                # a Lum Rush for the Puffcap corridor
 crystal(620, -10, VIOLET)
 L.lums(380, -120, 900, -150, 6, 30)
 L.deco("hanging_vines", 450, -575)

@@ -312,6 +312,8 @@ func _on_secret_found(s: Node2D) -> void:
 func _on_lum_collected(_slot: int, pos: Vector2) -> void:
 	sparkle(pos, 5, LUM_GLOW, 34.0)
 	ring(pos, 22.0, LUM_GLOW, 0.2, 3.0)
+	if GameManager.lum_rush > 0.0:
+		text(pos + Vector2(0, -30), "+2", Color("ffc93f"), 26)
 
 
 func _on_checkpoint(pos: Vector2) -> void:

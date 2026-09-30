@@ -84,7 +84,8 @@ L.dandelion(6660, -440, height=150)
 L.sign(5950, -440, "Jump into a DANDELION and float\nacross the valley. (JUMP lets go)", 400)
 L.pit_kill(7020, 7700, 700)
 L.lums(6600, -600, 7500, -520, 10, -60)
-for x, k in [(6250, "flowers"), (6100, "grass"), (6500, "big_flower")]:
+L.bell(6440, -440)                               # Lum Rush for the float across the valley
+for x, k in [(6250, "flowers"), (6100, "grass"), (6280, "grass")]:
     L.deco(k, x, -440)
 # The hidden cave: a shelf in the valley wall below the puff route.
 L.snoozling(6760, 180, fur=C(1.0, 0.72, 0.85))

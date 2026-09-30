@@ -29,7 +29,8 @@ L.land([(-300, 0), (1000, 0), (1180, 10), (1200, 380), (3000, 380), (3020, 10), 
 L.sign(80, 0, "MILLSTREAM RUSH. Hop the logs,\nride the wheel, climb the falls!", 400)
 L.deco("hut", 600, 0)
 L.deco("lilypads", 1080, 4)
-L.lums(300, -110, 950, -110, 6)
+L.bell(430, 0)                                   # Lum Rush for the log rafts
+L.lums(620, -130, 1000, -110, 4)
 
 # ---- S1 the log rafts (1200..3000) -----------------------------------------------------------
 L.water(1200, 20, 1820, 360, current=(160, 0))

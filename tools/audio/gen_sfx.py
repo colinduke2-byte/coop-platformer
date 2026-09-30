@@ -1,7 +1,7 @@
 """Generate the game's placeholder sound effects (all original, synthesized).
 Run: python3 tools/audio/gen_sfx.py  ->  audio/sfx/*.wav  (needs numpy)
 Swap any file for a real recording later; names are what Audio (audio_manager.gd) plays."""
-import numpy as np, wave, os
+import numpy as np, wave, os, sys
 
 SR = 22050
 OUT = os.path.join(os.path.dirname(__file__), "../../audio/sfx")
@@ -65,7 +65,12 @@ def seq(*parts, gap=0.0):
     return np.concatenate(out)
 
 
+ONLY = set(sys.argv[1:])  # e.g. `python3 gen_sfx.py bell` regenerates just that one
+
+
 def save(name, x, vol=0.8):
+    if ONLY and name not in ONLY:
+        return
     x = np.asarray(x, dtype=float)
     peak = max(np.abs(x).max(), 1e-6)
     x = x / peak * vol
@@ -116,6 +121,11 @@ def main():
     save("menu_move", tone(660, 0.05, "square", curve=3), 0.25)
     save("menu_ok", seq(tone(784, 0.06, "square"), tone(1175, 0.12, "square", curve=2)), 0.35)
     save("join", seq(tone(523, 0.07, "tri"), tone(784, 0.07, "tri"), tone(1047, 0.15, "tri", curve=2)), 0.45)
+    # Dream Bell: inharmonic bell partials with a long ring, plus a rising sparkle.
+    bell = mix(*[tone(784 * r, 1.6, "sine", 0.002, curve=c) * a for r, a, c in
+                 [(0.5, 0.5, 2.0), (1.0, 1.0, 2.5), (1.19, 0.5, 3.5), (1.56, 0.35, 4.0), (2.0, 0.4, 4.5), (2.74, 0.2, 6.0)]])
+    sparkle = seq(np.zeros(int(SR * 0.15)), *[tone(f, 0.07, "tri", curve=2) * 0.35 for f in [1568, 1976, 2349, 3136]])
+    save("bell", mix(bell, np.pad(sparkle, (0, max(0, len(bell) - len(sparkle))))), 0.7)
     notes = [523, 659, 784, 1047, 784, 1047, 1319]
     save("victory", seq(*[tone(f, 0.12 if i < 6 else 0.6, "square", curve=1.5 if i < 6 else 2.5) for i, f in enumerate(notes)]), 0.5)
     print("wrote sfx to", os.path.abspath(OUT))

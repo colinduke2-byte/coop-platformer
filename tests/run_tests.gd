@@ -3418,3 +3418,41 @@ func test_stomp_chain_bounces_higher_and_pays_lums() -> void:
 	check(popped >= 1, "the third chained stomp should pop a bonus Lum")
 	await seconds(2.0)
 	check(p.is_on_floor() and p.stomp_chain == 0, "landing resets the chain")
+
+
+func test_dream_bell_rings_a_lum_rush_that_doubles_lums() -> void:
+	GameManager.lum_rush = 0.0
+	var bell := DreamBell.new()
+	bell.position = Vector2(0, 0)
+	_arena.add_child(bell)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	check(GameManager.lum_rush == 0.0, "walking under the bell shouldn't ring it")
+	press(0, "jump")
+	await seconds(0.35)
+	release(0, "jump")
+	check(GameManager.lum_rush > 5.0, "jumping into the bell should start a Lum Rush (%.1f s)" % GameManager.lum_rush)
+	check(not bell.is_ready(), "a rung bell dozes until it recharges")
+	await settle(p)
+	var lums0 := GameManager.lums
+	var lum: Lum = load("res://collectibles/lum.tscn").instantiate()
+	lum.position = p.global_position + Vector2(0, -30)
+	_arena.add_child(lum)
+	await frames(4)
+	check(GameManager.lums == lums0 + 2, "during a Lum Rush a Lum counts double (%d -> %d)" % [lums0, GameManager.lums])
+	GameManager.lum_rush = 0.0
+
+
+func test_dream_bell_can_be_punched() -> void:
+	GameManager.lum_rush = 0.0
+	var bell := DreamBell.new()
+	bell.position = Vector2(60, 0)
+	_arena.add_child(bell)
+	var p := add_player(0, Vector2(-30, -2))
+	await settle(p)
+	bell.take_hit(p, Vector2.RIGHT)
+	check(GameManager.lum_rush > 0.0, "punching the bell rings it too")
+	var left := GameManager.lum_rush
+	bell.take_hit(p, Vector2.RIGHT)
+	check(GameManager.lum_rush <= left, "a dozing bell just clanks (no extra time)")
+	GameManager.lum_rush = 0.0

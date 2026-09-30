@@ -44,7 +44,8 @@ L.enemy("prickleroll", 2750, -40)
 L.enemy("shellbert", 3050, -40, facing=-1)
 L.enemy("puffcap", 3350, -40, phase=0.4)
 L.enemy("bumblebonk", 3100, -400)
-L.lums(2500, -140, 3600, -140, 10)
+L.bell(2540, -40)                                # Lum Rush along the ramparts
+L.lums(2700, -140, 3600, -140, 9)
 # A little turret with a cracked wall: gem 0 inside.
 L.block(3560, -300, 200, 30)
 L.breakable(3560, -270, 50, 230)

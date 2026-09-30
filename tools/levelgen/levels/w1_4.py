@@ -84,6 +84,7 @@ L.sign(6560, -60, "Climb the vines up the great trunk.\n(Anything inside that ho
 # ---- S7 the canopy top (7000..8900) ---------------------------------------------------------
 L.checkpoint(7060, -1200)
 L.land([(7000, -1200), (7700, -1200)], bottom=-1140, rounding=10.0)   # a thick branch deck
+L.bell(7450, -1200, duration=15.0)               # Lum Rush over the leaves and down the zipline
 L.leaf(7900, -1240, width=160)
 L.leaf(8150, -1300, width=160)
 L.leaf(8420, -1500, width=140, depth=240)

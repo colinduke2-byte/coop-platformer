@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/hollow.tres" id="2"]
@@ -9,24 +9,25 @@
 [ext_resource type="Script" path="res://decor/signpost.gd" id="7"]
 [ext_resource type="Script" path="res://decor/deco.gd" id="8"]
 [ext_resource type="Script" path="res://world/glow_light.gd" id="9"]
-[ext_resource type="Script" path="res://collectibles/lum_line.gd" id="10"]
-[ext_resource type="PackedScene" path="res://world/checkpoint.tscn" id="11"]
-[ext_resource type="PackedScene" path="res://enemies/puffcap.tscn" id="12"]
-[ext_resource type="PackedScene" path="res://enemies/wispet.tscn" id="13"]
-[ext_resource type="Script" path="res://world/bounce_pad.gd" id="14"]
-[ext_resource type="Script" path="res://collectibles/gem.gd" id="15"]
-[ext_resource type="PackedScene" path="res://enemies/diggle.tscn" id="16"]
-[ext_resource type="Script" path="res://world/crate.gd" id="17"]
-[ext_resource type="Script" path="res://world/breakable_block.gd" id="18"]
-[ext_resource type="Script" path="res://world/geyser.gd" id="19"]
-[ext_resource type="Script" path="res://world/stalactite.gd" id="20"]
-[ext_resource type="Script" path="res://world/water.gd" id="21"]
-[ext_resource type="Script" path="res://collectibles/snoozling_cage.gd" id="22"]
-[ext_resource type="Script" path="res://world/brambles.gd" id="23"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="24"]
-[ext_resource type="Script" path="res://world/kill_zone.gd" id="25"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="26"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="27"]
+[ext_resource type="Script" path="res://world/dream_bell.gd" id="10"]
+[ext_resource type="Script" path="res://collectibles/lum_line.gd" id="11"]
+[ext_resource type="PackedScene" path="res://world/checkpoint.tscn" id="12"]
+[ext_resource type="PackedScene" path="res://enemies/puffcap.tscn" id="13"]
+[ext_resource type="PackedScene" path="res://enemies/wispet.tscn" id="14"]
+[ext_resource type="Script" path="res://world/bounce_pad.gd" id="15"]
+[ext_resource type="Script" path="res://collectibles/gem.gd" id="16"]
+[ext_resource type="PackedScene" path="res://enemies/diggle.tscn" id="17"]
+[ext_resource type="Script" path="res://world/crate.gd" id="18"]
+[ext_resource type="Script" path="res://world/breakable_block.gd" id="19"]
+[ext_resource type="Script" path="res://world/geyser.gd" id="20"]
+[ext_resource type="Script" path="res://world/stalactite.gd" id="21"]
+[ext_resource type="Script" path="res://world/water.gd" id="22"]
+[ext_resource type="Script" path="res://collectibles/snoozling_cage.gd" id="23"]
+[ext_resource type="Script" path="res://world/brambles.gd" id="24"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="25"]
+[ext_resource type="Script" path="res://world/kill_zone.gd" id="26"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="27"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="28"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(13820, 200)
@@ -115,16 +116,20 @@ color = Color(1, 0.55, 0.85, 1)
 
 [node name="Deco2" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(980, -30)
+position = Vector2(900, -30)
 kind = 15
 size = 0.8
 
 [node name="Glow2" type="PointLight2D" parent="Decor"]
 script = ExtResource("9")
-position = Vector2(980, -134)
+position = Vector2(900, -134)
 radius = 256
 energy = 0.9
 color = Color(0.5, 1, 0.85, 1)
+
+[node name="DreamBell1" type="Area2D" parent="Toys"]
+script = ExtResource("10")
+position = Vector2(1120, -30)
 
 [node name="Deco3" type="Node2D" parent="Decor"]
 script = ExtResource("8")
@@ -140,7 +145,7 @@ energy = 0.8
 color = Color(0.75, 0.55, 1, 1)
 
 [node name="LumLine1" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(380, -120)
 count = 6
 end = Vector2(520, -30)
@@ -157,7 +162,7 @@ position = Vector2(1150, -600)
 kind = 16
 size = 0.8
 
-[node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("11")]
+[node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(1260, -30)
 
 [node name="Sign2" type="Node2D" parent="Signs"]
@@ -166,23 +171,23 @@ position = Vector2(1591.75, 0)
 text = "PUFFCAPS puff spores. Wait for a gap,\nor punch them while they snooze."
 width = 400
 
-[node name="Puffcap1" parent="Enemies" instance=ExtResource("12")]
+[node name="Puffcap1" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(1700, 0)
 start_facing = -1
 phase = 0
 
-[node name="Puffcap2" parent="Enemies" instance=ExtResource("12")]
+[node name="Puffcap2" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(2000, 0)
 start_facing = -1
 phase = 0.9
 
-[node name="Puffcap3" parent="Enemies" instance=ExtResource("12")]
+[node name="Puffcap3" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(2300, 0)
 start_facing = -1
 phase = 1.8
 
 [node name="LumLine2" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(1600, -120)
 count = 10
 end = Vector2(850, 0)
@@ -250,16 +255,16 @@ position = Vector2(3700, -640)
 size = Vector2(180, 20)
 one_way = true
 
-[node name="Wispet1" parent="Enemies" instance=ExtResource("13")]
+[node name="Wispet1" parent="Enemies" instance=ExtResource("14")]
 position = Vector2(3150, -700)
 start_facing = -1
 
-[node name="Wispet2" parent="Enemies" instance=ExtResource("13")]
+[node name="Wispet2" parent="Enemies" instance=ExtResource("14")]
 position = Vector2(3650, -300)
 start_facing = -1
 
 [node name="BouncePad1" type="Area2D" parent="Toys"]
-script = ExtResource("14")
+script = ExtResource("15")
 position = Vector2(2800, 0)
 launch_height = 980
 
@@ -269,19 +274,19 @@ size = Vector2(170, 20)
 one_way = true
 
 [node name="Gem1" type="Area2D" parent="Pickups"]
-script = ExtResource("15")
+script = ExtResource("16")
 position = Vector2(2805, -1050)
 gem_index = 0
 
 [node name="LumLine3" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(2800, -200)
 count = 7
 end = Vector2(0, -700)
 arc_height = 0
 
 [node name="LumLine4" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(3080, -250)
 count = 6
 end = Vector2(700, -450)
@@ -313,25 +318,25 @@ radius = 220
 energy = 0.8
 color = Color(0.5, 1, 0.85, 1)
 
-[node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("11")]
+[node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(3930, -660)
 
-[node name="Diggle1" parent="Enemies" instance=ExtResource("16")]
+[node name="Diggle1" parent="Enemies" instance=ExtResource("17")]
 position = Vector2(4250, -660)
 start_facing = -1
 
-[node name="Diggle2" parent="Enemies" instance=ExtResource("16")]
+[node name="Diggle2" parent="Enemies" instance=ExtResource("17")]
 position = Vector2(4600, -660)
 start_facing = -1
 
 [node name="Crate1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("17")
+script = ExtResource("18")
 position = Vector2(4420, -660)
 size = 64
 lums = 4
 
 [node name="LumLine5" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(4050, -760)
 count = 8
 end = Vector2(830, 0)
@@ -342,12 +347,12 @@ position = Vector2(5100, -660)
 size = Vector2(260, 60)
 
 [node name="Breakable1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("18")
+script = ExtResource("19")
 position = Vector2(5160, -1000)
 size = Vector2(50, 340)
 
 [node name="Gem2" type="Area2D" parent="Pickups"]
-script = ExtResource("15")
+script = ExtResource("16")
 position = Vector2(5290, -730)
 gem_index = 1
 
@@ -374,7 +379,7 @@ radius = 220
 energy = 0.8
 color = Color(1, 0.55, 0.85, 1)
 
-[node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("11")]
+[node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(5250, 0)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
@@ -384,7 +389,7 @@ text = "GEYSERS launch you up. Watch the\nstalactites overhead!"
 width = 380
 
 [node name="Geyser1" type="Area2D" parent="Toys"]
-script = ExtResource("19")
+script = ExtResource("20")
 position = Vector2(5550, 0)
 height = 760
 always_on = false
@@ -398,7 +403,7 @@ size = Vector2(220, 20)
 one_way = true
 
 [node name="Geyser2" type="Area2D" parent="Toys"]
-script = ExtResource("19")
+script = ExtResource("20")
 position = Vector2(6000, -780)
 height = 620
 always_on = false
@@ -416,12 +421,12 @@ size = Vector2(250, 20)
 one_way = true
 
 [node name="Stalactite1" type="Node2D" parent="Hazards"]
-script = ExtResource("20")
+script = ExtResource("21")
 position = Vector2(5780, -1640)
 ice = false
 
 [node name="Stalactite2" type="Node2D" parent="Hazards"]
-script = ExtResource("20")
+script = ExtResource("21")
 position = Vector2(6420, -1640)
 ice = false
 
@@ -431,19 +436,19 @@ size = Vector2(170, 20)
 one_way = true
 
 [node name="Gem3" type="Area2D" parent="Pickups"]
-script = ExtResource("15")
+script = ExtResource("16")
 position = Vector2(5480, -1440)
 gem_index = 2
 
 [node name="LumLine6" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(5550, -150)
 count = 6
 end = Vector2(0, -550)
 arc_height = 0
 
 [node name="LumLine7" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(6000, -900)
 count = 5
 end = Vector2(0, -450)
@@ -475,11 +480,11 @@ radius = 220
 energy = 0.8
 color = Color(0.75, 0.55, 1, 1)
 
-[node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("11")]
+[node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(6620, -1100)
 
 [node name="Water1" type="Area2D" parent="Toys"]
-script = ExtResource("21")
+script = ExtResource("22")
 position = Vector2(7600, -600)
 size = Vector2(1000, 420)
 
@@ -487,21 +492,21 @@ size = Vector2(1000, 420)
 script = ExtResource("6")
 polygon = PackedVector2Array(8000, -630, 8016, -640, 8154, -640, 8170, -630, 8170, -620, 8113.3333, -565.4463, 8056.6667, -551.2291, 8000, -620)
 rounding = 10
-seed_value = 86
+seed_value = 87
 
-[node name="Puffcap4" parent="Enemies" instance=ExtResource("12")]
+[node name="Puffcap4" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(8085, -640)
 start_facing = -1
 phase = 0.5
 
 [node name="Snoozling1" type="Area2D" parent="Pickups"]
-script = ExtResource("22")
+script = ExtResource("23")
 position = Vector2(8380, -200)
 hanging = false
 fur = Color(0.6, 0.9, 1, 1)
 
 [node name="LumLine8" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(7700, -420)
 count = 8
 end = Vector2(800, 120)
@@ -552,11 +557,11 @@ radius = 288
 energy = 0.9
 color = Color(1, 0.55, 0.85, 1)
 
-[node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("11")]
+[node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(8920, -600)
 
 [node name="Brambles1" type="Area2D" parent="Hazards"]
-script = ExtResource("23")
+script = ExtResource("24")
 position = Vector2(9000, -300)
 size = Vector2(1000, 150)
 seed_value = 3
@@ -566,7 +571,7 @@ position = Vector2(9080, -400)
 size = Vector2(100, 60)
 
 [node name="BouncePad2" type="Area2D" parent="Toys"]
-script = ExtResource("14")
+script = ExtResource("15")
 position = Vector2(9130, -400)
 launch_height = 420
 
@@ -575,16 +580,16 @@ position = Vector2(9510, -420)
 size = Vector2(100, 60)
 
 [node name="BouncePad3" type="Area2D" parent="Toys"]
-script = ExtResource("14")
+script = ExtResource("15")
 position = Vector2(9560, -420)
 launch_height = 560
 
-[node name="Wispet3" parent="Enemies" instance=ExtResource("13")]
+[node name="Wispet3" parent="Enemies" instance=ExtResource("14")]
 position = Vector2(9500, -900)
 start_facing = -1
 
 [node name="LumLine9" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(9150, -700)
 count = 8
 end = Vector2(800, 0)
@@ -597,7 +602,7 @@ text = "Daylight! Nearly home."
 width = 280
 
 [node name="Goal1" type="Area2D" parent="."]
-script = ExtResource("24")
+script = ExtResource("25")
 position = Vector2(10900, -780)
 
 [node name="Glow14" type="PointLight2D" parent="Decor"]
@@ -608,7 +613,7 @@ energy = 1.2
 color = Color(1, 0.92, 0.7, 1)
 
 [node name="LumLine10" type="Node2D" parent="Pickups"]
-script = ExtResource("10")
+script = ExtResource("11")
 position = Vector2(10350, -880)
 count = 5
 end = Vector2(400, 0)
@@ -968,7 +973,7 @@ position = Vector2(5550, 1000)
 collision_layer = 32
 collision_mask = 2
 monitorable = false
-script = ExtResource("25")
+script = ExtResource("26")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
 shape = SubResource("RectangleShape2D_1")
@@ -983,6 +988,6 @@ position = Vector2(0, -152)
 limit_left = -360
 limit_right = 11460
 limit_bottom = 700
-script = ExtResource("26")
+script = ExtResource("27")
 
-[node name="HUD" parent="." instance=ExtResource("27")]
+[node name="HUD" parent="." instance=ExtResource("28")]

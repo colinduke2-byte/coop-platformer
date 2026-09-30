@@ -19,6 +19,7 @@ const GEMS_PER_LEVEL := 3
 var players: Dictionary = {}  ## slot -> Player
 var chosen_characters: Dictionary = {}  ## slot -> CharacterDef (set by character select)
 var lums := 0
+var lum_rush := 0.0  ## seconds of Lum Rush left (a Dream Bell was rung): every Lum counts double
 var lums_by_slot: Dictionary = {}  ## slot -> Lums that player grabbed (results screen)
 var checkpoint := Vector2.ZERO
 var level: Level
@@ -48,6 +49,10 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if level != null and not level_complete:
 		level_time += delta
+		if lum_rush > 0.0:
+			lum_rush = maxf(lum_rush - delta, 0.0)
+			if lum_rush == 0.0:
+				EventBus.lum_rush_changed.emit(0.0)
 
 
 func register_level(new_level: Level) -> void:
@@ -56,6 +61,7 @@ func register_level(new_level: Level) -> void:
 	checkpoint = level.get_spawn_position()
 	lums = 0
 	lums_by_slot.clear()
+	lum_rush = 0.0
 	level_time = 0.0
 	gems = [false, false, false]
 	snoozling = false
@@ -139,8 +145,9 @@ func respawn_all_at_checkpoint() -> void:
 
 
 func _on_lum_collected(slot: int, _pos: Vector2) -> void:
-	lums += 1
-	lums_by_slot[slot] = lums_by_slot.get(slot, 0) + 1
+	var worth := 2 if lum_rush > 0.0 else 1
+	lums += worth
+	lums_by_slot[slot] = lums_by_slot.get(slot, 0) + worth
 	EventBus.lums_changed.emit(lums)
 
 
@@ -156,6 +163,12 @@ func _on_gem_collected(index: int, _slot: int, _pos: Vector2) -> void:
 func _on_device_lost(slot: int) -> void:
 	if level and players.has(slot):
 		EventBus.pause_requested.emit(slot, "P%d's controller disconnected - reconnect it, or choose Leave." % (slot + 1))
+
+
+## A Dream Bell was rung: every Lum counts double for `seconds` (ringing again tops it up).
+func start_lum_rush(seconds: float) -> void:
+	lum_rush = maxf(lum_rush, seconds)
+	EventBus.lum_rush_changed.emit(lum_rush)
 
 
 # --- Level flow --------------------------------------------------------------------

@@ -23,7 +23,8 @@ L.wind(-300, -1600, 5400, 2400, wind=(60, 0))
 L.wall(-360, -1300, 600)
 L.land([(-300, 0), (700, 0), (900, -30), (1150, -40), (1400, -40)], bottom=1300)
 L.sign(120, 0, "A breezy day! The wind pushes you -\nand anything you float on.", 420)
-L.lums(400, -110, 1000, -140, 6, 30)
+L.bell(520, 0)                                   # ring it and hurry: the leaves are full of Lums
+L.lums(700, -110, 1100, -140, 4, 30)
 
 # ---- S1 sinking leaves (1400..2600) --------------------------------------------------------
 L.sign(1180, -40, "Leaves sink when you stand on them.\nKeep hopping!", 360)

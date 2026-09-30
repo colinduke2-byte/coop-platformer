@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/meadow.tres" id="2"]
@@ -17,15 +17,16 @@
 [ext_resource type="Script" path="res://world/crate.gd" id="15"]
 [ext_resource type="PackedScene" path="res://enemies/ribbiton.tscn" id="16"]
 [ext_resource type="Script" path="res://world/dandelion.gd" id="17"]
-[ext_resource type="Script" path="res://collectibles/snoozling_cage.gd" id="18"]
-[ext_resource type="Script" path="res://world/bounce_pad.gd" id="19"]
-[ext_resource type="PackedScene" path="res://enemies/diggle.tscn" id="20"]
-[ext_resource type="Script" path="res://world/breakable_block.gd" id="21"]
-[ext_resource type="Script" path="res://world/crumble_platform.gd" id="22"]
-[ext_resource type="Script" path="res://world/pendulum.gd" id="23"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="24"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="25"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="26"]
+[ext_resource type="Script" path="res://world/dream_bell.gd" id="18"]
+[ext_resource type="Script" path="res://collectibles/snoozling_cage.gd" id="19"]
+[ext_resource type="Script" path="res://world/bounce_pad.gd" id="20"]
+[ext_resource type="PackedScene" path="res://enemies/diggle.tscn" id="21"]
+[ext_resource type="Script" path="res://world/breakable_block.gd" id="22"]
+[ext_resource type="Script" path="res://world/crumble_platform.gd" id="23"]
+[ext_resource type="Script" path="res://world/pendulum.gd" id="24"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="25"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="26"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="27"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(380, 60)
@@ -466,6 +467,10 @@ count = 10
 end = Vector2(900, 80)
 arc_height = -60
 
+[node name="DreamBell1" type="Area2D" parent="Toys"]
+script = ExtResource("18")
+position = Vector2(6440, -440)
+
 [node name="Deco20" type="Node2D" parent="Decor"]
 script = ExtResource("9")
 position = Vector2(6250, -440)
@@ -478,11 +483,11 @@ kind = 0
 
 [node name="Deco22" type="Node2D" parent="Decor"]
 script = ExtResource("9")
-position = Vector2(6500, -440)
-kind = 18
+position = Vector2(6280, -440)
+kind = 0
 
 [node name="Snoozling1" type="Area2D" parent="Pickups"]
-script = ExtResource("18")
+script = ExtResource("19")
 position = Vector2(6760, 180)
 hanging = false
 fur = Color(1, 0.72, 0.85, 1)
@@ -495,7 +500,7 @@ end = Vector2(120, 0)
 arc_height = 0
 
 [node name="BouncePad1" type="Area2D" parent="Toys"]
-script = ExtResource("19")
+script = ExtResource("20")
 position = Vector2(6975, 180)
 launch_height = 760
 
@@ -513,12 +518,12 @@ size = 0.8
 [node name="Terrain6" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(7700, -100, 8050, -100, 8120, -200, 8460, -200, 8530, -100, 9300, -100, 9300, -220, 9460, -220, 9460, 1400, 7700, 1400)
-seed_value = 89
+seed_value = 90
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(7730, -100)
 
-[node name="Diggle1" parent="Enemies" instance=ExtResource("20")]
+[node name="Diggle1" parent="Enemies" instance=ExtResource("21")]
 position = Vector2(8300, -200)
 start_facing = -1
 
@@ -540,7 +545,7 @@ position = Vector2(8750, -100)
 start_facing = -1
 
 [node name="Breakable1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("21")
+script = ExtResource("22")
 position = Vector2(9000, -300)
 size = Vector2(60, 200)
 
@@ -597,13 +602,13 @@ monitorable = false
 shape = SubResource("RectangleShape2D_6")
 
 [node name="Crumble1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("22")
+script = ExtResource("23")
 position = Vector2(9520, -260)
 size = Vector2(140, 28)
 respawn_time = 2.5
 
 [node name="Pendulum1" type="Node2D" parent="Toys"]
-script = ExtResource("23")
+script = ExtResource("24")
 position = Vector2(9900, -640)
 rope_length = 380
 log_width = 200
@@ -627,13 +632,13 @@ arc_height = -60
 [node name="Terrain7" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(10300, -200, 10700, -224, 11000, -200, 11400, -200, 11400, 1400, 10300, 1400)
-seed_value = 110
+seed_value = 111
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(10380, -200)
 
 [node name="Goal1" type="Area2D" parent="."]
-script = ExtResource("24")
+script = ExtResource("25")
 position = Vector2(11050, -200)
 
 [node name="LumLine15" type="Node2D" parent="Pickups"]
@@ -1108,6 +1113,6 @@ position = Vector2(0, -152)
 limit_left = -360
 limit_right = 11460
 limit_bottom = 600
-script = ExtResource("25")
+script = ExtResource("26")
 
-[node name="HUD" parent="." instance=ExtResource("26")]
+[node name="HUD" parent="." instance=ExtResource("27")]

@@ -78,6 +78,7 @@ give it a `world` value, a `map` position and a `music` track.
 `cannon(rotation, auto, sweep)` · `wind` · `updraft` · `bumper` · `zipline` ·
 `balloon` · `door` + `link_doors` · `dandelion` (parachute) · `geyser` ·
 `seesaw` · `bridge(x, y, ex, ey, broken=())` (sagging rope bridge) ·
+`bell(x, y, duration=10)` (Dream Bell: touch or punch it for a Lum Rush, when every Lum counts double; put one just before a long Lum trail) ·
 `pendulum(rope, width, spiked=False)` · `leaf` (sinks under you) · `raft`
 (drifts on water with the current).
 

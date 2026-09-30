@@ -8,6 +8,8 @@ extends Area2D
 @export var magnet_radius := 90.0
 @export var magnet_speed := 520.0
 
+const RUSH_TINT := Color(1.35, 1.05, 0.55)
+
 var _t := 0.0
 var _base := Vector2.ZERO
 var _taken := false
@@ -43,6 +45,13 @@ func _process(delta: float) -> void:
 	else:
 		position.y = _base.y + sin(_t) * bob_height
 	_wings.scale.y = 1.0 + sin(_t * 6.0) * 0.45  # flap (a transform: no redraw)
+	# Lum Rush (a Dream Bell rang): golden, bigger, twinkling - each one counts double.
+	if GameManager.lum_rush > 0.0:
+		modulate = RUSH_TINT
+		scale = Vector2.ONE * (1.3 + sin(_t * 4.0) * 0.1)
+	elif scale.x != 1.0:
+		modulate = Color.WHITE
+		scale = Vector2.ONE
 
 
 func _on_body_entered(body: Node2D) -> void:

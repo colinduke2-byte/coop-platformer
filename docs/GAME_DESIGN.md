@@ -66,7 +66,8 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
 - Target level length: 3–5 min.
 
 ## Collectibles & progression
-- **Lums** (common, shared counter; best count saved per level).
+- **Lums** (common, shared counter; best count saved per level). A **Dream Bell**
+  in each W1 level starts a Lum Rush: 10 s where every Lum is gold and worth 2.
 - **3 gems** per level (at least one behind a secret wall / hidden room).
 - **1 Snoozling** per level: a sleepy dream-critter in a cage - punch it open.
 - Map badges show gems + Snoozling per level; results show records; beating

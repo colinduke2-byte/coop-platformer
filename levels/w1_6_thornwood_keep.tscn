@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/thorn.tres" id="2"]
@@ -18,21 +18,22 @@
 [ext_resource type="PackedScene" path="res://enemies/shellbert.tscn" id="16"]
 [ext_resource type="PackedScene" path="res://enemies/puffcap.tscn" id="17"]
 [ext_resource type="PackedScene" path="res://enemies/bumblebonk.tscn" id="18"]
-[ext_resource type="Script" path="res://world/breakable_block.gd" id="19"]
-[ext_resource type="Script" path="res://collectibles/gem.gd" id="20"]
-[ext_resource type="Script" path="res://world/secret_area.gd" id="21"]
-[ext_resource type="Script" path="res://world/back_wall.gd" id="22"]
-[ext_resource type="Script" path="res://world/moving_platform.gd" id="23"]
-[ext_resource type="Script" path="res://world/spike_ball.gd" id="24"]
-[ext_resource type="PackedScene" path="res://enemies/wispet.tscn" id="25"]
-[ext_resource type="Script" path="res://world/gate.gd" id="26"]
-[ext_resource type="Script" path="res://world/defeat_trigger.gd" id="27"]
-[ext_resource type="PackedScene" path="res://enemies/baron_bristleback.tscn" id="28"]
-[ext_resource type="Script" path="res://world/zone_trigger.gd" id="29"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="30"]
-[ext_resource type="Script" path="res://world/kill_zone.gd" id="31"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="32"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="33"]
+[ext_resource type="Script" path="res://world/dream_bell.gd" id="19"]
+[ext_resource type="Script" path="res://world/breakable_block.gd" id="20"]
+[ext_resource type="Script" path="res://collectibles/gem.gd" id="21"]
+[ext_resource type="Script" path="res://world/secret_area.gd" id="22"]
+[ext_resource type="Script" path="res://world/back_wall.gd" id="23"]
+[ext_resource type="Script" path="res://world/moving_platform.gd" id="24"]
+[ext_resource type="Script" path="res://world/spike_ball.gd" id="25"]
+[ext_resource type="PackedScene" path="res://enemies/wispet.tscn" id="26"]
+[ext_resource type="Script" path="res://world/gate.gd" id="27"]
+[ext_resource type="Script" path="res://world/defeat_trigger.gd" id="28"]
+[ext_resource type="PackedScene" path="res://enemies/baron_bristleback.tscn" id="29"]
+[ext_resource type="Script" path="res://world/zone_trigger.gd" id="30"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="31"]
+[ext_resource type="Script" path="res://world/kill_zone.gd" id="32"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="33"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="34"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(9420, 200)
@@ -193,11 +194,15 @@ phase = 0.4
 position = Vector2(3100, -400)
 start_facing = -1
 
+[node name="DreamBell1" type="Area2D" parent="Toys"]
+script = ExtResource("19")
+position = Vector2(2540, -40)
+
 [node name="LumLine3" type="Node2D" parent="Pickups"]
 script = ExtResource("9")
-position = Vector2(2500, -140)
-count = 10
-end = Vector2(1100, 0)
+position = Vector2(2700, -140)
+count = 9
+end = Vector2(900, 0)
 arc_height = 0
 
 [node name="Block2" parent="Blocks" instance=ExtResource("5")]
@@ -205,7 +210,7 @@ position = Vector2(3560, -300)
 size = Vector2(200, 30)
 
 [node name="Breakable1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("19")
+script = ExtResource("20")
 position = Vector2(3560, -270)
 size = Vector2(50, 230)
 
@@ -214,17 +219,17 @@ position = Vector2(3740, -270)
 size = Vector2(20, 230)
 
 [node name="Gem1" type="Area2D" parent="Pickups"]
-script = ExtResource("20")
+script = ExtResource("21")
 position = Vector2(3680, -130)
 gem_index = 0
 
 [node name="Secret1" type="Node2D" parent="Decor"]
-script = ExtResource("21")
+script = ExtResource("22")
 position = Vector2(3610, -270)
 size = Vector2(130, 230)
 
 [node name="BackWall1" type="Node2D" parent="Decor"]
-script = ExtResource("22")
+script = ExtResource("23")
 position = Vector2(3840, -1660)
 size = Vector2(860, 1620)
 shade = 0.45
@@ -239,7 +244,7 @@ text = "The tower! Ride the lift, climb\nthe ledges... watch for ghosts."
 width = 380
 
 [node name="MovingPlatform1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("23")
+script = ExtResource("24")
 position = Vector2(3950, -80)
 size = Vector2(180, 30)
 waypoints = PackedVector2Array(0, -560)
@@ -275,22 +280,22 @@ size = Vector2(150, 20)
 one_way = true
 
 [node name="Gem2" type="Area2D" parent="Pickups"]
-script = ExtResource("20")
+script = ExtResource("21")
 position = Vector2(3950, -960)
 gem_index = 1
 
 [node name="SpikeBall1" type="Node2D" parent="Hazards"]
-script = ExtResource("24")
+script = ExtResource("25")
 position = Vector2(4400, -950)
 count = 2
 radius = 150
 speed = 80
 
-[node name="Wispet1" parent="Enemies" instance=ExtResource("25")]
+[node name="Wispet1" parent="Enemies" instance=ExtResource("26")]
 position = Vector2(4100, -1100)
 start_facing = -1
 
-[node name="Wispet2" parent="Enemies" instance=ExtResource("25")]
+[node name="Wispet2" parent="Enemies" instance=ExtResource("26")]
 position = Vector2(4550, -600)
 start_facing = -1
 
@@ -331,7 +336,7 @@ text = "BARON BRISTLEBACK! Jump his rolls,\nand STOMP him while he's on his back
 width = 420
 
 [node name="Gate1" type="AnimatableBody2D" parent="Logic"]
-script = ExtResource("26")
+script = ExtResource("27")
 position = Vector2(4950, -1760)
 size = Vector2(48, 360)
 open_offset = Vector2(0, -360)
@@ -339,22 +344,22 @@ stay_open = false
 start_open = true
 
 [node name="Gate2" type="AnimatableBody2D" parent="Logic"]
-script = ExtResource("26")
+script = ExtResource("27")
 position = Vector2(6250, -1760)
 size = Vector2(48, 360)
 open_offset = Vector2(0, -360)
 
 [node name="Arena1" type="Node2D" parent="Logic"]
-script = ExtResource("27")
+script = ExtResource("28")
 position = Vector2(5600, -1400)
 targets = Array[NodePath]([NodePath("../Gate2")])
 
-[node name="Baronbristleback1" parent="Logic/Arena1" instance=ExtResource("28")]
+[node name="Baronbristleback1" parent="Logic/Arena1" instance=ExtResource("29")]
 position = Vector2(0, 0)
 asleep = true
 
 [node name="Zone1" type="Area2D" parent="Logic"]
-script = ExtResource("29")
+script = ExtResource("30")
 position = Vector2(5020, -1900)
 size = Vector2(1200, 500)
 need_everyone = true
@@ -362,7 +367,7 @@ send_on = false
 targets = Array[NodePath]([NodePath("../Gate1")])
 
 [node name="Zone2" type="Area2D" parent="Logic"]
-script = ExtResource("29")
+script = ExtResource("30")
 position = Vector2(5020, -1900)
 size = Vector2(1200, 500)
 need_everyone = true
@@ -400,10 +405,10 @@ arc_height = 40
 [node name="Terrain3" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(6300, -1400, 7000, -1400, 7000, 900, 6300, 900)
-seed_value = 71
+seed_value = 72
 
 [node name="Goal1" type="Area2D" parent="."]
-script = ExtResource("30")
+script = ExtResource("31")
 position = Vector2(6700, -1400)
 
 [node name="Block17" parent="Blocks" instance=ExtResource("5")]
@@ -412,7 +417,7 @@ size = Vector2(150, 20)
 one_way = true
 
 [node name="Gem3" type="Area2D" parent="Pickups"]
-script = ExtResource("20")
+script = ExtResource("21")
 position = Vector2(6555, -1700)
 gem_index = 2
 
@@ -569,7 +574,7 @@ position = Vector2(3350, 1100)
 collision_layer = 32
 collision_mask = 2
 monitorable = false
-script = ExtResource("31")
+script = ExtResource("32")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
 shape = SubResource("RectangleShape2D_1")
@@ -584,6 +589,6 @@ position = Vector2(0, -152)
 limit_left = -360
 limit_right = 7060
 limit_bottom = 800
-script = ExtResource("32")
+script = ExtResource("33")
 
-[node name="HUD" parent="." instance=ExtResource("33")]
+[node name="HUD" parent="." instance=ExtResource("34")]

@@ -264,6 +264,10 @@ class LevelKit:
         return self._tool("Toys", "Balloon", "Area2D", "balloon_stand", x, y)
 
     # --- World 1 pieces ------------------------------------------------------------
+    def bell(self, x, y, duration=None, recharge=None):
+        """Dream Bell: touch/punch it for a Lum Rush (Lums count double for `duration` s)."""
+        return self._tool("Toys", "DreamBell", "Area2D", "dream_bell", x, y, duration=duration, recharge=recharge)
+
     def dandelion(self, x, y, height=180.0):
         return self._tool("Toys", "Dandelion", "Area2D", "dandelion", x, y, height=float(height))
 

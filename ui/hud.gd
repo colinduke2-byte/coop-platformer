@@ -5,6 +5,7 @@ extends CanvasLayer
 
 var _lums: Label
 var _lum_box: Control
+var _rush: RushBadge
 var _players_row: HBoxContainer
 var _gems: Array[GemIcon] = []
 var _timer: Label
@@ -37,6 +38,9 @@ func _ready() -> void:
 	lum_row.add_child(_lum_box)
 	_lums = UIStyle.label("0", 48, Color.WHITE, 10)
 	lum_row.add_child(_lums)
+	_rush = RushBadge.new()
+	_rush.visible = false
+	lum_row.add_child(_rush)
 	_players_row = HBoxContainer.new()
 	_players_row.add_theme_constant_override(&"separation", 18)
 	top_left.add_child(_players_row)
@@ -103,6 +107,9 @@ func _ready() -> void:
 	root.add_child(_debug)
 
 	EventBus.lums_changed.connect(_on_lums)
+	EventBus.lum_rush_changed.connect(func(left: float) -> void:
+		_rush.total = maxf(left, 0.01)
+		_rush.visible = left > 0.0)
 	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_players.call_deferred())
 	EventBus.player_left.connect(func(_s: int) -> void: _refresh_players.call_deferred())
 	EventBus.gem_collected.connect(func(i: int, _s: int, _p: Vector2) -> void:
@@ -150,6 +157,12 @@ func _on_lums(total: int) -> void:
 
 func _process(delta: float) -> void:
 	_bump = maxf(_bump - delta * 5.0, 0.0)
+	if _rush.visible:
+		_rush.left = GameManager.lum_rush
+		_rush.queue_redraw()
+		_lums.modulate = Color(1.0, 0.85, 0.35)
+	else:
+		_lums.modulate = Color.WHITE
 	_lums.scale = Vector2.ONE * (1.0 + 0.3 * _bump)
 	_lums.pivot_offset = _lums.size * 0.5
 	_timer.text = UIStyle.fmt_time(GameManager.level_time)
@@ -265,3 +278,27 @@ class SnoozeIcon extends Control:
 				var x := c.x - 12.0 + i * 8.0
 				draw_line(Vector2(x, c.y - 14), Vector2(x, c.y + 14), Color(1, 1, 1, 0.7), 3.0)
 			draw_line(Vector2(c.x - 16, c.y - 15), Vector2(c.x + 16, c.y - 15), Color(1, 1, 1, 0.8), 4.0)
+
+
+## "x2" badge beside the Lum counter while a Lum Rush lasts, with a draining ring.
+class RushBadge extends Control:
+	var total := 10.0
+	var left := 0.0
+	var _t := 0.0
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(76, 64)
+
+	func _process(delta: float) -> void:
+		_t += delta
+
+	func _draw() -> void:
+		var c := Vector2(38, 32)
+		var gold := Color("ffc93f")
+		var frac := clampf(left / total, 0.0, 1.0)
+		var pulse := 1.0 + (0.12 * sin(_t * 12.0) if frac < 0.3 else 0.04 * sin(_t * 5.0))
+		draw_circle(c, 30.0 * pulse, Color(0.1, 0.07, 0.15, 0.75))
+		draw_arc(c, 26.0 * pulse, -PI * 0.5, -PI * 0.5 + TAU * frac, 40, gold, 6.0, true)
+		var font := get_theme_default_font()
+		draw_string_outline(font, c + Vector2(-19, 11), "x2", HORIZONTAL_ALIGNMENT_LEFT, -1, 30, 6, Color(0.15, 0.08, 0.02))
+		draw_string(font, c + Vector2(-19, 11), "x2", HORIZONTAL_ALIGNMENT_LEFT, -1, 30, gold)

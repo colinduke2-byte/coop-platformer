@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/canopy.tres" id="2"]
@@ -24,11 +24,12 @@
 [ext_resource type="PackedScene" path="res://enemies/grunt.tscn" id="22"]
 [ext_resource type="Script" path="res://world/climbable.gd" id="23"]
 [ext_resource type="Script" path="res://collectibles/snoozling_cage.gd" id="24"]
-[ext_resource type="Script" path="res://world/leaf_platform.gd" id="25"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="26"]
-[ext_resource type="Script" path="res://world/kill_zone.gd" id="27"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="28"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="29"]
+[ext_resource type="Script" path="res://world/dream_bell.gd" id="25"]
+[ext_resource type="Script" path="res://world/leaf_platform.gd" id="26"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="27"]
+[ext_resource type="Script" path="res://world/kill_zone.gd" id="28"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="29"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="30"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(11260, 60)
@@ -367,22 +368,27 @@ polygon = PackedVector2Array(7000, -1200, 7700, -1200, 7700, -1140, 7000, -1140)
 rounding = 10
 seed_value = 63
 
-[node name="Leaf1" type="AnimatableBody2D" parent="Toys"]
+[node name="DreamBell1" type="Area2D" parent="Toys"]
 script = ExtResource("25")
+position = Vector2(7450, -1200)
+duration = 15
+
+[node name="Leaf1" type="AnimatableBody2D" parent="Toys"]
+script = ExtResource("26")
 position = Vector2(7900, -1240)
 width = 160
 sink_speed = 90
 sink_depth = 360
 
 [node name="Leaf2" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("25")
+script = ExtResource("26")
 position = Vector2(8150, -1300)
 width = 160
 sink_speed = 90
 sink_depth = 360
 
 [node name="Leaf3" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("25")
+script = ExtResource("26")
 position = Vector2(8420, -1500)
 width = 140
 sink_speed = 90
@@ -394,7 +400,7 @@ position = Vector2(8490, -1580)
 gem_index = 2
 
 [node name="Leaf4" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("25")
+script = ExtResource("26")
 position = Vector2(8500, -1240)
 width = 160
 sink_speed = 90
@@ -436,13 +442,13 @@ arc_height = 0
 script = ExtResource("6")
 polygon = PackedVector2Array(9850, -450, 10700, -450, 10700, -390, 10440, -390, 10390, -300, 10390, 1400, 10150, 1400, 10150, -300, 10100, -390, 9850, -390)
 rounding = 12
-seed_value = 75
+seed_value = 76
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(9920, -450)
 
 [node name="Goal1" type="Area2D" parent="."]
-script = ExtResource("26")
+script = ExtResource("27")
 position = Vector2(10450, -450)
 
 [node name="Deco7" type="Node2D" parent="Decor"]
@@ -460,7 +466,7 @@ position = Vector2(10700, -2000)
 size = Vector2(60, 1550)
 
 [node name="PitKill1" type="Area2D" parent="Hazards"]
-script = ExtResource("27")
+script = ExtResource("28")
 position = Vector2(5230, 1250)
 collision_layer = 32
 collision_mask = 2
@@ -680,7 +686,7 @@ position = Vector2(5200, 1300)
 collision_layer = 32
 collision_mask = 2
 monitorable = false
-script = ExtResource("27")
+script = ExtResource("28")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
 shape = SubResource("RectangleShape2D_2")
@@ -695,6 +701,6 @@ position = Vector2(0, -152)
 limit_left = -360
 limit_right = 10760
 limit_bottom = 900
-script = ExtResource("28")
+script = ExtResource("29")
 
-[node name="HUD" parent="." instance=ExtResource("29")]
+[node name="HUD" parent="." instance=ExtResource("30")]
