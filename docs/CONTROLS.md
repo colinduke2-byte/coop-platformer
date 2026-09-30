@@ -41,9 +41,11 @@ card is `ui/controls_card.gd`. Keep all three in sync.
 
 ## Online play (browser version)
 
-- Title screen: press **O** (gamepad **Y**) for **Play Online**.
-- **Host a game** - you get a 4-letter code (shown at the bottom of the character select). Send it to your friends.
-- **Join a friend's game** - type their code, press ENTER (gamepad: Up/Down letter, A next, X delete).
+- On the start page (before the game opens): **Host a game**, or type a friend's code and press **Join**.
+  A friend's invite link (`...#CODE`) shows one big **Join game CODE** button.
+- Hosting opens the lobby (character select) with your 4-letter code at the bottom, and a bar at the top of
+  the page with **Copy invite link**. Send the code or the link to friends.
+- Inside the game you can also press **O** (gamepad **Y**) on the title screen for the same Host / Join menu.
 - One dreamer per browser; WASD/Space *and* arrows/Enter *and* any gamepad all drive it.
 - The host picks levels and menu options; everyone else follows. Esc opens a menu that doesn't pause the game (Leave online game is there).
 - Up to 4 dreamers. In the claude.ai page, friends need a claude.ai account and must be invited to the page (Share).

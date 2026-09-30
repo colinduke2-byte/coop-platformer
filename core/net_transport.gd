@@ -23,6 +23,16 @@ func kind() -> String:
 	return "test"
 
 
+## Why online play is unavailable here (shown in the online menu), "" if unknown.
+func why() -> String:
+	return ""
+
+
+## What the start page's buttons asked for, once: {"a": "host"} / {"a": "join", "c": "ABCD"} / {}.
+func intent() -> Dictionary:
+	return {}
+
+
 func host() -> void:
 	st = "host"
 	if code == "":
@@ -72,6 +82,14 @@ class WebTransport extends NetTransport:
 
 	func kind() -> String:
 		return String(_js.available()) if _js else ""
+
+	func why() -> String:
+		return String(_js.why()) if _js else ""
+
+	func intent() -> Dictionary:
+		var s := String(_js.intent()) if _js else ""
+		var d: Variant = JSON.parse_string(s) if s != "" else null
+		return d if d is Dictionary else {}
 
 	func host() -> void:
 		if _js:

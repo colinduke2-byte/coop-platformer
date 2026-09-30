@@ -77,6 +77,13 @@ func _ready() -> void:
 	Net.changed.connect(_refresh)
 	_refresh()
 	Audio.play_music("menu")
+	var intent := Net.pending_intent
+	Net.pending_intent = {}
+	if intent.get("a") == "host":
+		_choose("Host a game")
+	elif intent.get("a") == "join" and String(intent.get("c", "")).length() == CODE_LEN:
+		_code = String(intent["c"]).to_upper()
+		_submit()
 
 
 func _exit_tree() -> void:
@@ -123,7 +130,7 @@ func _process(delta: float) -> void:
 	elif _menu.down:
 		_index = wrapi(_index + 1, 0, _items.size())
 		_refresh()
-	elif _menu.back:
+	elif _menu.back or _menu.pause:
 		_back_to_title()
 	elif _menu.confirm:
 		_choose(_items[_index])
@@ -242,7 +249,8 @@ func _refresh() -> void:
 	match _screen:
 		Screen.MAIN:
 			if kind == "" and OS.has_feature("web"):
-				_info.text = "Online play isn't available on this page.\nOn claude.ai everyone must be signed in, and friends must be invited to the game page (Share)."
+				var why := Net.transport.why()
+				_info.text = "Online play isn't available on this page.\n" + (why if why != "" else "On claude.ai everyone must be signed in, and friends must be invited to the game page (Share).")
 				_items = ["Back"]
 			elif kind == "":
 				_info.text = "Online play works in the browser version of Dreamers.\nOpen the game from its link, then pick Play Online."

@@ -46,6 +46,7 @@ var lobby: Array = [0, 0, 0]   ## my character index, outfit, ready (CharacterSe
 var map_index := -1       ## host: the world map node the gang stands on (clients mirror it)
 var epoch := 0            ## scene counter: host bumps it on every scene change; clients copy it
 var change_scenes := true ## tests turn this off (a scene change would end the test run)
+var pending_intent := {}  ## the start page's Host / Join button, carried to the online menu
 
 var _scene: Node
 var _send_t := 0.0
@@ -787,7 +788,7 @@ func _build_overlay() -> void:
 
 
 func _update_badge() -> void:
-	_badge.visible = is_online()
+	_badge.visible = is_online() and not OS.has_feature("web")  # the web page shows its own room bar
 	if not _badge.visible:
 		return
 	var n := all_slots().size()

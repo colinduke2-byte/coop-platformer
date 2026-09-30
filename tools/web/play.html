@@ -2,10 +2,11 @@
 <style>
   :root { --bg: #1d1726; --ink: #fff8ec; --muted: #b9aecb; --accent: #ffd23f; --pink: #ff5d8f; color-scheme: dark; }
   html, body { height: 100%; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Trebuchet MS", system-ui, sans-serif; overflow: hidden; }
   #stage { position: fixed; inset: 0; display: grid; place-items: center; }
   #canvas { display: block; width: 100vw; height: 100vh; outline: none; background: #000; }
-  #cover { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #3b2f5a, var(--bg) 70%); padding: 16px; }
+  #cover { position: fixed; inset: 0; display: grid; place-items: safe center; overflow-y: auto; background: radial-gradient(circle at 50% 35%, #3b2f5a, var(--bg) 70%); padding: 16px; }
   .card { max-width: 640px; width: 100%; text-align: center; display: grid; gap: 18px; }
   h1 { margin: 0; font-size: clamp(48px, 11vw, 96px); letter-spacing: 0.04em; line-height: 1; }
   h1 span:nth-child(6n+1) { color: #ff5d8f } h1 span:nth-child(6n+2) { color: #ffd23f } h1 span:nth-child(6n+3) { color: #5bc8ff }
@@ -19,21 +20,51 @@
   .keys { font-size: 15px; color: var(--muted); line-height: 1.6; text-align: left; background: #2a2238; border-radius: 14px; padding: 14px 18px; }
   .keys b { color: var(--ink); }
   #status { min-height: 1.4em; color: var(--muted); margin: 0; }
+  .online { display: grid; gap: 12px; background: #2a2238; border-radius: 18px; padding: 16px; }
+  .online h2 { margin: 0; font-size: 20px; color: var(--accent); letter-spacing: 0.04em; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  button.alt { font-size: 20px; padding: 10px 24px; background: #5b3fa8; }
+  button.big { background: #2fa36b; }
+  #code { font: inherit; font-size: 28px; font-weight: 700; width: 5.2em; text-align: center; letter-spacing: 0.25em; text-transform: uppercase;
+    padding: 8px 10px; border-radius: 14px; border: 3px solid var(--ink); background: #1d1726; color: var(--ink); }
+  #netnote { margin: 0; font-size: 15px; color: var(--muted); min-height: 1.2em; }
+  #invite { display: grid; gap: 10px; }
+  #invite p { margin: 0; font-size: 20px; }
+  #pill { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; gap: 10px; align-items: center; max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center;
+    background: rgba(29, 23, 38, 0.82); border: 2px solid rgba(255, 248, 236, 0.5); border-radius: 999px; padding: 6px 8px 6px 16px; font-size: 15px; }
+  #pill b { color: var(--accent); letter-spacing: 0.12em; }
+  #pill button { font-size: 14px; padding: 6px 14px; border-width: 2px; }
+  #pill input { font: inherit; font-size: 13px; width: 22em; max-width: 60vw; border-radius: 8px; border: 1px solid var(--muted); background: #1d1726; color: var(--ink); padding: 4px 6px; }
 </style>
 
 <div id="stage"><canvas id="canvas" tabindex="0">Your browser doesn't support canvas.</canvas></div>
+<div id="pill" hidden><span id="pillText"></span><button id="copy" type="button">Copy invite link</button><input id="linkBox" readonly hidden></div>
 <div id="cover">
   <div class="card">
     <h1 aria-label="DREAMERS"><span>D</span><span>R</span><span>E</span><span>A</span><span>M</span><span>E</span><span>R</span><span>S</span></h1>
     <p class="sub">a co-op dream adventure &middot; Worlds 1 &amp; 2</p>
+    <div id="invite" hidden>
+      <p>You're invited to online game <b id="inviteCode"></b>!</p>
+      <button id="joinInvite" class="big" disabled>Join the game</button>
+    </div>
     <button id="play" disabled>Loading&hellip;</button>
     <div class="bar"><i id="bar"></i></div>
     <p id="status">Downloading the game (about 17 MB)&hellip;</p>
+    <div class="online">
+      <h2>PLAY ONLINE WITH FRIENDS</h2>
+      <div class="row"><button id="host" class="alt" disabled>Host a game</button></div>
+      <div class="row">
+        <input id="code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" aria-label="Game code">
+        <button id="join" class="alt" disabled>Join</button>
+      </div>
+      <p id="netnote">Checking online play&hellip;</p>
+    </div>
     <div class="keys">
       <b>Player 1:</b> WASD move &middot; Space jump &middot; Left Shift punch &middot; Left Ctrl sprint<br>
       <b>Player 2:</b> Arrows move &middot; Enter jump &middot; Right Shift punch &middot; Right Ctrl sprint<br>
       <b>Gamepads</b> work too (A to join). <b>Esc</b> pauses &middot; <b>F9</b> on the map unlocks everything.<br>
-      <b>Online with friends:</b> press <b>O</b> on the title screen, then Host (you get a code) or Join (type a friend's code).
+      <b>Online:</b> Host gives you a 4-letter code and an invite link for friends. Everyone plays with any keys or a gamepad.
     </div>
   </div>
 </div>
@@ -51,6 +82,8 @@ window.dreamNet = (function () {
   const PEERJS = ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js",
                   "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
   let kind = "pending";
+  let why = "";   // when online play is unavailable: the reason (shown by the game's online menu)
+  let intent = "";  // what the start page asked for ({"a":"host"} / {"a":"join","c":"ABCD"}); the game takes it once
   let st = "idle", err = "", code = "", me = "";
   let inbox = new Map(), gone = new Set();
   let impl = null, roomApi = null;
@@ -180,6 +213,8 @@ window.dreamNet = (function () {
   async function start(asHost, wanted) {
     if (impl) api.leave();
     st = "connecting"; err = ""; inbox = new Map(); gone = new Set();
+    for (let i = 0; i < 60 && kind === "pending"; i++) await new Promise(function (r) { setTimeout(r, 200); });
+    if (!kind || kind === "pending") { fail(why || "Online play isn't available on this page."); return; }
     for (let attempt = 0; attempt < 4; attempt++) {
       code = wanted || randomCode();
       impl = make(asHost);
@@ -214,6 +249,10 @@ window.dreamNet = (function () {
 
   const api = {
     available: function () { return kind; },
+    why: function () { return why; },
+    setIntent: function (obj) { intent = JSON.stringify(obj); },
+    intent: function () { const i = intent; intent = ""; return i; },
+    players: function () { return impl && (st === "host" || st === "client") ? impl.others().length + 1 : 0; },
     info: function () { return { kind: kind, st: st, code: code, me: me, err: err }; },  // for the page / tests (doesn't drain)
     host: function () { start(true, ""); },
     join: function (c) { start(false, String(c).toUpperCase()); },
@@ -232,8 +271,16 @@ window.dreamNet = (function () {
   // Which transport this page can use.
   if (/[?&]net=local\b/.test(location.search)) kind = "local";
   else if (window.claude && typeof window.claude.use === "function") {
-    window.claude.use("room").then(function (r) { roomApi = r; kind = r ? "room" : ""; }, function () { kind = ""; });
-  } else kind = (window.RTCPeerConnection && window.WebSocket) ? "peer" : "";
+    const framed = window.top !== window.self;
+    window.claude.use("room").then(function (r) {
+      roomApi = r; kind = r ? "room" : "";
+      if (!r) why = framed ? "claude.ai didn't give this page its live room. Make sure you're signed in, then reload the page."
+                           : "This page was opened on its own. Open the game from its claude.ai link (inside claude.ai) to play online.";
+    }, function (e) { kind = ""; why = "claude.ai's live room didn't answer (" + (e && e.message ? e.message : e) + "). Reload and try again."; });
+  } else {
+    kind = (window.RTCPeerConnection && window.WebSocket) ? "peer" : "";
+    if (!kind) why = "This browser can't do online play (no WebRTC).";
+  }
   return api;
 })();
 </script>
@@ -243,6 +290,19 @@ window.dreamNet = (function () {
   const bar = document.getElementById("bar");
   const status = document.getElementById("status");
   const play = document.getElementById("play");
+  const hostBtn = document.getElementById("host");
+  const joinBtn = document.getElementById("join");
+  const codeBox = document.getElementById("code");
+  const note = document.getElementById("netnote");
+  const inviteBox = document.getElementById("invite");
+  const joinInvite = document.getElementById("joinInvite");
+  const canvas = document.getElementById("canvas");
+  const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  // The link friends open (claude.ai page, or wherever this page is hosted) + "#CODE".
+  const SHARE = /claudeusercontent|claude\.ai/.test(location.hostname) || window.claude
+    ? "https://claude.ai/artifact/ADX5rr3V6dWD2ooZ3emthA" : location.origin + location.pathname;
+  const invited = (location.hash.match(/^#([A-Za-z]{4})$/) || [])[1];
+  let loaded = false;
   const files = {};  // what the engine asks for -> Blob
   const realFetch = window.fetch.bind(window);
 
@@ -289,13 +349,69 @@ window.dreamNet = (function () {
       s.onerror = function () { bad(new Error("couldn't load index.js")); };
       document.head.appendChild(s);
     });
-    status.textContent = "Ready! Click to play (sound needs a click).";
+    status.textContent = "Ready!";
     play.disabled = false;
-    play.textContent = "Play";
+    play.textContent = "Play (on this computer)";
+    loaded = true;
+    refreshOnline();
   }
+
+  // --- Online buttons on the start page ----------------------------------------------
+  function cleanCode(v) { return String(v).toUpperCase().split("").filter(function (c) { return LETTERS.includes(c); }).join("").slice(0, 4); }
+  function refreshOnline() {
+    const k = dreamNet.available();
+    const ok = k !== "" && k !== "pending";
+    hostBtn.disabled = !(loaded && ok);
+    joinBtn.disabled = !(loaded && ok && cleanCode(codeBox.value).length === 4);
+    joinInvite.disabled = !(loaded && ok);
+    if (k === "pending") note.textContent = "Checking online play...";
+    else if (!ok) note.textContent = "Online play isn't available here: " + (dreamNet.why() || "unknown reason.");
+    else note.textContent = "Host: you get a code to send to friends. Join: type the code a friend sent you.";
+    if (k === "pending") setTimeout(refreshOnline, 300);
+  }
+  if (invited) {
+    const c = cleanCode(invited);
+    document.getElementById("inviteCode").textContent = c;
+    joinInvite.textContent = "Join game " + c;
+    codeBox.value = c;
+    inviteBox.hidden = false;
+  }
+  codeBox.addEventListener("input", function () { codeBox.value = cleanCode(codeBox.value); refreshOnline(); });
+  codeBox.addEventListener("keydown", function (e) { if (e.key === "Enter" && !joinBtn.disabled) joinBtn.click(); });
+  hostBtn.addEventListener("click", function () { dreamNet.setIntent({ a: "host" }); start(); });
+  joinBtn.addEventListener("click", function () { dreamNet.setIntent({ a: "join", c: cleanCode(codeBox.value) }); start(); });
+  joinInvite.addEventListener("click", function () { dreamNet.setIntent({ a: "join", c: cleanCode(invited) }); start(); });
+  refreshOnline();
+
+  // --- The room pill over the game: code, players, invite link --------------------------
+  const pill = document.getElementById("pill");
+  const pillText = document.getElementById("pillText");
+  const copyBtn = document.getElementById("copy");
+  const linkBox = document.getElementById("linkBox");
+  let copiedUntil = 0;
+  setInterval(function () {
+    const i = dreamNet.info();
+    const on = i.st === "host" || i.st === "client" || i.st === "connecting";
+    pill.hidden = !on || !i.code;
+    if (pill.hidden) { linkBox.hidden = true; return; }
+    const n = dreamNet.players();
+    if (i.st === "connecting") pillText.innerHTML = "Connecting to game <b></b>...";
+    else pillText.innerHTML = "Game <b></b> &middot; " + n + " player" + (n === 1 ? "" : "s");
+    pillText.querySelector("b").textContent = i.code;
+    copyBtn.hidden = i.st === "connecting";
+    if (Date.now() > copiedUntil) copyBtn.textContent = "Copy invite link";
+  }, 400);
+  copyBtn.addEventListener("click", function () {
+    const link = SHARE + "#" + dreamNet.info().code;
+    const done = function () { copyBtn.textContent = "Copied! Paste it to friends"; copiedUntil = Date.now() + 2500; canvas.focus(); };
+    const fallback = function () { linkBox.hidden = false; linkBox.value = link; linkBox.focus(); linkBox.select(); copyBtn.textContent = "Copy the link from the box"; copiedUntil = Date.now() + 6000; };
+    try { navigator.clipboard.writeText(link).then(done, fallback); } catch (e) { fallback(); }
+  });
+  linkBox.addEventListener("blur", function () { setTimeout(function () { linkBox.hidden = true; }, 3000); });
 
   function start() {
     play.disabled = true;
+    hostBtn.disabled = joinBtn.disabled = joinInvite.disabled = true;
     status.textContent = "Starting...";
     const config = {
       args: [], canvasResizePolicy: 2, executable: "index", experimentalVK: false, focusCanvas: true,

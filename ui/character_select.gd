@@ -237,7 +237,9 @@ func _sync_online(delta: float) -> void:
 			c.ready = int(lb[2]) == 1
 		if was != [c.joined, c.index, c.outfit, c.ready]:
 			_refresh(c)
-	var tip := "Room code: %s   -   friends pick Play Online > Join and type it" % Net.code
+	var tip := "Friends join with code  %s   -  or send them the invite link (button at the top)" % Net.code
+	if Net.is_client():
+		tip = "You're in game %s!  Pick your dreamer and press JUMP when ready" % Net.code
 	if _leave_t > 0.0:
 		tip = "Press PUNCH again to leave the online game"
 	_code_label.text = tip

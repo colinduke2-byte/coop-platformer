@@ -63,6 +63,12 @@ func _ready() -> void:
 	_build_logo()
 	InputRouter.join_requested.connect(_on_join)
 	Audio.play_music("menu")
+	# The start page's "Host a game" / "Join" buttons skip straight to online play.
+	var intent := Net.transport.intent()
+	if not intent.is_empty():
+		Net.pending_intent = intent
+		_leaving = true
+		get_tree().change_scene_to_file.call_deferred(ONLINE)
 
 
 func _exit_tree() -> void:
@@ -98,7 +104,7 @@ func _build_logo() -> void:
 	_ribbon.position = Vector2(1330, 380)
 	_ribbon.rotation = -0.12
 	layer.add_child(_ribbon)
-	if Net.available() != "":
+	if OS.has_feature("web"):
 		var online := UIStyle.label("Press O (or Y on a gamepad) to PLAY ONLINE with friends", 30, Color("ffd23f"), 10)
 		online.position = Vector2(460, 1010)
 		online.custom_minimum_size.x = 1000
@@ -130,7 +136,7 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _leaving or Net.available() == "":
+	if _leaving or not OS.has_feature("web"):
 		return
 	var key: bool = event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_O
 	var pad: bool = event is InputEventJoypadButton and event.pressed and (event as InputEventJoypadButton).button_index == JOY_BUTTON_Y
