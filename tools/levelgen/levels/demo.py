@@ -182,7 +182,6 @@ L.wind(21450, -1700, 650, 440, wind=(300, 0))
 kz(21450, 22100, -560)
 L.lums(21500, -1400, 22050, -1400, 6, 100)
 L.sign(21150, -1260, "19. Wind pushes you along -\nglide to ride it!", 360)
-L.ground(22100, 24300, -1260, 460)
 
 # ---- S16 hazard gauntlet (22100..23300) --------------------------------------------------------------------------------
 L.checkpoint(22180, -1260)
@@ -191,20 +190,56 @@ L.spikeball(22750, -1370, count=2, radius=110, speed=80)
 L.crusher(22980, -1700, 128, 112, drop=560)
 L.spikes(23250, -1260, 168)
 
-# ---- S17 secret mound + vault + goal (23500..24300) -----------------------------------------------------------------------
-L.ledge(23480, -1380, 140)
-L.block(23650, -1510, 500, 50)          # mound roof
-L.block(24050, -1460, 100, 200)         # mound right wall
-L.secret(23650, -1460, 400, 200)
-L.crate(23850, -1260, 64, lums=10)
-L.lums(23700, -1320, 24000, -1320, 4)
-L.sign(23400, -1260, "Is that mound hollow...?", 280)
-L.crate(24250, -1260, 110, lums=10, iron=True)
-L.goal(24500, -1260)
-L.ground(24300, 24800, -1260, 460)
-L.wall(24800, -2200, -800)
-L.sign(24150, -1510, "YOU MADE IT! Charge-punch the vault,\nthen jump into the Dream Gate.", 420)
+# ---- S21 toybox extras: balloon, zipline, doors, lum blocks, jets, spikes, icicles, saw, key (23400..27700) ----
+L.checkpoint(23380, -1260)
+L.ground(22100, 28000, -1260, 460)
+L.sign(23560, -1260, "21. TOYBOX EXTRAS! Grab a BALLOON to float up.\nSteer over the tower, PUNCH to pop it.", 400)
+L.balloon(23820, -1260)
+L.block(24000, -1700, 220, 440)                # tower
+L.zipline(24240, -1680, 25040, -1360)
+L.sign(24110, -1700, "Hop onto the ZIPLINE!", 260)
+L.lums(24300, -1680, 24900, -1480, 6)
+# Door to a secret sky room and back.
+da = L.door(24520, -1260)
+L.block(24300, -2320, 500, 40)
+db = L.door(24560, -2320)
+L.link_doors(da, db)
+L.crate(24420, -2320, 64, lums=8)
+L.lums(24650, -2400, 24780, -2400, 3)
+L.sign(24700, -1260, "Doors: press UP.", 220)
+for i in range(3):
+    L.lum_block(25150 + i * 100, -1470, lums=4)
+L.sign(25260, -1260, "Bump the blocks from below!", 300)
+for i in range(3):
+    L.flame(25600 + i * 180, -1260, length=200, on=0.9, off=1.3, phase=i * 0.22)
+L.sign(25450, -1260, "Fire jets: time it!", 240)
+L.flame(26250, -1260, steam=True, on=1.2, off=1.0)
+L.ledge(26170, -1500, 160)
+L.key(26250, -1560)
+L.sign(26120, -1260, "Steam geysers pop you up...", 300)
+L.pop_spikes(26450, -1260, 240, up=1.0, down=1.2)
+L.block(26800, -1920, 620, 300)                # icy ceiling slab
+for x in [26880, 27060, 27240]:
+    L.stalactite(x, -1620)
+L.saw(27450, -1300, waypoints=((300, 0),), speed=240)
+L.key_door(27850, -1560, 64, 300)
+L.sign(27700, -1260, "Carry the KEY to its door\n(drop it if you get bubbled!)", 360)
+L.checkpoint(28000, -1260)
 
-L.finish(spawn=(100, -2), left=-200, right=24800, bottom=560, kill_y=900,
+# ---- S17 secret mound + vault + goal (28200..29600) -----------------------------------------------------------------------
+L.ledge(28280, -1380, 140)
+L.block(28450, -1510, 500, 50)          # mound roof
+L.block(28850, -1460, 100, 200)         # mound right wall
+L.secret(28450, -1460, 400, 200)
+L.crate(28650, -1260, 64, lums=10)
+L.lums(28500, -1320, 28800, -1320, 4)
+L.sign(28200, -1260, "Is that mound hollow...?", 280)
+L.crate(29050, -1260, 110, lums=10, iron=True)
+L.goal(29300, -1260)
+L.ground(28000, 29600, -1260, 460)
+L.wall(29600, -2200, -800)
+L.sign(28950, -1510, "YOU MADE IT! Charge-punch the vault,\nthen jump into the Dream Gate.", 420)
+
+L.finish(spawn=(100, -2), left=-200, right=29600, bottom=560, kill_y=900,
          script_props=None)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/demo_level.tscn"))

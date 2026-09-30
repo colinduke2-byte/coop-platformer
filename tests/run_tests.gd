@@ -1666,15 +1666,15 @@ func test_demo_wind_gap_is_makeable() -> void:
 
 func test_demo_mound_is_climbable() -> void:
 	var p: Player = await _load_demo()
-	await _place(p, Vector2(23440, -1262))
-	await _run_to(p, 23460)
+	await _place(p, Vector2(28240, -1262))
+	await _run_to(p, 28260)
 	press(0, "jump")
 	await seconds(0.5)
 	release(0, "jump")
 	await seconds(0.3)
 	press(0, "jump")
 	await seconds(1.5)
-	check(p.global_position.x > 24160 or p.global_position.y < -1500.0, "should get up and over the mound (at %s)" % p.global_position)
+	check(p.global_position.x > 28960 or p.global_position.y < -1500.0, "should get up and over the mound (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -1928,3 +1928,210 @@ func test_audio_plays_sfx_for_events_and_theme_music() -> void:
 	EventBus.level_started.emit(_arena)  # arena has no theme -> default meadow music
 	await frames(2)
 	check(Audio._music_name.ends_with("meadow.wav"), "levels should pick their theme music (got %s)" % Audio._music_name)
+
+
+# --- Level pieces round 2 --------------------------------------------------------------
+
+func test_zipline_carries_you_downhill_and_flings_you_off() -> void:
+	var z := Zipline.new()
+	z.position = Vector2(-500, -500)
+	z.end = Vector2(700, 300)
+	_arena.add_child(z)
+	var p := add_player(0, Vector2(-350, -500 + 72 - 20))  # hands just above the rope, falling
+	for i in 60:
+		await get_tree().physics_frame
+		if _state(p) == &"Zipline":
+			break
+	check(_state(p) == &"Zipline", "jumping into a zipline should grab it (got %s)" % _state(p))
+	await seconds(0.5)
+	check(p.velocity.x > 300.0, "should whizz downhill (vx %.0f)" % p.velocity.x)
+	await seconds(2.0)
+	check(_state(p) != &"Zipline" and p.global_position.x > 200.0, "should be flung off the end (at %s)" % p.global_position)
+
+
+func test_balloon_lifts_then_drops_you() -> void:
+	var stand := BalloonStand.new()
+	stand.position = Vector2(120, 0)
+	_arena.add_child(stand)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.3)
+	release(0, "move_right")
+	check(p.balloon_timer > 0.0, "touching the stand should hand you a balloon")
+	await seconds(1.2)
+	check(p.global_position.y < -200.0, "the balloon should lift you (y %.0f)" % p.global_position.y)
+	await seconds(p.tuning.balloon_time + 1.5)
+	check(p.is_on_floor(), "when the balloon runs out you float back down")
+
+
+func test_door_takes_everyone_to_its_twin() -> void:
+	var a := Door.new()
+	a.name = "DoorA"
+	a.position = Vector2(0, 0)
+	_arena.add_child(a)
+	var b := Door.new()
+	b.name = "DoorB"
+	b.position = Vector2(-1500, 0)
+	_arena.add_child(b)
+	a.target = a.get_path_to(b)
+	var p := add_player(0, Vector2(0, -2))
+	var q := add_player(1, Vector2(300, -2))
+	await settle(p)
+	press(0, "move_up")
+	await seconds(0.8)
+	release(0, "move_up")
+	check(p.global_position.x < -1400.0 and q.global_position.x < -1400.0, "UP at a door should take everyone to the twin door")
+
+
+func test_lum_block_pops_lums_when_bumped() -> void:
+	var blk := LumBlock.new()
+	blk.position = Vector2(-32, -170)
+	blk.lums = 2
+	_arena.add_child(blk)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "jump")
+	await seconds(0.5)
+	release(0, "jump")
+	check(blk.lums == 1, "jumping into it from below should pop a Lum (left %d)" % blk.lums)
+
+
+func test_fire_jet_hurts_steam_jet_launches() -> void:
+	var fire := FlameJet.new()
+	fire.position = Vector2(-400, 0)
+	fire.on_time = 5.0
+	_arena.add_child(fire)
+	var a := add_player(0, Vector2(-400, -2))
+	await seconds(0.3)
+	check(a.is_bubbled(), "standing in a lit fire jet should bubble you")
+	var steam := FlameJet.new()
+	steam.style = FlameJet.Style.STEAM
+	steam.position = Vector2(400, 0)
+	steam.on_time = 5.0
+	_arena.add_child(steam)
+	var b := add_player(1, Vector2(400, -2))
+	var launched := false
+	for i in 60:
+		await get_tree().physics_frame
+		launched = launched or b.velocity.y < -600.0
+	check(launched and not b.is_bubbled(), "a steam geyser should launch you up, harmlessly")
+
+
+func test_pop_spikes_only_hurt_when_up() -> void:
+	var s := PopSpikes.new()
+	s.position = Vector2(-100, 0)
+	s.length = 200.0
+	s.up_time = 0.5
+	s.down_time = 1.0
+	s.phase = 0.45  # start just before they sink
+	_arena.add_child(s)
+	var p := add_player(0, Vector2(0, -2))
+	var hurt_at := -1.0
+	for i in 240:
+		await get_tree().physics_frame
+		if p.is_bubbled():
+			hurt_at = i / 120.0
+			break
+	check(hurt_at > 0.6, "spikes are safe while down, deadly once they pop back up (hurt at %.2f s)" % hurt_at)
+
+
+func test_stalactite_falls_on_you() -> void:
+	var st := Stalactite.new()
+	st.position = Vector2(0, -600)
+	_arena.add_child(st)
+	var p := add_player(0, Vector2(0, -2))
+	var hit := false
+	for i in 240:
+		await get_tree().physics_frame
+		hit = hit or p.is_bubbled()
+	check(hit, "standing under a stalactite should get you bonked")
+
+
+func test_saw_blade_hurts() -> void:
+	var saw := SawBlade.new()
+	saw.position = Vector2(-300, -34)
+	saw.waypoints = PackedVector2Array([Vector2(600, 0)])
+	saw.speed = 400.0
+	_arena.add_child(saw)
+	var p := add_player(0, Vector2(0, -2))
+	var hit := false
+	for i in 240:
+		await get_tree().physics_frame
+		hit = hit or p.is_bubbled()
+	check(hit, "a saw running along the floor should bubble you")
+
+
+func test_key_opens_matching_door_and_drops_when_carrier_bubbles() -> void:
+	var key := DreamKey.new()
+	key.position = Vector2(80, -30)
+	_arena.add_child(key)
+	var door := KeyDoor.new()
+	door.position = Vector2(400, -220)
+	_arena.add_child(door)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.3)
+	check(key.carrier == p, "touching the key should pick it up")
+	p.hurt()
+	await frames(2)
+	check(key.carrier == null, "getting bubbled drops the key")
+	p.revive(false)
+	p.global_position = Vector2(key.global_position.x - 40, -2)
+	await seconds(1.5)
+	release(0, "move_right")
+	check(door.collision_layer == 0, "carrying the key to the door should unlock it")
+
+
+func test_demo_toybox_balloon_reaches_tower_and_zipline() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(23700, -1262))
+	await _run_to(p, 23830)
+	release(0, "move_right")
+	check(p.balloon_timer > 0.0, "the balloon stand should give you a balloon")
+	# Float up, then steer right onto the tower.
+	var on_tower := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.global_position.y < -1720.0 and p.global_position.x < 24080.0:
+			press(0, "move_right")
+		elif p.global_position.x >= 24080.0 and p.balloon_timer > 0.0:
+			release(0, "move_right")
+			await _punch()  # pop it over the tower
+		if p.is_on_floor() and p.global_position.y < -1690.0:
+			on_tower = true
+			break
+	release(0, "move_right")
+	check(on_tower, "the balloon should get you onto the tower (at %s)" % p.global_position)
+	await _run_to(p, 24190)
+	press(0, "jump")
+	var zipped := false
+	for i in 120:
+		await get_tree().physics_frame
+		if i == 6:
+			release(0, "jump")  # a little hop
+		if _state(p) == &"Zipline":
+			zipped = true
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	check(zipped, "jumping off the tower should catch the zipline (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_demo_key_reachable_via_geyser() -> void:
+	var p: Player = await _load_demo()
+	await _place(p, Vector2(26150, -1262))
+	await _run_to(p, 26240, "move_right", 2.0)
+	release(0, "move_right")
+	var high := 0.0
+	for i in 360:
+		await get_tree().physics_frame
+		high = minf(high, p.global_position.y)
+		var key: DreamKey = _demo.find_children("*", "DreamKey", true, false)[0]
+		if key.carrier == p:
+			break
+	var k: DreamKey = _demo.find_children("*", "DreamKey", true, false)[0]
+	check(k.carrier == p, "the geyser should pop you up to the key (highest %.0f)" % high)
+	await _finish_demo()

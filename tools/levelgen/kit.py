@@ -148,7 +148,49 @@ class LevelKit:
     def secret(self, x, y, w, h):
         return self._tool("Decor", "Secret", "Node2D", "secret_area", x, y, size=V(w, h))
 
+    def zipline(self, x, y, ex, ey, posts=True):
+        return self._tool("Toys", "Zipline", "Node2D", "zipline", x, y, end=V(ex - x, ey - y),
+                          posts=None if posts else False)
+
+    def balloon(self, x, y):
+        return self._tool("Toys", "Balloon", "Area2D", "balloon_stand", x, y)
+
+    def door(self, x, y, locked=False):
+        return self._tool("Logic", "Door", "Area2D", "door", x, y, locked=locked or None)
+
+    def link_doors(self, a, b):
+        """Two-way link between doors."""
+        self.extra(a, target=self.rel(a, b))
+        self.extra(b, target=self.rel(b, a))
+
+    def lum_block(self, x, y, lums=5):
+        return self._tool("Toys", "LumBlock", "AnimatableBody2D", "lum_block", x, y, lums=lums)
+
+    def key(self, x, y, color=0):
+        return self._n("Pickups", "Key", "Area2D", f"{RES}collectibles/dream_key.gd", {"key_color": color or None}, x, y)
+
+    def key_door(self, x, y, w=64, h=220, color=0):
+        return self._tool("Logic", "KeyDoor", "AnimatableBody2D", "key_door", x, y, size=V(w, h),
+                          key_color=color or None)
+
     # --- hazards -----------------------------------------------------------------
+    def flame(self, x, y, length=220.0, steam=False, on=1.0, off=1.6, phase=0.0, rotation=0.0):
+        p = self._tool("Hazards", "FlameJet", "Node2D", "flame_jet", x, y, style=1 if steam else None,
+                       length=float(length), on_time=float(on), off_time=float(off), phase=float(phase) or None)
+        if rotation:
+            self._set_last("rotation_degrees", float(rotation))
+        return p
+
+    def pop_spikes(self, x, y, length=168.0, up=1.0, down=1.4, phase=0.0):
+        return self._tool("Hazards", "PopSpikes", "Area2D", "pop_spikes", x, y, length=float(length),
+                          up_time=float(up), down_time=float(down), phase=float(phase) or None)
+
+    def stalactite(self, x, y, ice=True):
+        return self._tool("Hazards", "Stalactite", "Node2D", "stalactite", x, y, ice=None if ice else False)
+
+    def saw(self, x, y, waypoints=((400, 0),), speed=220.0, radius=34.0, loop=False):
+        return self._tool("Hazards", "Saw", "Node2D", "saw_blade", x, y, waypoints=[V(*p) for p in waypoints],
+                          speed=float(speed), radius=float(radius), loop=loop or None)
     def spikes(self, x, y, length, rotation=0.0):
         p = self._tool("Hazards", "Spikes", "Area2D", "spikes", x, y, length=float(length))
         if rotation:

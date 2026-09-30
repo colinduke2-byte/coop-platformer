@@ -487,6 +487,13 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 					p[&"hand_f"] = Vector2(sx + 20, s_y + 2)
 					p[&"hand_b"] = Vector2(-sx - 20, s_y + 2)
 					p[&"brow_tilt"] = 1.0
+		&"Zipline":
+			p[&"hand_f"] = Vector2(3, -72)
+			p[&"hand_b"] = Vector2(-3, -72)
+			p[&"foot_f"] = Vector2(12, -6)
+			p[&"foot_b"] = Vector2(4, -2)
+			p[&"lean"] = -0.15
+			p[&"brow_raise"] = -3.0
 		&"Swing":
 			# Both arms straight up to the ring; legs trail the swing.
 			var trail := clampf(-swing_speed * 0.12, -1.0, 1.0) * 10.0

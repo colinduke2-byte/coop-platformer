@@ -98,6 +98,18 @@ enum GlideMode {
 @export var climb_jump_multiplier := 0.9    ## jump off (x jump velocity)
 @export var climb_regrab_delay := 0.3
 
+@export_group("Zipline")
+@export var zipline_accel := 1900.0         ## px/s^2 downhill pull (x steepness)
+@export var zipline_min_speed := 260.0      ## never slower than this along the line
+@export var zipline_max_speed := 980.0
+@export var zipline_jump_up := 420.0        ## JUMP off: extra upward kick
+@export var zipline_regrab_delay := 0.35
+
+@export_group("Balloon")
+@export var balloon_time := 3.5             ## s a balloon lifts you
+@export var balloon_rise_speed := 280.0     ## px/s upward
+@export var balloon_accel := 1100.0
+
 @export_group("Surfaces")
 @export var ice_friction := 0.12            ## accel/decel multiplier on slippery blocks
 

@@ -5,7 +5,7 @@ extends Node2D
 
 ## Palette every block / platform / toy in this level draws with.
 @export var level_theme: LevelTheme
-@export var level_name := "Unnamed Dream"
+@export var level_name := ""
 ## Screens every level gets automatically (so level scenes stay lean).
 @export var add_hud := true
 @export var add_pause_menu := true

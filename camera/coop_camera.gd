@@ -27,6 +27,7 @@ func _ready() -> void:
 	ignore_rotation = false
 	EventBus.level_reset.connect(snap)
 	EventBus.screen_shake.connect(add_trauma)
+	EventBus.players_teleported.connect(func(_pos: Vector2) -> void: snap())
 	EventBus.player_joined.connect(func(_p: Player) -> void: _offscreen_time.clear())
 
 

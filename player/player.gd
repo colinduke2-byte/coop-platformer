@@ -50,6 +50,12 @@ var _climb_timer := 0.0
 ## Set by SwingRing.grab for the Swing state.
 var swing_anchor: Node2D
 var swing_regrab_timer := 0.0
+## Set by Zipline for the Zipline state.
+var zipline: Node2D
+var zipline_regrab_timer := 0.0
+## > 0 while holding a Balloon (floats you up; JUMP / ATTACK pops it).
+var balloon_timer := 0.0
+var _has_balloon := false
 var _updraft_timer := 0.0
 var _sprint_build := 0.0
 var _drop_timer := 0.0
@@ -151,6 +157,9 @@ func _move_with_wind() -> void:
 # --- Shared movement helpers (used by states) --------------------------------
 
 func apply_gravity(delta: float) -> void:
+	if balloon_timer > 0.0:
+		velocity.y = move_toward(velocity.y, -tuning.balloon_rise_speed, tuning.balloon_accel * delta)
+		return
 	var g := tuning.rise_gravity() if velocity.y < 0.0 else tuning.fall_gravity()
 	var max_fall := tuning.max_fall_speed
 	if absf(velocity.y) < tuning.apex_speed_threshold and input.jump_held():
@@ -487,6 +496,37 @@ func can_grab_swing() -> bool:
 			and state_machine.current_name() in [&"Jump", &"Fall", &"Glide"]
 
 
+func can_grab_zipline() -> bool:
+	return zipline_regrab_timer <= 0.0 and not is_on_floor() and not crouched \
+			and state_machine.current_name() in [&"Jump", &"Fall", &"Glide"]
+
+
+func grab_zipline(line: Node2D) -> void:
+	zipline = line
+	pop_balloon()
+	state_machine.transition_to(&"Zipline")
+
+
+## Grab a balloon: float up for tuning.balloon_time.
+func take_balloon() -> void:
+	balloon_timer = tuning.balloon_time
+	_has_balloon = true
+	glide_armed = false
+	if is_on_floor():
+		velocity.y = -tuning.balloon_rise_speed
+	if state_machine.current_name() in [&"Ground", &"Glide", &"Crouch", &"Slide"]:
+		state_machine.transition_to(&"Jump")
+	EventBus.balloon_changed.emit(self, true)
+
+
+func pop_balloon() -> void:
+	if not _has_balloon:
+		return
+	_has_balloon = false
+	balloon_timer = 0.0
+	EventBus.balloon_changed.emit(self, false)
+
+
 func grab_swing(anchor: Node2D) -> void:
 	swing_anchor = anchor
 	state_machine.transition_to(&"Swing")
@@ -739,6 +779,11 @@ func _update_timers(delta: float) -> void:
 	if is_on_floor():
 		wall_run_used = false
 	swing_regrab_timer = maxf(swing_regrab_timer - delta, 0.0)
+	zipline_regrab_timer = maxf(zipline_regrab_timer - delta, 0.0)
+	if _has_balloon:
+		balloon_timer -= delta
+		if balloon_timer <= 0.0 or input.attack_pressed() or is_bubbled():
+			pop_balloon()
 	climb_regrab_timer = maxf(climb_regrab_timer - delta, 0.0)
 	# Environment areas re-register every physics frame; forget stale ones.
 	_water_timer -= delta

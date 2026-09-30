@@ -40,7 +40,7 @@ func physics_update(delta: float) -> void:
 		return
 	if player.try_wall_coyote_jump():
 		return
-	if _glide_requested(delta):
+	if player.balloon_timer <= 0.0 and _glide_requested(delta):
 		machine.transition_to(&"Glide")
 		return
 	if player.input.attack_pressed():
