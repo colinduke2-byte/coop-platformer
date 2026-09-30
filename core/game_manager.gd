@@ -58,6 +58,10 @@ func _physics_process(delta: float) -> void:
 func register_level(new_level: Level) -> void:
 	level = new_level
 	players.clear()
+	# Back on the map, show the world this level belongs to.
+	var i := LevelCatalog.index_of(level.scene_file_path)
+	if i != -1 and LevelCatalog.LEVELS[i]["world"] != "bonus":
+		WorldMap.world = LevelCatalog.LEVELS[i]["world"]
 	checkpoint = level.get_spawn_position()
 	lums = 0
 	lums_by_slot.clear()

@@ -54,9 +54,9 @@ func _ready() -> void:
 		var g := GemIcon.new(i, false, 40.0)
 		_gems.append(g)
 		top_right.add_child(g)
-	# World 1 levels: a little cage that fills in when you free the Snoozling.
+	# Story levels: a little cage that fills in when you free the Snoozling.
 	var idx := LevelCatalog.index_of(GameManager.level.scene_file_path) if GameManager.level else -1
-	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] == "w1":
+	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] != "bonus":
 		_snooze = SnoozeIcon.new()
 		_snooze.freed = false
 		top_right.add_child(_snooze)
@@ -125,9 +125,10 @@ func _show_banner() -> void:
 		return
 	_banner.text = lvl.level_name
 	var idx := LevelCatalog.index_of(lvl.scene_file_path)
-	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] == "w1":
-		var n := LevelCatalog.levels_in("w1").find(LevelCatalog.LEVELS[idx]) + 1
-		_banner.text = "World 1-%d\n%s" % [n, lvl.level_name]
+	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] != "bonus":
+		var w: String = LevelCatalog.LEVELS[idx]["world"]
+		var n := LevelCatalog.levels_in(w).find(LevelCatalog.LEVELS[idx]) + 1
+		_banner.text = "World %d-%d\n%s" % [LevelCatalog.world_number(w), n, lvl.level_name]
 	_banner.modulate.a = 0.0
 	var tw := create_tween()
 	tw.tween_property(_banner, ^"modulate:a", 1.0, 0.4)

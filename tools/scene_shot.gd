@@ -1,6 +1,6 @@
 extends Node
 ## Screenshot any scene (menus, the world map...):
-##   godot --path . res://tools/scene_shot.tscn -- --scene=res://ui/world_map.tscn --out=/tmp/x.png [--wait=1.0] [--players=2]
+##   godot --path . res://tools/scene_shot.tscn -- --scene=res://ui/world_map.tscn --out=/tmp/x.png [--wait=1.0] [--players=2] [--map_world=w2]
 
 
 func _ready() -> void:
@@ -10,6 +10,7 @@ func _ready() -> void:
 		args[kv[0]] = kv[1] if kv.size() > 1 else "true"
 	for i in int(args.get("players", "1")):
 		InputRouter.bind_slot(i, i if i < 2 else 2, i)
+	WorldMap.world = args.get("map_world", "w1")
 	var scene: Node = load(args.get("scene", "res://ui/world_map.tscn")).instantiate()
 	add_child(scene)
 	await get_tree().create_timer(float(args.get("wait", "1.0"))).timeout

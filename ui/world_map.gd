@@ -1,7 +1,8 @@
 class_name WorldMap
 extends Node2D
-## WORLD MAP: the hub between levels. An illustrated landscape of World 1 with
+## WORLD MAP: the hub between levels. One illustrated landscape per world with
 ## a winding path through the levels; the gang walks between level badges.
+## Gate nodes at the ends of a path lead to the next / previous world.
 ##   LEFT / RIGHT: walk to the previous / next level (locked ones stay shut)
 ##   JUMP: play the level (the balloon at the dock opens Bonus Dreams)
 ##   PUNCH: back to character select      PAUSE: controls
@@ -9,10 +10,13 @@ extends Node2D
 ## The landscape is baked into a single mesh; only small bits animate.
 
 const BONUS_POS := Vector2(115, 905)
+const GATE_W2_POS := Vector2(1830, 170)     ## World 1's gondola station up to World 2
+const GATE_W1_POS := Vector2(110, 975)      ## World 2's path back down to World 1
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
 
-static var last_index := -1          ## remembered between visits (this session)
+static var world := "w1"             ## which world's map to show
+static var last_index := {}          ## world -> node index, remembered between visits (this session)
 
 var nodes: Array[Dictionary] = []    ## {"id", "pos", "name", "blurb", "unlocked", "done", "bonus"}
 var index := 0
@@ -38,7 +42,7 @@ var _path := PackedVector2Array()    ## the whole winding path (for drawing)
 
 func _ready() -> void:
 	_build_nodes()
-	add_child(MapArt.new(_bake_land()))
+	add_child(MapArt.new(_bake_w2() if world == "w2" else _bake_land()))
 	var live := LiveBits.new()
 	live.map = self
 	add_child(live)
@@ -46,12 +50,13 @@ func _ready() -> void:
 	badges.map = self
 	add_child(badges)
 	# Start on the remembered node, else the newest unlocked level.
-	if last_index >= 0 and last_index < nodes.size() and nodes[last_index]["unlocked"]:
-		index = last_index
+	var remembered: int = last_index.get(world, -1)
+	if remembered >= 0 and remembered < nodes.size() and nodes[remembered]["unlocked"]:
+		index = remembered
 	else:
 		index = 0
 		for i in nodes.size():
-			if nodes[i]["unlocked"] and not nodes[i]["bonus"]:
+			if nodes[i]["unlocked"] and not nodes[i]["bonus"] and not nodes[i].has("gate"):
 				index = i
 	_gang_pos = nodes[index]["pos"]
 	var slots := InputRouter.get_bound_slots()
@@ -67,16 +72,24 @@ func _ready() -> void:
 		_gang.append(rig)
 	_build_ui()
 	_refresh_panel()
-	Audio.play_music("worldmap")
+	Audio.play_music("worldmap" if world == "w1" else "gondola")
 
 
 func _build_nodes() -> void:
-	nodes.append({"id": "bonus", "pos": BONUS_POS, "name": "Bonus Dreams", "bonus": true, "unlocked": true, "done": false,
-			"blurb": "Hop in the balloon to visit the old favourites: the Playground, Candy Canopy, Sunset Gusts and Glacier Grotto."})
-	for l in LevelCatalog.levels_in("w1"):
+	if world == "w1":
+		nodes.append({"id": "bonus", "pos": BONUS_POS, "name": "Bonus Dreams", "bonus": true, "unlocked": true, "done": false,
+				"blurb": "Hop in the balloon to visit the old favourites: the Playground, Candy Canopy, Sunset Gusts and Glacier Grotto."})
+	else:
+		nodes.append({"id": "gate_w1", "pos": GATE_W1_POS, "name": "Back to the Lullaby Woods", "bonus": false, "gate": "w1",
+				"unlocked": true, "done": false, "blurb": "Take the gondola back down to World 1."})
+	for l in LevelCatalog.levels_in(world):
 		nodes.append({"id": l["id"], "pos": l["map"], "name": l["name"], "blurb": l["blurb"], "bonus": false,
 				"unlocked": LevelCatalog.is_unlocked(l["id"]), "done": SaveData.get_record(l["id"]).get("done", false),
 				"boss": l.get("boss", false), "scene": l["scene"]})
+	if world == "w1" and LevelCatalog.exists("w2_1"):
+		nodes.append({"id": "gate_w2", "pos": GATE_W2_POS, "name": "Gondola to Frostwhistle Peaks", "bonus": false, "gate": "w2",
+				"unlocked": LevelCatalog.world_done("w1") or OS.has_feature("unlock_all"), "done": false,
+				"blurb": "World 2! Ride the gondola up into the snowy mountains."})
 	var pts: Array[Vector2] = []
 	for n in nodes:
 		pts.append(n["pos"])
@@ -87,8 +100,9 @@ func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 5
 	add_child(layer)
-	var totals := SaveData.world_totals("w1")
-	var title := UIStyle.label("World 1  -  The Lullaby Woods", 46, Color.WHITE, 12)
+	var totals := SaveData.world_totals(world)
+	var title := UIStyle.label("World %d  -  %s" % [LevelCatalog.world_number(world), LevelCatalog.world_info(world).get("name", "")],
+			46, Color.WHITE, 12)
 	title.position = Vector2(40, 28)
 	layer.add_child(title)
 	var sub := UIStyle.label("Levels %d / %d      Dream Gems %d / %d      Snoozlings %d / %d" % [
@@ -128,6 +142,8 @@ func _refresh_panel() -> void:
 	_panel_blurb.text = n["blurb"]
 	if n["bonus"]:
 		_panel_stats.text = "Always open"
+	elif n.has("gate"):
+		_panel_stats.text = "Press JUMP to ride" if n["unlocked"] else "Locked - beat Thornwood Keep's boss first"
 	elif not n["unlocked"]:
 		_panel_stats.text = "Locked - finish the level before it"
 	else:
@@ -163,7 +179,7 @@ func _process(delta: float) -> void:
 		if _walk_t >= _walk_len:
 			_walking = false
 			index = _walk_to
-			last_index = index
+			last_index[world] = index
 			_refresh_panel()
 		_update_gang(delta)
 		return
@@ -208,9 +224,14 @@ func _enter() -> void:
 	if not n["unlocked"]:
 		return
 	set_process(false)
-	last_index = index
+	last_index[world] = index
 	Audio.play("menu_ok", -4.0)
-	if n["bonus"]:
+	if n.has("gate"):
+		# To the next world: start at its first level. Back: stand by the gondola station.
+		world = n["gate"]
+		last_index[world] = 1 if world != "w1" else LevelCatalog.levels_in("w1").size() + 1
+		GameManager.goto_scene(GameManager.WORLD_MAP)
+	elif n["bonus"]:
 		GameManager.goto_scene(GameManager.LEVEL_SELECT)
 	else:
 		GameManager.goto_scene(n["scene"])
@@ -341,6 +362,8 @@ func _bake_land() -> ArrayMesh:
 	_region_river(mp, Vector2(1440, 760))
 	_region_keep(mp, Vector2(1680, 380))
 	_region_dock(mp, BONUS_POS)
+	if LevelCatalog.exists("w2_1"):
+		_region_station(mp, GATE_W2_POS)
 	# Scattered trees (not on top of regions).
 	for i in 60:
 		var p := Vector2(rng.randf_range(200, 1800), rng.randf_range(450, 960))
@@ -361,6 +384,171 @@ func _bake_land() -> ArrayMesh:
 		mp.draw_circle(_sample(_path, d), 3.0, Color("c9a86a"))
 		d += 22.0
 	return mp.build()
+
+
+# --- World 2: Frostwhistle Peaks (baked once) --------------------------------------------
+
+func _bake_w2() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	var snow := Color("f4f9ff")
+	var shade := Color("d6e4f3")
+	var rock := Color("7d8ba6")
+	var rock_dark := Color("5d6b86")
+	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("7fa8e6"), Color("e6f2ff"), 12)
+	# Far range: jagged blue peaks with snow caps.
+	var far := PackedVector2Array([Vector2(0, 520)])
+	var caps: Array[PackedVector2Array] = []
+	var x := 0.0
+	while x <= 1960.0:
+		var h := 170.0 + absf(sin(x * 0.011)) * 150.0 + rng.randf_range(0, 50)
+		var top := Vector2(x + 60.0, 470.0 - h)
+		far.append(Vector2(x, 470.0))
+		far.append(top)
+		caps.append(PackedVector2Array([top, top + Vector2(34, 46), top + Vector2(12, 38), top + Vector2(-4, 50), top + Vector2(-30, 42)]))
+		x += 120.0
+	far.append(Vector2(1920, 470))
+	far.append(Vector2(1920, 520))
+	mp.draw_colored_polygon(far, Color("a3bde0"))
+	for c in caps:
+		mp.draw_colored_polygon(c, Color("f0f6ff"))
+	# The great summit (World 2's boss) towering on the right.
+	var peak := Vector2(1640, 140)
+	var mtn := PackedVector2Array([Vector2(1180, 1080), Vector2(1380, 620), Vector2(1500, 420), peak, Vector2(1760, 380),
+			Vector2(1900, 560), Vector2(1920, 1080)])
+	mp.draw_colored_polygon(mtn, rock)
+	mp.draw_colored_polygon(PackedVector2Array([peak, Vector2(1760, 380), Vector2(1900, 560), Vector2(1920, 1080), Vector2(1640, 1080)]), rock_dark)
+	mp.draw_colored_polygon(PackedVector2Array([peak, Vector2(1700, 250), Vector2(1670, 236), Vector2(1650, 262), Vector2(1610, 240),
+			Vector2(1570, 270), Vector2(1545, 250)]), snow)
+	# Snowfields: rolling white land across the bottom of the map.
+	var land := PackedVector2Array([Vector2(0, 1080), Vector2(0, 640)])
+	for i in 25:
+		var lx := i * 80.0
+		land.append(Vector2(lx, 620.0 + sin(i * 0.9) * 40.0 + rng.randf_range(-10, 10)))
+	land.append(Vector2(1920, 640))
+	land.append(Vector2(1920, 1080))
+	mp.draw_colored_polygon(land, snow)
+	for i in 22:
+		var h := Vector2(rng.randf_range(60, 1860), rng.randf_range(660, 1040))
+		var r := rng.randf_range(60, 130)
+		mp.draw_colored_polygon(Art.ellipse(h, r, r * 0.35, 20), shade)
+		mp.draw_colored_polygon(Art.ellipse(h + Vector2(-r * 0.2, -r * 0.08), r * 0.7, r * 0.2, 16), snow)
+	# Regions.
+	_w2_village(mp, Vector2(230, 860))
+	_w2_cliffs(mp, Vector2(520, 700), rock, rock_dark, snow)
+	_w2_caverns(mp, Vector2(820, 820))
+	_w2_avalanche(mp, Vector2(1110, 620), rock, snow, shade)
+	_w2_springs(mp, Vector2(1420, 780))
+	_w2_throne(mp, Vector2(1640, 300))
+	# Pine forests (not on the regions or the path).
+	for i in 90:
+		var p := Vector2(rng.randf_range(40, 1880), rng.randf_range(640, 1060))
+		var clear := true
+		for n in nodes:
+			if p.distance_to(n["pos"]) < 115.0:
+				clear = false
+		if clear and _path_dist(p) > 34.0 and p.x < 1280.0 + (p.y - 640.0) * 0.4:
+			_pine(mp, p, rng.randf_range(0.6, 1.1))
+	# The path: packed-snow trail with footprints.
+	mp.draw_polyline(_path, Color("8a9bb8"), 22.0)
+	mp.draw_polyline(_path, Color("eaf2fb"), 16.0)
+	var d := 0.0
+	var total := _poly_len(_path)
+	while d < total:
+		mp.draw_circle(_sample(_path, d), 3.0, Color("b3c3da"))
+		d += 22.0
+	return mp.build()
+
+
+func _pine(mp: MeshPainter, base: Vector2, s: float) -> void:
+	mp.draw_rect(Rect2(base + Vector2(-3, -10) * s, Vector2(6, 10) * s), Color("6b4a2e"))
+	for k in 3:
+		var y := -8.0 - k * 12.0
+		var w := 16.0 - k * 4.0
+		mp.draw_colored_polygon(PackedVector2Array([base + Vector2(-w, y) * s, base + Vector2(0, y - 18.0) * s, base + Vector2(w, y) * s]), Color("2f6b5c"))
+		mp.draw_colored_polygon(PackedVector2Array([base + Vector2(-w * 0.5, y - 6.0) * s, base + Vector2(0, y - 18.0) * s, base + Vector2(w * 0.2, y - 9.0) * s]), Color("f4f9ff"))
+
+
+func _igloo(mp: MeshPainter, c: Vector2, s: float) -> void:
+	mp.draw_colored_polygon(Art.ellipse(c, 30 * s, 22 * s, 18), Color("dbe8f6"))
+	var dome := PackedVector2Array()
+	for i in 13:
+		var a := PI + i * PI / 12.0
+		dome.append(c + Vector2(cos(a) * 28.0, sin(a) * 24.0) * s)
+	mp.draw_colored_polygon(dome, Color("ffffff"))
+	for r in 2:
+		mp.draw_line(c + Vector2(-24 + r * 4, -8 - r * 8) * s, c + Vector2(24 - r * 4, -8 - r * 8) * s, Color("c7dcef"), 2.0)
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(-8, -4) * s, 7 * s, 9 * s, 10), Color("3a4a66"))
+
+
+func _w2_village(mp: MeshPainter, c: Vector2) -> void:
+	_igloo(mp, c + Vector2(-90, -6), 1.0)
+	_igloo(mp, c + Vector2(80, 16), 0.8)
+	_cottage(mp, c + Vector2(-10, -30), Color("ff5d5d"))
+	for i in 5:  # a snowman and some skis
+		mp.draw_circle(c + Vector2(130, -10 - i * 0.0), 9.0, Color.WHITE)
+	mp.draw_circle(c + Vector2(130, -24), 6.0, Color.WHITE)
+	mp.draw_line(c + Vector2(-40, 30), c + Vector2(-34, 4), Color("ff5d5d"), 3.0)
+	mp.draw_line(c + Vector2(-32, 30), c + Vector2(-26, 4), Color("5bc8ff"), 3.0)
+
+
+func _w2_cliffs(mp: MeshPainter, c: Vector2, rock: Color, rock_dark: Color, snow: Color) -> void:
+	# Stacked cliffs with the ski lift climbing them.
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-160, 90), c + Vector2(-120, -10), c + Vector2(-40, -30), c + Vector2(-20, -120),
+			c + Vector2(90, -140), c + Vector2(120, -40), c + Vector2(170, 90)]), rock)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-20, -120), c + Vector2(90, -140), c + Vector2(80, -118), c + Vector2(-10, -104)]), snow)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-120, -10), c + Vector2(-40, -30), c + Vector2(-44, -18), c + Vector2(-112, 0)]), snow)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(90, -140), c + Vector2(120, -40), c + Vector2(170, 90), c + Vector2(60, 90)]), rock_dark)
+	for p: Vector2 in [c + Vector2(-110, 40), c + Vector2(60, -150)]:
+		mp.draw_rect(Rect2(p + Vector2(-3, -60), Vector2(6, 60)), Color("5d6b82"))
+		mp.draw_rect(Rect2(p + Vector2(-12, -64), Vector2(24, 5)), Color("5d6b82"))
+	mp.draw_line(c + Vector2(-110, -20), c + Vector2(60, -210), Color("1d1726"), 2.0)
+
+
+func _w2_caverns(mp: MeshPainter, c: Vector2) -> void:
+	# A frozen lake by a glowing cave mouth.
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(40, 80), 150, 40, 28), Color("a9dcf5"))
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(10, 72), 90, 16, 20), Color("dff3ff"))
+	for k in 4:
+		mp.draw_line(c + Vector2(-40 + k * 40, 70), c + Vector2(-20 + k * 40, 92), Color(1, 1, 1, 0.7), 2.0)
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(-20, -10), 110, 70, 24), Color("8a9bb8"))
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(-20, 10), 44, 40, 20), Color("2a2f55"))
+	for k in 5:
+		var p := c + Vector2(-70 + k * 26, 30 - (k % 2) * 10)
+		var col := Color("c58bff") if k % 2 else Color("7fe8ff")
+		mp.draw_circle(p + Vector2(0, -12), 16, Color(col, 0.25))
+		mp.draw_colored_polygon(PackedVector2Array([p + Vector2(-6, 0), p + Vector2(0, -22), p + Vector2(6, 0)]), col)
+
+
+func _w2_avalanche(mp: MeshPainter, c: Vector2, rock: Color, snow: Color, shade: Color) -> void:
+	# A steep slope with a great white avalanche scar down it.
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-200, 110), c + Vector2(-60, -170), c + Vector2(40, -190), c + Vector2(220, 110)]), rock)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-60, -170), c + Vector2(40, -190), c + Vector2(110, 110), c + Vector2(-120, 110)]), snow)
+	for k in 6:
+		var p := c + Vector2(-60 + k * 26, -120 + k * 40)
+		mp.draw_circle(p, 12.0 - k, shade)
+		mp.draw_circle(p + Vector2(-2, -2), 9.0 - k, Color.WHITE)
+
+
+func _w2_springs(mp: MeshPainter, c: Vector2) -> void:
+	for k in 3:
+		var p := c + Vector2(-80 + k * 80, 20 + (k % 2) * 24)
+		mp.draw_colored_polygon(Art.ellipse(p, 46, 18, 20), Color("8a7a78"))
+		mp.draw_colored_polygon(Art.ellipse(p, 38, 13, 18), Color("7fd6d0"))
+		mp.draw_colored_polygon(Art.ellipse(p + Vector2(-8, -3), 18, 5, 12), Color(1, 1, 1, 0.5))
+	_cottage(mp, c + Vector2(110, -30), Color("ff8f5a"))
+
+
+func _w2_throne(mp: MeshPainter, c: Vector2) -> void:
+	# Grumblefrost's icy throne near the peak: pillars of ice and a crown.
+	for k in 5:
+		var x := -60.0 + k * 30.0
+		var h := 50.0 + (30.0 if k == 2 else 0.0) + (k % 2) * 10.0
+		mp.draw_colored_polygon(PackedVector2Array([c + Vector2(x - 12, 20), c + Vector2(x - 4, 20 - h), c + Vector2(x + 4, 20 - h - 12),
+				c + Vector2(x + 12, 20)]), Color("bfe9ff"))
+		mp.draw_line(c + Vector2(x - 2, 14), c + Vector2(x + 1, 24 - h), Color(1, 1, 1, 0.8), 2.0)
+	mp.draw_rect(Rect2(c + Vector2(-80, 20), Vector2(160, 16)), Color("9fb9d6"))
 
 
 func _path_dist(p: Vector2) -> float:
@@ -479,6 +667,14 @@ func _region_keep(mp: MeshPainter, c: Vector2) -> void:
 		mp.draw_polyline(pts, Color("43305a"), 4.0)
 
 
+func _region_station(mp: MeshPainter, c: Vector2) -> void:
+	# A little gondola station on the crag, with a cable up into the clouds.
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-70, 40), c + Vector2(-40, -10), c + Vector2(50, -14), c + Vector2(80, 40)]), Color("7d7a90"))
+	mp.draw_rect(Rect2(c + Vector2(-34, -40), Vector2(60, 32)), Color("e8d5b0"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-42, -38), c + Vector2(-4, -62), c + Vector2(34, -38)]), Color("5b8cff"))
+	mp.draw_line(c + Vector2(26, -50), Vector2(1960, -40), Color("1d1726"), 2.5)
+
+
 func _region_dock(mp: MeshPainter, c: Vector2) -> void:
 	mp.draw_rect(Rect2(c + Vector2(-40, 20), Vector2(110, 12)), Color("8a5a36"))
 	for i in 4:
@@ -506,6 +702,18 @@ class LiveBits extends Node2D:
 		queue_redraw()
 
 	func _draw() -> void:
+		if map.world == "w2":
+			_draw_w2()
+			return
+		# Gondola bobbing up the cable to World 2.
+		if LevelCatalog.exists("w2_1"):
+			var a := WorldMap.GATE_W2_POS + Vector2(26, -50)
+			var b := Vector2(1960, -40)
+			var f := fposmod(t * 0.08, 1.0)
+			var g := a.lerp(b, f)
+			draw_line(g, g + Vector2(0, 14), Color("1d1726"), 2.0)
+			Art.shape(self, Art.rounded_rect(g + Vector2(-12, 14), g + Vector2(12, 34), 4.0), Color("ff5d5d"), Color("1d1726"), 2.0)
+			draw_rect(Rect2(g + Vector2(-8, 18), Vector2(16, 6)), Color("bfe6ff"))
 		# Windmill blades.
 		var hub := Vector2(617, 570)
 		for k in 4:
@@ -547,6 +755,9 @@ class LiveBits extends Node2D:
 		Art.shape(self, Art.ellipse(b, 34, 40, 24), Color("ff5d8f"), Color("1d1726"), 3.0)
 		draw_colored_polygon(Art.ellipse(b + Vector2(-10, -10), 10, 20, 12), Color(1, 1, 1, 0.3))
 		draw_line(b + Vector2(0, -40), b + Vector2(0, 40), Color("ffd23f"), 4.0)
+		_clouds()
+
+	func _clouds() -> void:
 		# Drifting clouds (over everything).
 		for i in 5:
 			var x := fposmod(i * 460.0 + t * 12.0, 2300.0) - 200.0
@@ -555,10 +766,76 @@ class LiveBits extends Node2D:
 				draw_circle(Vector2(x + k * 30, y - (k % 2) * 12), 26.0, Color(1, 1, 1, 0.75))
 
 
+	func _draw_w2() -> void:
+		var o := Color("1d1726")
+		# The ski lift chair climbing the cliffs (Cablecar Cliffs).
+		var a := Vector2(410, 680)
+		var b := Vector2(580, 490)
+		var f := fposmod(t * 0.12, 2.0)
+		f = f if f < 1.0 else 2.0 - f
+		var g := a.lerp(b, f)
+		draw_line(g, g + Vector2(0, 12), o, 2.0)
+		draw_rect(Rect2(g + Vector2(-10, 12), Vector2(20, 5)), Color("ffb13f"))
+		# Steam from the hot springs.
+		for k in 3:
+			var base := Vector2(1340 + k * 80, 800 + (k % 2) * 24)
+			for i in 4:
+				var ph := fposmod(t * 0.35 + i * 0.25 + k * 0.1, 1.0)
+				draw_circle(base + Vector2(sin(ph * 6.0 + k) * 8.0, -ph * 70.0), 5.0 + ph * 9.0, Color(1, 1, 1, 0.5 * (1.0 - ph)))
+		# Smoke from the village chimney.
+		for i in 4:
+			var ph := fposmod(t * 0.4 + i * 0.25, 1.0)
+			draw_circle(Vector2(233, 786) + Vector2(sin(ph * 6.0) * 6.0, -ph * 50.0), 4.0 + ph * 6.0, Color(1, 1, 1, 0.5 * (1.0 - ph)))
+		# Crystal glints by the caverns.
+		for k in 3:
+			var p := Vector2(760 + k * 40, 800 - (k % 2) * 16)
+			var tw := maxf(sin(t * 3.0 + k * 2.0), 0.0)
+			draw_line(p + Vector2(-8, 0) * tw, p + Vector2(8, 0) * tw, Color(1, 1, 1, tw), 2.0)
+			draw_line(p + Vector2(0, -8) * tw, p + Vector2(0, 8) * tw, Color(1, 1, 1, tw), 2.0)
+		# The Snowball King's banner on the summit.
+		var pole := Vector2(1640, 140)
+		draw_line(pole, pole + Vector2(0, -34), o, 2.0)
+		var flag := PackedVector2Array()
+		for i in 6:
+			flag.append(pole + Vector2(i * 6, -34 + sin(t * 6.0 + i) * 2.0))
+		for i in range(5, -1, -1):
+			flag.append(pole + Vector2(i * 6, -22 + sin(t * 6.0 + i) * 2.0))
+		draw_colored_polygon(flag, Color("5bc8ff"))
+		# Snow falling over the whole map.
+		for i in 70:
+			var x := fposmod(i * 137.0 + sin(t * 0.8 + i) * 20.0, 1920.0)
+			var y := fposmod(i * 71.0 + t * (40.0 + (i % 5) * 12.0), 1080.0)
+			draw_circle(Vector2(x, y), 2.0 + (i % 3), Color(1, 1, 1, 0.8))
+		_clouds()
+
+
 ## Level badges on top of the path (redrawn when the selection moves).
 class Badges extends Node2D:
 	var map: WorldMap
 	var t := 0.0
+
+	## A signpost badge for a gate to another world (snowflake up, leaf back down).
+	func _draw_gate(p: Vector2, n: Dictionary, sel: bool, r: float) -> void:
+		var o := Color("1d1726")
+		var to_snow: bool = n["gate"] == "w2"
+		var fill := Color("bfe6ff") if to_snow else Color("9be07e")
+		if not n["unlocked"]:
+			fill = Color("9a93a8")
+		draw_circle(p + Vector2(0, 6), r, Color(0, 0, 0, 0.25))
+		Art.shape(self, Art.ellipse(p, r, r, 28), fill, o, 4.0)
+		if not n["unlocked"]:
+			draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), o)
+			draw_arc(p + Vector2(0, -3), 7.0, PI, TAU, 10, o, 3.0)
+		elif to_snow:
+			for k in 3:  # snowflake
+				var d := Vector2.from_angle(k * PI / 3.0) * 16.0
+				draw_line(p - d, p + d, Color.WHITE, 4.0)
+				draw_line(p - d, p + d, o, 1.5)
+		else:
+			Art.shape(self, Art.ellipse(p, 9, 15, 12), Color("4fb548"), o, 2.5)
+			draw_line(p + Vector2(0, -12), p + Vector2(0, 14), o, 2.0)
+		if sel:
+			draw_arc(p, r + 10.0, 0, TAU, 32, Color.WHITE, 4.0)
 
 	func _process(delta: float) -> void:
 		t += delta
@@ -576,6 +853,9 @@ class Badges extends Node2D:
 			if n["bonus"]:
 				if sel:
 					draw_arc(p + Vector2(20, -70), 52.0, 0, TAU, 32, Color("ffd23f"), 4.0)
+				continue
+			if n.has("gate"):
+				_draw_gate(p, n, sel, r)
 				continue
 			var fill := Color("ffd23f") if n["done"] else (UIStyle.ACCENT if n["unlocked"] else Color("9a93a8"))
 			if n.get("boss", false) and n["unlocked"]:

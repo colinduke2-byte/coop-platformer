@@ -3622,9 +3622,11 @@ func _hop_run(p: Player, jump_at: Array, end_x: float, sprint := false, max_s :=
 			held -= 1
 			if held == 0:
 				release(0, "jump")
-		if k < jump_at.size() and p.global_position.x >= float(jump_at[k]):
+		while k < jump_at.size() and p.global_position.x > float(jump_at[k]) + 140.0:
+			k += 1  # overshot this take-off point in the air: skip it
+		if k < jump_at.size() and p.global_position.x >= float(jump_at[k]) and (p.is_on_floor() or p.coyote_timer > 0.0) and held == 0:
 			press(0, "jump")
-			held = 24
+			held = 46
 			k += 1
 		if p.global_position.x >= end_x and p.is_on_floor():
 			break
@@ -3883,3 +3885,161 @@ func test_w2_4_avalanche_restarts_behind_a_mid_chase_checkpoint() -> void:
 	await seconds(ava.restart_delay + 0.3)
 	check(ava.active, "...then comes again by itself")
 	await _finish_demo()
+
+
+const W2_5 := "res://levels/w2_5_hot_spring_hollow.tscn"
+
+
+func test_w2_5_geysers_carry_you_up_the_terraces() -> void:
+	var p: Player = await _load_demo(W2_5)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	for vent in [Vector2(1620, -2), Vector2(2150, -302), Vector2(2650, -602)]:
+		await _place(p, vent)
+		var launched := false
+		for i in 600:
+			await get_tree().physics_frame
+			if p.velocity.y < -600.0:
+				launched = true
+				break
+		check(launched, "the geyser at %s should launch you" % vent)
+		press(0, "move_right")
+		for i in 240:
+			await get_tree().physics_frame
+			if p.is_on_floor() and p.global_position.x > vent.x + 90.0:
+				break
+		release(0, "move_right")
+		check(p.global_position.y < vent.y - 250.0, "...up onto the next terrace (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_5_canyon_rocks_can_be_hopped() -> void:
+	var p: Player = await _load_demo(W2_5)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await _place(p, Vector2(4050, -902))
+	var ok := await _hop_run(p, [4185, 4625, 5065, 5545], 5900, false, 8.0)
+	check(ok, "the floating rocks should be hoppable (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_5_thermal_lifts_you_out_of_the_canyon() -> void:
+	var p: Player = await _load_demo(W2_5)
+	await _place(p, Vector2(5300, 298))
+	check(p.is_on_floor() and p.global_position.y > 250.0, "should stand on the warm rock (at %s)" % p.global_position)
+	press(0, "jump")
+	await frames(40)
+	release(0, "jump")
+	await frames(4)
+	press(0, "jump")  # glide (SECOND_PRESS)
+	var best := 9999.0
+	for i in 480:
+		await get_tree().physics_frame
+		best = minf(best, p.global_position.y)
+	release(0, "jump")
+	check(best < -900.0, "gliding in the thermal should lift you back above the rocks (best %.0f)" % best)
+	await _finish_demo()
+
+
+const W2_6 := "res://levels/w2_6_grumblefrost_summit.tscn"
+
+
+func test_w2_6_lift_ridge_and_net_reach_the_summit() -> void:
+	var p: Player = await _load_demo(W2_6)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e.global_position.x < 4600.0:
+			e.queue_free()
+	var ok := await _ride_lift(p, Vector2(1620, -4), 2760.0, -700.0)
+	check(ok, "the last lift should reach the ridge (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	ok = await _hop_run(p, [3090, 3330], 4150, true, 6.0)
+	check(ok, "the ridge should be crossable in the wind (at %s)" % p.global_position)
+	await _run_to(p, 4255, "move_right", 2.0)
+	release(0, "move_right")
+	press(0, "move_up")
+	for i in 600:
+		await get_tree().physics_frame
+		if p.global_position.y < -1300.0:
+			break
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_up")
+	release(0, "move_right")
+	check(p.is_on_floor() and absf(p.global_position.y + 1400.0) < 6.0, "climbing the net should reach the summit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
+	seed(20261001)
+	var p: Player = await _load_demo(W2_6)
+	var boss: Grumblefrost = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Grumblefrost:
+			boss = e
+		else:
+			e.queue_free()
+	check(boss != null and boss.asleep, "Grumblefrost should be asleep in his arena")
+	await _place(p, Vector2(4950, -1402))
+	await frames(10)
+	check(not boss.asleep, "walking into the arena should wake him")
+	var reflected := 0
+	for round in 30:
+		if not is_instance_valid(boss) or boss.dead:
+			break
+		p.invulnerable_timer = 100.0
+		# Stand left of him, facing him; wait for a boulder, then PUNCH it back.
+		p.global_position = Vector2(boss.global_position.x - 420.0, -1402.0)
+		p.velocity = Vector2.ZERO
+		p.facing = 1
+		boss.st = Grumblefrost.St.WALK
+		boss.stun_timer = 0.0
+		boss._throw_boulder()
+		var hit := false
+		for i in 300:
+			await get_tree().physics_frame
+			for c in boss.get_parent().get_children():
+				if c is Snowball and c.hostile and absf(c.global_position.x - p.global_position.x) < 150.0 and not hit:
+					press(0, "attack")
+					await frames(3)
+					release(0, "attack")
+					hit = true
+			if boss.st == Grumblefrost.St.DAZED:
+				break
+		if boss.st != Grumblefrost.St.DAZED:
+			continue
+		reflected += 1
+		var hp := boss.health
+		p.global_position = boss.global_position + Vector2(0, -320)
+		p.velocity = Vector2.ZERO
+		p.state_machine.transition_to(&"Fall")
+		for i in 150:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.health < hp:
+				break
+		await seconds(0.5)
+	check(reflected > 0, "punching a boulder back should knock him down")
+	check(not is_instance_valid(boss) or boss.dead, "six stomps should beat Grumblefrost (hp %d)" % (boss.health if is_instance_valid(boss) else 0))
+	await seconds(1.5)
+	var exit_open := false
+	for g in _demo.find_children("*", "Gate", true, false):
+		if g.global_position.x > 5900.0 and g.is_open():
+			exit_open = true
+	check(exit_open, "beating him should open the exit gate")
+	await _finish_demo()
+
+
+func test_world_maps_build_for_every_world_with_gates() -> void:
+	for w in ["w1", "w2"]:
+		WorldMap.world = w
+		var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
+		_arena.add_child(m)
+		await frames(3)
+		var ids: Array = []
+		for n in m.nodes:
+			ids.append(n["id"])
+		check(ids.has(w + "_1") and ids.has(w + "_6"), "the %s map should list its six levels (%s)" % [w, ids])
+		check(ids.has("gate_w2") if w == "w1" else ids.has("gate_w1"), "the %s map should have a gate to the other world" % w)
+		m.queue_free()
+		await frames(2)
+	WorldMap.world = "w1"
+	check(LevelCatalog.previous_world("w2") == "w1" and LevelCatalog.world_number("w2") == 2, "worlds are in order")

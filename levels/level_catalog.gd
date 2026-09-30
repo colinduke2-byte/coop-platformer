@@ -8,6 +8,7 @@ class_name LevelCatalog
 
 const WORLDS: Array[Dictionary] = [
 	{"id": "w1", "name": "The Lullaby Woods", "blurb": "Where every dream begins. Mind the thorns."},
+	{"id": "w2", "name": "Frostwhistle Peaks", "blurb": "Snowballs, ski lifts and a very grumpy yeti."},
 	{"id": "bonus", "name": "Bonus Dreams", "blurb": "Old favourites and tricky extras."},
 ]
 
@@ -30,6 +31,24 @@ const LEVELS: Array[Dictionary] = [
 	{"id": "w1_6", "world": "w1", "name": "Thornwood Keep", "scene": "res://levels/w1_6_thornwood_keep.tscn",
 		"blurb": "The bramble castle. Something big and prickly lives at the top...",
 		"theme": "res://world/themes/thorn.tres", "map": Vector2(1680, 380), "boss": true},
+	{"id": "w2_1", "world": "w2", "name": "Snowball Slopes", "scene": "res://levels/w2_1_snowball_slopes.tscn",
+		"blurb": "Punch a snow pile and watch the snowball grow. Mind the penguins on the pond!",
+		"theme": "res://world/themes/frost.tres", "map": Vector2(230, 860)},
+	{"id": "w2_2", "world": "w2", "name": "Cablecar Cliffs", "scene": "res://levels/w2_2_cablecar_cliffs.tscn",
+		"blurb": "Ride the old ski lifts up the cliffs, through the gusts.",
+		"theme": "res://world/themes/gondola.tres", "map": Vector2(520, 700)},
+	{"id": "w2_3", "world": "w2", "name": "Crystal Caverns", "scene": "res://levels/w2_3_crystal_caverns.tscn",
+		"blurb": "Inside the mountain: icicles, a frozen lake and glowing crystals.",
+		"theme": "res://world/themes/crystal.tres", "map": Vector2(820, 820)},
+	{"id": "w2_4", "world": "w2", "name": "Avalanche Alley", "scene": "res://levels/w2_4_avalanche_alley.tscn",
+		"blurb": "It's awfully quiet up here... RUN!",
+		"theme": "res://world/themes/avalanche.tres", "map": Vector2(1110, 620)},
+	{"id": "w2_5", "world": "w2", "name": "Hot Spring Hollow", "scene": "res://levels/w2_5_hot_spring_hollow.tscn",
+		"blurb": "Steamy pools, geysers and thermals hidden between the peaks.",
+		"theme": "res://world/themes/hotspring.tres", "map": Vector2(1420, 780)},
+	{"id": "w2_6", "world": "w2", "name": "Grumblefrost's Summit", "scene": "res://levels/w2_6_grumblefrost_summit.tscn",
+		"blurb": "The top of the mountain, where the Snowball King sits on his icy throne.",
+		"theme": "res://world/themes/summit.tres", "map": Vector2(1640, 300), "boss": true},
 	{"id": "demo", "world": "bonus", "name": "Dreamer's Playground", "scene": "res://levels/demo_level.tscn",
 		"blurb": "Every move in one long sunny playground.", "theme": "res://world/themes/meadow.tres"},
 	{"id": "candy", "world": "bonus", "name": "Candy Canopy", "scene": "res://levels/candy_canopy.tscn",
@@ -86,4 +105,40 @@ static func is_unlocked(id: String) -> bool:
 		return true
 	var list := levels_in(info["world"])
 	var k := list.find(info)
-	return k <= 0 or SaveData.get_record(list[k - 1]["id"]).get("done", false)
+	if k > 0:
+		return SaveData.get_record(list[k - 1]["id"]).get("done", false)
+	# The first level of a world opens when the world before it is finished.
+	var prev := previous_world(info["world"])
+	return prev == "" or world_done(prev)
+
+
+## The story worlds in order ("w1", "w2", ...; not the bonus levels).
+static func story_worlds() -> Array[String]:
+	var out: Array[String] = []
+	for w in WORLDS:
+		if w["id"] != "bonus":
+			out.append(w["id"])
+	return out
+
+
+static func previous_world(world_id: String) -> String:
+	var ws := story_worlds()
+	var i := ws.find(world_id)
+	return ws[i - 1] if i > 0 else ""
+
+
+static func world_number(world_id: String) -> int:
+	return story_worlds().find(world_id) + 1
+
+
+static func world_info(world_id: String) -> Dictionary:
+	for w in WORLDS:
+		if w["id"] == world_id:
+			return w
+	return {}
+
+
+## Has the last level of the world been finished (e.g. its boss beaten)?
+static func world_done(world_id: String) -> bool:
+	var list := levels_in(world_id)
+	return not list.is_empty() and SaveData.get_record(list[-1]["id"]).get("done", false)

@@ -102,12 +102,18 @@ func _build() -> void:
 		_add(v, UIStyle.label("Secrets  %d / %d" % [_results.get("secrets", 0), _results.get("secrets_total", 0)], 26))
 	var info := LevelCatalog.by_id(_results.get("id", ""))
 	var world_levels := LevelCatalog.levels_in(info.get("world", ""))
-	if info.get("world", "") == "w1" and not world_levels.is_empty() and world_levels[-1]["id"] == info["id"]:
-		var t := SaveData.world_totals("w1")
-		_add(v, UIStyle.label("WORLD 1 COMPLETE!", 44, Color("ffd23f"), 10, UIStyle.OUTLINE))
+	var world: String = info.get("world", "")
+	var story := world != "" and world != "bonus"
+	if story and not world_levels.is_empty() and world_levels[-1]["id"] == info["id"]:
+		var t := SaveData.world_totals(world)
+		_add(v, UIStyle.label("WORLD %d COMPLETE!" % LevelCatalog.world_number(world), 44, Color("ffd23f"), 10, UIStyle.OUTLINE))
 		_add(v, UIStyle.label("Snoozlings rescued %d / %d     Dream Gems %d / %d" % [
 				t["snoozlings"], t["levels"], t["gems"], t["gems_total"]], 24))
-	if info.get("world", "") == "w1":
+		var ws := LevelCatalog.story_worlds()
+		var nxt := ws.find(world) + 1
+		if nxt < ws.size():
+			_add(v, UIStyle.label("A new world is open: %s!" % LevelCatalog.world_info(ws[nxt])["name"], 26, UIStyle.ACCENT))
+	if story:
 		var freed: bool = _results.get("snoozling", false)
 		var s_text := "Snoozling rescued!" if freed else ("Snoozling already safe" if SaveData.has_snoozling(info["id"]) else "The Snoozling is still caged somewhere...")
 		_add(v, UIStyle.label(s_text + ("   NEW!" if news.has("snoozling") else ""), 26, UIStyle.ACCENT if freed else UIStyle.INK))
