@@ -4,7 +4,8 @@ extends Node2D
 ## (without --shots it just shows them; they're frozen after a moment).
 
 const ENEMIES := ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo",
-		"shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet"]
+		"shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
+		"slidgewick", "snowl", "yetling", "grumblefrost"]
 
 
 func _ready() -> void:
@@ -35,8 +36,8 @@ func _ready() -> void:
 			shelf.size = Vector2(200, 30)
 			add_child(shelf)
 	var cam := Camera2D.new()
-	cam.position = Vector2(860, -200)
-	cam.zoom = Vector2(1.05, 1.05)
+	cam.position = Vector2(860, -330)
+	cam.zoom = Vector2(0.9, 0.9)
 	add_child(cam)
 	cam.make_current()
 	await get_tree().create_timer(0.7).timeout

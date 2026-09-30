@@ -1,7 +1,9 @@
 """Generate placeholder music loops (original, procedural chiptune-ish).
 Run: python3 tools/audio/gen_music.py -> audio/music/<name>.wav (seamless loops).
 Each track: 16 bars = intro-free A/B loop, chords + generated melody + bass + drums."""
-import numpy as np, wave, os
+import numpy as np, wave, os, sys
+
+ONLY = set(sys.argv[1:])  # e.g. `python3 gen_music.py frost` writes just that track
 
 SR = 22050
 OUT = os.path.join(os.path.dirname(__file__), "../../audio/music")
@@ -42,6 +44,8 @@ def chord_notes(root, kind):
 
 
 def track(name, key, bpm, prog, lead="square", seed=1, swing=0.0, bass_shape="tri", drums="pop", bright=1.0):
+    if ONLY and name not in ONLY:
+        return
     rng = np.random.default_rng(seed)
     beat = 60.0 / bpm
     bar = 4 * beat
@@ -141,3 +145,10 @@ track("river", "A", 134, [I, V, IV, V] * 2 + [vi, iii, IV, I, ii, V, I, I], lead
 track("thorn", "C", 108, [vi, V, IV, V] * 2 + [vi, IV, (7, "sus"), V, vi, ii, iii, V], lead="saw", seed=39, bass_shape="square")
 track("boss", "D", 150, [vi, IV, V, V] * 2 + [vi, (5, "maj7"), V, iii, ii, V, vi, V], lead="saw", seed=41, drums="busy", bass_shape="square")
 track("worldmap", "F", 104, [I, iii, IV, V] * 2 + [vi, IV, I, V], lead="tri", seed=43, swing=0.08)
+# World 2 - Frostwhistle Peaks
+track("frost", "E", 126, [I, IV, vi, V] * 2 + [IV, I, ii, V, I, vi, IV, (7, "sus")], lead="tri", seed=51, drums="busy", bright=1.2)
+track("crystal", "B", 92, [vi, IV, I, V] * 2 + [ii, vi, (0, "maj7"), V, vi, IV, (2, "min7"), V], lead="sine", seed=53, bright=0.8)
+track("gondola", "A", 112, [I, iii, vi, IV] * 2 + [I, V, vi, IV, ii, V, I, I], lead="square", seed=55, swing=0.1)
+track("avalanche", "C", 164, [vi, IV, V, V] * 2 + [vi, IV, I, V, ii, V, vi, V], lead="saw", seed=57, drums="busy", bass_shape="square")
+track("hotspring", "F", 98, [I, vi, ii, V] * 2 + [IV, iii, ii, V, I, vi, ii, V], lead="tri", seed=59, swing=0.14, bright=0.9)
+track("yeti", "G", 146, [vi, V, IV, V] * 2 + [vi, IV, (5, "maj7"), V, ii, iii, IV, V], lead="saw", seed=61, drums="busy", bass_shape="square")

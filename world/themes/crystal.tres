@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/crystal.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+ground = Color(0.2392, 0.3098, 0.4784, 1)
+ground_dark = Color(0.1725, 0.2275, 0.3686, 1)
+top = Color(0.6588, 0.9020, 1.0000, 1)
+top_dark = Color(0.4353, 0.7647, 0.9098, 1)
+outline = Color(0.0784, 0.1137, 0.2000, 1)
+pattern = 1
+ledge = Color(0.7882, 0.5412, 0.2941, 1)
+ledge_dark = Color(0.6039, 0.3961, 0.2000, 1)
+accent = Color(0.7725, 0.5451, 1.0000, 1)
+accent_dark = Color(0.6039, 0.3725, 0.8392, 1)
+sky_top = Color(0.1020, 0.1373, 0.2745, 1)
+sky_bottom = Color(0.2314, 0.3098, 0.5412, 1)
+far_hills = Color(0.1804, 0.2392, 0.4314, 1)
+near_hills = Color(0.2275, 0.2941, 0.5020, 1)
+sun = Color(0.8118, 0.9137, 1.0000, 1)
+foliage = Color(0.3725, 0.7882, 0.7529, 1)
+foliage_dark = Color(0.2275, 0.6039, 0.5725, 1)
+flower_colors = Array[Color]([Color(0.7725, 0.5451, 1.0000, 1), Color(0.4980, 0.9098, 1.0000, 1), Color(1.0000, 0.5608, 0.8157, 1), Color(1.0000, 1.0000, 1.0000, 1)])
+music = ExtResource("2")

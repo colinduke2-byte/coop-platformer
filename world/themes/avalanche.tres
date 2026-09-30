@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/avalanche.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+ground = Color(0.3333, 0.4000, 0.4980, 1)
+ground_dark = Color(0.2471, 0.3020, 0.3882, 1)
+top = Color(0.9569, 0.9843, 1.0000, 1)
+top_dark = Color(0.7882, 0.8706, 0.9412, 1)
+outline = Color(0.1059, 0.1647, 0.2667, 1)
+pattern = 1
+ledge = Color(0.7882, 0.5412, 0.2941, 1)
+ledge_dark = Color(0.6039, 0.3961, 0.2000, 1)
+accent = Color(1.0000, 0.3647, 0.3647, 1)
+accent_dark = Color(0.7882, 0.2275, 0.2275, 1)
+sky_top = Color(0.4863, 0.5490, 0.6588, 1)
+sky_bottom = Color(0.8471, 0.8784, 0.9176, 1)
+far_hills = Color(0.6667, 0.7137, 0.7843, 1)
+near_hills = Color(0.7843, 0.8235, 0.8706, 1)
+sun = Color(0.9490, 0.9608, 0.9804, 1)
+foliage = Color(0.2471, 0.5608, 0.4784, 1)
+foliage_dark = Color(0.1686, 0.4196, 0.3608, 1)
+flower_colors = Array[Color]([Color(1.0000, 0.3647, 0.3647, 1), Color(1.0000, 1.0000, 1.0000, 1), Color(1.0000, 0.8235, 0.2471, 1), Color(0.4980, 0.7843, 1.0000, 1)])
+music = ExtResource("2")

@@ -3456,3 +3456,151 @@ func test_dream_bell_can_be_punched() -> void:
 	bell.take_hit(p, Vector2.RIGHT)
 	check(GameManager.lum_rush <= left, "a dozing bell just clanks (no extra time)")
 	GameManager.lum_rush = 0.0
+
+
+func test_snow_pile_rolls_a_growing_snowball_that_bowls_enemies() -> void:
+	var pile := SnowPile.new()
+	pile.position = Vector2(-300, 0)
+	_arena.add_child(pile)
+	var g := _spawn_enemy("res://enemies/grunt.tscn", Vector2(200, 0))
+	g.walk_speed = 0.0
+	g.sight = 0.0
+	var p := add_player(0, Vector2(-420, -2))
+	await settle(p)
+	pile.take_hit(p, Vector2.RIGHT)
+	var ball: Snowball = null
+	for c in _arena.get_children():
+		if c is Snowball:
+			ball = c
+	check(ball != null and ball.direction > 0.0, "punching the pile from the left rolls a snowball to the right")
+	if ball == null:
+		return
+	await seconds(0.6)
+	check(is_instance_valid(ball) and ball.radius > ball.start_radius + 5.0, "the snowball grows as it rolls")
+	await seconds(1.0)
+	check(not is_instance_valid(g) or g.dead, "the snowball should flatten the Grumblet")
+	await seconds(1.5)
+	check(not is_instance_valid(ball), "the snowball bursts on the wall")
+	check(not p.is_bubbled(), "snowballs never hurt players")
+
+
+func test_avalanche_catches_players_who_dawdle_and_resets() -> void:
+	var av := Avalanche.new()
+	av.position = Vector2(-900, 0)
+	av.distance = 3000.0
+	av.speed = 500.0
+	_arena.add_child(av)
+	var p := add_player(0, Vector2(-300, -2))
+	await settle(p)
+	av.set_active(true)
+	await seconds(1.6)
+	check(p.is_bubbled() or p.state_machine.current_name() == &"Bubble", "standing still, the avalanche catches you")
+	check(av.front_x() > -300.0, "the avalanche rolls forward (front %.0f)" % av.front_x())
+	GameManager.checkpoint = Vector2(-2000, 0)
+	EventBus.level_reset.emit()
+	await frames(2)
+	check(not av.active and absf(av.front_x() + 900.0) < 1.0, "a level reset puts it back, waiting")
+
+
+func test_gondola_carries_riders_along_its_cable() -> void:
+	var gd := Gondola.new()
+	gd.position = Vector2(-200, -300)
+	gd.waypoints = PackedVector2Array([Vector2(400, -200)])
+	gd.speed = 200.0
+	gd.wait_time = 0.0
+	gd.one_way = true
+	_arena.add_child(gd)
+	var p := add_player(0, Vector2(-100, -340))
+	await seconds(1.2)
+	check(p.global_position.x > 0.0 and p.global_position.y < -400.0,
+			"a rider is carried up the cable (at %s)" % p.global_position)
+
+
+func test_slidgewick_toboggans_at_you_and_a_stomp_stops_it() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var s := _spawn_enemy("res://enemies/slidgewick.tscn", Vector2(-350, 0), 1) as Slidgewick
+	var slid := false
+	for i in 120:
+		await get_tree().physics_frame
+		if s.st == Slidgewick.St.SLIDE:
+			slid = true
+			break
+	check(slid, "it should flap, then belly-slide at the player")
+	check(s.blocks_hit(p, Enemy.HitKind.PUNCH), "a sliding penguin's beak shrugs off punches from the front")
+	s._on_stomped(p)
+	check(not s.dead and s.st == Slidgewick.St.SKID, "stomping a sliding penguin stops it, dazed")
+	s.take_hit(p, Vector2(300, -100))
+	await frames(2)
+	check(not is_instance_valid(s) or s.dead, "a stopped penguin can be punched out")
+
+
+func test_snowl_drops_snowballs_on_players_below() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var o := _spawn_enemy("res://enemies/snowl.tscn", Vector2(0, -420)) as Snowl
+	o.patrol_offset = Vector2.ZERO
+	var dropped := false
+	for i in 150:
+		await get_tree().physics_frame
+		for c in _arena.get_children():
+			if c is Projectile:
+				dropped = true
+		if dropped:
+			break
+	check(dropped, "a Snowl should drop a snowball on someone underneath")
+	await seconds(1.0)
+	check(p.is_bubbled() or p.state_machine.current_name() == &"Bubble", "the dropped snowball should hit a player who stands still")
+
+
+func test_yetling_lobs_snowballs_and_takes_two_hits() -> void:
+	var p := add_player(0, Vector2(-100, -2))
+	await settle(p)
+	var y := _spawn_enemy("res://enemies/yetling.tscn", Vector2(420, 0)) as Yetling
+	var landed_near := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_bubbled() or p.state_machine.current_name() == &"Bubble":
+			landed_near = true
+			break
+	check(landed_near, "a Yetling's lobbed snowball should find a player who stands still")
+	y.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(not y.dead, "one hit isn't enough for a Yetling")
+	await seconds(0.8)
+	y.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(y.dead, "two hits knock it out")
+
+
+func test_grumblefrost_is_dazed_by_his_own_boulder_punched_back() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).queue_free()
+	var b := _spawn_enemy("res://enemies/grumblefrost.tscn", Vector2(500, 0), -1) as Grumblefrost
+	var p := add_player(0, Vector2(-200, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	b.set_active(true)
+	await frames(2)
+	b._throw_boulder()
+	var boulder: Snowball = null
+	for c in _arena.get_children():
+		if c is Snowball:
+			boulder = c
+	check(boulder != null and boulder.hostile, "he heaves a hostile snow boulder")
+	if boulder == null:
+		return
+	await seconds(0.3)
+	boulder.take_hit(p, Vector2.RIGHT)
+	check(not boulder.hostile and boulder.direction > 0.0, "a punch sends the boulder back at him")
+	var dazed := false
+	for i in 180:
+		await get_tree().physics_frame
+		if b.st == Grumblefrost.St.DAZED:
+			dazed = true
+			break
+	check(dazed, "his own boulder knocks him flat")
+	var hp := b.health
+	b._on_stomped(p)
+	check(b.health == hp - 1, "a dazed yeti can be stomped (hp %d -> %d)" % [hp, b.health])
+	check(not b.blocks_hit(p, Enemy.HitKind.PROJECTILE), "boulders always get through")

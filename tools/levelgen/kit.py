@@ -17,7 +17,7 @@ BLOCK = RES + "world/block.tscn"
 ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
            ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo",
             "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
-            "baron_bristleback"]}
+            "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
@@ -151,6 +151,8 @@ class LevelKit:
         "forest": [("fern", 4), ("grass", 2), ("mushrooms", 1), ("stump", 0.6), ("log", 0.4), ("bush", 1), ("tree", 0.5)],
         "cave": [("mushrooms", 3), ("crystals", 1.5), ("rock", 1.5), ("fern", 0.8), ("giant_mushroom", 0.35)],
         "river": [("reeds", 3), ("grass", 3), ("flowers", 2), ("rock", 1), ("bush", 1), ("tree", 0.5)],
+        "snow": [("pine", 2.5), ("rock", 1.2), ("snowman", 0.25), ("fence", 0.4), ("crystals", 0.4), ("stump", 0.4)],
+        "icecave": [("crystals", 3), ("rock", 1.5), ("snowman", 0.1)],
         "thorn": [("grass", 2), ("rock", 2), ("stump", 1), ("mushrooms", 1), ("fern", 0.6)],
     }
 
@@ -264,6 +266,23 @@ class LevelKit:
         return self._tool("Toys", "Balloon", "Area2D", "balloon_stand", x, y)
 
     # --- World 1 pieces ------------------------------------------------------------
+    def snowpile(self, x, y, regrow=None, speed=None, max_radius=None):
+        """Snow heap: punch it and a growing Snowball rolls out the far side."""
+        return self._tool("Toys", "SnowPile", "Area2D", "snow_pile", x, y, regrow=regrow,
+                          ball_speed=speed, ball_max_radius=max_radius)
+
+    def avalanche(self, x, y, distance=6000.0, speed=None, height=None, active=False):
+        """Chase: a wall of snow sweeping right from x (start it with a zone)."""
+        return self._tool("Hazards", "Avalanche", "Node2D", "avalanche", x, y, distance=float(distance),
+                          speed=speed, height=height, active=active or None)
+
+    def gondola(self, x, y, waypoints=((800, -300),), w=200, speed=150.0, wait=0.8, offset=0.0, rider=False):
+        """Ski-lift chair on a cable (a MovingPlatform with a wire and pylons)."""
+        return self._tool("Toys", "Gondola", "AnimatableBody2D", "gondola", x, y,
+                          size=V(w, 28), waypoints=[V(*p) for p in waypoints], speed=float(speed),
+                          wait_time=float(wait), one_way=True, wait_for_rider=rider or None,
+                          start_offset=float(offset) if offset else None)
+
     def bell(self, x, y, duration=None, recharge=None):
         """Dream Bell: touch/punch it for a Lum Rush (Lums count double for `duration` s)."""
         return self._tool("Toys", "DreamBell", "Area2D", "dream_bell", x, y, duration=duration, recharge=recharge)
@@ -465,7 +484,7 @@ class LevelKit:
     def deco(self, kind, x, y, size=1.0, front=False, seed=0):
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
-                 "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN"]
+                 "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

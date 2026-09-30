@@ -7,7 +7,8 @@ extends Node2D
 ## Drawn ONCE into a mesh; the breeze is a shear (skew), so hundreds are cheap.
 
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
-		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN }
+		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
+		SNOWMAN, ICICLES, IGLOO, SKIS }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
 		Kind.HANGING_VINES, Kind.BIG_FLOWER]
@@ -306,3 +307,55 @@ func _paint(mp: MeshPainter) -> void:
 			mp.draw_circle(Vector2(18, -64) * s, 26.0 * s, Color(1.0, 0.85, 0.4, 0.18))
 			Art.shape(mp, Art.rounded_rect(Vector2(8, -78) * s, Vector2(28, -52) * s, 5.0 * s), Color(1.0, 0.86, 0.45), o, 2.0)
 			mp.draw_rect(Rect2(Vector2(6, -80) * s, Vector2(24, 4) * s), th.ledge_dark)
+		Kind.SNOWMAN:
+			var snow := Color("f4fbff")
+			var shade := Color("c7dcef")
+			for b: Vector3 in [Vector3(0, -34, 36), Vector3(0, -92, 27), Vector3(0, -136, 20)]:
+				Art.shape(mp, Art.ellipse(Vector2(b.x, b.y) * s, b.z * s, b.z * 0.95 * s, 18), snow, o, 3.0)
+				mp.draw_colored_polygon(Art.ellipse(Vector2(b.z * 0.25, b.y + b.z * 0.25) * s, b.z * 0.6 * s, b.z * 0.5 * s, 14), shade)
+			# Coal eyes and buttons, carrot nose, stick arms, a scarf and a bucket hat.
+			for e: Vector2 in [Vector2(-7, -142), Vector2(7, -142), Vector2(0, -98), Vector2(0, -84), Vector2(0, -44)]:
+				mp.draw_circle(e * s, 3.0 * s, o)
+			Art.shape(mp, PackedVector2Array([Vector2(0, -136) * s, Vector2(26, -132) * s, Vector2(0, -130) * s]), Color("ff8f3f"), o, 1.5)
+			for d: float in [-1.0, 1.0]:
+				mp.draw_polyline(PackedVector2Array([Vector2(d * 22, -100) * s, Vector2(d * 50, -118) * s, Vector2(d * 60, -130) * s]),
+						th.ledge_dark.darkened(0.2), 4.0 * s)
+			Art.shape(mp, Art.rounded_rect(Vector2(-24, -122) * s, Vector2(24, -112) * s, 4.0 * s), th.accent, o, 2.0)
+			Art.shape(mp, Art.rect(Vector2(10, -118) * s, Vector2(22, -92) * s), th.accent, o, 2.0)
+			Art.shape(mp, PackedVector2Array([Vector2(-16, -152) * s, Vector2(16, -152) * s, Vector2(12, -176) * s, Vector2(-12, -176) * s]),
+					Color("5d6b82"), o, 2.5)
+		Kind.ICICLES:
+			# Hangs from a ceiling (origin on the ceiling).
+			var ice := Color("bfe9ff")
+			for i in 6:
+				var x := (float(i) - 2.5) * 16.0 * s + rng.randf_range(-3, 3)
+				var h := rng.randf_range(24, 70) * s
+				Art.shape(mp, PackedVector2Array([Vector2(x - 7 * s, 0), Vector2(x + 7 * s, 0), Vector2(x, h)]), ice, o, 2.0)
+				mp.draw_line(Vector2(x - 2 * s, 4 * s), Vector2(x - 1 * s, h * 0.6), Color(1, 1, 1, 0.8), 2.0)
+		Kind.IGLOO:
+			var snow := Color("f4fbff")
+			var dome := PackedVector2Array()
+			for i in 25:
+				var a := PI + i * PI / 24.0
+				dome.append(Vector2(cos(a) * 110.0, sin(a) * 90.0) * s)
+			Art.shape(mp, dome, snow, o, 3.0)
+			for r in 3:  # block rows
+				var y := -22.0 - r * 26.0
+				var half := sqrt(maxf(1.0 - pow(y / 90.0, 2.0), 0.0)) * 110.0
+				mp.draw_line(Vector2(-half, y) * s, Vector2(half, y) * s, Color("c7dcef"), 2.5)
+				var k := -half + (18.0 if r % 2 == 1 else 0.0)
+				while k < half:
+					mp.draw_line(Vector2(k, y) * s, Vector2(k, y + 26.0) * s, Color("c7dcef"), 2.0)
+					k += 36.0
+			var door := PackedVector2Array()
+			for i in 13:
+				var a := PI + i * PI / 12.0
+				door.append(Vector2(-10 + cos(a) * 32.0, sin(a) * 44.0) * s)
+			Art.shape(mp, door, Color("24324d"), o, 3.0)
+		Kind.SKIS:
+			for d: float in [-1.0, 1.0]:
+				var base := Vector2(d * 10, 0) * s
+				Art.shape(mp, PackedVector2Array([base + Vector2(-5, 0) * s, base + Vector2(5, 0) * s, base + Vector2(8 + d * 6, -120) * s,
+						base + Vector2(-2 + d * 6, -126) * s]), th.accent if d < 0 else Color("5bc8ff"), o, 2.5)
+			mp.draw_line(Vector2(-26, -10) * s, Vector2(-40, -100) * s, o, 3.0 * s)
+			mp.draw_line(Vector2(30, -10) * s, Vector2(42, -96) * s, o, 3.0 * s)
