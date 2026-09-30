@@ -1,7 +1,8 @@
 class_name CharacterSelect
 extends Node2D
 ## Lobby. Players join with their join button, pick with left/right, press JUMP
-## to lock in and ATTACK to un-ready (or leave if not ready). When everyone who
+## to lock in and ATTACK to un-ready (or leave if not ready). UP / DOWN picks an
+## outfit from the Dream Wardrobe (unlocked by Dream Gems and Snoozlings). When everyone who
 ## joined is ready, the picks go to GameManager.chosen_characters and
 ## next_scene loads. A character locked in by one player can't be taken.
 
@@ -31,8 +32,10 @@ class Card:
 	var joined := false
 	var ready := false
 	var index := 0
+	var outfit := 0
 	var grace := 0.0
 	var prev_x := 0.0
+	var prev_y := 0.0
 	var input: PlayerInput
 	var panel: Polygon2D
 	var rig: CharacterRig
@@ -41,12 +44,13 @@ class Card:
 	var blurb: Label
 	var status: Label
 	var arrows: Label
+	var outfit_label: Label
 
 
 func _ready() -> void:
 	var w := 1920.0
 	_label("Choose your dreamer", 64, Vector2(0, 50), w)
-	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)      Left / Right: pick      Jump: ready      Punch: back / leave",
+	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)     Left / Right: pick     Up / Down: outfit     Jump: ready     Punch: leave",
 			22, Vector2(0, 150), w)
 	_label("Press PAUSE (Esc / Backspace / Start) to see all the controls", 22, Vector2(0, 185), w)
 	_footer = _label("", 28, Vector2(0, 950), w)
@@ -129,13 +133,24 @@ func _handle_input(c: Card) -> void:
 	elif x < -STICK_FLICK and c.prev_x >= -STICK_FLICK:
 		dir = -1
 	c.prev_x = x
+	var y := c.input.move_y()
+	var ydir := 0
+	if y > STICK_FLICK and c.prev_y <= STICK_FLICK:
+		ydir = 1
+	elif y < -STICK_FLICK and c.prev_y >= -STICK_FLICK:
+		ydir = -1
+	c.prev_y = y
+	if not c.ready and ydir != 0:
+		c.outfit = wrapi(c.outfit + ydir, 0, Wardrobe.OUTFITS.size())
+		_refresh(c)
+		Audio.play("menu_move", -6.0, 1.2, 0.0)
 
 	if not c.ready and dir != 0:
 		c.index = _next_free(c.index, dir, c.slot)
 		_refresh(c)
 		Audio.play("menu_move", -6.0, 1.0, 0.0)
 	if c.input.jump_pressed():
-		if not c.ready and not _taken_by_other(c.index, c.slot):
+		if not c.ready and not _taken_by_other(c.index, c.slot) and Wardrobe.is_unlocked(c.outfit):
 			c.ready = true
 			_refresh(c)
 			Audio.play("menu_ok", -4.0, 1.0, 0.0)
@@ -157,7 +172,10 @@ func _join(slot: int) -> void:
 	c.prev_x = 0.0
 	c.input = PlayerInput.new(slot)
 	var chars := GameManager.CHARACTERS
-	var preferred := chars.find(GameManager.character_for(slot))
+	var preferred := chars.find(Wardrobe.base_of(GameManager.character_for(slot)))
+	c.outfit = GameManager.chosen_outfits.get(slot, 0)
+	if not Wardrobe.is_unlocked(c.outfit):
+		c.outfit = 0
 	c.index = preferred if preferred != -1 else slot % chars.size()
 	if _taken_by_other(c.index, slot):
 		c.index = _next_free(c.index, 1, slot)
@@ -177,7 +195,8 @@ func _start() -> void:
 	set_process(false)
 	for c in _cards:
 		if c.joined:
-			GameManager.chosen_characters[c.slot] = GameManager.CHARACTERS[c.index]
+			GameManager.chosen_characters[c.slot] = Wardrobe.dress(GameManager.CHARACTERS[c.index], c.outfit)
+			GameManager.chosen_outfits[c.slot] = c.outfit
 	get_tree().change_scene_to_file.call_deferred(next_scene)
 
 
@@ -213,6 +232,7 @@ func _make_card(slot: int, center_x: float) -> Card:
 	c.rig.position = Vector2(center_x, CARD_TOP + 390)
 	c.rig.scale = Vector2.ONE * RIG_SCALE
 	add_child(c.rig)
+	c.outfit_label = _label("", 22, Vector2(center_x - half, CARD_TOP + 66), CARD_SIZE.x)
 	c.arrows = _label("<                                    >", 40, Vector2(center_x - half, CARD_TOP + 210), CARD_SIZE.x)
 	c.name_label = _label("", 36, Vector2(center_x - half, CARD_TOP + 410), CARD_SIZE.x)
 	c.blurb = _label("", 20, Vector2(center_x - half + 30, CARD_TOP + 465), CARD_SIZE.x - 60, true)
@@ -226,18 +246,25 @@ func _refresh(c: Card) -> void:
 	c.arrows.visible = c.joined and not c.ready
 	c.name_label.visible = c.joined
 	c.blurb.visible = c.joined
+	c.outfit_label.visible = c.joined
 	if not c.joined:
 		c.panel.color = PANEL_EMPTY
 		c.status.text = "Press jump to join"
 		return
-	var def: CharacterDef = GameManager.CHARACTERS[c.index]
-	if c.rig.def != def:
+	var base: CharacterDef = GameManager.CHARACTERS[c.index]
+	var def := Wardrobe.dress(base, c.outfit)
+	if c.rig.def == null or c.rig.def.display_name != def.display_name or c.rig.def.main_color != def.main_color:
 		c.rig.build(def)
+	var unlocked := Wardrobe.is_unlocked(c.outfit)
+	c.rig.modulate = Color.WHITE if unlocked else Color(0.35, 0.35, 0.4, 0.8)
+	var outfit_name: String = Wardrobe.OUTFITS[c.outfit]["name"]
+	c.outfit_label.text = ("Outfit: %s  (up / down)" % outfit_name) if unlocked else ("%s - locked: %s" % [outfit_name, Wardrobe.requirement(c.outfit)])
+	c.outfit_label.add_theme_color_override(&"font_color", INK if unlocked else Color("b8435e"))
 	c.panel.color = PANEL_READY if c.ready else PANEL
 	c.name_label.text = def.display_name
 	c.name_label.add_theme_color_override(&"font_color", def.main_color.darkened(0.25))
 	c.blurb.text = def.blurb
-	c.status.text = "READY!  (attack to change)" if c.ready else "Jump: ready   Attack: leave"
+	c.status.text = "READY!  (attack to change)" if c.ready else ("Jump: ready   Attack: leave" if unlocked else "Pick an unlocked outfit")
 
 
 func _label(text: String, font_size: int, pos: Vector2, width: float, wrap := false) -> Label:

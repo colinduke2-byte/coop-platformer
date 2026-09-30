@@ -75,7 +75,10 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
 - **3 gems** per level (at least one behind a secret wall / hidden room).
 - **1 Snoozling** per level: a sleepy dream-critter in a cage - punch it open.
 - Map badges show gems + Snoozling per level; results show records; beating
-  1-6 shows World 1 totals. TODO: what do full gem / Snoozling sets unlock?
+  1-6 shows World 1 totals.
+- **Dream Wardrobe**: gems and Snoozlings unlock outfits (Sunset 6 gems, Minty 12,
+  Snoozling PJs 6 Snoozlings, Frostbite 20, Midnight 28, Golden Dreamer = everything).
+  Pick with UP / DOWN on character select. Edit the list in `characters/wardrobe.gd`.
 
 ## Art & audio direction
 - Hand-painted look, layered parallax backgrounds, cutout-animated characters

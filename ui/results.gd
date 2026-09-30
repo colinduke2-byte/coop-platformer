@@ -117,6 +117,8 @@ func _build() -> void:
 		var freed: bool = _results.get("snoozling", false)
 		var s_text := "Snoozling rescued!" if freed else ("Snoozling already safe" if SaveData.has_snoozling(info["id"]) else "The Snoozling is still caged somewhere...")
 		_add(v, UIStyle.label(s_text + ("   NEW!" if news.has("snoozling") else ""), 26, UIStyle.ACCENT if freed else UIStyle.INK))
+	for o: String in _results.get("new_outfits", []):
+		_add(v, UIStyle.label("New outfit in the Dream Wardrobe: %s!  (character select: up / down)" % o, 24, Color("c58bff")))
 	_items = []
 	if _results.get("next", "") != "":
 		_items.append("Next level")

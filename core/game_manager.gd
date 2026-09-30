@@ -17,7 +17,8 @@ const WORLD_MAP := "res://ui/world_map.tscn"
 const GEMS_PER_LEVEL := 3
 
 var players: Dictionary = {}  ## slot -> Player
-var chosen_characters: Dictionary = {}  ## slot -> CharacterDef (set by character select)
+var chosen_characters: Dictionary = {}  ## slot -> CharacterDef (set by character select; may wear a Wardrobe outfit)
+var chosen_outfits: Dictionary = {}     ## slot -> Wardrobe outfit index
 var lums := 0
 var lum_rush := 0.0  ## seconds of Lum Rush left (a Dream Bell was rung): every Lum counts double
 var lums_by_slot: Dictionary = {}  ## slot -> Lums that player grabbed (results screen)
@@ -188,12 +189,20 @@ func complete_level() -> void:
 	var path := level.scene_file_path
 	var i := LevelCatalog.index_of(path)
 	var id: String = LevelCatalog.LEVELS[i]["id"] if i != -1 else path.get_file().get_basename()
+	var had: Array[int] = []
+	for k in Wardrobe.OUTFITS.size():
+		if Wardrobe.is_unlocked(k):
+			had.append(k)
 	var news := SaveData.submit(id, level_time, lums, gems, snoozling)
+	var new_outfits: Array[String] = []
+	for k in Wardrobe.OUTFITS.size():
+		if Wardrobe.is_unlocked(k) and not k in had:
+			new_outfits.append(Wardrobe.OUTFITS[k]["name"])
 	last_results = {
 		"id": id, "name": level.level_name, "time": level_time, "lums": lums,
 		"lums_by_slot": lums_by_slot.duplicate(), "gems": gems.duplicate(), "snoozling": snoozling,
 		"secrets": secrets_found, "secrets_total": secrets_total, "new": news,
-		"next": LevelCatalog.next_after(path),
+		"next": LevelCatalog.next_after(path), "new_outfits": new_outfits,
 	}
 	EventBus.level_completed.emit(last_results)
 

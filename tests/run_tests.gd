@@ -4043,3 +4043,14 @@ func test_world_maps_build_for_every_world_with_gates() -> void:
 		await frames(2)
 	WorldMap.world = "w1"
 	check(LevelCatalog.previous_world("w2") == "w1" and LevelCatalog.world_number("w2") == 2, "worlds are in order")
+
+
+func test_wardrobe_dresses_characters_and_unlocks_with_gems() -> void:
+	var base: CharacterDef = GameManager.CHARACTERS[0]
+	check(Wardrobe.dress(base, 0) == base, "the Classic outfit is the character itself")
+	var d := Wardrobe.dress(base, 1)
+	check(d != base and d.main_color == Wardrobe.OUTFITS[1]["main"] and d.display_name == base.display_name, "an outfit recolours a copy")
+	check(Wardrobe.base_of(d) == base, "a dressed dreamer still knows who they are")
+	check(Wardrobe.is_unlocked(0), "Classic is always available")
+	var t := Wardrobe.totals()
+	check(Wardrobe.is_unlocked(1) == (t["gems"] >= 6), "Sunset unlocks at 6 Dream Gems (have %d)" % t["gems"])

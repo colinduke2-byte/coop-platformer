@@ -44,6 +44,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [ ] More secrets per level (a second cracked wall / hidden room in 1-1 and 1-2)
 - [x] World 2 (see below)
 - [x] Dream Bell in every level: a Lum Rush (Lums worth double for 10 s)
+- [x] Dream Wardrobe: 6 unlockable outfits (gems / Snoozlings), picked on character select
 
 ## World 2 — Frostwhistle Peaks ✅ (needs Colin's playtest)
 - [x] New pieces: snow piles + growing snowballs (bowl enemies, smash packed ice), ski-lift gondolas, avalanche chase (rubber-banded to stay on screen), slippery icy terrain
