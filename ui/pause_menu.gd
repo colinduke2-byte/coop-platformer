@@ -67,6 +67,7 @@ func open(slot: int, message := "") -> void:
 	_rebuild()
 	_root.visible = true
 	get_tree().paused = true
+	Audio.play("menu_ok", -4.0, 0.8, 0.0)
 
 
 func close() -> void:
@@ -76,7 +77,7 @@ func close() -> void:
 
 
 func _process(_delta: float) -> void:
-	_menu.poll()
+	_menu.poll(_open)
 	if not _open:
 		if _menu.pause and not GameManager.level_complete:
 			open(_menu.who)

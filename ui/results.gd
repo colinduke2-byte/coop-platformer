@@ -29,7 +29,7 @@ func _on_completed(results: Dictionary) -> void:
 func _process(_delta: float) -> void:
 	if not _active:
 		return
-	_menu.poll()
+	_menu.poll(true)
 	if _menu.left:
 		_index = wrapi(_index - 1, 0, _items.size())
 		_refresh_items()

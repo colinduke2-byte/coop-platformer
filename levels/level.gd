@@ -32,6 +32,7 @@ func _ready() -> void:
 	var cam := get_viewport().get_camera_2d()
 	if cam is CoopCamera:
 		cam.snap()
+	EventBus.level_started.emit(self)
 
 
 func _exit_tree() -> void:

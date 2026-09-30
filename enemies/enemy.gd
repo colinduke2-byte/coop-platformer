@@ -293,6 +293,7 @@ func shoot(offset: Vector2, dir: Vector2, speed := 380.0, gravity_scale := 0.0) 
 	p.shooter = self
 	p.position = position + Vector2(offset.x * facing, offset.y)
 	get_parent().add_child(p)
+	EventBus.enemy_shot.emit(self)
 	return p
 
 

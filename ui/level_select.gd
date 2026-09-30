@@ -55,6 +55,7 @@ func _ready() -> void:
 		rig.build(GameManager.character_for(slots[k]))
 		_rigs.append(rig)
 	_refresh()
+	Audio.play_music("menu")
 
 
 func _make_card(info: Dictionary) -> Control:

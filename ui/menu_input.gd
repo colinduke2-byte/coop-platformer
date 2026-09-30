@@ -17,7 +17,8 @@ var who := -1                ## slot that pressed confirm/back/pause this frame
 var _prev := {}              ## slot -> Vector2 stick last frame
 
 
-func poll() -> void:
+## `sounds`: play menu blips for moves / confirm (off while the menu is hidden).
+func poll(sounds := true) -> void:
 	up = false
 	down = false
 	left = false
@@ -44,3 +45,8 @@ func poll() -> void:
 		if inp.pause_pressed():
 			pause = true
 			who = slot
+	if sounds:
+		if up or down or left or right:
+			Audio.play("menu_move", -6.0, 1.0, 0.0)
+		if confirm:
+			Audio.play("menu_ok", -4.0, 1.0, 0.0)

@@ -28,6 +28,9 @@ extends Resource
 @export var cloud := Color(1, 1, 1, 0.9)
 @export var sun := Color("fff3b0")
 
+@export_group("Music")
+@export var music: AudioStream               ## loops while a level with this theme plays
+
 @export_group("Decor")
 @export var foliage := Color("4fb548")
 @export var foliage_dark := Color("2f8a3b")

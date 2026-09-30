@@ -96,6 +96,7 @@ func _launch() -> void:
 	player.punch_area.position = Vector2(target.x * player.facing, target.y)
 	player.punch_area.scale = Vector2.ONE * lerpf(1.0, t.punch_charged_hitbox_multiplier, _power)
 	player.set_punch_visual(true, target, _power)
+	EventBus.player_punched.emit(player, _power)
 	_set_phase(Phase.ACTIVE)
 	_apply_hits()  # land on the first active frame too
 

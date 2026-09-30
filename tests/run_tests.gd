@@ -1914,3 +1914,17 @@ func test_glacier_boss_sleeps_wakes_and_unlocks_exit() -> void:
 			break
 	check(exit_g.is_open(), "beating the King (and his minions) should open the exit")
 	await _finish_demo()
+
+
+func test_audio_plays_sfx_for_events_and_theme_music() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "jump")
+	await frames(2)
+	release(0, "jump")
+	var playing := Audio._voices.filter(func(v: AudioStreamPlayer) -> bool:
+		return v.playing and v.stream and v.stream.resource_path.ends_with("jump.wav"))
+	check(playing.size() > 0, "jumping should play the jump sound")
+	EventBus.level_started.emit(_arena)  # arena has no theme -> default meadow music
+	await frames(2)
+	check(Audio._music_name.ends_with("meadow.wav"), "levels should pick their theme music (got %s)" % Audio._music_name)

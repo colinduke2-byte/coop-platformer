@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="LevelTheme" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/sunset.wav" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -22,3 +23,4 @@ sun = Color(1.0000, 0.9412, 0.7529, 1)
 foliage = Color(0.7608, 0.8392, 0.3529, 1)
 foliage_dark = Color(0.5608, 0.6392, 0.2275, 1)
 flower_colors = Array[Color]([Color(1.0000, 0.8235, 0.2471, 1), Color(1.0000, 0.3647, 0.5608, 1), Color(1.0000, 1.0000, 1.0000, 1), Color(0.2314, 0.8078, 0.6745, 1)])
+music = ExtResource("2")

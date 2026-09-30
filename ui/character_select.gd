@@ -52,6 +52,7 @@ func _ready() -> void:
 	for slot in InputRouter.get_bound_slots():
 		_join(slot)
 	InputRouter.join_requested.connect(_join)
+	Audio.play_music("menu")
 
 
 func _exit_tree() -> void:
@@ -114,10 +115,12 @@ func _handle_input(c: Card) -> void:
 	if not c.ready and dir != 0:
 		c.index = _next_free(c.index, dir, c.slot)
 		_refresh(c)
+		Audio.play("menu_move", -6.0, 1.0, 0.0)
 	if c.input.jump_pressed():
 		if not c.ready and not _taken_by_other(c.index, c.slot):
 			c.ready = true
 			_refresh(c)
+			Audio.play("menu_ok", -4.0, 1.0, 0.0)
 	elif c.input.attack_pressed():
 		if c.ready:
 			c.ready = false
