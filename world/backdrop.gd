@@ -216,18 +216,21 @@ func _hills_scene() -> void:
 
 
 func _forest_scene() -> void:
+	# Trunks are tinted green-grey (bark in shade), never the gameplay brown.
+	var bark := _th.ground.lerp(_th.near_hills, 0.45).darkened(0.1)
 	var back := _layer(0.08, 2400.0)
-	_trunk_row(back, 2400.0, 16, 60.0, _haze(_th.near_hills.darkened(0.3), 0.55))
-	_canopy_band(back, 2400.0, horizon_y - 1300.0, _haze(_th.foliage_dark, 0.5))
+	_trunk_row(back, 2400.0, 14, 60.0, _haze(bark, 0.68))
+	_canopy_band(back, 2400.0, horizon_y - 1300.0, _haze(_th.foliage_dark, 0.55))
 	_commit(back)
 	var mid := _layer(0.22, 2000.0)
-	_trunk_row(mid, 2000.0, 9, 110.0, _haze(_th.ground.darkened(0.15), 0.3))
-	_canopy_band(mid, 2000.0, horizon_y - 1150.0, _haze(_th.foliage_dark, 0.28))
+	_hill_band(mid, 2000.0, horizon_y - 120.0, 80.0, 3, _haze(_th.near_hills, 0.3))
+	_trunk_row(mid, 2000.0, 7, 100.0, _haze(bark, 0.45))
+	_canopy_band(mid, 2000.0, horizon_y - 1150.0, _haze(_th.foliage_dark, 0.35))
 	_commit(mid)
 	var near := _layer(0.45, 1700.0)
-	_hill_band(near, 1700.0, horizon_y - 60.0, 70.0, 3, _haze(_th.near_hills.darkened(0.1), 0.05))
-	_trunk_row(near, 1700.0, 5, 170.0, _th.ground.darkened(0.3))
-	_ferns(near, 1700.0, 14, _th.foliage_dark)
+	_hill_band(near, 1700.0, horizon_y - 40.0, 60.0, 2, _haze(_th.near_hills.darkened(0.05), 0.12))
+	_trunk_row(near, 1700.0, 4, 150.0, _haze(bark.darkened(0.15), 0.25))
+	_ferns(near, 1700.0, 12, _haze(_th.foliage_dark, 0.1))
 	_commit(near)
 
 
@@ -359,9 +362,15 @@ class MeshArt extends Node2D:
 		draw_mesh(mesh, null)
 
 
+## Visible half-height (world px) at the camera's usual zoom: layers are
+## anchored so they line up with the world when the camera centres on horizon_y.
+const HALF_VIEW := 620.0
+
+
 func _parallax(scale: float, repeat: float, autoscroll := Vector2.ZERO) -> Parallax2D:
 	var p := Parallax2D.new()
 	p.scroll_scale = Vector2(scale, scale * 0.9 + 0.1)
+	p.scroll_offset.y = -(horizon_y - HALF_VIEW) * (1.0 - p.scroll_scale.y)
 	p.repeat_size = Vector2(repeat, 0)
 	p.repeat_times = 3
 	p.autoscroll = autoscroll

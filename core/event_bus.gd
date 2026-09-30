@@ -41,6 +41,7 @@ signal player_splashed(player: Player, position: Vector2)
 signal cannon_fired(cannon: Node2D, player: Player)
 signal secret_found(secret: Node2D)
 signal balloon_changed(player: Player, holding: bool)
+signal parachute_changed(player: Player, holding: bool)  ## dandelion puff grabbed / let go
 signal players_teleported(position: Vector2)
 signal key_picked(key: Node2D, player: Player)
 signal door_unlocked(door: Node2D)

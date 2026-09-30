@@ -116,6 +116,11 @@ enum GlideMode {
 @export var balloon_rise_speed := 280.0     ## px/s upward
 @export var balloon_accel := 1100.0
 
+@export_group("Dandelion")
+@export var parachute_fall_speed := 75.0    ## px/s drifting down under a dandelion puff
+@export var parachute_accel := 1800.0       ## how quickly the puff brakes a fall
+@export var parachute_wind_multiplier := 2.0  ## wind pushes parachuters this much harder
+
 @export_group("Surfaces")
 @export var ice_friction := 0.12            ## accel/decel multiplier on slippery blocks
 

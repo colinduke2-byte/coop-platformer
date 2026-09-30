@@ -56,6 +56,7 @@ var zipline_regrab_timer := 0.0
 ## > 0 while holding a Balloon (floats you up; JUMP / ATTACK pops it).
 var balloon_timer := 0.0
 var _has_balloon := false
+var parachute := false     ## holding a dandelion puff: slow, steerable fall (see Dandelion)
 var _updraft_timer := 0.0
 var _sprint_build := 0.0
 var _tap_dir := 0          ## direction of the last fresh stick/key press (double-tap sprint)
@@ -150,6 +151,8 @@ func _move_with_wind() -> void:
 		return
 	if state_machine.current_name() == &"Glide":
 		push *= 1.6  # gliders catch the wind
+	elif parachute:
+		push *= tuning.parachute_wind_multiplier
 	velocity += push
 	move_and_slide()
 	if not is_on_wall():
@@ -163,6 +166,9 @@ func _move_with_wind() -> void:
 func apply_gravity(delta: float) -> void:
 	if balloon_timer > 0.0:
 		velocity.y = move_toward(velocity.y, -tuning.balloon_rise_speed, tuning.balloon_accel * delta)
+		return
+	if parachute and velocity.y > -60.0:
+		velocity.y = move_toward(velocity.y, tuning.parachute_fall_speed, tuning.parachute_accel * delta)
 		return
 	var g := tuning.rise_gravity() if velocity.y < 0.0 else tuning.fall_gravity()
 	var max_fall := tuning.max_fall_speed
@@ -556,6 +562,25 @@ func take_balloon() -> void:
 	EventBus.balloon_changed.emit(self, true)
 
 
+## Grab a dandelion puff: drift down slowly until you land, JUMP or PUNCH.
+func take_parachute() -> void:
+	if parachute:
+		return
+	pop_balloon()
+	parachute = true
+	glide_armed = false
+	if state_machine.current_name() in [&"Glide"]:
+		state_machine.transition_to(&"Fall")
+	EventBus.parachute_changed.emit(self, true)
+
+
+func drop_parachute() -> void:
+	if not parachute:
+		return
+	parachute = false
+	EventBus.parachute_changed.emit(self, false)
+
+
 func pop_balloon() -> void:
 	if not _has_balloon:
 		return
@@ -821,6 +846,9 @@ func _update_timers(delta: float) -> void:
 		balloon_timer -= delta
 		if balloon_timer <= 0.0 or input.attack_pressed() or is_bubbled():
 			pop_balloon()
+	if parachute and (is_on_floor() or input.jump_pressed() or input.attack_pressed() or is_bubbled() \
+			or state_machine.current_name() in [&"Swim", &"Climb", &"Swing", &"Zipline", &"Cannon", &"LedgeHang"]):
+		drop_parachute()
 	climb_regrab_timer = maxf(climb_regrab_timer - delta, 0.0)
 	# Environment areas re-register every physics frame; forget stale ones.
 	_water_timer -= delta

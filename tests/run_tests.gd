@@ -2461,3 +2461,160 @@ func test_wispet_only_moves_when_you_look_away() -> void:
 	p.facing = -1  # turn our back
 	await seconds(1.0)
 	check(not w.shy and w.global_position.x < x_watched - 40.0, "back turned: it should creep closer (x %.0f)" % w.global_position.x)
+
+
+# --- World 1 obstacles ----------------------------------------------------------------
+
+func test_dandelion_parachute_slows_fall_and_drops_on_landing() -> void:
+	var d := Dandelion.new()
+	d.position = Vector2(0, 0)
+	d.height = 300.0
+	_arena.add_child(d)
+	var p := add_player(0, Vector2(0, -420))
+	var grabbed := false
+	for i in 60:
+		await get_tree().physics_frame
+		if p.parachute:
+			grabbed = true
+			break
+	check(grabbed, "falling into the fluff should grab a puff")
+	await seconds(0.5)
+	check(p.velocity.y <= p.tuning.parachute_fall_speed + 5.0, "a parachute should drift down slowly (vy %.0f)" % p.velocity.y)
+	await seconds(4.0)
+	check(p.is_on_floor() and not p.parachute, "landing lets go of the puff")
+
+
+func test_dandelion_jump_lets_go() -> void:
+	var p := add_player(0, Vector2(0, -600))
+	await frames(2)
+	p.take_parachute()
+	await seconds(0.3)
+	press(0, "jump")
+	await frames(2)
+	release(0, "jump")
+	check(not p.parachute, "JUMP should let go of the puff")
+
+
+func test_geyser_launches_players_when_erupting() -> void:
+	var g := Geyser.new()
+	g.position = Vector2(0, 0)
+	g.calm_time = 0.2
+	g.warn_time = 0.2
+	_arena.add_child(g)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var peak := 0.0
+	for i in 150:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	check(peak < -250.0, "the eruption should launch you high (peak %.0f)" % peak)
+
+
+func test_seesaw_tips_toward_rider_and_slam_flings_other_end() -> void:
+	var s := Seesaw.new()
+	s.position = Vector2(0, -44)
+	s.length = 320.0
+	_arena.add_child(s)
+	var a := add_player(0, Vector2(-120, -120))  # rider on the left end
+	await seconds(0.8)
+	check(s.angle < -0.1, "the left end should tip down under a rider (angle %.2f)" % s.angle)
+	# Player 2 drops hard onto the raised right end.
+	var b := add_player(1, Vector2(125, -700))
+	var peak := 0.0
+	for i in 150:
+		await get_tree().physics_frame
+		peak = minf(peak, a.global_position.y)
+	check(peak < -400.0, "a slam on the high end should catapult the other rider (peak %.0f)" % peak)
+	check(not b.is_bubbled() and not a.is_bubbled(), "nobody gets hurt")
+
+
+func test_rope_bridge_sags_under_a_rider() -> void:
+	var r := RopeBridge.new()
+	r.position = Vector2(-300, -200)
+	r.span = Vector2(600, 0)
+	_arena.add_child(r)
+	await frames(2)
+	var mid := r._planks[r.plank_count / 2]
+	var rest_y := mid.position.y
+	var p := add_player(0, Vector2(0, -330))
+	await seconds(1.2)
+	check(p.is_on_floor() and p.global_position.y < -100.0, "you should stand on the bridge (y %.0f)" % p.global_position.y)
+	check(mid.position.y > rest_y + 15.0, "the middle should sag under you (%.0f -> %.0f)" % [rest_y, mid.position.y])
+
+
+func test_pendulum_platform_carries_rider_and_spiked_one_hurts() -> void:
+	var pd := Pendulum.new()
+	pd.position = Vector2(0, -600)
+	pd.rope_length = 300.0
+	pd.amplitude = 0.6
+	_arena.add_child(pd)
+	await frames(2)
+	var start := pd.log_position() + pd.position
+	var p := add_player(0, start + Vector2(0, -60))
+	await seconds(0.3)
+	var x0 := p.global_position.x
+	await seconds(0.8)
+	check(p.global_position.y < -200.0 and absf(p.global_position.x - x0) > 40.0, "the swinging log should carry you (x %.0f -> %.0f)" % [x0, p.global_position.x])
+	var sp := Pendulum.new()
+	sp.spiked = true
+	sp.position = Vector2(-900, -400)
+	sp.rope_length = 360.0
+	sp.amplitude = 0.0
+	_arena.add_child(sp)
+	var q := add_player(1, Vector2(-900, -2))
+	await seconds(0.4)
+	check(q.is_bubbled(), "a spiky log should bubble you")
+
+
+func test_leaf_platform_sinks_while_ridden() -> void:
+	var l := LeafPlatform.new()
+	l.position = Vector2(0, -300)
+	_arena.add_child(l)
+	var p := add_player(0, Vector2(0, -360))
+	await seconds(0.5)
+	var y0 := l.position.y
+	await seconds(1.0)
+	check(p.is_on_floor(), "you can stand on the leaf")
+	check(l.position.y > y0 + 50.0, "it should sink under you (%.0f -> %.0f)" % [y0, l.position.y])
+
+
+func test_brambles_hurt() -> void:
+	var b := Brambles.new()
+	b.position = Vector2(-100, -60)
+	b.size = Vector2(200, 60)
+	_arena.add_child(b)
+	var p := add_player(0, Vector2(0, -200))
+	await seconds(0.6)
+	check(p.is_bubbled(), "falling into brambles should bubble you")
+
+
+func test_log_raft_drifts_and_carries_rider() -> void:
+	var r := LogRaft.new()
+	r.position = Vector2(-300, -200)
+	r.travel = 1000.0
+	r.current = 150.0
+	r.start_offset = 0.2
+	_arena.add_child(r)
+	var p := add_player(0, Vector2(-100, -300))
+	await seconds(0.6)
+	var x0 := p.global_position.x
+	await seconds(1.0)
+	check(p.is_on_floor() and p.global_position.x > x0 + 100.0, "the raft should carry you downstream (x %.0f -> %.0f)" % [x0, p.global_position.x])
+
+
+func test_acorn_dropper_drops_acorns_near_players() -> void:
+	var a := AcornDropper.new()
+	a.position = Vector2(0, -400)
+	a.interval = 0.5
+	_arena.add_child(a)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var dropped := false
+	for i in 120:
+		await get_tree().physics_frame
+		for c in _arena.get_children():
+			if c is Projectile:
+				dropped = true
+	check(dropped, "it should drop an acorn")
+	await seconds(1.0)
+	check(p.is_bubbled(), "an acorn on the head bubbles you")

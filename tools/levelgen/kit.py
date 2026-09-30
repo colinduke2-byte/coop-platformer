@@ -10,7 +10,7 @@ Coordinates are world pixels, +y down. Ground tops are usually y = 0.
 Every helper returns the node path, so triggers can target it:
     gate = L.gate(...); L.switch(x, y, targets=[gate])
 """
-from tscn import Scene, V, C, NodePath
+from tscn import Scene, V, C, NodePath, Raw
 
 RES = "res://"
 BLOCK = RES + "world/block.tscn"
@@ -160,6 +160,45 @@ class LevelKit:
 
     def balloon(self, x, y):
         return self._tool("Toys", "Balloon", "Area2D", "balloon_stand", x, y)
+
+    # --- World 1 pieces ------------------------------------------------------------
+    def dandelion(self, x, y, height=180.0):
+        return self._tool("Toys", "Dandelion", "Area2D", "dandelion", x, y, height=float(height))
+
+    def geyser(self, x, y, height=420.0, always_on=False, phase=0.0, calm=1.8, launch=1250.0):
+        return self._tool("Toys", "Geyser", "Area2D", "geyser", x, y, height=float(height), always_on=always_on,
+                          phase=float(phase), calm_time=float(calm), launch_speed=float(launch))
+
+    def seesaw(self, x, ground_y, length=320.0):
+        """Pivot sits 44 px above the ground at x."""
+        return self._tool("Toys", "Seesaw", "AnimatableBody2D", "seesaw", x, ground_y - 44.0, length=float(length))
+
+    def bridge(self, x, y, ex, ey, planks=None, broken=(), slack=26.0):
+        n = planks or max(int(((ex - x) ** 2 + (ey - y) ** 2) ** 0.5 / 46), 4)
+        props = dict(span=V(ex - x, ey - y), plank_count=n, slack=float(slack))
+        if broken:
+            props["broken_planks"] = Raw("PackedInt32Array(%s)" % ", ".join(str(int(b)) for b in broken))
+        self.max_x = max(self.max_x, ex)
+        return self._tool("Toys", "RopeBridge", "Node2D", "rope_bridge", x, y, **props)
+
+    def pendulum(self, x, y, rope=260.0, width=170.0, amplitude=0.9, period=3.2, phase=0.0, spiked=False):
+        group = "Hazards" if spiked else "Toys"
+        return self._tool(group, "Pendulum", "Node2D", "pendulum", x, y, rope_length=float(rope), log_width=float(width),
+                          amplitude=float(amplitude), period=float(period), phase=float(phase), spiked=spiked)
+
+    def leaf(self, x, y, width=150.0, sink=90.0, depth=360.0):
+        return self._tool("Toys", "Leaf", "AnimatableBody2D", "leaf_platform", x, y, width=float(width),
+                          sink_speed=float(sink), sink_depth=float(depth))
+
+    def brambles(self, x, y, w, h, seed=3):
+        return self._tool("Hazards", "Brambles", "Area2D", "brambles", x, y, size=V(w, h), seed_value=seed)
+
+    def raft(self, x, y, width=180.0, travel=1200.0, current=110.0, offset=0.0):
+        return self._tool("Toys", "Raft", "AnimatableBody2D", "log_raft", x, y, width=float(width), travel=float(travel),
+                          current=float(current), start_offset=float(offset))
+
+    def acorns(self, x, y, interval=2.2, phase=0.0):
+        return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
 
     def door(self, x, y, locked=False):
         return self._tool("Logic", "Door", "Area2D", "door", x, y, locked=locked or None)
