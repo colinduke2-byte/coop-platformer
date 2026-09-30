@@ -51,6 +51,12 @@ func jump_held() -> bool:
 	return is_active() and Input.is_action_pressed(_p + "jump")
 
 
+## The sprint button (keyboard Ctrl / pad triggers). Double-tap sprinting is
+## detected by Player from move_x(), so it works on every device.
+func sprint_held() -> bool:
+	return is_active() and Input.is_action_pressed(_p + "sprint")
+
+
 func glide_held() -> bool:
 	return is_active() and Input.is_action_pressed(_p + "glide")
 

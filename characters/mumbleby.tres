@@ -5,16 +5,19 @@
 [resource]
 script = ExtResource("1")
 display_name = "Mumbleby"
-blurb = "A wizard who only casts spells in his sleep. Nobody has told him he's awake."
+blurb = "A wizard who only casts spells in her sleep. Nobody has told her she's awake."
 main_color = Color(0.415686, 0.294118, 0.768627, 1)
 accent_color = Color(0.968627, 0.788235, 0.282353, 1)
 trim_color = Color(0.968627, 0.788235, 0.282353, 1)
 skin_color = Color(0.94902, 0.788235, 0.627451, 1)
 hand_color = Color(0.94902, 0.788235, 0.627451, 1)
 head_radius = 16.0
+nose_size = 0.7
 body_width = 27.0
 body_height = 36.0
 leg_length = 9.0
 headwear = 0
-has_beard = true
+has_long_hair = true
+hair_color = Color(0.847059, 0.4, 0.231373, 1)
+has_lashes = true
 idle_quirk = 1

@@ -21,9 +21,9 @@ func _glide_requested(delta: float) -> bool:
 			_hold_time += delta
 			return _hold_time >= t.glide_hold_delay and not player.wants_jump()
 		PlayerTuning.GlideMode.SECOND_PRESS:
-			# Wait until the press has aged out of the jump buffer: if we land
-			# inside that window it becomes a buffered jump, never a glide.
-			return player.glide_armed and not player.wants_jump()
+			# Glides at once. If we land while the press is still buffered,
+			# Ground turns it into a jump anyway, so nothing is lost.
+			return player.glide_armed
 		PlayerTuning.GlideMode.SEPARATE_BUTTON:
 			return player.input.glide_held()
 	return false
@@ -38,7 +38,7 @@ func physics_update(delta: float) -> void:
 		player.do_jump()
 		machine.transition_to(&"Jump")
 		return
-	if player.try_wall_coyote_jump():
+	if player.try_wall_jump():
 		return
 	if player.balloon_timer <= 0.0 and _glide_requested(delta):
 		machine.transition_to(&"Glide")

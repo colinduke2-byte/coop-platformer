@@ -42,7 +42,7 @@ L.sign(2500, 0, "3. One-way ledges: jump up through.\nDOWN + JUMP drops back dow
 L.deco("fence", 2800, 0); L.deco("mushrooms", 3000, 0)
 
 # ---- S3 sprint gap (2900..4250) ---------------------------------------------------------
-L.sign(3150, 0, "4. Keep running to SPRINT (watch the dust).\nSprint-jump the big gap!\n(or: run, DOWN to slide, JUMP = long jump)", 480)
+L.sign(3150, 0, "4. SPRINT: hold Ctrl / RT, or double-tap a direction.\nSprint-jump the big gap!\n(or: run, DOWN to slide, JUMP = long jump)", 500)
 L.lums(3920, -120, 4230, -120, 5, 90)
 L.block(3900, 320, 350, 200)            # pit floor: missed? climb the vine back up
 L.vine(3930, -60, 380)
@@ -62,7 +62,7 @@ L.block(5150, -240, 220, 240)
 L.sign(5200, -240, "6. Missed a ledge? You GRAB it!\nHold toward it (or UP) to climb.", 400)
 L.block(5430, -700, 60, 560)           # pillar (walk under it)
 L.block(5650, -700, 900, 700)          # cliff
-L.sign(5530, 0, "7. WALL JUMP: grab a wall,\ntap JUMP to zig-zag up", 340)
+L.sign(5530, 0, "7. WALL JUMP: press JUMP by a wall.\nTap = zig-zag, hold toward = climb", 360)
 L.lums(5570, -120, 5570, -620, 6)
 L.gem(5460, -770)                      # on top of the pillar
 L.checkpoint(5760, -700)
@@ -75,7 +75,7 @@ L.deco("tree", 6150, -700, 0.9)
 
 # ---- S7 glide canyon (6550..8400) -------------------------------------------------------------
 L.checkpoint(6620, -1020)
-L.sign(7200, -1020, "9. GLIDE: keep holding JUMP after the top of a jump.\nLet go + press JUMP again to re-glide.\nWind lifts gliders!", 520)
+L.sign(7200, -1020, "9. GLIDE: in the air, press JUMP again\nand hold it. Wind lifts gliders!", 440)
 kz(7450, 8350, -380)
 L.updraft(7820, -1500, 160, 1100, 380)
 L.lums(7500, -1120, 8300, -1000, 9, 120)

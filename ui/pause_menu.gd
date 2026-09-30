@@ -11,6 +11,8 @@ var _menu := MenuInput.new()
 var _root: Control
 var _list: VBoxContainer
 var _note: Label
+var _panel: Control
+var _controls: Control     ## the ControlsCard overlay (null = not showing)
 
 
 func _ready() -> void:
@@ -28,6 +30,7 @@ func _ready() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(center)
+	_panel = center
 	var pc := PanelContainer.new()
 	pc.add_theme_stylebox_override(&"panel", UIStyle.panel())
 	center.add_child(pc)
@@ -61,7 +64,7 @@ func open(slot: int, message := "") -> void:
 	_open = true
 	_opener = slot
 	_index = 0
-	_items = ["Resume", "Restart from checkpoint", "Restart level", "Level select", "Character select", "Leave game (P%d)" % (slot + 1)]
+	_items = ["Resume", "Controls", "Restart from checkpoint", "Restart level", "Level select", "Character select", "Leave game (P%d)" % (slot + 1)]
 	_note.text = message
 	_note.visible = message != ""
 	_rebuild()
@@ -71,6 +74,7 @@ func open(slot: int, message := "") -> void:
 
 
 func close() -> void:
+	_hide_controls()
 	_open = false
 	_root.visible = false
 	get_tree().paused = false
@@ -81,6 +85,10 @@ func _process(_delta: float) -> void:
 	if not _open:
 		if _menu.pause and not GameManager.level_complete:
 			open(_menu.who)
+		return
+	if _controls:
+		if _menu.back or _menu.pause or _menu.confirm:
+			_hide_controls()
 		return
 	if _menu.up:
 		_index = wrapi(_index - 1, 0, _items.size())
@@ -98,6 +106,10 @@ func _choose(item: String) -> void:
 	match item:
 		"Resume":
 			close()
+		"Controls":
+			_controls = ControlsCard.overlay()
+			_root.add_child(_controls)
+			_panel.visible = false
 		"Restart from checkpoint":
 			close()
 			GameManager.respawn_all_at_checkpoint()
@@ -124,3 +136,10 @@ func _rebuild() -> void:
 				UIStyle.ACCENT if sel else UIStyle.INK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(l)
+
+
+func _hide_controls() -> void:
+	if _controls:
+		_controls.queue_free()
+		_controls = null
+	_panel.visible = true

@@ -3,28 +3,33 @@ extends Node
 ## actions named "p<slot>_<action>", e.g. "p0_jump".
 ##
 ## Unjoined devices join by pressing their join button:
-##   Keyboard (left side)  : SPACE  - WASD move, SPACE jump, F attack, G glide
-##   Keyboard (right side) : ENTER  - arrows move, ENTER jump, SHIFT attack, R-CTRL glide
-##   Gamepad               : A / START - A jump, X/B attack, RB glide
+##   Keyboard (left side)  : SPACE  - WASD move, SPACE jump, LEFT SHIFT punch, LEFT CTRL sprint
+##   Keyboard (right side) : ENTER  - arrows move, ENTER jump, RIGHT SHIFT punch, RIGHT CTRL sprint
+##   Gamepad               : A / START - A jump, X/B punch, RT/LT sprint, RB glide
+## Double-tapping a direction also sprints (see Player._update_sprint).
 ## (glide action is only used when PlayerTuning.glide_mode is SEPARATE_BUTTON)
 ## Player code never reads devices directly; it goes through PlayerInput.
+## docs/CONTROLS.md and ui/controls_card.gd show these to players: keep them in sync.
 
 signal join_requested(slot: int)
 
 const MAX_PLAYERS := 4
 const ACTIONS: Array[StringName] = [
-	&"move_left", &"move_right", &"move_up", &"move_down", &"jump", &"attack", &"glide", &"pause",
+	&"move_left", &"move_right", &"move_up", &"move_down", &"jump", &"attack", &"sprint", &"glide", &"pause",
 ]
 
 enum DeviceKind { KEYBOARD_LEFT, KEYBOARD_RIGHT, JOYPAD }
 
+## action -> keycode, or [keycode, KeyLocation] to use only the left / right copy of a key.
 const KEYS_LEFT := {
 	&"move_left": KEY_A, &"move_right": KEY_D, &"move_up": KEY_W, &"move_down": KEY_S,
-	&"jump": KEY_SPACE, &"attack": KEY_F, &"glide": KEY_G, &"pause": KEY_ESCAPE,
+	&"jump": KEY_SPACE, &"attack": [KEY_SHIFT, KEY_LOCATION_LEFT], &"sprint": [KEY_CTRL, KEY_LOCATION_LEFT],
+	&"glide": KEY_G, &"pause": KEY_ESCAPE,
 }
 const KEYS_RIGHT := {
 	&"move_left": KEY_LEFT, &"move_right": KEY_RIGHT, &"move_up": KEY_UP, &"move_down": KEY_DOWN,
-	&"jump": KEY_ENTER, &"attack": KEY_SHIFT, &"glide": KEY_CTRL, &"pause": KEY_BACKSPACE,
+	&"jump": KEY_ENTER, &"attack": [KEY_SHIFT, KEY_LOCATION_RIGHT], &"sprint": [KEY_CTRL, KEY_LOCATION_RIGHT],
+	&"glide": KEY_KP_0, &"pause": KEY_BACKSPACE,
 }
 const STICK_DEADZONE := 0.25
 
@@ -80,7 +85,7 @@ func bind_slot(slot: int, kind: int, id: int = 0) -> void:
 		DeviceKind.KEYBOARD_LEFT:
 			_bind_keys(slot, KEYS_LEFT)
 		DeviceKind.KEYBOARD_RIGHT:
-			_bind_keys(slot, KEYS_RIGHT, true)
+			_bind_keys(slot, KEYS_RIGHT)
 		DeviceKind.JOYPAD:
 			_bind_joypad(slot, id)
 
@@ -93,12 +98,15 @@ func unbind_slot(slot: int) -> void:
 			InputMap.erase_action(n)
 
 
-func _bind_keys(slot: int, map: Dictionary, right_side := false) -> void:
+func _bind_keys(slot: int, map: Dictionary) -> void:
 	for action: StringName in map:
 		var ev := InputEventKey.new()
-		ev.physical_keycode = map[action]
-		if right_side and map[action] == KEY_CTRL:
-			ev.location = KEY_LOCATION_RIGHT  # Right Ctrl only, so left Ctrl stays free
+		var key: Variant = map[action]
+		if key is Array:
+			ev.physical_keycode = key[0]
+			ev.location = key[1]  # e.g. Left Shift only, so the other player keeps Right Shift
+		else:
+			ev.physical_keycode = key
 		InputMap.action_add_event(action_name(slot, action), ev)
 
 
@@ -114,6 +122,9 @@ func _bind_joypad(slot: int, id: int) -> void:
 	_add_button(slot, &"jump", id, JOY_BUTTON_A)
 	_add_button(slot, &"attack", id, JOY_BUTTON_X)
 	_add_button(slot, &"attack", id, JOY_BUTTON_B)
+	_add_axis(slot, &"sprint", id, JOY_AXIS_TRIGGER_RIGHT, 1.0)
+	_add_axis(slot, &"sprint", id, JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_add_button(slot, &"sprint", id, JOY_BUTTON_LEFT_SHOULDER)
 	_add_button(slot, &"glide", id, JOY_BUTTON_RIGHT_SHOULDER)
 	_add_button(slot, &"pause", id, JOY_BUTTON_START)
 

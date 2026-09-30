@@ -28,6 +28,7 @@ func _run() -> void:
 	await _measure("Air uppercut extra height (at the apex)", "px", _uppercut)
 	await _measure("Wall jump: height gained per kick (2 walls 160 px apart)", "px", _wall_kick)
 	await _measure("Wall run height (sprint into a wall)", "px", _wall_run)
+	await _measure("Wall climb: height per hop (hold toward wall, tap JUMP)", "px", _wall_climb)
 	await _measure("Stomp bounce height (tap / hold jump)", "px", _stomp_bounce)
 	var t: PlayerTuning = load("res://player/tuning/player_default.tres")
 	_rows.append(["Run speed / sprint speed", "%d / %d px/s" % [t.max_run_speed, t.sprint_speed]])
@@ -142,9 +143,12 @@ func _run_jump(sprint: bool) -> float:
 	var p := _player(Vector2(-3500, -2))
 	await _settle(p)
 	_press("move_right")
-	await _frames(int((1.6 if sprint else 0.3) * 120.0))
+	if sprint:
+		_press("sprint")
+	await _frames(int((1.0 if sprint else 0.3) * 120.0))
 	var d: float = await _airtime_distance(p, 45)  # release before the apex: no glide
 	_release("move_right")
+	_release("sprint")
 	return d
 
 
@@ -255,9 +259,33 @@ func _wall_run() -> float:
 	var p := _player(Vector2(-2400, -2))
 	await _settle(p)
 	_press("move_right")
+	_press("sprint")
 	var h: float = await _peak(p, p.global_position.y, 600)
 	_release("move_right")
+	_release("sprint")
 	return h
+
+
+## Hold toward one wall and tap JUMP: height gained per climbing hop.
+func _wall_climb() -> float:
+	var w: Block = load("res://world/block.tscn").instantiate()
+	w.position = Vector2(300, -2000)
+	w.size = Vector2(60, 1900)
+	_arena.add_child(w)
+	var p := _player(Vector2(250, -300))
+	_press("move_right")
+	for i in 60:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"WallSlide":
+			break
+	var y0 := p.global_position.y
+	for k in 4:
+		_press("jump")
+		await _frames(3)
+		_release("jump")
+		await _frames(33)
+	_release("move_right")
+	return (y0 - p.global_position.y) / 4.0
 
 
 func _stomp_bounce() -> String:

@@ -17,7 +17,7 @@ and friends save each other constantly. (TODO: Colin, one sentence in your words
 ## Players & characters
 - 1–4 players, keyboard (2 layouts) or gamepads, join anytime.
 - Characters (original, "goofy dreamers"; see `characters/*.tres`, preview in `characters/character_gallery.tscn`):
-  - **P1 Mumbleby**: sleepy wizard, purple robe, bent star hat, big white beard. Casts spells only in his sleep.
+  - **P1 Mumbleby**: sleepy wizard, purple robe, bent star hat, long copper hair. Casts spells only in her sleep.
   - **P2 Sir Dinkworth**: tiny knight lost inside a huge bucket helm with a red plume. Never sees where he's going.
   - **P3 Tootle**: bard in a green tunic, red beret with a yellow feather, fluttering scarf. Knows one song, about himself.
   - **P4 Gribble**: portly bandit, orange coat, eye mask, pink polka-dot bandana. Steals only things nobody wanted.
@@ -29,11 +29,14 @@ and friends save each other constantly. (TODO: Colin, one sentence in your words
 | Move | Input | Notes |
 |---|---|---|
 | Run | stick / WASD / arrows | analog speed on sticks |
-| Jump | A / Space / Enter | variable height, coyote time, jump buffer, apex hang |
-| Glide | `glide_mode` (PlayerTuning, default HOLD_THROUGH) | slow fall, strong air steering. HOLD_THROUGH: keep holding jump past the apex (~0.12 s), or press jump again in the air to (re)start a glide - a tap never glides. SECOND_PRESS: fresh jump press in air + hold. SEPARATE_BUTTON: hold G / Right Ctrl / RB in air. Release ends the glide |
-| Wall slide / wall jump | push into wall, jump | |
-| Punch | X or B / F / Shift | tap = quick jab (72 px reach); HOLD = charge, release = mega punch (1.6x reach, bigger hitbox, 1.8x knockback, breaks iron crates); pops teammate bubbles |
+| Sprint | hold Ctrl / RT, or double-tap a direction | 430 -> 610 px/s; enables wall runs and long sprint jumps. `auto_sprint` brings back run-to-sprint |
+| Jump | A / Space / Enter | tap = short hop (always `jump_min_height`), hold = full jump; coyote time, jump buffer, apex hang |
+| Glide | `glide_mode` (PlayerTuning, default SECOND_PRESS) | press jump again in the air + hold; starts at once. HOLD_THROUGH (old default): keep holding past the apex. SEPARATE_BUTTON: hold G / Numpad 0 / RB |
+| Wall jump | JUMP beside a wall | works rising or falling. Toward the wall = climbing hop (climb one wall), otherwise kick away |
+| Punch | X or B / Left Shift / Right Shift | tap = quick jab (90 px reach); HOLD = charge, release = mega punch (1.6x reach, bigger hitbox, 1.8x knockback, breaks iron crates); pops teammate bubbles |
 | Stomp | land on enemy | bounces; hold jump to bounce higher |
+
+Full button list: `docs/CONTROLS.md`.
 
 World toys: wooden crates (any punch), iron crates (charged punch), updrafts (lift gliders).
 Ideas backlog: sprint, swimming, swinging, ground pound, air dash. TODO: pick.

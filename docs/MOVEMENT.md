@@ -7,7 +7,7 @@ need a helper (pad, updraft, swing, wall, glide).
 
 | Move | Result |
 |---|---|
-| Tap jump height | 45 px |
+| Tap jump height | 79 px |
 | Full jump height (hold) | 195 px |
 | Running jump distance (hold) | 301 px |
 | Sprinting jump distance (hold) | 427 px |
@@ -17,7 +17,8 @@ need a helper (pad, updraft, swing, wall, glide).
 | Ground-pound jump height | 303 px |
 | Air uppercut extra height (at the apex) | 53 px |
 | Wall jump: height gained per kick (2 walls 160 px apart) | 146 px |
-| Wall run height (sprint into a wall) | 144 px |
+| Wall run height (sprint into a wall) | 170 px |
+| Wall climb: height per hop (hold toward wall, tap JUMP) | 154 px |
 | Stomp bounce height (tap / hold jump) | 96 / 187 px |
 | Run speed / sprint speed | 430 / 610 px/s |
 | Fall speed / fast fall / glide fall | 1150 / 1500 / 110 px/s |

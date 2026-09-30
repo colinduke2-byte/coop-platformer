@@ -20,6 +20,7 @@ enum IdleQuirk { NONE, SNORE, PLUME_WAG, HUM, SHIFTY_EYES }
 
 @export_group("Proportions")
 @export var head_radius := 17.0
+@export var nose_size := 1.0                 ## 1 = the big goofy nose
 @export var body_width := 34.0               ## widest point (hem)
 @export var body_height := 28.0
 @export var leg_length := 12.0
@@ -27,6 +28,9 @@ enum IdleQuirk { NONE, SNORE, PLUME_WAG, HUM, SHIFTY_EYES }
 @export_group("Extras")
 @export var headwear: Headwear = Headwear.WIZARD_HAT
 @export var has_beard := false
+@export var has_long_hair := false           ## flowing hair down the back + a lock by the cheek
+@export var hair_color := Color("c4552f")
+@export var has_lashes := false              ## eyelashes
 @export var has_mask := false
 @export var has_scarf := false
 @export var idle_quirk: IdleQuirk = IdleQuirk.NONE

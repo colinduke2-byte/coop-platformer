@@ -10,9 +10,11 @@ extends Resource
 @export var ground_accel := 3400.0          ## px/s^2
 @export var ground_decel := 3800.0
 @export var turn_boost := 1.8               ## accel multiplier when reversing direction
-@export var sprint_speed := 610.0           ## px/s top speed after running flat out for a while
-@export var sprint_build_time := 0.8        ## s of flat-out running before the sprint kicks in
-@export var sprint_ramp_time := 0.4         ## s to grow from run speed to sprint speed
+@export var sprint_speed := 610.0           ## px/s top speed while sprinting
+@export var sprint_ramp_time := 0.25        ## s to grow from run speed to sprint speed
+@export var sprint_double_tap_window := 0.28  ## s between two taps of a direction that starts a sprint
+@export var auto_sprint := false            ## old behaviour: running flat out sprints by itself (no button)
+@export var sprint_build_time := 0.8        ## auto_sprint only: s of flat-out running before it kicks in
 @export var skid_speed := 260.0             ## reversing faster than this on the ground = skid (visual + dust)
 
 @export_group("Air")
@@ -29,11 +31,12 @@ extends Resource
 @export var jump_height := 190.0            ## px, full-hold jump
 @export var jump_time_to_peak := 0.38       ## s
 @export var jump_time_to_fall := 0.30       ## s, shorter = snappier fall
-@export var jump_cut_multiplier := 0.5      ## upward speed kept when jump released early
+@export var jump_cut_multiplier := 0.45     ## upward speed kept when jump released early (after the min hop)
+@export var jump_min_height := 90.0         ## px: even the quickest tap jumps at least this high (consistent short hops)
 @export var apex_speed_threshold := 70.0    ## |vy| under this counts as "apex"
 @export var apex_gravity_multiplier := 0.5  ## floaty hang at top while jump held
-@export var coyote_time := 0.10             ## s after leaving a ledge you can still jump
-@export var jump_buffer_time := 0.12        ## s a jump press is remembered before landing
+@export var coyote_time := 0.12             ## s after leaving a ledge you can still jump
+@export var jump_buffer_time := 0.15        ## s a jump press is remembered before landing
 @export var stomp_bounce_multiplier := 1.0  ## bounce off enemies (hold jump), fraction of jump velocity
 @export var stomp_cut_multiplier := 0.72    ## tap bounce keeps this much speed (normal jumps cut harder)
 @export var teammate_bounce_multiplier := 0.9  ## land on a teammate's head: boing
@@ -45,7 +48,7 @@ enum GlideMode {
 }
 
 @export_group("Glide (helicopter)")
-@export var glide_mode: GlideMode = GlideMode.HOLD_THROUGH
+@export var glide_mode: GlideMode = GlideMode.SECOND_PRESS  ## press jump again in the air + hold (full jumps never float by surprise)
 @export var glide_hold_delay := 0.12        ## s of held jump after the apex before HOLD_THROUGH glides
 @export var glide_fall_speed := 110.0
 @export var glide_accel := 1700.0
@@ -58,7 +61,10 @@ enum GlideMode {
 @export var wall_jump_lock_time := 0.16     ## s of ignored steering after a wall jump
 @export var wall_jump_cuttable := false     ## false = releasing jump early doesn't shorten wall jumps
 @export var wall_auto_grab := true          ## stick to walls you touch while falling (no need to push in); push away to let go
-@export var wall_coyote_time := 0.1         ## s after leaving a wall you can still wall jump
+@export var wall_coyote_time := 0.15        ## s after leaving a wall you can still wall jump
+@export var wall_jump_reach := 14.0         ## px: JUMP in the air this close to a wall = wall jump (rising or falling)
+@export var wall_climb_velocity := Vector2(170.0, -900.0)  ## JUMP while holding TOWARD the wall: small hop off, you come back to it
+@export var wall_climb_lock_time := 0.06    ## s of ignored steering after a climbing kick
 @export var wall_run := true                ## sprint into a wall and run up it (once per airtime)
 @export var wall_run_min_speed := 500.0     ## horizontal speed needed when you hit the wall
 @export var wall_run_speed := 620.0         ## px/s up the wall at the start (eases off)
@@ -138,8 +144,8 @@ enum GlideMode {
 @export var punch_windup := 0.05
 @export var punch_active := 0.12
 @export var punch_recovery := 0.12
-@export var punch_reach := 72.0             ## px, fist distance from body centre (was 46)
-@export var punch_hitbox_size := Vector2(64.0, 46.0)
+@export var punch_reach := 90.0             ## px, fist distance from body centre (was 72)
+@export var punch_hitbox_size := Vector2(72.0, 50.0)
 @export var punch_knockback := Vector2(380.0, -220.0)
 @export var punch_ground_speed_scale := 0.35
 @export var punch_charge_min := 0.1         ## s held after the windup before a punch starts charging

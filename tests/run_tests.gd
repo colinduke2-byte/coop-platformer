@@ -41,9 +41,14 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# Optional filter: godot ... res://tests/test_runner.tscn -- only=wall
+	var only := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("only="):
+			only = a.substr(5)
 	var names: Array[String] = []
 	for m in get_method_list():
-		if String(m.name).begins_with("test_"):
+		if String(m.name).begins_with("test_") and (only == "" or String(m.name).contains(only)):
 			names.append(m.name)
 	names.sort()
 	for n in names:
@@ -55,6 +60,8 @@ func _run() -> void:
 			_failures.append("%s: engine/script error: %s" % [n, e])
 		_teardown_arena()
 		print(("PASS  " if not _failures.any(func(f: String) -> bool: return f.begins_with(n)) else "FAIL  ") + n)
+	if names.is_empty():
+		_failures.append("no tests matched")
 	print("\n%d tests, %d failures" % [names.size(), _failures.size()])
 	for f in _failures:
 		print("  - " + f)
@@ -159,6 +166,93 @@ func test_tap_jump_is_lower_than_full_jump() -> void:
 	var height := start_y - peak
 	check(height < p.tuning.jump_height * 0.6, "tap jump too high: %.0f px" % height)
 	check(height > 10.0, "tap jump barely left the ground: %.0f px" % height)
+
+
+func _hop_height(p: Player, hold_frames: int) -> float:
+	await settle(p)
+	var start_y := p.global_position.y
+	var peak := start_y
+	press(0, "jump")
+	for i in 200:
+		await get_tree().physics_frame
+		if i == hold_frames:
+			release(0, "jump")
+		peak = minf(peak, p.global_position.y)
+		if i > hold_frames and i > 10 and p.is_on_floor():
+			break
+	release(0, "jump")
+	return start_y - peak
+
+
+func test_quick_taps_give_the_same_hop() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	var heights: Array[float] = []
+	for hold: int in [1, 3, 6, 9]:
+		heights.append(await _hop_height(p, hold))
+	var lo: float = heights.min()
+	var hi: float = heights.max()
+	check(lo >= p.tuning.jump_min_height - 4.0, "every tap should reach the minimum hop (%s)" % [heights])
+	check(hi - lo < 20.0, "quick taps should all hop about the same height (%s)" % [heights])
+	var full := await _hop_height(p, 90)
+	check(full > p.tuning.jump_height - 8.0, "holding jump should give the full jump (%.0f)" % full)
+
+
+func test_holding_jump_never_glides_by_itself() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "jump")
+	var glided := false
+	for i in 150:
+		await get_tree().physics_frame
+		glided = glided or _state(p) == &"Glide"
+	release(0, "jump")
+	check(not glided, "a held jump must land on its own arc (glide = press JUMP again in the air)")
+	check(p.is_on_floor(), "should have landed")
+
+
+func test_press_jump_again_in_air_glides_at_once() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "jump")
+	await frames(60)
+	release(0, "jump")
+	await frames(2)
+	press(0, "jump")
+	await frames(3)
+	check(_state(p) == &"Glide", "second press in the air should glide straight away (got %s)" % _state(p))
+	release(0, "jump")
+
+
+func test_wall_jump_works_while_rising() -> void:
+	var p := add_player(0, Vector2(570, -2))  # arena wall starts at x = 600
+	await settle(p)
+	press(0, "jump")
+	await frames(12)
+	release(0, "jump")
+	check(_state(p) == &"Jump", "should still be rising")
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(p.velocity.x < -200.0 and p.velocity.y < -600.0, "JUMP beside a wall while rising should kick off it (v %s)" % p.velocity)
+
+
+func test_hold_toward_wall_and_tap_jump_climbs_it() -> void:
+	var p := add_player(0, Vector2(560, -300))
+	press(0, "move_right")
+	for i in 90:
+		await get_tree().physics_frame
+		if _state(p) == &"WallSlide":
+			break
+	check(_state(p) == &"WallSlide", "should grab the wall")
+	var start_y := p.global_position.y
+	for kick in 5:
+		press(0, "jump")
+		await frames(3)
+		release(0, "jump")
+		await frames(27)
+	release(0, "move_right")
+	check(start_y - p.global_position.y > 350.0, "tapping JUMP while holding toward the wall should climb it (gained %.0f)" % (start_y - p.global_position.y))
+	check(p.touching_wall_dir(p.tuning.wall_jump_reach) == 1, "should still be on the same wall")
 
 
 const GM := PlayerTuning.GlideMode
@@ -551,17 +645,52 @@ func _state(p: Player) -> StringName:
 	return p.state_machine.current_name()
 
 
-func test_sprint_builds_after_running_flat_out() -> void:
+func test_running_alone_never_sprints() -> void:
 	var p := add_player(0, Vector2(-1800, -2))
 	await settle(p)
 	press(0, "move_right")
-	await seconds(0.5)
-	check(p.velocity.x <= p.tuning.max_run_speed + 1.0, "no sprint yet after 0.5 s (vx %.0f)" % p.velocity.x)
-	await seconds(p.tuning.sprint_build_time + p.tuning.sprint_ramp_time + 0.3)
-	check(p.velocity.x > p.tuning.max_run_speed * 1.2, "should be sprinting by now (vx %.0f)" % p.velocity.x)
+	await seconds(2.0)
+	release(0, "move_right")
+	check(p.velocity.x <= p.tuning.max_run_speed + 1.0, "plain running must stay at run speed (vx %.0f)" % p.velocity.x)
+
+
+func test_sprint_button_sprints_while_held() -> void:
+	var p := add_player(0, Vector2(-1800, -2))
+	await settle(p)
+	press(0, "move_right")
+	press(0, "sprint")
+	await seconds(p.tuning.sprint_ramp_time + 0.3)
+	check(p.velocity.x > p.tuning.max_run_speed * 1.2, "holding sprint should sprint (vx %.0f)" % p.velocity.x)
+	release(0, "sprint")
+	await seconds(0.2)
+	check(p.sprint == 0.0 and p.velocity.x <= p.tuning.max_run_speed + 1.0, "letting go of sprint should drop back to a run")
 	release(0, "move_right")
 	await seconds(0.4)
-	check(p.sprint == 0.0 and absf(p.velocity.x) < 1.0, "letting go should stop and end the sprint")
+	check(absf(p.velocity.x) < 1.0, "letting go should stop")
+
+
+func test_double_tap_direction_sprints() -> void:
+	var p := add_player(0, Vector2(-1800, -2))
+	await settle(p)
+	press(0, "move_right")
+	await frames(8)
+	release(0, "move_right")
+	await frames(8)
+	press(0, "move_right")
+	await seconds(p.tuning.sprint_ramp_time + 0.3)
+	check(p.velocity.x > p.tuning.max_run_speed * 1.2, "double-tap + hold should sprint (vx %.0f)" % p.velocity.x)
+	release(0, "move_right")
+	await seconds(0.3)
+	check(p.sprint == 0.0, "letting go ends a double-tap sprint")
+	# Two slow taps are just walking.
+	press(0, "move_left")
+	await frames(8)
+	release(0, "move_left")
+	await seconds(p.tuning.sprint_double_tap_window + 0.1)
+	press(0, "move_left")
+	await seconds(0.8)
+	release(0, "move_left")
+	check(p.velocity.x >= -p.tuning.max_run_speed - 1.0, "slow taps must not sprint (vx %.0f)" % p.velocity.x)
 
 
 func test_corner_correction_slides_past_ceiling_edge() -> void:
@@ -1340,6 +1469,7 @@ func test_wall_run_up_a_wall_when_sprinting() -> void:
 	var p := add_player(0, Vector2(-1200, -2))
 	await settle(p)
 	press(0, "move_right")
+	press(0, "sprint")
 	var ran := false
 	var best := 0.0
 	for i in 600:
@@ -1348,6 +1478,7 @@ func test_wall_run_up_a_wall_when_sprinting() -> void:
 			ran = true
 		best = minf(best, p.global_position.y)
 	release(0, "move_right")
+	release(0, "sprint")
 	check(ran, "sprinting into the arena wall should wall-run")
 	check(best < -120.0, "a wall run should carry you well up the wall (%.0f)" % best)
 
@@ -1390,7 +1521,7 @@ func test_walk_up_slope_and_slide_down_faster() -> void:
 	var p := add_player(0, Vector2(-200, -2))
 	await settle(p)
 	press(0, "move_right")
-	await seconds(1.2)
+	await seconds(1.6)
 	release(0, "move_right")
 	check(p.global_position.y < -140.0, "should walk up the slope onto the block (y %.0f)" % p.global_position.y)
 	check(not p.is_on_wall() or _state(p) == &"Ground", "slope must not count as a wall")
@@ -1411,8 +1542,10 @@ func test_walk_up_slope_and_slide_down_faster() -> void:
 	check(low_speed > top_speed + 100.0, "belly slide should speed up downhill (%.0f -> %.0f)" % [top_speed, low_speed])
 
 
-func _jump_distance(p: Player, run_frames: int) -> float:
+func _jump_distance(p: Player, run_frames: int, sprinting := false) -> float:
 	press(0, "move_right")
+	if sprinting:
+		press(0, "sprint")
 	await frames(run_frames)
 	var x0 := p.global_position.x
 	press(0, "jump")
@@ -1427,6 +1560,7 @@ func _jump_distance(p: Player, run_frames: int) -> float:
 			break
 	release(0, "jump")
 	release(0, "move_right")
+	release(0, "sprint")
 	return p.global_position.x - x0
 
 
@@ -1437,7 +1571,7 @@ func test_sprint_jump_carries_momentum() -> void:
 	await seconds(0.5)
 	p.global_position = Vector2(-1900, -2)
 	await settle(p)
-	var sprint := await _jump_distance(p, 200)
+	var sprint := await _jump_distance(p, 200, true)
 	check(sprint > run * 1.25, "sprint jumps should go much further (%.0f vs %.0f)" % [sprint, run])
 
 
@@ -1567,6 +1701,18 @@ func _run_to(p: Player, x: float, dir := "move_right", max_s := 6.0) -> void:
 			return
 
 
+## Bot glide (SECOND_PRESS): once the jump starts falling, let go of JUMP and
+## press it again (held until the test releases it). Call WITHOUT await.
+func _auto_glide(p: Player, max_frames := 360) -> void:
+	for i in max_frames:
+		await get_tree().physics_frame
+		if not is_instance_valid(p) or (p.velocity.y > 0.0 and not p.is_on_floor()):
+			break
+	release(0, "jump")
+	await frames(1)
+	press(0, "jump")
+
+
 func _finish_demo() -> void:
 	for a in router().ACTIONS:
 		Input.action_release(router().action_name(0, a))
@@ -1577,6 +1723,7 @@ func _finish_demo() -> void:
 func test_demo_sprint_gap_is_makeable() -> void:
 	var p: Player = await _load_demo()
 	await _place(p, Vector2(2300, -2))
+	press(0, "sprint")
 	await _run_to(p, 3860)
 	press(0, "jump")
 	await seconds(1.2)
@@ -1587,6 +1734,7 @@ func test_demo_sprint_gap_is_makeable() -> void:
 func test_demo_wall_run_step_is_makeable() -> void:
 	var p: Player = await _load_demo()
 	await _place(p, Vector2(5750, -702))
+	press(0, "sprint")
 	await _run_to(p, 6430)
 	press(0, "jump")
 	await seconds(1.5)
@@ -1599,6 +1747,7 @@ func test_demo_glide_canyon_is_makeable() -> void:
 	await _place(p, Vector2(7150, -1022))
 	await _run_to(p, 7420)
 	press(0, "jump")
+	_auto_glide(p)
 	await seconds(4.0)
 	check(p.global_position.x > 8360 and not p.is_bubbled() and p.global_position.y < -900.0,
 			"gliding should cross the canyon (at %s)" % p.global_position)
@@ -1654,6 +1803,7 @@ func test_demo_wind_gap_is_makeable() -> void:
 	await _place(p, Vector2(21200, -1262))
 	await _run_to(p, 21430)
 	press(0, "jump")
+	_auto_glide(p)
 	var landed := false
 	for i in 360:
 		await get_tree().physics_frame
@@ -1685,6 +1835,7 @@ func test_demo_pad_reaches_swing_rings() -> void:
 	release(0, "move_right")
 	press(0, "jump")  # hold for the big bounce
 	await seconds(0.5)
+	release(0, "jump")  # (holding on would glide past the ledge)
 	press(0, "move_right")
 	for i in 120:
 		await get_tree().physics_frame
@@ -1699,6 +1850,8 @@ func test_demo_pad_reaches_swing_rings() -> void:
 	var swung := false
 	for i in 120:
 		await get_tree().physics_frame
+		if i == 8:
+			release(0, "jump")  # a short hop reaches the ring (a full jump sails over it)
 		if _state(p) == &"Swing":
 			swung = true
 			break

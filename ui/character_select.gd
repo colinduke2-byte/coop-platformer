@@ -22,6 +22,8 @@ const INK := Color("2b2233")
 var _cards: Array[Card] = []
 var _start_timer := 0.0
 var _footer: Label
+var _menu := MenuInput.new()
+var _controls: CanvasLayer  ## ControlsCard overlay while PAUSE shows it
 
 
 class Card:
@@ -44,8 +46,9 @@ class Card:
 func _ready() -> void:
 	var w := 1920.0
 	_label("Choose your dreamer", 64, Vector2(0, 50), w)
-	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)      Left / Right: pick      Jump: ready      Attack: back / leave",
+	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)      Left / Right: pick      Jump: ready      Punch: back / leave",
 			22, Vector2(0, 150), w)
+	_label("Press PAUSE (Esc / Backspace / Start) to see all the controls", 22, Vector2(0, 185), w)
 	_footer = _label("", 28, Vector2(0, 950), w)
 	for slot in InputRouter.MAX_PLAYERS:
 		_cards.append(_make_card(slot, 240.0 + slot * 480.0))
@@ -83,6 +86,21 @@ func is_everyone_ready() -> bool:
 # --- Flow -----------------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	_menu.poll(false)
+	if _controls:
+		if _menu.pause or _menu.confirm or _menu.back:
+			_controls.queue_free()
+			_controls = null
+			for c in _cards:
+				c.grace = JOIN_GRACE  # don't let the closing press also ready / leave
+		return
+	if _menu.pause:
+		var layer := CanvasLayer.new()
+		layer.layer = 20
+		layer.add_child(ControlsCard.overlay())
+		add_child(layer)
+		_controls = layer
+		return
 	for c in _cards:
 		if not c.joined:
 			continue

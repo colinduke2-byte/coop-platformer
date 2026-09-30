@@ -39,8 +39,8 @@ func _refresh_info() -> void:
 	var how := {
 		"HOLD_THROUGH": "keep holding jump past the top of the jump",
 		"SECOND_PRESS": "press jump again in the air and hold",
-		"SEPARATE_BUTTON": "hold G / Right Ctrl / RB in the air",
+		"SEPARATE_BUTTON": "hold G / Numpad 0 / RB in the air",
 	}
 	_info.text = ("Glide mode: %s  (%s)   [F1 to change]\n" % [mode, how[mode]]
-			+ "Move: WASD / arrows / stick    Jump: Space / Enter / A    Punch: F / Shift / X    "
-			+ "Pause: Esc / Backspace / Start")
+			+ "Move: WASD / arrows / stick    Jump: Space / Enter / A    Punch: L-Shift / R-Shift / X    "
+			+ "Sprint: L-Ctrl / R-Ctrl / RT (or double-tap)    Pause (+ all controls): Esc / Backspace / Start")

@@ -7,9 +7,11 @@ platformer, set up so Claude Code can build on it safely.
 1. Install **Godot 4.6 or newer** (standard version, not .NET): https://godotengine.org/download
 2. Open Godot > Import > select this folder's `project.godot`.
 3. Press **F5**. Join with:
-   - **Space** (WASD, Space jump, F punch)
-   - **Enter** (arrows, Enter jump, Shift punch)
-   - **A** on any gamepad (A jump, X/B punch)
+   - **Space** (WASD, Space jump, Left Shift punch, Left Ctrl sprint)
+   - **Enter** (arrows, Enter jump, Right Shift punch, Right Ctrl sprint)
+   - **A** on any gamepad (A jump, X/B punch, RT sprint)
+   Double-tapping a direction also sprints. Full list: `docs/CONTROLS.md`,
+   or Pause → Controls in the game.
 4. Tune feel live: while running, open `player/tuning/player_default.tres`
    in the Inspector and change values.
 

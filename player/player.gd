@@ -58,6 +58,10 @@ var balloon_timer := 0.0
 var _has_balloon := false
 var _updraft_timer := 0.0
 var _sprint_build := 0.0
+var _tap_dir := 0          ## direction of the last fresh stick/key press (double-tap sprint)
+var _tap_timer := 0.0      ## > 0 while a second tap in _tap_dir starts a sprint
+var _prev_push_dir := 0
+var _tap_sprint := false   ## double-tapped: sprinting while that direction stays held
 var _drop_timer := 0.0
 var _dropped_through: Array[PhysicsBody2D] = []
 var _was_on_floor := false
@@ -291,23 +295,29 @@ func is_pushing_into_wall() -> bool:
 
 ## +1 / -1 if a wall is touching our right / left side, else 0. Unlike
 ## is_on_wall() this works with zero horizontal speed (e.g. after bumping a wall).
-func touching_wall_dir() -> int:
-	for d: int in [1, -1]:
-		var col := move_and_collide(Vector2(d * WALL_PROBE, 0.0), true, 0.08, true)
+## `reach` looks further out (wall jumps count near misses).
+func touching_wall_dir(reach := WALL_PROBE) -> int:
+	var order: Array[int] = [facing, -facing]
+	for d: int in order:
+		var col := move_and_collide(Vector2(d * reach, 0.0), true, 0.08, true)
 		# Only near-vertical surfaces count (not slopes you're brushing against).
 		if col and absf(col.get_normal().x) > 0.85:
 			return d
 	return 0
 
 
-## Kick off the wall on side `wall_dir` (+1 = wall on our right).
+## Kick off the wall on side `wall_dir` (+1 = wall on our right). Holding
+## TOWARD the wall makes a small climbing hop that brings you back to it
+## (tap JUMP to climb one wall); otherwise a big kick away.
 func do_wall_jump(wall_dir: int) -> void:
 	var t := tuning
 	consume_jump()
 	wall_coyote_timer = 0.0
-	velocity = Vector2(-wall_dir * t.wall_jump_velocity.x, t.wall_jump_velocity.y)
+	var climbing := input.move_x() * wall_dir > STICK_DEADZONE
+	var kick := t.wall_climb_velocity if climbing else t.wall_jump_velocity
+	velocity = Vector2(-wall_dir * kick.x, kick.y)
 	facing = -wall_dir
-	control_lock_timer = t.wall_jump_lock_time
+	control_lock_timer = t.wall_climb_lock_time if climbing else t.wall_jump_lock_time
 	squash(t.jump_stretch)
 	jump_cuttable = t.wall_jump_cuttable
 	uppercut_used = false
@@ -317,12 +327,18 @@ func do_wall_jump(wall_dir: int) -> void:
 	state_machine.transition_to(&"Jump")
 
 
-## Fell off / let go of a wall a moment ago: a jump still counts as a wall jump.
-func try_wall_coyote_jump() -> bool:
-	if wants_jump() and wall_coyote_timer > 0.0 and wall_coyote_dir != 0:
-		do_wall_jump(wall_coyote_dir)
-		return true
-	return false
+## JUMP in the air next to a wall (or just after leaving one) = wall jump.
+## Works rising or falling, no need to be sliding first: simple and reliable.
+func try_wall_jump() -> bool:
+	if not wants_jump() or is_on_floor() or can_coyote_jump():
+		return false
+	var dir := touching_wall_dir(tuning.wall_jump_reach)
+	if dir == 0 and wall_coyote_timer > 0.0:
+		dir = wall_coyote_dir
+	if dir == 0:
+		return false
+	do_wall_jump(dir)
+	return true
 
 
 ## Hit a wall at sprint speed: run up it (Rayman-style).
@@ -356,23 +372,44 @@ func wants_wall_grab(dir: int) -> bool:
 func _update_sprint(delta: float) -> void:
 	var t := tuning
 	var push := input.move_x()
+	_track_double_tap(push, delta)
+	var state := state_machine.current_name()
 	if is_on_floor():
-		var flat_out := absf(push) > 0.7 and signf(push) == signf(velocity.x) \
-				and absf(velocity.x) >= t.max_run_speed * 0.92
-		var state := state_machine.current_name()
-		if flat_out and state in [&"Ground", &"Punch"]:
-			_sprint_build += delta
-			if _sprint_build >= t.sprint_build_time:
-				sprint = move_toward(sprint, 1.0, delta / maxf(t.sprint_ramp_time, 0.01))
+		if t.auto_sprint:
+			var flat_out := absf(push) > 0.7 and signf(push) == signf(velocity.x) \
+					and absf(velocity.x) >= t.max_run_speed * 0.92
+			_sprint_build = _sprint_build + delta if flat_out and state in [&"Ground", &"Punch"] else 0.0
+		var running := absf(push) > 0.5
+		var wants := wants_sprint() or (t.auto_sprint and _sprint_build >= t.sprint_build_time)
+		if wants and running and state in [&"Ground", &"Punch", &"Slide"]:
+			sprint = move_toward(sprint, 1.0, delta / maxf(t.sprint_ramp_time, 0.01))
 		elif state in [&"Ground", &"Crouch", &"Punch"]:
 			# (Not on takeoff frames: Jump starts while still "on floor".)
-			_sprint_build = 0.0
 			sprint = 0.0
 	elif push * velocity.x < 0.0:
 		sprint = move_toward(sprint, 0.0, delta * 3.0)  # steering back in the air drops it
 	if is_on_wall() and state_machine.current_name() != &"WallSlide":
 		_sprint_build = 0.0
 		sprint = 0.0
+
+
+## Sprint button held, or a direction double-tapped and still held.
+func wants_sprint() -> bool:
+	return input.sprint_held() or _tap_sprint
+
+
+## Tap a direction twice quickly (and keep holding) to sprint. Works with keys,
+## d-pad and stick flicks alike.
+func _track_double_tap(push: float, delta: float) -> void:
+	var dir := int(signf(push)) if absf(push) > 0.5 else 0
+	if dir != 0 and _prev_push_dir == 0:
+		_tap_sprint = dir == _tap_dir and _tap_timer > 0.0
+		_tap_dir = dir
+		_tap_timer = tuning.sprint_double_tap_window
+	elif dir != _tap_dir:
+		_tap_sprint = false
+	_tap_timer = maxf(_tap_timer - delta, 0.0)
+	_prev_push_dir = dir
 
 
 func is_sprinting() -> bool:

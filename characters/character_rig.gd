@@ -186,6 +186,15 @@ func _build_head(r: float) -> float:
 		_add_poly(_bandana_tails, PackedVector2Array([
 			Vector2(0, 1), Vector2(-13, 6), Vector2(-7, 9)]), def.accent_color.darkened(0.2))
 
+	if def.has_long_hair:
+		# Behind the head: falls from the crown down past the shoulders, wavy ends.
+		var hair := _add_poly(_head, PackedVector2Array([
+			Vector2(r * 0.55, -r * 0.85), Vector2(-r * 0.2, -r * 1.05), Vector2(-r * 0.95, -r * 0.6),
+			Vector2(-r * 1.25, r * 0.3), Vector2(-r * 1.35, r * 1.3), Vector2(-r * 1.05, r * 1.85),
+			Vector2(-r * 0.8, r * 1.5), Vector2(-r * 0.5, r * 1.95), Vector2(-r * 0.25, r * 1.45),
+			Vector2(r * 0.05, r * 1.7), Vector2(r * 0.2, r * 1.0), Vector2(r * 0.7, r * 0.2),
+		]), def.hair_color)
+		_add_shade(hair, _rect(-r * 2, -r, -r * 0.7, r * 2.5), def.hair_color.darkened(0.15))
 	var skull := _add_blob(_head, r, r, def.skin_color)
 	# Crescent shadow on the back-bottom of the head.
 	var lit := _ellipse(r * 1.02, r * 1.02)
@@ -206,6 +215,14 @@ func _build_head(r: float) -> float:
 		]), BEARD)
 		_add_shade(beard, _rect(-r, -r, r * 0.25, r * 2.0), BEARD.darkened(0.1))
 
+	if def.has_long_hair:
+		# A lock framing the cheek, in front of the ear.
+		var lock := _add_poly(_head, PackedVector2Array([
+			Vector2(-r * 0.15, -r * 0.95), Vector2(-r * 0.75, -r * 0.7), Vector2(-r * 0.95, r * 0.1),
+			Vector2(-r * 0.8, r * 0.85), Vector2(-r * 0.55, r * 0.35), Vector2(-r * 0.45, -r * 0.35),
+		]), def.hair_color)
+		_add_shade(lock, _rect(-r * 2, -r, -r * 0.8, r), def.hair_color.darkened(0.12))
+
 	_face = Node2D.new()
 	_head.add_child(_face)
 	_add_blob(_face, r * 0.22, r * 0.14, BLUSH, Vector2(r * 0.5, r * 0.3), false)
@@ -214,7 +231,8 @@ func _build_head(r: float) -> float:
 	_add_eye(Vector2(-r * 0.12, -r * 0.28), 0.85, 1.0)
 	_add_eye(Vector2(r * 0.4, -r * 0.25), 1.0, -1.0)
 	# Big goofy nose + small smile.
-	var nose := _add_blob(_face, r * 0.42, r * 0.3, def.skin_color.darkened(0.12), Vector2(r * 0.88, r * 0.18))
+	var ns := def.nose_size
+	var nose := _add_blob(_face, r * 0.42 * ns, r * 0.3 * ns, def.skin_color.darkened(0.12), Vector2(r * (0.62 + 0.26 * ns), r * 0.18))
 	_add_blob(nose, r * 0.12, r * 0.08, Color(1, 1, 1, 0.45), Vector2(r * 0.08, -r * 0.1), false)
 	var mouth := Line2D.new()
 	mouth.width = 2.0
@@ -753,6 +771,19 @@ func _add_eye(pos: Vector2, size: float, inner: float) -> void:
 	var e := _add_blob(_face, 4.8 * size, 6.2 * size, EYE_WHITE, pos, true)
 	_eyes.append(e)
 	_pupils.append(_add_blob(e, 2.3 * size, 3.1 * size, PUPIL, Vector2.ZERO, false))
+	if def.has_lashes:
+		# Three flicks off the outer top of the eye (children of it, so they blink too).
+		var outer := -inner
+		for k in 3:
+			var a := -PI * 0.5 + outer * (0.35 + 0.38 * k)
+			var base := Vector2(cos(a) * 4.8 * size, sin(a) * 6.2 * size)
+			var lash := Line2D.new()
+			lash.width = 2.2
+			lash.default_color = OUTLINE
+			lash.begin_cap_mode = Line2D.LINE_CAP_ROUND
+			lash.end_cap_mode = Line2D.LINE_CAP_ROUND
+			lash.points = PackedVector2Array([base, base + Vector2(cos(a), sin(a)) * 4.6 * size + Vector2(outer * 1.4, -0.8)])
+			e.add_child(lash)
 	var brow := Line2D.new()
 	brow.width = BROW_WIDTH
 	brow.default_color = OUTLINE

@@ -266,8 +266,8 @@ kind = 5
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("10")
 position = Vector2(3150, 0)
-text = "4. Keep running to SPRINT (watch the dust).\nSprint-jump the big gap!\n(or: run, DOWN to slide, JUMP = long jump)"
-width = 480
+text = "4. SPRINT: hold Ctrl / RT, or double-tap a direction.\nSprint-jump the big gap!\n(or: run, DOWN to slide, JUMP = long jump)"
+width = 500
 
 [node name="LumLine5" type="Node2D" parent="Pickups"]
 script = ExtResource("11")
@@ -347,8 +347,8 @@ size = Vector2(900, 700)
 [node name="Sign8" type="Node2D" parent="Signs"]
 script = ExtResource("10")
 position = Vector2(5530, 0)
-text = "7. WALL JUMP: grab a wall,\ntap JUMP to zig-zag up"
-width = 340
+text = "7. WALL JUMP: press JUMP by a wall.\nTap = zig-zag, hold toward = climb"
+width = 360
 
 [node name="LumLine7" type="Node2D" parent="Pickups"]
 script = ExtResource("11")
@@ -394,8 +394,8 @@ position = Vector2(6620, -1020)
 [node name="Sign10" type="Node2D" parent="Signs"]
 script = ExtResource("10")
 position = Vector2(7200, -1020)
-text = "9. GLIDE: keep holding JUMP after the top of a jump.\nLet go + press JUMP again to re-glide.\nWind lifts gliders!"
-width = 520
+text = "9. GLIDE: in the air, press JUMP again\nand hold it. Wind lifts gliders!"
+width = 440
 
 [node name="PitKill2" type="Area2D" parent="Hazards"]
 script = ExtResource("13")
