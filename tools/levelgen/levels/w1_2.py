@@ -1,7 +1,8 @@
 """World 1-2: DANDELION DRIFT - a breezy sky level of floating islands.
 Teaches: sinking leaf platforms, updrafts (glide or parachute into them),
 chains of dandelions carried by the wind, Bumblebonk dashes, a frog boost,
-and one huge windy valley to cross.
+one huge windy valley to cross, then Windmill Heights: a turning sail-wheel,
+a balloon up to the sky meadow and a last puff down to the gate.
 Secrets: gem 0 at the top of the first updraft, gem 1 high above the frog
 island, gem 2 at the top of the valley updraft; the Snoozling's cage hangs in
 the sky beside a hidden updraft near island B.
@@ -49,11 +50,11 @@ L.checkpoint(4400, -500)
 L.enemy("grunt", 4650, -500)
 L.enemy("prickleroll", 4900, -500)
 L.dandelion(5040, -500, height=180)
-L.lums(4500, -600, 4950, -600, 5)
+L.lums(4500, -720, 4950, -720, 5)
 
 # ---- S4 the dandelion chain (5100..7700) ---------------------------------------------------
 L.wind(5100, -1700, 3200, 2400, wind=(140, 0))
-L.sign(4470, -500, "Ride the puffs from island to island.\nLet go (JUMP) over the next dandelion!", 420)
+L.sign(4470, -500, "Ride the puffs across!\nJUMP lets go.", 260)
 L.island(5900, 6150, -380, depth=160)
 L.dandelion(6090, -380, height=170)
 L.island(6850, 7100, -300, depth=160)
@@ -72,12 +73,12 @@ L.island(7700, 8320, -250, depth=200)
 L.checkpoint(7780, -250)
 L.enemy("ribbiton", 8000, -250, sit_time=2.2, spring=1.7)
 L.gem(8000, -760)
-L.lums(8000, -420, 8000, -680, 4)
+L.lums(8000, -530, 8000, -690, 3)
 L.dandelion(8280, -250, height=190)
 
 # ---- S6 Gale Valley to the goal (8300..11200) ----------------------------------------------
 L.wind(8300, -1700, 2000, 2400, wind=(220, 0))
-L.sign(7840, -250, "GALE VALLEY: grab the last puff\nand let the wind carry you home!", 400)
+L.sign(7840, -250, "GALE VALLEY! Grab the last\npuff and ride the wind!", 300)
 L.leaf(9000, -360, width=170, sink=60, depth=280)
 L.leaf(9650, -300, width=170, sink=60, depth=280)
 L.updraft(9230, -1050, 150, 1350, rise=400)
@@ -85,14 +86,44 @@ L.gem(9305, -1080)
 L.lums(8400, -620, 10100, -420, 14, -80)
 L.enemy("bumblebonk", 8900, -760)
 L.enemy("bumblebonk", 9900, -700)
-L.pit_kill(-300, 11300, 880)
-L.land([(10200, -150), (10600, -170), (11000, -150), (11300, -150)], bottom=1300)
+L.pit_kill(-300, 16000, 880)
+L.land([(10200, -150), (10600, -170), (11000, -150), (11350, -150), (11350, -500), (11700, -500)], bottom=1300)
 L.checkpoint(10280, -150)
-L.goal(10950, -150)
 L.lums(10400, -250, 10800, -250, 5, 40)
-L.wall(11300, -1400, -150)
 
-L.dress(-250, 11300, "meadow", spacing=150, seed=21)
+# ---- S7 Windmill Heights (11350..15600) -----------------------------------------------------
+# The cliff stops anyone still drifting on a puff; climb the steps to the heights.
+L.sign(10900, -150, "WINDMILL HEIGHTS - climb up!", 300)
+L.ledge(11170, -280, 170)
+L.ledge(11010, -400, 160)
+L.lums(11090, -470, 11300, -600, 4, 30)
+L.wind(11700, -2100, 3900, 2400, wind=(70, 0))
+L.wheel(12000, -690, count=4, radius=230, speed=28.0)
+L.sign(11530, -500, "Hop onto the turning\nsails to cross!", 240)
+L.lums(11780, -780, 12220, -780, 5, 60)
+L.enemy("bumblebonk", 12000, -1120)
+L.island(12450, 13050, -600, depth=190)
+L.checkpoint(12480, -600)
+L.balloon(12930, -600)
+L.sign(12720, -600, "Grab a BALLOON to float up.\nPUNCH to pop it!", 290)
+L.lums(13000, -850, 13000, -1400, 6)
+# The sky meadow, way up high.
+L.island(13120, 13820, -1300, depth=200, bumps=[(13400, -1312)])
+L.enemy("grunt", 13380, -1300)
+L.enemy("prickleroll", 13600, -1300)
+L.lums(13320, -1500, 13700, -1500, 5, 30)
+L.lum_block(13640, -1620, lums=5)
+L.dandelion(13760, -1300, height=180)
+L.sign(13200, -1300, "Last puff! Float\ndown to the gate.", 220)
+L.lums(13900, -1250, 14600, -380, 9, -40)
+L.enemy("bumblebonk", 14300, -800)
+L.land([(14500, -150), (15600, -150)], bottom=1300)
+L.checkpoint(14560, -150)
+L.goal(15250, -150)
+L.lums(14700, -250, 15100, -250, 5, 40)
+L.wall(15600, -2000, -150)
 
-L.finish(spawn=(0, -2), left=-360, right=11360, bottom=700, kill_y=1000)
+L.dress(-250, 15600, "meadow", spacing=150, seed=21, skip=[(10850, 11700), (14500, 14700)])
+
+L.finish(spawn=(0, -2), left=-360, right=15660, bottom=700, kill_y=1000)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_2_dandelion_drift.tscn"))

@@ -89,7 +89,7 @@ seed_value = 14
 
 [node name="Sign1" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(90, 0)
+position = Vector2(30, 0)
 text = "CRYSTAL CAVERNS. Deep inside the\nmountain... follow the glow."
 width = 400
 
@@ -416,7 +416,7 @@ phase = 0.9
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(7984.25, -400)
+position = Vector2(7800, -400)
 text = "Ice spikes pop up in waves.\nThen: crushers!"
 width = 330
 
@@ -484,26 +484,6 @@ radius = 180
 energy = 0.7
 color = Color(1, 0.6, 0.9, 1)
 
-[node name="Deco12" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(-74, 0)
-kind = 6
-size = 1.2
-seed_value = 86
-
-[node name="Deco13" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(42, 0)
-kind = 8
-size = 0.97
-seed_value = 367
-
-[node name="Deco14" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(176, 0)
-kind = 8
-seed_value = 227
-
 [node name="Deco15" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(384, 0)
@@ -553,20 +533,6 @@ position = Vector2(1371, 0)
 kind = 8
 size = 0.84
 seed_value = 486
-
-[node name="Deco22" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(1934, 0)
-kind = 6
-size = 0.87
-seed_value = 819
-
-[node name="Deco23" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(2075, 0)
-kind = 8
-size = 1.17
-seed_value = 201
 
 [node name="Deco24" type="Node2D" parent="Decor"]
 script = ExtResource("8")
@@ -653,13 +619,6 @@ position = Vector2(7542, 480)
 kind = 8
 size = 1.2
 seed_value = 834
-
-[node name="Deco36" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(7889, -400)
-kind = 6
-size = 0.83
-seed_value = 984
 
 [node name="Deco37" type="Node2D" parent="Decor"]
 script = ExtResource("8")

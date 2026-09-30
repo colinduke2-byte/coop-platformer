@@ -2,7 +2,8 @@
 Teaches: running/jumping over little gaps, stomping Grumblets, kicking
 Shellbert's shell into a line of enemies + crates, bouncing off a Ribbiton to
 climb a cliff, riding a dandelion puff over a big valley, Diggle, and a
-swinging-log finale.
+swinging-log crossing, then Orchard Hill: a ferry platform, a Lum block,
+a mushroom up to the big apple tree and a stomp-chain staircase to the gate.
 Secrets: gem 0 on a high ledge over the second gap, gem 1 behind a cracked
 wall, gem 2 at the top of the pendulum's swing; the Snoozling hides in a cave
 under the dandelion valley (parachute down into it, a mushroom sends you back).
@@ -99,7 +100,7 @@ L.land([(7700, -100), (8050, -100), (8120, -200), (8460, -200), (8530, -100), (9
 L.checkpoint(7730, -100)
 L.enemy("diggle", 8300, -200)
 L.lums(8150, -280, 8430, -280, 4)
-L.sign(7880, -100, "DIGGLE pops up to throw dirt.\nHit him while he's out!", 380)
+L.sign(7960, -100, "DIGGLE: hit him\nwhile he's out!", 240)
 L.enemy("grunt", 8750, -100)
 # Gem 1: behind a cracked wall at the end of the meadow.
 L.breakable(9000, -300, 60, 200)
@@ -117,17 +118,50 @@ L.crumble(9520, -260, 140)
 L.pendulum(9900, -640, rope=380, width=200, amplitude=0.8, period=3.4)
 L.gem(9900, -310)                               # at the bottom of the swing: ride through it
 L.lums(9650, -440, 10150, -440, 6, -60)
-L.land([(10300, -200), (10700, -224), (11000, -200), (11400, -200)])
+L.land([(10300, -200), (10700, -224), (11000, -200), (11700, -200)])
 L.checkpoint(10380, -200)
-L.goal(11050, -200)
 L.lums(10500, -300, 10900, -300, 5, 40)
-L.sign(10560, -200, "Nice! The Dream Gate is just ahead.", 360)
-for x, k, s in [(10450, "big_flower", 1.0), (10800, "tree", 1.2), (11250, "fence", 1.0), (10650, "flowers", 1.0)]:
+for x, k, s in [(10450, "big_flower", 1.0), (10800, "tree", 1.2), (10650, "flowers", 1.0), (11300, "bush", 0.9)]:
     L.deco(k, x, -200, s)
-L.wall(11400, -1300, -200)
+
+# ---- S8 Orchard Hill (11000..14300) --------------------------------------------------------
+L.sign(11150, -200, "ORCHARD HILL - hop on the ferry\nplatform to cross the stream.", 380)
+L.water(11700, -165, 520, 565)                   # a lazy stream: fall in and just swim to the far bank
+L.block(11700, 400, 520, 1000)                   # the stream bed
+L.moving(11730, -232, w=180, waypoints=((290, 0),), speed=140.0, wait=0.9)
+L.lums(11760, -330, 12180, -330, 5, 40)
+L.land([(12220, -200), (12900, -200), (13000, -250), (13200, -250), (13300, -200), (14300, -200)])
+L.checkpoint(12300, -200)
+L.lum_block(12520, -500, lums=6)
+L.sign(12650, -200, "See that block? Jump and\nbonk it from below!", 320)
+L.enemy("grunt", 12820, -200)
+L.crate(12950, -250, 64, lums=3)
+L.crate(13014, -250, 64, lums=3)
+L.crate(12982, -314, 64, lums=4)
+# The big apple tree: a mushroom sends you up to its canopy.
+L.pad(13380, -200, height=520)
+L.tree_platform(13480, 13900, -640, 13600, trunk_w=180)
+L.lums(13520, -720, 13860, -720, 6, 30)
+L.enemy("grunt", 13700, -640, facing=1)
+for x, k, sz in [(13520, "bush", 0.8), (13860, "bush", 0.7), (13640, "flowers", 0.8)]:
+    L.deco(k, x, -640, sz)
+L.deco("big_flower", 13300, -200, 0.9)
+# Stomp-chain staircase: Grumblets snoozing on rising ledges - bounce from one to the next!
+L.sign(14080, -200, "Bounce from Grumblet to Grumblet\nwithout landing for bonus Lums!", 380)
+for i, (lx, ly) in enumerate([(14400, -320), (14670, -440), (14940, -560)]):
+    L.ledge(lx, ly, 200)
+    L.enemy("grunt", lx + 100, ly, walk_speed=0.0, sight=0.0)
+L.land([(14300, -200), (15600, -200)])
+L.lums(14500, -660, 15050, -760, 6, -60)
+L.goal(15400, -200)
+L.sign(15150, -200, "Nice! The Dream Gate!", 260)
+for x, k, s in [(14300, "tree", 1.2), (15520, "fence", 1.0), (14600, "flowers", 1.0), (15000, "big_flower", 1.0)]:
+    L.deco(k, x, -200, s)
+L.wall(15600, -1300, -200)
 
 # Scenery along the whole walk (skips the busy bits).
-L.dress(-250, 11350, "meadow", spacing=140, seed=11, skip=[(4020, 5010), (5540, 5700), (6560, 7020)])
+L.dress(-250, 15550, "meadow", spacing=140, seed=11, skip=[(4020, 5010), (5540, 5700), (6560, 7020),
+        (11650, 12260), (12450, 13100), (13300, 13950), (13950, 15550)])
 
-L.finish(spawn=(0, -2), left=-360, right=11460, bottom=600, kill_y=900)
+L.finish(spawn=(0, -2), left=-360, right=15660, bottom=600, kill_y=900)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_1_pillow_meadow.tscn"))

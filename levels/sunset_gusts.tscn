@@ -182,7 +182,7 @@ size = Vector2(140, 500)
 
 [node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(2685, 0)
+position = Vector2(2720, 0)
 text = "Stone bridges crumble - keep moving!"
 width = 360
 
@@ -287,7 +287,7 @@ size = Vector2(380, 500)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(4536.5, 0)
+position = Vector2(3830, -40)
 text = "Cannon canyon!"
 width = 220
 
@@ -322,7 +322,7 @@ size = Vector2(1000, 500)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(5760, 0)
+position = Vector2(5790, 0)
 text = "Ride the wheel!"
 width = 220
 

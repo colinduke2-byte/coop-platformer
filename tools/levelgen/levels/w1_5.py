@@ -1,7 +1,8 @@
 """World 1-5: MILLSTREAM RUSH - down by the river and up the falls.
 Teaches: hopping drifting log rafts, riding a giant water wheel up to the mill
 roof, crossing the rapids on rocks (geysers offer a high road), climbing a net
-beside a roaring waterfall, and a calm upper pond before a zipline home.
+beside a roaring waterfall, a calm upper pond and a zipline down to Lily
+Lagoon: sinking lily pads, bouncy Boingos over the water and the mill-house gate.
 Secrets: gem 0 above the water wheel, gem 1 on the high road over the rapids,
 gem 2 in a hidden alcove behind the waterfall; the Snoozling sleeps in a calm
 sunken cave under the rapids.
@@ -30,7 +31,7 @@ L.sign(80, 0, "MILLSTREAM RUSH. Hop the logs,\nride the wheel, climb the falls!"
 L.deco("hut", 600, 0)
 L.deco("lilypads", 1080, 4)
 L.bell(430, 0)                                   # Lum Rush for the log rafts
-L.lums(620, -130, 1000, -110, 4)
+L.lums(620, -200, 1000, -180, 4)
 
 # ---- S1 the log rafts (1200..3000) -----------------------------------------------------------
 L.water(1200, 20, 1820, 360, current=(160, 0))
@@ -52,7 +53,7 @@ L.enemy("diggle", 4800, -560)
 L.deco("hut", 4980, -560, 1.1)
 L.deco("lantern", 4600, -560)
 L.lums(3950, -300, 3950, -560, 3)
-L.lums(4560, -660, 5060, -660, 5)
+L.lums(4560, -750, 5060, -750, 5)
 
 # ---- S3 the rapids (5100..6900) ---------------------------------------------------------------
 L.checkpoint(5160, 0)
@@ -72,7 +73,7 @@ L.enemy("bumblebonk", 6050, -330)
 L.sign(4680, -560, "RAPIDS ahead! Hop the rocks\n(or ride the geyser up high).", 380)
 
 # ---- S4 the waterfall climb (6900..8400) -------------------------------------------------------
-L.checkpoint(7020, 0)
+L.checkpoint(6950, 0)
 L.s.node("Waterfall", "Node2D", "Decor", {"script": L.s.script("res://world/waterfall.gd"),
          "position": __import__("tscn").V(7300, -1100), "size": __import__("tscn").V(140, 1100)})
 L.net(7380, -1060, 60, 1000)
@@ -83,7 +84,7 @@ L.lums(7410, -200, 7410, -1000, 8)
 # Alcove hidden behind the waterfall, inside the cliff.
 L.gem(7600, -520)
 L.secret(7440, -620, 260, 180)
-L.sign(6950, 0, "Climb the net beside the falls.\n(Is there something behind the water?)", 380)
+L.sign(7160, 0, "Climb the net by the falls.\n(Anything behind the water?)", 300)
 L.deco("lilypads", 7150, 4)
 
 # ---- S5 the upper pond and the dam (8400..10200) ------------------------------------------------
@@ -100,14 +101,37 @@ L.deco("hut", 8050, -1100, 0.9)
 # ---- S6 zipline to the finish (10160..11600) ---------------------------------------------------
 L.zipline(10130, -1330, 11000, -520)
 L.lums(10250, -1250, 10900, -650, 7)
-L.land([(10900, -450), (11250, -470), (11600, -450)], bottom=1400)
+L.land([(10900, -450), (11250, -470), (11700, -450), (11720, -415), (11740, 20), (13260, 20), (13280, -415),
+        (13300, -450), (15200, -450)], bottom=1400)
 L.checkpoint(10960, -450)
-L.goal(11380, -450)
-L.deco("hut", 11560, -450, 0.8)
-L.wall(11600, -2000, -450)
 
-L.dress(-250, 11600, "river", spacing=160, seed=51,
-        skip=[(1180, 3020), (4500, 5120), (5200, 6920), (7280, 7460), (8420, 9640)])
+# ---- S7 Lily Lagoon (11700..13300) and the mill-house gate ---------------------------------------
+L.sign(11400, -450, "LILY LAGOON! Lily pads sink -\nkeep hopping. Boingos bounce!", 380)
+L.water(11740, -415, 1520, 435, current=(40, 0))
+for x, y in [(11860, -440), (12120, -470), (12380, -440)]:
+    L.leaf(x, y, width=150, sink=70, depth=240)
+L.enemy("boingo", 12720, -600)
+L.enemy("boingo", 13020, -640)
+L.lums(11860, -540, 12450, -540, 6, 40)
+L.lums(12650, -760, 13150, -800, 5, 60)
+L.enemy("bumblebonk", 12550, -900)
+L.deco("lilypads", 11800, -412)
+L.deco("lilypads", 12950, -412)
+L.deco("reeds", 13240, -450)
+L.checkpoint(13360, -450)
+L.enemy("shellbert", 13700, -450, facing=1, walk_speed=0.0)
+L.enemy("grunt", 14000, -450, walk_speed=0.0, sight=0.0)
+L.enemy("grunt", 14100, -450, walk_speed=0.0, sight=0.0)
+L.crate(14250, -450, 64, lums=4)
+L.lums(13500, -640, 14200, -640, 7)
+L.sign(13520, -450, "Kick the shell!", 220)
+L.goal(14750, -450)
+L.deco("hut", 14550, -450, 1.1)
+L.deco("hut", 15050, -450, 0.8)
+L.wall(15200, -2000, -450)
 
-L.finish(spawn=(0, -2), left=-360, right=11660, bottom=800, kill_y=1100)
+L.dress(-250, 15200, "river", spacing=160, seed=51,
+        skip=[(1180, 3020), (4500, 5120), (5200, 6920), (7280, 7460), (8420, 9640), (11700, 13300), (13600, 14300)])
+
+L.finish(spawn=(0, -2), left=-360, right=15260, bottom=800, kill_y=1100)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_5_millstream_rush.tscn"))

@@ -81,7 +81,7 @@ seed_value = 12
 
 [node name="Sign1" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(90, 0)
+position = Vector2(0, 0)
 text = "THE SUMMIT. Grumblefrost the\nSnowball King waits at the top..."
 width = 420
 
@@ -239,9 +239,9 @@ position = Vector2(4380, -1400)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(4684.75, -1400)
-text = "GRUMBLEFROST! Jump his boulders -\nor PUNCH THEM BACK at him!"
-width = 420
+position = Vector2(4600, -1400)
+text = "GRUMBLEFROST! Jump\nhis boulders - or\nPUNCH THEM BACK at\nhim!"
+width = 160
 
 [node name="Gate1" type="AnimatableBody2D" parent="Logic"]
 script = ExtResource("21")
@@ -342,27 +342,6 @@ kind = 21
 position = Vector2(7000, -2800)
 size = Vector2(60, 1400)
 
-[node name="Deco5" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(-115, 0)
-kind = 4
-size = 0.89
-seed_value = 616
-
-[node name="Deco6" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(71, 0)
-kind = 4
-size = 1.23
-seed_value = 489
-
-[node name="Deco7" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(185, 0)
-kind = 6
-size = 1.03
-seed_value = 651
-
 [node name="Deco8" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(355, 0)
@@ -426,49 +405,6 @@ position = Vector2(2906, -700)
 kind = 6
 size = 1.19
 seed_value = 622
-
-[node name="Deco17" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(3511, -700)
-kind = 6
-size = 0.82
-seed_value = 417
-
-[node name="Deco18" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(3551, -698)
-kind = 0
-size = 1.3
-front = true
-seed_value = 224
-
-[node name="Deco19" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(3672, -700)
-kind = 7
-size = 1.25
-seed_value = 93
-
-[node name="Deco20" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(3903, -700)
-kind = 4
-size = 0.98
-seed_value = 47
-
-[node name="Deco21" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(4147, -700)
-kind = 6
-size = 1.06
-seed_value = 42
-
-[node name="Deco22" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(4511, -1400)
-kind = 7
-size = 1.23
-seed_value = 696
 
 [node name="Deco23" type="Node2D" parent="Decor"]
 script = ExtResource("8")

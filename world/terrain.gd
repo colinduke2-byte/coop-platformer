@@ -57,7 +57,10 @@ func _rebuild() -> void:
 	if _col == null:
 		_col = CollisionPolygon2D.new()
 		add_child(_col, false, Node.INTERNAL_MODE_FRONT)
-	_col.polygon = _shape
+	# Collision rounds only the outside (convex) corners. A rounded INSIDE corner - the foot
+	# of a cliff - is a little ramp too steep to stand on: bodies pressed into it got stuck
+	# wall-sliding a few px above the floor.
+	_col.polygon = _rounded(polygon, rounding, true)
 	_mesh = null
 	queue_redraw()
 
@@ -349,11 +352,12 @@ static func _bounds(pts: PackedVector2Array) -> Rect2:
 
 
 ## Round off corners sharper than a few degrees with small arcs.
-static func _rounded(pts: PackedVector2Array, r: float) -> PackedVector2Array:
+static func _rounded(pts: PackedVector2Array, r: float, convex_only := false) -> PackedVector2Array:
 	if r <= 0.5 or pts.size() < 3:
 		return pts
 	var out := PackedVector2Array()
 	var n := pts.size()
+	var winding := signf(_signed_area(pts))
 	for i in n:
 		var p := pts[i]
 		var a := pts[(i - 1 + n) % n]
@@ -363,6 +367,9 @@ static func _rounded(pts: PackedVector2Array, r: float) -> PackedVector2Array:
 		var rr := minf(r, minf(da.length(), db.length()) * 0.45)
 		if rr < 1.0 or absf(da.normalized().dot(db.normalized())) > 0.985:
 			out.append(p)
+			continue
+		if convex_only and signf((p - a).cross(b - p)) != winding:
+			out.append(p)  # inside corner: keep it sharp
 			continue
 		var pa := p + da.normalized() * rr
 		var pb := p + db.normalized() * rr

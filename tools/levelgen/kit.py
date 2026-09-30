@@ -40,6 +40,7 @@ class LevelKit:
         self.surfaces = []   # polylines of walkable tops (for dress())
         self.spawn = (0, 0)
         self._gems = 0
+        self._dressed = set()  # node paths of scattered (dress) decorations: moved out of signs' way
 
     # --- helpers -------------------------------------------------------------
     def _n(self, group, base, ntype, script_path, props, x, y):
@@ -177,11 +178,11 @@ class LevelKit:
                     if r <= 0:
                         break
                 size = rnd.uniform(0.8, 1.25) if kind not in ("tree", "giant_mushroom") else rnd.uniform(0.9, 1.3)
-                self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999))
+                self._dressed.add(self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999)))
                 n += 1
                 if front_every and n % front_every == 0:
-                    self.deco("grass" if style != "cave" else "mushrooms", round(x + 40), round(y + 2), 1.3, front=True,
-                              seed=rnd.randint(1, 999))
+                    self._dressed.add(self.deco("grass" if style != "cave" else "mushrooms", round(x + 40), round(y + 2),
+                                                1.3, front=True, seed=rnd.randint(1, 999)))
             x += spacing * rnd.uniform(0.6, 1.4)
 
     def wall(self, x, top, bottom, w=60.0):
@@ -527,36 +528,193 @@ class LevelKit:
                         best = gy
         return best
 
-    def _declutter(self):
-        """Signs and checkpoint lanterns placed on the same spot overlap (the lantern hides
-        the sign's text). Slide the SIGN (pure scenery) sideways until its board clears the
-        lantern (post at x-5, lamp out to x+50), keeping it on nearby ground; checkpoints
-        never move."""
-        nodes = self.s.nodes
-        cps = [n[3]["position"] for n in nodes if n[2] == "Checkpoints"]
-        for n in nodes:
-            if n[2] != "Signs":
+    # --- sign placement ------------------------------------------------------------------
+    @staticmethod
+    def _sign_box(x, y, text, width):
+        """(board, post) rects (x0, y0, x1, y1) of a Signpost, matching decor/signpost.gd."""
+        lines = text.split("\n")
+        w = max(width, max(len(l) for l in lines) * 14.5 + 34)
+        h = 24 + 36 * len(lines)
+        return (x - w / 2, y - h - 70, x + w / 2, y - 70), (x - 7, y - 80, x + 7, y)
+
+    @staticmethod
+    def _hit(a, b):
+        return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+    @staticmethod
+    def _inside(pt, poly):
+        x, y = pt
+        c = False
+        for (ax, ay), (bx, by) in zip(poly, poly[1:] + poly[:1]):
+            if (ay > y) != (by > y) and x < (bx - ax) * (y - ay) / (by - ay) + ax:
+                c = not c
+        return c
+
+    def _poly_hits(self, poly, r):
+        x0, y0, x1, y1 = r
+        if any(x0 < px < x1 and y0 < py < y1 for px, py in poly):
+            return True
+        if any(self._inside(c, poly) for c in [(x0, y0), (x1, y0), (x0, y1), (x1, y1), ((x0 + x1) / 2, (y0 + y1) / 2)]):
+            return True
+        edges = [((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))]
+        def cross(p1, p2, p3, p4):
+            d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0])
+            if d == 0:
+                return False
+            t = ((p3[0] - p1[0]) * (p4[1] - p3[1]) - (p3[1] - p1[1]) * (p4[0] - p3[0])) / d
+            u = ((p3[0] - p1[0]) * (p2[1] - p1[1]) - (p3[1] - p1[1]) * (p2[0] - p1[0])) / d
+            return 0 < t < 1 and 0 < u < 1
+        return any(cross(a, b, c, d) for a, b in zip(poly, poly[1:] + poly[:1]) for c, d in edges)
+
+    def _obstacles(self):
+        """What a sign must not overlap: solid geometry, and things it would hide or that would hide it."""
+        solids, avoid = [], []
+        props = {"BouncePad": (-60, -40, 60, 0), "Cannon": (-60, -60, 60, 60), "Balloon": (-45, -200, 45, 0),
+                 "DreamBell": (-60, -210, 60, 0), "Geyser": (-50, -50, 50, 0), "SnowPile": (-60, -70, 60, 0),
+                 "Pedestal": (-50, -160, 50, 0), "LumBlock": (0, 0, 64, 64), "Snoozling": (-45, -110, 45, 0),
+                 "Crate": (-10, -140, 140, 10)}
+        for name, ntype, parent, pr, inst in self.s.nodes:
+            if (parent == "Blocks" or parent.startswith("Blocks/")) and "polygon" in pr:
+                off = pr.get("position")
+                ox, oy = (off.x, off.y) if off is not None else (0.0, 0.0)
+                solids.append(("poly", [(v.x + ox, v.y + oy) for v in pr["polygon"]]))
                 continue
-            sp = n[3]
-            spos = sp["position"]
-            longest = max(len(l) for l in sp.get("text", "").split("\n"))
-            half = max(sp.get("width", 440.0), longest * 13.5 + 34) / 2
-            for pos in cps:
-                if abs(spos.y - pos.y) > 60 or spos.x - half > pos.x + 55 or spos.x + half < pos.x - 15:
-                    continue
-                side = 1 if spos.x >= pos.x else -1
-                for nx in ((pos.x + 55 + half + 10) if d > 0 else (pos.x - 15 - half - 10) for d in (side, -side)):
-                    gy = self._ground_near(nx, spos.y)
-                    if gy is not None:
-                        spos.x, spos.y = nx, gy
+            pos = pr.get("position")
+            if pos is None:
+                continue
+            if parent == "Blocks" or parent.startswith("Blocks/"):
+                if "polygon" in pr:
+                    solids.append(("poly", [(v.x + pos.x, v.y + pos.y) for v in pr["polygon"]]))
+                elif "size" in pr:
+                    solids.append(("rect", (pos.x, pos.y, pos.x + pr["size"].x, pos.y + pr["size"].y)))
+            elif parent == "Checkpoints":
+                avoid.append((pos.x - 20, pos.y - 150, pos.x + 60, pos.y))
+            elif name.startswith("Goal") and parent == ".":
+                avoid.append((pos.x - 70, pos.y - 230, pos.x + 70, pos.y))
+            elif name.startswith("Water") and "size" in pr:
+                avoid.append((pos.x, pos.y, pos.x + pr["size"].x, pos.y + pr["size"].y))
+            elif parent == "Hazards" and name.startswith("Brambles") and "size" in pr:
+                avoid.append((pos.x, pos.y, pos.x + pr["size"].x, pos.y + pr["size"].y))
+            elif parent == "Hazards" and name.startswith("FlameJet"):
+                ln = pr.get("length", 220.0)
+                avoid.append((pos.x - 40, pos.y - ln - 20, pos.x + 40, pos.y + 10))
+            elif parent == "Hazards" and (name.startswith("PopSpikes") or name.startswith("Spikes")):
+                ln = pr.get("length", 168.0)
+                avoid.append((pos.x - 10, pos.y - 40, pos.x + ln + 10, pos.y + 10))
+            elif parent == "Hazards" and name.startswith("SpikeBall"):
+                r = pr.get("radius", 140.0) + 30
+                avoid.append((pos.x - r, pos.y - r, pos.x + r, pos.y + r))
+            elif name.startswith("Dandelion") and parent == "Toys":
+                h = pr.get("height", 180.0)
+                avoid.append((pos.x - 50, pos.y - h - 50, pos.x + 50, pos.y))
+            elif name.startswith("LumLine"):
+                n, end, arc = pr.get("count", 5), pr.get("end"), pr.get("arc_height", 0.0)
+                for i in range(n):
+                    t = i / max(n - 1, 1)
+                    lx = pos.x + end.x * t
+                    ly = pos.y + end.y * t - arc * 4 * t * (1 - t)
+                    avoid.append((lx - 16, ly - 16, lx + 16, ly + 16))
+            elif name.startswith("Lum") and parent == "Pickups":
+                avoid.append((pos.x - 16, pos.y - 16, pos.x + 16, pos.y + 16))
+            else:
+                for pre, (a, b, c, d) in props.items():
+                    if name.startswith(pre) and parent in ("Toys", "Pickups", "Decor"):
+                        avoid.append((pos.x + a, pos.y + b, pos.x + c, pos.y + d))
                         break
-                else:
-                    print(f"  note: sign at {spos.x:.0f},{spos.y:.0f} overlaps a checkpoint")
-                break
+        return solids, avoid
+
+    def _sign_ok(self, board, post, solids, avoid):
+        b = (board[0] + 4, board[1] + 4, board[2] - 4, board[3] - 4)
+        pst = (post[0] + 2, post[1], post[2] - 2, post[3] - 4)
+        for kind, sh in solids:
+            for r in (b, pst):
+                if (kind == "rect" and self._hit(sh, r)) or (kind == "poly" and self._poly_hits(sh, r)):
+                    return False
+        return not any(self._hit(a, board) or self._hit(a, post) for a in avoid)
+
+    @staticmethod
+    def _rewrap(text, chars):
+        words = text.replace("\n", " ").split()
+        lines, cur = [], ""
+        for w in words:
+            if cur and len(cur) + 1 + len(w) > chars:
+                lines.append(cur)
+                cur = w
+            else:
+                cur = (cur + " " + w).strip()
+        if cur:
+            lines.append(cur)
+        return "\n".join(lines)
+
+    def _place_signs(self):
+        """Signs are scenery: slide each one along its ground until its board and post clear
+        terrain, blocks, checkpoints, the goal, props, water, Lums and other signs.
+        Checks the same things tools/level_audit.gd reports."""
+        solids, avoid = self._obstacles()
+        offsets = [0] + [d * k for k in range(30, 1201, 30) for d in (1, -1)]
+        for i, (name, ntype, parent, pr, inst) in enumerate(self.s.nodes):
+            if parent != "Signs":
+                continue
+            pos, text, width = pr["position"], pr.get("text", ""), pr.get("width", 440.0)
+            placed = None
+            # Try the text as written, then re-wrapped narrower (more lines) for tight spots.
+            variants = [(text, width)]
+            for chars in (24, 18):
+                wrapped = self._rewrap(text, chars)
+                if wrapped != text:
+                    variants.append((wrapped, 0.0))
+            for limit in (400, 700):
+                for vtext, vwidth in variants:
+                    for dx in offsets:
+                        if abs(dx) > limit:
+                            continue
+                        nx = pos.x + dx
+                        gy = pos.y if dx == 0 and self._ground_near(nx, pos.y, 4.0) is not None else self._ground_near(nx, pos.y, 50.0)
+                        if gy is None:
+                            if dx == 0:
+                                gy = pos.y  # on something the kit can't see (a ledge): only try it where it is
+                            else:
+                                continue
+                        # the post must stand on ground across its width
+                        if dx != 0 and (self._ground_near(nx - 6, gy, 6.0) is None or self._ground_near(nx + 6, gy, 6.0) is None):
+                            continue
+                        board, post = self._sign_box(nx, gy, vtext, vwidth)
+                        if self._sign_ok(board, post, solids, avoid):
+                            placed = (nx, gy, board)
+                            pr["text"], pr["width"] = vtext, max(vwidth, 160.0)
+                            break
+                    if placed:
+                        break
+                if placed:
+                    break
+            if placed is None:
+                print(f"  note: no clear spot for sign {text.splitlines()[0][:30]!r} at {pos.x:.0f},{pos.y:.0f}")
+                board, _ = self._sign_box(pos.x, pos.y, text, width)
+                avoid.append(board)
+                continue
+            if placed[0] != pos.x or placed[1] != pos.y:
+                pos.x, pos.y = placed[0], placed[1]
+            avoid.append(placed[2])
+        self._clear_dressing_around_signs()
+
+    def _clear_dressing_around_signs(self):
+        """Scattered scenery (trees, mushrooms, grass tufts) never stands in front of a sign."""
+        boards = [self._sign_box(pr["position"].x, pr["position"].y, pr.get("text", ""), pr.get("width", 440.0))[0]
+                  for _, _, parent, pr, _ in self.s.nodes if parent == "Signs"]
+        keep = []
+        for node in self.s.nodes:
+            name, ntype, parent, pr, inst = node
+            path = name if parent == "." else f"{parent}/{name}"
+            if path in self._dressed:
+                x, y = pr["position"].x, pr["position"].y
+                if any(b[0] - 70 < x < b[2] + 70 and b[1] - 40 < y < b[3] + 140 for b in boards):
+                    continue
+            keep.append(node)
+        self.s.nodes[:] = keep
 
     def finish(self, spawn, left=None, right=None, bottom=None, kill_y=None, script_props=None):
         s = self.s
-        self._declutter()
+        self._place_signs()
         left = self.min_x - 100 if left is None else left
         right = self.max_x + 200 if right is None else right
         bottom = self.max_y if bottom is None else bottom

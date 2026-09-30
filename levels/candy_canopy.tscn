@@ -268,7 +268,7 @@ size = Vector2(560, 1120)
 
 [node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(3300, 0)
+position = Vector2(3420, 0)
 text = "Climb the vine, swing the rings!"
 width = 340
 
@@ -437,7 +437,7 @@ targets = Array[NodePath]([NodePath("../Gate1")])
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(8230.75, 0)
+position = Vector2(8240, 0)
 text = "The gate needs a punch...\nbut where's the switch?"
 width = 340
 
@@ -461,7 +461,7 @@ position = Vector2(9380, 0)
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(9196.25, 0)
+position = Vector2(9190, 0)
 text = "Uh oh. Is that SYRUP?\nCLIMB!"
 width = 280
 

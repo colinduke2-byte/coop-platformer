@@ -43,10 +43,13 @@ func _run() -> void:
 		var y := r.position.y + view.y * 0.5
 		while y - view.y * 0.5 < r.end.y:
 			var x := r.position.x + view.x * 0.5
+			var cols := 0
 			while x - view.x * 0.5 < r.end.x:
 				points.append(Vector2(x, y))
 				x += view.x
+				cols += 1
 			y += view.y
+			print("OVERVIEW_COLS %d" % cols)
 	elif _args.has("at"):
 		for s in String(_args["at"]).split(";"):
 			var xy := s.split(",")
@@ -68,8 +71,19 @@ func _level_rect(level: Node) -> Rect2:
 	var r := Rect2()
 	var first := true
 	for b in level.find_children("*", "", true, false):
+		var br := Rect2()
 		if b is Block:
-			var br := Rect2(b.global_position, b.size)
-			r = br if first else r.merge(br)
-			first = false
+			br = Rect2(b.global_position, b.size)
+		elif b is Terrain:
+			var poly: PackedVector2Array = b.polygon
+			if poly.is_empty():
+				continue
+			br = Rect2(b.global_transform * poly[0], Vector2.ZERO)
+			for v in poly:
+				br = br.expand(b.global_transform * v)
+			br.size.y = minf(br.size.y, 900.0)  # skip the deep fill below the ground line
+		else:
+			continue
+		r = br if first else r.merge(br)
+		first = false
 	return r

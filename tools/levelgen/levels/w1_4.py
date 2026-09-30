@@ -1,7 +1,8 @@
 """World 1-4: BRAMBLE BRIDGES - a treetop village high above the forest floor.
 Teaches: wobbly rope bridges (with a Prickleroll rolling along one!), riding a
 swinging log, a seesaw + frog deck, ziplines, a broken bridge under a spiky
-pendulum, climbing a giant trunk on vines, and a canopy run to a long zipline.
+pendulum, climbing a giant trunk on vines, a canopy run to a long zipline, then Lantern Lane: swing rings over the
+drop, a Shieldbug guarding a treehouse and a last broken bridge under falling acorns.
 Secrets: gem 0 high above the frog deck, gem 1 on a hidden ledge under the
 broken bridge (drop through a gap, a mushroom sends you back), gem 2 on a high
 leaf at the canopy top; the Snoozling hides in a hollow halfway up the trunk.
@@ -39,14 +40,14 @@ L.lums(2560, -260, 3040, -260, 6, -70)
 L.tree_platform(3220, 3950, -60, 3520, 220)
 
 # ---- S3 the frog + seesaw deck (3300..3950) --------------------------------------------------
-L.checkpoint(3360, -60)
+L.checkpoint(3250, -60)
 L.enemy("ribbiton", 3480, -60, sit_time=2.4, spring=1.72)
 L.gem(3470, -640)
 L.lums(3470, -300, 3470, -560, 4)
 L.seesaw(3760, -60, 300)
 L.lums(3880, -420, 3880, -640, 4)                 # up where the seesaw flings a friend
 L.acorns(3860, -470, interval=2.4)                 # over the seesaw, not the landing spot
-L.sign(3560, -60, "Bounce on the frog... or slam the seesaw\nto fling a friend sky-high!", 380)
+L.sign(3470, -60, "Bounce on the frog,\nor slam the seesaw\nto fling a friend!", 300)
 
 # ---- S4 zipline to the next tree (3950..5600) ------------------------------------------------
 L.block(3850, -300, 110, 240)
@@ -100,14 +101,37 @@ L.zipline(8870, -1300, 9950, -520)
 L.lums(9000, -1260, 9850, -600, 9)
 L.tree_platform(9850, 10700, -450, 10150, 240)
 L.checkpoint(9920, -450)
-L.goal(10450, -450)
 L.deco("hut", 10150, -450)
 L.deco("lantern", 10650, -450)
-L.wall(10700, -2000, -450)
 
-L.pit_kill(-300, 10760, 1250)
-L.dress(-250, 10700, "forest", spacing=190, seed=41, trees=False,
-        skip=[(3400, 3950), (5620, 6320), (7000, 7300)])
+# ---- S9 Lantern Lane: swing rings, a Shieldbug's treehouse, a last broken bridge (10700..14200) --
+L.sign(10420, -450, "Fly into a RING to swing.\nJUMP to let go!", 300)
+for x in [10960, 11290]:
+    L.ring(x, -640)
+L.lums(10760, -700, 11460, -700, 8, -60)
+L.tree_platform(11520, 12150, -420, 11740, 200)
+L.checkpoint(11570, -420)
+L.enemy("shieldbug", 11980, -420)
+L.sign(11800, -420, "SHIELDBUG! Hop over it and\nhit it from behind.", 300)
+L.lum_block(11640, -740, lums=5)
+L.deco("lantern", 12120, -420, 0.9)
+L.bridge(12150, -420, 12950, -460, broken=(5, 6, 12))
+L.acorns(12420, -900, interval=2.2)
+L.acorns(12700, -900, interval=2.2, phase=1.1)
+L.lums(12200, -510, 12900, -550, 8, 30)
+L.enemy("bumblebonk", 12550, -820)
+L.tree_platform(12950, 14200, -460, 13300, 220)
+L.checkpoint(13010, -460)
+L.goal(13900, -460)
+L.deco("hut", 13300, -460)
+L.deco("lantern", 13620, -460)
+L.deco("lantern", 14150, -460, 0.9)
+L.lums(13150, -560, 13700, -560, 6, 30)
+L.wall(14200, -2000, -460)
 
-L.finish(spawn=(0, -2), left=-360, right=10760, bottom=900, kill_y=1300)
+L.pit_kill(-300, 14260, 1250)
+L.dress(-250, 14200, "forest", spacing=190, seed=41, trees=False,
+        skip=[(3400, 3950), (5620, 6320), (7000, 7300), (10700, 11520), (12150, 12950)])
+
+L.finish(spawn=(0, -2), left=-360, right=14260, bottom=900, kill_y=1300)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_4_bramble_bridges.tscn"))

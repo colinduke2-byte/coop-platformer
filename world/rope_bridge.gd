@@ -91,10 +91,18 @@ func _update_collision() -> void:
 		var top := PackedVector2Array()
 		var first: int = r[0]
 		var last: int = r[r.size() - 1]
-		top.append(_pos[first] + Vector2(-hw + 2.0, 0).rotated(_rot[first]))
+		# At the anchored ends the deck ramps up to the post (and a little past it) so walking
+		# off the bridge onto the ledge it hangs from never meets a lip.
+		if first == 0:
+			top.append(Vector2(-6.0, 0.0))
+		else:
+			top.append(_pos[first] + Vector2(-hw + 2.0, 0).rotated(_rot[first]))
 		for i: int in r:
 			top.append(_pos[i])
-		top.append(_pos[last] + Vector2(hw - 2.0, 0).rotated(_rot[last]))
+		if last == plank_count - 1:
+			top.append(span + Vector2(6.0, 0.0))
+		else:
+			top.append(_pos[last] + Vector2(hw - 2.0, 0).rotated(_rot[last]))
 		var poly := top.duplicate()
 		for j in range(top.size() - 1, -1, -1):
 			poly.append(top[j] + Vector2(0, 12))
