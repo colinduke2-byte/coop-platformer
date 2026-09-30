@@ -168,7 +168,7 @@ func _process(delta: float) -> void:
 	_lums.pivot_offset = _lums.size * 0.5
 	_timer.text = UIStyle.fmt_time(GameManager.level_time)
 	var n := InputRouter.get_bound_slots().size()
-	_hint.visible = n < InputRouter.MAX_PLAYERS
+	_hint.visible = n < InputRouter.MAX_PLAYERS and not Net.is_online()
 	_hint.text = ("Press SPACE (WASD), ENTER (arrows) or A (gamepad) to join" if n == 0
 			else "More friends can join anytime: SPACE / ENTER / A")
 	# Once someone's playing, the join reminder fades after a few seconds.

@@ -5,6 +5,9 @@ extends Node2D
 ## outfit from the Dream Wardrobe (unlocked by Dream Gems and Snoozlings). When everyone who
 ## joined is ready, the picks go to GameManager.chosen_characters and
 ## next_scene loads. A character locked in by one player can't be taken.
+## ONLINE this is the lobby: your card is yours, friends' cards follow their
+## browsers (Net.remote_lobby), the room code shows at the bottom, and the
+## host's browser starts the game once everyone is ready.
 
 const CARD_SIZE := Vector2(420, 640)
 const CARD_TOP := 250.0
@@ -25,10 +28,13 @@ var _start_timer := 0.0
 var _footer: Label
 var _menu := MenuInput.new()
 var _controls: CanvasLayer  ## ControlsCard overlay while PAUSE shows it
+var _code_label: Label
+var _leave_t := 0.0         ## online: > 0 while a second PUNCH leaves the online game
 
 
 class Card:
 	var slot := 0
+	var remote := false         ## online: a friend's card (their browser drives it)
 	var joined := false
 	var ready := false
 	var index := 0
@@ -59,6 +65,9 @@ func _ready() -> void:
 	for slot in InputRouter.get_bound_slots():
 		_join(slot)
 	InputRouter.join_requested.connect(_join)
+	if Net.is_online():
+		_code_label = _label("", 34, Vector2(0, 1010), w)
+		_code_label.add_theme_color_override(&"font_color", UIStyle.ACCENT)
 	Audio.play_music("menu")
 
 
@@ -105,19 +114,21 @@ func _process(delta: float) -> void:
 		add_child(layer)
 		_controls = layer
 		return
+	if Net.is_online():
+		_sync_online(delta)
 	for c in _cards:
 		if not c.joined:
 			continue
 		c.grace -= delta
-		if c.grace <= 0.0:
+		if c.grace <= 0.0 and not c.remote:
 			_handle_input(c)
 		if c.joined:
 			c.rig.update_pose(&"Jump" if c.ready else &"Ground", Vector2.ZERO, not c.ready, 1.0, delta)
 
 	if is_everyone_ready():
-		_footer.text = "Everyone's ready!"
+		_footer.text = "Everyone's ready!" if not Net.is_client() else "Everyone's ready! Waiting for the host..."
 		_start_timer += delta
-		if auto_start and _start_timer >= START_DELAY:
+		if auto_start and _start_timer >= START_DELAY and not Net.is_client():
 			_start()
 	else:
 		_start_timer = 0.0
@@ -158,6 +169,13 @@ func _handle_input(c: Card) -> void:
 		if c.ready:
 			c.ready = false
 			_refresh(c)
+		elif Net.is_online():
+			if _leave_t > 0.0:
+				Net.leave()
+				set_process(false)
+				GameManager.goto_scene(Net.ONLINE_MENU)
+				return
+			_leave_t = 2.0  # press again to really leave
 		else:
 			_leave(c)
 
@@ -198,6 +216,31 @@ func _start() -> void:
 			GameManager.chosen_characters[c.slot] = Wardrobe.dress(GameManager.CHARACTERS[c.index], c.outfit)
 			GameManager.chosen_outfits[c.slot] = c.outfit
 	get_tree().change_scene_to_file.call_deferred(next_scene)
+
+
+## Online: friends' cards mirror their browsers; ours is sent to them.
+func _sync_online(delta: float) -> void:
+	_leave_t = maxf(_leave_t - delta, 0.0)
+	var remote := Net.remote_slots()
+	for c in _cards:
+		if c.slot == Net.my_slot:
+			if c.joined:
+				Net.lobby = [c.index, c.outfit, 1 if c.ready else 0]
+			continue
+		var lb := Net.remote_lobby(c.slot) if c.slot in remote else []
+		var was := [c.joined, c.index, c.outfit, c.ready]
+		c.remote = true
+		c.joined = not lb.is_empty()
+		if c.joined:
+			c.index = clampi(int(lb[0]), 0, GameManager.CHARACTERS.size() - 1)
+			c.outfit = clampi(int(lb[1]), 0, Wardrobe.OUTFITS.size() - 1)
+			c.ready = int(lb[2]) == 1
+		if was != [c.joined, c.index, c.outfit, c.ready]:
+			_refresh(c)
+	var tip := "Room code: %s   -   friends pick Play Online > Join and type it" % Net.code
+	if _leave_t > 0.0:
+		tip = "Press PUNCH again to leave the online game"
+	_code_label.text = tip
 
 
 func _taken_by_other(index: int, slot: int) -> bool:
@@ -249,13 +292,13 @@ func _refresh(c: Card) -> void:
 	c.outfit_label.visible = c.joined
 	if not c.joined:
 		c.panel.color = PANEL_EMPTY
-		c.status.text = "Press jump to join"
+		c.status.text = "Waiting for a friend..." if Net.is_online() else "Press jump to join"
 		return
 	var base: CharacterDef = GameManager.CHARACTERS[c.index]
 	var def := Wardrobe.dress(base, c.outfit)
 	if c.rig.def == null or c.rig.def.display_name != def.display_name or c.rig.def.main_color != def.main_color:
 		c.rig.build(def)
-	var unlocked := Wardrobe.is_unlocked(c.outfit)
+	var unlocked := c.remote or Wardrobe.is_unlocked(c.outfit)  # a friend wears what their save unlocked
 	c.rig.modulate = Color.WHITE if unlocked else Color(0.35, 0.35, 0.4, 0.8)
 	var outfit_name: String = Wardrobe.OUTFITS[c.outfit]["name"]
 	c.outfit_label.text = ("Outfit: %s  (up / down)" % outfit_name) if unlocked else ("%s - locked: %s" % [outfit_name, Wardrobe.requirement(c.outfit)])

@@ -45,8 +45,10 @@ func _ready() -> void:
 	_rebuild()
 	_build_path()
 	_dist = start_offset * _total
-	if not Engine.is_editor_hint() and wait_for_rider:
-		active = false
+	if not Engine.is_editor_hint():
+		add_to_group(&"net_sync")
+		if wait_for_rider:
+			active = false
 
 
 func set_active(on: bool) -> void:
@@ -122,6 +124,22 @@ func _physics_process(delta: float) -> void:
 		if (prev - acc) * (_dist - acc) < 0.0:
 			_wait = wait_time
 	position = _origin + _at(_dist)
+
+
+## Online: the host's platform steers everyone's (see Net).
+func net_state() -> Array:
+	return [snappedf(_dist, 0.1), _dir, snappedf(_wait, 0.01), 1 if active else 0]
+
+
+func net_apply(s: Array) -> void:
+	if s.size() < 4:
+		return
+	active = int(s[3]) == 1
+	_dir = float(s[1])
+	_wait = float(s[2])
+	var d := float(s[0])
+	if absf(d - _dist) > 6.0:
+		_dist = lerpf(_dist, d, 0.5)  # ease: riders on it barely notice
 
 
 func _has_rider() -> bool:

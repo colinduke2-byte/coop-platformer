@@ -135,8 +135,8 @@ func _check_contacts(delta: float) -> void:
 			_contact_cd.erase(p)
 	for body in _hitbox.get_overlapping_bodies():
 		var p := body as Player
-		if p == null or p.is_bubbled() or _contact_cd.has(p) or dead:
-			continue
+		if p == null or p.remote or p.is_bubbled() or _contact_cd.has(p) or dead:
+			continue  # (online friends' stomps and bumps are decided by their own browser)
 		var state := p.state_machine.current_name()
 		if state == &"GroundPound":
 			continue  # the pound's own hitbox deals with us
@@ -147,6 +147,8 @@ func _check_contacts(delta: float) -> void:
 				p.bounce(stomp_bounce)
 				_on_stomped(p)
 				p.register_stomp()
+				if Net.is_online():
+					Net.relay_stomp(p, self)
 			else:
 				p.hurt()
 			continue
@@ -211,6 +213,8 @@ func die(by: Player, kind: HitKind, knockback: Vector2) -> void:
 	_hitbox.set_deferred(&"monitoring", false)
 	defeated.emit(by)
 	EventBus.enemy_defeated.emit(self, by)
+	if Net.is_online():
+		Net.relay_dead(self)
 	_drop_lums()
 	var tw := create_tween()
 	if kind in [HitKind.STOMP, HitKind.POUND]:
@@ -243,6 +247,32 @@ func _drop_lums() -> void:
 
 func is_stunned() -> bool:
 	return stun_timer > 0.0
+
+
+# --- Online (Net): the host's copy steers everyone else's -----------------------------
+
+func net_state() -> Array:
+	return [roundf(global_position.x), roundf(global_position.y), roundf(velocity.x), roundf(velocity.y),
+			facing, health, snappedf(stun_timer, 0.05)]
+
+
+## Ease toward the host's copy: small drift blends, big jumps (it charged
+## somewhere else) snap. Health only ever goes down.
+func net_apply(s: Array) -> void:
+	if s.size() < 7:
+		return
+	var target := Vector2(float(s[0]), float(s[1]))
+	var err := target - global_position
+	if err.length() > 160.0:
+		global_position = target
+	else:
+		global_position += err * 0.35
+	velocity = velocity.lerp(Vector2(float(s[2]), float(s[3])), 0.5)
+	facing = 1 if int(s[4]) >= 0 else -1
+	if int(s[5]) < health:
+		health = int(s[5])
+	if float(s[6]) > 0.0 and stun_timer <= 0.0:
+		stun_timer = float(s[6])
 
 
 # --- Helpers for behaviours -----------------------------------------------------------

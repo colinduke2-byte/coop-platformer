@@ -81,3 +81,12 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Punch = Shift (Left Shift P1, Right Shift P2); sprint = hold Ctrl / RT, or double-tap a direction
 - [ ] Playtest round 2: are single-wall climbs too strong for level secrets? (`wall_climb_velocity`)
 - [ ] Button rebinding in a settings menu
+
+
+## Online multiplayer (browser)
+- [x] Host / join with 4-letter codes; lobby = character select; host drives menus and levels
+- [x] Friends as puppets (interpolated), relayed punches/stomps/revives/doors, level start barrier
+- [x] Host corrections for enemies, moving platforms and wheels; hit-stop off online
+- [ ] Test on real separate computers (latency feel); tune NetPeer.delay() in core/net.gd if friends look jerky
+- [ ] PeerJS path (public hosting e.g. GitHub Pages) is untested - the dev sandbox blocks its server
+- [ ] Sync bosses' attack states (only position/health are corrected now)

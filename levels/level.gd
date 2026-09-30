@@ -33,6 +33,7 @@ func _ready() -> void:
 	if cam is CoopCamera:
 		cam.snap()
 	EventBus.level_started.emit(self)
+	Net.level_loaded(self)
 
 
 func _exit_tree() -> void:

@@ -28,6 +28,18 @@ var _plats: Array[AnimatableBody2D] = []
 
 func _ready() -> void:
 	_rebuild()
+	if not Engine.is_editor_hint():
+		add_to_group(&"net_sync")
+
+
+## Online: the host's wheel steers everyone's (see Net).
+func net_state() -> Array:
+	return [snappedf(_angle, 0.001)]
+
+
+func net_apply(s: Array) -> void:
+	if s.size() >= 1 and absf(angle_difference(_angle, float(s[0]))) > 0.02:
+		_angle = lerp_angle(_angle, float(s[0]), 0.5)
 
 
 func _rebuild() -> void:

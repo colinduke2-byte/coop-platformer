@@ -26,7 +26,9 @@ You cannot see or play the game. `tools/check.sh` and the tests are your eyes:
 ```
 core/        Autoloads: EventBus (global signals), InputRouter (devices -> slots),
              GameManager (join, checkpoints, lums, gems, snoozlings, scene flow),
-             Vfx, Audio (music + SFX driven by EventBus). SaveData (records),
+             Vfx, Audio (music + SFX driven by EventBus), Net (online play: host/join
+             codes, friends as Player.remote puppets, relayed hits; transport in
+             net_transport.gd <-> window.dreamNet in tools/web/play.html). SaveData (records),
              View (static camera rect: View.sees / View.redraw for cheap culling)
 player/      player.gd (body + shared helpers), states/*.gd (one move per file:
              ground, jump, fall, glide, wall_slide, wall_run, ledge_hang, crouch,
@@ -85,6 +87,17 @@ pieces cost nothing. Check with `tools/bench.tscn -- --drawcalls`.
    palettes), no image files needed.
 9. Small, playable steps. Prefer a working simple version Colin can try today
    over a big system he can't test for a week.
+
+## Online play (Net)
+
+Each browser simulates the whole game; its own dreamer is authoritative, friends
+are `Player.remote` puppets. Anything a local dreamer does to the world that must
+happen on every screen goes through a Net relay: hits use `Player.strike()` (never
+call `take_hit` on another node from player code directly), stomps/deaths/doors
+use `Net.relay_*`. Only the host changes scenes online (clients follow). Pieces that
+move riders on a timer can join group `net_sync` with `net_state()/net_apply()`.
+Test online code with the in-memory transport (`test_net_*` in run_tests.gd); the
+two-tab browser test uses `play.html?net=local`.
 
 ## Collision layers
 

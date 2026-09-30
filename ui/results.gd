@@ -29,6 +29,8 @@ func _on_completed(results: Dictionary) -> void:
 func _process(_delta: float) -> void:
 	if not _active:
 		return
+	if Net.is_client():
+		return  # the host picks what's next; everyone follows
 	_menu.poll(true)
 	if _menu.left:
 		_index = wrapi(_index - 1, 0, _items.size())
@@ -119,6 +121,9 @@ func _build() -> void:
 		_add(v, UIStyle.label(s_text + ("   NEW!" if news.has("snoozling") else ""), 26, UIStyle.ACCENT if freed else UIStyle.INK))
 	for o: String in _results.get("new_outfits", []):
 		_add(v, UIStyle.label("New outfit in the Dream Wardrobe: %s!  (character select: up / down)" % o, 24, Color("c58bff")))
+	if Net.is_client():
+		_add(v, UIStyle.label("Waiting for the host to pick what's next...", 28, UIStyle.ACCENT))
+		return
 	_items = []
 	if _results.get("next", "") != "":
 		_items.append("Next level")

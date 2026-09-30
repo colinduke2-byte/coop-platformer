@@ -38,3 +38,12 @@ card is `ui/controls_card.gd`. Keep all three in sync.
 
 - **F9** on the world map: unlock every level, world and outfit (this session only; F9 again to undo).
 - **F3** in a level: debug overlay (states, speeds, timers).
+
+## Online play (browser version)
+
+- Title screen: press **O** (gamepad **Y**) for **Play Online**.
+- **Host a game** - you get a 4-letter code (shown at the bottom of the character select). Send it to your friends.
+- **Join a friend's game** - type their code, press ENTER (gamepad: Up/Down letter, A next, X delete).
+- One dreamer per browser; WASD/Space *and* arrows/Enter *and* any gamepad all drive it.
+- The host picks levels and menu options; everyone else follows. Esc opens a menu that doesn't pause the game (Leave online game is there).
+- Up to 4 dreamers. In the claude.ai page, friends need a claude.ai account and must be invited to the page (Share).

@@ -65,11 +65,16 @@ func open(slot: int, message := "") -> void:
 	_opener = slot
 	_index = 0
 	_items = ["Resume", "Controls", "Restart from checkpoint", "Restart level", "World map", "Character select", "Leave game (P%d)" % (slot + 1)]
+	if Net.is_host():
+		_items = ["Resume", "Controls", "Restart level", "World map", "Character select", "Leave online game"]
+	elif Net.is_client():
+		_items = ["Resume", "Controls", "Leave online game"]
 	_note.text = message
 	_note.visible = message != ""
 	_rebuild()
 	_root.visible = true
-	get_tree().paused = true
+	get_tree().paused = not Net.is_online()  # online the game keeps going for everyone else
+	_hold_players(true)
 	Audio.play("menu_ok", -4.0, 0.8, 0.0)
 
 
@@ -77,7 +82,18 @@ func close() -> void:
 	_hide_controls()
 	_open = false
 	_root.visible = false
-	get_tree().paused = false
+	if not Net.is_online():
+		get_tree().paused = false
+	_hold_players(false)
+
+
+## Online the world keeps running under the menu: our dreamer stands still meanwhile.
+func _hold_players(hold: bool) -> void:
+	if not Net.is_online():
+		return
+	for p: Player in GameManager.players.values():
+		if is_instance_valid(p) and not p.remote:
+			p.input.enabled = not hold
 
 
 func _process(_delta: float) -> void:
@@ -119,6 +135,9 @@ func _choose(item: String) -> void:
 			GameManager.goto_scene(GameManager.WORLD_MAP)
 		"Character select":
 			GameManager.goto_scene(GameManager.CHARACTER_SELECT)
+		"Leave online game":
+			Net.leave()
+			GameManager.goto_scene(Net.ONLINE_MENU)
 		_:
 			GameManager.drop_player(_opener)
 			if InputRouter.get_bound_slots().is_empty():

@@ -18,7 +18,7 @@ const ACTIONS: Array[StringName] = [
 	&"move_left", &"move_right", &"move_up", &"move_down", &"jump", &"attack", &"sprint", &"glide", &"pause",
 ]
 
-enum DeviceKind { KEYBOARD_LEFT, KEYBOARD_RIGHT, JOYPAD }
+enum DeviceKind { KEYBOARD_LEFT, KEYBOARD_RIGHT, JOYPAD, ANY }  ## ANY = both keyboard halves + every pad (online)
 
 ## action -> keycode, or [keycode, KeyLocation] to use only the left / right copy of a key.
 const KEYS_LEFT := {
@@ -45,6 +45,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	var device := _device_for_join_event(event)
 	if device.is_empty() or find_slot(device["kind"], device["id"]) != -1:
 		return
+	if Net.is_online():
+		# Online, this browser has exactly one dreamer, played with any keys or pad.
+		if Net.my_slot < 0 or _slots.has(Net.my_slot):
+			return
+		bind_slot(Net.my_slot, DeviceKind.ANY)
+		get_viewport().set_input_as_handled()
+		join_requested.emit(Net.my_slot)
+		return
 	var slot := _first_free_slot()
 	if slot == -1:
 		return
@@ -68,9 +76,21 @@ func get_bound_slots() -> Array[int]:
 func find_slot(kind: int, id: int) -> int:
 	for slot: int in _slots:
 		var d: Dictionary = _slots[slot]
+		if d["kind"] == DeviceKind.ANY:
+			return slot
 		if d["kind"] == kind and (kind != DeviceKind.JOYPAD or d["id"] == id):
 			return slot
 	return -1
+
+
+## Online play: this browser's one dreamer is `slot`, on every key and pad
+## (so the keyboard halves and pads don't fight over slots). -1 = back to
+## local play: nobody is bound, players join again with their join buttons.
+func bind_online(slot: int) -> void:
+	for s: int in get_bound_slots():
+		unbind_slot(s)
+	if slot >= 0:
+		bind_slot(slot, DeviceKind.ANY)
 
 
 func bind_slot(slot: int, kind: int, id: int = 0) -> void:
@@ -88,6 +108,10 @@ func bind_slot(slot: int, kind: int, id: int = 0) -> void:
 			_bind_keys(slot, KEYS_RIGHT)
 		DeviceKind.JOYPAD:
 			_bind_joypad(slot, id)
+		DeviceKind.ANY:
+			_bind_keys(slot, KEYS_LEFT)
+			_bind_keys(slot, KEYS_RIGHT)
+			_bind_joypad(slot, -1)  # device -1 = every pad
 
 
 func unbind_slot(slot: int) -> void:

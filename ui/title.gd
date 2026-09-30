@@ -6,6 +6,7 @@ extends Node2D
 const GAME_TITLE := "DREAMERS"
 const SUBTITLE := "a co-op dream adventure"
 const NEXT := "res://ui/character_select.tscn"
+const ONLINE := "res://ui/online_menu.tscn"
 const LETTER_COLORS := [Color("ff5d8f"), Color("ffd23f"), Color("5bc8ff"), Color("7ee05a"), Color("c58bff"),
 		Color("ff9e3f"), Color("3bceac"), Color("ff7fb0")]
 
@@ -97,6 +98,12 @@ func _build_logo() -> void:
 	_ribbon.position = Vector2(1330, 380)
 	_ribbon.rotation = -0.12
 	layer.add_child(_ribbon)
+	if Net.available() != "":
+		var online := UIStyle.label("Press O (or Y on a gamepad) to PLAY ONLINE with friends", 30, Color("ffd23f"), 10)
+		online.position = Vector2(460, 1010)
+		online.custom_minimum_size.x = 1000
+		online.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		layer.add_child(online)
 	var hint := UIStyle.label("1-4 players - keyboards and gamepads welcome", 22, Color(1, 1, 1, 0.8), 6)
 	hint.position = Vector2(560, 960)
 	hint.custom_minimum_size.x = 800
@@ -120,6 +127,17 @@ func _process(delta: float) -> void:
 		var pose := &"Victory" if beat < 1.2 else (&"Jump" if beat < 1.5 else &"Ground")
 		rig.update_pose(pose, Vector2.ZERO, pose != &"Jump", 1.0, delta)
 		rig.position.y = 282 + absf(i - 1.5) * 4.0 - (sin((beat - 1.2) / 0.3 * PI) * 30.0 if pose == &"Jump" else 0.0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _leaving or Net.available() == "":
+		return
+	var key: bool = event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_O
+	var pad: bool = event is InputEventJoypadButton and event.pressed and (event as InputEventJoypadButton).button_index == JOY_BUTTON_Y
+	if key or pad:
+		_leaving = true
+		Audio.play("menu_ok", -2.0)
+		get_tree().change_scene_to_file.call_deferred(ONLINE)
 
 
 func _on_join(_slot: int) -> void:

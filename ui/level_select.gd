@@ -95,6 +95,8 @@ func _process(delta: float) -> void:
 	_t += delta
 	for rig in _rigs:
 		rig.update_pose(&"Victory" if fmod(_t, 3.0) < 1.0 else &"Ground", Vector2.ZERO, true, 1.0, delta)
+	if Net.is_client():
+		return  # online, the host browses; everyone follows
 	_menu.poll()
 	if _menu.left:
 		_index = wrapi(_index - 1, 0, _cards.size())

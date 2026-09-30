@@ -4068,3 +4068,137 @@ func test_hit_stop_is_a_short_blink_and_always_releases() -> void:
 	check(Engine.time_scale == 1.0, "after 0.2 s real time everything runs at full speed again (%.2f)" % Engine.time_scale)
 	Vfx.hit_stop_enabled = false
 	Engine.time_scale = 1.0
+
+
+# --- Online play (Net) with the in-memory transport ---------------------------------------
+
+var _net_t := 0.0
+
+
+## Go online as the host on a fake connection (restored by _net_end).
+func _net_host() -> NetTransport:
+	var tr := NetTransport.new()
+	Net.transport = tr
+	Net.host_game()
+	for i in 3:
+		await get_tree().process_frame
+	Net.level_loaded(_arena)  # as if the level had loaded while online
+	return tr
+
+
+func _net_end() -> void:
+	Net.leave()
+	Net.transport = NetTransport.WebTransport.new()
+	for s in router().get_bound_slots():
+		router().unbind_slot(s)
+	await frames(2)
+
+
+## One packet from friend "f1" (a client in slot `slot`) with their dreamer at `pos`.
+func _friend_packet(tr: NetTransport, pos: Vector2, state := &"Ground", flags := 1, events: Array = []) -> void:
+	var me: Player = gm().players.get(0)
+	var idx := me.state_machine.index_of(state) if me else 0
+	var pk := {"v": 1, "r": "c", "t": Time.get_ticks_msec(), "s": 1, "lb": [2, 0, 1], "ld": Net.epoch,
+			"ak": [["me", 0]], "pe": Net.epoch,
+			"p": [pos.x, pos.y, 0, 0, 1, idx, flags, 0, 0, 0, 72, -30, 0, -1, 0, -70, 0, 0]}
+	if not events.is_empty():
+		pk["ev"] = events
+	tr.inject("f1", pk)
+
+
+func _feed_friend(tr: NetTransport, from: Vector2, to: Vector2, secs: float, state := &"Ground") -> void:
+	var n := int(secs * 20.0)
+	for i in n + 1:
+		_friend_packet(tr, from.lerp(to, float(i) / n), state)
+		await seconds(0.05)
+
+
+func test_net_friend_appears_as_a_puppet_that_follows_their_stream() -> void:
+	var me := add_player(0, Vector2(0, -2))
+	var tr: NetTransport = await _net_host()
+	check(Net.is_host() and Net.my_slot == 0, "hosting gives us slot 0")
+	await _feed_friend(tr, Vector2(200, -2), Vector2(200, -2), 0.3)
+	var pup: Player = gm().players.get(1)
+	check(pup != null and pup.remote, "the friend got slot 1 and a puppet")
+	if pup == null:
+		await _net_end()
+		return
+	check(pup.character.display_name == gm().CHARACTERS[2].display_name, "puppet wears the friend's pick (lobby char 2)")
+	await _feed_friend(tr, Vector2(200, -2), Vector2(700, -2), 1.0)
+	await _feed_friend(tr, Vector2(700, -2), Vector2(700, -2), 0.4)
+	check(absf(pup.global_position.x - 700.0) < 20.0, "puppet reached the friend's spot (x=%.0f)" % pup.global_position.x)
+	check(pup.is_on_floor(), "puppet stands on the floor like a real body")
+	check(me.state_machine.current_name() != &"Bubble", "our dreamer untouched")
+	# Their dreamer can't be hurt by our world: only their browser decides.
+	pup.hurt()
+	check(not pup.is_bubbled(), "puppets ignore hurt()")
+	# A packet saying they're bubbled shows the bubble.
+	for i in 8:
+		_friend_packet(tr, Vector2(700, -200), &"Bubble", 0)
+		await seconds(0.05)
+	check(pup.is_bubbled(), "friend's bubble shows on our screen")
+	await _net_end()
+
+
+func test_net_friends_hits_land_here_and_ours_are_sent() -> void:
+	var me := add_player(0, Vector2(0, -2))
+	var tr: NetTransport = await _net_host()
+	var grunt: Enemy = load("res://enemies/grunt.tscn").instantiate()
+	grunt.position = Vector2(500, -2)
+	grunt.health = 2
+	_arena.add_child(grunt)
+	await _feed_friend(tr, Vector2(430, -2), Vector2(430, -2), 0.3)
+	var path := String(_arena.get_path_to(grunt))
+	# The friend's punch arrives as an event.
+	_friend_packet(tr, Vector2(430, -2), &"Punch", 1, [[1, Net.epoch, "hit", 1, path, 300.0, -200.0, 0.0, "Punch"]])
+	await frames(3)
+	check(grunt.health == 1, "friend's punch hurt the enemy here (health %d)" % grunt.health)
+	# Replaying the same packet doesn't hit twice.
+	_friend_packet(tr, Vector2(430, -2), &"Punch", 1, [[1, Net.epoch, "hit", 1, path, 300.0, -200.0, 0.0, "Punch"]])
+	await frames(3)
+	check(grunt.health == 1, "events apply once")
+	# Our own punch goes out as an event.
+	grunt.global_position = Vector2(70, -2)
+	grunt.velocity = Vector2.ZERO
+	grunt.stun_timer = 5.0
+	await frames(2)
+	me.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(0.3)
+	var sent_hit := false
+	for pk in tr.sent:
+		for e: Array in pk.get("ev", []):
+			if e[2] == "hit" and e[4] == path:
+				sent_hit = true
+	check(sent_hit, "our punch was sent to friends")
+	await _net_end()
+
+
+func test_net_host_steers_friends_scene_and_hands_out_slots() -> void:
+	# As a client: the host's packet gives us our slot.
+	var tr := NetTransport.new()
+	Net.transport = tr
+	Net.change_scenes = false
+	Net.join_game("abcd")
+	check(Net.code == "ABCD", "codes are upper-case")
+	tr.inject("h1", {"v": 1, "r": "h", "t": Time.get_ticks_msec(), "s": 0, "lb": [0, 0, 0], "ld": 0,
+			"ak": [], "sc": "", "ep": 0, "go": -1, "w": "w1", "mi": 2, "sl": [["me", 2]]})
+	await frames(3)
+	check(Net.my_slot == 2, "the host gave us slot 2 (got %d)" % Net.my_slot)
+	await frames(2)
+	check(Net.is_client(), "joined as a client")
+	check(router().get_bound_slots() == [2], "our keys and pads now drive slot 2")
+	check(int(Net.host_value("mi", -1)) == 2, "we can read the host's map cursor")
+	await seconds(0.15)  # a packet goes out every 0.05 s
+	var sent_hello := false
+	for pk in tr.sent:
+		sent_hello = sent_hello or pk.get("r") == "c"
+	check(sent_hello, "we told the host we're here")
+	# The host closing their tab ends the game for us.
+	tr.drop("h1")
+	await frames(2)
+	check(Net.mode == Net.Mode.OFFLINE and Net.error != "", "host leaving drops us back offline with a message")
+	Net.change_scenes = true
+	await _net_end()

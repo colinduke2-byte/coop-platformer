@@ -32,10 +32,211 @@
     <div class="keys">
       <b>Player 1:</b> WASD move &middot; Space jump &middot; Left Shift punch &middot; Left Ctrl sprint<br>
       <b>Player 2:</b> Arrows move &middot; Enter jump &middot; Right Shift punch &middot; Right Ctrl sprint<br>
-      <b>Gamepads</b> work too (A to join). <b>Esc</b> pauses &middot; <b>F9</b> on the map unlocks everything.
+      <b>Gamepads</b> work too (A to join). <b>Esc</b> pauses &middot; <b>F9</b> on the map unlocks everything.<br>
+      <b>Online with friends:</b> press <b>O</b> on the title screen, then Host (you get a code) or Join (type a friend's code).
     </div>
   </div>
 </div>
+
+<script>
+// ONLINE PLAY transport for the game (Godot reads it through JavaScriptBridge as
+// window.dreamNet; see core/net_transport.gd). Every browser publishes one small
+// "packet" (its latest state) ~20 times a second and reads everyone else's.
+//   room  - inside claude.ai: the page's live room (a named room per game code)
+//   peer  - anywhere else: PeerJS / WebRTC, the host relays packets between friends
+//   local - ?net=local: tabs of one browser talk over a BroadcastChannel (testing)
+window.dreamNet = (function () {
+  const PREFIX = "dreamers-";
+  const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const PEERJS = ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js",
+                  "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
+  let kind = "pending";
+  let st = "idle", err = "", code = "", me = "";
+  let inbox = new Map(), gone = new Set();
+  let impl = null, roomApi = null;
+
+  function randomCode() {
+    let c = "";
+    const r = new Uint32Array(4);
+    crypto.getRandomValues(r);
+    for (let i = 0; i < 4; i++) c += LETTERS[r[i] % LETTERS.length];
+    return c;
+  }
+  function fail(message) { st = "error"; err = message; if (impl) { try { impl.close(); } catch (e) {} impl = null; } }
+  function hostSeen() { return !!impl && impl.others().some(function (g) { return g && g.r === "h"; }); }
+  function loadScript(urls) {
+    return new Promise(function (ok, bad) {
+      const tryOne = function (i) {
+        if (i >= urls.length) return bad(new Error("couldn't load " + urls[0]));
+        const s = document.createElement("script");
+        s.src = urls[i];
+        s.onload = ok;
+        s.onerror = function () { tryOne(i + 1); };
+        document.head.appendChild(s);
+      };
+      tryOne(0);
+    });
+  }
+
+  // --- claude.ai room ---------------------------------------------------------------
+  function roomImpl() {
+    let r = null, unsub = null, all = new Map();
+    return {
+      async open(name) {
+        r = await roomApi.join(name);
+        unsub = r.onPeers(function (ch) {
+          for (const p of ch.joined.concat(ch.updated)) {
+            if (p.sameTab) { me = p.peer; continue; }
+            if (p.kind !== "viewer") continue;
+            const g = p.presence && p.presence.g;
+            if (g && all.get(p.peer) !== g) { all.set(p.peer, g); inbox.set(p.peer, g); }
+          }
+          for (const p of ch.left) { all.delete(p.peer); inbox.delete(p.peer); gone.add(p.peer); }
+        }, function (e) { fail("Online connection lost (" + e.code + ")."); });
+        for (const p of r.peers()) if (p.sameTab) me = p.peer;
+      },
+      others() { return [...all.values()]; },
+      send(obj) { if (r) r.presence({ g: obj }).catch(function () {}); },
+      close() { if (unsub) unsub(); if (r) r.leave().catch(function () {}); r = null; },
+    };
+  }
+
+  // --- PeerJS (WebRTC) ---------------------------------------------------------------
+  function peerImpl(asHost) {
+    let peer = null, conns = new Map(), toHost = null, all = new Map();
+    const relay = function (from, g, except) {
+      for (const [id, c] of conns) if (id !== except && c.open) c.send({ f: from, g: g });
+    };
+    return {
+      async open(name) {
+        if (!window.Peer) await loadScript(PEERJS);
+        await new Promise(function (ok, bad) {
+          peer = asHost ? new window.Peer(name) : new window.Peer();
+          peer.on("open", function (id) { if (!asHost) me = id; ok(); });
+          peer.on("error", function (e) {
+            if (e.type === "unavailable-id") bad(new Error("taken"));
+            else if (e.type === "peer-unavailable") fail("No game with code " + code + " - check the code, or ask the host to open theirs.");
+            else if (st === "connecting") bad(e);
+            else fail("Online connection problem (" + e.type + ").");
+          });
+          if (asHost) {
+            peer.on("connection", function (c) {
+              c.on("open", function () { conns.set(c.peer, c); });
+              c.on("data", function (g) { if (g && typeof g === "object") { all.set(c.peer, g); inbox.set(c.peer, g); relay(c.peer, g, c.peer); } });
+              c.on("close", function () { conns.delete(c.peer); all.delete(c.peer); gone.add(c.peer); relay(c.peer, null, c.peer); for (const [, o] of conns) if (o.open) o.send({ f: c.peer, bye: true }); });
+            });
+          }
+        });
+        if (asHost) { me = name; return; }
+        await new Promise(function (ok) {
+          toHost = peer.connect(name, { reliable: true });
+          toHost.on("open", ok);
+          toHost.on("data", function (m) {
+            if (!m || !m.f) return;
+            if (m.bye) { all.delete(m.f); gone.add(m.f); return; }
+            if (m.g) { all.set(m.f, m.g); inbox.set(m.f, m.g); }
+          });
+          toHost.on("close", function () { gone.add(name); if (st === "client") fail("The host left the game."); });
+        });
+      },
+      others() { return [...all.values()]; },
+      send(obj) {
+        if (asHost) relay(me, obj, null);
+        else if (toHost && toHost.open) toHost.send(obj);
+      },
+      close() { if (peer) peer.destroy(); peer = null; },
+    };
+  }
+
+  // --- BroadcastChannel (tabs of one browser: testing) -----------------------------------
+  function localImpl() {
+    let ch = null, all = new Map(), seen = new Map(), timer = 0;
+    me = "t" + Math.random().toString(36).slice(2, 10);
+    return {
+      async open(name) {
+        ch = new BroadcastChannel(name);
+        ch.onmessage = function (e) {
+          const m = e.data;
+          if (!m || m.f === me) return;
+          if (m.bye) { all.delete(m.f); gone.add(m.f); return; }
+          all.set(m.f, m.g); inbox.set(m.f, m.g); seen.set(m.f, Date.now());
+        };
+        timer = setInterval(function () {
+          for (const [id, t] of seen) if (Date.now() - t > 4000) { seen.delete(id); all.delete(id); gone.add(id); }
+        }, 1000);
+      },
+      others() { return [...all.values()]; },
+      send(obj) { if (ch) ch.postMessage({ f: me, g: obj }); },
+      close() { clearInterval(timer); if (ch) { ch.postMessage({ f: me, bye: true }); ch.close(); } ch = null; },
+    };
+  }
+
+  function make(asHost) {
+    if (kind === "room") return roomImpl();
+    if (kind === "local") return localImpl();
+    return peerImpl(asHost);
+  }
+
+  async function start(asHost, wanted) {
+    if (impl) api.leave();
+    st = "connecting"; err = ""; inbox = new Map(); gone = new Set();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      code = wanted || randomCode();
+      impl = make(asHost);
+      try {
+        await impl.open(PREFIX + code.toLowerCase());
+      } catch (e) {
+        if (impl) { try { impl.close(); } catch (x) {} impl = null; }
+        if (asHost && String(e && e.message) === "taken") continue;
+        if (st !== "error") fail("Couldn't go online: " + (e && e.message ? e.message : e));
+        return;
+      }
+      if (st === "error") return;
+      // Hosting: make sure nobody already hosts this code. Joining: wait for the host.
+      const deadline = Date.now() + (asHost ? (kind === "peer" ? 0 : 1500) : 10000);
+      while (Date.now() < deadline && st === "connecting") {
+        if (hostSeen()) break;
+        await new Promise(function (r) { setTimeout(r, 200); });
+      }
+      if (st !== "connecting") return;
+      if (asHost) {
+        if (hostSeen()) { impl.close(); impl = null; continue; }
+        st = "host";
+      } else if (hostSeen() || kind === "peer") {
+        st = "client";
+      } else {
+        fail("No game with code " + code + " - check the code, or ask the host to open theirs.");
+      }
+      return;
+    }
+    fail("Couldn't find a free game code - try again.");
+  }
+
+  const api = {
+    available: function () { return kind; },
+    info: function () { return { kind: kind, st: st, code: code, me: me, err: err }; },  // for the page / tests (doesn't drain)
+    host: function () { start(true, ""); },
+    join: function (c) { start(false, String(c).toUpperCase()); },
+    leave: function () { if (impl) impl.close(); impl = null; st = "idle"; code = ""; inbox = new Map(); gone = new Set(); },
+    send: function (json) {
+      if (!impl || (st !== "host" && st !== "client" && st !== "connecting")) return;
+      try { impl.send(JSON.parse(json)); } catch (e) {}
+    },
+    poll: function () {
+      const out = { st: st, err: err, code: code, me: me, in: [...inbox.entries()], gone: [...gone] };
+      inbox = new Map(); gone = new Set();
+      return JSON.stringify(out);
+    },
+  };
+
+  // Which transport this page can use.
+  if (/[?&]net=local\b/.test(location.search)) kind = "local";
+  else if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("room").then(function (r) { roomApi = r; kind = r ? "room" : ""; }, function () { kind = ""; });
+  } else kind = (window.RTCPeerConnection && window.WebSocket) ? "peer" : "";
+  return api;
+})();
+</script>
 
 <script>
 (function () {

@@ -13,11 +13,15 @@ const BODY_SIZE := Vector2(36, 60)
 const LEDGE_PROBE := 6.0      ## px past our side where ledges are looked for
 const LEDGE_STEP := 2.0       ## px resolution of the ledge-top search
 const CLIMB_FORWARD := 28.0   ## px we end up past the ledge edge after climbing
+const PUPPET_SNAP := 96.0     ## px: an online puppet further than this from its owner's spot teleports
 
 @export var tuning: PlayerTuning = preload("res://player/tuning/player_default.tres")
 
 var slot := 0
 var input: PlayerInput
+## Online: a friend's dreamer. It doesn't simulate; it replays what their browser
+## streams (Net.puppet_sample) and never gets hurt here - their browser decides that.
+var remote := false
 var character: CharacterDef = preload("res://characters/mumbleby.tres")
 var player_color := Color.WHITE  ## = character.main_color; for HUD / UI tinting
 var facing := 1
@@ -111,6 +115,10 @@ func _ready() -> void:
 	_build_character()
 	state_machine.setup(self)
 	state_machine.start(&"Fall")
+	if remote:
+		state_machine.puppet = true
+		platform_floor_layers = 0  # it goes where its owner says, not where platforms carry it
+		($Visual/Tag as Label).text = "P%d" % (slot + 1)
 
 
 ## Swap costume at runtime (wardrobe, character select). Cosmetic only.
@@ -131,6 +139,9 @@ func _build_character() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if remote:
+		_puppet_step(delta)
+		return
 	_update_timers(delta)
 	state_machine.physics_update(delta)
 	_update_sprint(delta)
@@ -634,7 +645,7 @@ func try_drop_through() -> bool:
 # --- Damage / co-op ----------------------------------------------------------
 
 func hurt() -> void:
-	if is_bubbled() or invulnerable_timer > 0.0:
+	if remote or is_bubbled() or invulnerable_timer > 0.0:
 		return
 	state_machine.transition_to(&"Bubble")
 	EventBus.player_died.emit(self)
@@ -689,7 +700,7 @@ func _check_head_bounce() -> void:
 
 
 func revive(pop := true) -> void:
-	if not is_bubbled():
+	if remote or not is_bubbled():
 		return
 	glide_armed = false
 	invulnerable_timer = tuning.revive_invulnerability
@@ -700,6 +711,8 @@ func revive(pop := true) -> void:
 
 ## Level complete: cheer (ignores input from now on).
 func celebrate() -> void:
+	if remote:
+		return
 	if is_bubbled():
 		revive(false)
 	state_machine.transition_to(&"Victory")
@@ -734,21 +747,32 @@ func hit_with_punch_area(knockback: Vector2, already: Array[Node]) -> Array[Node
 		if body == self or body in already:
 			continue
 		if body.has_method("take_hit"):
-			body.take_hit(self, knockback)
+			strike(body, knockback)
 			already.append(body)
 			hit.append(body)
 			punch_hit(body)
 	for area in punch_area.get_overlapping_areas():
 		if area.has_method("take_hit") and not area in already:
-			area.take_hit(self, knockback)  # switches and other punchable areas
+			strike(area, knockback)  # switches and other punchable areas
 			already.append(area)
 			hit.append(area)
 			punch_hit(area)
 			continue
 		var target := area.get_parent()
 		if target is Player and target != self and target.is_bubbled():
-			target.revive()
+			if target.remote:
+				Net.relay_revive(target.slot)  # their browser pops it
+			else:
+				target.revive()
 	return hit
+
+
+## Hit something (punch, slide kick, pound). Online, a local dreamer's hits are
+## sent to the friends' browsers so the same thing gets hit there too.
+func strike(target: Node, knockback: Vector2) -> void:
+	target.take_hit(self, knockback)
+	if not remote and Net.is_online():
+		Net.relay_hit(self, target, knockback)
 
 
 # --- Visual hooks (swap for AnimationPlayer / Skeleton2D later) --------------
@@ -819,6 +843,8 @@ func _update_visual(delta: float) -> void:
 
 ## Reversing hard on the ground (heels dug in).
 func is_skidding() -> bool:
+	if remote:
+		return _puppet_skid
 	return is_on_floor() and absf(velocity.x) > tuning.skid_speed and input.move_x() * signf(velocity.x) < -0.3
 
 
@@ -887,3 +913,116 @@ func _update_timers(delta: float) -> void:
 				if is_instance_valid(b):
 					remove_collision_exception_with(b)
 			_dropped_through.clear()
+
+
+# --- Online (Net) ------------------------------------------------------------------
+
+var _puppet_skid := false
+var _puppet_floor := false
+var _puppet_punching := false
+var _puppet_balloon := false
+var _puppet_parachute := false
+
+
+## What friends' browsers need to show this dreamer (see _puppet_step for the layout).
+func net_state() -> Array:
+	var flags := 0
+	if is_on_floor(): flags |= 1
+	if crouched: flags |= 2
+	if rig.gliding: flags |= 4
+	if rig.punching: flags |= 8
+	if rig.punch_up: flags |= 16
+	if is_skidding(): flags |= 32
+	if _has_balloon: flags |= 64
+	if parachute: flags |= 128
+	if invulnerable_timer > 0.0: flags |= 256
+	return [snappedf(global_position.x, 0.1), snappedf(global_position.y, 0.1),
+			roundf(velocity.x), roundf(velocity.y), facing,
+			state_machine.index_of(state_machine.current_name()), flags,
+			snappedf(sprint, 0.01), snappedf(rig.punch_charge, 0.01), snappedf(body_rotation, 0.01),
+			roundf(rig.punch_target.x), roundf(rig.punch_target.y), snappedf(rig.punch_power, 0.01),
+			rig.pound_phase, snappedf(rig.ledge_climb, 0.01), roundf(rig.ledge_lip),
+			snappedf(rig.swing_speed, 0.01), snappedf(rig.pound_spin, 0.01)]
+
+
+## A friend's dreamer: follow their streamed state, pose the rig, and fire the
+## same EventBus signals a local move would (sounds, dust, bubbles).
+func _puppet_step(delta: float) -> void:
+	var s := Net.puppet_sample(slot)
+	if s.size() < 18:
+		_update_visual(delta)
+		return
+	var flags := int(s[6])
+	_puppet_transition(state_machine.name_at(int(s[5])), flags, float(s[12]))
+	facing = 1 if float(s[4]) >= 0.0 else -1
+	set_crouched(flags & 2 != 0)
+	var target := Vector2(float(s[0]), float(s[1]))
+	var err := target - global_position
+	if err.length() > PUPPET_SNAP or is_bubbled():
+		global_position = target
+	else:
+		# Move there as a body, so floors, crumbling platforms and seesaws feel them.
+		velocity = err / maxf(delta, 0.001)
+		if flags & 1 and absf(err.y) < 12.0:
+			velocity.y = 60.0  # standing: settle onto our own floor so is_on_floor() holds
+		move_and_slide()
+	velocity = Vector2(float(s[2]), float(s[3]))
+	sprint = float(s[7])
+	body_rotation = float(s[9])
+	rig.gliding = flags & 4 != 0
+	rig.punching = flags & 8 != 0
+	rig.punch_up = flags & 16 != 0
+	rig.punch_charge = float(s[8])
+	rig.punch_target = Vector2(float(s[10]), float(s[11]))
+	rig.punch_power = float(s[12])
+	rig.pound_phase = int(s[13])
+	rig.ledge_climb = float(s[14])
+	rig.ledge_lip = float(s[15])
+	rig.swing_speed = float(s[16])
+	rig.pound_spin = float(s[17])
+	_puppet_skid = flags & 32 != 0
+	invulnerable_timer = (0.2 + fposmod(-Time.get_ticks_msec() / 1000.0, 1.0)) if flags & 256 else 0.0
+	var balloon := flags & 64 != 0
+	if _puppet_balloon and not balloon:
+		pop_balloon()
+	_puppet_balloon = balloon
+	var chute := flags & 128 != 0
+	if _puppet_parachute and not chute:
+		drop_parachute()
+	_puppet_parachute = chute
+	_update_visual(delta)
+
+
+func _puppet_transition(to: StringName, flags: int, power: float) -> void:
+	var from := state_machine.puppet_name
+	var on_floor := flags & 1 != 0
+	if on_floor and not _puppet_floor and from != &"Bubble":
+		squash(tuning.hard_land_squash if from == &"GroundPound" else Vector2(1.1, 0.92))
+		if from == &"GroundPound" or to == &"GroundPound":
+			EventBus.player_ground_pounded.emit(self, global_position)
+		else:
+			EventBus.player_landed.emit(self)
+	_puppet_floor = on_floor
+	var punching := flags & 8 != 0
+	if punching and not _puppet_punching:
+		EventBus.player_punched.emit(self, power)
+	_puppet_punching = punching
+	if to == from:
+		return
+	state_machine.puppet_name = to
+	if from == &"Bubble":
+		set_bubbled_physics(false)
+		EventBus.player_revived.emit(self)
+	match to:
+		&"Jump":
+			squash(tuning.jump_stretch)
+			EventBus.player_jumped.emit(self)
+		&"Bubble":
+			set_bubbled_physics(true)
+			EventBus.player_died.emit(self)
+		&"Slide":
+			EventBus.player_slid.emit(self)
+		&"LedgeHang":
+			EventBus.player_ledge_grabbed.emit(self)
+		&"WallRun":
+			EventBus.player_wall_ran.emit(self)

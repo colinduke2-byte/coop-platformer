@@ -57,7 +57,7 @@ func _ready() -> void:
 ## is always released by _process from the wall clock (never stuck in slow-mo),
 ## capped at hit_stop_max seconds however many hits pile up.
 func hit_stop(duration: float) -> void:
-	if not hit_stop_enabled or duration <= 0.0:
+	if not hit_stop_enabled or duration <= 0.0 or Net.is_online():  # online, everyone's clock must keep running
 		return
 	var now := Time.get_ticks_usec()
 	var until := now + int(minf(duration, hit_stop_max) * 1000000.0)

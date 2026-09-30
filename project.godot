@@ -22,6 +22,7 @@ InputRouter="*res://core/input_router.gd"
 GameManager="*res://core/game_manager.gd"
 Vfx="*res://vfx/vfx.gd"
 Audio="*res://core/audio_manager.gd"
+Net="*res://core/net.gd"
 
 [display]
 

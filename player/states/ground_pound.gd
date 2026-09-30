@@ -86,7 +86,7 @@ func _land() -> void:
 		var c := player.get_slide_collision(i).get_collider()
 		if c and c.has_method("take_hit") and not c in _already_hit:
 			_already_hit.append(c)
-			c.take_hit(player, Vector2(0.0, -200.0))
+			player.strike(c, Vector2(0.0, -200.0))
 			player.punch_hit(c)
 	# Shockwave: knock out grounded enemies close by.
 	for e in player.get_tree().get_nodes_in_group(&"enemies"):
@@ -96,5 +96,5 @@ func _land() -> void:
 		var d := n.global_position - player.global_position
 		if absf(d.x) <= t.ground_pound_radius and absf(d.y) <= 40.0:
 			_already_hit.append(n)
-			n.take_hit(player, Vector2(signf(d.x) * 250.0, -350.0))
+			player.strike(n, Vector2(signf(d.x) * 250.0, -350.0))
 	EventBus.player_ground_pounded.emit(player, player.global_position)

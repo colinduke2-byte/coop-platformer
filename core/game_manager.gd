@@ -94,6 +94,22 @@ func spawn_player(slot: int, at := Vector2.INF) -> Player:
 	return p
 
 
+## Online: a friend's dreamer (a puppet their browser drives), at `at`.
+func spawn_remote(slot: int, at: Vector2) -> Player:
+	if level == null:
+		return null
+	if players.has(slot) and is_instance_valid(players[slot]):
+		return players[slot]
+	var p: Player = PLAYER_SCENE.instantiate()
+	p.setup(slot, character_for(slot))
+	p.remote = true
+	p.position = level.players_root.to_local(at)
+	level.players_root.add_child(p)
+	players[slot] = p
+	EventBus.player_joined.emit(p)
+	return p
+
+
 ## The slot's picked character, or the default for that slot if none was picked.
 func character_for(slot: int) -> CharacterDef:
 	if chosen_characters.has(slot):

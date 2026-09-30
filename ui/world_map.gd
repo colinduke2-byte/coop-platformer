@@ -59,7 +59,7 @@ func _ready() -> void:
 			if nodes[i]["unlocked"] and not nodes[i]["bonus"] and not nodes[i].has("gate"):
 				index = i
 	_gang_pos = nodes[index]["pos"]
-	var slots := InputRouter.get_bound_slots()
+	var slots := Net.all_slots() if Net.is_online() else InputRouter.get_bound_slots()
 	if slots.is_empty():
 		slots = [0]
 	for k in slots.size():
@@ -74,6 +74,12 @@ func _ready() -> void:
 	_refresh_panel()
 	if LevelCatalog.dev_unlock:
 		_show_toast("Dev: everything unlocked (F9 to undo)")
+	if Net.is_online():
+		# The host's save decides what's open; friends ride along.
+		for n in nodes:
+			n["unlocked"] = n["unlocked"] or Net.is_client()
+		if Net.is_client():
+			_show_toast("The host picks the level - enjoy the ride!")
 	Audio.play_music("worldmap" if world == "w1" else "gondola")
 
 
@@ -185,6 +191,12 @@ func _process(delta: float) -> void:
 			_refresh_panel()
 		_update_gang(delta)
 		return
+	if Net.is_client():
+		_follow_host_cursor()
+		_update_gang(delta)
+		return
+	if Net.is_host():
+		Net.map_index = index
 	_menu.poll()
 	if _menu.right:
 		_try_walk(index + 1)
@@ -203,9 +215,24 @@ func _process(delta: float) -> void:
 	_update_gang(delta)
 
 
+## Online friends: walk to wherever the host's gang is standing.
+func _follow_host_cursor() -> void:
+	_menu.poll(false)
+	if _menu.pause:
+		_controls = CanvasLayer.new()
+		_controls.layer = 20
+		_controls.add_child(ControlsCard.overlay())
+		add_child(_controls)
+		return
+	var target := int(Net.host_value("mi", -1))
+	if target < 0 or target >= nodes.size() or target == index:
+		return
+	_try_walk(index + signi(target - index))
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	# Dev shortcut: F9 opens every level, world and outfit (this session only).
-	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F9:
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F9 and not Net.is_client():
 		LevelCatalog.dev_unlock = not LevelCatalog.dev_unlock
 		last_index[world] = index
 		GameManager.goto_scene(GameManager.WORLD_MAP)

@@ -53,8 +53,9 @@ func _physics_process(delta: float) -> void:
 
 func _go() -> void:
 	var dest := get_node_or_null(target) as Node2D
-	if dest == null:
+	if dest == null or _busy:
 		return
+	Net.relay_call(self, "_go")  # online: the whole team goes through, on every screen
 	_busy = true
 	var fade := ColorRect.new()
 	fade.color = Color(0.05, 0.02, 0.1, 0.0)
