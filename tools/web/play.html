@@ -79,8 +79,12 @@
 window.dreamNet = (function () {
   const PREFIX = "dreamers-";
   const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const PEERJS = ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js",
+  // PeerJS ships next to this page (peerjs.min.js); the CDNs are a fallback.
+  const PEERJS = ["peerjs.min.js", "https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js",
                   "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
+  // ?peerhost=127.0.0.1&peerport=9000 points at a private PeerJS server (testing); default = the free PeerJS cloud.
+  const q = new URLSearchParams(location.search);
+  const PEER_OPTS = q.get("peerhost") ? { host: q.get("peerhost"), port: Number(q.get("peerport") || 9000), path: "/", secure: false, debug: 1 } : { debug: 1 };
   let kind = "pending";
   let why = "";   // when online play is unavailable: the reason (shown by the game's online menu)
   let intent = "";  // what the start page asked for ({"a":"host"} / {"a":"join","c":"ABCD"}); the game takes it once
@@ -144,26 +148,33 @@ window.dreamNet = (function () {
       async open(name) {
         if (!window.Peer) await loadScript(PEERJS);
         await new Promise(function (ok, bad) {
-          peer = asHost ? new window.Peer(name) : new window.Peer();
+          peer = asHost ? new window.Peer(name, PEER_OPTS) : new window.Peer(PEER_OPTS);
+          // The signalling link can drop while playing; reconnect so more friends can still join.
+          peer.on("disconnected", function () { if (peer && !peer.destroyed) setTimeout(function () { try { peer.reconnect(); } catch (e) {} }, 1000); });
           peer.on("open", function (id) { if (!asHost) me = id; ok(); });
           peer.on("error", function (e) {
             if (e.type === "unavailable-id") bad(new Error("taken"));
-            else if (e.type === "peer-unavailable") fail("No game with code " + code + " - check the code, or ask the host to open theirs.");
-            else if (st === "connecting") bad(e);
-            else fail("Online connection problem (" + e.type + ").");
+            else if (e.type === "peer-unavailable") fail("No game with code " + code + " - check the code, and that the host still has the game open.");
+            else if (st === "connecting") bad(new Error(e.type === "browser-incompatible" ? "this browser can't do online play" : "the online server didn't answer (" + e.type + ")"));
+            // Once playing, a signalling hiccup doesn't matter: friends are connected directly (and it reconnects).
           });
           if (asHost) {
             peer.on("connection", function (c) {
               c.on("open", function () { conns.set(c.peer, c); });
               c.on("data", function (g) { if (g && typeof g === "object") { all.set(c.peer, g); inbox.set(c.peer, g); relay(c.peer, g, c.peer); } });
+              c.on("error", function () {});
               c.on("close", function () { conns.delete(c.peer); all.delete(c.peer); gone.add(c.peer); relay(c.peer, null, c.peer); for (const [, o] of conns) if (o.open) o.send({ f: c.peer, bye: true }); });
             });
           }
         });
         if (asHost) { me = name; return; }
         await new Promise(function (ok) {
+          setTimeout(function () {
+            if (st === "connecting") fail("Found game " + code + " but couldn't connect to it. A strict network (school/work Wi-Fi) can block this - try another network or a phone hotspot.");
+          }, 15000);
           toHost = peer.connect(name, { reliable: true });
           toHost.on("open", ok);
+          toHost.on("error", function () { if (st === "connecting") fail("Couldn't connect to game " + code + ". Try again, or try another network."); });
           toHost.on("data", function (m) {
             if (!m || !m.f) return;
             if (m.bye) { all.delete(m.f); gone.add(m.f); return; }
