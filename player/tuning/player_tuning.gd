@@ -40,6 +40,9 @@ extends Resource
 @export var stomp_bounce_multiplier := 1.0  ## bounce off enemies (hold jump), fraction of jump velocity
 @export var stomp_cut_multiplier := 0.72    ## tap bounce keeps this much speed (normal jumps cut harder)
 @export var teammate_bounce_multiplier := 0.9  ## land on a teammate's head: boing
+@export var stomp_chain_bonus := 0.05       ## each extra stomp without landing bounces this much higher (x jump velocity)
+@export var stomp_chain_max_bonus := 0.25
+@export var stomp_chain_lum_from := 3       ## from this many chained stomps on, each stomp pops a bonus Lum
 
 enum GlideMode {
 	HOLD_THROUGH,     ## keep holding jump past the apex -> glide (no second press)
@@ -160,6 +163,8 @@ enum GlideMode {
 @export var punch_charged_knockback_multiplier := 1.8
 @export var punch_charge_move_scale := 0.2  ## run speed fraction while charging on the ground
 @export var uppercut_lift := 560.0          ## UP + punch in the air: upward kick, once per airtime
+@export var air_punch_fall_cap := 110.0     ## px/s: punching in the air briefly slows your fall (hit flyers!)
+@export var air_charge_fall_cap := 260.0    ## px/s while charging a punch in the air
 
 @export_group("Bubble / revive")
 @export var bubble_steer_speed := 160.0

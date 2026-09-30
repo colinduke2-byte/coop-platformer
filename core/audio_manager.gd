@@ -166,6 +166,7 @@ func _connect_events() -> void:
 	E.breakable_broken.connect(_on_broken)
 	E.lum_collected.connect(_on_lum)
 	E.gem_collected.connect(func(_i: int, _s: int, _pos: Vector2) -> void: play("gem", -2.0, 1.0, 0.0))
+	E.stomp_chain.connect(func(_p: Player, n: int) -> void: play("lum", -2.0, 1.0 + 0.12 * mini(n, 8), 0.0))
 	E.snoozling_rescued.connect(func(_pos: Vector2) -> void:
 		play("break", -4.0, 1.2)
 		play("gem", 0.0, 1.25, 0.0))

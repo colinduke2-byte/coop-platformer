@@ -47,6 +47,7 @@ func _ready() -> void:
 	EventBus.player_splashed.connect(_on_splashed)
 	EventBus.cannon_fired.connect(_on_cannon_fired)
 	EventBus.secret_found.connect(_on_secret_found)
+	EventBus.stomp_chain.connect(_on_stomp_chain)
 
 
 # --- Public ----------------------------------------------------------------------
@@ -357,3 +358,35 @@ static func _star(radius: float, points := 4, inner := 0.4) -> PackedVector2Arra
 		var rr := radius if i % 2 == 0 else radius * inner
 		pts.append(Vector2(cos(a) * rr, sin(a) * rr))
 	return pts
+
+
+## Floating text that pops up and drifts away (combo counters, "SECRET!"...).
+func text(pos: Vector2, msg: String, color := Color.WHITE, size := 34) -> void:
+	var l := Label.new()
+	l.text = msg
+	l.add_theme_font_size_override(&"font_size", size)
+	l.add_theme_color_override(&"font_color", color)
+	l.add_theme_color_override(&"font_outline_color", Color("1d1726"))
+	l.add_theme_constant_override(&"outline_size", 8)
+	l.z_index = 60
+	l.position = pos - Vector2(size * 0.8, size * 0.6)
+	l.scale = Vector2(0.4, 0.4)
+	l.pivot_offset = Vector2(size * 0.8, size * 0.6)
+	_layer_for_world().add_child(l)
+	var tw := l.create_tween()
+	tw.tween_property(l, ^"scale", Vector2.ONE * 1.15, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, ^"scale", Vector2.ONE, 0.08)
+	tw.tween_property(l, ^"position:y", l.position.y - 60.0, 0.6).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(l, ^"modulate:a", 0.0, 0.35).set_delay(0.3)
+	tw.tween_callback(l.queue_free)
+
+
+func _layer_for_world() -> Node:
+	var scene := get_tree().current_scene
+	return scene if scene else get_tree().root
+
+
+func _on_stomp_chain(p: Player, count: int) -> void:
+	var cols := [Color("ffd23f"), Color("ff9e3f"), Color("ff5d8f"), Color("c58bff"), Color("5bc8ff")]
+	text(p.global_position + Vector2(0, -110), "x%d!" % count, cols[mini(count - 2, cols.size() - 1)], 30 + mini(count, 8) * 3)
+	sparkle(p.global_position + Vector2(0, -20), 4 + count, SPARK, 50.0)

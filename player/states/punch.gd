@@ -45,6 +45,12 @@ func physics_update(delta: float) -> void:
 	else:
 		player.apply_horizontal(delta, t.air_accel, t.air_decel, player.current_max_speed())
 	player.apply_gravity(delta)
+	if not player.is_on_floor():
+		# A little hang in the air while the punch comes out.
+		if _phase in [Phase.WINDUP, Phase.ACTIVE]:
+			player.velocity.y = minf(player.velocity.y, t.air_punch_fall_cap)
+		elif _phase == Phase.CHARGE:
+			player.velocity.y = minf(player.velocity.y, t.air_charge_fall_cap)
 
 	match _phase:
 		Phase.WINDUP:

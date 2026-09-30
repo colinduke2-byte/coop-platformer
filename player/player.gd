@@ -57,6 +57,7 @@ var zipline_regrab_timer := 0.0
 var balloon_timer := 0.0
 var _has_balloon := false
 var parachute := false     ## holding a dandelion puff: slow, steerable fall (see Dandelion)
+var stomp_chain := 0       ## enemies stomped since last touching the ground
 var _updraft_timer := 0.0
 var _sprint_build := 0.0
 var _tap_dir := 0          ## direction of the last fresh stick/key press (double-tap sprint)
@@ -640,6 +641,22 @@ func hurt() -> void:
 
 
 ## Stomped an enemy: bounce. Holding jump bounces higher (Jump state cuts it otherwise).
+## An enemy was stomped: chain stomps without landing for bigger bounces,
+## "x2 x3..." pops and, from stomp_chain_lum_from, a bonus Lum each.
+func register_stomp() -> void:
+	stomp_chain += 1
+	var t := tuning
+	if stomp_chain >= 2:
+		var extra := minf((stomp_chain - 1) * t.stomp_chain_bonus, t.stomp_chain_max_bonus)
+		velocity.y = minf(velocity.y, velocity.y * (1.0 + extra))
+		EventBus.stomp_chain.emit(self, stomp_chain)
+	if stomp_chain >= t.stomp_chain_lum_from:
+		# load(), not preload(): lum.tscn refers back to Player (a cyclic preload breaks it).
+		var lum: Node2D = load("res://collectibles/lum.tscn").instantiate()
+		lum.position = global_position + Vector2(0, -90)
+		get_parent().add_child.call_deferred(lum)
+
+
 func bounce(multiplier := -1.0) -> void:
 	if multiplier < 0.0:
 		multiplier = tuning.stomp_bounce_multiplier
@@ -811,6 +828,7 @@ func _track_landing() -> void:
 		_fall_speed = maxf(_fall_speed, velocity.y)
 	elif not _was_on_floor:
 		uppercut_used = false
+		stomp_chain = 0
 		if _fall_speed >= tuning.hard_land_speed:
 			squash(tuning.hard_land_squash)
 			EventBus.player_hard_landed.emit(self, _fall_speed)

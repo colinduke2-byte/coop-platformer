@@ -146,6 +146,7 @@ func _check_contacts(delta: float) -> void:
 			if stompable:
 				p.bounce(stomp_bounce)
 				_on_stomped(p)
+				p.register_stomp()
 			else:
 				p.hurt()
 			continue

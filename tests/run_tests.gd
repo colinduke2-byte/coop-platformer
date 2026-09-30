@@ -3383,3 +3383,38 @@ func test_w1_6_tower_climb_reaches_the_roof() -> void:
 		await frames(6)
 	check(p.global_position.y < -1390.0 and p.global_position.x > 4700.0, "you should reach the roof (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+# --- Mechanics polish ----------------------------------------------------------------
+
+func test_air_punch_slows_your_fall() -> void:
+	var p := add_player(0, Vector2(0, -900))
+	await seconds(0.5)
+	check(p.velocity.y > 400.0, "should be falling fast first (vy %.0f)" % p.velocity.y)
+	await _punch()
+	await frames(3)
+	check(p.velocity.y <= p.tuning.air_punch_fall_cap + 1.0, "an air punch should brake the fall (vy %.0f)" % p.velocity.y)
+
+
+func test_stomp_chain_bounces_higher_and_pays_lums() -> void:
+	var p := add_player(0, Vector2(0, -600))
+	await frames(2)
+	p.invulnerable_timer = 100.0
+	var lums0 := GameManager.lums
+	var heights: Array[float] = []
+	for i in 3:
+		p.velocity = Vector2(0, 600)
+		p.state_machine.transition_to(&"Fall")
+		p.bounce(0.85)
+		p.register_stomp()
+		heights.append(-p.velocity.y)
+	check(p.stomp_chain == 3, "three stomps without landing = a chain of 3 (%d)" % p.stomp_chain)
+	check(heights[2] > heights[0] + 10.0, "chained stomps should bounce higher (%s)" % [heights])
+	await frames(3)
+	var popped := 0
+	for c in get_tree().root.find_children("*", "", true, false):
+		if c is Lum:
+			popped += 1
+	check(popped >= 1, "the third chained stomp should pop a bonus Lum")
+	await seconds(2.0)
+	check(p.is_on_floor() and p.stomp_chain == 0, "landing resets the chain")

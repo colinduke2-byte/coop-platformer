@@ -11,6 +11,8 @@ var _timer: Label
 var _hint: Label
 var _banner: Label
 var _bump := 0.0
+var _debug: Label
+var _snooze: SnoozeIcon
 var _boss_box: Control
 var _boss_name: Label
 var _boss_bar: BossBar
@@ -48,6 +50,15 @@ func _ready() -> void:
 		var g := GemIcon.new(i, false, 40.0)
 		_gems.append(g)
 		top_right.add_child(g)
+	# World 1 levels: a little cage that fills in when you free the Snoozling.
+	var idx := LevelCatalog.index_of(GameManager.level.scene_file_path) if GameManager.level else -1
+	if idx != -1 and LevelCatalog.LEVELS[idx]["world"] == "w1":
+		_snooze = SnoozeIcon.new()
+		_snooze.freed = false
+		top_right.add_child(_snooze)
+		EventBus.snoozling_rescued.connect(func(_p: Vector2) -> void:
+			_snooze.freed = true
+			_snooze.queue_redraw())
 	_timer = UIStyle.label("0:00.00", 34, Color.WHITE, 8)
 	_timer.custom_minimum_size.x = 160
 	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -83,6 +94,11 @@ func _ready() -> void:
 		_boss_box.visible = active
 		_boss_name.text = n
 		_boss_bar.set_health(hp, mx))
+
+	_debug = UIStyle.label("", 18, Color.WHITE, 6)
+	_debug.position = Vector2(32, 180)
+	_debug.visible = false
+	root.add_child(_debug)
 
 	EventBus.lums_changed.connect(_on_lums)
 	EventBus.player_joined.connect(func(_p: Player) -> void: _refresh_players.call_deferred())
@@ -121,7 +137,31 @@ func _process(delta: float) -> void:
 	_hint.visible = n < InputRouter.MAX_PLAYERS
 	_hint.text = ("Press SPACE (WASD), ENTER (arrows) or A (gamepad) to join" if n == 0
 			else "More friends can join anytime: SPACE / ENTER / A")
-	_hint.modulate.a = 1.0 if n == 0 else 0.55
+	# Once someone's playing, the join reminder fades after a few seconds.
+	_hint.modulate.a = 1.0 if n == 0 else clampf(1.0 - (GameManager.level_time - 5.0) / 1.5, 0.0, 0.55)
+	if _debug.visible:
+		_debug.text = _debug_text()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var k := event as InputEventKey
+	if k and k.pressed and not k.echo and k.physical_keycode == KEY_F3:
+		_debug.visible = not _debug.visible
+
+
+## F3 overlay: numbers for tuning feel (see player/tuning/player_default.tres).
+func _debug_text() -> String:
+	var lines := PackedStringArray()
+	lines.append("FPS %d   draw calls %d   nodes %d" % [Engine.get_frames_per_second(),
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.OBJECT_NODE_COUNT)])
+	for slot: int in GameManager.players:
+		var p: Player = GameManager.players[slot]
+		if not is_instance_valid(p):
+			continue
+		lines.append("P%d %-10s v(%5.0f,%5.0f) floor %s  sprint %.2f  coyote %.2f  buffer %.2f  chain %d%s" % [
+				slot + 1, p.state_machine.current_name(), p.velocity.x, p.velocity.y, "Y" if p.is_on_floor() else "n",
+				p.sprint, p.coyote_timer, p.jump_buffer_timer, p.stomp_chain, "  PARACHUTE" if p.parachute else ""])
+	return "\n".join(lines)
 
 
 func _refresh_players() -> void:
@@ -185,3 +225,23 @@ class BossBar extends Control:
 			var x := 4.0 + w * i / max_hp
 			draw_line(Vector2(x, 4), Vector2(x, size.y - 4), Color(0.1, 0.06, 0.14), 3.0)
 		draw_rect(r, UIStyle.OUTLINE, false, 4.0)
+
+
+
+## The Snoozling cage icon (World 1): empty cage until rescued.
+class SnoozeIcon extends Control:
+	var freed := false
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(44, 44)
+
+	func _draw() -> void:
+		var c := Vector2(22, 24)
+		if freed:
+			SnoozlingCage.draw_snoozling(self, c + Vector2(0, 16), Color("ffb3d9"), 0.0, false)
+		else:
+			draw_circle(c, 14.0, Color(1, 1, 1, 0.25))
+			for i in 4:
+				var x := c.x - 12.0 + i * 8.0
+				draw_line(Vector2(x, c.y - 14), Vector2(x, c.y + 14), Color(1, 1, 1, 0.7), 3.0)
+			draw_line(Vector2(c.x - 16, c.y - 15), Vector2(c.x + 16, c.y - 15), Color(1, 1, 1, 0.8), 4.0)

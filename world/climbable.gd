@@ -12,6 +12,7 @@ extends Area2D
 @export var auto_grab := true               ## grab on touch while airborne (else need UP)
 
 var _t := 0.0
+var _mesh: ArrayMesh
 var _col: CollisionShape2D
 
 
@@ -33,6 +34,7 @@ func _rebuild() -> void:
 	shape.size = size
 	_col.shape = shape
 	_col.position = size * 0.5
+	_mesh = null
 	queue_redraw()
 
 
@@ -60,7 +62,16 @@ func _physics_process(delta: float) -> void:
 				p.touch_climbable(self)
 
 
+## Baked into one mesh (vines and nets are static): one draw call.
 func _draw() -> void:
+	if _mesh == null:
+		var mp := MeshPainter.new()
+		_paint(mp)
+		_mesh = mp.build()
+	draw_mesh(_mesh, null)
+
+
+func _paint(c: MeshPainter) -> void:
 	var th := LevelTheme.find(self)
 	if is_vine():
 		var x := size.x * 0.5
@@ -68,23 +79,23 @@ func _draw() -> void:
 		for i in int(size.y / 12.0) + 1:
 			var y := i * 12.0
 			pts.append(Vector2(x + sin(y * 0.05) * 5.0, y))
-		draw_polyline(pts, th.outline, 12.0)
-		draw_polyline(pts, th.foliage_dark, 8.0)
+		c.draw_polyline(pts, th.outline, 12.0)
+		c.draw_polyline(pts, th.foliage_dark, 8.0)
 		for i in int(size.y / 40.0):
 			var y := 20.0 + i * 40.0
 			var s := 1.0 if i % 2 == 0 else -1.0
-			Art.shape(self, Art.ellipse(Vector2(x + s * 12.0, y), 10, 5, 10), th.foliage, th.outline, 2.0)
+			Art.shape(c, Art.ellipse(Vector2(x + s * 12.0, y), 10, 5, 10), th.foliage, th.outline, 2.0)
 	else:
 		var rope := Color("c9a06b")
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.08))
+		c.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.08))
 		var step := 36.0
 		var x := 0.0
 		while x <= size.x:
-			draw_line(Vector2(x, 0), Vector2(x, size.y), th.outline, 6.0)
-			draw_line(Vector2(x, 0), Vector2(x, size.y), rope, 3.0)
+			c.draw_line(Vector2(x, 0), Vector2(x, size.y), th.outline, 6.0)
+			c.draw_line(Vector2(x, 0), Vector2(x, size.y), rope, 3.0)
 			x += step
 		var y := 0.0
 		while y <= size.y:
-			draw_line(Vector2(0, y), Vector2(size.x, y), th.outline, 6.0)
-			draw_line(Vector2(0, y), Vector2(size.x, y), rope, 3.0)
+			c.draw_line(Vector2(0, y), Vector2(size.x, y), th.outline, 6.0)
+			c.draw_line(Vector2(0, y), Vector2(size.x, y), rope, 3.0)
 			y += step
