@@ -162,7 +162,7 @@ position = Vector2(1260, -30)
 
 [node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(1420, 0)
+position = Vector2(1591.75, 0)
 text = "PUFFCAPS puff spores. Wait for a gap,\nor punch them while they snooze."
 width = 400
 
@@ -379,7 +379,7 @@ position = Vector2(5250, 0)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(5380, 0)
+position = Vector2(5548, 0)
 text = "GEYSERS launch you up. Watch the\nstalactites overhead!"
 width = 380
 
@@ -476,7 +476,7 @@ energy = 0.8
 color = Color(0.75, 0.55, 1, 1)
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("11")]
-position = Vector2(6700, -1100)
+position = Vector2(6620, -1100)
 
 [node name="Water1" type="Area2D" parent="Toys"]
 script = ExtResource("21")
@@ -509,9 +509,9 @@ arc_height = 60
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(7000, -1100)
-text = "An underground lake. Dive in -\nsomething's glowing at the bottom."
-width = 380
+position = Vector2(6870, -1100)
+text = "Underground lake!\nDive in - something glows."
+width = 300
 
 [node name="Deco15" type="Node2D" parent="Decor"]
 script = ExtResource("8")

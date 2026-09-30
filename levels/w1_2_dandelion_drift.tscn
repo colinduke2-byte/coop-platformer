@@ -159,7 +159,7 @@ position = Vector2(2700, -80)
 
 [node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("8")
-position = Vector2(2780, -80)
+position = Vector2(3065.5, -80)
 text = "Glide into the updraft (press JUMP\nagain in the air) - or float in on a puff!"
 width = 420
 
@@ -222,7 +222,7 @@ wind = Vector2(140, 0)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("8")
-position = Vector2(4470, -500)
+position = Vector2(4738.5, -507.845)
 text = "Ride the puffs from island to island.\nLet go (JUMP) over the next dandelion!"
 width = 420
 
@@ -329,7 +329,7 @@ wind = Vector2(220, 0)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("8")
-position = Vector2(7840, -250)
+position = Vector2(8078, -250)
 text = "GALE VALLEY: grab the last puff\nand let the wind carry you home!"
 width = 400
 

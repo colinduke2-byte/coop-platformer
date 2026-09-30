@@ -68,7 +68,7 @@ L.gem(6310, -760)
 L.lums(5990, -680, 6380, -780, 5)
 L.lums(5500, -120, 6680, -120, 8)
 L.enemy("bumblebonk", 6050, -330)
-L.sign(5260, 0, "RAPIDS! The current is strong -\nhop the rocks (or ride the geyser up high).", 420)
+L.sign(4680, -560, "RAPIDS ahead! Hop the rocks\n(or ride the geyser up high).", 380)
 
 # ---- S4 the waterfall climb (6900..8400) -------------------------------------------------------
 L.checkpoint(7020, 0)

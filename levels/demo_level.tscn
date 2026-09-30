@@ -307,7 +307,7 @@ position = Vector2(4320, 0)
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(4520, 0)
+position = Vector2(4597.75, 0)
 text = "5. Hold DOWN to crawl.\nRunning + DOWN = belly slide!"
 width = 380
 
@@ -437,7 +437,7 @@ position = Vector2(8370, -960)
 
 [node name="Sign11" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(8600, -960)
+position = Vector2(8661.25, -960)
 text = "10. Bounce on mushrooms\n(hold JUMP = higher).\nFly into flower rings to SWING,\nJUMP to let go."
 width = 380
 
@@ -508,7 +508,7 @@ position = Vector2(10020, -960)
 
 [node name="Sign12" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(10250, -960)
+position = Vector2(10338.25, -960)
 text = "11. PUNCH: tap = jab,\nHOLD = charged punch (breaks iron).\nUP + punch = uppercut"
 width = 380
 
@@ -612,7 +612,7 @@ position = Vector2(11790, -960)
 
 [node name="Sign14" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(12000, -960)
+position = Vector2(12013.75, -960)
 text = "GRUMBLET:\nstomp it or punch it."
 width = 300
 
@@ -635,7 +635,7 @@ position = Vector2(12950, -960)
 
 [node name="Sign16" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(13150, -960)
+position = Vector2(13234.5, -960)
 text = "SHIELDBUG: hit it from behind,\nstomp it, or CHARGED punch\nthe shield."
 width = 320
 
@@ -667,7 +667,7 @@ size = Vector2(60, 560)
 
 [node name="Sign18" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(13890, -960)
+position = Vector2(13879, -960)
 text = "BONKHORN: dodge the charge -\ndizzy on walls? POUND it!"
 width = 280
 
@@ -696,7 +696,7 @@ targets = Array[NodePath]([NodePath("../../Toys/MovingPlatform2")])
 
 [node name="Sign19" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(14260, -960)
+position = Vector2(14333.75, -960)
 text = "13. PUNCH the switch\nto start the platform"
 width = 260
 
@@ -770,7 +770,7 @@ size = Vector2(550, 460)
 
 [node name="Sign21" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(16250, -960)
+position = Vector2(16304.5, -960)
 text = "15. SWIM: steer anywhere,\nJUMP = stroke,\nJUMP at the surface = leap out"
 width = 360
 
@@ -819,7 +819,7 @@ size = Vector2(40, 600)
 
 [node name="Sign22" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(17500, -960)
+position = Vector2(17554.25, -960)
 text = "16. Climb vines: UP / DOWN,\nJUMP to leap off"
 width = 340
 
@@ -835,7 +835,7 @@ position = Vector2(17950, -1560)
 
 [node name="Sign23" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(18190, -1560)
+position = Vector2(18261.5, -1560)
 text = "17. Hop in a barrel, JUMP to FIRE!"
 width = 380
 
@@ -876,7 +876,7 @@ position = Vector2(19395, -1560)
 
 [node name="Sign24" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(19660, -1560)
+position = Vector2(19699.75, -1560)
 text = "18. Slide down slopes:\nDOWN = belly slide. It gets FAST!"
 width = 400
 
@@ -944,7 +944,7 @@ position = Vector2(22180, -1260)
 
 [node name="Sign27" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(22380, -1260)
+position = Vector2(22444.25, -1260)
 text = "20. Watch out! Spike balls,\ncrushers and spikes."
 width = 360
 
@@ -975,7 +975,7 @@ size = Vector2(5900, 460)
 
 [node name="Sign28" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(23560, -1260)
+position = Vector2(23772.5, -1260)
 text = "21. TOYBOX EXTRAS! Grab a BALLOON to float up.\nSteer over the tower, PUNCH to pop it."
 width = 400
 
@@ -1188,7 +1188,7 @@ arc_height = 0
 
 [node name="Sign35" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(28200, -1260)
+position = Vector2(28244, -1260)
 text = "Is that mound hollow...?"
 width = 280
 

@@ -172,7 +172,7 @@ arc_height = 30
 
 [node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(1180, -40)
+position = Vector2(1041.75, -40)
 text = "Crumbling stones over the brambles.\nMind the swinging spikes!"
 width = 380
 
@@ -234,7 +234,7 @@ position = Vector2(3860, -40)
 
 [node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(3900, -40)
+position = Vector2(4151.25, -40)
 text = "The tower! Ride the lift, climb\nthe ledges... watch for ghosts."
 width = 380
 
@@ -326,7 +326,7 @@ position = Vector2(4850, -1400)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(4900, -1400)
+position = Vector2(5181.75, -1400)
 text = "BARON BRISTLEBACK! Jump his rolls,\nand STOMP him while he's on his back!"
 width = 420
 

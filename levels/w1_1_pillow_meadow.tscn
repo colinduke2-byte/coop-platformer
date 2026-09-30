@@ -327,7 +327,7 @@ size = 1.2
 
 [node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(3760, 0)
+position = Vector2(3951.25, 0)
 text = "SHELLBERT: stomp him, then kick\nthe shell into everything!"
 width = 400
 
@@ -445,7 +445,7 @@ height = 150
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(5950, -440)
+position = Vector2(6104.75, -440)
 text = "Jump into a DANDELION and float\nacross the valley. (JUMP lets go)"
 width = 400
 
@@ -516,7 +516,7 @@ polygon = PackedVector2Array(7700, -100, 8050, -100, 8120, -200, 8460, -200, 853
 seed_value = 89
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
-position = Vector2(7780, -100)
+position = Vector2(7730, -100)
 
 [node name="Diggle1" parent="Enemies" instance=ExtResource("20")]
 position = Vector2(8300, -200)
@@ -531,7 +531,7 @@ arc_height = 0
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(7880, -100)
+position = Vector2(8007.75, -100)
 text = "DIGGLE pops up to throw dirt.\nHit him while he's out!"
 width = 380
 
@@ -645,7 +645,7 @@ arc_height = 40
 
 [node name="Sign8" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(10560, -200)
+position = Vector2(10698.25, -223.895)
 text = "Nice! The Dream Gate is just ahead."
 width = 360
 

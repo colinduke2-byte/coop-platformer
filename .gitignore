@@ -2,3 +2,4 @@
 .godot/
 # Export output
 /build/
+__pycache__/

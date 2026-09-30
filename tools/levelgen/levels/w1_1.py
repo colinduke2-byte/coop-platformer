@@ -95,7 +95,7 @@ L.deco("hanging_vines", 6700, -110, 0.8)
 L.land([(7700, -100), (8050, -100), (8120, -200), (8460, -200), (8530, -100), (9300, -100), (9300, -220), (9460, -220)])
 
 # ---- S6 Diggle's hill + cracked wall (7700..9300) ---------------------------------------------
-L.checkpoint(7780, -100)
+L.checkpoint(7730, -100)
 L.enemy("diggle", 8300, -200)
 L.lums(8150, -280, 8430, -280, 4)
 L.sign(7880, -100, "DIGGLE pops up to throw dirt.\nHit him while he's out!", 380)

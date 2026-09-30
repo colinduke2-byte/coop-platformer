@@ -493,8 +493,47 @@ class LevelKit:
                 return
         raise KeyError(path)
 
+    def _ground_near(self, x, y, tol=40.0):
+        """y of the walkable top at x that is closest to y (within tol), else None."""
+        best = None
+        for poly in self.surfaces:
+            for (ax, ay), (bx, by) in zip(poly, poly[1:]):
+                if ax <= x <= bx and bx > ax:
+                    gy = ay + (by - ay) * (x - ax) / (bx - ax)
+                    if abs(gy - y) < tol and (best is None or abs(gy - y) < abs(best - y)):
+                        best = gy
+        return best
+
+    def _declutter(self):
+        """Signs and checkpoint lanterns placed on the same spot overlap (the lantern hides
+        the sign's text). Slide the SIGN (pure scenery) sideways until its board clears the
+        lantern (post at x-5, lamp out to x+50), keeping it on nearby ground; checkpoints
+        never move."""
+        nodes = self.s.nodes
+        cps = [n[3]["position"] for n in nodes if n[2] == "Checkpoints"]
+        for n in nodes:
+            if n[2] != "Signs":
+                continue
+            sp = n[3]
+            spos = sp["position"]
+            longest = max(len(l) for l in sp.get("text", "").split("\n"))
+            half = max(sp.get("width", 440.0), longest * 13.5 + 34) / 2
+            for pos in cps:
+                if abs(spos.y - pos.y) > 60 or spos.x - half > pos.x + 55 or spos.x + half < pos.x - 15:
+                    continue
+                side = 1 if spos.x >= pos.x else -1
+                for nx in ((pos.x + 55 + half + 10) if d > 0 else (pos.x - 15 - half - 10) for d in (side, -side)):
+                    gy = self._ground_near(nx, spos.y)
+                    if gy is not None:
+                        spos.x, spos.y = nx, gy
+                        break
+                else:
+                    print(f"  note: sign at {spos.x:.0f},{spos.y:.0f} overlaps a checkpoint")
+                break
+
     def finish(self, spawn, left=None, right=None, bottom=None, kill_y=None, script_props=None):
         s = self.s
+        self._declutter()
         left = self.min_x - 100 if left is None else left
         right = self.max_x + 200 if right is None else right
         bottom = self.max_y if bottom is None else bottom

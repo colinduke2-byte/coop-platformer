@@ -62,7 +62,7 @@ L.lums(5350, 150, 5650, 150, 4); L.lums(5850, 350, 6350, 350, 5)
 L.breakable(6380, 330, 60, 150, lums=0)
 L.gem(6450, 420)                             # behind the breakable reef
 L.ground(6500, 7000, 0)
-L.sign(5160, 0, "Soda lake - swim!\n(The current pushes you along.)", 340)
+L.sign(4800, 0, "Soda lake ahead - swim!\n(The current pushes you along.)", 340)
 L.deco("reeds", 5290, 0, front=True); L.deco("reeds", 6510, 0, front=True)
 
 # ---- S4 Boingo + bumper skyway (7000..7900) -------------------------------------------------------------

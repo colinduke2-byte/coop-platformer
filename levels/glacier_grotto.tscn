@@ -231,7 +231,7 @@ arc_height = 0
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(4650, 600)
+position = Vector2(4663.25, 600)
 text = "Sprint through!"
 width = 220
 
@@ -265,7 +265,7 @@ arc_height = 0
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(5850, 600)
+position = Vector2(6064.25, 600)
 text = "Wall jump up the ice shaft!"
 width = 300
 
@@ -344,7 +344,7 @@ position = Vector2(8700, 0)
 
 [node name="Sign7" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(8880, 0)
+position = Vector2(8984.5, 0)
 text = "Shh! The KING is napping...\nJump his shockwaves. Stomp him\nwhen he's dazed!"
 width = 380
 

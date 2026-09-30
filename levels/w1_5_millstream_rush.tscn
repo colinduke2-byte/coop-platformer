@@ -306,9 +306,9 @@ start_facing = -1
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(5260, 0)
-text = "RAPIDS! The current is strong -\nhop the rocks (or ride the geyser up high)."
-width = 420
+position = Vector2(4680, -560)
+text = "RAPIDS ahead! Hop the rocks\n(or ride the geyser up high)."
+width = 380
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(7020, 0)
@@ -356,7 +356,7 @@ size = Vector2(260, 180)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(6950, 0)
+position = Vector2(7358.5, 1.5673)
 text = "Climb the net beside the falls.\n(Is there something behind the water?)"
 width = 380
 
@@ -407,7 +407,7 @@ arc_height = 0
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(7700, -1100)
+position = Vector2(7804.5, -1100)
 text = "The calm upper pond. The dam's\nzipline is the quick way home!"
 width = 380
 
