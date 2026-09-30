@@ -103,10 +103,28 @@ func _bake() -> ArrayMesh:
 			var r := rng.randf_range(3.0, 7.0)
 			mp.draw_colored_polygon(Art.ellipse(p, r * 1.4, r, 10), th.ground_dark)
 			mp.draw_colored_polygon(Art.ellipse(p + Vector2(-1, -1), r * 0.6, r * 0.4, 8), th.ground.lightened(0.15))
+	# A lighter rim just inside the outline: solid ground reads clearly even
+	# against busy or dark backgrounds.
+	for rim in Geometry2D.offset_polygon(pts, -6.0, Geometry2D.JOIN_ROUND):
+		var rc := rim.duplicate()
+		rc.append(rim[0])
+		mp.draw_polyline(rc, th.ground.lightened(0.22), 3.0)
 	# Outline.
 	var closed := pts.duplicate()
 	closed.append(pts[0])
 	mp.draw_polyline(closed, th.outline, Block.OUTLINE_W)
+	# Moss drips under ceilings and overhangs.
+	for i in pts.size():
+		var a := pts[i]
+		var b := pts[(i + 1) % pts.size()]
+		if _normal(a, b).y > 0.7:
+			var l := a.distance_to(b)
+			var k := 0.0
+			while k < l:
+				var p := a.lerp(b, k / l)
+				var h := rng.randf_range(6.0, 22.0)
+				mp.draw_colored_polygon(PackedVector2Array([p + Vector2(-5, -2), p + Vector2(5, -2), p + Vector2(0, h)]), th.top_dark)
+				k += rng.randf_range(14.0, 34.0)
 	# Grass lip on every upward-facing run of edges.
 	if lip:
 		for run in _up_runs(pts):

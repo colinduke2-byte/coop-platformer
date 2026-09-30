@@ -164,6 +164,18 @@ func _configure(p: CPUParticles2D) -> void:
 func _process(_delta: float) -> void:
 	if _p == null:
 		return
+	if _mod and not Engine.is_editor_hint():
+		# In the dark, every player carries a soft light.
+		for n in get_tree().get_nodes_in_group(&"players"):
+			if not n.has_node(^"CarriedLight"):
+				var l := GlowLight.new()
+				l.name = "CarriedLight"
+				l.radius = 340.0
+				l.energy = 0.95
+				l.pulse = 0.0
+				l.color = Color(1.0, 0.95, 0.85)
+				l.position = Vector2(0, -34)
+				n.add_child(l)
 	if View.active:
 		_p.global_position = View.rect.get_center()
 	elif Engine.is_editor_hint():

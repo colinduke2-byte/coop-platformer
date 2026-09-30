@@ -2873,3 +2873,112 @@ func test_w1_2_gale_valley_crossing() -> void:
 	release(0, "move_right")
 	check(landed and not p.is_bubbled(), "the last puff + gale should carry you to the goal (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+# --- World 1-3 Mossy Hollow bots ------------------------------------------------------
+
+const W1_3 := "res://levels/w1_3_mossy_hollow.tscn"
+
+
+func test_w1_3_punching_through_the_puffcaps() -> void:
+	var p: Player = await _load_demo(W1_3)
+	p.invulnerable_timer = 0.0
+	await _place(p, Vector2(1500, -2))
+	# Walk up to each Puffcap, wait for it to snooze, punch it.
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Puffcap:
+			continue
+		var pc := e as Puffcap
+		if pc.global_position.x > 2400.0:
+			continue
+		for i in 600:
+			await get_tree().physics_frame
+			if pc.st == Puffcap.St.IDLE and pc._timer > 0.8:
+				break
+		p.global_position = Vector2(pc.global_position.x - 70.0, -2)
+		p.facing = 1
+		await frames(2)
+		await _punch()
+		await frames(20)
+	var alive := 0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Puffcap and e.global_position.x < 2400.0 and not e.dead:
+			alive += 1
+	check(alive == 0, "punching Puffcaps between puffs should clear the corridor (%d left)" % alive)
+	check(not p.is_bubbled(), "without getting sporeed")
+	await _finish_demo()
+
+
+func test_w1_3_geyser_shaft_reaches_the_corridor() -> void:
+	var p: Player = await _load_demo(W1_3)
+	await _clear_enemies()
+	await _place(p, Vector2(5550, -2))
+	# Ride geyser 1, drift right onto the ledge.
+	var up := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.global_position.y < -800.0:
+			up = true
+			press(0, "move_right")
+		if up and p.is_on_floor():
+			break
+	release(0, "move_right")
+	check(p.is_on_floor() and p.global_position.y < -770.0, "geyser 1 should get you onto the first ledge (at %s)" % p.global_position)
+	# Walk into geyser 2, then drift right to the corridor.
+	await _run_to(p, 6000, "move_right", 2.0)
+	release(0, "move_right")
+	var high := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -1250.0:
+			high = true
+		if high:
+			press(0, "move_right")
+		if high and p.is_on_floor() and p.global_position.x > 6250.0:
+			break
+	await _run_to(p, 6750, "move_right", 3.0)
+	release(0, "move_right")
+	check(p.global_position.x > 6600.0 and p.global_position.y < -1050.0, "geyser 2 should lift you to the upper corridor (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_3_lake_snoozling_is_reachable() -> void:
+	var p: Player = await _load_demo(W1_3)
+	await _clear_enemies()
+	await _place(p, Vector2(7700, -620))
+	var cage: SnoozlingCage = null
+	for n in _demo.find_children("*", "SnoozlingCage", true, false):
+		cage = n
+	press(0, "move_down")
+	press(0, "move_right")
+	for i in 600:
+		await get_tree().physics_frame
+		if p.global_position.x > cage.global_position.x - 60.0:
+			release(0, "move_right")
+		if p.global_position.distance_to(cage.global_position) < 90.0:
+			break
+	release(0, "move_down")
+	release(0, "move_right")
+	p.facing = 1 if cage.global_position.x > p.global_position.x else -1
+	await _punch()
+	await frames(20)
+	check(cage._opened, "you should be able to swim down and punch the cage open (player at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_3_mushroom_hops_over_the_brambles() -> void:
+	var p: Player = await _load_demo(W1_3)
+	await _clear_enemies()
+	await _place(p, Vector2(8940, -602))
+	press(0, "move_right")
+	var ok := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 10050.0:
+			ok = true
+			break
+		if p.is_bubbled():
+			break
+	release(0, "move_right")
+	check(ok, "running right should bounce you from mushroom to mushroom and across (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()

@@ -266,7 +266,8 @@ func _forest_scene() -> void:
 
 
 func _cave_scene() -> void:
-	var rock := _th.ground.darkened(0.35)
+	# Background rock is lighter and bluer than the solid gameplay rock.
+	var rock := _th.far_hills.lerp(_th.near_hills, 0.3)
 	var back := _layer(0.08, 2400.0)
 	_rock_band(back, 2400.0, horizon_y - 900.0, 380.0, _haze(rock, 0.45), true)
 	_crystals(back, 2400.0, 10, horizon_y - 500.0, 0.6)

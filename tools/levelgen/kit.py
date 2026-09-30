@@ -102,6 +102,11 @@ class LevelKit:
         self.surfaces.append(list(profile))
         return self.terrain(pts, **kw)
 
+    def ceiling(self, profile, top=-2600.0, **kw):
+        """Cave roof from its underside profile [(x, y), ...] (left to right) up to `top`."""
+        pts = list(profile) + [(profile[-1][0], top), (profile[0][0], top)]
+        return self.terrain(pts, lip=False, **kw)
+
     def island(self, x0, x1, y, depth=140, bumps=(), seed=0):
         """A floating island: gently rounded top at y, rocky tapering underside."""
         import random
