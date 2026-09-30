@@ -33,3 +33,8 @@ card is `ui/controls_card.gd`. Keep all three in sync.
 | Stomp | Land on enemies. Hold JUMP to bounce higher |
 | Revive | Punch a teammate's bubble |
 | Swing / zipline / vines | Fly into rings and ziplines; UP grabs vines; JUMP lets go |
+
+## Dev shortcuts
+
+- **F9** on the world map: unlock every level, world and outfit (this session only; F9 again to undo).
+- **F3** in a level: debug overlay (states, speeds, timers).

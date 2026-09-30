@@ -6,6 +6,9 @@ class_name LevelCatalog
 ## Within a world, a level unlocks when the one before it is finished.
 ## Bonus Dreams are always open.
 
+## F9 on the world map (dev shortcut, this session only): everything is open.
+static var dev_unlock := false
+
 const WORLDS: Array[Dictionary] = [
 	{"id": "w1", "name": "The Lullaby Woods", "blurb": "Where every dream begins. Mind the thorns."},
 	{"id": "w2", "name": "Frostwhistle Peaks", "blurb": "Snowballs, ski lifts and a very grumpy yeti."},
@@ -101,7 +104,7 @@ static func is_unlocked(id: String) -> bool:
 	var info := by_id(id)
 	if info.is_empty() or not ResourceLoader.exists(info["scene"]):
 		return false
-	if info["world"] == "bonus" or OS.has_feature("unlock_all"):
+	if info["world"] == "bonus" or OS.has_feature("unlock_all") or dev_unlock:
 		return true
 	var list := levels_in(info["world"])
 	var k := list.find(info)
@@ -141,4 +144,4 @@ static func world_info(world_id: String) -> Dictionary:
 ## Has the last level of the world been finished (e.g. its boss beaten)?
 static func world_done(world_id: String) -> bool:
 	var list := levels_in(world_id)
-	return not list.is_empty() and SaveData.get_record(list[-1]["id"]).get("done", false)
+	return dev_unlock or (not list.is_empty() and SaveData.get_record(list[-1]["id"]).get("done", false))

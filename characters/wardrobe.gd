@@ -32,7 +32,7 @@ static func totals() -> Dictionary:
 
 
 static func is_unlocked(index: int) -> bool:
-	if OS.has_feature("unlock_all"):
+	if OS.has_feature("unlock_all") or LevelCatalog.dev_unlock:
 		return true
 	var o: Dictionary = OUTFITS[index]
 	var t := totals()

@@ -72,6 +72,8 @@ func _ready() -> void:
 		_gang.append(rig)
 	_build_ui()
 	_refresh_panel()
+	if LevelCatalog.dev_unlock:
+		_show_toast("Dev: everything unlocked (F9 to undo)")
 	Audio.play_music("worldmap" if world == "w1" else "gondola")
 
 
@@ -199,6 +201,14 @@ func _process(delta: float) -> void:
 		_controls.add_child(ControlsCard.overlay())
 		add_child(_controls)
 	_update_gang(delta)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Dev shortcut: F9 opens every level, world and outfit (this session only).
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F9:
+		LevelCatalog.dev_unlock = not LevelCatalog.dev_unlock
+		last_index[world] = index
+		GameManager.goto_scene(GameManager.WORLD_MAP)
 
 
 func _try_walk(to: int) -> void:

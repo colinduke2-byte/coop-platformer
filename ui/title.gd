@@ -14,6 +14,7 @@ const LETTER_COLORS := [Color("ff5d8f"), Color("ffd23f"), Color("5bc8ff"), Color
 var _t := 0.0
 var _letters: Array[Label] = []
 var _prompt: Label
+var _ribbon: Label
 var _rigs: Array[CharacterRig] = []
 var _cam: Camera2D
 var _leaving := false
@@ -92,6 +93,10 @@ func _build_logo() -> void:
 	_prompt.custom_minimum_size.x = 1000
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layer.add_child(_prompt)
+	_ribbon = UIStyle.label("NEW!  World 2 - Frostwhistle Peaks", 32, Color("ffd23f"), 12)
+	_ribbon.position = Vector2(1330, 380)
+	_ribbon.rotation = -0.12
+	layer.add_child(_ribbon)
 	var hint := UIStyle.label("1-4 players - keyboards and gamepads welcome", 22, Color(1, 1, 1, 0.8), 6)
 	hint.position = Vector2(560, 960)
 	hint.custom_minimum_size.x = 800
@@ -107,6 +112,7 @@ func _process(delta: float) -> void:
 		l.rotation = sin(_t * 1.7 + i) * 0.05
 		l.pivot_offset = l.size * 0.5
 	_prompt.modulate.a = 0.55 + 0.45 * sin(_t * 4.0)
+	_ribbon.scale = Vector2.ONE * (1.0 + 0.05 * sin(_t * 5.0))
 	_cam.position.x = sin(_t * 0.12) * 160.0
 	for i in _rigs.size():
 		var rig := _rigs[i]
