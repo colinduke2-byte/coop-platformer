@@ -49,6 +49,10 @@ enum Scenery {
 	set(v):
 		stars = v
 		_rebuild()
+@export var cloud_sea := false:             ## sky levels: a sea of puffy clouds below the islands
+	set(v):
+		cloud_sea = v
+		_rebuild()
 @export var theme_override: LevelTheme:
 	set(v):
 		theme_override = v
@@ -85,6 +89,8 @@ func _rebuild() -> void:
 		Scenery.CASTLE: _castle_scene()
 		Scenery.CANDY: _candy_scene()
 		Scenery.ICE: _ice_scene()
+	if cloud_sea:
+		_build_cloud_sea()
 	if light_shafts:
 		_build_shafts()
 
@@ -172,6 +178,31 @@ func _cloud(mp: MeshPainter, c: Vector2, s: float) -> void:
 	for b: Vector3 in blobs:
 		mp.draw_colored_polygon(Art.ellipse(c + Vector2(b.x, b.y) * s, b.z * s, b.z * s * 0.78, 20), col)
 	mp.draw_colored_polygon(Art.ellipse(c + Vector2(-18, -30) * s, 22 * s, 12 * s, 14), Color(1, 1, 1, 0.5))
+
+
+## Two layers of cloud tops rolling along below the horizon.
+func _build_cloud_sea() -> void:
+	for layer in 2:
+		var scale := 0.7 if layer == 0 else 0.85
+		var width := 2400.0
+		var l := _layer(scale, width)
+		l.parallax.autoscroll = Vector2(-10.0 - layer * 8.0, 0)
+		var y := horizon_y + 40.0 + layer * 110.0
+		var col := _th.cloud.lerp(_th.sky_bottom, 0.35 - layer * 0.25)
+		var shade := col.lerp(_th.far_hills, 0.25)
+		var n := 22
+		for i in n + 1:
+			var x := width * float(i) / n
+			var r := _rng.randf_range(70, 140)
+			l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, y + 10.0), r * 1.1, r * 0.55, 20), shade)
+		for i in n + 1:
+			var x := width * float(i) / n + _rng.randf_range(-20, 20)
+			var r := _rng.randf_range(70, 130)
+			l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, y), r, r * 0.5, 20), col)
+			l.painter.draw_colored_polygon(Art.ellipse(Vector2(x - r * 0.25, y - r * 0.2), r * 0.45, r * 0.18, 14), Color(1, 1, 1, 0.35))
+		l.painter.draw_rect(Rect2(0, y + 30.0, width, DEPTH), col)
+		_commit(l)
+		l.parallax.z_index = -60 + layer * 10
 
 
 func _build_shafts() -> void:

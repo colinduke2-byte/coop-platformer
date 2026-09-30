@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 			"Play again":
 				GameManager.restart_level()
 			_:
-				GameManager.goto_scene(GameManager.LEVEL_SELECT)
+				GameManager.goto_scene(GameManager.WORLD_MAP)
 
 
 func _build() -> void:
@@ -100,10 +100,15 @@ func _build() -> void:
 	v.add_child(gem_row)
 	if _results.get("secrets_total", 0) > 0:
 		_add(v, UIStyle.label("Secrets  %d / %d" % [_results.get("secrets", 0), _results.get("secrets_total", 0)], 26))
+	var info := LevelCatalog.by_id(_results.get("id", ""))
+	if info.get("world", "") == "w1":
+		var freed: bool = _results.get("snoozling", false)
+		var s_text := "Snoozling rescued!" if freed else ("Snoozling already safe" if SaveData.has_snoozling(info["id"]) else "The Snoozling is still caged somewhere...")
+		_add(v, UIStyle.label(s_text + ("   NEW!" if news.has("snoozling") else ""), 26, UIStyle.ACCENT if freed else UIStyle.INK))
 	_items = []
 	if _results.get("next", "") != "":
 		_items.append("Next level")
-	_items.append_array(["Play again", "Level select"])
+	_items.append_array(["Play again", "World map"])
 	_list = HBoxContainer.new()
 	_list.alignment = BoxContainer.ALIGNMENT_CENTER
 	_list.add_theme_constant_override(&"separation", 50)

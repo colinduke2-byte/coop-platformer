@@ -76,6 +76,14 @@ func draw_circle(center: Vector2, radius: float, color: Color, filled := true, w
 		draw_polyline(pts, color, maxf(width, 1.0))
 
 
+func draw_arc(center: Vector2, radius: float, start_angle: float, end_angle: float, point_count: int, color: Color, width := -1.0, _antialiased := false) -> void:
+	var pts := PackedVector2Array()
+	for i in point_count + 1:
+		var a := lerpf(start_angle, end_angle, float(i) / maxi(point_count, 1))
+		pts.append(center + Vector2(cos(a), sin(a)) * radius)
+	draw_polyline(pts, color, width)
+
+
 func draw_line(a: Vector2, b: Vector2, color: Color, width := -1.0, _antialiased := false) -> void:
 	draw_polyline(PackedVector2Array([a, b]), color, width)
 

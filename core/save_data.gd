@@ -1,6 +1,7 @@
 class_name SaveData
 ## Best results per level, stored in user://save.json.
-## records[level_id] = {"time": float, "lums": int, "gems": [bool, bool, bool], "done": bool}
+## records[level_id] = {"time": float, "lums": int, "gems": [bool, bool, bool], "done": bool,
+##                      "snoozling": bool}
 
 const PATH := "user://save.json"
 
@@ -26,7 +27,7 @@ static func get_record(id: String) -> Dictionary:
 
 
 ## Merge a finished run into the record. Returns which fields are new bests.
-static func submit(id: String, time: float, lums: int, gems: Array) -> Dictionary:
+static func submit(id: String, time: float, lums: int, gems: Array, snoozling := false) -> Dictionary:
 	load_records()
 	var r: Dictionary = records.get(id, {"time": 0.0, "lums": 0, "gems": [false, false, false], "done": false})
 	var news := {}
@@ -44,12 +45,36 @@ static func submit(id: String, time: float, lums: int, gems: Array) -> Dictionar
 			old_gems.append(false)
 		old_gems[i] = old_gems[i] or gems[i]
 	r["gems"] = old_gems
+	if snoozling and not r.get("snoozling", false):
+		news["snoozling"] = true
+	r["snoozling"] = r.get("snoozling", false) or snoozling
 	r["done"] = true
 	records[id] = r
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(records, "\t"))
 	return news
+
+
+static func has_snoozling(id: String) -> bool:
+	return get_record(id).get("snoozling", false)
+
+
+## Totals across a world (for the world map).
+static func world_totals(world_id: String) -> Dictionary:
+	var t := {"done": 0, "levels": 0, "gems": 0, "gems_total": 0, "snoozlings": 0}
+	for l in LevelCatalog.levels_in(world_id):
+		var r := get_record(l["id"])
+		t["levels"] += 1
+		t["gems_total"] += 3
+		if r.get("done", false):
+			t["done"] += 1
+		for g in r.get("gems", []):
+			if g:
+				t["gems"] += 1
+		if r.get("snoozling", false):
+			t["snoozlings"] += 1
+	return t
 
 
 static func has_gem(id: String, index: int) -> bool:

@@ -1,7 +1,7 @@
 extends Control
-## Pick a dream (level). LEFT/RIGHT to browse, JUMP to play, ATTACK to go back
-## to character select. Shows each level's best time, Lums and Dream Gems.
-## Levels come from LevelCatalog.
+## BONUS DREAMS: pick one of the extra levels. LEFT/RIGHT to browse, JUMP to
+## play, PUNCH to go back to the world map. Shows each level's best time, Lums
+## and Dream Gems. Levels come from LevelCatalog (world "bonus").
 
 const CARD := Vector2(440, 470)
 
@@ -11,6 +11,7 @@ var _cards: Array[Control] = []
 var _row: HBoxContainer
 var _rigs: Array[CharacterRig] = []
 var _t := 0.0
+var _levels: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -26,13 +27,13 @@ func _ready() -> void:
 	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-	var title := UIStyle.label("Pick a dream", 72, Color.WHITE, 14)
+	var title := UIStyle.label("Bonus Dreams", 72, Color.WHITE, 14)
 	title.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	title.position = Vector2(-600, 50)
 	title.custom_minimum_size.x = 1200
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(title)
-	var hint := UIStyle.label("Left / Right: browse     Jump: play     Attack: back to characters", 24, Color.WHITE, 8)
+	var hint := UIStyle.label("Left / Right: browse     Jump: play     Punch: back to the map", 24, Color.WHITE, 8)
 	hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.position = Vector2(-600, -70)
 	hint.custom_minimum_size.x = 1200
@@ -42,8 +43,9 @@ func _ready() -> void:
 	_row.add_theme_constant_override(&"separation", 40)
 	_row.position = Vector2(0, 190)
 	add_child(_row)
-	for i in LevelCatalog.LEVELS.size():
-		_cards.append(_make_card(LevelCatalog.LEVELS[i]))
+	_levels = LevelCatalog.levels_in("bonus")
+	for i in _levels.size():
+		_cards.append(_make_card(_levels[i]))
 		_row.add_child(_cards[i])
 	# The gang, cheering at the bottom.
 	var slots := InputRouter.get_bound_slots()
@@ -102,10 +104,10 @@ func _process(delta: float) -> void:
 		_refresh()
 	elif _menu.confirm:
 		set_process(false)
-		GameManager.goto_scene(LevelCatalog.LEVELS[_index]["scene"])
+		GameManager.goto_scene(_levels[_index]["scene"])
 	elif _menu.back:
 		set_process(false)
-		GameManager.goto_scene(GameManager.CHARACTER_SELECT)
+		GameManager.goto_scene(GameManager.WORLD_MAP)
 	# Keep the selected card centred.
 	var target_x := 960.0 - (_index * (CARD.x + 40.0) + CARD.x * 0.5)
 	_row.position.x = lerpf(_row.position.x, target_x, clampf(10.0 * delta, 0.0, 1.0))

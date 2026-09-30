@@ -166,6 +166,9 @@ func _connect_events() -> void:
 	E.breakable_broken.connect(_on_broken)
 	E.lum_collected.connect(_on_lum)
 	E.gem_collected.connect(func(_i: int, _s: int, _pos: Vector2) -> void: play("gem", -2.0, 1.0, 0.0))
+	E.snoozling_rescued.connect(func(_pos: Vector2) -> void:
+		play("break", -4.0, 1.2)
+		play("gem", 0.0, 1.25, 0.0))
 	E.checkpoint_reached.connect(func(_pos: Vector2) -> void: play("checkpoint", -4.0, 1.0, 0.0))
 	E.pad_bounced.connect(func(_p: Player, _pad: Node2D, pounding: bool) -> void: play("pad", -4.0, 0.8 if pounding else 1.0))
 	E.player_swung.connect(func(_p: Player) -> void: play("swing", -6.0))

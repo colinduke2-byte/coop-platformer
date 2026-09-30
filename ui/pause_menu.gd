@@ -64,7 +64,7 @@ func open(slot: int, message := "") -> void:
 	_open = true
 	_opener = slot
 	_index = 0
-	_items = ["Resume", "Controls", "Restart from checkpoint", "Restart level", "Level select", "Character select", "Leave game (P%d)" % (slot + 1)]
+	_items = ["Resume", "Controls", "Restart from checkpoint", "Restart level", "World map", "Character select", "Leave game (P%d)" % (slot + 1)]
 	_note.text = message
 	_note.visible = message != ""
 	_rebuild()
@@ -115,8 +115,8 @@ func _choose(item: String) -> void:
 			GameManager.respawn_all_at_checkpoint()
 		"Restart level":
 			GameManager.restart_level()
-		"Level select":
-			GameManager.goto_scene(GameManager.LEVEL_SELECT)
+		"World map":
+			GameManager.goto_scene(GameManager.WORLD_MAP)
 		"Character select":
 			GameManager.goto_scene(GameManager.CHARACTER_SELECT)
 		_:

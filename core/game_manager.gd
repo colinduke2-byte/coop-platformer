@@ -12,7 +12,8 @@ const CHARACTERS: Array[CharacterDef] = [
 ]
 const RESPAWN_DELAY := 1.0
 const CHARACTER_SELECT := "res://ui/character_select.tscn"
-const LEVEL_SELECT := "res://ui/level_select.tscn"
+const LEVEL_SELECT := "res://ui/level_select.tscn"   ## Bonus Dreams list
+const WORLD_MAP := "res://ui/world_map.tscn"
 const GEMS_PER_LEVEL := 3
 
 var players: Dictionary = {}  ## slot -> Player
@@ -24,6 +25,7 @@ var level: Level
 ## Per-level run stats (reset when a level registers).
 var level_time := 0.0
 var gems: Array[bool] = [false, false, false]
+var snoozling := false   ## this run freed the level's caged Snoozling
 var secrets_found := 0
 var secrets_total := 0
 var level_complete := false
@@ -38,6 +40,7 @@ func _ready() -> void:
 	EventBus.lum_collected.connect(_on_lum_collected)
 	EventBus.checkpoint_reached.connect(_on_checkpoint_reached)
 	EventBus.gem_collected.connect(_on_gem_collected)
+	EventBus.snoozling_rescued.connect(_on_snoozling_rescued)
 	EventBus.secret_found.connect(func(_s: Node2D) -> void: secrets_found += 1)
 	EventBus.device_lost.connect(_on_device_lost)
 
@@ -55,6 +58,7 @@ func register_level(new_level: Level) -> void:
 	lums_by_slot.clear()
 	level_time = 0.0
 	gems = [false, false, false]
+	snoozling = false
 	secrets_found = 0
 	secrets_total = level.find_children("*", "SecretArea", true, false).size()
 	level_complete = false
@@ -140,6 +144,10 @@ func _on_lum_collected(slot: int, _pos: Vector2) -> void:
 	EventBus.lums_changed.emit(lums)
 
 
+func _on_snoozling_rescued(_pos: Vector2) -> void:
+	snoozling = true
+
+
 func _on_gem_collected(index: int, _slot: int, _pos: Vector2) -> void:
 	if index >= 0 and index < gems.size():
 		gems[index] = true
@@ -163,10 +171,10 @@ func complete_level() -> void:
 	var path := level.scene_file_path
 	var i := LevelCatalog.index_of(path)
 	var id: String = LevelCatalog.LEVELS[i]["id"] if i != -1 else path.get_file().get_basename()
-	var news := SaveData.submit(id, level_time, lums, gems)
+	var news := SaveData.submit(id, level_time, lums, gems, snoozling)
 	last_results = {
 		"id": id, "name": level.level_name, "time": level_time, "lums": lums,
-		"lums_by_slot": lums_by_slot.duplicate(), "gems": gems.duplicate(),
+		"lums_by_slot": lums_by_slot.duplicate(), "gems": gems.duplicate(), "snoozling": snoozling,
 		"secrets": secrets_found, "secrets_total": secrets_total, "new": news,
 		"next": LevelCatalog.next_after(path),
 	}

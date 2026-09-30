@@ -43,7 +43,8 @@ func _rebuild() -> void:
 	_streaks.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
-	for i in int(size.x * size.y / 14000.0) + 3:
+	# Capped: huge "ambient breeze" zones shouldn't draw a snowstorm of lines.
+	for i in mini(int(size.x * size.y / 14000.0) + 3, 140):
 		_streaks.append(Vector2(rng.randf() * size.x, rng.randf() * size.y))
 	queue_redraw()
 
@@ -74,7 +75,8 @@ func _physics_process(delta: float) -> void:
 
 func _draw() -> void:
 	var on := blowing() or Engine.is_editor_hint()
-	var a := 0.5 if on else 0.12
+	var strength := clampf(wind.length() / 260.0, 0.25, 1.0)  # a light breeze = faint streaks
+	var a := (0.5 if on else 0.12) * strength
 	var dir := wind.normalized()
 	for s in _streaks:
 		var tail := s - dir * 40.0

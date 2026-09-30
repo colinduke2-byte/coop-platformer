@@ -133,3 +133,11 @@ track("candy", "F", 132, [I, vi, IV, V] * 2 + [ii, V, I, vi, ii, V, I, (7, "sus"
 track("sunset", "D", 110, [vi, IV, I, V] * 2 + [ii, iii, IV, V, vi, IV, V, V], lead="saw", seed=5, bass_shape="square")
 track("glacier", "A", 100, [I, iii, IV, I] * 2 + [vi, V, IV, V, (0, "maj7"), IV, (2, "min7"), V], lead="sine", seed=9, bright=0.7)
 track("menu", "G", 116, [I, IV, vi, V] * 2, lead="tri", seed=21)
+# World 1
+track("breezy", "G", 128, [I, IV, I, V] * 2 + [vi, IV, I, V, IV, V, I, (7, "sus")], lead="tri", seed=31, bright=1.1)
+track("hollow", "E", 96, [vi, IV, V, iii] * 2 + [ii, vi, IV, V, vi, (2, "min7"), IV, V], lead="sine", seed=33, bright=0.6)
+track("canopy", "D", 120, [I, vi, ii, V] * 2 + [IV, I, ii, V, I, iii, IV, V], lead="square", seed=35, swing=0.12)
+track("river", "A", 134, [I, V, IV, V] * 2 + [vi, iii, IV, I, ii, V, I, I], lead="tri", seed=37, drums="busy")
+track("thorn", "C", 108, [vi, V, IV, V] * 2 + [vi, IV, (7, "sus"), V, vi, ii, iii, V], lead="saw", seed=39, bass_shape="square")
+track("boss", "D", 150, [vi, IV, V, V] * 2 + [vi, (5, "maj7"), V, iii, ii, V, vi, V], lead="saw", seed=41, drums="busy", bass_shape="square")
+track("worldmap", "F", 104, [I, iii, IV, V] * 2 + [vi, IV, I, V], lead="tri", seed=43, swing=0.08)

@@ -16,7 +16,7 @@ const PANEL_EMPTY := Color(1, 1, 1, 0.2)
 const PANEL_READY := Color(0.85, 1, 0.85, 0.8)
 const INK := Color("2b2233")
 
-@export_file("*.tscn") var next_scene := "res://ui/level_select.tscn"
+@export_file("*.tscn") var next_scene := "res://ui/world_map.tscn"
 @export var auto_start := true   ## tests turn this off
 
 var _cards: Array[Card] = []

@@ -36,6 +36,7 @@ class LevelKit:
         for g in GROUPS:
             self.s.node(g, "Node2D", unique=False)
         self.min_x, self.max_x, self.max_y = 0.0, 0.0, 0.0
+        self.surfaces = []   # polylines of walkable tops (for dress())
         self.spawn = (0, 0)
         self._gems = 0
 
@@ -74,11 +75,98 @@ class LevelKit:
         self.max_y = max(self.max_y, y + h)
         self.max_x = max(self.max_x, x + w)
         self.min_x = min(self.min_x, x)
+        if not one_way and w >= 120:
+            self.surfaces.append([(x, y), (x + w, y)])
         return self.s.node("Block", None, group, dict({"position": V(x, y)}, **props),
                            instance=self.s.scene(BLOCK))
 
     def ground(self, x0, x1, top=0.0, depth=500.0, **kw):
         return self.block(x0, top, x1 - x0, depth, **kw)
+
+    # --- Freeform terrain -------------------------------------------------------------
+    def terrain(self, points, rounding=14.0, lip=True, group="Blocks"):
+        """Any polygon (list of (x, y)) as themed ground with grass on up-facing edges."""
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        self.min_x, self.max_x = min(self.min_x, min(xs)), max(self.max_x, max(xs))
+        self.max_y = max(self.max_y, max(ys))
+        return self.s.node("Terrain", "StaticBody2D", group, {
+            "script": self.s.script(RES + "world/terrain.gd"),
+            "polygon": [V(*p) for p in points], "rounding": float(rounding) if rounding != 14.0 else None,
+            "lip": None if lip else False, "seed_value": len(self.s.nodes)})
+
+    def land(self, profile, bottom=1400.0, **kw):
+        """Ground from a top profile [(x, y), ...] (left to right) down to `bottom`.
+        Put two points at the same x for a vertical cliff."""
+        pts = list(profile) + [(profile[-1][0], bottom), (profile[0][0], bottom)]
+        self.surfaces.append(list(profile))
+        return self.terrain(pts, **kw)
+
+    def island(self, x0, x1, y, depth=140, bumps=(), seed=0):
+        """A floating island: gently rounded top at y, rocky tapering underside."""
+        import random
+        rnd = random.Random(seed or int(x0))
+        w = x1 - x0
+        top = [(x0, y + 10), (x0 + 16, y)]
+        for bx, by in bumps:
+            top.append((bx, by))
+        top += [(x1 - 16, y), (x1, y + 10)]
+        under = []
+        n = max(int(w / 60), 3)
+        for i in range(n, -1, -1):
+            t = i / n
+            sag = (1 - (2 * t - 1) ** 2) * depth
+            under.append((x0 + w * t, y + 20 + sag * rnd.uniform(0.75, 1.1)))
+        pts = top + under
+        self.surfaces.append(top)
+        return self.terrain(pts, rounding=10.0)
+
+    def surface_y(self, x):
+        """Top of the highest walkable surface at x (None if there is none)."""
+        best = None
+        for poly in self.surfaces:
+            for (ax, ay), (bx, by) in zip(poly, poly[1:]):
+                if ax <= x <= bx and bx > ax:
+                    y = ay + (by - ay) * (x - ax) / (bx - ax)
+                    best = y if best is None else min(best, y)
+        return best
+
+    DRESS = {
+        "meadow": [("grass", 4), ("flowers", 3), ("fern", 1), ("bush", 1.2), ("big_flower", 0.6), ("tree", 0.7),
+                   ("rock", 0.5), ("stump", 0.3), ("mushrooms", 0.4)],
+        "forest": [("fern", 4), ("grass", 2), ("mushrooms", 1), ("stump", 0.6), ("log", 0.4), ("bush", 1), ("tree", 0.5)],
+        "cave": [("mushrooms", 3), ("crystals", 1.5), ("rock", 1.5), ("fern", 0.8), ("giant_mushroom", 0.35)],
+        "river": [("reeds", 3), ("grass", 3), ("flowers", 2), ("rock", 1), ("bush", 1), ("tree", 0.5)],
+        "thorn": [("grass", 2), ("rock", 2), ("stump", 1), ("mushrooms", 1), ("fern", 0.6)],
+    }
+
+    def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=6, skip=(), trees=True):
+        """Scatter decorations along the walkable tops between x0 and x1."""
+        import random
+        rnd = random.Random(seed)
+        table = [k for k in self.DRESS[style] if trees or k[0] != "tree"]
+        total = sum(w for _, w in table)
+        x = x0 + rnd.uniform(0, spacing)
+        n = 0
+        while x < x1:
+            y = self.surface_y(x)
+            ok = y is not None and all(not (a <= x <= b) for a, b in skip)
+            if ok:
+                yl, yr = self.surface_y(x - 24), self.surface_y(x + 24)
+                ok = yl is not None and yr is not None and abs(yl - yr) < 20
+            if ok:
+                r = rnd.uniform(0, total)
+                for kind, w in table:
+                    r -= w
+                    if r <= 0:
+                        break
+                size = rnd.uniform(0.8, 1.25) if kind not in ("tree", "giant_mushroom") else rnd.uniform(0.9, 1.3)
+                self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999))
+                n += 1
+                if front_every and n % front_every == 0:
+                    self.deco("grass" if style != "cave" else "mushrooms", round(x + 40), round(y + 2), 1.3, front=True,
+                              seed=rnd.randint(1, 999))
+            x += spacing * rnd.uniform(0.6, 1.4)
 
     def wall(self, x, top, bottom, w=60.0):
         return self.block(x, top, w, bottom - top, lip=True)
@@ -199,6 +287,19 @@ class LevelKit:
 
     def acorns(self, x, y, interval=2.2, phase=0.0):
         return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
+
+    def ambience(self, kind="pollen", density=1.0, darkness=None, tint=None):
+        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow"]
+        props = {"script": self.s.script(RES + "world/ambience.gd"), "kind": kinds.index(kind),
+                 "density": float(density) if density != 1.0 else None, "darkness": darkness, "tint": tint}
+        return self.s.node("Ambience", "Node2D", "Decor", {k: v for k, v in props.items() if v is not None})
+
+    def glow(self, x, y, color=None, radius=260.0, energy=1.0):
+        props = {"script": self.s.script(RES + "world/glow_light.gd"), "position": V(x, y), "radius": float(radius),
+                 "energy": float(energy)}
+        if color:
+            props["color"] = color
+        return self.s.node("Glow", "PointLight2D", "Decor", props)
 
     def door(self, x, y, locked=False):
         return self._tool("Logic", "Door", "Area2D", "door", x, y, locked=locked or None)
@@ -323,6 +424,12 @@ class LevelKit:
             "script": self.s.script(RES + "collectibles/lum_line.gd"), "position": V(x, y),
             "count": count, "end": V(ex - x, ey - y), "arc_height": float(arc)})
 
+    def snoozling(self, x, y, hanging=False, fur=None):
+        props = {"script": self.s.script(RES + "collectibles/snoozling_cage.gd"), "position": V(x, y), "hanging": hanging}
+        if fur:
+            props["fur"] = fur
+        return self.s.node("Snoozling", "Area2D", "Pickups", props)
+
     def gem(self, x, y):
         i = self._gems
         self._gems += 1
@@ -336,7 +443,8 @@ class LevelKit:
 
     def deco(self, kind, x, y, size=1.0, front=False, seed=0):
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
-                 "CANDY_CANE", "LOLLIPOP", "REEDS"]
+                 "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
+                 "LILYPADS", "BIG_FLOWER", "ROOTS"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

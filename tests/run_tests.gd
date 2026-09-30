@@ -2618,3 +2618,258 @@ func test_acorn_dropper_drops_acorns_near_players() -> void:
 	check(dropped, "it should drop an acorn")
 	await seconds(1.0)
 	check(p.is_bubbled(), "an acorn on the head bubbles you")
+
+
+# --- World 1-1 Pillow Meadow bots ----------------------------------------------------
+
+const W1_1 := "res://levels/w1_1_pillow_meadow.tscn"
+
+
+func test_w1_1_cliff_can_be_wall_climbed() -> void:
+	var p: Player = await _load_demo(W1_1)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Ribbiton:
+			e.queue_free()  # climbing without the frog's help
+	await _place(p, Vector2(5620, -2))
+	press(0, "move_right")
+	for k in 8:
+		press(0, "jump")
+		await frames(4)
+		release(0, "jump")
+		await frames(26)
+		if p.global_position.y < -430.0 and p.is_on_floor():
+			break
+	await seconds(0.6)
+	release(0, "move_right")
+	check(p.global_position.y < -430.0 and p.global_position.x > 5700.0, "you should be able to climb onto the cliff (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_1_frog_bounce_clears_the_cliff() -> void:
+	var p: Player = await _load_demo(W1_1)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Ribbiton:
+			e.global_position = Vector2(5600, -2)
+			e.sit_time = 100.0
+			e._sit = 100.0
+	await _place(p, Vector2(5420, -112))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "move_right")
+	var best := 0.0
+	for i in 150:
+		await get_tree().physics_frame
+		best = minf(best, p.global_position.y)
+		if i > 40:
+			press(0, "move_right")
+	release(0, "move_right")
+	release(0, "jump")
+	check(best < -450.0, "a frog bounce should carry you above the cliff top (best %.0f)" % best)
+	await _finish_demo()
+
+
+func test_w1_1_dandelion_crosses_the_valley() -> void:
+	var p: Player = await _load_demo(W1_1)
+	await _place(p, Vector2(6760, -442))
+	press(0, "move_right")
+	await frames(8)
+	press(0, "jump")
+	await frames(30)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.x > 7720.0 and p.is_on_floor():
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed and not p.is_bubbled(), "a dandelion puff should float you across (at %s, parachute %s)" % [p.global_position, p.parachute])
+	await _finish_demo()
+
+
+func test_w1_1_cave_mushroom_returns_you_to_the_cliff() -> void:
+	var p: Player = await _load_demo(W1_1)
+	await _place(p, Vector2(6800, 178))
+	check(p.is_on_floor() and p.global_position.y > 150.0, "should stand in the cave (at %s)" % p.global_position)
+	await _run_to(p, 6975, "move_right", 2.0)
+	release(0, "move_right")
+	await frames(20)
+	press(0, "move_left")
+	var ok := false
+	for i in 360:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.y < -430.0:
+			ok = true
+			break
+	release(0, "move_left")
+	check(ok, "the mushroom should send you back up onto the cliff (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_1_pendulum_carries_you_to_the_goal_side() -> void:
+	var p: Player = await _load_demo(W1_1)
+	var pd: Pendulum = null
+	for n in _demo.find_children("*", "Pendulum", true, false):
+		pd = n
+	check(pd != null, "the level should have a pendulum")
+	# Wait until the log is at its left end, stand on it and ride.
+	for i in 600:
+		await get_tree().physics_frame
+		if pd.angle() > pd.amplitude * 0.97:
+			break
+	var log_pos := pd.global_position + pd.log_position()
+	p.global_position = log_pos + Vector2(0, -30)
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	for i in 600:
+		await get_tree().physics_frame
+		if pd.angle() < -pd.amplitude * 0.9:
+			break
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(20)
+	release(0, "jump")
+	await seconds(1.5)
+	release(0, "move_right")
+	check(p.global_position.x > 10300.0 and p.global_position.y < -150.0 and not p.is_bubbled(), "jumping off at the far end should reach the goal ground (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_1_shell_bowls_over_the_grumblets() -> void:
+	var p: Player = await _load_demo(W1_1)
+	var shell: Shellbert = null
+	var grunts: Array[Enemy] = []
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Shellbert:
+			shell = e
+		elif e is Grunt and e.global_position.x > 4400.0 and e.global_position.x < 4800.0:
+			grunts.append(e)
+	var sx := shell.global_position.x
+	p.global_position = Vector2(sx, -200)
+	p.velocity = Vector2.ZERO
+	for i in 90:
+		await get_tree().physics_frame
+		if shell.st != Shellbert.St.WALK:
+			break
+	check(shell.st == Shellbert.St.SHELL, "stomping Shellbert should hide him")
+	await _place(p, Vector2(sx - 90, -2))
+	await _run_to(p, shell.global_position.x, "move_right", 1.0)
+	release(0, "move_right")
+	await seconds(1.5)
+	var down := 0
+	for g in grunts:
+		if not is_instance_valid(g) or g.dead:
+			down += 1
+	check(down == grunts.size() and grunts.size() == 3, "the kicked shell should knock out all three Grumblets (%d/%d)" % [down, grunts.size()])
+	await _finish_demo()
+
+
+# --- World 1-2 Dandelion Drift bots ---------------------------------------------------
+
+const W1_2 := "res://levels/w1_2_dandelion_drift.tscn"
+
+
+func _clear_enemies() -> void:
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await frames(2)
+
+
+func test_w1_2_leaves_cross_to_the_first_island() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _place(p, Vector2(1350, -42))
+	for x in [1600.0, 1860.0, 2120.0, 2380.0, 2700.0]:
+		press(0, "move_right")
+		press(0, "jump")
+		for i in 90:
+			await get_tree().physics_frame
+			if p.global_position.x >= x - 50.0 and p.is_on_floor():
+				break
+			if p.global_position.x >= x - 60.0:
+				release(0, "move_right")  # coast onto the leaf instead of overshooting
+		release(0, "jump")
+		release(0, "move_right")
+		await frames(6)
+	check(p.global_position.x > 2620.0 and p.global_position.y < -60.0 and not p.is_bubbled(), "hopping the leaves should reach the island (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_2_glide_through_updraft_to_high_island() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _place(p, Vector2(3200, -82))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(20)
+	release(0, "jump")
+	await frames(20)
+	press(0, "jump")  # glide
+	var rose := 0.0
+	for i in 600:
+		await get_tree().physics_frame
+		rose = minf(rose, p.global_position.y)
+		# Hover in the column until high, then drift right.
+		if p.global_position.x > 3560.0 and rose > -900.0:
+			release(0, "move_right")
+			press(0, "move_left")
+		else:
+			release(0, "move_left")
+			press(0, "move_right")
+		if p.is_on_floor() and p.global_position.x > 4300.0:
+			break
+	release(0, "jump")
+	release(0, "move_left")
+	release(0, "move_right")
+	check(rose < -900.0, "the updraft should lift a glider high (best %.0f)" % rose)
+	check(p.global_position.x > 4300.0 and p.global_position.y < -480.0, "and you can glide on to the high island (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_2_dandelion_hop_to_island_a() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _place(p, Vector2(4960, -502))
+	press(0, "move_right")
+	await frames(6)
+	press(0, "jump")
+	await frames(30)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		# Steer to stop over island A.
+		if p.global_position.x > 6030.0:
+			release(0, "move_right")
+			press(0, "move_left")
+		elif p.global_position.x < 5950.0:
+			release(0, "move_left")
+			press(0, "move_right")
+		if p.is_on_floor() and p.global_position.x > 5880.0 and p.global_position.x < 6170.0:
+			landed = true
+			break
+	release(0, "move_right")
+	release(0, "move_left")
+	check(landed, "a puff from the high island should reach island A (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_2_gale_valley_crossing() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _place(p, Vector2(8200, -252))
+	press(0, "move_right")
+	await frames(6)
+	press(0, "jump")
+	await frames(30)
+	release(0, "jump")
+	var landed := false
+	for i in 1200:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 10200.0:
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed and not p.is_bubbled(), "the last puff + gale should carry you to the goal (at %s)" % p.global_position)
+	await _finish_demo()

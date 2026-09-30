@@ -167,8 +167,10 @@ func apply_gravity(delta: float) -> void:
 	if balloon_timer > 0.0:
 		velocity.y = move_toward(velocity.y, -tuning.balloon_rise_speed, tuning.balloon_accel * delta)
 		return
-	if parachute and velocity.y > -60.0:
-		velocity.y = move_toward(velocity.y, tuning.parachute_fall_speed, tuning.parachute_accel * delta)
+	if parachute and velocity.y > -60.0 - updraft_speed:
+		# Dandelion puffs drift down - or ride an updraft up, like a glide.
+		var target := -updraft_speed * 0.85 if updraft_speed > 0.0 else tuning.parachute_fall_speed
+		velocity.y = move_toward(velocity.y, target, tuning.parachute_accel * delta)
 		return
 	var g := tuning.rise_gravity() if velocity.y < 0.0 else tuning.fall_gravity()
 	var max_fall := tuning.max_fall_speed

@@ -30,6 +30,7 @@ signal punch_landed(player: Player, target: Node2D, power: float)
 signal breakable_broken(breakable: Node2D, by: Player)
 signal checkpoint_reached(position: Vector2)
 signal gem_collected(index: int, slot: int, position: Vector2)
+signal snoozling_rescued(position: Vector2)   ## a caged Snoozling was freed
 signal level_completed(results: Dictionary)
 signal pause_requested(slot: int, message: String)
 signal level_reset
