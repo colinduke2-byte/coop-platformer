@@ -37,6 +37,9 @@ class ErrorCatcher extends Logger:
 func _ready() -> void:
 	OS.add_logger(_errors)
 	Vfx.hit_stop_enabled = false  # keep test timing deterministic
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("ticks="):  # e.g. ticks=60: run everything at the browser's physics rate
+			Engine.physics_ticks_per_second = int(a.substr(6))
 	_run.call_deferred()
 
 

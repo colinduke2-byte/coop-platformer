@@ -21,7 +21,8 @@ enum Mode { OFFLINE, CONNECTING, HOST, CLIENT }
 
 const PROTOCOL := 1
 const MAX_PLAYERS := 4
-const SEND_INTERVAL := 0.05     ## s between packets (20 a second)
+const SEND_INTERVAL := 0.05     ## s between packets (20 a second) - claude.ai rooms; direct links send 30 a second
+const SEND_INTERVAL_P2P := 1.0 / 30.0
 const PEER_TIMEOUT := 8.0       ## s of silence before a friend counts as gone
 const JOIN_TIMEOUT := 20.0      ## s to find the host before giving up (the page gives its own reason sooner)
 const BARRIER_TIMEOUT := 8.0    ## s the host waits for everyone to load a level
@@ -59,6 +60,8 @@ var _barrier := -1        ## epoch of the level we're paused in, waiting for fri
 var _barrier_t := 0.0
 var _connect_t := 0.0
 var _link := "idle"       ## the transport's own status
+var _picks := {}          ## slot -> the lobby entry its CharacterDef was built from (built once, not every frame)
+var _debug_page := false  ## browser test runs (?net=local) get window.dreamDebug
 var _toast_t := 0.0
 var _layer: CanvasLayer
 var _badge: Label
@@ -93,7 +96,7 @@ class NetPeer:
 			snaps.pop_front()
 
 	func delay() -> float:
-		return clampf(SEND_INTERVAL * 1000.0 + 2.5 * jitter + 30.0, 80.0, 320.0)
+		return clampf(SEND_INTERVAL * 1000.0 + 2.5 * jitter + 30.0, 70.0, 320.0)
 
 	## The player state to show now: interpolated ~delay() ms in the past, so
 	## there's always a packet on both sides; briefly extrapolated if late.
@@ -124,6 +127,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_priority = -100  # before gameplay reads puppets
 	_build_overlay()
+	if OS.has_feature("web"):
+		_debug_page = bool(JavaScriptBridge.eval("/[?&](net=local|peerhost=)/.test(location.search)", true))
 
 
 # --- Public ------------------------------------------------------------------------
@@ -338,7 +343,7 @@ func _process(delta: float) -> void:
 		if _link == "client":
 			_send_t -= delta
 			if _send_t <= 0.0:
-				_send_t = SEND_INTERVAL
+				_send_t = SEND_INTERVAL_P2P if available() == "peer" else SEND_INTERVAL
 				transport.send(_make_packet())  # say hello so the host gives us a slot
 		return
 	_expire_peers()
@@ -357,7 +362,7 @@ func _process(delta: float) -> void:
 			_release_barrier()
 	_send_t -= delta
 	if _send_t <= 0.0:
-		_send_t = SEND_INTERVAL
+		_send_t = SEND_INTERVAL_P2P if available() == "peer" else SEND_INTERVAL
 		_tick += 1
 		transport.send(_make_packet())
 	_update_badge()
@@ -368,7 +373,7 @@ func _process(delta: float) -> void:
 var _debug_t := 0.0
 func _debug_to_page(delta: float) -> void:
 	_debug_t -= delta
-	if _debug_t > 0.0 or not OS.has_feature("web"):
+	if _debug_t > 0.0 or not _debug_page:
 		return
 	_debug_t = 0.5
 	var ps := {}
@@ -531,6 +536,10 @@ func _sync_picks() -> void:
 			continue
 		var ci := clampi(int(lb[0]), 0, GameManager.CHARACTERS.size() - 1)
 		var outfit := clampi(int(lb[1]), 0, Wardrobe.OUTFITS.size() - 1)
+		var key := [ci, outfit]
+		if _picks.get(pr.slot) == key and GameManager.chosen_characters.has(pr.slot):
+			continue
+		_picks[pr.slot] = key
 		var cur: CharacterDef = GameManager.chosen_characters.get(pr.slot)
 		var want := Wardrobe.dress(GameManager.CHARACTERS[ci], outfit)
 		if cur == null or cur.display_name != want.display_name or cur.main_color != want.main_color:
@@ -807,6 +816,7 @@ func _host_name() -> String:
 
 func _reset() -> void:
 	peers.clear()
+	_picks.clear()
 	code = ""
 	my_id = ""
 	my_slot = -1

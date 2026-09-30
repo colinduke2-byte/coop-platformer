@@ -172,7 +172,9 @@ window.dreamNet = (function () {
           setTimeout(function () {
             if (st === "connecting") fail("Found game " + code + " but couldn't connect to it. A strict network (school/work Wi-Fi) can block this - try another network or a phone hotspot.");
           }, 15000);
-          toHost = peer.connect(name, { reliable: true });
+          // Unreliable: every packet is a full snapshot (events repeat until acknowledged),
+          // so a lost packet is simply replaced by the next one instead of holding the rest up.
+          toHost = peer.connect(name, { reliable: false });
           toHost.on("open", ok);
           toHost.on("error", function () { if (st === "connecting") fail("Couldn't connect to game " + code + ". Try again, or try another network."); });
           toHost.on("data", function (m) {
@@ -399,18 +401,22 @@ window.dreamNet = (function () {
   const pillText = document.getElementById("pillText");
   const copyBtn = document.getElementById("copy");
   const linkBox = document.getElementById("linkBox");
-  let copiedUntil = 0;
+  let copiedUntil = 0, lastPill = "";
   setInterval(function () {
     const i = dreamNet.info();
     const on = i.st === "host" || i.st === "client" || i.st === "connecting";
     pill.hidden = !on || !i.code;
     if (pill.hidden) { linkBox.hidden = true; return; }
     const n = dreamNet.players();
-    if (i.st === "connecting") pillText.innerHTML = "Connecting to game <b></b>...";
-    else pillText.innerHTML = "Game <b></b> &middot; " + n + " player" + (n === 1 ? "" : "s");
-    pillText.querySelector("b").textContent = i.code;
+    const text = i.st === "connecting" ? "Connecting to game " + i.code + "..." : "Game " + i.code + " \u00b7 " + n + " player" + (n === 1 ? "" : "s");
+    if (text !== lastPill) {  // touch the page only when something changed (no layout work over the game)
+      lastPill = text;
+      if (i.st === "connecting") pillText.innerHTML = "Connecting to game <b></b>...";
+      else pillText.innerHTML = "Game <b></b> &middot; " + n + " player" + (n === 1 ? "" : "s");
+      pillText.querySelector("b").textContent = i.code;
+    }
     copyBtn.hidden = i.st === "connecting";
-    if (Date.now() > copiedUntil) copyBtn.textContent = "Copy invite link";
+    if (Date.now() > copiedUntil && copyBtn.textContent !== "Copy invite link") copyBtn.textContent = "Copy invite link";
   }, 400);
   copyBtn.addEventListener("click", function () {
     const link = SHARE + "#" + dreamNet.info().code;
