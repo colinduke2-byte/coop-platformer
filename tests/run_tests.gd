@@ -4054,3 +4054,17 @@ func test_wardrobe_dresses_characters_and_unlocks_with_gems() -> void:
 	check(Wardrobe.is_unlocked(0), "Classic is always available")
 	var t := Wardrobe.totals()
 	check(Wardrobe.is_unlocked(1) == (t["gems"] >= 6), "Sunset unlocks at 6 Dream Gems (have %d)" % t["gems"])
+
+
+func test_hit_stop_is_a_short_blink_and_always_releases() -> void:
+	Vfx.hit_stop_enabled = true
+	Vfx.hit_stop(0.04)
+	Vfx.hit_stop(5.0)       # an over-long request is capped
+	Vfx.hit_stop(0.03)
+	check(Engine.time_scale < 1.0, "a hit-stop slows time for a blink")
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 200:
+		await get_tree().process_frame
+	check(Engine.time_scale == 1.0, "after 0.2 s real time everything runs at full speed again (%.2f)" % Engine.time_scale)
+	Vfx.hit_stop_enabled = false
+	Engine.time_scale = 1.0

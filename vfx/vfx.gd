@@ -14,7 +14,8 @@ const CONFETTI: Array[Color] = [Color("ff5d8f"), Color("ffd23f"), Color("3bceac"
 
 @export var enabled := true
 @export var hit_stop_enabled := true
-@export var hit_stop_scale := 0.05          ## Engine.time_scale during a hit-stop
+@export var hit_stop_scale := 0.1           ## Engine.time_scale during a hit-stop
+@export var hit_stop_max := 0.07            ## s: the longest a single hit-stop may last
 @export var trail_interval := 0.045         ## s between dust puffs while sprinting / sliding / skidding
 
 var _trail_timers := {}                     ## Player -> s until next trail puff
@@ -52,18 +53,28 @@ func _ready() -> void:
 
 # --- Public ----------------------------------------------------------------------
 
-## Freeze the action for a blink so hits land with weight. Uses real time.
+## Freeze the action for a blink so hits land with weight. Uses real time, and
+## is always released by _process from the wall clock (never stuck in slow-mo),
+## capped at hit_stop_max seconds however many hits pile up.
 func hit_stop(duration: float) -> void:
 	if not hit_stop_enabled or duration <= 0.0:
 		return
-	var until := Time.get_ticks_msec() + int(duration * 1000.0)
+	var now := Time.get_ticks_usec()
+	var until := now + int(minf(duration, hit_stop_max) * 1000000.0)
 	if until <= _hit_stop_until:
 		return
 	_hit_stop_until = until
 	Engine.time_scale = hit_stop_scale
-	await get_tree().create_timer(duration, true, false, true).timeout
-	if Time.get_ticks_msec() >= _hit_stop_until:
+
+
+func _process(_delta: float) -> void:
+	if _hit_stop_until != 0 and Time.get_ticks_usec() >= _hit_stop_until:
+		_hit_stop_until = 0
 		Engine.time_scale = 1.0
+
+
+func is_hit_stopped() -> bool:
+	return _hit_stop_until != 0
 
 
 ## Burst of round blobs flying out from `pos` in a cone around `dir`.
@@ -216,7 +227,6 @@ func _on_ground_pounded(_p: Player, pos: Vector2) -> void:
 	puff(pos + Vector2(0, -3), 9, DUST, Vector2.LEFT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
 	puff(pos + Vector2(0, -3), 9, DUST, Vector2.RIGHT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
 	shake(0.45)
-	hit_stop(0.05)
 
 
 func _on_slid(p: Player) -> void:
@@ -251,7 +261,8 @@ func _on_punch_landed(_p: Player, target: Node2D, power: float) -> void:
 	var at := target.global_position + Vector2(0, -24)
 	ring(at, 40.0 + 40.0 * power, SPARK, 0.18, 4.0 + 3.0 * power)
 	shake(0.12 + 0.3 * power)
-	hit_stop(0.035 + 0.05 * power)
+	# Only a blink: a tiny one for jabs, a bit more for a fully charged punch.
+	hit_stop(0.02 + 0.04 * power * power)
 
 
 func _on_enemy_defeated(enemy: Node2D, _by: Player) -> void:
@@ -282,7 +293,7 @@ func _on_enemy_spawned(e: Node2D) -> void:
 
 func _on_reflected(p: Node2D, _by: Player) -> void:
 	ring(p.global_position, 36.0, SPARK, 0.18, 4.0)
-	hit_stop(0.05)
+	hit_stop(0.03)
 
 
 func _on_pad_bounced(_p: Player, pad: Node2D, pounding: bool) -> void:
