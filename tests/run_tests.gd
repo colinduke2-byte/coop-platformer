@@ -2288,3 +2288,176 @@ func test_demo_key_reachable_via_geyser() -> void:
 	var k: DreamKey = _demo.find_children("*", "DreamKey", true, false)[0]
 	check(k.carrier == p, "the geyser should pop you up to the key (highest %.0f)" % high)
 	await _finish_demo()
+
+
+# --- World 1 enemies --------------------------------------------------------------------
+
+func test_shellbert_stomp_hides_then_kicked_shell_smashes_enemies() -> void:
+	var s := _spawn_enemy("res://enemies/shellbert.tscn", Vector2(0, 0)) as Shellbert
+	s.walk_speed = 0.0
+	var g := _spawn_enemy("res://enemies/grunt.tscn", Vector2(-360, 0))
+	g.walk_speed = 0.0
+	g.sight = 0.0
+	var p := add_player(0, Vector2(0, -200))
+	await seconds(0.5)
+	check(s.st == Shellbert.St.SHELL, "a stomp should send it into its shell (st %d)" % s.st)
+	check(not p.is_bubbled(), "stomping it is safe")
+	# Walk into the shell from the right: kicks it left into the Grumblet.
+	p.global_position = Vector2(90, -2)
+	await settle(p)
+	press(0, "move_left")
+	var kicked := false
+	for i in 90:
+		await get_tree().physics_frame
+		if s.st == Shellbert.St.SPIN:
+			kicked = true
+			break
+	release(0, "move_left")
+	check(kicked, "walking into the shell should kick it")
+	await seconds(0.8)
+	check(not is_instance_valid(g) or g.dead, "the spinning shell should knock out the Grumblet")
+	check(not p.is_bubbled(), "a spinning shell never hurts players")
+
+
+func test_shellbert_cracks_after_bouncing_off_walls() -> void:
+	var s := _spawn_enemy("res://enemies/shellbert.tscn", Vector2(400, 0)) as Shellbert
+	s.max_bounces = 1
+	await frames(3)
+	s._kick(1)
+	var gone := false
+	for i in 480:
+		await get_tree().physics_frame
+		if not is_instance_valid(s) or s.dead:
+			gone = true
+			break
+	check(gone, "after its bounces the shell should crack")
+
+
+func test_bumblebonk_aims_then_dashes_at_player() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var b := _spawn_enemy("res://enemies/bumblebonk.tscn", Vector2(300, -200)) as Bumblebonk
+	var aimed := false
+	var dashed := false
+	for i in 240:
+		await get_tree().physics_frame
+		aimed = aimed or b.st == Bumblebonk.St.AIM
+		if b.st == Bumblebonk.St.DASH:
+			dashed = true
+			await frames(2)
+			check(b.velocity.x < 0.0 and b.velocity.y > 0.0, "the dash should head down toward the player (v %s)" % b.velocity)
+			break
+	check(aimed and dashed, "it should telegraph, then dash")
+
+
+func test_bumblebonk_stomp_defeats() -> void:
+	var b := _spawn_enemy("res://enemies/bumblebonk.tscn", Vector2(0, -60)) as Bumblebonk
+	b.sight = 0.0
+	b.loop_size = Vector2.ZERO
+	var p := add_player(0, Vector2(0, -300))
+	await seconds(0.6)
+	check(not is_instance_valid(b) or b.dead, "stomping a bee should defeat it")
+	check(not p.is_bubbled(), "and not hurt you")
+
+
+func test_diggle_pops_up_throws_and_is_only_hittable_when_up() -> void:
+	var d := _spawn_enemy("res://enemies/diggle.tscn", Vector2(0, 0)) as Diggle
+	var p := add_player(0, Vector2(-1500, -2))
+	await settle(p)
+	await frames(10)
+	check(d.st == Diggle.St.HIDDEN, "no one near: stays hidden")
+	d.take_hit(p, Vector2.ZERO)
+	check(not d.dead and d.health == 1, "hidden moles can't be hit")
+	p.global_position = Vector2(-300, -2)
+	p.invulnerable_timer = 100.0
+	var threw := false
+	for i in 180:
+		await get_tree().physics_frame
+		for c in _arena.get_children():
+			if c is Projectile:
+				threw = true
+		if threw:
+			break
+	check(d.st == Diggle.St.UP or d.st == Diggle.St.SINKING, "a nearby player should make it pop up")
+	check(threw, "it should throw a clod")
+
+
+func test_ribbiton_is_a_trampoline_not_a_stomp_kill() -> void:
+	var r := _spawn_enemy("res://enemies/ribbiton.tscn", Vector2(0, 0)) as Ribbiton
+	r.sit_time = 100.0
+	r._sit = 100.0
+	var p := add_player(0, Vector2(0, -160))
+	var peak := 0.0
+	var start := -160.0
+	for i in 150:
+		await get_tree().physics_frame
+		peak = minf(peak, p.global_position.y)
+	check(not r.dead, "stomping the frog must not defeat it")
+	check(not p.is_bubbled(), "bouncing on it is safe")
+	check(peak < start - 180.0, "it should launch you high (peak %.0f)" % peak)
+
+
+func test_ribbiton_hops_toward_player() -> void:
+	var r := _spawn_enemy("res://enemies/ribbiton.tscn", Vector2(0, 0)) as Ribbiton
+	var p := add_player(0, Vector2(400, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var x0 := r.global_position.x
+	await seconds(3.0)
+	check(r.global_position.x > x0 + 150.0, "it should hop toward the player (x %.0f)" % r.global_position.x)
+
+
+func test_prickleroll_rolls_blocks_punches_and_gets_dizzy_on_wall() -> void:
+	var p := add_player(0, Vector2(560, -2))  # right next to the arena wall
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var h := _spawn_enemy("res://enemies/prickleroll.tscn", Vector2(300, 0), 1) as Prickleroll
+	var rolled := false
+	for i in 120:
+		await get_tree().physics_frame
+		if h.st == Prickleroll.St.ROLL:
+			rolled = true
+			break
+	check(rolled, "it should curl up and roll at the player")
+	check(h.blocks_hit(p, Enemy.HitKind.PUNCH), "a rolling ball shrugs off punches")
+	p.global_position = Vector2(0, -2)  # jump out of the way
+	var dizzy := false
+	for i in 240:
+		await get_tree().physics_frame
+		if h.st == Prickleroll.St.DIZZY:
+			dizzy = true
+			break
+	check(dizzy, "rolling into the wall should make it dizzy")
+	h.take_hit(p, Vector2(300, -100))
+	await frames(2)
+	check(not is_instance_valid(h) or h.dead, "a dizzy hedgehog can be punched out")
+
+
+func test_puffcap_spores_bubble_players_nearby() -> void:
+	var m := _spawn_enemy("res://enemies/puffcap.tscn", Vector2(0, 0)) as Puffcap
+	m.idle_time = 0.3
+	var p := add_player(0, Vector2(70, -2))
+	await settle(p)
+	var hurt := false
+	for i in 480:
+		await get_tree().physics_frame
+		if p.is_bubbled():
+			hurt = true
+			break
+	check(hurt, "standing next to a puffing Puffcap should bubble you")
+
+
+func test_wispet_only_moves_when_you_look_away() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	var w := _spawn_enemy("res://enemies/wispet.tscn", Vector2(400, -40)) as Wispet
+	p.facing = 1  # looking at it
+	await seconds(0.8)
+	var x_watched := w.global_position.x
+	check(w.shy and x_watched > 380.0, "watched: it should freeze (x %.0f)" % x_watched)
+	check(not w.contact_hurts, "a shy ghost is harmless")
+	p.facing = -1  # turn our back
+	await seconds(1.0)
+	check(not w.shy and w.global_position.x < x_watched - 40.0, "back turned: it should creep closer (x %.0f)" % w.global_position.x)

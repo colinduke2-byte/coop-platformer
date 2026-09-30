@@ -15,7 +15,8 @@ from tscn import Scene, V, C, NodePath
 RES = "res://"
 BLOCK = RES + "world/block.tscn"
 ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
-           ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo"]}
+           ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo",
+            "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
