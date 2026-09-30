@@ -1,0 +1,121 @@
+<title>Dreamers</title>
+<style>
+  :root { --bg: #1d1726; --ink: #fff8ec; --muted: #b9aecb; --accent: #ffd23f; --pink: #ff5d8f; color-scheme: dark; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Trebuchet MS", system-ui, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  #canvas { display: block; width: 100vw; height: 100vh; outline: none; background: #000; }
+  #cover { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #3b2f5a, var(--bg) 70%); padding: 16px; }
+  .card { max-width: 640px; width: 100%; text-align: center; display: grid; gap: 18px; }
+  h1 { margin: 0; font-size: clamp(48px, 11vw, 96px); letter-spacing: 0.04em; line-height: 1; }
+  h1 span:nth-child(6n+1) { color: #ff5d8f } h1 span:nth-child(6n+2) { color: #ffd23f } h1 span:nth-child(6n+3) { color: #5bc8ff }
+  h1 span:nth-child(6n+4) { color: #7ee05a } h1 span:nth-child(6n+5) { color: #c58bff } h1 span:nth-child(6n) { color: #ff9e3f }
+  .sub { color: var(--muted); font-size: 18px; margin: 0; }
+  button { font: inherit; font-size: 26px; font-weight: 700; padding: 16px 40px; border-radius: 999px; border: 4px solid var(--ink);
+    background: var(--pink); color: white; cursor: pointer; justify-self: center; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .bar { height: 12px; border-radius: 99px; background: #3a3050; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0%; background: var(--accent); transition: width 0.2s; }
+  .keys { font-size: 15px; color: var(--muted); line-height: 1.6; text-align: left; background: #2a2238; border-radius: 14px; padding: 14px 18px; }
+  .keys b { color: var(--ink); }
+  #status { min-height: 1.4em; color: var(--muted); margin: 0; }
+</style>
+
+<div id="stage"><canvas id="canvas" tabindex="0">Your browser doesn't support canvas.</canvas></div>
+<div id="cover">
+  <div class="card">
+    <h1 aria-label="DREAMERS"><span>D</span><span>R</span><span>E</span><span>A</span><span>M</span><span>E</span><span>R</span><span>S</span></h1>
+    <p class="sub">a co-op dream adventure &middot; Worlds 1 &amp; 2</p>
+    <button id="play" disabled>Loading&hellip;</button>
+    <div class="bar"><i id="bar"></i></div>
+    <p id="status">Downloading the game (about 17 MB)&hellip;</p>
+    <div class="keys">
+      <b>Player 1:</b> WASD move &middot; Space jump &middot; Left Shift punch &middot; Left Ctrl sprint<br>
+      <b>Player 2:</b> Arrows move &middot; Enter jump &middot; Right Shift punch &middot; Right Ctrl sprint<br>
+      <b>Gamepads</b> work too (A to join). <b>Esc</b> pauses &middot; <b>F9</b> on the map unlocks everything.
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const bar = document.getElementById("bar");
+  const status = document.getElementById("status");
+  const play = document.getElementById("play");
+  const files = {};  // what the engine asks for -> Blob
+  const realFetch = window.fetch.bind(window);
+
+  // Hand the engine its (pre-downloaded) files instead of fetching them.
+  window.fetch = function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    for (const name in files) {
+      if (url.split("?")[0].endsWith(name)) {
+        const type = name.endsWith(".wasm") ? "application/wasm" : "application/octet-stream";
+        return Promise.resolve(new Response(files[name], { headers: { "Content-Type": type, "Content-Length": String(files[name].size) } }));
+      }
+    }
+    return realFetch(input, init);
+  };
+
+  async function download(url, weight, base) {
+    const res = await realFetch(url);
+    if (!res.ok) throw new Error(url + ": " + res.status);
+    const total = Number(res.headers.get("Content-Length")) || 0;
+    const reader = res.body.getReader();
+    const parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value);
+      got += value.length;
+      if (total) bar.style.width = (base + weight * got / total) + "%";
+    }
+    return new Blob(parts);
+  }
+
+  async function prepare() {
+    const gz = await download("engine.gz.wasm", 60, 0);
+    status.textContent = "Unpacking the engine...";
+    const wasm = await new Response(gz.stream().pipeThrough(new DecompressionStream("gzip"))).blob();
+    files["index.wasm"] = wasm;
+    files["index.pck"] = await download("game.pck.wasm", 35, 60);
+    bar.style.width = "100%";
+    await new Promise(function (ok, bad) {
+      const s = document.createElement("script");
+      s.src = "index.js";
+      s.onload = ok;
+      s.onerror = function () { bad(new Error("couldn't load index.js")); };
+      document.head.appendChild(s);
+    });
+    status.textContent = "Ready! Click to play (sound needs a click).";
+    play.disabled = false;
+    play.textContent = "Play";
+  }
+
+  function start() {
+    play.disabled = true;
+    status.textContent = "Starting...";
+    const config = {
+      args: [], canvasResizePolicy: 2, executable: "index", experimentalVK: false, focusCanvas: true,
+      fileSizes: { "index.pck": files["index.pck"].size, "index.wasm": files["index.wasm"].size },
+      gdextensionLibs: [], emscriptenPoolSize: 8, godotPoolSize: 4, ensureCrossOriginIsolationHeaders: false,
+    };
+    const engine = new Engine(config);
+    engine.startGame({
+      onProgress: function (cur, total) { if (total) bar.style.width = (100 * cur / total) + "%"; },
+    }).then(function () {
+      document.getElementById("cover").style.display = "none";
+      document.getElementById("canvas").focus();
+    }, function (err) {
+      status.textContent = "Couldn't start the game here: " + (err && err.message ? err.message : err);
+      play.disabled = false;
+    });
+  }
+
+  play.addEventListener("click", start);
+  prepare().catch(function (err) {
+    status.textContent = "Download failed: " + (err && err.message ? err.message : err);
+  });
+})();
+</script>
