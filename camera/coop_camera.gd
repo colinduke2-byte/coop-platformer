@@ -50,6 +50,7 @@ func add_trauma(amount: float) -> void:
 
 
 func _process(delta: float) -> void:
+	View.set_from_camera(self)
 	_trauma = maxf(_trauma - shake_decay * delta, 0.0)
 	var s := _trauma * _trauma
 	offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * shake_max_offset * s
@@ -122,3 +123,7 @@ func _check_stragglers(delta: float) -> void:
 		if _offscreen_time[p] > offscreen_grace:
 			_offscreen_time.erase(p)
 			p.hurt()
+
+
+func _exit_tree() -> void:
+	View.reset()

@@ -4,7 +4,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 
-L = LevelKit("CandyCanopy", "Candy Canopy", theme="candy", horizon=0)
+L = LevelKit("CandyCanopy", "Candy Canopy", theme="candy", horizon=0, scenery="candy")
 
 # ---- start (x -300..900) ---------------------------------------------------------------
 L.wall(-360, -1000, 500)

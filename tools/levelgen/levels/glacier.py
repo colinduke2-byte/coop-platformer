@@ -4,7 +4,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 
-L = LevelKit("GlacierGrotto", "Glacier Grotto", theme="glacier", horizon=600)
+L = LevelKit("GlacierGrotto", "Glacier Grotto", theme="glacier", horizon=600, scenery="ice")
 
 # ---- start --------------------------------------------------------------------------------------------
 L.wall(-360, -1000, 500)

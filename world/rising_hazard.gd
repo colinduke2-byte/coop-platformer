@@ -46,7 +46,7 @@ func surface_y() -> float:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw(self, width)
 	if Engine.is_editor_hint():
 		return
 	if active and _risen < rise_distance:

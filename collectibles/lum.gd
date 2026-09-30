@@ -12,32 +12,37 @@ var _t := 0.0
 var _base := Vector2.ZERO
 var _taken := false
 var _pull: Player
+var _wings: Node2D
 
 
 func _ready() -> void:
 	_base = position
 	_t = randf() * TAU
 	body_entered.connect(_on_body_entered)
+	_wings = Wings.new()
+	_wings.position = Vector2(0, -2)
+	_wings.show_behind_parent = true
+	add_child(_wings, false, Node.INTERNAL_MODE_FRONT)
 	for n in [^"Glow"]:
 		if has_node(n):
 			get_node(n).visible = false
 
 
 func _process(delta: float) -> void:
-	_t += delta * bob_speed
-	if _taken:
+	if _taken or not View.sees(global_position):
 		return
+	_t += delta * bob_speed
 	if _pull == null:
-		for p in get_tree().get_nodes_in_group(&"players"):
-			var pl := p as Player
-			if not pl.is_bubbled() and (pl.global_position + Vector2(0, -30)).distance_to(global_position) < magnet_radius:
+		for pl: Player in GameManager.players.values():
+			if is_instance_valid(pl) and not pl.is_bubbled() \
+					and (pl.global_position + Vector2(0, -30)).distance_squared_to(global_position) < magnet_radius * magnet_radius:
 				_pull = pl
 				break
 	if _pull and is_instance_valid(_pull):
 		global_position = global_position.move_toward(_pull.global_position + Vector2(0, -30), magnet_speed * delta)
 	else:
 		position.y = _base.y + sin(_t) * bob_height
-	queue_redraw()
+	_wings.scale.y = 1.0 + sin(_t * 6.0) * 0.45  # flap (a transform: no redraw)
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -52,12 +57,15 @@ func _on_body_entered(body: Node2D) -> void:
 	tw.tween_callback(queue_free)
 
 
+## Drawn once; bobbing and flapping are transforms, so lums never redraw.
 func _draw() -> void:
-	var flap := sin(_t * 6.0)
 	draw_circle(Vector2.ZERO, 17.0, Color(1, 0.9, 0.3, 0.22))
-	for s: float in [-1.0, 1.0]:
-		var wing := PackedVector2Array([Vector2(s * 4, -3), Vector2(s * 16, -12 - flap * 5.0), Vector2(s * 14, -2)])
-		draw_colored_polygon(wing, Color(1, 1, 1, 0.85))
 	draw_circle(Vector2.ZERO, 9.0, Color("1d1726"))
 	draw_circle(Vector2.ZERO, 7.5, Color("ffe45c"))
 	draw_circle(Vector2(-2.5, -2.5), 2.5, Color(1, 1, 1, 0.9))
+
+
+class Wings extends Node2D:
+	func _draw() -> void:
+		for s: float in [-1.0, 1.0]:
+			draw_colored_polygon(PackedVector2Array([Vector2(s * 4, -3), Vector2(s * 16, -12), Vector2(s * 14, -2)]), Color(1, 1, 1, 0.85))

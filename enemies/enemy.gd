@@ -125,7 +125,7 @@ func _physics_process(delta: float) -> void:
 	visual.scale = Vector2(_squash.x * facing, _squash.y)
 	var f := 1.0 + 2.5 * hit_flash
 	visual.modulate = Color(f, f, f)
-	visual.queue_redraw()
+	View.redraw(visual)
 
 
 func _check_contacts(delta: float) -> void:

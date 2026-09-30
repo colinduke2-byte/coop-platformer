@@ -84,6 +84,7 @@ level_name = "Dreamer's Playground"
 [node name="Backdrop" type="Node2D" parent="."]
 script = ExtResource("3")
 horizon_y = 0
+scenery = 0
 
 [node name="Decor" type="Node2D" parent="."]
 

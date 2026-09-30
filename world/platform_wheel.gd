@@ -63,7 +63,7 @@ func _physics_process(delta: float) -> void:
 	if not Engine.is_editor_hint():
 		_angle += deg_to_rad(speed) * delta
 	_place()
-	queue_redraw()
+	View.redraw(self, radius + 200.0)
 
 
 func _draw_platform(b: AnimatableBody2D) -> void:

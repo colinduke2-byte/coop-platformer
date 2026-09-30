@@ -36,7 +36,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_t += delta
 	_recoil = maxf(_recoil - delta * 4.0, 0.0)
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	if sweep_degrees != 0.0:

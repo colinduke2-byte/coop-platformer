@@ -49,7 +49,7 @@ func _physics_process(delta: float) -> void:
 		elif body is CollisionObject2D and (body as CollisionObject2D).collision_layer & 1:
 			_pop()
 			return
-	queue_redraw()
+	View.redraw(self)
 
 
 ## Punched: fly back where it came from, twice as fast, now hurting enemies.

@@ -69,7 +69,7 @@ func _physics_process(delta: float) -> void:
 		_cooldowns[k] -= delta
 		if _cooldowns[k] <= 0.0:
 			_cooldowns.erase(k)
-	queue_redraw()
+	View.redraw(self, length + 200.0)
 	if Engine.is_editor_hint() or not is_on():
 		return
 	for b in _area.get_overlapping_bodies():

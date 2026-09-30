@@ -20,13 +20,18 @@ GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "
 
 
 class LevelKit:
-    def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd"):
+    SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7}
+
+    def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
+                 scenery="hills", backdrop=None):
         self.s = Scene(root)
         self.s.root_props["script"] = self.s.script(script)
         self.s.root_props["level_theme"] = self.s.resource(f"{RES}world/themes/{theme}.tres")
         self.s.root_props["level_name"] = level_name
-        self.s.node("Backdrop", "Node2D", props={"script": self.s.script(RES + "world/backdrop.gd"),
-                                                 "horizon_y": float(horizon)}, unique=False)
+        bprops = {"script": self.s.script(RES + "world/backdrop.gd"), "horizon_y": float(horizon),
+                  "scenery": self.SCENERY[scenery]}
+        bprops.update(backdrop or {})  # e.g. {"light_shafts": True, "stars": True}
+        self.s.node("Backdrop", "Node2D", props=bprops, unique=False)
         for g in GROUPS:
             self.s.node(g, "Node2D", unique=False)
         self.min_x, self.max_x, self.max_y = 0.0, 0.0, 0.0

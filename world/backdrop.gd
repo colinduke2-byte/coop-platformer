@@ -1,15 +1,33 @@
 @tool
 class_name Backdrop
 extends Node2D
-## Painted-style parallax background built from the level's LevelTheme:
-## gradient sky, sun, drifting clouds, far hills, near hills with trees.
-## Drop ONE in a level (anywhere; it draws behind everything). Set
-## `horizon_y` to roughly the world y of your main ground.
-## Swap for painted art later by replacing the layers it builds.
+## Painted-style parallax background built from the level's LevelTheme.
+## Drop ONE in a level (anywhere; it draws behind everything). Set `horizon_y`
+## to roughly the world y of your main ground and pick a `scenery`.
+##
+## Layers, back to front: sky gradient (+ sun or stars), drifting clouds, up to
+## four parallax layers that fade into the sky with distance (aerial haze), and
+## optional light shafts. Every layer is baked into ONE mesh, so a whole
+## backdrop costs a handful of draw calls no matter how detailed it is.
+
+enum Scenery {
+	HILLS,      ## rolling meadow hills, round trees, a windmill
+	FOREST,     ## tall trunks in layers, ferns, light shafts
+	CAVE,       ## dark rock layers, stalactites, glowing crystals and mushrooms
+	CANOPY,     ## treetop village: huge trunks, huts on branches, rope bridges
+	RIVER,      ## hills with a river valley and a water mill
+	CASTLE,     ## thorny hills and a dark castle on a crag
+	CANDY,      ## lollipop trees and gumdrop hills
+	ICE,        ## snowy peaks and pines
+}
 
 @export var horizon_y := 600.0:
 	set(v):
 		horizon_y = v
+		_rebuild()
+@export var scenery: Scenery = Scenery.HILLS:
+	set(v):
+		scenery = v
 		_rebuild()
 @export var seed_value := 7:
 	set(v):
@@ -23,15 +41,24 @@ extends Node2D
 	set(v):
 		trees = v
 		_rebuild()
+@export var light_shafts := false:           ## soft sunbeams (forests, canopies)
+	set(v):
+		light_shafts = v
+		_rebuild()
+@export var stars := false:                  ## night / cave sky sparkles instead of a sun
+	set(v):
+		stars = v
+		_rebuild()
 @export var theme_override: LevelTheme:
 	set(v):
 		theme_override = v
 		_rebuild()
 
-const FAR_REPEAT := 2400.0
-const NEAR_REPEAT := 1800.0
-const CLOUD_REPEAT := 3000.0
-const DEPTH := 4000.0          ## how far below the horizon hills extend
+const DEPTH := 5000.0          ## how far below the horizon layers extend
+const CLOUD_REPEAT := 3200.0
+
+var _th: LevelTheme
+var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
@@ -44,18 +71,34 @@ func _rebuild() -> void:
 		return
 	for c in get_children(true):
 		c.queue_free()
-	var th := theme_override if theme_override else LevelTheme.find(self)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
+	_th = theme_override if theme_override else LevelTheme.find(self)
+	_rng.seed = seed_value
+	_build_sky()
+	if clouds and scenery != Scenery.CAVE:
+		_build_clouds()
+	match scenery:
+		Scenery.HILLS: _hills_scene()
+		Scenery.FOREST: _forest_scene()
+		Scenery.CAVE: _cave_scene()
+		Scenery.CANOPY: _canopy_scene()
+		Scenery.RIVER: _river_scene()
+		Scenery.CASTLE: _castle_scene()
+		Scenery.CANDY: _candy_scene()
+		Scenery.ICE: _ice_scene()
+	if light_shafts:
+		_build_shafts()
 
-	# Sky: a screen-filling gradient on its own canvas layer.
-	var sky_layer := CanvasLayer.new()
-	sky_layer.layer = -100
-	sky_layer.follow_viewport_enabled = false
-	add_child(sky_layer, false, Node.INTERNAL_MODE_FRONT)
+
+# --- Sky ------------------------------------------------------------------------------
+
+func _build_sky() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = -100
+	add_child(layer, false, Node.INTERNAL_MODE_FRONT)
 	var grad := Gradient.new()
-	grad.set_color(0, th.sky_top)
-	grad.set_color(1, th.sky_bottom)
+	grad.set_color(0, _th.sky_top)
+	grad.set_color(1, _th.sky_bottom)
+	grad.add_point(0.62, _th.sky_top.lerp(_th.sky_bottom, 0.75))
 	var tex := GradientTexture2D.new()
 	tex.gradient = grad
 	tex.fill_from = Vector2(0, 0)
@@ -67,100 +110,612 @@ func _rebuild() -> void:
 	sky.stretch_mode = TextureRect.STRETCH_SCALE
 	sky.set_anchors_preset(Control.PRESET_FULL_RECT)
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sky_layer.add_child(sky)
-	# Sun (screen-fixed, top right-ish).
-	var sun := Polygon2D.new()
-	sun.polygon = Art.ellipse(Vector2(1500, 170), 90, 90, 32)
-	sun.color = Color(th.sun, 0.9)
-	sky_layer.add_child(sun)
-	var glow := Polygon2D.new()
-	glow.polygon = Art.ellipse(Vector2(1500, 170), 140, 140, 32)
-	glow.color = Color(th.sun, 0.25)
-	sky_layer.add_child(glow)
-	sky_layer.move_child(glow, sun.get_index())
+	layer.add_child(sky)
+	var mp := MeshPainter.new()
+	if stars or scenery == Scenery.CAVE:
+		for i in 90:
+			var p := Vector2(_rng.randf_range(0, 1920), _rng.randf_range(0, 700))
+			var r := _rng.randf_range(1.0, 2.6)
+			mp.draw_circle(p, r, Color(1, 1, 1, _rng.randf_range(0.25, 0.8)))
+			if r > 2.2:
+				mp.draw_line(p - Vector2(r * 3, 0), p + Vector2(r * 3, 0), Color(1, 1, 1, 0.3), 1.0)
+				mp.draw_line(p - Vector2(0, r * 3), p + Vector2(0, r * 3), Color(1, 1, 1, 0.3), 1.0)
+	if scenery != Scenery.CAVE:
+		var sc := Vector2(1480, 190)
+		if stars:  # a moon
+			mp.draw_circle(sc, 120, Color(_th.sun, 0.12))
+			mp.draw_circle(sc, 70, _th.sun.lightened(0.3))
+			mp.draw_circle(sc + Vector2(24, -12), 60, _th.sky_top.lerp(_th.sky_bottom, 0.3))
+		else:
+			mp.draw_circle(sc, 86, _th.sun)
+			mp.draw_circle(sc + Vector2(-20, -22), 40, Color(1, 1, 1, 0.35))
+			_sun_glow(layer, sc)
+	var art := MeshArt.new(mp.build())
+	layer.add_child(art)
 
-	if clouds:
-		var cl := _parallax(0.12, CLOUD_REPEAT)
-		cl.autoscroll = Vector2(-12, 0)
-		for i in 7:
-			var c := Vector2(rng.randf_range(0, CLOUD_REPEAT), horizon_y - rng.randf_range(650, 1200))
-			_cloud(cl, c, rng.randf_range(0.7, 1.4), th)
-	var far := _parallax(0.3, FAR_REPEAT)
-	_hills(far, FAR_REPEAT, horizon_y - 260.0, 220.0, th.far_hills, rng, 7)
-	var near := _parallax(0.6, NEAR_REPEAT)
-	_hills(near, NEAR_REPEAT, horizon_y - 120.0, 150.0, th.near_hills, rng, 5)
+
+## Smooth radial glow (a gradient texture: no banding, one draw call).
+func _sun_glow(layer: CanvasLayer, at: Vector2) -> void:
+	var g := Gradient.new()
+	g.set_color(0, Color(_th.sun, 0.55))
+	g.set_color(1, Color(_th.sun, 0.0))
+	g.add_point(0.25, Color(_th.sun, 0.3))
+	var tex := GradientTexture2D.new()
+	tex.gradient = g
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 256
+	tex.height = 256
+	var spr := Sprite2D.new()
+	spr.texture = tex
+	spr.position = at
+	spr.scale = Vector2(3.2, 3.2)
+	layer.add_child(spr)
+
+
+func _build_clouds() -> void:
+	var p := _parallax(0.1, CLOUD_REPEAT, Vector2(-14, 0))
+	var mp := MeshPainter.new()
+	for i in 8:
+		var c := Vector2(_rng.randf_range(0, CLOUD_REPEAT), horizon_y - _rng.randf_range(700, 1250))
+		_cloud(mp, c, _rng.randf_range(0.7, 1.5))
+	p.add_child(MeshArt.new(mp.build()))
+
+
+func _cloud(mp: MeshPainter, c: Vector2, s: float) -> void:
+	var col := _th.cloud
+	var shade := col.lerp(_th.sky_top, 0.25)
+	var blobs := [Vector3(0, 0, 52), Vector3(-58, 14, 36), Vector3(58, 12, 42), Vector3(-22, -26, 40), Vector3(30, -22, 36), Vector3(90, 22, 26), Vector3(-92, 24, 24)]
+	for b: Vector3 in blobs:  # shadow side first
+		mp.draw_colored_polygon(Art.ellipse(c + Vector2(b.x, b.y + 8) * s, b.z * s, b.z * s * 0.8, 20), shade)
+	for b: Vector3 in blobs:
+		mp.draw_colored_polygon(Art.ellipse(c + Vector2(b.x, b.y) * s, b.z * s, b.z * s * 0.78, 20), col)
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(-18, -30) * s, 22 * s, 12 * s, 14), Color(1, 1, 1, 0.5))
+
+
+func _build_shafts() -> void:
+	var p := _parallax(0.85, 2600.0)
+	var mp := MeshPainter.new()
+	for i in 5:
+		var x := _rng.randf_range(0, 2600)
+		var w := _rng.randf_range(60, 160)
+		var top := horizon_y - 1500.0
+		var bot := horizon_y + 200.0
+		var lean := 380.0
+		var pts := PackedVector2Array([Vector2(x, top), Vector2(x + w, top), Vector2(x + w + lean, bot), Vector2(x + lean - w * 0.3, bot)])
+		mp.draw_colored_polygon(pts, Color(_th.sun, 0.07))
+		var inner := PackedVector2Array([Vector2(x + w * 0.3, top), Vector2(x + w * 0.7, top), Vector2(x + w * 0.7 + lean, bot), Vector2(x + w * 0.2 + lean, bot)])
+		mp.draw_colored_polygon(inner, Color(_th.sun, 0.06))
+	var art := MeshArt.new(mp.build())
+	p.add_child(art)
+	p.z_index = -40  # in front of the scenery, behind the gameplay
+
+
+# --- Scenery sets ---------------------------------------------------------------------
+
+func _hills_scene() -> void:
+	_mountain_layer(0.05, 3000.0, 0.7, 420.0, 5, false)
+	var far := _layer(0.14, 2600.0)
+	_hill_band(far, 2600.0, horizon_y - 300.0, 160.0, 5, _haze(_th.far_hills, 0.4))
 	if trees:
-		for i in 6:
-			var x := rng.randf_range(0, NEAR_REPEAT)
-			_tree(near, Vector2(x, _hill_y_hint), rng.randf_range(0.8, 1.3), th)
+		_tree_row(far, 2600.0, 16, 0.3, _haze(_th.far_hills.darkened(0.15), 0.38), false)
+	_commit(far)
+	var mid := _layer(0.3, 2400.0)
+	_hill_band(mid, 2400.0, horizon_y - 170.0, 130.0, 3, _haze(_th.far_hills.lerp(_th.near_hills, 0.5), 0.22))
+	if trees:
+		_tree_row(mid, 2400.0, 6, 0.55, _haze(_th.near_hills.darkened(0.12), 0.2), true)
+	_windmill(mid, Vector2(_rng.randf_range(300, 1900), 0), 0.8, _haze(_th.ground.lightened(0.3), 0.22))
+	_commit(mid)
+	var near := _layer(0.55, 2000.0)
+	_hill_band(near, 2000.0, horizon_y - 60.0, 90.0, 2, _haze(_th.near_hills, 0.08))
+	if trees:
+		_tree_row(near, 2000.0, 4, 0.85, _haze(_th.near_hills.darkened(0.1).lerp(_th.foliage, 0.3), 0.06), true)
+		_bushes(near, 2000.0, 6, _haze(_th.foliage_dark.lerp(_th.near_hills, 0.5), 0.06))
+	_commit(near)
 
 
-var _hill_y_hint := 0.0
-var _hill_pts := PackedVector2Array()
+func _forest_scene() -> void:
+	var back := _layer(0.08, 2400.0)
+	_trunk_row(back, 2400.0, 16, 60.0, _haze(_th.near_hills.darkened(0.3), 0.55))
+	_canopy_band(back, 2400.0, horizon_y - 1300.0, _haze(_th.foliage_dark, 0.5))
+	_commit(back)
+	var mid := _layer(0.22, 2000.0)
+	_trunk_row(mid, 2000.0, 9, 110.0, _haze(_th.ground.darkened(0.15), 0.3))
+	_canopy_band(mid, 2000.0, horizon_y - 1150.0, _haze(_th.foliage_dark, 0.28))
+	_commit(mid)
+	var near := _layer(0.45, 1700.0)
+	_hill_band(near, 1700.0, horizon_y - 60.0, 70.0, 3, _haze(_th.near_hills.darkened(0.1), 0.05))
+	_trunk_row(near, 1700.0, 5, 170.0, _th.ground.darkened(0.3))
+	_ferns(near, 1700.0, 14, _th.foliage_dark)
+	_commit(near)
 
 
-func _parallax(scale: float, repeat: float) -> Parallax2D:
+func _cave_scene() -> void:
+	var rock := _th.ground.darkened(0.35)
+	var back := _layer(0.08, 2400.0)
+	_rock_band(back, 2400.0, horizon_y - 900.0, 380.0, _haze(rock, 0.45), true)
+	_crystals(back, 2400.0, 10, horizon_y - 500.0, 0.6)
+	_commit(back)
+	var mid := _layer(0.25, 2000.0)
+	_rock_band(mid, 2000.0, horizon_y - 500.0, 300.0, _haze(rock, 0.22), false)
+	_stalactites(mid, 2000.0, 14, horizon_y - 1600.0, _haze(rock, 0.22))
+	_glow_mushrooms(mid, 2000.0, 7, 0.8)
+	_commit(mid)
+	var near := _layer(0.5, 1700.0)
+	_rock_band(near, 1700.0, horizon_y - 200.0, 200.0, rock.darkened(0.15), false)
+	_stalactites(near, 1700.0, 8, horizon_y - 1300.0, rock.darkened(0.15))
+	_crystals(near, 1700.0, 5, horizon_y - 180.0, 1.0)
+	_commit(near)
+
+
+func _canopy_scene() -> void:
+	var back := _layer(0.07, 2600.0)
+	_canopy_band(back, 2600.0, horizon_y - 1400.0, _haze(_th.foliage_dark, 0.5))
+	_trunk_row(back, 2600.0, 10, 90.0, _haze(_th.ground, 0.5))
+	_commit(back)
+	var mid := _layer(0.2, 2200.0)
+	var trunk_col := _haze(_th.ground.darkened(0.1), 0.22)
+	var xs := _trunk_row(mid, 2200.0, 5, 200.0, trunk_col)
+	for i in xs.size() - 1:  # rope bridges between the big trunks
+		var y := horizon_y - _rng.randf_range(500, 900)
+		_rope_bridge(mid, Vector2(xs[i] + 100, y), Vector2(xs[i + 1] - 100, y + _rng.randf_range(-60, 60)), _haze(_th.ledge, 0.25))
+	for x in xs:
+		_hut(mid, Vector2(x, horizon_y - _rng.randf_range(650, 1000)), 1.0, _haze(_th.ledge, 0.2), _haze(_th.accent, 0.3))
+	_canopy_band(mid, 2200.0, horizon_y - 1250.0, _haze(_th.foliage_dark, 0.25))
+	_commit(mid)
+	var near := _layer(0.5, 1800.0)
+	_leaf_clusters(near, 1800.0, 12, horizon_y - 700.0, _th.foliage_dark)
+	_commit(near)
+
+
+func _river_scene() -> void:
+	_mountain_layer(0.05, 3000.0, 0.65, 380.0, 4, false)
+	var far := _layer(0.15, 2600.0)
+	_hill_band(far, 2600.0, horizon_y - 260.0, 160.0, 5, _haze(_th.far_hills, 0.3))
+	_tree_row(far, 2600.0, 18, 0.35, _haze(_th.far_hills.darkened(0.2), 0.3), false)
+	_commit(far)
+	var mid := _layer(0.32, 2200.0)
+	_hill_band(mid, 2200.0, horizon_y - 150.0, 120.0, 3, _haze(_th.near_hills, 0.12))
+	# The river: a band of water with sparkles along the valley floor.
+	var water := Color("5fb8e8").lerp(_th.sky_bottom, 0.3)
+	mid.painter.draw_rect(Rect2(0, horizon_y - 40.0, 2200.0, 60.0), water)
+	for i in 30:
+		var x := _rng.randf_range(0, 2200)
+		mid.painter.draw_line(Vector2(x, horizon_y - 25 + _rng.randf_range(0, 30)), Vector2(x + _rng.randf_range(20, 60), horizon_y - 25 + _rng.randf_range(0, 30)), Color(1, 1, 1, 0.4), 2.0)
+	_mill(mid, Vector2(_rng.randf_range(400, 1600), horizon_y - 120.0), 1.0)
+	_tree_row(mid, 2200.0, 8, 0.6, _haze(_th.near_hills.darkened(0.15), 0.12), true)
+	_commit(mid)
+	var near := _layer(0.55, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 70.0, 90.0, 3, _th.near_hills)
+	_reeds(near, 1800.0, 20, _th.foliage_dark)
+	_commit(near)
+
+
+func _castle_scene() -> void:
+	_mountain_layer(0.05, 3000.0, 0.6, 520.0, 3, false)
+	var far := _layer(0.14, 2600.0)
+	_hill_band(far, 2600.0, horizon_y - 280.0, 220.0, 4, _haze(_th.far_hills, 0.3))
+	_castle(far, Vector2(1300, horizon_y - 420.0), 1.2, _haze(_th.ground.darkened(0.4), 0.3), _haze(_th.accent, 0.2))
+	_commit(far)
+	var mid := _layer(0.3, 2200.0)
+	_hill_band(mid, 2200.0, horizon_y - 160.0, 150.0, 4, _haze(_th.near_hills, 0.12))
+	_thorns(mid, 2200.0, 10, _haze(_th.foliage_dark.darkened(0.3), 0.12))
+	_commit(mid)
+	var near := _layer(0.55, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 80.0, 110.0, 3, _th.near_hills)
+	_thorns(near, 1800.0, 7, _th.foliage_dark.darkened(0.4))
+	_commit(near)
+
+
+func _candy_scene() -> void:
+	_mountain_layer(0.05, 3000.0, 0.6, 360.0, 6, false)
+	var far := _layer(0.15, 2600.0)
+	_hill_band(far, 2600.0, horizon_y - 260.0, 200.0, 7, _haze(_th.far_hills, 0.3))
+	_commit(far)
+	var mid := _layer(0.32, 2200.0)
+	_hill_band(mid, 2200.0, horizon_y - 150.0, 150.0, 5, _haze(_th.near_hills, 0.12))
+	for i in 9:
+		_lollipop(mid, Vector2(_rng.randf_range(0, 2200), 0), _rng.randf_range(0.6, 1.0), 0.12)
+	_commit(mid)
+	var near := _layer(0.55, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 70.0, 110.0, 3, _th.near_hills)
+	for i in 6:
+		_lollipop(near, Vector2(_rng.randf_range(0, 1800), 0), _rng.randf_range(1.0, 1.4), 0.0)
+	_commit(near)
+
+
+func _ice_scene() -> void:
+	_mountain_layer(0.05, 3000.0, 0.55, 620.0, 4, true)
+	_mountain_layer(0.12, 2600.0, 0.3, 420.0, 5, true)
+	var mid := _layer(0.3, 2200.0)
+	_hill_band(mid, 2200.0, horizon_y - 170.0, 130.0, 4, _haze(_th.near_hills, 0.12))
+	_pine_row(mid, 2200.0, 14, 0.7, _haze(_th.foliage_dark, 0.15), true)
+	_commit(mid)
+	var near := _layer(0.55, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 80.0, 100.0, 3, _th.near_hills)
+	_pine_row(near, 1800.0, 7, 1.1, _th.foliage_dark, true)
+	_commit(near)
+
+
+# --- Layer plumbing -------------------------------------------------------------------
+
+## One parallax layer being painted: call _commit() when done.
+class Layer:
+	var parallax: Parallax2D
+	var painter := MeshPainter.new()
+	var width := 0.0
+	var profile := PackedVector2Array()   ## top edge of the last hill band (for placing things)
+
+
+## A baked mesh drawn as one canvas item.
+class MeshArt extends Node2D:
+	var mesh: ArrayMesh
+
+	func _init(m: ArrayMesh) -> void:
+		mesh = m
+
+	func _draw() -> void:
+		draw_mesh(mesh, null)
+
+
+func _parallax(scale: float, repeat: float, autoscroll := Vector2.ZERO) -> Parallax2D:
 	var p := Parallax2D.new()
-	p.scroll_scale = Vector2(scale, scale)
+	p.scroll_scale = Vector2(scale, scale * 0.9 + 0.1)
 	p.repeat_size = Vector2(repeat, 0)
-	p.repeat_times = 4
+	p.repeat_times = 3
+	p.autoscroll = autoscroll
 	p.z_index = -100
 	add_child(p, false, Node.INTERNAL_MODE_FRONT)
 	return p
 
 
-func _hills(parent: Node2D, width: float, y: float, amp: float, color: Color, rng: RandomNumberGenerator, bumps: int) -> void:
-	var pts := PackedVector2Array([Vector2(0, y + DEPTH)])
-	var phase := rng.randf() * TAU
-	var steps := 48
+func _layer(scale: float, width: float) -> Layer:
+	var l := Layer.new()
+	l.parallax = _parallax(scale, width)
+	l.width = width
+	return l
+
+
+func _commit(l: Layer) -> void:
+	l.parallax.add_child(MeshArt.new(l.painter.build()))
+
+
+## Colour pushed toward the sky colour: things far away fade into the air.
+func _haze(c: Color, amount: float) -> Color:
+	return c.lerp(_th.sky_bottom, amount)
+
+
+## Height of the last hill band at x (wraps around the layer width).
+func _ground_at(l: Layer, x: float) -> float:
+	var pts := l.profile
+	if pts.is_empty():
+		return horizon_y
+	x = fposmod(x, l.width)
+	for i in pts.size() - 1:
+		if x >= pts[i].x and x <= pts[i + 1].x:
+			return lerpf(pts[i].y, pts[i + 1].y, (x - pts[i].x) / maxf(pts[i + 1].x - pts[i].x, 0.01))
+	return pts[0].y
+
+
+# --- Building blocks ------------------------------------------------------------------
+
+## Rolling hills that loop seamlessly over `width`, with a lighter rim and
+## a darker band lower down for depth.
+func _hill_band(l: Layer, width: float, y: float, amp: float, bumps: int, color: Color) -> void:
+	var phase := _rng.randf() * TAU
+	var steps := 80
+	var top := PackedVector2Array()
 	for i in steps + 1:
-		var x := width * float(i) / steps
 		var t := TAU * float(i) / steps
-		# Sum of sines that loop exactly over `width` so the repeat is seamless.
-		var h := sin(t * bumps * 0.5 + phase) * 0.6 + sin(t * bumps + phase * 2.0) * 0.3 + sin(t * 2.0) * 0.1
-		pts.append(Vector2(x, y - (h * 0.5 + 0.5) * amp))
-	pts.append(Vector2(width, y + DEPTH))
-	var poly := Polygon2D.new()
-	poly.polygon = pts
-	poly.color = color
-	parent.add_child(poly)
-	var edge := Line2D.new()
-	var top := pts.slice(1, pts.size() - 1)
-	edge.points = top
-	edge.width = 6.0
-	edge.default_color = color.lightened(0.15)
-	parent.add_child(edge)
-	_hill_pts = top
-	_hill_y_hint = y
+		# Whole-number frequencies only, so the band loops seamlessly over `width`.
+		var h := sin(t * bumps + phase) * 0.6 + sin(t * (bumps * 2 + 1) + phase * 2.0) * 0.25 + sin(t + phase) * 0.15
+		top.append(Vector2(width * float(i) / steps, y - (h * 0.5 + 0.5) * amp))
+	var poly := top.duplicate()
+	poly.append(Vector2(width, y + DEPTH))
+	poly.append(Vector2(0, y + DEPTH))
+	l.painter.draw_colored_polygon(poly, color)
+	# Shading band that follows the hill shape.
+	var band := PackedVector2Array()
+	for p in top:
+		band.append(p + Vector2(0, amp * 0.55 + 40.0))
+	var band_poly := band.duplicate()
+	band_poly.append(Vector2(width, y + DEPTH))
+	band_poly.append(Vector2(0, y + DEPTH))
+	l.painter.draw_colored_polygon(band_poly, color.darkened(0.07))
+	l.painter.draw_polyline(top, color.lightened(0.18), 6.0)
+	l.profile = top
 
 
-func _hill_height_at(x: float) -> float:
-	for i in _hill_pts.size() - 1:
-		if x >= _hill_pts[i].x and x <= _hill_pts[i + 1].x:
-			return lerpf(_hill_pts[i].y, _hill_pts[i + 1].y, (x - _hill_pts[i].x) / maxf(_hill_pts[i + 1].x - _hill_pts[i].x, 0.01))
-	return _hill_y_hint
+func _mountain_layer(scale: float, width: float, haze: float, height: float, peaks: int, snow: bool) -> void:
+	var l := _layer(scale, width)
+	var base_y := horizon_y - 200.0
+	var col := _haze(_th.far_hills.darkened(0.08), haze)
+	var phase := _rng.randf() * TAU
+	var steps := 160
+	var top := PackedVector2Array()
+	for i in steps + 1:
+		var t := TAU * float(i) / steps
+		# 1 - |cos| = sharp ridges with rounded valleys; whole-number
+		# frequencies keep it seamless over `width`.
+		var ridge := 1.0 - absf(cos(t * peaks * 0.5 + phase))
+		var ridge2 := 1.0 - absf(cos(t * (peaks + 2) * 0.5 + phase * 1.7))
+		var h := ridge * 0.7 + ridge2 * 0.22 + sin(t * 9.0 + phase) * 0.04
+		top.append(Vector2(width * float(i) / steps, base_y - h * height))
+	var poly := top.duplicate()
+	poly.append(Vector2(width, base_y + DEPTH))
+	poly.append(Vector2(0, base_y + DEPTH))
+	l.painter.draw_colored_polygon(poly, col)
+	# Shadowed lower slopes.
+	var band := PackedVector2Array()
+	for p in top:
+		band.append(p + Vector2(0, height * 0.35))
+	band.append(Vector2(width, base_y + DEPTH))
+	band.append(Vector2(0, base_y + DEPTH))
+	l.painter.draw_colored_polygon(band, col.darkened(0.05))
+	if snow:
+		var snowline := base_y - height * 0.62
+		var cap := Rect2(-10, snowline - height * 2.0, width + 20, height * 2.0)
+		for piece in Geometry2D.intersect_polygons(poly, Art.rect(cap.position, cap.end)):
+			l.painter.draw_colored_polygon(piece, _haze(Color.WHITE, haze * 0.5))
+	_commit(l)
 
 
-func _tree(parent: Node2D, at: Vector2, s: float, th: LevelTheme) -> void:
-	var base := Vector2(at.x, _hill_height_at(at.x) + 6.0)
-	var trunk := Polygon2D.new()
-	trunk.polygon = Art.rect(base + Vector2(-6, -60) * s, base + Vector2(6, 0) * s)
-	trunk.color = th.near_hills.darkened(0.35)
-	parent.add_child(trunk)
-	for b: Vector3 in [Vector3(0, -80, 34), Vector3(-22, -62, 24), Vector3(22, -64, 26)]:
-		var blob := Polygon2D.new()
-		blob.polygon = Art.ellipse(base + Vector2(b.x, b.y) * s, b.z * s, b.z * s * 0.9, 16)
-		blob.color = th.near_hills.darkened(0.12).lerp(th.foliage, 0.35)
-		parent.add_child(blob)
+func _tree_row(l: Layer, width: float, count: int, s: float, color: Color, detailed: bool) -> void:
+	for i in count:
+		var x := (float(i) + _rng.randf_range(0.1, 0.9)) * width / count
+		_round_tree(l, Vector2(x, _ground_at(l, x) + 8.0 * s), s * _rng.randf_range(0.8, 1.25), color, detailed)
 
 
-func _cloud(parent: Node2D, c: Vector2, s: float, th: LevelTheme) -> void:
-	for b: Vector3 in [Vector3(0, 0, 50), Vector3(-55, 12, 36), Vector3(55, 10, 40), Vector3(-20, -24, 38), Vector3(28, -20, 34)]:
-		var blob := Polygon2D.new()
-		blob.polygon = Art.ellipse(c + Vector2(b.x, b.y) * s, b.z * s, b.z * s * 0.8, 16)
-		blob.color = th.cloud
-		parent.add_child(blob)
-	var base := Polygon2D.new()
-	base.polygon = Art.rect(c + Vector2(-80, 10) * s, c + Vector2(80, 38) * s)
-	base.color = th.cloud
-	parent.add_child(base)
+func _round_tree(l: Layer, base: Vector2, s: float, color: Color, detailed: bool) -> void:
+	var mp := l.painter
+	var trunk := color.darkened(0.45).lerp(_th.ground, 0.3)
+	mp.draw_colored_polygon(PackedVector2Array([base + Vector2(-9, 0) * s, base + Vector2(-5, -70) * s, base + Vector2(5, -70) * s, base + Vector2(9, 0) * s]), trunk)
+	var blobs := [Vector3(0, -100, 40), Vector3(-30, -76, 28), Vector3(30, -78, 30), Vector3(-14, -122, 26), Vector3(18, -118, 24)]
+	for b: Vector3 in blobs:
+		mp.draw_colored_polygon(Art.ellipse(base + Vector2(b.x, b.y) * s, b.z * s, b.z * s * 0.9, 18), color.darkened(0.12))
+	if detailed:
+		for b: Vector3 in blobs:
+			mp.draw_colored_polygon(Art.ellipse(base + Vector2(b.x - b.z * 0.18, b.y - b.z * 0.18) * s, b.z * s * 0.78, b.z * s * 0.7, 16), color)
+		mp.draw_colored_polygon(Art.ellipse(base + Vector2(-12, -118) * s, 10 * s, 7 * s, 12), color.lightened(0.18))
+
+
+func _pine_row(l: Layer, width: float, count: int, s: float, color: Color, snow: bool) -> void:
+	for i in count:
+		var x := (float(i) + _rng.randf_range(0.1, 0.9)) * width / count
+		var base := Vector2(x, _ground_at(l, x) + 6.0)
+		var ss := s * _rng.randf_range(0.8, 1.3)
+		l.painter.draw_rect(Rect2(base + Vector2(-6, -24) * ss, Vector2(12, 24) * ss), color.darkened(0.4))
+		for k in 3:
+			var w := (58.0 - k * 14.0) * ss
+			var y := base.y - (20.0 + k * 38.0) * ss
+			l.painter.draw_colored_polygon(PackedVector2Array([Vector2(base.x - w, y), Vector2(base.x, y - 62 * ss), Vector2(base.x + w, y)]), color)
+			if snow:
+				l.painter.draw_colored_polygon(PackedVector2Array([Vector2(base.x - w * 0.35, y - 40 * ss), Vector2(base.x, y - 62 * ss), Vector2(base.x + w * 0.35, y - 40 * ss)]), _haze(Color.WHITE, 0.1))
+
+
+func _bushes(l: Layer, width: float, count: int, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 10.0)
+		for k in 3:
+			l.painter.draw_colored_polygon(Art.ellipse(base + Vector2((k - 1) * 22, -14 - (k % 2) * 8), 24, 20, 14), color.lightened(k * 0.05))
+
+
+func _windmill(l: Layer, at: Vector2, s: float, color: Color) -> void:
+	var base := Vector2(at.x, _ground_at(l, at.x) + 10.0)
+	var mp := l.painter
+	mp.draw_colored_polygon(PackedVector2Array([base + Vector2(-34, 0) * s, base + Vector2(-20, -150) * s, base + Vector2(20, -150) * s, base + Vector2(34, 0) * s]), color)
+	mp.draw_colored_polygon(PackedVector2Array([base + Vector2(-28, -150) * s, base + Vector2(0, -186) * s, base + Vector2(28, -150) * s]), color.darkened(0.3))
+	mp.draw_rect(Rect2(base + Vector2(-8, -40) * s, Vector2(16, 40) * s), color.darkened(0.35))
+	var hub := base + Vector2(0, -150) * s
+	for k in 4:
+		var a := k * PI * 0.5 + 0.35
+		var d := Vector2(cos(a), sin(a))
+		var n := d.orthogonal()
+		mp.draw_colored_polygon(PackedVector2Array([hub + n * 3 * s, hub + d * 120 * s + n * 3 * s, hub + d * 120 * s + n * 22 * s, hub + d * 30 * s + n * 18 * s]), color.lightened(0.15))
+		mp.draw_line(hub, hub + d * 122 * s, color.darkened(0.3), 4.0 * s)
+	mp.draw_circle(hub, 8 * s, color.darkened(0.4))
+
+
+func _trunk_row(l: Layer, width: float, count: int, w: float, color: Color) -> PackedFloat32Array:
+	var xs := PackedFloat32Array()
+	for i in count:
+		var x := (float(i) + _rng.randf_range(0.2, 0.8)) * width / count
+		xs.append(x)
+		var ww := w * _rng.randf_range(0.8, 1.2)
+		var top := horizon_y - 2400.0
+		var bot := horizon_y + 400.0
+		l.painter.draw_colored_polygon(PackedVector2Array([
+			Vector2(x - ww * 0.5, top), Vector2(x + ww * 0.5, top), Vector2(x + ww * 0.55, bot - 120),
+			Vector2(x + ww * 0.95, bot), Vector2(x - ww * 0.95, bot), Vector2(x - ww * 0.55, bot - 120)]), color)
+		l.painter.draw_rect(Rect2(x - ww * 0.5, top, ww * 0.22, bot - top - 120), color.lightened(0.08))
+		for k in 5:  # bark rings
+			var y := _rng.randf_range(top + 400, bot - 200)
+			l.painter.draw_line(Vector2(x - ww * 0.4, y), Vector2(x + ww * 0.3, y + 6), color.darkened(0.15), 3.0)
+	return xs
+
+
+func _canopy_band(l: Layer, width: float, y: float, color: Color) -> void:
+	var n := int(width / 90.0)
+	for i in n + 1:
+		var x := width * float(i) / n
+		var r := _rng.randf_range(80, 150)
+		l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, y + _rng.randf_range(-40, 60)), r, r * 0.7, 18), color)
+	l.painter.draw_rect(Rect2(0, y - 2400.0, width, 2400.0), color)
+
+
+func _ferns(l: Layer, width: float, count: int, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 12.0)
+		for k in 5:
+			var a := -PI * 0.5 + (k - 2) * 0.38
+			var tip := base + Vector2(cos(a), sin(a)) * _rng.randf_range(50, 80)
+			var n := (tip - base).normalized().orthogonal() * 7.0
+			l.painter.draw_colored_polygon(PackedVector2Array([base - n, tip, base + n]), color.lightened(k * 0.03))
+
+
+func _rock_band(l: Layer, width: float, y: float, amp: float, color: Color, arches: bool) -> void:
+	_hill_band(l, width, y, amp, 5, color)
+	# Ceiling: an inverted band hanging from above.
+	var steps := 60
+	var bottom := PackedVector2Array()
+	var phase := _rng.randf() * TAU
+	for i in steps + 1:
+		var t := TAU * float(i) / steps
+		var h := sin(t * 3.0 + phase) * 0.6 + sin(t * 7.0 + phase) * 0.4
+		bottom.append(Vector2(width * float(i) / steps, y - 1500.0 + (h * 0.5 + 0.5) * amp))
+	var poly := bottom.duplicate()
+	poly.append(Vector2(width, y - 5000.0))
+	poly.append(Vector2(0, y - 5000.0))
+	l.painter.draw_colored_polygon(poly, color.darkened(0.1))
+	if arches:
+		for i in 3:
+			var x := _rng.randf_range(0, width)
+			l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, y - 600), 160, 260, 24), color.darkened(0.2))
+
+
+func _stalactites(l: Layer, width: float, count: int, ceiling_y: float, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var w := _rng.randf_range(20, 50)
+		var h := _rng.randf_range(90, 260)
+		l.painter.draw_colored_polygon(PackedVector2Array([Vector2(x - w, ceiling_y), Vector2(x + w, ceiling_y), Vector2(x + w * 0.2, ceiling_y + h), Vector2(x, ceiling_y + h + 20)]), color)
+
+
+func _crystals(l: Layer, width: float, count: int, y: float, s: float) -> void:
+	var cols := [Color("7ee0ff"), Color("c58bff"), Color("7dffb0")]
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 10.0) if not l.profile.is_empty() else Vector2(x, y)
+		var c: Color = cols[_rng.randi() % cols.size()]
+		l.painter.draw_circle(base + Vector2(0, -40) * s, 90 * s, Color(c, 0.1))
+		l.painter.draw_circle(base + Vector2(0, -40) * s, 50 * s, Color(c, 0.12))
+		for k in 3:
+			var h := _rng.randf_range(50, 110) * s
+			var ox := (k - 1) * 18.0 * s
+			var lean := (k - 1) * 0.35
+			var tip := base + Vector2(ox + lean * h, -h)
+			l.painter.draw_colored_polygon(PackedVector2Array([base + Vector2(ox - 10 * s, 0), tip, base + Vector2(ox + 10 * s, 0)]), c.darkened(0.1))
+			l.painter.draw_colored_polygon(PackedVector2Array([base + Vector2(ox - 3 * s, 0), tip, base + Vector2(ox + 6 * s, 0)]), c.lightened(0.3))
+
+
+func _glow_mushrooms(l: Layer, width: float, count: int, s: float) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 10.0)
+		var c := Color("ff8ad8") if i % 2 == 0 else Color("8affe0")
+		var ss := s * _rng.randf_range(0.7, 1.3)
+		l.painter.draw_circle(base + Vector2(0, -70) * ss, 110 * ss, Color(c, 0.08))
+		l.painter.draw_rect(Rect2(base + Vector2(-8, -70) * ss, Vector2(16, 70) * ss), Color("e8e0d0").darkened(0.4))
+		l.painter.draw_colored_polygon(Art.ellipse(base + Vector2(0, -74) * ss, 50 * ss, 26 * ss, 20), c.darkened(0.2))
+		l.painter.draw_colored_polygon(Art.ellipse(base + Vector2(-8, -80) * ss, 34 * ss, 14 * ss, 16), c)
+		for k in 3:
+			l.painter.draw_circle(base + Vector2(-26 + k * 22, -82 + (k % 2) * 6) * ss, 4 * ss, Color(1, 1, 1, 0.8))
+
+
+func _rope_bridge(l: Layer, a: Vector2, b: Vector2, color: Color) -> void:
+	var sag := 60.0
+	var pts := PackedVector2Array()
+	for i in 21:
+		var t := float(i) / 20.0
+		pts.append(a.lerp(b, t) + Vector2(0, sin(t * PI) * sag))
+	l.painter.draw_polyline(pts, color.darkened(0.3), 3.0)
+	for i in range(1, 20):
+		var p := pts[i]
+		l.painter.draw_rect(Rect2(p + Vector2(-9, 0), Vector2(18, 6)), color)
+	var rail := PackedVector2Array()
+	for p in pts:
+		rail.append(p + Vector2(0, -34))
+	l.painter.draw_polyline(rail, color.darkened(0.3), 2.0)
+
+
+func _hut(l: Layer, at: Vector2, s: float, wall: Color, roof: Color) -> void:
+	var mp := l.painter
+	mp.draw_rect(Rect2(at + Vector2(-130, 0) * s, Vector2(260, 16) * s), wall.darkened(0.25))  # platform
+	mp.draw_rect(Rect2(at + Vector2(-60, -90) * s, Vector2(120, 90) * s), wall)
+	mp.draw_colored_polygon(PackedVector2Array([at + Vector2(-85, -86) * s, at + Vector2(0, -160) * s, at + Vector2(85, -86) * s]), roof)
+	mp.draw_rect(Rect2(at + Vector2(-16, -52) * s, Vector2(32, 52) * s), wall.darkened(0.4))
+	mp.draw_circle(at + Vector2(34, -60) * s, 12 * s, Color(1.0, 0.85, 0.4, 0.8))  # warm window
+
+
+func _leaf_clusters(l: Layer, width: float, count: int, y: float, color: Color) -> void:
+	for i in count:
+		var c := Vector2(_rng.randf_range(0, width), y + _rng.randf_range(-600, 300))
+		for k in 6:
+			var p := c + Vector2(_rng.randf_range(-90, 90), _rng.randf_range(-50, 50))
+			l.painter.draw_colored_polygon(Art.ellipse(p, 60, 40, 14), color.lightened(k * 0.03))
+
+
+func _mill(l: Layer, at: Vector2, s: float) -> void:
+	var mp := l.painter
+	var wall := _haze(Color("e8d5b0"), 0.15)
+	var roof := _haze(Color("b5533c"), 0.15)
+	mp.draw_rect(Rect2(at + Vector2(-90, -150) * s, Vector2(180, 150) * s), wall)
+	mp.draw_colored_polygon(PackedVector2Array([at + Vector2(-110, -146) * s, at + Vector2(0, -230) * s, at + Vector2(110, -146) * s]), roof)
+	mp.draw_rect(Rect2(at + Vector2(-20, -60) * s, Vector2(40, 60) * s), wall.darkened(0.4))
+	var hub := at + Vector2(-110, -70) * s
+	var wood := _haze(_th.ledge.darkened(0.2), 0.15)
+	mp.draw_circle(hub, 80 * s, wood.darkened(0.2), false, 8.0)
+	for k in 8:
+		var a := k * TAU / 8.0
+		mp.draw_line(hub, hub + Vector2(cos(a), sin(a)) * 80 * s, wood, 6.0)
+		mp.draw_rect(Rect2(hub + Vector2(cos(a), sin(a)) * 80 * s - Vector2(10, 10) * s, Vector2(20, 20) * s), wood)
+	mp.draw_circle(hub, 12 * s, wood.darkened(0.3))
+
+
+func _castle(l: Layer, at: Vector2, s: float, color: Color, glow: Color) -> void:
+	var mp := l.painter
+	mp.draw_colored_polygon(PackedVector2Array([at + Vector2(-260, 300) * s, at + Vector2(-150, 40) * s, at + Vector2(160, 30) * s, at + Vector2(280, 300) * s]), color.darkened(0.1))
+	for t: Vector3 in [Vector3(-110, 190, 48), Vector3(0, 280, 60), Vector3(120, 220, 46)]:
+		var top := at + Vector2(t.x, 40 - t.y) * s
+		mp.draw_rect(Rect2(top + Vector2(-t.z * 0.5, 0) * s, Vector2(t.z, t.y) * s), color)
+		mp.draw_colored_polygon(PackedVector2Array([top + Vector2(-t.z * 0.65, 0) * s, top + Vector2(0, -t.z * 1.3) * s, top + Vector2(t.z * 0.65, 0) * s]), color.darkened(0.2))
+		mp.draw_rect(Rect2(top + Vector2(-6, 30) * s, Vector2(12, 20) * s), glow)
+	mp.draw_rect(Rect2(at + Vector2(-150, -20) * s, Vector2(300, 80) * s), color)
+	for k in 8:
+		mp.draw_rect(Rect2(at + Vector2(-150 + k * 40, -38) * s, Vector2(22, 20) * s), color)
+
+
+func _thorns(l: Layer, width: float, count: int, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 10.0)
+		for k in 3:
+			var pts := PackedVector2Array()
+			var p := base
+			var a := -PI * 0.5 + (k - 1) * 0.5
+			for j in 8:
+				pts.append(p)
+				a += _rng.randf_range(-0.5, 0.5)
+				p += Vector2(cos(a), sin(a)) * 22.0
+			l.painter.draw_polyline(pts, color, 7.0)
+			for j in range(1, pts.size(), 2):
+				var d := (pts[j] - pts[j - 1]).normalized().orthogonal() * 12.0
+				l.painter.draw_colored_polygon(PackedVector2Array([pts[j] - d * 0.3, pts[j] + d, pts[j] + d * 0.1 + (pts[j] - pts[j - 1]) * 0.3]), color)
+
+
+func _reeds(l: Layer, width: float, count: int, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 14.0)
+		for k in 4:
+			var tip := base + Vector2((k - 1.5) * 10 + _rng.randf_range(-6, 6), -_rng.randf_range(50, 90))
+			l.painter.draw_line(base + Vector2((k - 1.5) * 4, 0), tip, color, 4.0)
+			if k % 2 == 0:
+				l.painter.draw_colored_polygon(Art.ellipse(tip + Vector2(0, 10), 5, 14, 10), color.darkened(0.3))
+
+
+func _lollipop(l: Layer, at: Vector2, s: float, haze: float) -> void:
+	var base := Vector2(at.x, _ground_at(l, at.x) + 10.0)
+	var cols: Array = _th.flower_colors
+	var c: Color = _haze(cols[_rng.randi() % cols.size()], haze)
+	l.painter.draw_rect(Rect2(base + Vector2(-5, -120) * s, Vector2(10, 120) * s), _haze(Color.WHITE, haze))
+	var top := base + Vector2(0, -150) * s
+	l.painter.draw_circle(top, 44 * s, c)
+	var pts := PackedVector2Array()
+	for k in 40:
+		var a := k * 0.45
+		pts.append(top + Vector2(cos(a), sin(a)) * (4.0 + k) * s)
+	l.painter.draw_polyline(pts, _haze(Color.WHITE, haze + 0.1), 5.0 * s)

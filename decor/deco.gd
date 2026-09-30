@@ -36,7 +36,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if sway and kind in [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH]:
 		_t += delta
-		queue_redraw()
+		View.redraw(self)
 
 
 func _draw() -> void:

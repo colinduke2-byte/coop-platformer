@@ -46,7 +46,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer -= delta
 	_shake = 1.0 - _timer / maxf(crumble_delay, 0.01)
-	queue_redraw()
+	View.redraw(self)
 	if _timer <= 0.0:
 		_crumble()
 

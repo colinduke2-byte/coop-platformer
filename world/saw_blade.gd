@@ -60,7 +60,7 @@ func _at(d: float) -> Vector2:
 
 func _physics_process(delta: float) -> void:
 	_spin += delta * 14.0
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	var total := _total()

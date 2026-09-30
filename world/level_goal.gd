@@ -25,7 +25,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw(self)
 
 
 func _on_body_entered(body: Node2D) -> void:

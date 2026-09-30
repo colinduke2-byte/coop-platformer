@@ -37,7 +37,7 @@ func set_active(on: bool) -> void:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint() or _busy or locked:
 		return
 	for b in get_overlapping_bodies():

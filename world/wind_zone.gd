@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 			if s.y > size.y: s.y -= size.y
 			if s.y < 0.0: s.y += size.y
 			_streaks[i] = s
-	queue_redraw()
+	View.redraw_rect(self, Rect2(global_position, size))
 	if Engine.is_editor_hint() or not on:
 		return
 	for b in get_overlapping_bodies():

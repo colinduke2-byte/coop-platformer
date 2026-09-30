@@ -43,7 +43,7 @@ func surface_y() -> float:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw_rect(self, Rect2(global_position, size))
 	if Engine.is_editor_hint():
 		return
 	for b in get_overlapping_bodies():

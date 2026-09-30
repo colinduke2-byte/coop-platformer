@@ -49,7 +49,7 @@ func _rebuild() -> void:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	_timer -= delta

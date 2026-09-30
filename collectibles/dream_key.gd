@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 	if carrier and is_instance_valid(carrier):
 		var want := carrier.global_position + Vector2(-carrier.facing * 44.0, -90.0 + sin(_t * 4.0) * 6.0)
 		global_position = global_position.lerp(want, clampf(10.0 * delta, 0.0, 1.0))
-	queue_redraw()
+	View.redraw(self)
 
 
 func _draw() -> void:

@@ -41,6 +41,7 @@ level_name = "Glacier Grotto"
 [node name="Backdrop" type="Node2D" parent="."]
 script = ExtResource("3")
 horizon_y = 600
+scenery = 7
 
 [node name="Decor" type="Node2D" parent="."]
 

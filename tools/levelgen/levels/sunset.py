@@ -4,7 +4,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 
-L = LevelKit("SunsetGusts", "Sunset Gusts", theme="sunset", horizon=0)
+L = LevelKit("SunsetGusts", "Sunset Gusts", theme="sunset", horizon=0, scenery="castle")
 
 # ---- start --------------------------------------------------------------------------------------
 L.wall(-360, -1000, 500)

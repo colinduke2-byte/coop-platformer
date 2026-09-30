@@ -27,7 +27,7 @@ func _physics_process(delta: float) -> void:
 	_t += delta
 	var target := 1.0 if is_up() else 0.0
 	_ext = move_toward(_ext, target, delta * 10.0)
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	if _ext > 0.6:

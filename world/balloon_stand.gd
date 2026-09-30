@@ -29,7 +29,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint() or not _ready_balloon:
 		return
 	for b in get_overlapping_bodies():

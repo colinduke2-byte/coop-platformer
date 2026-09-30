@@ -35,7 +35,7 @@ func take_hit(by: Player, _knockback: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	_bump = maxf(_bump - delta * 5.0, 0.0)
 	_cd = maxf(_cd - delta, 0.0)
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	# Head bumps: a player moving up whose head just hit our underside.

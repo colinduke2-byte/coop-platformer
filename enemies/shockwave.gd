@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	for b in get_overlapping_bodies():
 		if b is Player:
 			(b as Player).hurt()
-	queue_redraw()
+	View.redraw(self)
 
 
 func _draw() -> void:

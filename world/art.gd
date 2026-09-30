@@ -1,7 +1,8 @@
 class_name Art
 ## Tiny shared drawing helpers for world pieces that draw themselves with
 ## _draw() (so they preview live in the editor). Flat shapes + dark outline,
-## matching the character rigs.
+## matching the character rigs. `ci` is a CanvasItem or a MeshPainter (bakes
+## static art into one mesh = one draw call).
 
 const OUTLINE_WIDTH := 3.0
 
@@ -39,7 +40,7 @@ static func star(c: Vector2, radius: float, points := 5, inner := 0.45, rot := 0
 
 
 ## Filled polygon with the standard dark outline.
-static func shape(ci: CanvasItem, pts: PackedVector2Array, fill: Color, outline: Color, width := OUTLINE_WIDTH) -> void:
+static func shape(ci: Object, pts: PackedVector2Array, fill: Color, outline: Color, width := OUTLINE_WIDTH) -> void:
 	if pts.size() < 3:
 		return
 	ci.draw_colored_polygon(pts, fill)
@@ -49,7 +50,7 @@ static func shape(ci: CanvasItem, pts: PackedVector2Array, fill: Color, outline:
 		ci.draw_polyline(closed, outline, width, true)
 
 
-static func dotted(ci: CanvasItem, pts: PackedVector2Array, color: Color, gap := 14.0, r := 3.0) -> void:
+static func dotted(ci: Object, pts: PackedVector2Array, color: Color, gap := 14.0, r := 3.0) -> void:
 	var carry := 0.0
 	for i in pts.size() - 1:
 		var a := pts[i]

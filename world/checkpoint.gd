@@ -21,7 +21,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_flash = maxf(_flash - delta * 2.0, 0.0)
-	queue_redraw()
+	View.redraw(self)
 
 
 func _on_body_entered(body: Node2D) -> void:

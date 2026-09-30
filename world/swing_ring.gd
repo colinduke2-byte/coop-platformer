@@ -27,7 +27,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_spin += delta
-	queue_redraw()
+	View.redraw(self)
 	if Engine.is_editor_hint():
 		return
 	for body in get_overlapping_bodies():

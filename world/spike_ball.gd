@@ -57,7 +57,7 @@ func _place() -> void:
 func _physics_process(delta: float) -> void:
 	_angle += deg_to_rad(speed) * delta
 	_place()
-	queue_redraw()
+	View.redraw(self, radius + 200.0)
 	if Engine.is_editor_hint():
 		return
 	for a in _balls:
