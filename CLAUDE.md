@@ -1,7 +1,7 @@
 # CLAUDE.md — Co-op Platformer
 
 Local co-op (1–4 players, one screen) 2D platformer with Rayman Legends-style
-feel, built in **Godot 4.6+ / GDScript**. Colin is the designer and director;
+feel, built in **Godot 4.7 / GDScript**. Colin is the designer and director;
 you are the engineer. Runs on his Windows PC and M-series MacBook.
 
 Read `docs/GAME_DESIGN.md` (what the game is) and `docs/ROADMAP.md` (what's next)
@@ -12,8 +12,11 @@ before starting any feature.
 - Verify everything: `bash tools/check.sh` (import + boot main scene + tests).
   Needs `GODOT` env var if Godot isn't on PATH (see top of the script).
 - Tests only: `$GODOT --headless --path . res://tests/test_runner.tscn`
+  (add `-- only=<substring>` to run matching tests, e.g. `-- only=w1_4`)
 - Play: open the folder in the Godot editor and press F5, or `$GODOT --path .`.
-  F5 = character select -> demo level. `levels/test_level.tscn` still works via F6.
+  F5 = title -> character select -> World 1 map. Any level opens alone via F6.
+- Regenerate a level: `python3 tools/levelgen/levels/w1_3.py`
+- Windows build: `$GODOT --headless --export-release "Windows" build/windows/DreamersPlayground.exe`
 
 You cannot see or play the game. `tools/check.sh` and the tests are your eyes:
 **run the check after every change and don't report a task done until it passes.**
@@ -22,23 +25,42 @@ You cannot see or play the game. `tools/check.sh` and the tests are your eyes:
 
 ```
 core/        Autoloads: EventBus (global signals), InputRouter (devices -> slots),
-             GameManager (join, checkpoints, lums, bubble/respawn rules)
-player/      player.gd (body + shared helpers), player.tscn,
-             state_machine.gd, states/*.gd (one move per file),
-             player_input.gd (per-slot input view),
-             tuning/player_tuning.gd + player_default.tres (ALL feel numbers)
-characters/  CharacterDef (.tres per character: colours, proportions, headwear),
-             CharacterRig (builds + animates the vector cutout), character_gallery.tscn
-camera/      coop_camera.gd — frames all living players, zooms, bubbles stragglers
-world/       block (grey-box geometry, @tool), kill_zone, checkpoint, wardrobe_pedestal,
-             crate (punchable; AnimatableBody2D so areas detect it), updraft (lifts gliders)
-enemies/     grunt (patrol; punch or stomp to defeat)
-collectibles/lum
-levels/      level.gd (every level root), test_level.tscn (template)
-ui/          hud, character_select (lobby: join, pick, ready -> next_scene)
-tests/       run_tests.gd + test_runner.tscn + test_arena.tscn
-docs/        GAME_DESIGN.md, ROADMAP.md
+             GameManager (join, checkpoints, lums, gems, snoozlings, scene flow),
+             Vfx, Audio (music + SFX driven by EventBus). SaveData (records),
+             View (static camera rect: View.sees / View.redraw for cheap culling)
+player/      player.gd (body + shared helpers), states/*.gd (one move per file:
+             ground, jump, fall, glide, wall_slide, wall_run, ledge_hang, crouch,
+             slide, ground_pound, punch, climb, swim, swing, zipline, cannon,
+             bubble, victory), tuning/player_tuning.gd + player_default.tres
+characters/  CharacterDef .tres + CharacterRig (procedural vector cutout)
+camera/      coop_camera.gd - frames all living players, zooms, shake, updates View
+world/       Geometry (block, terrain, slope, back_wall), toys (bounce_pad, swing_ring,
+             zipline, dandelion, geyser, seesaw, rope_bridge, pendulum, leaf_platform,
+             log_raft, platform_wheel...), hazards (spikes, brambles, saw_blade,
+             acorn_dropper...), logic (activation, gate, switches, zone/defeat triggers),
+             looks (backdrop, ambience, glow_light, waterfall, level_theme + themes/),
+             mesh_painter.gd (bakes static art to one ArrayMesh = one draw call)
+decor/       deco.gd (baked scenery props, sway via skew), signpost
+enemies/     enemy.gd base + 14 enemies + 2 bosses (king_grumblo, baron_bristleback)
+collectibles/ lum, gem, snoozling_cage, dream key
+levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
+             w1_*.tscn (World 1 - GENERATED, see below), bonus levels, demo_level
+ui/          title -> character_select -> world_map -> level -> results;
+             hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus)
+tools/       check.sh, levelgen/ (Python level kit + level scripts), bench (draw
+             calls / blame), scene_shot + shots.sh (screenshots), audio/ (music gen)
+tests/       run_tests.gd (feel, pieces, enemies, bots that play each W1 level)
+docs/        GAME_DESIGN, ROADMAP, LEVEL_BUILDING, CONTROLS, MOVEMENT
 ```
+
+**Levels are generated.** Edit `tools/levelgen/levels/<level>.py` and run it;
+don't hand-edit `levels/w1_*.tscn` (changes get overwritten). See
+`docs/LEVEL_BUILDING.md` for the kit and the enemy/piece catalogue.
+
+**Performance (target 120 fps).** Static art goes through `MeshPainter` and is
+baked once. Animated `_draw()` pieces call `View.redraw(self)` (or
+`View.redraw_rect`) from `_process` instead of `queue_redraw()`, so off-screen
+pieces cost nothing. Check with `tools/bench.tscn -- --drawcalls`.
 
 ## Golden rules
 
@@ -58,9 +80,9 @@ docs/        GAME_DESIGN.md, ROADMAP.md
    `snake_case` files, `PascalCase` class_names, `&"StringName"` for state names.
 7. Physics/state changes triggered inside physics callbacks (body_entered etc.)
    must be deferred (`set_deferred`, `call_deferred`).
-8. Keep grey-box placeholder visuals until Colin starts the art pass. All
-   characters, names, and art must be **original**; don't copy Rayman assets,
-   characters, or names.
+8. All characters, names, and art must be **original**; don't copy Rayman
+   assets, characters, or names. Art is procedural (vector shapes + LevelTheme
+   palettes), no image files needed.
 9. Small, playable steps. Prefer a working simple version Colin can try today
    over a big system he can't test for a week.
 
@@ -95,7 +117,7 @@ Bitmask values: 1, 2, 4, 8, 16, 32. PunchArea mask = enemies+bubbles = 20.
 - If a request is ambiguous about how something should *feel* or *look*, ask one
   focused question rather than guessing big.
 
-## Gotchas (Godot 4.6)
+## Gotchas (Godot 4.7)
 
 - Scripts run with `godot -s` compile before autoloads exist. That's why tests
   run as a scene (`tests/test_runner.tscn`). Keep it that way.
@@ -103,3 +125,7 @@ Bitmask values: 1, 2, 4, 8, 16, 32. PunchArea mask = enemies+bubbles = 20.
   the real 16:9 window. Don't assert on exact camera positions in tests.
 - `is_on_floor()` / `is_on_wall()` reflect the previous `move_and_slide()`.
 - Don't edit `.godot/` or `*.uid` files by hand; Godot regenerates them.
+- Don't `preload()` a scene that preloads you back (player.gd <-> lum.tscn):
+  cyclic preloads break instancing silently. Use `load()` at call time.
+- Pieces moving riders should be AnimatableBody2D; many small separate bodies
+  in a row (e.g. planks) make players snag on the seams - use one body.

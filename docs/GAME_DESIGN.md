@@ -1,4 +1,4 @@
-# Game Design — working title: *TBD*
+# Game Design — working title: *DREAMERS*
 
 > Colin owns this doc. Claude reads it before building features and asks before
 > changing the pillars. Fill in the TODOs over time; defaults are placeholders.
@@ -34,12 +34,19 @@ and friends save each other constantly. (TODO: Colin, one sentence in your words
 | Glide | `glide_mode` (PlayerTuning, default SECOND_PRESS) | press jump again in the air + hold; starts at once. HOLD_THROUGH (old default): keep holding past the apex. SEPARATE_BUTTON: hold G / Numpad 0 / RB |
 | Wall jump | JUMP beside a wall | works rising or falling. Toward the wall = climbing hop (climb one wall), otherwise kick away |
 | Punch | X or B / Left Shift / Right Shift | tap = quick jab (90 px reach); HOLD = charge, release = mega punch (1.6x reach, bigger hitbox, 1.8x knockback, breaks iron crates); pops teammate bubbles |
-| Stomp | land on enemy | bounces; hold jump to bounce higher |
+| Stomp | land on enemy | bounces; hold jump to bounce higher. Chain stomps without landing = bigger bounces, x2/x3 pops, bonus Lum from x3 |
+| Crouch / slide | DOWN / DOWN while running | crawl under low gaps; slide knocks enemies over; slide + jump = long jump |
+| Ground pound | DOWN + PUNCH in the air | smashes breakables, launches off seesaws and bounce pads; pound-jump goes higher |
+| Ledge grab | automatic | catch ledge edges and pull up |
+| Wall run | sprint into a wall | runs up it a little way |
+| Air punch | punch in the air | hangs you briefly in the air (`air_punch_fall_cap`) |
+| Parachute | jump into a dandelion head | float down slowly, steer; wind carries you far, updrafts lift you |
+| Climb / swim / swing / zipline | vines + nets, water, flower rings, ropes | see `player/states/` |
 
 Full button list: `docs/CONTROLS.md`.
 
-World toys: wooden crates (any punch), iron crates (charged punch), updrafts (lift gliders).
-Ideas backlog: sprint, swimming, swinging, ground pound, air dash. TODO: pick.
+World toys: ~45 pieces - see `docs/LEVEL_BUILDING.md` for the full catalogue.
+Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
 
 ## Co-op rules
 - Hit once = bubble. Teammate touches or punches bubble = revived.
@@ -49,17 +56,27 @@ Ideas backlog: sprint, swimming, swinging, ground pound, air dash. TODO: pick.
 - Friendly fire: off. TODO: slap teammates for fun?
 
 ## World & levels
-- Structure: TODO (hub world with painting-style portals? linear worlds?)
-- Level types: TODO (standard, chase/escape, music levels, boss)
-- Target level length: TODO (default 3–5 min)
+- Structure (current): Title -> character select -> **world map** (walk the gang
+  between level nodes; beating a level unlocks the next) + a Bonus Dreams island.
+- **World 1 - The Lullaby Woods**: 1-1 Pillow Meadow, 1-2 Dandelion Drift,
+  1-3 Mossy Hollow, 1-4 Bramble Bridges, 1-5 Millstream Rush, 1-6 Thornwood Keep
+  (boss: **Baron Bristleback**, a giant hedgehog knight).
+- Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
+- Level types so far: standard, dark cave, river/water, boss. TODO: chase/escape, music levels.
+- Target level length: 3–5 min.
 
 ## Collectibles & progression
-- Lums (common), TODO: rare collectible per level, unlocks (characters, levels)
+- **Lums** (common, shared counter; best count saved per level).
+- **3 gems** per level (at least one behind a secret wall / hidden room).
+- **1 Snoozling** per level: a sleepy dream-critter in a cage - punch it open.
+- Map badges show gems + Snoozling per level; results show records; beating
+  1-6 shows World 1 totals. TODO: what do full gem / Snoozling sets unlock?
 
 ## Art & audio direction
 - Hand-painted look, layered parallax backgrounds, cutout-animated characters
   (Godot Skeleton2D or Spine). TODO: color palette, mood board links.
-- Music: TODO
+- Music: generated chiptune-ish tracks per level (`tools/audio/gen_music.py`),
+  boss theme, map theme. TODO: Colin's taste - replace with composed tracks later?
 
 ## Open questions for Colin
 - Name of the game and characters?
