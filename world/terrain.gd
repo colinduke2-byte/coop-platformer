@@ -93,8 +93,28 @@ func _bake() -> ArrayMesh:
 	mp.draw_colored_polygon(pts, th.ground_dark)
 	for inner in Geometry2D.offset_polygon(pts, -22.0, Geometry2D.JOIN_ROUND):
 		mp.draw_colored_polygon(inner, th.ground)
-		# Pebbles / bricks inside the core.
 		var box := _bounds(inner)
+		if th.pattern == 0:
+			# Bark: long wavy grain lines.
+			var x := box.position.x + rng.randf_range(6, 20)
+			while x < box.end.x:
+				var pts2 := PackedVector2Array()
+				var y := box.position.y
+				while y < box.end.y:
+					var q := Vector2(x + sin(y * 0.02 + x) * 4.0, y)
+					if Geometry2D.is_point_in_polygon(q, inner):
+						pts2.append(q)
+					elif pts2.size() > 1:
+						mp.draw_polyline(pts2, th.ground_dark, 2.5)
+						pts2 = PackedVector2Array()
+					else:
+						pts2 = PackedVector2Array()
+					y += 18.0
+				if pts2.size() > 1:
+					mp.draw_polyline(pts2, th.ground_dark, 2.5)
+				x += rng.randf_range(22, 40)
+			continue
+		# Pebbles inside the core.
 		var n := int(box.get_area() / 2800.0)
 		for i in mini(n, 900):
 			var p := Vector2(rng.randf_range(box.position.x, box.end.x), rng.randf_range(box.position.y, box.end.y))

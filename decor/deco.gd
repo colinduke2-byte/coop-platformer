@@ -7,7 +7,7 @@ extends Node2D
 ## Drawn ONCE into a mesh; the breeze is a shear (skew), so hundreds are cheap.
 
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
-		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS }
+		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
 		Kind.HANGING_VINES, Kind.BIG_FLOWER]
@@ -285,3 +285,24 @@ func _paint(mp: MeshPainter) -> void:
 					p += Vector2.from_angle(a) * 14.0 * s
 				mp.draw_polyline(pts, o, 7.0 * s)
 				mp.draw_polyline(pts, th.ledge_dark, 4.5 * s)
+		Kind.HUT:
+			var wall := th.ledge.lightened(0.15)
+			var roof := th.accent
+			Art.shape(mp, Art.rect(Vector2(-60, -100) * s, Vector2(60, 0)), wall, o, 3.0)
+			for i in 5:  # plank lines
+				mp.draw_line(Vector2(-58, -18 - i * 18) * s, Vector2(58, -18 - i * 18) * s, th.ledge_dark, 1.5)
+			Art.shape(mp, PackedVector2Array([Vector2(-80, -94) * s, Vector2(0, -170) * s, Vector2(80, -94) * s]), roof, o, 3.0)
+			mp.draw_line(Vector2(-70, -100) * s, Vector2(0, -164) * s, roof.lightened(0.25), 3.0)
+			Art.shape(mp, Art.rounded_rect(Vector2(-16, -60) * s, Vector2(16, 0), 12.0 * s), th.ledge_dark.darkened(0.3), o, 2.5)
+			mp.draw_circle(Vector2(8, -30) * s, 3.0 * s, th.accent)
+			Art.shape(mp, Art.rect(Vector2(26, -76) * s, Vector2(48, -54) * s), Color(1.0, 0.88, 0.5), o, 2.0)
+			mp.draw_line(Vector2(37, -76) * s, Vector2(37, -54) * s, o, 2.0)
+			mp.draw_line(Vector2(26, -65) * s, Vector2(48, -65) * s, o, 2.0)
+			Art.shape(mp, Art.rect(Vector2(20, -150) * s, Vector2(34, -120) * s), th.ground.lightened(0.1), o, 2.0)  # chimney
+		Kind.LANTERN:
+			mp.draw_line(Vector2.ZERO, Vector2(0, -90) * s, o, 5.0 * s)
+			mp.draw_line(Vector2(0, -90) * s, Vector2(18, -90) * s, o, 4.0 * s)
+			mp.draw_line(Vector2(18, -90) * s, Vector2(18, -78) * s, o, 2.0)
+			mp.draw_circle(Vector2(18, -64) * s, 26.0 * s, Color(1.0, 0.85, 0.4, 0.18))
+			Art.shape(mp, Art.rounded_rect(Vector2(8, -78) * s, Vector2(28, -52) * s, 5.0 * s), Color(1.0, 0.86, 0.45), o, 2.0)
+			mp.draw_rect(Rect2(Vector2(6, -80) * s, Vector2(24, 4) * s), th.ledge_dark)

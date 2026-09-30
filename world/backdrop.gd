@@ -291,16 +291,17 @@ func _canopy_scene() -> void:
 	_commit(back)
 	var mid := _layer(0.2, 2200.0)
 	var trunk_col := _haze(_th.ground.darkened(0.1), 0.22)
-	var xs := _trunk_row(mid, 2200.0, 5, 200.0, trunk_col)
+	var xs := _trunk_row(mid, 2200.0, 4, 200.0, trunk_col)
 	for i in xs.size() - 1:  # rope bridges between the big trunks
 		var y := horizon_y - _rng.randf_range(500, 900)
-		_rope_bridge(mid, Vector2(xs[i] + 100, y), Vector2(xs[i + 1] - 100, y + _rng.randf_range(-60, 60)), _haze(_th.ledge, 0.25))
-	for x in xs:
-		_hut(mid, Vector2(x, horizon_y - _rng.randf_range(650, 1000)), 1.0, _haze(_th.ledge, 0.2), _haze(_th.accent, 0.3))
-	_canopy_band(mid, 2200.0, horizon_y - 1250.0, _haze(_th.foliage_dark, 0.25))
+		_rope_bridge(mid, Vector2(xs[i] + 100, y), Vector2(xs[i + 1] - 100, y + _rng.randf_range(-60, 60)), _haze(_th.ledge, 0.35))
+	for i in xs.size():
+		if i % 2 == 0:  # a hut on every other trunk
+			_hut(mid, Vector2(xs[i], horizon_y - _rng.randf_range(650, 1000)), 1.0, _haze(_th.ledge, 0.35), _haze(_th.accent, 0.45))
+	_canopy_band(mid, 2200.0, horizon_y - 1250.0, _haze(_th.foliage_dark, 0.3))
 	_commit(mid)
 	var near := _layer(0.5, 1800.0)
-	_leaf_clusters(near, 1800.0, 12, horizon_y - 700.0, _th.foliage_dark)
+	_leaf_clusters(near, 1800.0, 5, horizon_y - 700.0, _haze(_th.foliage_dark, 0.25))
 	_commit(near)
 
 

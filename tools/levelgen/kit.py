@@ -107,6 +107,14 @@ class LevelKit:
         pts = list(profile) + [(profile[-1][0], top), (profile[0][0], top)]
         return self.terrain(pts, lip=False, **kw)
 
+    def tree_platform(self, x0, x1, y, trunk_x, trunk_w=180, thick=60, bottom=1400):
+        """A treetop deck on a big trunk (one seamless piece)."""
+        tx, tw = trunk_x, trunk_w
+        pts = [(x0, y), (x1, y), (x1, y + thick), (tx + tw + 50, y + thick), (tx + tw, y + thick + 90),
+               (tx + tw, bottom), (tx, bottom), (tx, y + thick + 90), (tx - 50, y + thick), (x0, y + thick)]
+        self.surfaces.append([(x0, y), (x1, y)])
+        return self.terrain(pts, rounding=12.0)
+
     def island(self, x0, x1, y, depth=140, bumps=(), seed=0):
         """A floating island: gently rounded top at y, rocky tapering underside."""
         import random
@@ -449,7 +457,7 @@ class LevelKit:
     def deco(self, kind, x, y, size=1.0, front=False, seed=0):
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
-                 "LILYPADS", "BIG_FLOWER", "ROOTS"]
+                 "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

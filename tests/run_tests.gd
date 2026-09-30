@@ -2534,12 +2534,12 @@ func test_rope_bridge_sags_under_a_rider() -> void:
 	r.span = Vector2(600, 0)
 	_arena.add_child(r)
 	await frames(2)
-	var mid := r._planks[r.plank_count / 2]
-	var rest_y := mid.position.y
+	var mid_i := r.plank_count / 2
+	var rest_y := r._pos[mid_i].y
 	var p := add_player(0, Vector2(0, -330))
 	await seconds(1.2)
 	check(p.is_on_floor() and p.global_position.y < -100.0, "you should stand on the bridge (y %.0f)" % p.global_position.y)
-	check(mid.position.y > rest_y + 15.0, "the middle should sag under you (%.0f -> %.0f)" % [rest_y, mid.position.y])
+	check(r._pos[mid_i].y > rest_y + 15.0, "the middle should sag under you (%.0f -> %.0f)" % [rest_y, r._pos[mid_i].y])
 
 
 func test_pendulum_platform_carries_rider_and_spiked_one_hurts() -> void:
@@ -2981,4 +2981,144 @@ func test_w1_3_mushroom_hops_over_the_brambles() -> void:
 			break
 	release(0, "move_right")
 	check(ok, "running right should bounce you from mushroom to mushroom and across (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()
+
+
+# --- World 1-4 Bramble Bridges bots ---------------------------------------------------
+
+const W1_4 := "res://levels/w1_4_bramble_bridges.tscn"
+
+
+func test_w1_4_first_bridge_crossing() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(850, -2))
+	await _run_to(p, 1760, "move_right", 4.0)
+	release(0, "move_right")
+	await seconds(0.5)
+	check(p.global_position.x > 1700.0 and p.global_position.y < 0.0 and not p.is_bubbled(), "you should walk across the rope bridge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_swinging_log_to_the_frog_deck() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	var pd: Pendulum = null
+	for n in _demo.find_children("*", "Pendulum", true, false):
+		if not n.spiked and n.global_position.x < 3000.0:
+			pd = n
+	await _place(p, Vector2(2280, -42))
+	# Wait for the log to swing close, then jump onto it.
+	for i in 900:
+		await get_tree().physics_frame
+		if pd.angle() > pd.amplitude * 0.95:
+			break
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 70:
+		await get_tree().physics_frame
+		var lp := pd.global_position + pd.log_position()
+		if p.global_position.x > lp.x - 20.0:
+			release(0, "move_right")
+	release(0, "move_right")
+	release(0, "jump")
+	var rode := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_on_floor() and absf(p.global_position.x - (pd.global_position + pd.log_position()).x) < 120.0:
+			rode = true
+		if rode and pd.angle() < -pd.amplitude * 0.9:
+			break
+	check(rode, "you should be able to jump onto the swinging log (at %s)" % p.global_position)
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(45)
+	release(0, "jump")
+	await seconds(1.2)
+	release(0, "move_right")
+	check(p.global_position.x > 3300.0 and p.global_position.y < -40.0 and not p.is_bubbled(), "and ride it over to the frog deck (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_zipline_to_the_next_tree() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(3900, -302))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 4920.0:
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed, "the zipline should carry you to the next tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_ducking_under_the_spiky_log() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	var pd: Pendulum = null
+	for n in _demo.find_children("*", "Pendulum", true, false):
+		if n.spiked:
+			pd = n
+	var log_bottom := (pd.global_position + Vector2(0, pd.rope_length)).y
+	await _place(p, Vector2(pd.global_position.x, -60))
+	check(p.is_on_floor(), "should stand on the bridge under the log")
+	press(0, "move_down")
+	await seconds(3.0)
+	release(0, "move_down")
+	check(not p.is_bubbled(), "crouching should duck under the spiky log (log bottom %.0f, player %.0f)" % [log_bottom, p.global_position.y])
+	await _finish_demo()
+
+
+func test_w1_4_vine_climb_to_the_canopy() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(6800, -62))
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"Climb":
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	check(p.state_machine.current_name() == &"Climb", "jumping at the vine should grab it (%s)" % p.state_machine.current_name())
+	press(0, "move_up")
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -1150.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(p.is_on_floor() and p.global_position.y < -1190.0 and p.global_position.x > 7000.0, "climbing to the top should get you onto the canopy deck (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_last_zipline_to_the_goal_tree() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(8800, -1242))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 9870.0:
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed, "the long zipline should reach the goal tree (at %s)" % p.global_position)
 	await _finish_demo()

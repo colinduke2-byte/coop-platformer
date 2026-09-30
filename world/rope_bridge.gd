@@ -26,7 +26,11 @@ const PLANK := Color("c98a4b")
 const ROPE := Color("8a6a45")
 const POST := Color("7a4e2d")
 
-var _planks: Array[AnimatableBody2D] = []
+var _deck: AnimatableBody2D
+var _runs: Array = []                        ## lists of plank indices without gaps
+var _polys: Array[CollisionPolygon2D] = []
+var _pos := PackedVector2Array()             ## plank centres (top surface)
+var _rot := PackedFloat32Array()
 var _dip: PackedFloat32Array = []       ## current extra sag per plank
 var _dip_vel: PackedFloat32Array = []
 var _t := 0.0
@@ -39,32 +43,62 @@ func _ready() -> void:
 func _rebuild() -> void:
 	if not is_node_ready():
 		return
-	for p in _planks:
-		if is_instance_valid(p):
-			p.queue_free()
-	_planks.clear()
+	if _deck and is_instance_valid(_deck):
+		_deck.queue_free()
+	_polys.clear()
 	_dip.resize(plank_count)
 	_dip_vel.resize(plank_count)
 	_dip.fill(0.0)
 	_dip_vel.fill(0.0)
-	var w := _plank_width()
+	_pos.resize(plank_count)
+	_rot.resize(plank_count)
 	for i in plank_count:
-		var b := AnimatableBody2D.new()
-		b.collision_layer = 1
-		b.collision_mask = 0
-		b.sync_to_physics = false
-		var col := CollisionShape2D.new()
-		var shape := RectangleShape2D.new()
-		shape.size = Vector2(w - 4.0, 12.0)
-		col.shape = shape
-		col.position = Vector2(0, 6)
-		col.one_way_collision = true
-		col.disabled = i in broken_planks
-		b.add_child(col)
-		b.position = _rest(i)
-		add_child(b, false, Node.INTERNAL_MODE_FRONT)
-		_planks.append(b)
+		_pos[i] = _rest(i)
+		_rot[i] = atan2(span.y, span.x)
+	# One body; each unbroken run of planks is one smooth one-way polygon that
+	# is reshaped every frame to follow the sag (no steps between planks).
+	_deck = AnimatableBody2D.new()
+	_deck.collision_layer = 1
+	_deck.collision_mask = 0
+	_deck.sync_to_physics = false
+	add_child(_deck, false, Node.INTERNAL_MODE_FRONT)
+	_runs.clear()
+	var run: Array[int] = []
+	for i in plank_count:
+		if i in broken_planks:
+			if run.size() > 0:
+				_runs.append(run)
+			run = []
+		else:
+			run.append(i)
+	if run.size() > 0:
+		_runs.append(run)
+	for r in _runs:
+		var cp := CollisionPolygon2D.new()
+		cp.build_mode = CollisionPolygon2D.BUILD_SOLIDS
+		cp.one_way_collision = true
+		_deck.add_child(cp)
+		_polys.append(cp)
+	_update_collision()
 	queue_redraw()
+
+
+## Rebuild each run's deck polygon from the current plank positions.
+func _update_collision() -> void:
+	var hw := _plank_width() * 0.5
+	for k in _runs.size():
+		var r: Array = _runs[k]
+		var top := PackedVector2Array()
+		var first: int = r[0]
+		var last: int = r[r.size() - 1]
+		top.append(_pos[first] + Vector2(-hw + 2.0, 0).rotated(_rot[first]))
+		for i: int in r:
+			top.append(_pos[i])
+		top.append(_pos[last] + Vector2(hw - 2.0, 0).rotated(_rot[last]))
+		var poly := top.duplicate()
+		for j in range(top.size() - 1, -1, -1):
+			poly.append(top[j] + Vector2(0, 12))
+		_polys[k].polygon = poly
 
 
 func _plank_width() -> float:
@@ -99,18 +133,18 @@ func _physics_process(delta: float) -> void:
 		var target := 0.0
 		for r in riders:
 			# A rider pulls the whole bridge down, most right under their feet.
-			var near := 1.0 - clampf(absf(t - r) * 2.2, 0.0, 1.0)
+			var near := 1.0 - clampf(absf(t - r) * 1.6, 0.0, 1.0)
 			target += max_dip * sin(r * PI) * (0.35 + 0.65 * near * near)
 		target = minf(target, max_dip * 1.6)
 		_dip_vel[i] += (target - _dip[i]) * 90.0 * delta
 		_dip_vel[i] *= exp(-7.0 * delta)
 		_dip[i] += _dip_vel[i] * delta
-		var b := _planks[i]
-		b.position = _rest(i) + Vector2(0, _dip[i])
+		_pos[i] = _rest(i) + Vector2(0, _dip[i])
 		var ang := 0.0
 		if i > 0 and i < plank_count - 1:
 			ang = (_dip[i + 1] - _dip[i - 1]) / (_plank_width() * 2.0) * 0.8
-		b.rotation = ang + atan2(span.y, span.x)
+		_rot[i] = ang + atan2(span.y, span.x)
+	_update_collision()
 	View.redraw_rect(self, Rect2(global_position - Vector2(0, 50), span.abs() + Vector2(0, 150)))
 
 
@@ -129,7 +163,7 @@ func _draw() -> void:
 	var rope := PackedVector2Array([Vector2(0, -54)])
 	var under := PackedVector2Array([Vector2(0, 4)])
 	for i in plank_count:
-		var p := _planks[i].position if i < _planks.size() else _rest(i)
+		var p := _pos[i] if i < _pos.size() else _rest(i)
 		rope.append(p + Vector2(0, -44))
 		under.append(p + Vector2(0, 8))
 	rope.append(span + Vector2(0, -54))
@@ -141,8 +175,8 @@ func _draw() -> void:
 	for i in plank_count:
 		if i in broken_planks:
 			continue
-		var p := _planks[i].position if i < _planks.size() else _rest(i)
-		var r := _planks[i].rotation if i < _planks.size() else 0.0
+		var p := _pos[i] if i < _pos.size() else _rest(i)
+		var r := _rot[i] if i < _rot.size() else 0.0
 		draw_set_transform(p, r)
 		Art.shape(self, Art.rounded_rect(Vector2(-w * 0.5 + 2, 0), Vector2(w * 0.5 - 2, 12), 3.0), PLANK.darkened(0.05 * (i % 2)), o, 2.0)
 		draw_set_transform(Vector2.ZERO, 0.0)
