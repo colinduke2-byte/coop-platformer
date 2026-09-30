@@ -327,7 +327,7 @@ text = "Ride the wheel!"
 width = 220
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("10")]
-position = Vector2(6760, 0)
+position = Vector2(6705, 0)
 
 [node name="Crusher1" type="AnimatableBody2D" parent="Hazards"]
 script = ExtResource("17")
@@ -356,9 +356,9 @@ arc_height = 0
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(6860, -200)
-text = "Don't stop under the crushers!"
-width = 320
+position = Vector2(6860, 0)
+text = "Don't stop\nunder the\ncrushers!"
+width = 170
 
 [node name="Block13" parent="Blocks" instance=ExtResource("4")]
 position = Vector2(7700, 0)
@@ -423,9 +423,9 @@ targets = Array[NodePath]([NodePath("../Arena1/Spawner1")])
 
 [node name="Sign7" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(7600, -150)
-text = "ARENA: beat everyone\nto open the gate!"
-width = 280
+position = Vector2(7940, 0)
+text = "ARENA: beat\neveryone to\nopen the gate!"
+width = 200
 
 [node name="Block14" parent="Blocks" instance=ExtResource("4")]
 position = Vector2(8900, 0)

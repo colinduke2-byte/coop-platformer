@@ -3950,14 +3950,15 @@ const W2_6 := "res://levels/w2_6_grumblefrost_summit.tscn"
 func test_w2_6_lift_ridge_and_net_reach_the_summit() -> void:
 	var p: Player = await _load_demo(W2_6)
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if e.global_position.x < 4600.0:
+		if e.global_position.x < 6000.0:
 			e.queue_free()
 	var ok := await _ride_lift(p, Vector2(1620, -4), 2760.0, -700.0)
 	check(ok, "the last lift should reach the ridge (at %s)" % p.global_position)
 	p.invulnerable_timer = 100.0
 	ok = await _hop_run(p, [3090, 3330], 4150, true, 6.0)
 	check(ok, "the ridge should be crossable in the wind (at %s)" % p.global_position)
-	await _run_to(p, 4255, "move_right", 2.0)
+	await _place(p, Vector2(5580, -702))  # (past the tollgate - it has its own test)
+	await _run_to(p, 5655, "move_right", 2.0)
 	release(0, "move_right")
 	press(0, "move_up")
 	for i in 600:
@@ -3982,7 +3983,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 		else:
 			e.queue_free()
 	check(boss != null and boss.asleep, "Grumblefrost should be asleep in his arena")
-	await _place(p, Vector2(4950, -1402))
+	await _place(p, Vector2(6350, -1402))
 	await frames(10)
 	check(not boss.asleep, "walking into the arena should wake him")
 	var reflected := 0
@@ -4025,7 +4026,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 	await seconds(1.5)
 	var exit_open := false
 	for g in _demo.find_children("*", "Gate", true, false):
-		if g.global_position.x > 5900.0 and g.is_open():
+		if g.global_position.x > 7300.0 and g.is_open():
 			exit_open = true
 	check(exit_open, "beating him should open the exit gate")
 	await _finish_demo()
@@ -4365,3 +4366,145 @@ func test_w1_6_courtyard_leads_to_the_tower() -> void:
 	var ok: bool = await _hop_run(p, [4150, 4800, 5250], 5600, false, 14.0)
 	check(ok, "the courtyard (spikes, Bonkhorn pen walls, fire jets) leads to the tower door (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+func test_w2_1_sledge_run_reaches_the_new_gate() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10460, 558))
+	var ok: bool = await _hop_run(p, [11290], 15000, false, 16.0)
+	check(ok or gm().level_complete, "over the snow hut, down Snowman Hill and across the penguin lake (at %s)" % p.global_position)
+	check(gm().level_complete, "the new gate completes Snowball Slopes")
+	await _finish_demo()
+
+
+func test_w2_1_snow_hut_hides_gem_2() -> void:
+	var p: Player = await _load_demo(W2_1)
+	await _place(p, Vector2(11300, 558))
+	p.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(0.5)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[2], "punching through the hut's drift reaches gem 2 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_third_lift_reaches_the_frost_fort() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	var ok := await _ride_lift(p, Vector2(10400, -954), 11800.0, -1650.0)
+	check(ok, "the third lift should carry you over the gem room up to the Frost Fort (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_frost_fort_snowball_breaks_the_gate_and_leads_to_the_goal() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(12060, -1652))
+	p.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(3.0)
+	var ok: bool = await _hop_run(p, [13350, 13750], 14350, false, 12.0)
+	check(ok or gm().level_complete, "the snowball smashes the ice gate and the courtyard leads to the goal (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_3_minecart_carries_you_over_the_chasm() -> void:
+	var p: Player = await _load_demo(W2_3)
+	p.invulnerable_timer = 100.0
+	await _clear_enemies()
+	var cart: MovingPlatform = null
+	for n in _demo.find_children("*", "MovingPlatform", true, false):
+		if (n as Node2D).global_position.x > 10000:
+			cart = n
+	check(cart != null, "the mine should have a cart")
+	await _place(p, Vector2(10220, -402))
+	for i in 1200:  # wait for the cart to park at the near side
+		await get_tree().physics_frame
+		if cart.global_position.x < 10320.0:
+			break
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if p.global_position.x > cart.global_position.x + 70.0:
+			break
+	release(0, "move_right")
+	for i in 900:
+		await get_tree().physics_frame
+		if cart.global_position.x > 11220.0:
+			break
+	var ok: bool = await _hop_run(p, [], 11600, false, 3.0)
+	check(ok, "riding the cart across and stepping off reaches the crystal chamber (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_3_crystal_chamber_leads_to_the_goal() -> void:
+	var p: Player = await _load_demo(W2_3)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await _place(p, Vector2(11550, -402))
+	var ok: bool = await _hop_run(p, [], 13450, true, 8.0)
+	check(ok or gm().level_complete, "sprinting under the chamber's crushers reaches the goal (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	await _finish_demo()
+
+
+func test_w2_4_ice_floes_cross_frostbite_lake_to_the_camp() -> void:
+	var p: Player = await _load_demo(W2_4)
+	p.invulnerable_timer = 100.0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await _place(p, Vector2(11480, 898))
+	var ok: bool = await _hop_run(p, [11110, 11660, 12010, 12360, 12710, 13060, 13730, 14180], 14850, false, 16.0)
+	check(ok or gm().level_complete, "over the shed, across the floes and through the camp to the goal (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_5_boardwalk_and_seesaw_hill_reach_the_upper_bath_house() -> void:
+	var p: Player = await _load_demo(W2_5)
+	p.invulnerable_timer = 100.0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await _place(p, Vector2(10700, -202))
+	var ok: bool = await _hop_run(p, [10980, 11190, 11490, 11790, 12090, 12720], 14500, false, 16.0)
+	check(ok or gm().level_complete, "over the back room, along the boardwalk and up the hill to the goal (at %s)" % p.global_position)
+	check(gm().level_complete, "the upper bath-house gate completes Hot Spring Hollow")
+	await _finish_demo()
+
+
+func test_w2_6_tollgate_key_opens_the_way_to_the_ice_wall() -> void:
+	var p: Player = await _load_demo(W2_6)
+	p.invulnerable_timer = 100.0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Grumblefrost:
+			e.queue_free()
+	await _place(p, Vector2(4900, -702))
+	press(0, "move_right")
+	for i in 240:
+		await get_tree().physics_frame
+		if p.global_position.x > 5050.0:
+			break
+	release(0, "move_right")  # the mushroom throws you straight up onto the key ledge
+	for i in 240:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.y < -1000.0:
+			break
+	check(p.global_position.y < -1000.0, "the mushroom should put you on the key ledge (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [], 5580, false, 6.0)
+	check(ok, "carrying the key, the door opens and you reach the ice wall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_every_level_passes_the_layout_audit() -> void:
+	# Signs clear of terrain / props / Lum trails, nothing buried, one goal each (tools/level_audit.gd).
+	for n in [^"Floor", ^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	for path in LevelAudit.all_levels():
+		var issues: Array[String] = await LevelAudit.audit_path(self, path)
+		check(issues.is_empty(), "%s: %s" % [path.get_file(), ", ".join(issues)])

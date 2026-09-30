@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/gondola.tres" id="2"]
@@ -22,10 +22,11 @@
 [ext_resource type="Script" path="res://world/dream_bell.gd" id="20"]
 [ext_resource type="PackedScene" path="res://enemies/slidgewick.tscn" id="21"]
 [ext_resource type="Script" path="res://world/zipline.gd" id="22"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="23"]
-[ext_resource type="Script" path="res://world/breakable_block.gd" id="24"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="25"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="26"]
+[ext_resource type="Script" path="res://world/breakable_block.gd" id="23"]
+[ext_resource type="PackedScene" path="res://enemies/grunt.tscn" id="24"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="25"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="26"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="27"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(1540, 60)
@@ -43,7 +44,10 @@ size = Vector2(1500, 60)
 size = Vector2(1300, 60)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6"]
-size = Vector2(13670, 200)
+size = Vector2(730, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7"]
+size = Vector2(17020, 200)
 
 [node name="CablecarCliffs" type="Node2D"]
 script = ExtResource("1")
@@ -389,25 +393,21 @@ seed_value = 66
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(9900, -950)
 
-[node name="Goal1" type="Area2D" parent="."]
-script = ExtResource("23")
-position = Vector2(10600, -950)
-
 [node name="LumLine8" type="Node2D" parent="Pickups"]
 script = ExtResource("9")
-position = Vector2(10100, -1050)
-count = 5
-end = Vector2(400, 0)
-arc_height = 40
+position = Vector2(10000, -1050)
+count = 3
+end = Vector2(250, 0)
+arc_height = 30
 
 [node name="Deco7" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(10300, -950)
+position = Vector2(10750, -950)
 kind = 24
 size = 0.8
 
 [node name="Breakable1" type="AnimatableBody2D" parent="Toys"]
-script = ExtResource("24")
+script = ExtResource("23")
 position = Vector2(10960, -1150)
 size = Vector2(50, 200)
 
@@ -415,37 +415,183 @@ size = Vector2(50, 200)
 position = Vector2(11010, -1170)
 size = Vector2(240, 20)
 
+[node name="Block3" parent="Blocks" instance=ExtResource("5")]
+position = Vector2(11250, -1170)
+size = Vector2(20, 220)
+
 [node name="Gem3" type="Area2D" parent="Pickups"]
 script = ExtResource("12")
 position = Vector2(11120, -1030)
 gem_index = 2
 
-[node name="Block3" parent="Blocks" instance=ExtResource("5")]
-position = Vector2(11250, -2400)
-size = Vector2(60, 1450)
+[node name="Sign5" type="Node2D" parent="Signs"]
+script = ExtResource("7")
+position = Vector2(10560, -950)
+text = "Last lift! Up to\nthe Frost Fort."
+width = 220
 
-[node name="Deco11" type="Node2D" parent="Decor"]
+[node name="Gondola3" type="AnimatableBody2D" parent="Toys"]
+script = ExtResource("11")
+position = Vector2(10300, -950)
+size = Vector2(200, 28)
+waypoints = PackedVector2Array(1280, -700)
+speed = 160
+wait_time = 0.8
+one_way = true
+wait_for_rider = true
+
+[node name="PitKill6" type="Area2D" parent="Hazards"]
+script = ExtResource("10")
+position = Vector2(11535, 1300)
+collision_layer = 32
+collision_mask = 2
+monitorable = false
+
+[node name="Shape1" type="CollisionShape2D" parent="Hazards/PitKill6"]
+shape = SubResource("RectangleShape2D_6")
+
+[node name="LumLine9" type="Node2D" parent="Pickups"]
+script = ExtResource("9")
+position = Vector2(10500, -1150)
+count = 8
+end = Vector2(1000, -550)
+arc_height = 0
+
+[node name="Snowl2" parent="Enemies" instance=ExtResource("16")]
+position = Vector2(11100, -1900)
+start_facing = -1
+
+[node name="Terrain10" type="StaticBody2D" parent="Blocks"]
+script = ExtResource("6")
+polygon = PackedVector2Array(11720, 400, 11780, -1650, 14600, -1650, 14600, 1500, 11720, 1500)
+seed_value = 80
+
+[node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("13")]
+position = Vector2(11850, -1650)
+
+[node name="SnowPile2" type="Area2D" parent="Toys"]
+script = ExtResource("19")
+position = Vector2(12150, -1650)
+ball_max_radius = 95
+
+[node name="Sign6" type="Node2D" parent="Signs"]
+script = ExtResource("7")
+position = Vector2(12050, -1650)
+text = "THE FROST FORT!\nBowl the guards!"
+width = 240
+
+[node name="Grunt1" parent="Enemies" instance=ExtResource("24")]
+position = Vector2(12450, -1650)
+start_facing = -1
+walk_speed = 0
+sight = 0
+
+[node name="Grunt2" parent="Enemies" instance=ExtResource("24")]
+position = Vector2(12570, -1650)
+start_facing = -1
+walk_speed = 0
+sight = 0
+
+[node name="Grunt3" parent="Enemies" instance=ExtResource("24")]
+position = Vector2(12690, -1650)
+start_facing = -1
+walk_speed = 0
+sight = 0
+
+[node name="Breakable2" type="AnimatableBody2D" parent="Toys"]
+script = ExtResource("23")
+position = Vector2(12900, -1850)
+size = Vector2(70, 200)
+reinforced = true
+
+[node name="Block4" parent="Blocks" instance=ExtResource("5")]
+position = Vector2(12880, -1880)
+size = Vector2(110, 30)
+
+[node name="LumLine10" type="Node2D" parent="Pickups"]
+script = ExtResource("9")
+position = Vector2(12300, -1760)
+count = 5
+end = Vector2(500, 0)
+arc_height = 0
+
+[node name="Checkpoint7" parent="Checkpoints" instance=ExtResource("13")]
+position = Vector2(13060, -1650)
+
+[node name="Block5" parent="Blocks" instance=ExtResource("5")]
+position = Vector2(13400, -1750)
+size = Vector2(40, 100)
+
+[node name="Yetling2" parent="Enemies" instance=ExtResource("18")]
+position = Vector2(13520, -1650)
+start_facing = -1
+
+[node name="Block6" parent="Blocks" instance=ExtResource("5")]
+position = Vector2(13800, -1750)
+size = Vector2(40, 100)
+
+[node name="Yetling3" parent="Enemies" instance=ExtResource("18")]
+position = Vector2(13920, -1650)
+start_facing = -1
+
+[node name="DreamBell2" type="Area2D" parent="Toys"]
+script = ExtResource("20")
+position = Vector2(13150, -1650)
+
+[node name="LumLine11" type="Node2D" parent="Pickups"]
+script = ExtResource("9")
+position = Vector2(13250, -1840)
+count = 9
+end = Vector2(850, 0)
+arc_height = 0
+
+[node name="Sign7" type="Node2D" parent="Signs"]
+script = ExtResource("7")
+position = Vector2(13620, -1650)
+text = "Yetlings! Punch their\nsnowballs back at them."
+width = 300
+
+[node name="Goal1" type="Area2D" parent="."]
+script = ExtResource("25")
+position = Vector2(14300, -1650)
+
+[node name="Deco8" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(14500, -1650)
+kind = 24
+size = 0.9
+
+[node name="Deco9" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(14150, -1650)
+kind = 21
+
+[node name="Block7" parent="Blocks" instance=ExtResource("5")]
+position = Vector2(14600, -2800)
+size = Vector2(60, 1150)
+
+[node name="Deco13" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(395, 0)
 kind = 6
 size = 1.22
 seed_value = 702
 
-[node name="Deco12" type="Node2D" parent="Decor"]
+[node name="Deco14" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(597, 0)
 kind = 4
 size = 1.2
 seed_value = 591
 
-[node name="Deco13" type="Node2D" parent="Decor"]
+[node name="Deco15" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(819, 0)
 kind = 6
 size = 0.94
 seed_value = 195
 
-[node name="Deco14" type="Node2D" parent="Decor"]
+[node name="Deco16" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(859, 2)
 kind = 0
@@ -453,49 +599,49 @@ size = 1.3
 front = true
 seed_value = 185
 
-[node name="Deco15" type="Node2D" parent="Decor"]
+[node name="Deco17" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(1036, 0)
 kind = 6
 size = 1.22
 seed_value = 793
 
-[node name="Deco18" type="Node2D" parent="Decor"]
+[node name="Deco20" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(3880, -620)
 kind = 4
 size = 1.22
 seed_value = 190
 
-[node name="Deco22" type="Node2D" parent="Decor"]
+[node name="Deco24" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5779, -1250)
 kind = 4
 size = 1.01
 seed_value = 199
 
-[node name="Deco23" type="Node2D" parent="Decor"]
+[node name="Deco25" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5904, -1250)
 kind = 6
 size = 0.96
 seed_value = 337
 
-[node name="Deco26" type="Node2D" parent="Decor"]
+[node name="Deco28" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(7848, -1850)
 kind = 6
 size = 1.19
 seed_value = 488
 
-[node name="Deco27" type="Node2D" parent="Decor"]
+[node name="Deco29" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8049, -1850)
 kind = 6
 size = 0.96
 seed_value = 803
 
-[node name="Deco28" type="Node2D" parent="Decor"]
+[node name="Deco30" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8089, -1848)
 kind = 0
@@ -503,48 +649,48 @@ size = 1.3
 front = true
 seed_value = 114
 
-[node name="Deco29" type="Node2D" parent="Decor"]
+[node name="Deco31" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8262, -1850)
 kind = 6
 size = 1.22
 seed_value = 19
 
-[node name="Deco30" type="Node2D" parent="Decor"]
+[node name="Deco32" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8390, -1850)
 kind = 4
 size = 0.83
 seed_value = 100
 
-[node name="Deco31" type="Node2D" parent="Decor"]
+[node name="Deco33" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8515, -1850)
 kind = 6
 seed_value = 276
 
-[node name="Deco32" type="Node2D" parent="Decor"]
+[node name="Deco34" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(8641, -1850)
 kind = 4
 size = 0.89
 seed_value = 696
 
-[node name="Deco33" type="Node2D" parent="Decor"]
+[node name="Deco35" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(9925, -950)
 kind = 4
 size = 1.13
 seed_value = 948
 
-[node name="Deco34" type="Node2D" parent="Decor"]
+[node name="Deco36" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(10098, -950)
 kind = 4
 size = 0.91
 seed_value = 862
 
-[node name="Deco35" type="Node2D" parent="Decor"]
+[node name="Deco37" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(10138, -948)
 kind = 0
@@ -552,50 +698,43 @@ size = 1.3
 front = true
 seed_value = 870
 
-[node name="Deco36" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(10285, -950)
-kind = 4
-size = 1.14
-seed_value = 651
-
-[node name="Deco37" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(10439, -950)
-kind = 22
-size = 1.12
-seed_value = 476
-
-[node name="Deco38" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(10576, -950)
-kind = 8
-size = 0.85
-seed_value = 945
-
 [node name="Deco39" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(10686, -950)
+position = Vector2(12960, -1650)
 kind = 6
-size = 0.87
-seed_value = 911
+size = 0.81
+seed_value = 785
 
 [node name="Deco40" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(10919, -950)
+position = Vector2(13166, -1650)
 kind = 4
-size = 0.81
-seed_value = 163
+size = 1.17
+seed_value = 464
+
+[node name="Deco41" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(14181, -1650)
+kind = 7
+size = 0.8
+seed_value = 389
+
+[node name="Deco42" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(14365, -1650)
+kind = 4
+size = 1.18
+seed_value = 978
 
 [node name="KillZone" type="Area2D" parent="."]
-position = Vector2(5475, 1600)
+position = Vector2(7150, 1600)
 collision_layer = 32
 collision_mask = 2
 monitorable = false
 script = ExtResource("10")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
-shape = SubResource("RectangleShape2D_6")
+shape = SubResource("RectangleShape2D_7")
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(0, -2)
@@ -605,8 +744,8 @@ position = Vector2(0, -2)
 [node name="CoopCamera" type="Camera2D" parent="."]
 position = Vector2(0, -152)
 limit_left = -360
-limit_right = 11310
+limit_right = 14660
 limit_bottom = 1300
-script = ExtResource("25")
+script = ExtResource("26")
 
-[node name="HUD" parent="." instance=ExtResource("26")]
+[node name="HUD" parent="." instance=ExtResource("27")]

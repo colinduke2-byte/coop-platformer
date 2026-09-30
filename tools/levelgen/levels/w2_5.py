@@ -1,8 +1,9 @@
 """World 2-5: HOT SPRING HOLLOW - steamy pools hidden between the peaks.
 Teaches: riding geysers up the terraces, a Yetling lobbing from above, seesaws
 on the plateau, a steaming canyon (hop the floating rocks - or glide the
-thermal updrafts for the high road), and a snowball bowling slope down to
-the bath-house.
+thermal updrafts for the high road), a snowball bowling slope down to
+the bath-house, then the boardwalk over the steaming pool (time the steam
+jets), a seesaw hill and the upper bath-house.
 Secrets: gem 0 at the top of the first thermal, gem 1 on the bottom of the
 village hot pool, gem 2 behind the bath-house; the Snoozling snoozes on a warm
 rock at the bottom of the canyon (glide into the thermal to get back up).
@@ -25,12 +26,12 @@ L.water(365, 0, 340, 140)
 L.gem(620, 110)                                     # on the bottom of the hot pool
 L.sign(90, 0, "HOT SPRING HOLLOW. Ahh, warm at last!\n(Pools are safe for a paddle.)", 420)
 L.deco("hut", 1000, 0)
-L.deco("snowman", 1350, 0, 0.9)
-L.lums(800, -110, 1500, -110, 6, 30)
+L.deco("snowman", 780, 0, 0.9)
+L.lums(820, -110, 1150, -110, 4, 30)
 
 # ---- S1 the geyser terraces (1700..2800) ------------------------------------------------------
 L.checkpoint(1560, 0)
-L.sign(1260, 0, "GEYSERS! Stand on the vent and\nride the eruption up the terraces.", 400)
+L.sign(1340, 0, "GEYSERS! Stand on\nthe vent and ride\nthe eruption up.", 280)
 L.geyser(1620, 0, height=420, calm=1.2)
 L.geyser(2150, -300, height=420, calm=1.2, phase=0.6)
 L.geyser(2650, -600, height=420, calm=1.2, phase=1.2)
@@ -74,21 +75,50 @@ L.lums(6650, -870, 7750, -320, 12)
 L.sign(6150, -800, "Bowling time!\nPunch the snow pile.", 280)
 
 # ---- S5 the bath-house (7800..10600) ------------------------------------------------------------
-L.land([(8300, -200), (8315, -60), (8700, -60), (8715, -200)], bottom=1500)   # a hot tub in the deck
+L.land([(8300, -200), (8315, -60), (8700, -60), (8715, -200), (11000, -200), (11020, -60), (12380, -60), (12400, -200),
+        (13400, -200), (13700, -400), (14800, -400)], bottom=1500)   # a hot tub in the deck, then the steaming pool
 L.water(8315, -200, 385, 140)
 L.checkpoint(7900, -200)
 L.enemy("yetling", 9300, -200)
-L.goal(9800, -200)
 L.deco("hut", 10150, -200, 1.2)
 L.deco("lantern", 9500, -200)
 L.lums(8350, -290, 8680, -290, 4, 40)
 L.lums(9000, -300, 9600, -300, 5)
-# Gem 2: behind the bath-house.
-L.block(10380, -400, 20, 200)
-L.gem(10490, -270)
-L.secret(10400, -400, 200, 200)
-L.wall(10600, -1400, -200)
+# Gem 2: in the bath-house's back room - over its roof, or wall-jump in.
+L.block(10380, -340, 20, 140)
+L.block(10380, -360, 240, 20)
+L.block(10600, -360, 20, 160)
+L.gem(10490, -260)
+L.secret(10400, -340, 200, 140)
 
-L.dress(-250, 10350, "snow", spacing=180, seed=25, skip=[(300, 760), (1500, 2850), (3150, 3600), (4150, 6050), (8250, 8760)])
-L.finish(spawn=(0, -2), left=-360, right=10660, bottom=1100, kill_y=1500)
+# ---- S6 the steaming pool boardwalk (10620..12400) ----------------------------------------------
+L.checkpoint(10700, -200)
+L.sign(10850, -200, "STEAM JETS! Cross the\nboardwalk between puffs.", 320)
+L.water(11020, -170, 1360, 110)                      # warm and shallow: fall in and just climb out
+for i, x0 in enumerate([11040, 11340, 11640, 11940, 12240]):
+    L.ledge(x0, -210, 160 if x0 < 12240 else 150)
+    if i > 0:
+        L.flame(x0 - 70, -60, length=280, steam=True, on=1.0, off=1.7, phase=i * 0.55)
+L.lums(11100, -300, 12320, -300, 10)
+L.enemy("snowl", 11700, -700)
+
+# ---- S7 the seesaw hill and the upper bath-house (12400..14800) ------------------------------------
+L.checkpoint(12480, -200)
+L.seesaw(12950, -200, 320)
+L.ledge(12900, -600, 200)
+L.lum_block(12960, -900, lums=5)
+L.lums(12920, -680, 13080, -680, 3)
+L.sign(12650, -200, "Slam the SEESAW\nto fling a friend!", 260)
+L.enemy("yetling", 13950, -400)
+L.enemy("slidgewick", 14200, -400)
+L.bell(13850, -400)
+L.lums(13800, -500, 14300, -500, 6, 40)
+L.goal(14450, -400)
+L.deco("hut", 14650, -400, 1.1)
+L.deco("lantern", 14300, -400)
+L.wall(14800, -1600, -400)
+
+L.dress(-250, 14750, "snow", spacing=180, seed=25, skip=[(300, 760), (1500, 2850), (3150, 3600), (4150, 6050), (8250, 8760),
+        (10350, 10650), (10980, 12420), (12750, 13150), (13800, 14300)])
+L.finish(spawn=(0, -2), left=-360, right=14860, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_5_hot_spring_hollow.tscn"))

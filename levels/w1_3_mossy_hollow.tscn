@@ -87,24 +87,19 @@ seed_value = 13
 
 [node name="Terrain2" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(4950, 0, 6600, 0, 6600, -1100, 6900, -1100, 7400, -640, 7600, -600, 7650, -200, 8550, -200, 8600, -600, 9000, -600, 9000, -150, 10000, -150, 10000, 1400, 4950, 1400)
+polygon = PackedVector2Array(4950, 0, 6600, 0, 6600, -1100, 6900, -1100, 7400, -640, 7600, -600, 7650, -200, 8550, -200, 8600, -600, 9000, -600, 9000, -150, 10000, -150, 10000, -600, 10250, -650, 10600, -780, 11600, -780, 11600, 1400, 4950, 1400)
 seed_value = 14
 
 [node name="Terrain3" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(10000, -150, 10000, -600, 10250, -650, 10600, -780, 11600, -780, 11600, 1400, 10000, 1400)
+polygon = PackedVector2Array(12400, -780, 13450, -780, 13700, -880, 14000, -1000, 15200, -1000, 15200, 1400, 12400, 1400)
 seed_value = 15
 
 [node name="Terrain4" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(12400, -780, 13450, -780, 13700, -880, 14000, -1000, 15200, -1000, 15200, 1400, 12400, 1400)
-seed_value = 16
-
-[node name="Terrain5" type="StaticBody2D" parent="Blocks"]
-script = ExtResource("6")
 polygon = PackedVector2Array(-300, -520, 300, -600, 700, -540, 1100, -620, 1300, -560, 1500, -370, 2500, -380, 2700, -560, 2750, -1150, 3850, -1150, 3850, -1000, 5360, -1000, 5360, -1650, 6600, -1650, 6600, -1450, 6900, -1450, 7400, -1000, 8600, -1000, 8900, -950, 9000, -1150, 10300, -1150, 10700, -1250, 13550, -1250, 13750, -1300, 14000, -1600, 14000, -2600, -300, -2600)
 lip = false
-seed_value = 17
+seed_value = 16
 
 [node name="Sign1" type="Node2D" parent="Signs"]
 script = ExtResource("7")
@@ -498,11 +493,11 @@ script = ExtResource("22")
 position = Vector2(7600, -600)
 size = Vector2(1000, 420)
 
-[node name="Terrain6" type="StaticBody2D" parent="Blocks"]
+[node name="Terrain5" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(8000, -630, 8016, -640, 8154, -640, 8170, -630, 8170, -620, 8113.3333, -565.4463, 8056.6667, -551.2291, 8000, -620)
 rounding = 10
-seed_value = 88
+seed_value = 87
 
 [node name="Puffcap4" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(8085, -640)

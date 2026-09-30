@@ -343,9 +343,9 @@ size = Vector2(500, 500)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(4800, 0)
-text = "Soda lake ahead - swim!\n(The current pushes you along.)"
-width = 340
+position = Vector2(4820, -620)
+text = "Soda lake ahead -\nswim! The current\nhelps you along."
+width = 260
 
 [node name="Deco8" type="Node2D" parent="Decor"]
 script = ExtResource("7")

@@ -52,6 +52,12 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] 2-1 Snowball Slopes, 2-2 Cablecar Cliffs, 2-3 Crystal Caverns, 2-4 Avalanche Alley, 2-5 Hot Spring Hollow, 2-6 Grumblefrost's Summit
 - [x] Snowy world map + gondola gate from World 1 (opens after the Baron)
 - [ ] Playtest: is Avalanche Alley too scary for new players? (`Avalanche.speed` 450, `catchup_gap` 850)
+
+## Level refinement pass ✅
+- [x] Every W1/W2 level 10–25% longer with a new closing section (W1: stream swim + ferry, sky meadow, glowroot bridge + grotto, swing rings + shieldbug tree, lily lagoon, keep courtyard; W2: sledge run + snow hut, frost fort, minecart chasm + crystal chamber, ice floes + yetling camp, steam boardwalk + seesaw hill, frozen tollgate)
+- [x] Signs auto-placed clear of terrain / props; layout audit (`tools/level_audit.gd`) runs in the tests
+- [x] Fixes: stuck wall-sliding at cliff feet (terrain collision keeps inside corners sharp), rope-bridge end lip, ground-piece seams
+- [ ] Bonus levels (Candy, Sunset, Glacier) only got layout fixes - extend them next
 - [ ] World 3 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
 
 ## Phase 5 — Art & audio

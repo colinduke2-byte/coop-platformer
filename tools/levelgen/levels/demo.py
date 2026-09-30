@@ -33,7 +33,7 @@ L.deco("flowers", 1520, 0); L.deco("grass", 1800, 0)
 
 # ---- S2 coyote + one-way (1900..2900) ---------------------------------------------------
 kz(1900, 2100, 520)
-L.sign(1810, 0, "2. Jump just AFTER the edge -\nyou still can (coyote time)", 380)
+L.sign(1860, 0, "2. Jump just\nAFTER the edge\n(coyote time!)", 200)
 L.ground(2100, 3900, 0)
 L.checkpoint(2180, 0)
 L.ledge(2350, -140, 200); L.ledge(2570, -270, 200); L.ledge(2350, -400, 200)
@@ -51,8 +51,8 @@ L.ground(4250, 6000, 0)
 L.deco("rock", 3800, 0, 0.8)
 
 # ---- S4 crouch / slide tunnel (4250..5000) -----------------------------------------------
-L.checkpoint(4320, 0)
-L.sign(4520, 0, "5. Hold DOWN to crawl.\nRunning + DOWN = belly slide!", 380)
+L.checkpoint(4270, 0)
+L.sign(4466, 0, "5. Hold DOWN to\ncrawl. Running +\nDOWN = slide!", 220)
 L.block(4600, -320, 400, 275)          # 45 px gap underneath
 L.lums(4640, -22, 4960, -22, 5)
 L.deco("bush", 5050, 0)
@@ -62,8 +62,8 @@ L.block(5150, -240, 220, 240)
 L.sign(5200, -240, "6. Missed a ledge? You GRAB it!\nHold toward it (or UP) to climb.", 400)
 L.block(5430, -700, 60, 560)           # pillar (walk under it)
 L.block(5650, -700, 900, 700)          # cliff
-L.sign(5530, 0, "7. WALL JUMP: press JUMP by a wall.\nTap = zig-zag, hold toward = climb", 360)
-L.lums(5570, -120, 5570, -620, 6)
+L.sign(5570, 0, "7. WALL\nJUMP up\nhere!", 120)
+L.lums(5570, -240, 5570, -620, 5)
 L.gem(5460, -770)                      # on top of the pillar
 L.checkpoint(5760, -700)
 
@@ -209,10 +209,10 @@ L.lums(24650, -2400, 24780, -2400, 3)
 L.sign(24700, -1260, "Doors: press UP.", 220)
 for i in range(3):
     L.lum_block(25150 + i * 100, -1470, lums=4)
-L.sign(25260, -1260, "Bump the blocks from below!", 300)
+L.sign(25200, -1260, "Bump the blocks\nfrom below!", 220)
 for i in range(3):
     L.flame(25600 + i * 180, -1260, length=200, on=0.9, off=1.3, phase=i * 0.22)
-L.sign(25450, -1260, "Fire jets: time it!", 240)
+L.sign(25470, -1260, "Fire jets:\ntime it!", 160)
 L.flame(26250, -1260, steam=True, on=1.2, off=1.0)
 L.ledge(26170, -1500, 160)
 L.key(26250, -1560)
@@ -233,12 +233,12 @@ L.block(28850, -1460, 100, 200)         # mound right wall
 L.secret(28450, -1460, 400, 200)
 L.crate(28650, -1260, 64, lums=10)
 L.lums(28500, -1320, 28800, -1320, 4)
-L.sign(28200, -1260, "Is that mound hollow...?", 280)
+L.sign(28172, -1260, "Is that mound\nhollow...?", 200)
 L.crate(29050, -1260, 110, lums=10, iron=True)
 L.goal(29300, -1260)
 L.ground(28000, 29600, -1260, 460)
 L.wall(29600, -2200, -800)
-L.sign(28950, -1510, "YOU MADE IT! Charge-punch the vault,\nthen jump into the Dream Gate.", 420)
+L.sign(28700, -1510, "YOU MADE IT! Charge-punch the vault,\nthen jump into the Dream Gate.", 420)
 
 L.finish(spawn=(100, -2), left=-200, right=29600, bottom=560, kill_y=900,
          script_props=None)

@@ -56,11 +56,11 @@ L.ground(6700, 7700, 0)
 L.sign(5760, 0, "Ride the wheel!", 220)
 
 # ---- S5 crusher corridor (6700..7700) ------------------------------------------------------------------------
-L.checkpoint(6760, 0)
+L.checkpoint(6705, 0)
 for x in [6950, 7200, 7450]:
     L.crusher(x, -560, 128, 112, drop=600)
 L.lums(6950, -60, 7560, -60, 6)
-L.sign(6860, -200, "Don't stop under the crushers!", 320)
+L.sign(6860, 0, "Don't stop\nunder the\ncrushers!", 170)
 
 # ---- S6 locked arena (7700..8900) ----------------------------------------------------------------------------
 L.ground(7700, 8900, 0)
@@ -73,7 +73,7 @@ sp = L.spawner(arena, 8350, -300, kind="flapjack", total=2, alive=2, interval=1.
                parent_origin=(8300, 0))
 L.zone(7920, -400, 860, 400, [entry], everyone=True, send_on=False)
 L.zone(7920, -400, 860, 400, [sp], everyone=True)
-L.sign(7600, -150, "ARENA: beat everyone\nto open the gate!", 280)
+L.sign(7640, 0, "ARENA: beat\neveryone to\nopen the gate!", 200)
 
 # ---- S7 shooters on the heights (8900..10300) ------------------------------------------------------------------
 L.ground(8900, 10400, 0)

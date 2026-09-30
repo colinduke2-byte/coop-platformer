@@ -70,7 +70,10 @@ static func audit(level: Node) -> Array[String]:
 			issues.append("checkpoint at %s floats (no ground under it)" % _p(c.global_position))
 		if _solid_at(space, c.global_position + Vector2(0, -20)):
 			issues.append("checkpoint at %s is buried in terrain" % _p(c.global_position))
-	for n in level.find_children("*", "LevelGoal", true, false):
+	var goals := level.find_children("*", "LevelGoal", true, false)
+	if goals.size() != 1:
+		issues.append("the level has %d goals (should be exactly 1)" % goals.size())
+	for n in goals:
 		var g := n as Node2D
 		avoid.append(["goal", Rect2(g.global_position + GOAL_BOX.position, GOAL_BOX.size)])
 	# Props that stand in front of signs (boxes around their origin; origin = where they stand).

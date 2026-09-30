@@ -92,7 +92,7 @@ seed_value = 13
 
 [node name="Terrain2" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(6300, -1400, 7900, -1400, 7900, 900, 6300, 900)
+polygon = PackedVector2Array(6300, -1400, 8600, -1400, 8600, 900, 6300, 900)
 rounding = 6
 seed_value = 14
 
@@ -484,11 +484,6 @@ position = Vector2(6750, -1500)
 count = 8
 end = Vector2(1000, 0)
 arc_height = 40
-
-[node name="Terrain3" type="StaticBody2D" parent="Blocks"]
-script = ExtResource("6")
-polygon = PackedVector2Array(7900, -1400, 8600, -1400, 8600, 900, 7900, 900)
-seed_value = 86
 
 [node name="Goal1" type="Area2D" parent="."]
 script = ExtResource("35")

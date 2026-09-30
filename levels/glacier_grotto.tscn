@@ -130,9 +130,9 @@ start_facing = -1
 
 [node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(1060, 0)
-text = "Belly-slide down the glacier!\n(slides knock spiky things over)"
-width = 360
+position = Vector2(910, 0)
+text = "Belly-slide down the\nglacier! (Slides knock\nspiky things over.)"
+width = 300
 
 [node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("10")]
 position = Vector2(2880, 600)
@@ -236,7 +236,7 @@ text = "Sprint through!"
 width = 220
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("10")]
-position = Vector2(5800, 600)
+position = Vector2(5700, 600)
 
 [node name="Block9" parent="Blocks" instance=ExtResource("4")]
 position = Vector2(6000, -700)
@@ -265,9 +265,9 @@ arc_height = 0
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(5850, 600)
-text = "Wall jump up the ice shaft!"
-width = 300
+position = Vector2(5880, 600)
+text = "Wall jump up\nthe ice shaft!"
+width = 200
 
 [node name="Gem2" type="Area2D" parent="Pickups"]
 script = ExtResource("14")
@@ -310,9 +310,9 @@ fill_below = 600
 
 [node name="LumLine6" type="Node2D" parent="Pickups"]
 script = ExtResource("6")
-position = Vector2(7200, -600)
+position = Vector2(7200, -620)
 count = 8
-end = Vector2(900, 560)
+end = Vector2(900, 480)
 arc_height = 0
 
 [node name="Block13" parent="Blocks" instance=ExtResource("4")]

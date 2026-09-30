@@ -21,7 +21,7 @@ L.lums(1100, -40, 2100, 540, 9)
 L.ground(2200, 3000, 600)
 L.enemy("spikeroo", 2500, 600)
 L.enemy("spikeroo", 2800, 600)
-L.sign(1060, 0, "Belly-slide down the glacier!\n(slides knock spiky things over)", 360)
+L.sign(700, 0, "Belly-slide down the\nglacier! (Slides knock\nspiky things over.)", 300)
 
 # ---- S2 frozen lake (3000..4400) --------------------------------------------------------------------------
 L.checkpoint(2880, 600)
@@ -46,13 +46,13 @@ L.lums(4950, 540, 5600, 540, 6)
 L.sign(4650, 600, "Sprint through!", 220)
 
 # ---- S4 ice wall-jump shaft (6000..6250) ----------------------------------------------------------------------
-L.checkpoint(5800, 600)
+L.checkpoint(5700, 600)
 L.block(6000, -700, 60, 1160)                  # left wall (walk under at the bottom)
 L.block(6220, -600, 380, 1700)                 # cliff up to the ridge...
 L.block(6740, -600, 380, 1700)                 # ...(split around the secret chamber)
 L.enemy("flapjack", 6140, 200, mode=1, patrol_offset=(0, -300))
 L.lums(6140, 500, 6140, -500, 8)
-L.sign(5850, 600, "Wall jump up the ice shaft!", 300)
+L.sign(5880, 600, "Wall jump up\nthe ice shaft!", 200)
 L.gem(6030, -770)                              # on top of the shaft's left wall
 
 # ---- S5 ridge + pound secret + slide to the long jump (6220..8400) -------------------------------------------
@@ -63,7 +63,7 @@ L.pad(6670, -380, height=420)
 L.gem(6720, -440)
 L.secret(6600, -560, 140, 180)
 L.slope(7120, 0, 1100, 600, rising_right=False, fill_below=600)
-L.lums(7200, -600, 8100, -40, 8)
+L.lums(7200, -620, 8100, -140, 8)
 L.ground(8220, 8300, 0)
 L.pit_kill(8300, 8620, 450)
 L.ground(8620, 9200, 0)

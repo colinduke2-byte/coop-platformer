@@ -22,7 +22,7 @@ DX = 1600   # everything from the tower on sits DX further right (room for the c
 L.wall(-360, -1500, 800)
 L.land([(-300, 0), (700, 0), (900, -40), (1400, -40), (1400, 280), (2400, 280), (2400, -40), (4700 + DX, -40)])
 # The tower's solid right side; its top is the roof deck (the arena floor).
-L.land([(4700 + DX, -1400), (6300 + DX, -1400)], bottom=900, rounding=6.0)
+L.land([(4700 + DX, -1400), (7000 + DX, -1400)], bottom=900, rounding=6.0)
 
 # ---- S0 the approach (x -300..1400) ---------------------------------------------------------
 L.sign(60, 0, "THORNWOOD KEEP. The Baron waits at\nthe top of the tower. Be brave!", 400)
@@ -108,7 +108,6 @@ L.ledge(5840 + DX, -1580, 180)
 L.lums(5150 + DX, -1500, 6150 + DX, -1500, 8, 40)
 
 # ---- the victory balcony --------------------------------------------------------------------
-L.land([(6300 + DX, -1400), (7000 + DX, -1400)], bottom=900)
 L.goal(6700 + DX, -1400)
 L.ledge(6480 + DX, -1640, 150)
 L.gem(6555 + DX, -1700)

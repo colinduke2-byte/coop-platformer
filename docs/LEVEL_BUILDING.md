@@ -56,6 +56,17 @@ give it a `world` value, a `map` position and a `music` track.
 - Teach, test, twist: introduce a piece safely, then over a pit, then combine it.
 - Every W1 level has a **bot test** in `tests/run_tests.gd` that runs it
   start-to-goal. If you move something, run the bot (`-- only=w1_3`).
+- **Signs place themselves.** `sign(x, y, text)` is a wish: `finish()` slides the
+  board up to ±700 px (and rewraps the text) until it stands on ground, clear of
+  terrain, checkpoints, the goal, water, hazards, props and Lum trails. It prints
+  `note: no clear spot` if it can't; move the sign by hand then.
+- **One ground piece per stretch.** Two `land()` pieces meeting at the same point
+  leave a seam players snag on; the kit warns about it. Merge them into one profile.
+- **Exactly one goal** per level.
+- **Audit:** `godot --headless --path . res://tools/level_audit.tscn [-- --level=res://levels/x.tscn]`
+  flags signs cut by terrain / floating / covering things, buried Lums, gems,
+  cages and enemies, floating checkpoints and goal count. The test suite runs it
+  on every level (`test_every_level_passes_the_layout_audit`).
 
 ## Kit reference
 

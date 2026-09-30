@@ -702,7 +702,7 @@ arc_height = 40
 
 [node name="Terrain8" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(12220, -200, 12900, -200, 13000, -250, 13200, -250, 13300, -200, 14300, -200, 14300, 1400, 12220, 1400)
+polygon = PackedVector2Array(12220, -200, 12900, -200, 13000, -250, 13200, -250, 13300, -200, 15600, -200, 15600, 1400, 12220, 1400)
 seed_value = 123
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("13")]
@@ -825,11 +825,6 @@ position = Vector2(15040, -560)
 start_facing = -1
 walk_speed = 0
 sight = 0
-
-[node name="Terrain10" type="StaticBody2D" parent="Blocks"]
-script = ExtResource("6")
-polygon = PackedVector2Array(14300, -200, 15600, -200, 15600, 1400, 14300, 1400)
-seed_value = 146
 
 [node name="LumLine18" type="Node2D" parent="Pickups"]
 script = ExtResource("8")

@@ -130,7 +130,7 @@ L.water(11700, -165, 520, 565)                   # a lazy stream: fall in and ju
 L.block(11700, 400, 520, 1000)                   # the stream bed
 L.moving(11730, -232, w=180, waypoints=((290, 0),), speed=140.0, wait=0.9)
 L.lums(11760, -330, 12180, -330, 5, 40)
-L.land([(12220, -200), (12900, -200), (13000, -250), (13200, -250), (13300, -200), (14300, -200)])
+L.land([(12220, -200), (12900, -200), (13000, -250), (13200, -250), (13300, -200), (15600, -200)])
 L.checkpoint(12300, -200)
 L.lum_block(12520, -500, lums=6)
 L.sign(12650, -200, "See that block? Jump and\nbonk it from below!", 320)
@@ -151,7 +151,6 @@ L.sign(14080, -200, "Bounce from Grumblet to Grumblet\nwithout landing for bonus
 for i, (lx, ly) in enumerate([(14400, -320), (14670, -440), (14940, -560)]):
     L.ledge(lx, ly, 200)
     L.enemy("grunt", lx + 100, ly, walk_speed=0.0, sight=0.0)
-L.land([(14300, -200), (15600, -200)])
 L.lums(14500, -660, 15050, -760, 6, -60)
 L.goal(15400, -200)
 L.sign(15150, -200, "Nice! The Dream Gate!", 260)

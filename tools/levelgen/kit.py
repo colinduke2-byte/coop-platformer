@@ -41,6 +41,7 @@ class LevelKit:
         self.spawn = (0, 0)
         self._gems = 0
         self._dressed = set()  # node paths of scattered (dress) decorations: moved out of signs' way
+        self.terrain_tops = []  # top profiles of land() pieces (for the seam check)
 
     # --- helpers -------------------------------------------------------------
     def _n(self, group, base, ntype, script_path, props, x, y):
@@ -102,6 +103,7 @@ class LevelKit:
         Put two points at the same x for a vertical cliff."""
         pts = list(profile) + [(profile[-1][0], bottom), (profile[0][0], bottom)]
         self.surfaces.append(list(profile))
+        self.terrain_tops.append(list(profile))
         return self.terrain(pts, **kw)
 
     def ceiling(self, profile, top=-2600.0, **kw):
@@ -712,8 +714,21 @@ class LevelKit:
             keep.append(node)
         self.s.nodes[:] = keep
 
+    def _check_seams(self):
+        """Two ground pieces meeting edge to edge at the same height leave a seam (their rounded
+        corners) that snags walkers. Warn so the level script merges them into one land()."""
+        ends = []
+        for poly in self.terrain_tops:
+            if len(poly) >= 2:
+                ends.append((poly[0], poly[-1]))
+        for i, (a0, a1) in enumerate(ends):
+            for j, (b0, b1) in enumerate(ends):
+                if i != j and abs(a1[0] - b0[0]) < 3 and abs(a1[1] - b0[1]) < 3:
+                    print(f"  note: ground seam at {a1[0]:.0f},{a1[1]:.0f} - merge these into one land() / terrain")
+
     def finish(self, spawn, left=None, right=None, bottom=None, kill_y=None, script_props=None):
         s = self.s
+        self._check_seams()
         self._place_signs()
         left = self.min_x - 100 if left is None else left
         right = self.max_x + 200 if right is None else right

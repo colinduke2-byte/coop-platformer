@@ -215,9 +215,9 @@ shape = SubResource("RectangleShape2D_1")
 
 [node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(1810, 0)
-text = "2. Jump just AFTER the edge -\nyou still can (coyote time)"
-width = 380
+position = Vector2(1860, 0)
+text = "2. Jump just\nAFTER the edge\n(coyote time!)"
+width = 200
 
 [node name="Block6" parent="Blocks" instance=ExtResource("4")]
 position = Vector2(2100, 0)
@@ -303,13 +303,13 @@ kind = 6
 size = 0.8
 
 [node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("14")]
-position = Vector2(4320, 0)
+position = Vector2(4270, 0)
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(4520, 0)
-text = "5. Hold DOWN to crawl.\nRunning + DOWN = belly slide!"
-width = 380
+position = Vector2(4466, 0)
+text = "5. Hold DOWN to\ncrawl. Running +\nDOWN = slide!"
+width = 220
 
 [node name="Block12" parent="Blocks" instance=ExtResource("4")]
 position = Vector2(4600, -320)
@@ -347,15 +347,15 @@ size = Vector2(900, 700)
 
 [node name="Sign8" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(5530, 0)
-text = "7. WALL JUMP: press JUMP by a wall.\nTap = zig-zag, hold toward = climb"
-width = 360
+position = Vector2(5570, 0)
+text = "7. WALL\nJUMP up\nhere!"
+width = 160
 
 [node name="LumLine7" type="Node2D" parent="Pickups"]
 script = ExtResource("11")
-position = Vector2(5570, -120)
-count = 6
-end = Vector2(0, -500)
+position = Vector2(5570, -240)
+count = 5
+end = Vector2(0, -380)
 arc_height = 0
 
 [node name="Gem1" type="Area2D" parent="Pickups"]
@@ -1055,9 +1055,9 @@ lums = 4
 
 [node name="Sign31" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(25260, -1260)
-text = "Bump the blocks from below!"
-width = 300
+position = Vector2(25020, -1260)
+text = "Bump the blocks\nfrom below!"
+width = 220
 
 [node name="FlameJet1" type="Node2D" parent="Hazards"]
 script = ExtResource("45")
@@ -1084,9 +1084,9 @@ phase = 0.44
 
 [node name="Sign32" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(25450, -1260)
+position = Vector2(25380, -1260)
 text = "Fire jets: time it!"
-width = 240
+width = 160
 
 [node name="FlameJet4" type="Node2D" parent="Hazards"]
 script = ExtResource("45")
@@ -1188,9 +1188,9 @@ arc_height = 0
 
 [node name="Sign35" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(28200, -1260)
-text = "Is that mound hollow...?"
-width = 280
+position = Vector2(28172, -1260)
+text = "Is that mound\nhollow...?"
+width = 200
 
 [node name="Crate10" type="AnimatableBody2D" parent="Toys"]
 script = ExtResource("22")
@@ -1213,7 +1213,7 @@ size = Vector2(60, 1400)
 
 [node name="Sign36" type="Node2D" parent="Signs"]
 script = ExtResource("10")
-position = Vector2(28950, -1510)
+position = Vector2(28700, -1510)
 text = "YOU MADE IT! Charge-punch the vault,\nthen jump into the Dream Gate."
 width = 420
 

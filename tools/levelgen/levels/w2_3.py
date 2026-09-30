@@ -1,7 +1,9 @@
 """World 2-3: CRYSTAL CAVERNS - inside the mountain, lit only by glowing crystals.
 Teaches: running an icicle corridor (they drop when you pass underneath), a
 long slippery ice slide with tobogganing penguins, swimming a frozen lake past
-spiky balls, climbing crystal ledges, ice pop-spikes and grinding ice crushers.
+spiky balls, climbing crystal ledges, ice pop-spikes and grinding ice crushers,
+then the old crystal mine: a minecart over a spiky chasm under loose icicles,
+and a crystal chamber with its own crushers.
 Secrets: gem 0 in an alcove in the corridor roof (mushroom launch), gem 1 on
 the bottom of the frozen lake, gem 2 behind a cracked wall past the goal; the
 Snoozling sleeps in a glowing grotto at the bottom of the lake.
@@ -27,8 +29,9 @@ def crystal(x, y, color, size=1.1):
 L.wall(-360, -1400, 600)
 L.land([(-300, 0), (3200, 0), (5000, 500), (5150, 520), (5150, 900), (6650, 900), (6650, 480), (7650, 480),
          (7650, -400), (10300, -400)], bottom=1500)
+L.land([(11450, -400), (14100, -400)], bottom=1500)
 L.ceiling([(-300, -520), (1400, -520), (1420, -900), (1700, -900), (1720, -420), (3200, -420), (3350, -300),
-           (5100, 80), (6600, 80), (6700, -900), (10300, -900)])
+           (5100, 80), (6600, 80), (6700, -900), (14100, -900)])
 
 # ---- S0 the entrance (x -300..1400) -----------------------------------------------------------
 L.sign(90, 0, "CRYSTAL CAVERNS. Deep inside the\nmountain... follow the glow.", 400)
@@ -55,10 +58,10 @@ crystal(2600, 0, TEAL, 0.8)
 L.checkpoint(3120, 0)
 L.bell(3300, 0)
 L.terrain([(3200, 0), (5000, 500), (5000, 540), (3200, 40)], rounding=4.0, slippery=True)
-L.sign(3500, 83, "A slippery slide! Belly-slide\n(DOWN while running) for speed.", 380)
+L.sign(3520, 83, "Slippery slide!\nBelly-slide (DOWN\nwhile running)!", 260)
 L.enemy("slidgewick", 3900, 194)
 L.enemy("slidgewick", 4500, 361)
-L.lums(3500, -20, 4950, 390, 14)
+L.lums(3720, 40, 4600, 290, 9)
 crystal(4300, 306, VIOLET)
 
 # ---- S3 the frozen lake (5150..6650) ----------------------------------------------------------
@@ -82,23 +85,51 @@ L.lums(7040, 250, 7540, -390, 8)
 crystal(6850, 480, VIOLET)
 
 # ---- S5 spikes and crushers (7650..10300) ------------------------------------------------------
-L.checkpoint(7720, -400)
+L.checkpoint(7680, -400)
 for i, x in enumerate([8000, 8250, 8500]):
     L.pop_spikes(x, -400, length=168, up=1.0, down=1.6, phase=i * 0.45)
-L.sign(7800, -400, "Ice spikes pop up in waves.\nThen: crushers!", 330)
+L.sign(7870, -400, "Pop-up spikes\nin waves - then\nCRUSHERS!", 230)
 for x in [8950, 9350]:
     L.crusher(x, -900, w=140, h=112, drop=388)
 L.lums(8000, -520, 8700, -520, 7)
 L.lums(8980, -470, 9460, -470, 4)
 L.enemy("slidgewick", 9700, -400)
-L.goal(9950, -400)
 crystal(9750, -400, TEAL)
-# Gem 2: behind the cracked wall past the goal.
-L.breakable(10100, -700, 50, 300)
-L.gem(10220, -470)
-L.glow(10220, -520, PINK, radius=180, energy=0.7)
 
-L.dress(-250, 10050, "icecave", spacing=190, seed=23,
-        skip=[(1400, 1700), (3150, 5200), (5150, 6700), (7600, 7700), (7950, 8700), (8900, 9500)])
-L.finish(spawn=(0, -2), left=-360, right=10300, bottom=1000, kill_y=1500)
+# ---- S6 the old crystal mine: a minecart over the chasm (10000..11450) ---------------------------
+L.checkpoint(9880, -400)
+L.sign(10080, -400, "The old mine! Ride the\ncart over the chasm.", 300)
+L.block(10300, 300, 1150, 200)                      # the chasm floor...
+L.spikes(10300, 300, 1150)                          # ...all crystal spikes
+L.pit_kill(10300, 11450, 700)
+L.moving(10302, -400, w=200, h=30, waypoints=((935, 0),), speed=190, wait=1.8, rider=True)
+for x in [10700, 11050]:
+    L.stalactite(x, -900)
+L.lums(10420, -540, 11350, -540, 8)
+crystal(10500, 300, PINK, 0.8)
+crystal(11200, 300, VIOLET, 0.8)
+L.glow(10870, 200, C(0.9, 0.6, 1.0), radius=500, energy=0.8)
+
+# ---- S7 the crystal chamber (11450..14100) ------------------------------------------------------
+L.checkpoint(11520, -400)
+L.enemy("yetling", 12000, -400)
+L.enemy("snowl", 12300, -780)
+for x in [12450, 12800]:
+    L.crusher(x, -900, w=140, h=112, drop=388)
+L.lum_block(12640, -700, lums=6)
+L.lums(12400, -470, 12960, -470, 5)
+L.enemy("slidgewick", 13250, -400)
+L.goal(13400, -400)
+crystal(11700, -400, TEAL)
+crystal(13100, -400, PINK)
+# Gem 2: behind the cracked wall past the goal.
+L.breakable(13650, -700, 50, 300)
+L.gem(13820, -470)
+L.glow(13820, -520, PINK, radius=180, energy=0.7)
+L.wall(14100, -1000, -400)
+
+L.dress(-250, 13600, "icecave", spacing=190, seed=23,
+        skip=[(1400, 1700), (3150, 5200), (5150, 6700), (7600, 7700), (7950, 8700), (8900, 9500),
+              (10250, 11500), (12350, 13000)])
+L.finish(spawn=(0, -2), left=-360, right=14100, bottom=1000, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_3_crystal_caverns.tscn"))

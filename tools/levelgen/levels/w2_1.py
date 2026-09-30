@@ -2,7 +2,8 @@
 Teaches: punching snow piles (the snowball grows and bowls everything over),
 the slippery frozen pond with a tobogganing Slidgewick, a long downhill where a
 huge snowball smashes a packed-ice wall, a ski jump over a gap (sprint, slide
-or glide), and Snowls dropping snowballs over the floating drifts.
+or glide), Snowls dropping snowballs over the floating drifts, then the sledge
+run: a snowball down Snowman Hill, a frozen lake full of penguins and the gate.
 Secrets: gem 0 on the high ledges over the pond, gem 1 at the top of the ski
 jump's arc, gem 2 behind a snowdrift at the finish; the Snoozling is locked in
 the ice cave at the bottom of the big slope (smash the wall with a snowball).
@@ -53,18 +54,18 @@ L.deco("snowman", 4480, 0, 0.8)
 L.checkpoint(4650, 0)
 L.snowpile(4800, 0, max_radius=90)
 L.bell(4700, 0)
-L.sign(4950, 70, "Downhill! Roll a snowball and chase it -\nor belly-slide (DOWN while running)!", 420)
+L.sign(5050, 70, "Downhill! Roll a\nsnowball - or belly-\nslide (DOWN + run)!", 300)
 L.enemy("grunt", 5400, 213, walk_speed=0.0, sight=0.0)
 L.enemy("grunt", 5800, 384, walk_speed=0.0, sight=0.0)
 L.enemy("snowl", 5900, 0)
-L.lums(5000, -40, 6300, 540, 14)
+L.lums(5300, 90, 5950, 370, 7)
 # The ice gate at the bottom: a packed-ice wall (a snowball or a CHARGED punch breaks it)
 # under a snowy lintel. The Snoozling's cage sits just behind it.
 L.breakable(6560, 380, 70, 260, iron=True)
 L.block(6540, 340, 400, 40)                       # the lintel
 L.snoozling(6800, 640, fur=C(0.7, 0.85, 1.0))
 L.lums(6680, 560, 6900, 560, 3)
-L.sign(6300, 597, "Packed ice! Smash it with a snowball\n(or a CHARGED punch: hold PUNCH).", 400)
+L.sign(6200, 555, "Packed ice! Smash\nit with a snowball\nor CHARGED punch.", 300)
 
 # ---- S4 the ski jump (7200..8700) -------------------------------------------------------------
 L.checkpoint(7120, 640)
@@ -86,22 +87,49 @@ for x0, x1, y in [(8950, 9230, 560), (9480, 9760, 500), (10010, 10290, 560)]:
 L.enemy("snowl", 9100, 180)
 L.enemy("snowl", 9650, 120)
 L.enemy("yetling", 10200, 560)
-L.lums(8760, 520, 10250, 520, 12, -70)
+L.lums(8760, 440, 10250, 440, 12)
 L.sign(8620, 640, "Snowls drop snowballs.\nPunch them back up!", 320)
 
 # ---- S6 the finish (10300..11600) ---------------------------------------------------------------
-L.land([(10400, 560), (11600, 560)], bottom=1500)
+L.land([(10400, 560), (12000, 560), (13200, 900), (14010, 900), (14100, 880), (14400, 880), (14620, 760), (15200, 760)], bottom=1500)
 L.checkpoint(10460, 560)
-L.goal(11150, 560)
 L.lums(10600, 460, 11000, 460, 5, 40)
 L.deco("igloo", 10800, 560, 0.8)
-# Gem 2: behind a drift in the cliff at the very end.
-L.block(11380, 360, 20, 200)
-L.gem(11490, 470)
-L.secret(11400, 360, 200, 200)
-L.wall(11600, -1200, 560)
+# Gem 2: in a snow hut - punch through its front drift. The path climbs over its roof.
+L.breakable(11380, 420, 40, 140, lums=2)
+L.block(11380, 400, 280, 20)
+L.block(11640, 400, 20, 160)
+L.gem(11520, 500)
+L.secret(11420, 420, 220, 140)
 
-L.dress(-250, 11550, "snow", spacing=170, seed=21,
-        skip=[(1400, 2900), (3000, 4600), (6500, 7120), (7600, 8050), (8700, 10380), (11350, 11600)])
-L.finish(spawn=(0, -2), left=-360, right=11660, bottom=1300, kill_y=1600)
+# ---- S7 the sledge run: Snowman Hill, the penguin lake, the gate (11700..15200) ------------------
+L.checkpoint(11760, 560)
+L.snowpile(11960, 560, max_radius=85)
+L.sign(11820, 560, "SNOWMAN HILL! Send a snowball\ndown to clear the way.", 360)
+for x in [12400, 12700, 12950]:
+    L.enemy("grunt", x, 560 + (x - 12000) * 340 / 1200, walk_speed=0.0, sight=0.0)
+L.deco("snowman", 12200, 560 + 200 * 340 / 1200, 1.1)
+L.deco("snowman", 13100, 872, 0.9)
+L.lums(12100, 520, 13100, 800, 9)
+L.enemy("snowl", 12600, 300)
+# The penguin lake: slippery ice, two tobogganing Slidgewicks.
+L.terrain([(13200, 900), (14010, 900), (14010, 940), (13200, 940)], rounding=4.0, slippery=True)
+L.checkpoint(13260, 900)
+L.enemy("slidgewick", 13700, 900)
+L.enemy("slidgewick", 13950, 900, facing=-1)
+L.lums(13300, 800, 13950, 800, 7)
+L.ledge(13480, 740, 160)
+L.lum_block(13520, 560, lums=5)
+L.sign(14150, 880, "Brr! Nearly there.", 240)
+L.enemy("yetling", 14350, 880)
+L.goal(14900, 760)
+L.lums(14550, 660, 14800, 660, 4, 30)
+L.deco("igloo", 15080, 760, 0.9)
+L.deco("lantern", 14700, 760)
+L.wall(15200, -1200, 760)
+
+L.dress(-250, 15150, "snow", spacing=170, seed=21,
+        skip=[(1400, 2900), (3000, 4600), (6500, 7120), (7600, 8050), (8700, 10380), (11350, 11700),
+              (11900, 13150), (13200, 14050)])
+L.finish(spawn=(0, -2), left=-360, right=15260, bottom=1300, kill_y=1600)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_1_snowball_slopes.tscn"))

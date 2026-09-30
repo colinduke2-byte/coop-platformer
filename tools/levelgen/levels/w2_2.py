@@ -1,7 +1,9 @@
 """World 2-2: CABLECAR CLIFFS - up the mountain on the old ski lifts.
 Teaches: riding chairlifts (they wait for a rider), crumbling ice ledges in a
 gusty headwind, a Yetling lobbing snowballs at the chair, a slippery ice
-staircase, bowling a Slidgewick with a snowball, and a long zipline down.
+staircase, bowling a Slidgewick with a snowball, a long zipline down, then a
+third lift up to the Frost Fort: bowl the guards, break the ice gate, dodge
+the Yetlings' snowballs.
 Secrets: gem 0 above the first lift's cable (jump off the chair!), gem 1 up
 over the ice staircase, gem 2 behind the cracked wall at the bottom station;
 the Snoozling's cage hangs beside the second lift - punch it open mid-ride.
@@ -77,15 +79,43 @@ L.lums(8850, -1860, 9800, -1150, 10)
 L.pit_kill(8700, 9800, 1300)
 L.land([(9720, 400), (9800, -950), (11000, -950), (11250, -950)], bottom=1500)
 L.checkpoint(9900, -950)
-L.goal(10600, -950)
-L.lums(10100, -1050, 10500, -1050, 5, 40)
-L.deco("igloo", 10300, -950, 0.8)
+L.lums(10000, -1050, 10250, -1050, 3, 30)
+L.deco("igloo", 10750, -950, 0.8)
 # Gem 2: behind the cracked wall at the bottom station.
 L.breakable(10960, -1150, 50, 200)
 L.block(11010, -1170, 240, 20)
+L.block(11250, -1170, 20, 220)
 L.gem(11120, -1030)
-L.wall(11250, -2400, -950)
 
-L.dress(-250, 11000, "snow", spacing=170, seed=22, skip=[(1180, 2560), (2980, 3880), (4430, 5710), (6380, 7720), (8680, 9820)])
-L.finish(spawn=(0, -2), left=-360, right=11310, bottom=1300, kill_y=1600)
+# ---- S7 the third lift and the Frost Fort (10300..14600) -----------------------------------------
+L.sign(10560, -950, "Last lift! Up to\nthe Frost Fort.", 220)
+L.gondola(10300, -950, waypoints=((1280, -700),), speed=160, wait=0.8, rider=True)
+L.pit_kill(11270, 11800, 1300)
+L.lums(10500, -1150, 11500, -1700, 8)
+L.enemy("snowl", 11100, -1900)
+L.land([(11720, 400), (11780, -1650), (14600, -1650)], bottom=1500)
+L.checkpoint(11850, -1650)
+L.snowpile(12150, -1650, max_radius=95)
+L.sign(11990, -1650, "THE FROST FORT!\nBowl the guards!", 240)
+for x in [12450, 12570, 12690]:
+    L.enemy("grunt", x, -1650, walk_speed=0.0, sight=0.0)
+L.breakable(12900, -1850, 70, 200, iron=True)           # the packed-ice gate
+L.block(12880, -1880, 110, 30)
+L.lums(12300, -1760, 12800, -1760, 5)
+L.checkpoint(13060, -1650)
+L.block(13400, -1750, 40, 100)                          # snow walls the Yetlings hide behind
+L.enemy("yetling", 13520, -1650)
+L.block(13800, -1750, 40, 100)
+L.enemy("yetling", 13920, -1650)
+L.bell(13150, -1650)
+L.lums(13250, -1840, 14100, -1840, 9)
+L.sign(13620, -1650, "Yetlings! Punch their\nsnowballs back at them.", 300)
+L.goal(14300, -1650)
+L.deco("igloo", 14500, -1650, 0.9)
+L.deco("lantern", 14150, -1650)
+L.wall(14600, -2800, -1650)
+
+L.dress(-250, 14550, "snow", spacing=170, seed=22, skip=[(1180, 2560), (2980, 3880), (4430, 5710), (6380, 7720), (8680, 9820),
+        (10280, 11800), (12100, 12950), (13350, 14000)])
+L.finish(spawn=(0, -2), left=-360, right=14660, bottom=1300, kill_y=1600)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_2_cablecar_cliffs.tscn"))

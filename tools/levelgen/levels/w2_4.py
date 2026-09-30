@@ -1,7 +1,8 @@
 """World 2-4: AVALANCHE ALLEY - a peaceful valley... until it isn't.
 A calm start, then a roaring avalanche chases you all the way down the
 mountain: keep running, hop the crevasses, bop what's in your way, and leap
-off the ski jump at the bottom as the snow crashes behind you.
+off the ski jump at the bottom as the snow crashes behind you. Then, safe at
+the lodge, hop the ice floes across Frostbite Lake to the Yetlings' camp.
 Checkpoints mid-chase: the avalanche restarts a safe way behind them.
 Secrets: gem 0 on a high ledge before the chase (mushroom), gem 1 high over
 the second crevasse (a sprint jump), gem 2 behind the lodge at the finish; the
@@ -21,7 +22,8 @@ L.land([(-300, 0), (1500, 0), (3000, 300)], bottom=1800)
 L.land([(3260, 320), (4200, 420), (4500, 340), (5200, 600)], bottom=1800)
 L.land([(5480, 620), (6800, 800), (7400, 800)], bottom=1800)
 L.land([(7680, 820), (8800, 1000), (9300, 1000), (9520, 930)], bottom=1800)          # ends in a ski jump
-L.land([(9900, 900), (11400, 900)], bottom=1800)
+L.land([(9900, 900), (11700, 900)], bottom=1800)
+L.land([(13300, 900), (15200, 900)], bottom=1800)
 for x0, x1 in [(3000, 3260), (5200, 5480), (7400, 7680), (9520, 9900)]:
     L.pit_kill(x0, x1, 1700)
 
@@ -62,16 +64,38 @@ L.sign(9050, 1000, "SKI JUMP! Sprint and leap!", 300)
 
 # ---- Safe at the bottom (9900..11400) ----------------------------------------------------------------
 L.checkpoint(9980, 900)
-L.goal(10700, 900)
 L.deco("hut", 10400, 900)
-L.deco("igloo", 11000, 900, 0.9)
+L.deco("igloo", 10900, 900, 0.9)
 L.lums(10100, 800, 10500, 800, 5, 40)
-# Gem 2: tucked behind the lodge at the very end.
-L.block(11180, 700, 20, 200)
-L.gem(11290, 830)
-L.secret(11200, 700, 200, 200)
-L.wall(11400, -1400, 900)
+L.sign(10650, 900, "Phew! Safe... Now hop the\nice floes across the lake.", 340)
+# Gem 2: tucked in the lodge's snow shed - over its roof, or in through the front.
+L.block(11180, 760, 20, 140)
+L.block(11180, 740, 240, 20)
+L.block(11400, 740, 20, 160)
+L.gem(11290, 850)
+L.secret(11200, 760, 200, 140)
 
-L.dress(-250, 11380, "snow", spacing=180, seed=24, skip=[(-300, 200), (2950, 3300), (5150, 5520), (7350, 7720), (9300, 9950), (11150, 11400)])
-L.finish(spawn=(0, -2), left=-360, right=11460, bottom=1500, kill_y=1900)
+# ---- S7 Frostbite Lake and the Yetlings' camp (11700..15200) --------------------------------------
+L.checkpoint(11480, 900)
+L.water(11700, 940, 1600, 420, current=(50, 0))
+L.block(11700, 1360, 1600, 400)                      # the lake bed
+for x0, x1, y in [(11890, 12050, 900), (12240, 12390, 880), (12590, 12750, 900), (12950, 13100, 880)]:
+    L.terrain([(x0, y), (x1, y), (x1 - 10, y + 60), (x0 + 10, y + 60)], rounding=8.0, slippery=True)
+L.lums(11800, 780, 13200, 780, 12, 30)
+L.enemy("snowl", 12400, 560)
+L.checkpoint(13380, 900)
+L.block(13800, 800, 40, 100)                         # snow walls
+L.enemy("yetling", 13950, 900)
+L.block(14250, 800, 40, 100)
+L.enemy("yetling", 14400, 900)
+L.snowpile(13600, 900, max_radius=80)
+L.lums(13500, 780, 14500, 780, 9)
+L.goal(14800, 900)
+L.deco("igloo", 15050, 900, 1.0)
+L.deco("lantern", 14650, 900)
+L.wall(15200, -1400, 900)
+
+L.dress(-250, 15150, "snow", spacing=180, seed=24, skip=[(-300, 200), (2950, 3300), (5150, 5520), (7350, 7720), (9300, 9950),
+        (11150, 11450), (11650, 13350), (13550, 14500)])
+L.finish(spawn=(0, -2), left=-360, right=15260, bottom=1500, kill_y=1900)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_4_avalanche_alley.tscn"))
