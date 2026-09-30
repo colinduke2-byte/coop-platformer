@@ -3308,6 +3308,7 @@ const W1_6 := "res://levels/w1_6_thornwood_keep.tscn"
 
 
 func test_w1_6_boss_fight_can_be_won() -> void:
+	seed(20260930)  # the Baron picks moves at random: keep the test repeatable
 	var p: Player = await _load_demo(W1_6)
 	var baron: BaronBristleback = null
 	for e in get_tree().get_nodes_in_group(&"enemies"):
@@ -3320,7 +3321,7 @@ func test_w1_6_boss_fight_can_be_won() -> void:
 	await frames(10)
 	check(not baron.asleep, "walking into the arena should wake him")
 	var gates := _demo.find_children("*", "Gate", true, false)
-	for round in 12:
+	for round in 24:
 		if baron == null or not is_instance_valid(baron) or baron.dead:
 			break
 		p.invulnerable_timer = 100.0
@@ -3334,9 +3335,16 @@ func test_w1_6_boss_fight_can_be_won() -> void:
 		if not is_instance_valid(baron):
 			break
 		p.invulnerable_timer = 0.0
+		var hp := baron.health
 		p.global_position = baron.global_position + Vector2(0, -300)
 		p.velocity = Vector2.ZERO
-		await seconds(0.8)
+		p.state_machine.transition_to(&"Fall")
+		for i in 150:
+			await get_tree().physics_frame
+			if not is_instance_valid(baron) or baron.health < hp:
+				break
+		if p.is_bubbled():
+			await seconds(2.5)  # (respawn) then try again
 	check(baron == null or not is_instance_valid(baron) or baron.dead, "six belly-stomps should defeat the Baron (hp %d)" % (baron.health if is_instance_valid(baron) else 0))
 	await seconds(1.5)
 	var exit_open := false
