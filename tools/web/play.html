@@ -331,111 +331,63 @@ window.dreamNet = (function () {
     return realFetch(input, init);
   };
 
-  // Big files over flaky connections (and networks that cut long downloads): fetch in
-  // 2 MB pieces with HTTP Range requests, retrying each piece. Hosts without Range
-  // support just send the whole file, which still works.
-  const CHUNK = 1024 * 1024;
-  const STALL_MS = 8000;  // a piece that receives nothing for this long is cancelled and re-requested
+  // The game ships as ~20 small files (pieces/<name>-NNN.webm, listed in pieces/parts.json):
+  // small plain downloads get through flaky networks and picky hosts that choke on one big
+  // file. Each piece is retried, and a piece that stops receiving data is re-requested.
+  const STALL_MS = 8000;
 
-  async function fetchRetry(url, init) {
+  async function fetchPiece(url) {
     for (let attempt = 1; ; attempt++) {
-      try {
-        let timer = 0;
-        const res = await Promise.race([realFetch(url, init), new Promise(function (_, bad) {
-          timer = setTimeout(function () { bad(new Error("no answer from the server")); }, STALL_MS * 2);
-        })]).finally(function () { clearTimeout(timer); });
-        if (res.status === 404) { const e = new Error(url + ": 404"); e.missing = true; throw e; }
-        if (res.status === 416) { const e = new Error(url + ": 416"); e.pastEnd = true; throw e; }
-        if (!res.ok) throw new Error(url + ": " + res.status);
-        return res;
-      } catch (err) {
-        if (attempt >= 5 || err.missing || err.pastEnd) throw err;
-        status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
-        await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
-      }
-    }
-  }
-
-  async function readAll(res, onBytes, ctrl) {
-    const reader = res.body.getReader();
-    const parts = [];
-    for (;;) {
+      const ctrl = new AbortController();
       let timer = 0;
-      const stalled = new Promise(function (_, bad) {
-        timer = setTimeout(function () { if (ctrl) ctrl.abort(); bad(new Error("download stalled")); }, STALL_MS);
-      });
-      let r;
+      const arm = function () { clearTimeout(timer); timer = setTimeout(function () { ctrl.abort(); }, STALL_MS); };
       try {
-        r = await Promise.race([reader.read(), stalled]);
-      } finally {
-        clearTimeout(timer);
-      }
-      const { done, value } = r;
-      if (done) break;
-      parts.push(value);
-      onBytes(value.length);
-    }
-    return parts;
-  }
-
-  async function download(url, weight, base) {
-    let got = 0, total = 0;
-    const tick = function (n) { got += n; if (total) bar.style.width = (base + weight * got / total) + "%"; };
-    const parts = [];
-    for (let start = 0; ; start += CHUNK) {
-      let piece = null;
-      for (let attempt = 1; ; attempt++) {
-        try {
-          const ctrl = new AbortController();
-          // Never ask past the end of the file (some hosts refuse that and the last piece never comes).
-          const end = total ? Math.min(start + CHUNK, total) - 1 : start + CHUNK - 1;
-          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + end }, cache: "no-store", signal: ctrl.signal });
-          if (res.status === 200) {  // no Range support: this is the whole file
-            total = Number(res.headers.get("Content-Length")) || 0;
-            got = 0;
-            return new Blob(await readAll(res, tick, ctrl));
-          }
-          const range = res.headers.get("Content-Range") || "";
-          total = Number(range.split("/")[1]) || total;
-          const before = got;
-          try {
-            piece = await readAll(res, tick, ctrl);
-          } catch (err) {
-            got = before;  // the piece broke mid-way: fetch it again
-            throw err;
-          }
-          break;
-        } catch (err) {
-          if (err.pastEnd && got > 0) { piece = []; total = got; break; }  // asked past the end: we have it all
-          if (attempt >= 8 || err.missing) throw err;
-          status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
-          await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
+        arm();
+        const res = await realFetch(url, { cache: "no-store", signal: ctrl.signal });
+        if (!res.ok) throw new Error(url + ": " + res.status);
+        const reader = res.body.getReader();
+        const parts = [];
+        for (;;) {
+          arm();
+          const { done, value } = await reader.read();
+          if (done) break;
+          parts.push(value);
         }
+        clearTimeout(timer);
+        return new Blob(parts);
+      } catch (err) {
+        clearTimeout(timer);
+        if (attempt >= 8) throw new Error((err && err.name === "AbortError" ? "download stalled" : (err && err.message) || err) + " (" + url + ")");
+        status.textContent = "Connection hiccup - retrying (" + attempt + "/7)...";
+        await new Promise(function (ok) { setTimeout(ok, 800 * attempt); });
       }
-      for (const part of piece) parts.push(part);
-      status.textContent = "Downloading the game... " + Math.round(got / 1048576) + " / " + Math.round(total / 1048576) + " MB";
-      if (!total || got >= total) break;
     }
-    return new Blob(parts);
   }
 
-  // The same file under the names each host can serve (GitHub Pages: .bin; claude.ai: .webm).
-  async function downloadAny(names, weight, base) {
-    for (let i = 0; ; i++) {
-      try {
-        return await download(names[i], weight, base);
-      } catch (err) {
-        if (i + 1 >= names.length) throw err;
-      }
+  let manifest = null;
+  let doneBytes = 0;
+
+  async function download(name) {
+    const info = manifest[name];
+    const blobs = [];
+    for (let i = 0; i < info.count; i++) {
+      const piece = await fetchPiece("pieces/" + name + "-" + String(i).padStart(3, "0") + ".webm");
+      blobs.push(piece);
+      doneBytes += piece.size;
+      bar.style.width = (100 * doneBytes / manifest.total) + "%";
+      status.textContent = "Downloading the game... " + (doneBytes / 1048576).toFixed(1) + " / " + (manifest.total / 1048576).toFixed(1) + " MB";
     }
+    return new Blob(blobs);
   }
 
   async function prepare() {
-    const gz = await downloadAny(["part1.bin", "part1.webm"], 60, 0);
+    manifest = JSON.parse(await (await fetchPiece("pieces/parts.json")).text());
+    doneBytes = 0;
+    const gz = await download("part1");
     status.textContent = "Unpacking the engine...";
     const wasm = await new Response(gz.stream().pipeThrough(new DecompressionStream("gzip"))).blob();
     files["index.wasm"] = wasm;
-    files["index.pck"] = await downloadAny(["part2.bin", "part2.webm"], 35, 60);
+    files["index.pck"] = await download("part2");
     bar.style.width = "100%";
     await new Promise(function (ok, bad) {
       const s = document.createElement("script");

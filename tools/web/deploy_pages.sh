@@ -8,8 +8,7 @@ cd "$(dirname "$0")/../.."
 mkdir -p build/web
 "$GODOT" --headless --export-release "Web" build/web/index.html
 out=$(mktemp -d)
-gzip -9 -c build/web/index.wasm > "$out/part1.bin"
-cp build/web/index.pck "$out/part2.bin"
+python3 tools/web/split_pieces.py build/web "$out"
 cp build/web/index.js build/web/index.audio.worklet.js build/web/index.audio.position.worklet.js "$out/"
 cp tools/web/play.html "$out/index.html"
 cp tools/web/peerjs.min.js "$out/"
