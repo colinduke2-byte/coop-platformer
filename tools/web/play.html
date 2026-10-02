@@ -334,12 +334,16 @@ window.dreamNet = (function () {
   // Big files over flaky connections (and networks that cut long downloads): fetch in
   // 2 MB pieces with HTTP Range requests, retrying each piece. Hosts without Range
   // support just send the whole file, which still works.
-  const CHUNK = 2 * 1024 * 1024;
+  const CHUNK = 1024 * 1024;
+  const STALL_MS = 8000;  // a piece that receives nothing for this long is cancelled and re-requested
 
   async function fetchRetry(url, init) {
     for (let attempt = 1; ; attempt++) {
       try {
-        const res = await realFetch(url, init);
+        let timer = 0;
+        const res = await Promise.race([realFetch(url, init), new Promise(function (_, bad) {
+          timer = setTimeout(function () { bad(new Error("no answer from the server")); }, STALL_MS * 2);
+        })]).finally(function () { clearTimeout(timer); });
         if (res.status === 404) { const e = new Error(url + ": 404"); e.missing = true; throw e; }
         if (!res.ok) throw new Error(url + ": " + res.status);
         return res;
@@ -351,11 +355,21 @@ window.dreamNet = (function () {
     }
   }
 
-  async function readAll(res, onBytes) {
+  async function readAll(res, onBytes, ctrl) {
     const reader = res.body.getReader();
     const parts = [];
     for (;;) {
-      const { done, value } = await reader.read();
+      let timer = 0;
+      const stalled = new Promise(function (_, bad) {
+        timer = setTimeout(function () { if (ctrl) ctrl.abort(); bad(new Error("download stalled")); }, STALL_MS);
+      });
+      let r;
+      try {
+        r = await Promise.race([reader.read(), stalled]);
+      } finally {
+        clearTimeout(timer);
+      }
+      const { done, value } = r;
       if (done) break;
       parts.push(value);
       onBytes(value.length);
@@ -371,24 +385,25 @@ window.dreamNet = (function () {
       let piece = null;
       for (let attempt = 1; ; attempt++) {
         try {
-          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + (start + CHUNK - 1) }, cache: "no-store" });
+          const ctrl = new AbortController();
+          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + (start + CHUNK - 1) }, cache: "no-store", signal: ctrl.signal });
           if (res.status === 200) {  // no Range support: this is the whole file
             total = Number(res.headers.get("Content-Length")) || 0;
             got = 0;
-            return new Blob(await readAll(res, tick));
+            return new Blob(await readAll(res, tick, ctrl));
           }
           const range = res.headers.get("Content-Range") || "";
           total = Number(range.split("/")[1]) || total;
           const before = got;
           try {
-            piece = await readAll(res, tick);
+            piece = await readAll(res, tick, ctrl);
           } catch (err) {
             got = before;  // the piece broke mid-way: fetch it again
             throw err;
           }
           break;
         } catch (err) {
-          if (attempt >= 5 || err.missing) throw err;
+          if (attempt >= 8 || err.missing) throw err;
           status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
           await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
         }
