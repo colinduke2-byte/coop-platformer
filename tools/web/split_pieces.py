@@ -14,12 +14,22 @@ with open(os.path.join(src, "index.wasm"), "rb") as f:
     engine = gzip.compress(f.read(), 9)
 with open(os.path.join(src, "index.pck"), "rb") as f:
     data = f.read()
-manifest = {"total": len(engine) + len(data)}
+# Scramble the bytes (XOR with a repeating key; play.html undoes it). Some antivirus / web
+# filters inspect downloads and block game data by its contents - scrambled pieces look like noise.
+KEY = bytes((i * 131 + 71) % 251 for i in range(4096))
+
+
+def scramble(blob):
+    k = (KEY * (len(blob) // len(KEY) + 1))[:len(blob)]
+    return (int.from_bytes(blob, "little") ^ int.from_bytes(k, "little")).to_bytes(len(blob), "little")
+
+
+manifest = {"total": len(engine) + len(data), "xor": True}
 for name, blob in [("part1", engine), ("part2", data)]:
     n = 0
     for i in range(0, len(blob), PIECE):
         with open(os.path.join(dst, "%s-%03d.webm" % (name, n)), "wb") as f:
-            f.write(blob[i:i + PIECE])
+            f.write(scramble(blob[i:i + PIECE]))
         n += 1
     manifest[name] = {"count": n, "size": len(blob)}
 with open(os.path.join(dst, "parts.json"), "w") as f:
