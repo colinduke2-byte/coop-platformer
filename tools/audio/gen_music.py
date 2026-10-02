@@ -159,3 +159,10 @@ track("ruins", "E", 100, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), IV, V, ii, vi,
 track("rapids", "A", 140, [I, V, vi, IV] * 2 + [IV, V, I, vi, ii, V, I, I], lead="tri", seed=77, drums="busy")
 track("swamp", "C", 92, [vi, ii, V, vi] * 2 + [IV, iii, ii, V, vi, (2, "min7"), IV, V], lead="sine", seed=79, swing=0.18, bright=0.6)
 track("chameleon", "F", 148, [vi, IV, V, iii] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=81, drums="busy", bass_shape="square")
+# World 4 - Clockwhirl Works (bouncy, mechanical, square leads).
+track("brass", "C", 120, [I, V, IV, V] * 2 + [vi, IV, I, V, ii, V, I, I], lead="square", seed=91, drums="busy")
+track("conveyor", "G", 136, [I, IV, I, V] * 2 + [vi, V, IV, V, I, iii, IV, V], lead="square", seed=93, drums="busy", bright=1.1)
+track("steam", "D", 108, [vi, IV, I, V] * 2 + [ii, vi, IV, V, vi, (2, "min7"), IV, V], lead="tri", seed=95, swing=0.12)
+track("tower", "A", 116, [I, iii, vi, IV] * 2 + [IV, V, iii, vi, ii, V, I, (7, "sus")], lead="sine", seed=97, bright=0.9)
+track("nightshift", "E", 96, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), IV, V, ii, vi, IV, V], lead="sine", seed=99, bright=0.65)
+track("cuckoo", "B", 152, [vi, V, IV, V] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=101, drums="busy", bass_shape="square")

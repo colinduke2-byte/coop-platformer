@@ -4,6 +4,9 @@ The same list is in the game: **Pause → Controls**, or press **Pause** on the
 character select screen. Bindings live in `core/input_router.gd`; the in-game
 card is `ui/controls_card.gd`. Keep all three in sync.
 
+Volume (music / sound effects) and fullscreen: **Pause → Settings**, LEFT / RIGHT
+to change. Saved between sessions.
+
 ## Buttons
 
 | Action | Player 1 keyboard | Player 2 keyboard | Gamepad |

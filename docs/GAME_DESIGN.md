@@ -70,6 +70,12 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   3-6 Chamelia's Temple (boss: **Chamelia**, the Colour Queen chameleon - her
   tongue sticks in walls, then stomp her). New: swinging lianas, flytraps,
   monkeys, toucans and piranhas. Reached from the top of World 2's map.
+- **World 4 - Clockwhirl Works**: 4-1 Cogwheel Courtyard, 4-2 Conveyor Chaos,
+  4-3 Steam Pipes, 4-4 Tick-Tock Tower (vertical), 4-5 Night Shift (dark),
+  4-6 Cuckoolossus Clocktower (boss: **Cuckoolossus**, a giant cuckoo clock -
+  jump its pendulum, stomp the cuckoo when it sticks in the floor). New:
+  tick-tock blocks that swap on the beat, zap arcs, factory scenery, wind-up
+  soldiers, sparkbots and springbots. Reached from the top of World 3's map.
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.

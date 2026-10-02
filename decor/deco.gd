@@ -8,7 +8,7 @@ extends Node2D
 
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
 		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
-		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD }
+		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD, GEAR, PIPES, CLOCK, TOYBLOCKS }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
 		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD]
@@ -418,3 +418,55 @@ func _paint(mp: MeshPainter) -> void:
 			var fc: Color = th.flower_colors[rng.randi() % th.flower_colors.size()]
 			Art.shape(mp, PackedVector2Array([Vector2(-8, -10) * s, Vector2(0, -52) * s, Vector2(8, -10) * s]), fc, o, 2.0)
 			mp.draw_circle(Vector2(0, -50) * s, 4.0 * s, Color("ffd23f"))
+		Kind.GEAR:
+			# A big brass cog half-sunk in the ground (scenery).
+			var c := Vector2(0, -40) * s
+			var brass := th.top
+			var teeth := PackedVector2Array()
+			for i in 48:
+				var a := TAU * i / 48.0
+				var r := (52.0 if (i / 3) % 2 == 0 else 42.0) * s
+				teeth.append(c + Vector2(cos(a), sin(a)) * r)
+			Art.shape(mp, teeth, brass, o, 3.0)
+			Art.shape(mp, Art.ellipse(c, 30 * s, 30 * s, 20), brass.darkened(0.15), o, 2.5)
+			for k in 4:
+				var a := TAU * k / 4.0 + 0.4
+				mp.draw_colored_polygon(Art.ellipse(c + Vector2(cos(a), sin(a)) * 18.0 * s, 6 * s, 6 * s, 10), brass.darkened(0.3))
+			Art.shape(mp, Art.ellipse(c, 9 * s, 9 * s, 12), th.ledge_dark, o, 2.0)
+		Kind.PIPES:
+			# Two copper pipes with a valve wheel and a pressure gauge.
+			var copper := th.ledge
+			for k in 2:
+				var x := (-14.0 + k * 28.0) * s
+				var h := (110.0 + k * 40.0) * s
+				Art.shape(mp, Art.rect(Vector2(x - 9 * s, -h), Vector2(x + 9 * s, 0)), copper.darkened(k * 0.08), o, 2.5)
+				Art.shape(mp, Art.rect(Vector2(x - 12 * s, -h - 8 * s), Vector2(x + 12 * s, -h + 4 * s)), copper.darkened(0.2), o, 2.0)
+				mp.draw_line(Vector2(x - 4 * s, -h + 8 * s), Vector2(x - 4 * s, -6 * s), copper.lightened(0.25), 2.0)
+			var v := Vector2(-14, -70) * s
+			mp.draw_arc(v, 13.0 * s, 0, TAU, 16, th.accent, 3.0)
+			for k in 3:
+				var a := TAU * k / 3.0
+				mp.draw_line(v, v + Vector2(cos(a), sin(a)) * 13.0 * s, th.accent, 2.5)
+			Art.shape(mp, Art.ellipse(Vector2(14, -120) * s, 12 * s, 12 * s, 14), Color("fff8ec"), o, 2.0)
+			mp.draw_line(Vector2(14, -120) * s, Vector2(20, -127) * s, Color("e8452e"), 2.0)
+		Kind.CLOCK:
+			# A clock on a post (its hands are painted at ten to two).
+			mp.draw_line(Vector2.ZERO, Vector2(0, -90) * s, o, 6.0 * s)
+			mp.draw_line(Vector2.ZERO, Vector2(0, -90) * s, th.ledge_dark, 4.0 * s)
+			var c := Vector2(0, -116) * s
+			Art.shape(mp, Art.ellipse(c, 30 * s, 30 * s, 24), th.top, o, 3.0)
+			Art.shape(mp, Art.ellipse(c, 24 * s, 24 * s, 24), Color("fff8ec"), o, 2.0)
+			for k in 12:
+				var a := TAU * k / 12.0
+				mp.draw_line(c + Vector2(cos(a), sin(a)) * 19.0 * s, c + Vector2(cos(a), sin(a)) * 22.0 * s, o, 2.0)
+			mp.draw_line(c, c + Vector2(-10, -9) * s, o, 3.0)
+			mp.draw_line(c, c + Vector2(13, -10) * s, o, 2.0)
+		Kind.TOYBLOCKS:
+			# A wobbly stack of lettered toy blocks.
+			var cols := [Color("ff5d8f"), Color("ffd23f"), Color("5bc8ff"), Color("7ee05a")]
+			var pos := [Vector2(-24, -28), Vector2(8, -28), Vector2(-8, -60)]
+			for k in 3:
+				var p: Vector2 = pos[k] * s
+				var col: Color = cols[(k + rng.randi()) % 4]
+				Art.shape(mp, Art.rounded_rect(p + Vector2(-15, -14) * s, p + Vector2(15, 16) * s, 4.0 * s), col, o, 2.5)
+				Art.shape(mp, Art.rounded_rect(p + Vector2(-8, -7) * s, p + Vector2(8, 9) * s, 3.0 * s), col.lightened(0.3), o, 1.5)

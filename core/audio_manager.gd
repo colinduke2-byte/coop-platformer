@@ -37,6 +37,7 @@ func _ready() -> void:
 			_music = m
 		else:
 			_music_old = m
+	Settings.load_and_apply()
 	_connect_events()
 
 

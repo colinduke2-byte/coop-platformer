@@ -13,6 +13,9 @@ var _list: VBoxContainer
 var _note: Label
 var _panel: Control
 var _controls: Control     ## the ControlsCard overlay (null = not showing)
+var _settings := false     ## showing the Settings rows instead of the main list
+var _main_items: Array[String] = []
+const SETTING_ROWS := ["music", "sfx", "fullscreen", "back"]
 
 
 func _ready() -> void:
@@ -64,11 +67,12 @@ func open(slot: int, message := "") -> void:
 	_open = true
 	_opener = slot
 	_index = 0
-	_items = ["Resume", "Controls", "Restart from checkpoint", "Restart level", "World map", "Character select", "Leave game (P%d)" % (slot + 1)]
+	_settings = false
+	_items = ["Resume", "Controls", "Settings", "Restart from checkpoint", "Restart level", "World map", "Character select", "Leave game (P%d)" % (slot + 1)]
 	if Net.is_host():
-		_items = ["Resume", "Controls", "Restart level", "World map", "Character select", "Leave online game"]
+		_items = ["Resume", "Controls", "Settings", "Restart level", "World map", "Character select", "Leave online game"]
 	elif Net.is_client():
-		_items = ["Resume", "Controls", "Leave online game"]
+		_items = ["Resume", "Controls", "Settings", "Leave online game"]
 	_note.text = message
 	_note.visible = message != ""
 	_rebuild()
@@ -106,6 +110,13 @@ func _process(_delta: float) -> void:
 		if _menu.back or _menu.pause or _menu.confirm:
 			_hide_controls()
 		return
+	if _settings and (_menu.left or _menu.right or _menu.confirm) and _items[_index] != "back":
+		Settings.nudge(_items[_index], 1 if (_menu.right or (_menu.confirm and _items[_index] == "fullscreen")) else (-1 if _menu.left else 0))
+		_rebuild()
+		return
+	if _settings and (_menu.back or _menu.pause or _menu.confirm):
+		_show_settings(false)
+		return
 	if _menu.up:
 		_index = wrapi(_index - 1, 0, _items.size())
 		_rebuild()
@@ -126,6 +137,8 @@ func _choose(item: String) -> void:
 			_controls = ControlsCard.overlay()
 			_root.add_child(_controls)
 			_panel.visible = false
+		"Settings":
+			_show_settings(true)
 		"Restart from checkpoint":
 			close()
 			GameManager.respawn_all_at_checkpoint()
@@ -146,12 +159,31 @@ func _choose(item: String) -> void:
 				close()
 
 
+## Swap the list to the settings rows (Left / Right change a value) and back.
+func _show_settings(on: bool) -> void:
+	_settings = on
+	if on:
+		_main_items = _items.duplicate()
+		_items.assign(SETTING_ROWS)
+		_index = 0
+		_note.text = "Left / Right: change"
+		_note.visible = true
+	else:
+		_items = _main_items
+		_index = _items.find("Settings")
+		_note.visible = false
+	_rebuild()
+
+
 func _rebuild() -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	for i in _items.size():
 		var sel := i == _index
-		var l := UIStyle.label(("> %s <" if sel else "%s") % _items[i], 34 if sel else 28,
+		var text := _items[i]
+		if _settings:
+			text = "Back" if text == "back" else Settings.describe(text)
+		var l := UIStyle.label(("> %s <" if sel and not _settings else "%s") % text, 34 if sel else 28,
 				UIStyle.ACCENT if sel else UIStyle.INK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(l)

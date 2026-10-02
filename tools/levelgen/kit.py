@@ -18,13 +18,14 @@ ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
            ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo",
             "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
             "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost",
-            "cocobonk", "swoopbeak", "nibblefin", "chamelia"]}
+            "cocobonk", "swoopbeak", "nibblefin", "chamelia",
+            "windup", "sparkbot", "springbot", "cuckoolossus"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
 class LevelKit:
     SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7,
-               "jungle": 8, "ruins": 9}
+               "jungle": 8, "ruins": 9, "factory": 10}
 
     def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
                  scenery="hills", backdrop=None):
@@ -163,6 +164,7 @@ class LevelKit:
                    ("mushrooms", 0.4), ("rock", 0.4)],
         "ruins": [("fern", 2.5), ("big_leaf", 2), ("totem", 0.35), ("rock", 1.5), ("grass", 1.5), ("bromeliad", 0.6)],
         "swamp": [("reeds", 3), ("fern", 2), ("mushrooms", 1.2), ("big_leaf", 1), ("log", 0.4), ("stump", 0.5)],
+        "factory": [("pipes", 1.0), ("gear", 1.4), ("toyblocks", 1.2), ("clock", 0.5), ("rock", 0.6), ("grass", 0.8)],
     }
 
     def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=6, skip=(), trees=True):
@@ -291,6 +293,16 @@ class LevelKit:
                           size=V(w, 28), waypoints=[V(*p) for p in waypoints], speed=float(speed),
                           wait_time=float(wait), one_way=True, wait_for_rider=rider or None,
                           start_offset=float(offset) if offset else None)
+
+    def beat(self, x, y, w=128, h=32, group=0, beat=None):
+        """Tick-tock block (top-left x, y): group 0 pink / 1 blue take turns being solid."""
+        return self._n("Blocks", "BeatBlock", "StaticBody2D", f"{RES}world/beat_block.gd",
+                       {"size": V(w, h), "group": group or None, "beat": beat}, x, y)
+
+    def zap(self, x, y, ex, ey, on=None, off=None, phase=None):
+        """Electric arc between posts at (x, y) and (ex, ey); on/off timing, phase ripples a row."""
+        return self._tool("Hazards", "ZapArc", "Node2D", "zap_arc", x, y, end=V(ex - x, ey - y), on_time=on,
+                          off_time=off, phase=phase)
 
     def waterfall(self, x, y, w, h):
         """A curtain of falling water (scenery); origin top-left."""
@@ -508,7 +520,7 @@ class LevelKit:
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
                  "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS",
-                 "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD"]
+                 "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD", "GEAR", "PIPES", "CLOCK", "TOYBLOCKS"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

@@ -100,7 +100,7 @@ func _build_logo() -> void:
 	_prompt.custom_minimum_size.x = 1000
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layer.add_child(_prompt)
-	_ribbon = UIStyle.label("NEW!  World 3 - Rainbloom Jungle", 32, Color("ffd23f"), 12)
+	_ribbon = UIStyle.label("NEW!  World 4 - Clockwhirl Works", 32, Color("ffd23f"), 12)
 	_ribbon.position = Vector2(1330, 380)
 	_ribbon.rotation = -0.12
 	layer.add_child(_ribbon)

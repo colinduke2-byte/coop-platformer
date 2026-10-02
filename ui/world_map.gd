@@ -17,6 +17,7 @@ const GATE_TEXT := {
 	"w1": ["", "Back to the Lullaby Woods", "Take the gondola back down to World 1."],
 	"w2": ["Gondola to Frostwhistle Peaks", "Back to Frostwhistle Peaks", "World 2! Ride the gondola up into the snowy mountains."],
 	"w3": ["Down to the Rainbloom Jungle", "Back to the Rainbloom Jungle", "World 3! Follow the river down into the warm, rainy jungle."],
+	"w4": ["Up to the Clockwhirl Works", "Back to the Clockwhirl Works", "World 4! Climb past the temple to the clanking dream factory."],
 }
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
@@ -52,6 +53,7 @@ func _ready() -> void:
 	match world:
 		"w2": art = _bake_w2()
 		"w3": art = _bake_w3()
+		"w4": art = _bake_w4()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
 	var live := LiveBits.new()
@@ -91,7 +93,7 @@ func _ready() -> void:
 			n["unlocked"] = n["unlocked"] or Net.is_client()
 		if Net.is_client():
 			_show_toast("The host picks the level - enjoy the ride!")
-	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops"}.get(world, "worldmap"))
+	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass"}.get(world, "worldmap"))
 
 
 func _build_nodes() -> void:
@@ -751,6 +753,144 @@ func _w3_temple(mp: MeshPainter, c: Vector2) -> void:
 		mp.draw_line(c + Vector2(x, 0), c + Vector2(x + 6, 80), Color("3f8f3a"), 3.0)
 
 
+# --- World 4: Clockwhirl Works (baked once) -------------------------------------------------
+
+func _bake_w4() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 41
+	var brick := Color("8a5a46")
+	var steel := Color("6d6a80")
+	var brass := Color("e8c04a")
+	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("f6a86a"), Color("ffe6c0"), 12)
+	# Far factory halls and smokestacks.
+	var x := 0.0
+	while x < 1960.0:
+		var w := rng.randf_range(120, 220)
+		var h := rng.randf_range(120, 260)
+		mp.draw_rect(Rect2(x, 560 - h, w, h + 40), Color("d99a7a"))
+		if rng.randf() < 0.6:
+			mp.draw_rect(Rect2(x + w * 0.6, 560 - h - 120, 22, 130), Color("c98a6a"))
+		x += w + rng.randf_range(10, 40)
+	# The clocktower (World 4's boss) on its hill, top right.
+	mp.draw_colored_polygon(PackedVector2Array([Vector2(1400, 1080), Vector2(1470, 500), Vector2(1840, 480), Vector2(1920, 1080)]), Color("a8705a"))
+	_w4_clocktower(mp, Vector2(1650, 330))
+	# The factory floor: tiled brick yard.
+	var land := PackedVector2Array([Vector2(0, 1080), Vector2(0, 620)])
+	for i in 25:
+		land.append(Vector2(i * 80.0, 610.0 + sin(i * 0.7) * 26.0))
+	land.append(Vector2(1920, 620))
+	land.append(Vector2(1920, 1080))
+	mp.draw_colored_polygon(land, Color("b98262"))
+	for row in 12:
+		var y := 650.0 + row * 36.0
+		mp.draw_line(Vector2(0, y), Vector2(1920, y), Color(0, 0, 0, 0.06), 2.0)
+	# Pipes running across the yard.
+	for py: float in [700.0, 980.0]:
+		mp.draw_line(Vector2(0, py), Vector2(1920, py + 20), steel.darkened(0.2), 14.0)
+		mp.draw_line(Vector2(0, py - 3), Vector2(1920, py + 17), steel.lightened(0.2), 4.0)
+	# Regions.
+	_w4_courtyard(mp, Vector2(240, 850), brass)
+	_w4_belts(mp, Vector2(540, 660), steel)
+	_w4_boilers(mp, Vector2(850, 820), steel, brick)
+	_w4_tower(mp, Vector2(1130, 600), brick, brass)
+	_w4_nightshed(mp, Vector2(1420, 800))
+	# Scattered gears and crates (not on the regions or the path).
+	for i in 70:
+		var p := Vector2(rng.randf_range(30, 1890), rng.randf_range(640, 1060))
+		var clear := true
+		for n in nodes:
+			if p.distance_to(n["pos"]) < 120.0:
+				clear = false
+		if clear and _path_dist(p) > 40.0:
+			if i % 3 == 0:
+				mp.draw_rect(Rect2(p - Vector2(12, 12), Vector2(24, 24)), Color("c98a4b"))
+				mp.draw_rect(Rect2(p - Vector2(12, 1), Vector2(24, 3)), Color("8a5a36"))
+			else:
+				_w4_gear(mp, p, rng.randf_range(10, 20), brass.darkened(rng.randf_range(0.0, 0.3)))
+	# The path: a riveted steel walkway.
+	mp.draw_polyline(_path, Color("3a3448"), 24.0)
+	mp.draw_polyline(_path, Color("9a96aa"), 16.0)
+	var d := 0.0
+	var total := _poly_len(_path)
+	while d < total:
+		mp.draw_circle(_sample(_path, d), 2.5, Color("5a5668"))
+		d += 20.0
+	return mp.build()
+
+
+func _w4_gear(mp: MeshPainter, c: Vector2, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 32:
+		var a := TAU * i / 32.0
+		var rr := r * (1.0 if (i / 2) % 2 == 0 else 0.78)
+		pts.append(c + Vector2(cos(a), sin(a)) * rr)
+	mp.draw_colored_polygon(pts, col)
+	mp.draw_circle(c, r * 0.32, col.darkened(0.4))
+
+
+func _w4_courtyard(mp: MeshPainter, c: Vector2, brass: Color) -> void:
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(0, 14), 140, 50, 24), Color("d8a07a"))
+	_w4_gear(mp, c + Vector2(-80, -30), 34, brass)
+	_w4_gear(mp, c + Vector2(-34, -52), 22, brass.darkened(0.15))
+	for k in 3:  # toy blocks
+		mp.draw_rect(Rect2(c + Vector2(50 + k * 26, -26), Vector2(24, 24)), [Color("ff5d8f"), Color("5bc8ff"), Color("ffd23f")][k])
+	mp.draw_rect(Rect2(c + Vector2(63, -50), Vector2(24, 24)), Color("7ad13f"))
+
+
+func _w4_belts(mp: MeshPainter, c: Vector2, steel: Color) -> void:
+	for k in 2:
+		var p := c + Vector2(-110 + k * 40, -40 + k * 50)
+		mp.draw_rect(Rect2(p, Vector2(200, 18)), Color("3a3448"))
+		for i in 8:
+			mp.draw_circle(p + Vector2(12 + i * 25, 9), 6.0, steel)
+		for i in 3:  # boxes riding the belt
+			mp.draw_rect(Rect2(p + Vector2(20 + i * 60, -18), Vector2(20, 18)), Color("c98a4b"))
+	mp.draw_rect(Rect2(c + Vector2(90, -110), Vector2(50, 150)), steel)  # a crusher tower
+	mp.draw_rect(Rect2(c + Vector2(84, -2), Vector2(62, 26)), steel.darkened(0.3))
+
+
+func _w4_boilers(mp: MeshPainter, c: Vector2, steel: Color, brick: Color) -> void:
+	for k in 2:
+		var p := c + Vector2(-70 + k * 120, 0)
+		mp.draw_colored_polygon(Art.ellipse(p + Vector2(0, -40), 44, 60, 20), steel.lerp(Color("c9603a"), 0.3))
+		mp.draw_rect(Rect2(p + Vector2(-10, -130), Vector2(20, 60)), steel.darkened(0.2))
+		mp.draw_circle(p + Vector2(0, -40), 14.0, Color("ffd23f"))
+	mp.draw_rect(Rect2(c + Vector2(-140, 16), Vector2(280, 18)), brick)
+
+
+func _w4_tower(mp: MeshPainter, c: Vector2, brick: Color, brass: Color) -> void:
+	mp.draw_rect(Rect2(c + Vector2(-50, -200), Vector2(100, 260)), brick)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-62, -198), c + Vector2(0, -260), c + Vector2(62, -198)]), Color("5a3a4a"))
+	mp.draw_circle(c + Vector2(0, -140), 36.0, Color("fff8ec"))
+	mp.draw_arc(c + Vector2(0, -140), 36.0, 0, TAU, 32, brass, 5.0)
+	for k in 3:
+		mp.draw_rect(Rect2(c + Vector2(-10, -80 + k * 40), Vector2(20, 24)), Color("ffcf6a"))
+
+
+func _w4_nightshed(mp: MeshPainter, c: Vector2) -> void:
+	# The night shift shed: dark, with glowing windows.
+	mp.draw_rect(Rect2(c + Vector2(-130, -70), Vector2(260, 90)), Color("3a3448"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-140, -68), c + Vector2(-60, -110), c + Vector2(20, -68),
+			c + Vector2(100, -110), c + Vector2(140, -68)]), Color("2a2436"))
+	for k in 5:
+		mp.draw_rect(Rect2(c + Vector2(-110 + k * 48, -50), Vector2(28, 22)), Color("ffd98a"))
+
+
+func _w4_clocktower(mp: MeshPainter, c: Vector2) -> void:
+	# Cuckoolossus' clocktower: a giant cuckoo clock on a brick tower.
+	mp.draw_rect(Rect2(c + Vector2(-70, 0), Vector2(140, 190)), Color("8a5a46"))
+	mp.draw_rect(Rect2(c + Vector2(-90, -150), Vector2(180, 160)), Color("8a5a36"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-110, -146), c + Vector2(0, -230), c + Vector2(110, -146)]), Color("c9452e"))
+	mp.draw_circle(c + Vector2(0, -70), 56.0, Color("fff8ec"))
+	mp.draw_arc(c + Vector2(0, -70), 56.0, 0, TAU, 40, Color("e8c04a"), 6.0)
+	for k in 12:
+		var a := TAU * k / 12.0
+		mp.draw_circle(c + Vector2(0, -70) + Vector2(cos(a), sin(a)) * 44.0, 3.0, Color("1d1726"))
+	mp.draw_rect(Rect2(c + Vector2(-18, -146), Vector2(36, 28)), Color("3a2a1a"))  # the cuckoo door
+	mp.draw_rect(Rect2(c + Vector2(-20, 130), Vector2(40, 60)), Color("3a2a1a"))
+
+
 func _path_dist(p: Vector2) -> float:
 	var best := 1e9
 	for q in _path:
@@ -908,6 +1048,9 @@ class LiveBits extends Node2D:
 		if map.world == "w3":
 			_draw_w3()
 			return
+		if map.world == "w4":
+			_draw_w4()
+			return
 		# Gondola bobbing up the cable to World 2.
 		if LevelCatalog.exists("w2_1"):
 			var a := WorldMap.GATE_W2_POS + Vector2(26, -50)
@@ -1039,6 +1182,44 @@ class LiveBits extends Node2D:
 			draw_line(Vector2(x, y), Vector2(x + 3, y + 16), Color(0.85, 0.95, 1.0, 0.35), 1.5)
 		_clouds()
 
+	func _draw_w4() -> void:
+		var o := Color("1d1726")
+		# The clocktower's hands sweeping round (fast - it's a dream clock).
+		var face := Vector2(1650, 260)
+		draw_line(face, face + Vector2.from_angle(t * 0.6 - PI * 0.5) * 30.0, o, 4.0)
+		draw_line(face, face + Vector2.from_angle(t * 3.0 - PI * 0.5) * 40.0, Color("c9452e"), 2.5)
+		draw_circle(face, 4.0, o)
+		# The cuckoo popping out now and then.
+		var pop := clampf(sin(t * 0.9) * 4.0 - 3.0, 0.0, 1.0)
+		if pop > 0.0:
+			var bird := Vector2(1650, 198) + Vector2(0, -pop * 24.0)
+			Art.shape(self, Art.ellipse(bird, 11, 9, 12), Color("6fb7ff"), o, 2.0)
+			draw_colored_polygon(PackedVector2Array([bird + Vector2(9, -2), bird + Vector2(20, 1), bird + Vector2(9, 4)]), Color("ffb13f"))
+		# The courtyard gears turning.
+		for g: Vector3 in [Vector3(160, 820, 34), Vector3(206, 798, 22)]:
+			var a := t * (1.2 if g.z > 30.0 else -1.85)
+			for k in 4:
+				var d := Vector2.from_angle(a + k * PI * 0.25) * g.z * 0.9
+				draw_line(Vector2(g.x, g.y) - d, Vector2(g.x, g.y) + d, Color(0.3, 0.2, 0.1, 0.5), 3.0)
+		# Boxes riding the belts.
+		for k in 2:
+			var p := Vector2(430 + k * 40, 620 + k * 50)
+			var f := fposmod(t * 40.0 + k * 50.0, 180.0)
+			draw_rect(Rect2(p + Vector2(f, -16), Vector2(16, 16)), Color("ffd23f"))
+			draw_rect(Rect2(p + Vector2(f, -16), Vector2(16, 16)), o, false, 1.5)
+		# Steam from the boilers and smoke from the stacks.
+		for k in 2:
+			var base := Vector2(780 + k * 120, 690)
+			for i in 4:
+				var ph := fposmod(t * 0.5 + i * 0.25 + k * 0.13, 1.0)
+				draw_circle(base + Vector2(sin(ph * 6.0 + k) * 8.0, -ph * 80.0), 5.0 + ph * 10.0, Color(1, 1, 1, 0.55 * (1.0 - ph)))
+		# Sparks at the night shed.
+		for i in 8:
+			var ph := fposmod(t * 1.3 + i * 0.37, 1.0)
+			var p := Vector2(1420 + sin(i * 2.7) * 110.0, 760) + Vector2(sin(i * 5.0) * 30.0 * ph, -40.0 * ph + 60.0 * ph * ph)
+			draw_circle(p, 2.0, Color(1.0, 0.85, 0.4, 1.0 - ph))
+		_clouds()
+
 
 ## Level badges on top of the path (redrawn when the selection moves).
 class Badges extends Node2D:
@@ -1050,7 +1231,8 @@ class Badges extends Node2D:
 		var o := Color("1d1726")
 		var to_snow: bool = n["gate"] == "w2"
 		var to_jungle: bool = n["gate"] == "w3"
-		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else Color("9be07e"))
+		var to_works: bool = n["gate"] == "w4"
+		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
 		if not n["unlocked"]:
 			fill = Color("9a93a8")
 		draw_circle(p + Vector2(0, 6), r, Color(0, 0, 0, 0.25))
@@ -1058,6 +1240,12 @@ class Badges extends Node2D:
 		if not n["unlocked"]:
 			draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), o)
 			draw_arc(p + Vector2(0, -3), 7.0, PI, TAU, 10, o, 3.0)
+		elif to_works:
+			var gear := PackedVector2Array()
+			for k in 24:  # a brass gear
+				gear.append(p + Vector2.from_angle(TAU * k / 24.0 + t * 0.8) * (16.0 if (k / 2) % 2 == 0 else 12.0))
+			Art.shape(self, gear, Color("e8c04a"), o, 2.0)
+			draw_circle(p, 5.0, o)
 		elif to_jungle:
 			for k in 5:  # a jungle flower
 				var d := Vector2.from_angle(k * TAU / 5.0) * 10.0

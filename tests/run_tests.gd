@@ -1643,6 +1643,46 @@ func test_pause_menu_pauses_and_resumes() -> void:
 	check(not get_tree().paused and not pm.is_open(), "choosing Resume should unpause")
 
 
+func _tap(action: String) -> void:
+	press(0, action)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	release(0, action)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+
+func test_pause_settings_change_and_save_the_volume() -> void:
+	var keep := [Settings.music, Settings.sfx, Settings.fullscreen]
+	Settings.music = 1.0
+	Settings.apply()
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var pm = _arena.get_node(^"PauseMenu")
+	await _tap("pause")
+	await _tap("move_down")
+	await _tap("move_down")
+	await _tap("jump")   # Settings
+	check(pm._settings, "the third item opens the settings")
+	await _tap("move_left")
+	await _tap("move_left")
+	check(is_equal_approx(Settings.music, 0.8), "Left twice turns the music down to 80%% (%.2f)" % Settings.music)
+	var db := AudioServer.get_bus_volume_db(AudioServer.get_bus_index(&"Music"))
+	check(is_equal_approx(db, -6.0 + linear_to_db(0.8)), "the Music bus follows the setting (%.2f dB)" % db)
+	var f := FileAccess.open(Settings.PATH, FileAccess.READ)
+	var saved: Variant = JSON.parse_string(f.get_as_text()) if f else null
+	check(saved is Dictionary and is_equal_approx(float(saved["music"]), 0.8), "the setting is saved (%s)" % [saved])
+	await _tap("attack")  # back to the main list
+	check(not pm._settings and pm.is_open(), "Back returns to the pause list")
+	await _tap("pause")
+	check(not pm.is_open() and not get_tree().paused, "PAUSE closes the menu")
+	Settings.music = keep[0]
+	Settings.sfx = keep[1]
+	Settings.fullscreen = keep[2]
+	Settings.apply()
+	Settings.save()
+
+
 func test_drop_out_removes_player() -> void:
 	var a := add_player(0, Vector2(0, -2))
 	var b := add_player(1, Vector2(100, -2))
@@ -4033,7 +4073,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 
 
 func test_world_maps_build_for_every_world_with_gates() -> void:
-	for w in ["w1", "w2"]:
+	for w in ["w1", "w2", "w3", "w4"]:
 		WorldMap.world = w
 		var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 		_arena.add_child(m)
@@ -4042,7 +4082,10 @@ func test_world_maps_build_for_every_world_with_gates() -> void:
 		for n in m.nodes:
 			ids.append(n["id"])
 		check(ids.has(w + "_1") and ids.has(w + "_6"), "the %s map should list its six levels (%s)" % [w, ids])
-		check(ids.has("gate_w2") if w == "w1" else ids.has("gate_w1"), "the %s map should have a gate to the other world" % w)
+		var back := LevelCatalog.previous_world(w)
+		var onward := LevelCatalog.next_world(w)
+		check(back == "" or ids.has("gate_" + back), "the %s map should have a gate back to %s (%s)" % [w, back, ids])
+		check(onward == "" or ids.has("gate_" + onward), "the %s map should have a gate on to %s (%s)" % [w, onward, ids])
 		m.queue_free()
 		await frames(2)
 	WorldMap.world = "w1"
@@ -4543,7 +4586,7 @@ func _boss_arena_lets_you_back_in(path: String, cp: Vector2, inside_x: float) ->
 
 func _clear_enemies_except_bosses() -> void:
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo or e is Chamelia):
+		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo or e is Chamelia or e is Cuckoolossus):
 			e.queue_free()
 
 
@@ -5443,3 +5486,648 @@ func test_w3_6_chamelia_can_be_beaten_by_sticking_her_tongue_in_the_walls() -> v
 
 func test_w3_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
 	await _boss_arena_lets_you_back_in(W3_6, Vector2(6300, -700), 6950.0)
+
+
+# --- World 4: Clockwhirl Works pieces and enemies --------------------------------------------
+
+func test_beat_blocks_take_turns_being_solid() -> void:
+	BeatBlock.clock = 0.0
+	var pink := BeatBlock.new()
+	pink.position = Vector2(-300, -200)
+	pink.beat = 1.0
+	_arena.add_child(pink)
+	var blue := BeatBlock.new()
+	blue.position = Vector2(0, -200)
+	blue.group = 1
+	blue.beat = 1.0
+	_arena.add_child(blue)
+	await frames(10)
+	check(pink._solid and not blue._solid, "pink is solid first, blue is a dotted outline")
+	await seconds(1.0)
+	check(blue._solid and not pink._solid, "after one beat they swap")
+	# Stand on the blue block: when the beat passes it vanishes and you fall.
+	var p := add_player(0, Vector2(64, -202))
+	await frames(4)
+	check(p.global_position.y < -150.0, "you can stand on a solid tick-tock block")
+	await seconds(1.2)
+	check(p.global_position.y > -150.0, "when it swaps out, you drop through")
+
+
+func test_beat_block_never_snaps_solid_inside_a_player() -> void:
+	BeatBlock.clock = 0.0
+	var blue := BeatBlock.new()
+	blue.position = Vector2(-64, -48)
+	blue.size = Vector2(128, 48)
+	blue.group = 1
+	blue.beat = 1.0
+	_arena.add_child(blue)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	await seconds(1.2)
+	check(not blue._solid, "a block waits while a player stands inside its space")
+	p.global_position = Vector2(-400, -2)
+	await frames(6)
+	check(blue._solid, "and snaps solid once they've moved out")
+
+
+func test_zap_arc_hurts_only_while_on() -> void:
+	var z := ZapArc.new()
+	z.position = Vector2(200, -10)
+	z.end = Vector2(0, -200)
+	z.on_time = 0.6
+	z.off_time = 1.0
+	_arena.add_child(z)
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	await frames(10)
+	check(not p.is_bubbled(), "standing in an arc while it's off is safe")
+	await seconds(1.2)
+	check(p.is_bubbled(), "when the bolt fires, you're zapped")
+
+
+func test_windup_loses_its_key_then_races_and_takes_two_hits() -> void:
+	var w := _spawn_enemy("res://enemies/windup.tscn", Vector2(-200, 0)) as Windup
+	await frames(30)
+	var slow := absf(w.velocity.x)
+	w.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(not w.dead and w._keyless, "the first hit knocks its key off")
+	await seconds(1.0)
+	check(absf(w.velocity.x) > slow * 1.8, "without its key it races (%.0f -> %.0f)" % [slow, absf(w.velocity.x)])
+	w.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(w.dead, "the second hit finishes it")
+
+
+func test_sparkbot_zips_shocks_stompers_and_pops_to_a_punch() -> void:
+	var s := _spawn_enemy("res://enemies/sparkbot.tscn", Vector2(-300, -60)) as Sparkbot
+	var x0 := s.global_position.x
+	await seconds(1.0)
+	check(absf(s.global_position.x - x0) > 100.0, "it zips along its rail")
+	check(not s.stompable, "stomping it shocks you")
+	s.take_hit(null, Vector2.RIGHT)
+	check(s.dead, "a punch pops it")
+
+
+func test_springbot_springs_at_you() -> void:
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	var b := _spawn_enemy("res://enemies/springbot.tscn", Vector2(-200, 0)) as Springbot
+	var top := 0.0
+	for i in 300:
+		await get_tree().physics_frame
+		top = minf(top, b.global_position.y)
+	check(top < -150.0, "it springs high (peak %.0f)" % top)
+	check(b.global_position.x > -150.0, "toward the player (x %.0f)" % b.global_position.x)
+
+
+func test_cuckoolossus_bird_gets_stuck_and_can_be_stomped() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	var c := _spawn_enemy("res://enemies/cuckoolossus.tscn", Vector2(-300, 0), 1) as Cuckoolossus
+	var p := add_player(0, Vector2(100, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	c.set_active(true)
+	await frames(2)
+	c.st = Cuckoolossus.St.RATTLE
+	c._timer = 0.1
+	c._cuckoos_left = 1
+	var stuck := false
+	for i in 240:
+		await get_tree().physics_frame
+		if c.st == Cuckoolossus.St.STUCK:
+			stuck = true
+			break
+	check(stuck, "the cuckoo shoots out at you and sticks in the floor")
+	check(c.bird_head().distance_to(Vector2(100, -18)) < 60.0, "it lands where you stood (%s)" % c.bird_head())
+	var hp := c.health
+	# Drop onto the bird's head.
+	p.global_position = c.bird_head() + Vector2(0, -160)
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	for i in 120:
+		await get_tree().physics_frame
+		if c.health < hp:
+			break
+	check(c.health == hp - 1, "stomping the stuck bird hurts the clock (hp %d -> %d)" % [hp, c.health])
+	check(c.st == Cuckoolossus.St.RETRACT, "and it snaps back into its house")
+
+
+func test_cuckoolossus_body_shrugs_off_punches() -> void:
+	var c := _spawn_enemy("res://enemies/cuckoolossus.tscn", Vector2(0, 0), 1) as Cuckoolossus
+	c.set_active(true)
+	await frames(2)
+	var hp := c.health
+	c.take_hit(null, Vector2.RIGHT)
+	check(c.health == hp, "only the bird can be hurt, not the clock")
+
+
+func test_cuckoolossus_pendulum_sweeps_the_floor() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	var c := _spawn_enemy("res://enemies/cuckoolossus.tscn", Vector2(-200, 0), 1) as Cuckoolossus
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	c.set_active(true)
+	await frames(2)
+	p.invulnerable_timer = 0.0
+	c.st = Cuckoolossus.St.CHIME
+	c._timer = 0.3
+	await seconds(1.2)
+	check(p.is_bubbled(), "standing in front of the swinging pendulum gets you hit")
+
+
+## Bot: hop along tick-tock blocks. `hops` = [[land_x, group], ...]; group -1 = solid ground.
+## The first hop waits for its group to be solid; later hops jump on the BLINK (just before
+## the swap) so they land on the next block right as it appears.
+func _beat_hops(p: Player, hops: Array, beat := 1.6) -> void:
+	for k in hops.size():
+		var x: float = hops[k][0]
+		var g: int = hops[k][1]
+		for i in 400:
+			await get_tree().physics_frame
+			var left := beat - fmod(BeatBlock.clock, beat)
+			var solid_now := BeatBlock.solid_group(BeatBlock.clock, beat)
+			if g < 0:
+				break
+			if k == 0 and solid_now == g and left > 1.0:
+				break
+			if k > 0 and solid_now != g and left < 0.3:
+				break
+		press(0, "move_right")
+		press(0, "jump")
+		for i in 120:
+			await get_tree().physics_frame
+			if p.global_position.x >= x - 40.0:
+				release(0, "move_right")
+			if i > 10 and p.is_on_floor():
+				break
+		release(0, "jump")
+		release(0, "move_right")
+		await frames(4)
+
+
+const W4_1 := "res://levels/w4_1_cogwheel_courtyard.tscn"
+
+
+func test_w4_1_belts_and_windups_lead_to_the_scrap_pit() -> void:
+	var p: Player = await _load_demo(W4_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3400, false, 12.0)
+	check(ok, "over the belts to the scrap pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_gem_0_over_the_belts() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	await _place(p, Vector2(2060, -2))
+	var ok: bool = await _hop_run(p, [2100, 2330], 2480, false, 4.0)
+	check(gm().gems[0], "two hops up the ledges reach gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_cart_crosses_the_scrap_pit() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(3700, -4), 4755.0, -2.0)
+	check(ok and p.global_position.x > 4600.0, "the cart carries you over the scrap pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_tick_tock_steps_reach_gem_1() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	await _place(p, Vector2(5150, -2))
+	await _beat_hops(p, [[5300, 0], [5500, 1], [5700, 0]])
+	check(gm().gems[1], "jumping on the blink climbs the practice steps to gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_tick_tock_blocks_cross_the_pit() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	await _place(p, Vector2(5950, -2))
+	await _beat_hops(p, [[6100, 0], [6340, 1], [6580, 0], [6820, 1], [7100, -1]])
+	check(p.global_position.x > 7000.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "the tick-tock row crosses the pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_yard_zaps_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7100, -2))
+	var ok: bool = await _hop_run(p, [11100], 12350, false, 16.0)
+	check(ok or gm().level_complete, "through the yard, past the zaps and over the crate (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Cogwheel Courtyard")
+	await _finish_demo()
+
+
+const W4_2 := "res://levels/w4_2_conveyor_chaos.tscn"
+
+
+func test_w4_2_belt_under_the_crushers() -> void:
+	var p: Player = await _load_demo(W4_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3400, false, 14.0)
+	check(ok, "against the belt and under the crushers (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_zaps_lead_to_the_lift() -> void:
+	var p: Player = await _load_demo(W4_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(3400, -2))
+	var ok: bool = await _hop_run(p, [], 4950, false, 8.0)
+	check(ok, "past the zap arcs to the lift (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_tick_tock_steps_reach_gem_0() -> void:
+	var p: Player = await _load_demo(W4_2)
+	await _clear_enemies()
+	await _place(p, Vector2(3480, -2))
+	await _beat_hops(p, [[3650, 0], [3850, 1], [4080, -1]])
+	check(gm().gems[0], "tick-tock steps up to the shelf with gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_lift_to_the_catwalk() -> void:
+	var p: Player = await _load_demo(W4_2)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(5220, -2), 5440.0, -600.0)
+	check(ok and p.global_position.y < -590.0, "the lift carries you up to the catwalk (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_tick_tock_catwalk_gap() -> void:
+	var p: Player = await _load_demo(W4_2)
+	await _clear_enemies()
+	await _place(p, Vector2(6560, -602))
+	await _beat_hops(p, [[6740, 0], [6980, 1], [7220, 0], [7460, 1], [7700, -1]])
+	check(p.global_position.x > 7600.0 and p.global_position.y < -590.0 and not p.is_bubbled(), "tick-tock blocks cross the catwalk gap (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_ramp_sorting_line_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7700, -602))
+	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
+	check(gm().gems[1], "gem 1 waits at the end of the catwalk")
+	check(ok or gm().level_complete, "down the ramp, along the sorting line, over the crate (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Conveyor Chaos")
+	await _finish_demo()
+
+
+const W4_3 := "res://levels/w4_3_steam_pipes.tscn"
+
+
+## Stand on a geyser at `gx`, wait for it to throw you above `above_y`, then steer right.
+func _geyser_ride(p: Player, gx: float, above_y: float, steer_to: float, max_s := 6.0) -> void:
+	await _place(p, Vector2(gx, -2))
+	var risen := false
+	for i in int(max_s * 60.0):
+		await get_tree().physics_frame
+		if not risen and p.global_position.y < above_y:
+			risen = true
+			press(0, "move_right")
+		if risen and p.global_position.x >= steer_to:
+			release(0, "move_right")
+		if risen and i > 20 and p.is_on_floor():
+			break
+	release(0, "move_right")
+	await frames(4)
+
+
+func test_w4_3_fire_vent_wave() -> void:
+	var p: Player = await _load_demo(W4_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3100, false, 10.0)
+	check(ok, "through the fire vents (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_geyser_to_the_pipe_walkway_and_gem_0() -> void:
+	var p: Player = await _load_demo(W4_3)
+	await _clear_enemies()
+	await _geyser_ride(p, 3320, -540, 3600, 10.0)
+	check(p.global_position.y < -500.0 and p.is_on_floor(), "the geyser throws you onto the pipe walkway (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [4700], 4760, false, 6.0)
+	check(gm().gems[0], "gem 0 waits at the end of the walkway (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_vent_corridor() -> void:
+	var p: Player = await _load_demo(W4_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4900, -2))
+	var ok: bool = await _hop_run(p, [], 6520, false, 8.0)
+	check(ok, "through the vent corridor (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_cart_over_the_boiling_pit() -> void:
+	var p: Player = await _load_demo(W4_3)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(6700, -4), 7755.0, -2.0)
+	check(ok and p.global_position.x > 7600.0, "the pressure cart crosses the pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_pit_edge_geyser_reaches_gem_1() -> void:
+	var p: Player = await _load_demo(W4_3)
+	await _clear_enemies()
+	await _place(p, Vector2(6540, -2))
+	for i in 420:
+		await get_tree().physics_frame
+		if gm().gems[1]:
+			break
+	check(gm().gems[1], "the geyser at the pit's edge throws you up to gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_pipe_yard_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7700, -2))
+	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
+	check(ok or gm().level_complete, "through the pipe yard and over the toolbox (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Steam Pipes")
+	await _finish_demo()
+
+
+const W4_4 := "res://levels/w4_4_tick_tock_tower.tscn"
+
+
+func test_w4_4_staircase_shaft_reaches_the_pendulum_hall() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	await _place(p, Vector2(1480, -2))
+	var ok := true
+	for t: Vector2 in [Vector2(1700, -170), Vector2(1930, -340), Vector2(2160, -510), Vector2(2390, -680), Vector2(2600, -850)]:
+		ok = ok and await _hop_to(p, t.x, t.y)
+	check(ok and p.global_position.y < -840.0, "up the shelves into the pendulum hall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_hidden_shelf_holds_gem_0() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	await _place(p, Vector2(2160, -512))
+	await _hop_to(p, 1870, -680)
+	await _run_to(p, 1880, "move_left", 1.0)
+	release(0, "move_left")
+	check(gm().gems[0], "a hop left off the third shelf reaches gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_pendulum_hall() -> void:
+	var p: Player = await _load_demo(W4_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(2600, -852))
+	var ok: bool = await _hop_run(p, [], 3760, false, 6.0)
+	check(ok, "under the pendulums to the tick-tock climb (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_tick_tock_climb_to_the_deck() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	await _place(p, Vector2(3800, -852))
+	await _beat_hops(p, [[3990, 0], [4190, 1], [4390, 0], [4590, 1], [4800, -1]])
+	check(p.global_position.x > 4700.0 and p.global_position.y < -1590.0 and not p.is_bubbled(), "the tick-tock blocks climb to the clock deck (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_lift_to_the_gallery_and_gem_1() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(5110, -1602), 5360.0, -2190.0)
+	check(ok, "the lift reaches the clock gallery (at %s)" % p.global_position)
+	await _run_to(p, 5660, "move_right", 2.0)
+	release(0, "move_right")
+	check(gm().gems[1], "gem 1 waits in the gallery (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_roof_steps_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5900, -1602))
+	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
+	check(ok or gm().level_complete, "down the roof steps and over the crate (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Tick-Tock Tower")
+	await _finish_demo()
+
+
+const W4_5 := "res://levels/w4_5_night_shift.tscn"
+
+
+func test_w4_5_belt_under_the_rail_saws() -> void:
+	var p: Player = await _load_demo(W4_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3300, false, 10.0)
+	check(ok, "along the belt under the rail saws (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_crumbling_crates_cross_the_pit() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(3280, -2))
+	var ok: bool = await _hop_run(p, [3390, 3640, 3900, 4150], 4500, true, 8.0)
+	check(ok, "the crumbling crates carry you over the scrap pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_bounce_pad_reaches_gem_0() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(4700, -2))
+	for i in 240:
+		await get_tree().physics_frame
+		if gm().gems[0]:
+			break
+	check(gm().gems[0], "the bounce pad throws you up to gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_sorting_floor() -> void:
+	var p: Player = await _load_demo(W4_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4950, -2))
+	var ok: bool = await _hop_run(p, [], 6850, false, 8.0)
+	check(ok, "across the sorting floor and under the crushers (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_shelves_hold_gem_1() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(5380, -2))
+	var ok: bool = await _hop_to(p, 5580, -170)
+	ok = ok and await _hop_to(p, 5810, -340)
+	check(gm().gems[1], "two shelves up to gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_glowing_tick_tock_blocks() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(6850, -2))
+	await _beat_hops(p, [[7020, 0], [7260, 1], [7500, 0], [7740, 1], [8000, -1]])
+	check(p.global_position.x > 7900.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "the glowing tick-tock row crosses the dark (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_night_line_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(8000, -2))
+	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
+	check(ok or gm().level_complete, "down the night line and over the toolbox (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Night Shift")
+	await _finish_demo()
+
+
+const W4_6 := "res://levels/w4_6_cuckoolossus_clocktower.tscn"
+
+
+func test_w4_6_assembly_yard() -> void:
+	var p: Player = await _load_demo(W4_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3300, false, 10.0)
+	check(ok, "through the assembly yard (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_tick_tock_steps_reach_gem_0() -> void:
+	var p: Player = await _load_demo(W4_6)
+	await _clear_enemies()
+	await _place(p, Vector2(2580, -2))
+	await _beat_hops(p, [[2750, 0], [2950, 1], [3180, -1]])
+	check(gm().gems[0], "tick-tock steps up to the shelf with gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_tick_tock_blocks_over_the_gear_pit() -> void:
+	var p: Player = await _load_demo(W4_6)
+	await _clear_enemies()
+	await _place(p, Vector2(3300, -2))
+	await _beat_hops(p, [[3500, 0], [3740, 1], [3980, 0], [4220, 1], [4500, -1]])
+	check(p.global_position.x > 4400.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "the tick-tock row crosses the gear pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_terraces_climb_to_the_bell_loft() -> void:
+	var p: Player = await _load_demo(W4_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4480, -2))
+	var ok: bool = await _hop_run(p, [4920, 5170, 5420, 5670, 5920], 6250, false, 10.0)
+	check(ok and p.global_position.y < -690.0, "hopping up the terraces reaches the bell loft (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_hidden_ledge_holds_gem_1() -> void:
+	var p: Player = await _load_demo(W4_6)
+	await _clear_enemies()
+	await _place(p, Vector2(5560, -422))
+	await _hop_to(p, 5400, -560)
+	check(gm().gems[1], "a hop left off the terrace reaches gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_cuckoolossus_can_be_beaten_by_stomping_the_cuckoo() -> void:
+	seed(20261002)
+	var p: Player = await _load_demo(W4_6)
+	var boss: Cuckoolossus = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Cuckoolossus:
+			boss = e
+		else:
+			e.queue_free()
+	check(boss != null and boss.asleep, "Cuckoolossus should be asleep in the bell loft")
+	await _place(p, Vector2(6800, -702))
+	await frames(10)
+	check(not boss.asleep, "walking into the loft should wake it")
+	var gates := _demo.find_children("*", "Gate", true, false)
+	for round in 24:
+		if not is_instance_valid(boss) or boss.dead:
+			break
+		p.invulnerable_timer = 100.0
+		# Stand a little way off, let the cuckoo shoot out and stick, then drop on its head.
+		var side := -1.0 if boss.global_position.x > 7080.0 else 1.0
+		p.global_position = Vector2(boss.global_position.x + side * 340.0, -702.0)
+		p.velocity = Vector2.ZERO
+		await frames(2)
+		boss.st = Cuckoolossus.St.RATTLE
+		boss._timer = 0.2
+		boss._cuckoos_left = 1
+		for i in 300:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.st == Cuckoolossus.St.STUCK:
+				break
+		if not is_instance_valid(boss) or boss.st != Cuckoolossus.St.STUCK:
+			continue
+		var hp := boss.health
+		p.global_position = boss.bird_head() + Vector2(0, -160)
+		p.velocity = Vector2.ZERO
+		p.state_machine.transition_to(&"Fall")
+		for i in 120:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.dead or boss.health < hp:
+				break
+		await seconds(0.8)
+	check(not is_instance_valid(boss) or boss.dead, "six stomps on the stuck cuckoo should beat Cuckoolossus (hp %d)" % (boss.health if is_instance_valid(boss) else 0))
+	await seconds(1.5)
+	var exit_open := false
+	for g in gates:
+		if g.global_position.x > 7600.0 and g.is_open():
+			exit_open = true
+	check(exit_open, "beating it should open the exit gate")
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7650, -702))
+	var ok: bool = await _hop_run(p, [7880], 8560, false, 6.0)
+	check(gm().level_complete, "over the toolbox to the gate completes World 4 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_dying_in_the_bell_loft_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in(W4_6, Vector2(6300, -700), 6950.0)
+
+
+func test_w4_every_snoozling_cage_can_be_punched_open() -> void:
+	for path in [W4_1, W4_2, W4_3, W4_4, W4_5, W4_6]:
+		var p: Player = await _load_demo(path)
+		await _clear_enemies()
+		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
+		await _place(p, cage.global_position + Vector2(-55, -4))
+		p.facing = 1
+		await _punch()
+		await frames(20)
+		check(cage._opened, "%s: the Snoozling's cage opens with a punch (player %s %s, cage %s)" % [path.get_file(), p.global_position, _state(p), cage.global_position])
+		await _finish_demo()
+
+
+func test_w4_secret_toolboxes_hold_gem_2() -> void:
+	for spot: Array in [[W4_3, Vector2(10700, -2)], [W4_4, Vector2(10700, -2)], [W4_5, Vector2(10700, -2)], [W4_6, Vector2(7850, -702)]]:
+		var p: Player = await _load_demo(spot[0])
+		await _clear_enemies_except_bosses()
+		await _place(p, spot[1])
+		p.facing = 1
+		await _run_to(p, spot[1].x + 50.0, "move_right", 1.0)
+		release(0, "move_right")
+		await _punch()
+		await frames(20)
+		press(0, "move_right")
+		await seconds(1.0)
+		release(0, "move_right")
+		check(gm().gems[2], "%s: punching the toolbox open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
+		await _finish_demo()

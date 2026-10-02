@@ -94,7 +94,10 @@ give it a `world` value, a `map` position and a `music` track.
 `pendulum(rope, width, spiked=False)` · `leaf` (sinks under you) · `raft`
 (drifts on water with the current; `travel=0, current=0` = a floating stepping stone) ·
 `liana(x, y, length, sway, phase)` (jungle vine hanging from x, y: jump into its lower half and swing;
-bots chain them up to ~480 px apart) · `waterfall(x, y, w, h)` (scenery curtain).
+bots chain them up to ~480 px apart) · `waterfall(x, y, w, h)` (scenery curtain) ·
+`beat(x, y, w, h, group, beat)` (tick-tock block: group 0 pink / 1 blue take turns being solid every
+`beat` s (1.6); they blink 0.4 s before a swap and never turn solid inside a player. Bots: 150 px up /
+200 px across per step, or a flat row 240 px apart).
 
 ### Hazards
 `spikes` · `pop_spikes` · `spikeball` · `saw` · `crusher` · `flame(steam=)` ·
@@ -103,6 +106,8 @@ bots chain them up to ~480 px apart) · `waterfall(x, y, w, h)` (scenery curtain
 `avalanche(x, y, distance, speed, height, depth)` (chase; start it with a `zone`, it
 rubber-bands to stay on screen and restarts behind mid-chase checkpoints).
 `snaptrap(x, y)` (flytrap: snaps shut 0.45 s after someone steps in - run across or jump).
+`zap(x, y, ex, ey, on, off, phase)` (electric arc between two posts: flickers for 0.5 s, then zaps for
+`on` s; hurts within 26 px of the line).
 Icy ground: `terrain(..., slippery=True)` or `block(..., slippery=True)`.
 
 ### Logic
@@ -119,11 +124,11 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | Call | What |
 |---|---|
 | `LevelKit(..., theme=, scenery=, horizon=, backdrop={})` | Palette (`world/themes/*.tres`) + parallax scenery. |
-| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice`, `jungle`, `ruins` |
+| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice`, `jungle`, `ruins`, `factory` |
 | `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow`, `rain` |
 | `glow(x, y, color, radius)` | Soft light (for dark levels). |
-| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis, palm, big_leaf, totem, bromeliad |
-| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave, jungle, ruins, swamp |
+| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis, palm, big_leaf, totem, bromeliad, gear, pipes, clock, toyblocks |
+| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave, jungle, ruins, swamp, factory |
 | `extra(path, **props)` | Any other scene or script (e.g. `world/waterfall.gd`). |
 
 ## Enemy catalogue (`L.enemy(kind, x, y, facing=-1, **props)`)
@@ -152,6 +157,10 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | `swoopbeak` | Swoopbeak | Toucan flapping overhead; squawks (tell), dives at you, flaps back. Stomp or punch. |
 | `nibblefin` | Nibblefin | Piranha: place on the water surface; bubbles (tell), then leaps `leap_height` out. `phase` desyncs. |
 | `chamelia` | Chamelia | World 3 boss: tongue lash (sticks in a wall = stompable), invisible sneak (phase 2+), leap + seed fan (phase 3). |
+| `windup` | Windup | Wind-up tin soldier patrolling. First hit knocks its key off and it races about at double speed; 2 hits. |
+| `sparkbot` | Sparkbot | Electric drone flying along `travel` (`speed`, `phase`). Don't stomp it (zap!) - punch it. |
+| `springbot` | Springbot | Coiled robot: crouches (tell), then hops at you (`hop_height`). Stomp or punch. |
+| `cuckoolossus` | Cuckoolossus | World 4 boss: chime + pendulum sweep (jump), brass gears, cuckoo lunge (sticks in the floor = stomp/punch the bird; phase 3 twice + gear rain). |
 | `king_grumblo` | King Grumblo | Boss (bonus levels): slam shockwaves. |
 | `baron_bristleback` | Baron Bristleback | World 1 boss. Rolls (bounces off walls, count = phase), quill volley, leap slam, acorn rain. Stomp him while he's DAZED. |
 

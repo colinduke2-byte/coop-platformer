@@ -21,7 +21,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Phase 3 — Game loop ✅
 - [x] Hit feedback: hit-stop, camera shake, dust/puff/star particles, stomp chains (x2 x3 pops)
-- [x] 17 enemies + 3 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
+- [x] 23 enemies + 5 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
 - [x] Hazards and toys: spikes, saws, crushers, moving/crumbling platforms, bounce pads, and ~40 more
 - [x] Level goal + results screen (time, Lums, gems, Snoozling, records)
 - [x] Hidden collectibles: 3 gems + 1 caged Snoozling per level
@@ -72,7 +72,14 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Jungle world map + gate from the top of World 2's map; 6 new music tracks
 - [ ] Playtest: are the liana chains too hard for new players? (`Liana.sway`, spacing 420-480, grab = lower half of the vine)
 - [ ] Is Chamelia fair with 1 player? (`tongue_reach` 760, `stuck_time` 2.6)
-- [ ] World 4 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
+
+## World 4 - Clockwhirl Works ✅ (needs Colin's playtest)
+- [x] New pieces: tick-tock blocks (pink / blue swap on a shared beat), zap arcs, factory backdrop, gear / pipes / clock / toy-block deco, 6 themes + 6 music tracks
+- [x] New enemies: Windup (loses its key, races), Sparkbot (electric drone - punch it), Springbot (hops at you), boss Cuckoolossus (pendulum, gears, the cuckoo sticks in the floor - stomp it)
+- [x] 4-1 Cogwheel Courtyard, 4-2 Conveyor Chaos, 4-3 Steam Pipes, 4-4 Tick-Tock Tower, 4-5 Night Shift, 4-6 Cuckoolossus Clocktower; bot tests for every section
+- [x] Factory world map + gate from the top of World 3's map
+- [ ] Playtest: is the beat (`BeatBlock.beat` 1.6 s) too fast with 4 players? Is Cuckoolossus fair solo (`stuck_time` 2.6)?
+- [ ] Ideas for World 5: Candy Clouds (expand the Candy Canopy bonus level)?
 
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)
@@ -88,7 +95,8 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Phase 6 — Polish & ship to yourself
 - [x] Performance: static art baked to meshes, on-screen-only redraws (draw calls 1200–2700 -> 280–530 on the busiest levels)
-- [ ] Settings: volume, fullscreen, input rebinding
+- [x] Settings: music / SFX volume, fullscreen (Pause -> Settings, saved in user://settings.json)
+- [ ] Input rebinding
 - [x] Windows export preset (`export_presets.cfg`, single .exe)
 - [ ] macOS export preset
 

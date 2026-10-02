@@ -21,6 +21,7 @@ enum Scenery {
 	ICE,        ## snowy peaks and pines
 	JUNGLE,     ## misty rainforest: waterfalls, giant trees, palms, hanging vines
 	RUINS,      ## jungle with old stepped temples and broken pillars
+	FACTORY,    ## the clockwork dream factory: smokestacks, giant gears, pipes and girders
 }
 
 @export var horizon_y := 600.0:
@@ -93,6 +94,7 @@ func _rebuild() -> void:
 		Scenery.ICE: _ice_scene()
 		Scenery.JUNGLE: _jungle_scene(false)
 		Scenery.RUINS: _jungle_scene(true)
+		Scenery.FACTORY: _factory_scene()
 	if cloud_sea:
 		_build_cloud_sea()
 	if light_shafts:
@@ -491,6 +493,74 @@ func _temple(l: Layer, at: Vector2, s: float, color: Color) -> void:
 	l.painter.draw_rect(Rect2(at.x - 26 * s, at.y - 60 * s, 52 * s, 60 * s), color.darkened(0.35))
 	for k in 5:  # moss on the steps
 		l.painter.draw_colored_polygon(Art.ellipse(Vector2(at.x + _rng.randf_range(-140, 140) * s, at.y - (k + 1) * 60.0 * s), 30 * s, 8 * s, 10), _th.top_dark.lerp(_th.sky_bottom, 0.3))
+
+
+func _factory_scene() -> void:
+	# Far: a skyline of factory halls and smokestacks with drifting smoke.
+	var far := _layer(0.08, 2800.0)
+	var wall := _haze(_th.ground.lerp(_th.far_hills, 0.5), 0.45)
+	var x := 0.0
+	while x < 2800.0:
+		var w := _rng.randf_range(180, 360)
+		var h := _rng.randf_range(260, 620)
+		far.painter.draw_rect(Rect2(x, horizon_y - h, w - 20, h + DEPTH), wall)
+		var teeth := int(w / 60.0)  # saw-tooth roof
+		for k in teeth:
+			var tx := x + k * 60.0
+			far.painter.draw_colored_polygon(PackedVector2Array([Vector2(tx, horizon_y - h), Vector2(tx + 40, horizon_y - h - 40),
+					Vector2(tx + 40, horizon_y - h)]), wall)
+		if _rng.randf() < 0.6:  # a smokestack with smoke puffs
+			var sx := x + _rng.randf_range(20, w - 60)
+			var sh := _rng.randf_range(200, 380)
+			far.painter.draw_rect(Rect2(sx, horizon_y - h - sh, 34, sh), wall.darkened(0.08))
+			far.painter.draw_rect(Rect2(sx - 4, horizon_y - h - sh, 42, 14), wall.darkened(0.15))
+			for k in 4:
+				var p := Vector2(sx + 17 + k * 30.0, horizon_y - h - sh - 30.0 - k * 50.0)
+				far.painter.draw_colored_polygon(Art.ellipse(p, 26.0 + k * 10.0, 18.0 + k * 6.0, 14), Color(_th.sky_bottom, 0.6 - k * 0.12))
+		for k in int(h / 70.0):  # rows of glowing windows
+			for m in int((w - 40) / 46.0):
+				if _rng.randf() < 0.55:
+					far.painter.draw_rect(Rect2(x + 14 + m * 46.0, horizon_y - h + 30 + k * 70.0, 22, 30), _haze(_th.accent, 0.5))
+		x += w
+	_commit(far)
+	# Mid: giant gears and pipes.
+	var mid := _layer(0.25, 2200.0)
+	var metal := _haze(_th.top.lerp(_th.ground, 0.3), 0.3)
+	for i in 5:
+		var c := Vector2(_rng.randf_range(0, 2200), horizon_y - _rng.randf_range(250, 700))
+		_gear_shape(mid, c, _rng.randf_range(120, 230), metal)
+	for i in 6:  # vertical pipes with elbows
+		var px := _rng.randf_range(0, 2200)
+		var top := horizon_y - _rng.randf_range(500, 1100)
+		mid.painter.draw_rect(Rect2(px, top, 36, horizon_y - top + DEPTH), _haze(_th.ledge, 0.3))
+		mid.painter.draw_rect(Rect2(px - 6, top, 48, 16), _haze(_th.ledge_dark, 0.3))
+		mid.painter.draw_rect(Rect2(px, top, 160, 36), _haze(_th.ledge, 0.3))
+	_commit(mid)
+	# Near: steel girders and a railing.
+	var near := _layer(0.5, 1800.0)
+	var steel := _haze(_th.ledge_dark, 0.4)
+	near.painter.draw_rect(Rect2(0, horizon_y - 70, 1800, DEPTH + 70), _th.near_hills.darkened(0.1))
+	for i in 9:
+		var gx := i * 200.0 + 40.0
+		near.painter.draw_rect(Rect2(gx, horizon_y - 420, 22, 360), steel)
+		near.painter.draw_line(Vector2(gx + 11, horizon_y - 420), Vector2(gx + 211, horizon_y - 70), steel, 6.0)
+	near.painter.draw_rect(Rect2(0, horizon_y - 430, 1800, 18), steel)
+	_commit(near)
+
+
+func _gear_shape(l: Layer, c: Vector2, r: float, color: Color) -> void:
+	var pts := PackedVector2Array()
+	var n := int(r / 9.0) * 2
+	for i in n * 3:
+		var a := TAU * i / (n * 3.0)
+		var rr := r if (i / 3) % 2 == 0 else r * 0.84
+		pts.append(c + Vector2(cos(a), sin(a)) * rr)
+	l.painter.draw_colored_polygon(pts, color)
+	l.painter.draw_colored_polygon(Art.ellipse(c, r * 0.55, r * 0.55, 24), color.darkened(0.12))
+	for k in 6:
+		var a := TAU * k / 6.0
+		l.painter.draw_colored_polygon(Art.ellipse(c + Vector2(cos(a), sin(a)) * r * 0.36, r * 0.1, r * 0.1, 10), color.darkened(0.3))
+	l.painter.draw_colored_polygon(Art.ellipse(c, r * 0.14, r * 0.14, 12), color.lightened(0.2))
 
 
 # --- Layer plumbing -------------------------------------------------------------------

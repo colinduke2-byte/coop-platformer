@@ -1,0 +1,25 @@
+"""Sandbox with every World 4 toy and enemy (not in the level list; open it with F6)."""
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from kit import LevelKit
+
+L = LevelKit("SandboxW4", "World 4 Toybox", theme="brass", horizon=0, scenery="factory")
+L.ambience("embers", 0.6)
+L.land([(-400, 0), (1500, 0)])
+L.enemy("windup", 500, 0)
+L.enemy("springbot", 1100, 0)
+L.beat(1600, -40, 160, 32, group=0)
+L.beat(1860, -100, 160, 32, group=1)
+L.beat(2120, -40, 160, 32, group=0)
+L.land([(2380, 0), (4400, 0)])
+L.zap(2700, -10, 2700, -230)
+L.zap(3000, -10, 3000, -230, phase=0.5)
+L.enemy("sparkbot", 3400, -80)
+L.block(3800, -16, 400, 16, conveyor=180.0)
+L.dress(-400, 4400, "factory", seed=7)
+L.deco("clock", 200, 0)
+L.deco("gear", 900, 0)
+L.deco("pipes", 2500, 0)
+L.deco("toyblocks", 3600, 0)
+L.finish(spawn=(0, -2), left=-400, right=4400, bottom=900, kill_y=1200)
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/sandbox_w4.tscn"))
