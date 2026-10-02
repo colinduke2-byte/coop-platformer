@@ -29,6 +29,7 @@ const ANGRY := Color("ffb0c0")
 const MOUTH := Color("3a2a4a")
 
 var st := St.WALK
+var _home := Vector2.INF   ## where he sleeps (set the first time he wakes)
 var _timer := 2.0
 var _bounces := 0
 var _max_health := 6
@@ -57,8 +58,22 @@ func phase() -> int:
 	return 3
 
 
+## Everyone respawned at the checkpoint (his ZoneTrigger sends false): back to his
+## spot and asleep, with the damage you did kept. The health bar hides till you return.
 func set_active(on: bool) -> void:
+	if _home == Vector2.INF:
+		_home = global_position
 	asleep = not on
+	if not on and not dead:
+		global_position = _home
+		velocity = Vector2.ZERO
+		st = St.WALK
+		stun_timer = 0.0
+		for b in get_parent().get_children():
+			if b is Snowball and b.thrower == self:
+				b.queue_free()
+		_send_health()
+		return
 	if on:
 		_timer = 1.4
 		st = St.WALK

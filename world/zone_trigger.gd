@@ -57,8 +57,11 @@ func _physics_process(_delta: float) -> void:
 	if Engine.is_editor_hint() or (_fired and once):
 		return
 	var inside := 0
+	# Overlaps lag a physics step behind teleports: a respawn at a checkpoint outside
+	# would still count as inside and slam the arena gate shut again. Check the feet too.
+	var box := Rect2(global_position, size).grow(48.0)
 	for b in get_overlapping_bodies():
-		if b is Player and not b.is_bubbled():
+		if b is Player and not b.is_bubbled() and box.has_point(b.global_position):
 			inside += 1
 	var alive := GameManager.living_players().size()
 	var go := inside > 0 and (not need_everyone or inside >= alive)

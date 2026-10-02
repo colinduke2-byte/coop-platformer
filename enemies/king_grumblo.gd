@@ -14,6 +14,7 @@ enum Mode { WALK, CROUCH, AIR, DAZED }
 @export var daze_time := 1.6
 @export var minion_scene: PackedScene = preload("res://enemies/grunt.tscn")
 @export var asleep := false                 ## snoozes (invulnerable, still) until set_active(true)
+@export var boss_name := "KING GRUMBLO"
 
 const BODY := Color("7a4bc4")
 const BELLY := Color("d9c8f5")
@@ -21,6 +22,7 @@ const CROWN := Color("ffd23f")
 
 var _mode := Mode.WALK
 var _timer := 1.5
+var _home := Vector2.INF   ## where he sleeps (set the first time he wakes)
 var _max_health := 6
 
 
@@ -38,10 +40,21 @@ func _setup() -> void:
 
 
 ## Wake up (a ZoneTrigger at the arena entrance usually does this).
+## Everyone respawned (his ZoneTrigger sends false): back to his spot, asleep, damage kept.
 func set_active(on: bool) -> void:
+	if _home == Vector2.INF:
+		_home = global_position
 	asleep = not on
+	if not on and not dead:
+		global_position = _home
+		velocity = Vector2.ZERO
+		_mode = Mode.WALK
+		stun_timer = 0.0
+		_send_health()
+		return
 	if on:
 		_timer = 1.0
+		_send_health()
 		squash(Vector2(0.8, 1.25))
 		EventBus.screen_shake.emit(0.3)
 
@@ -112,14 +125,20 @@ func _on_stomped(by: Player) -> void:
 		_timer = 0.8
 
 
+func _send_health() -> void:
+	EventBus.boss_changed.emit(boss_name, health, _max_health, not asleep and not dead)
+
+
 func _on_hurt(_by: Player, _kind: HitKind) -> void:
 	stun_timer = 0.0
 	_mode = Mode.WALK
 	_timer = 0.8
+	_send_health()
 
 
 func die(by: Player, kind: HitKind, knockback: Vector2) -> void:
 	EventBus.screen_shake.emit(0.8)
+	EventBus.boss_changed.emit(boss_name, 0, _max_health, false)
 	super(by, kind, knockback)
 
 

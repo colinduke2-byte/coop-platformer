@@ -4508,3 +4508,50 @@ func test_every_level_passes_the_layout_audit() -> void:
 	for path in LevelAudit.all_levels():
 		var issues: Array[String] = await LevelAudit.audit_path(self, path)
 		check(issues.is_empty(), "%s: %s" % [path.get_file(), ", ".join(issues)])
+
+
+## Die in a boss arena -> respawn at the lantern before it -> the arena must let you back in.
+func _boss_arena_lets_you_back_in(path: String, cp: Vector2, inside_x: float) -> void:
+	var p: Player = await _load_demo(path)
+	_clear_enemies_except_bosses()
+	var boss: Enemy = get_tree().get_first_node_in_group(&"enemies")
+	var home := boss.global_position
+	await _place(p, cp + Vector2(0, -2))
+	await frames(4)
+	p.invulnerable_timer = 100.0
+	await _run_to(p, inside_x, "move_right", 8.0)
+	release(0, "move_right")
+	await seconds(1.0)
+	check(p.global_position.x > inside_x - 80.0, "should reach the arena (x %d)" % p.global_position.x)
+	check(not boss.get(&"asleep"), "the boss should wake up")
+	p.invulnerable_timer = 0.0
+	p.hurt()
+	await seconds(2.5)
+	check(not p.is_bubbled(), "should respawn")
+	check(p.global_position.distance_to(cp) < 300.0, "should respawn at the lantern before the arena (at %s)" % p.global_position)
+	check(boss.get(&"asleep") and boss.global_position.distance_to(home) < 40.0, "the boss should go back to sleep on his spot")
+	p.invulnerable_timer = 100.0
+	await _run_to(p, inside_x, "move_right", 8.0)
+	release(0, "move_right")
+	check(p.global_position.x > inside_x - 80.0, "should get back into the arena (stuck at x %d)" % p.global_position.x)
+	await frames(10)
+	check(not boss.get(&"asleep"), "the boss should wake up again")
+	await _finish_demo()
+
+
+func _clear_enemies_except_bosses() -> void:
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo):
+			e.queue_free()
+
+
+func test_w1_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in(W1_6, Vector2(6310, -1400), 7000.0)
+
+
+func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in(W2_6, Vector2(5780, -1400), 6700.0)
+
+
+func test_glacier_dying_in_king_grumblos_arena_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(8700, 0), 9600.0)

@@ -29,6 +29,7 @@ const PLUME := Color("ff5d3f")
 const ANGRY := Color("ff6b5a")
 
 var st := St.WALK
+var _home := Vector2.INF   ## where he sleeps (set the first time he wakes)
 var _timer := 2.0
 var _bounces := 0
 var _angle := 0.0
@@ -59,8 +60,23 @@ func phase() -> int:
 	return 3
 
 
+## Everyone respawned at the checkpoint (his ZoneTrigger sends false): back to his
+## spot and asleep, with the damage you did kept. The health bar hides till you return.
 func set_active(on: bool) -> void:
+	if _home == Vector2.INF:
+		_home = global_position
 	asleep = not on
+	if not on and not dead:
+		global_position = _home
+		velocity = Vector2.ZERO
+		st = St.WALK
+		stun_timer = 0.0
+		for m in _squires:
+			if is_instance_valid(m):
+				m.queue_free()
+		_squires.clear()
+		_send_health()
+		return
 	if on:
 		_timer = 1.2
 		st = St.WALK

@@ -58,6 +58,12 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Signs auto-placed clear of terrain / props; layout audit (`tools/level_audit.gd`) runs in the tests
 - [x] Fixes: stuck wall-sliding at cliff feet (terrain collision keeps inside corners sharp), rope-bridge end lip, ground-piece seams
 - [ ] Bonus levels (Candy, Sunset, Glacier) only got layout fixes - extend them next
+
+## Boss fights
+- [x] Dying in an arena no longer locks you out: the entry gate reopens on respawn (ZoneTrigger ignored stale overlaps and slammed it shut again)
+- [x] On a full-party respawn the boss walks back to his spot and naps (damage dealt is kept; minions / boulders cleared); boss bar hides until you return
+- [x] King Grumblo gets the boss health bar too
+- [ ] Playtest: should bosses heal on respawn instead? (set_active(false) in each boss script)
 - [ ] World 3 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
 
 ## Phase 5 — Art & audio
