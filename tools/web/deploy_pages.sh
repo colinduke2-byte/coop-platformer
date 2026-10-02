@@ -14,6 +14,8 @@ cp build/web/index.js build/web/index.audio.worklet.js build/web/index.audio.pos
 cp tools/web/play.html "$out/index.html"
 cp tools/web/peerjs.min.js "$out/"
 touch "$out/.nojekyll"
+# Keep the Windows download on the site if one has been built (build/Dreamers-Windows.zip).
+[ -f build/Dreamers-Windows.zip ] && cp build/Dreamers-Windows.zip "$out/"
 url=$(git remote get-url origin)
 cd "$out"
 git init -q -b gh-pages

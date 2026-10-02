@@ -345,10 +345,11 @@ window.dreamNet = (function () {
           timer = setTimeout(function () { bad(new Error("no answer from the server")); }, STALL_MS * 2);
         })]).finally(function () { clearTimeout(timer); });
         if (res.status === 404) { const e = new Error(url + ": 404"); e.missing = true; throw e; }
+        if (res.status === 416) { const e = new Error(url + ": 416"); e.pastEnd = true; throw e; }
         if (!res.ok) throw new Error(url + ": " + res.status);
         return res;
       } catch (err) {
-        if (attempt >= 5 || err.missing) throw err;
+        if (attempt >= 5 || err.missing || err.pastEnd) throw err;
         status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
         await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
       }
@@ -386,7 +387,9 @@ window.dreamNet = (function () {
       for (let attempt = 1; ; attempt++) {
         try {
           const ctrl = new AbortController();
-          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + (start + CHUNK - 1) }, cache: "no-store", signal: ctrl.signal });
+          // Never ask past the end of the file (some hosts refuse that and the last piece never comes).
+          const end = total ? Math.min(start + CHUNK, total) - 1 : start + CHUNK - 1;
+          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + end }, cache: "no-store", signal: ctrl.signal });
           if (res.status === 200) {  // no Range support: this is the whole file
             total = Number(res.headers.get("Content-Length")) || 0;
             got = 0;
@@ -403,6 +406,7 @@ window.dreamNet = (function () {
           }
           break;
         } catch (err) {
+          if (err.pastEnd && got > 0) { piece = []; total = got; break; }  // asked past the end: we have it all
           if (attempt >= 8 || err.missing) throw err;
           status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
           await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
