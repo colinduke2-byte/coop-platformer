@@ -331,8 +331,21 @@ window.dreamNet = (function () {
     return realFetch(input, init);
   };
 
+  // Big files over flaky connections: retry a few times before giving up.
   async function download(url, weight, base) {
-    const res = await realFetch(url);
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await downloadOnce(url, weight, base);
+      } catch (err) {
+        if (attempt >= 4) throw err;
+        status.textContent = "Connection hiccup - retrying (" + attempt + "/3)...";
+        await new Promise(function (ok) { setTimeout(ok, 1500 * attempt); });
+      }
+    }
+  }
+
+  async function downloadOnce(url, weight, base) {
+    const res = await realFetch(url, { cache: "no-cache" });
     if (!res.ok) throw new Error(url + ": " + res.status);
     const total = Number(res.headers.get("Content-Length")) || 0;
     const reader = res.body.getReader();
@@ -427,6 +440,13 @@ window.dreamNet = (function () {
   linkBox.addEventListener("blur", function () { setTimeout(function () { linkBox.hidden = true; }, 3000); });
 
   function start() {
+    if (!loaded) {  // the download failed earlier: this button is "Try again"
+      play.disabled = true;
+      play.textContent = "Loading...";
+      status.textContent = "Downloading...";
+      tryPrepare();
+      return;
+    }
     play.disabled = true;
     hostBtn.disabled = joinBtn.disabled = joinInvite.disabled = true;
     status.textContent = "Starting...";
@@ -448,8 +468,13 @@ window.dreamNet = (function () {
   }
 
   play.addEventListener("click", start);
-  prepare().catch(function (err) {
-    status.textContent = "Download failed: " + (err && err.message ? err.message : err);
-  });
+  function tryPrepare() {
+    prepare().catch(function (err) {
+      status.textContent = "Download failed (" + (err && err.message ? err.message : err) + "). Check your connection and press Try again.";
+      play.disabled = false;
+      play.textContent = "Try again";
+    });
+  }
+  tryPrepare();
 })();
 </script>
