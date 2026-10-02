@@ -331,32 +331,70 @@ window.dreamNet = (function () {
     return realFetch(input, init);
   };
 
-  // Big files over flaky connections: retry a few times before giving up.
-  async function download(url, weight, base) {
+  // Big files over flaky connections (and networks that cut long downloads): fetch in
+  // 2 MB pieces with HTTP Range requests, retrying each piece. Hosts without Range
+  // support just send the whole file, which still works.
+  const CHUNK = 2 * 1024 * 1024;
+
+  async function fetchRetry(url, init) {
     for (let attempt = 1; ; attempt++) {
       try {
-        return await downloadOnce(url, weight, base);
+        const res = await realFetch(url, init);
+        if (!res.ok) throw new Error(url + ": " + res.status);
+        return res;
       } catch (err) {
-        if (attempt >= 4) throw err;
-        status.textContent = "Connection hiccup - retrying (" + attempt + "/3)...";
-        await new Promise(function (ok) { setTimeout(ok, 1500 * attempt); });
+        if (attempt >= 5) throw err;
+        status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
+        await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
       }
     }
   }
 
-  async function downloadOnce(url, weight, base) {
-    const res = await realFetch(url, { cache: "no-cache" });
-    if (!res.ok) throw new Error(url + ": " + res.status);
-    const total = Number(res.headers.get("Content-Length")) || 0;
+  async function readAll(res, onBytes) {
     const reader = res.body.getReader();
     const parts = [];
-    let got = 0;
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       parts.push(value);
-      got += value.length;
-      if (total) bar.style.width = (base + weight * got / total) + "%";
+      onBytes(value.length);
+    }
+    return parts;
+  }
+
+  async function download(url, weight, base) {
+    let got = 0, total = 0;
+    const tick = function (n) { got += n; if (total) bar.style.width = (base + weight * got / total) + "%"; };
+    const parts = [];
+    for (let start = 0; ; start += CHUNK) {
+      let piece = null;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          const res = await fetchRetry(url, { headers: { Range: "bytes=" + start + "-" + (start + CHUNK - 1) }, cache: "no-store" });
+          if (res.status === 200) {  // no Range support: this is the whole file
+            total = Number(res.headers.get("Content-Length")) || 0;
+            got = 0;
+            return new Blob(await readAll(res, tick));
+          }
+          const range = res.headers.get("Content-Range") || "";
+          total = Number(range.split("/")[1]) || total;
+          const before = got;
+          try {
+            piece = await readAll(res, tick);
+          } catch (err) {
+            got = before;  // the piece broke mid-way: fetch it again
+            throw err;
+          }
+          break;
+        } catch (err) {
+          if (attempt >= 5) throw err;
+          status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
+          await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
+        }
+      }
+      for (const part of piece) parts.push(part);
+      status.textContent = "Downloading the game... " + Math.round(got / 1048576) + " / " + Math.round(total / 1048576) + " MB";
+      if (!total || got >= total) break;
     }
     return new Blob(parts);
   }
