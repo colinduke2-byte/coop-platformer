@@ -2,12 +2,12 @@
 class_name Ambience
 extends Node2D
 ## Floating atmosphere that follows the camera: pollen, falling leaves,
-## fireflies, spores, petals, embers or snow. One particle system per kind
+## fireflies, spores, petals, embers, snow or rain. One particle system per kind
 ## (a single draw call each). Add one or two to a level; `density` scales it.
 ## Optional `darkness` dims the level for caves (a CanvasModulate) - glowing
 ## things (fireflies, crystals, GlowLight) then really pop.
 
-enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW }
+enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW, RAIN }
 
 @export var kind := Kind.POLLEN:
 	set(v):
@@ -157,6 +157,21 @@ func _configure(p: CPUParticles2D) -> void:
 			p.scale_amount_max = 0.8
 			if col.a == 0.0:
 				col = Color(1, 1, 1, 0.85)
+		Kind.RAIN:
+			# Warm rainforest drizzle: thin slanted streaks that fall fast.
+			p.amount = int(150 * density)
+			p.lifetime = 1.4
+			p.texture = _streak()
+			p.gravity = Vector2(60, 700)
+			p.initial_velocity_min = 650.0
+			p.initial_velocity_max = 850.0
+			p.direction = Vector2(0.12, 1)
+			p.spread = 3.0
+			p.particle_flag_align_y = true
+			p.scale_amount_min = 0.6
+			p.scale_amount_max = 1.0
+			if col.a == 0.0:
+				col = Color(0.85, 0.95, 1.0, 0.45)
 	p.color = Color.WHITE if p.color_ramp else col  # ramps already carry the colour
 	p.preprocess = p.lifetime
 
@@ -195,6 +210,18 @@ static func _dot(size: int, hard: float) -> Texture2D:
 	t.width = size
 	t.height = size
 	return t
+
+
+## A thin vertical raindrop streak (white; tinted by colour).
+static func _streak() -> Texture2D:
+	var w := 3
+	var h := 34
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in h:
+		for x in w:
+			var a := (1.0 - absf(float(x) - 1.0)) * clampf(float(y) / h * 1.4, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
 
 
 ## A small leaf shape rasterised into a texture (white; tinted by colour).

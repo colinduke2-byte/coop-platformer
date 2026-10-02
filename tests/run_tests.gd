@@ -4326,6 +4326,8 @@ func test_w1_4_swing_rings_cross_to_the_shieldbug_tree() -> void:
 			if held == 0:
 				release(0, "jump")
 		var st := _state(p)
+		if DEBUG_LIANA and i % 12 == 0:
+			print("L ", i, " ", st, " ", p.global_position.round(), " v", p.velocity.round())
 		if not jumped and p.global_position.x > 10670.0 and p.is_on_floor():
 			press(0, "jump")
 			held = 40  # a full jump off the end of the deck carries you into the first ring
@@ -4541,7 +4543,7 @@ func _boss_arena_lets_you_back_in(path: String, cp: Vector2, inside_x: float) ->
 
 func _clear_enemies_except_bosses() -> void:
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo):
+		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo or e is Chamelia):
 			e.queue_free()
 
 
@@ -4555,3 +4557,889 @@ func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
 
 func test_glacier_dying_in_king_grumblos_arena_lets_you_back_in() -> void:
 	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(9040, 0), 9600.0)
+
+
+# --- World 3: Rainbloom Jungle pieces and enemies -------------------------------------------
+
+func test_liana_grab_swing_far_and_release() -> void:
+	var vine := Liana.new()
+	vine.length = 320.0
+	vine.sway = 0.0
+	vine.position = Vector2(0, -900)
+	_arena.add_child(vine)
+	var p := add_player(0, Vector2(-60, -900 + 320 + 40))
+	await frames(1)
+	p.velocity = Vector2(300, -150)
+	p.state_machine.transition_to(&"Jump")
+	for i in 40:
+		await get_tree().physics_frame
+		if _state(p) == &"Swing":
+			break
+	check(_state(p) == &"Swing", "jumping into a liana's end should grab it (got %s)" % _state(p))
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	var d := (p.global_position + Player.GRIP_OFFSET).distance_to(vine.global_position)
+	check(absf(d - vine.rope_length) < 14.0 and vine.rope_length > 170.0, "hands stay where you caught the long vine (%.0f / %.0f)" % [d, vine.rope_length])
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	check(_state(p) in [&"Jump", &"Fall"], "jump lets go of the vine")
+
+
+func test_snap_trap_catches_you_if_you_linger_but_not_if_you_run() -> void:
+	var trap := SnapTrap.new()
+	trap.position = Vector2(200, 0)
+	_arena.add_child(trap)
+	var p := add_player(0, Vector2(200, -2))
+	await settle(p)
+	await seconds(0.8)
+	check(p.is_bubbled(), "standing in an open flytrap gets you caught when it snaps")
+	await seconds(3.0)  # respawn
+	trap.st = SnapTrap.St.OPEN
+	p.global_position = Vector2(-200, -2)
+	p.velocity = Vector2.ZERO
+	await settle(p)
+	p.invulnerable_timer = 0.0
+	press(0, "move_right")
+	await _run_to(p, 420.0, "move_right", 3.0)
+	release(0, "move_right")
+	await seconds(0.6)
+	check(not p.is_bubbled(), "running straight across is quicker than the snap")
+
+
+func test_nibblefin_leaps_out_of_the_water_and_back() -> void:
+	var f := _spawn_enemy("res://enemies/nibblefin.tscn", Vector2(-300, -200)) as Nibblefin
+	f.interval = 0.3
+	f._timer = 0.2
+	var surface := -200.0
+	var top := 0.0
+	var back := false
+	for i in 400:
+		await get_tree().physics_frame
+		top = minf(top, f.global_position.y - surface)
+		if top < -200.0 and f.global_position.y > surface:
+			back = true
+	check(top < -200.0, "it should leap well above the surface (peak %.0f)" % top)
+	check(back, "and splash back under")
+
+
+func test_cocobonk_lobs_coconuts_and_takes_two_hits() -> void:
+	var p := add_player(0, Vector2(-100, -2))
+	await settle(p)
+	var m := _spawn_enemy("res://enemies/cocobonk.tscn", Vector2(380, 0)) as Cocobonk
+	var hit := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_bubbled():
+			hit = true
+			break
+	check(hit, "a Cocobonk's coconut should find a player who stands still")
+	m.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(not m.dead, "one hit isn't enough")
+	await seconds(0.8)
+	m.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(m.dead, "two hits knock it out")
+
+
+func test_swoopbeak_dives_at_you_and_flies_back() -> void:
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var b := _spawn_enemy("res://enemies/swoopbeak.tscn", Vector2(-150, -380)) as Swoopbeak
+	b.patrol_offset = Vector2.ZERO
+	var lowest := -380.0
+	for i in 240:
+		await get_tree().physics_frame
+		lowest = maxf(lowest, b.global_position.y)
+		if p.is_bubbled():
+			break
+	check(lowest > -150.0, "it should dive down toward you (lowest %.0f)" % lowest)
+	await seconds(2.5)
+	check(b.global_position.y < -250.0, "then flap back up (y %.0f)" % b.global_position.y)
+
+
+func test_chamelia_tongue_sticks_in_a_wall_and_she_can_be_stomped() -> void:
+	var c := _spawn_enemy("res://enemies/chamelia.tscn", Vector2(0, 0), 1) as Chamelia
+	var p := add_player(0, Vector2(470, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	c.set_active(true)
+	await frames(2)
+	c._start_tell()
+	var stuck := false
+	for i in 240:
+		await get_tree().physics_frame
+		if c.st == Chamelia.St.STUCK:
+			stuck = true
+			break
+	check(stuck, "her tongue should hit the wall behind you and stick")
+	var hp := c.health
+	c._on_stomped(p)
+	check(c.health == hp - 1, "stuck = stompable (hp %d -> %d)" % [hp, c.health])
+	check(c.st != Chamelia.St.STUCK, "a stomp frees her tongue")
+
+
+func test_chamelia_tongue_hurts_whoever_it_reaches() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	var c := _spawn_enemy("res://enemies/chamelia.tscn", Vector2(0, 0), 1) as Chamelia
+	var p := add_player(0, Vector2(450, -2))
+	await settle(p)
+	c.set_active(true)
+	await frames(2)
+	p.invulnerable_timer = 0.0
+	c._start_tell()
+	await seconds(1.3)
+	check(p.is_bubbled(), "standing still in front of her tongue gets you caught")
+
+
+## Bot: run, jump into the first liana, pump, let go at the forward swing, catch the next...
+## until standing on the floor past `end_x`.
+const DEBUG_LIANA := false
+const GAP_PROBE := 460.0
+
+
+func _liana_cross(p: Player, take_off_x: float, end_x: float, max_s := 14.0) -> bool:
+	var y0 := p.global_position.y
+	press(0, "move_right")
+	var jumped := false
+	var hold := 0
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		if hold > 0:
+			hold -= 1
+			if hold == 0:
+				release(0, "jump")
+		var st := _state(p)
+		if DEBUG_LIANA and i % 12 == 0:
+			print("L ", i, " ", st, " ", p.global_position.round(), " v", p.velocity.round())
+		if not jumped and p.global_position.x >= take_off_x and p.is_on_floor():
+			press(0, "jump")
+			hold = 40
+			jumped = true
+		if st == &"Swing":
+			# Pump with the swing: push the way you're moving.
+			if p.velocity.x < -20.0:
+				release(0, "move_right")
+				press(0, "move_left")
+			else:
+				release(0, "move_left")
+				press(0, "move_right")
+		else:
+			release(0, "move_left")
+			press(0, "move_right")
+		if st == &"Swing" and hold == 0:
+			var anchor: Node2D = p.swing_anchor
+			var grip := p.global_position + Player.GRIP_OFFSET
+			# Let go on the forward upswing.
+			var rope: float = anchor.get(&"rope_length") if anchor.get(&"rope_length") != null else 92.0
+			if p.velocity.x > 200.0 and grip.x > anchor.global_position.x + rope * 0.42 and p.velocity.y < 60.0:
+				press(0, "jump")
+				hold = 30
+		if p.global_position.x >= end_x and p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "move_left")
+	release(0, "jump")
+	return p.global_position.x >= end_x and p.global_position.y < y0 + 60.0 and not p.is_bubbled()
+
+
+func test_liana_chain_crosses_a_wide_pit() -> void:
+	for n in [^"Wall", ^"Floor"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	for r in [Rect2(-2000, 0, 500, 200), Rect2(-1500 + GAP_PROBE * 3 - 100, 0, 1500, 200)]:
+		var b: Node2D = load("res://world/block.tscn").instantiate()
+		b.position = r.position
+		b.size = r.size
+		_arena.add_child(b)
+	for k in 3:
+		var v := Liana.new()
+		v.length = 330.0
+		v.position = Vector2(-1300 + k * GAP_PROBE, -520)
+		v.phase = k * 0.7
+		_arena.add_child(v)
+	var p := add_player(0, Vector2(-1800, -2))
+	await settle(p)
+	var ok := await _liana_cross(p, -1560.0, -1500 + GAP_PROBE * 3, 14.0)
+	check(ok, "a bot swinging vine to vine should cross a pit with lianas %.0f px apart" % GAP_PROBE)
+
+
+## Bot: walk into water, swim right at the surface, leap out past `bank_x`, stop on land past `end_x`.
+func _swim_across(p: Player, bank_x: float, end_x: float, max_s := 10.0) -> bool:
+	press(0, "move_right")
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			press(0, "move_up")
+			# Leap out at the far bank - or onto anything that blocks the way.
+			if (p.global_position.x > bank_x or absf(p.velocity.x) < 30.0) and i % 20 == 0:
+				press(0, "jump")
+		if i % 20 == 8:
+			release(0, "jump")
+		if p.global_position.x > end_x and p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "move_up")
+	release(0, "jump")
+	return p.global_position.x > end_x and p.is_on_floor() and not p.is_bubbled()
+
+
+## Bot: hop along sinking leaves (one hop per leaf x), coasting onto each.
+func _leaf_hops(p: Player, xs: Array) -> void:
+	for x in xs:
+		press(0, "move_right")
+		press(0, "jump")
+		for i in 90:
+			await get_tree().physics_frame
+			if p.global_position.x >= float(x) - 50.0 and p.is_on_floor():
+				break
+			if p.global_position.x >= float(x) - 60.0:
+				release(0, "move_right")
+		release(0, "jump")
+		release(0, "move_right")
+		await frames(6)
+
+
+const W3_1 := "res://levels/w3_1_drizzle_thicket.tscn"
+
+
+func test_w3_1_flytraps_and_monkeys_lead_to_the_lianas() -> void:
+	var p: Player = await _load_demo(W3_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3400, false, 10.0)
+	check(ok, "running past the flytraps reaches the liana checkpoint (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_gem_0_sits_on_the_ledges_over_the_flytraps() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(2060, -2))
+	var ok: bool = await _hop_run(p, [2100, 2330], 2480, false, 4.0)
+	check(gm().gems[0], "two hops up the ledges reach gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_lianas_swing_you_over_the_pit() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(3400, -2))
+	var ok := await _liana_cross(p, 4090.0, 5300.0)
+	check(ok, "swinging liana to liana crosses the pit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_stream_can_be_swum_past_the_nibblefins() -> void:
+	var p: Player = await _load_demo(W3_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5300, -2))
+	var ok := await _swim_across(p, 6480.0, 6700.0)
+	check(ok, "you can swim the stream and climb out (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_tall_tree_pad_reaches_gem_1() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(8080, -2))
+	press(0, "move_right")
+	for i in 300:
+		await get_tree().physics_frame
+		if p.global_position.x > 8300.0:
+			release(0, "move_right")
+		if gm().gems[1]:
+			break
+	release(0, "move_right")
+	if not gm().gems[1]:
+		await _run_to(p, 8560.0, "move_right", 2.0)
+		release(0, "move_right")
+	check(gm().gems[1], "the mushroom pad bounces you onto the tall tree and gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_leaves_cross_the_bog() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(9320, -2))
+	await _leaf_hops(p, [9560, 9820, 10080, 10340, 10700])
+	check(p.global_position.x > 10600.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "hopping the sinking leaves crosses the bog (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_finish_reaches_the_gate() -> void:
+	var p: Player = await _load_demo(W3_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10700, -2))
+	var ok: bool = await _hop_run(p, [11200], 12450, false, 10.0)
+	check(ok or gm().level_complete, "over the mossy mound and past the flytraps (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Drizzle Thicket")
+	await _finish_demo()
+
+
+func test_w3_1_mossy_hollow_hides_gem_2() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(11240, -2))
+	p.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(0.5)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[2], "punching through the mossy wall reaches gem 2 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W3_2 := "res://levels/w3_2_canopy_highway.tscn"
+
+
+func test_w3_2_first_bridge_reaches_the_second_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 2200, false, 8.0)
+	check(ok, "across the first rope bridge to the second tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_liana_gap_to_the_third_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(1800, -42))
+	var ok := await _liana_cross(p, 2240.0, 3450.0)
+	check(ok, "two lianas swing you to the third tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_zipline_to_the_fourth_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(3960, -302))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 600:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 4970.0:
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed, "the zipline should carry you to the fourth tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_zipline_post_is_reachable_from_the_deck() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(3640, -42))
+	press(0, "move_right")
+	var high := 0.0
+	var k := 0
+	for i in 480:
+		await get_tree().physics_frame
+		high = minf(high, p.global_position.y)
+		if k < 2 and p.global_position.x >= [3700.0, 3850.0][k] and p.is_on_floor():
+			press(0, "jump")
+			k += 1
+		if i % 40 == 30:
+			release(0, "jump")
+	release(0, "move_right")
+	release(0, "jump")
+	check(high < -280.0, "ledge then post: you can climb to the zipline (highest %.0f)" % high)
+	await _finish_demo()
+
+
+func test_w3_2_crumbling_branches_cross_to_the_fifth_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(5450, -102))
+	var ok: bool = await _hop_run(p, [5640, 5900, 6160, 6420], 6560, false, 6.0)
+	check(ok, "hopping the crumbling branches reaches the fifth tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_three_liana_swing_reaches_the_sixth_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(6560, -82))
+	var ok := await _liana_cross(p, 7040.0, 8650.0)
+	check(ok, "three lianas in a row reach the sixth tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_broken_bridge_and_the_treehouse_gate() -> void:
+	var p: Player = await _load_demo(W3_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(8650, -42))
+	var ok: bool = await _hop_run(p, [9380, 10600], 11600, false, 12.0)
+	check(ok or gm().level_complete, "over the broken bridge and the stump to the gate (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Canopy Highway")
+	await _finish_demo()
+
+
+func test_w3_2_under_bridge_branch_has_gem_1_and_a_pad_back_up() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(9395, 298))
+	await _run_to(p, 9560.0, "move_right", 2.0)
+	check(gm().gems[1], "the branch under the bridge holds gem 1")
+	release(0, "move_right")
+	var up := false
+	for i in 200:
+		await get_tree().physics_frame
+		if p.global_position.y < -100.0:
+			up = true
+	check(up, "the mushroom bounces you back up through the gap (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W3_3 := "res://levels/w3_3_sunken_temple.tscn"
+
+
+func test_w3_3_entrance_hall_traps_lead_to_the_crushers() -> void:
+	var p: Player = await _load_demo(W3_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3700, false, 10.0)
+	check(ok, "past the pop-spikes and the flytrap to the crusher hall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_pop_spikes_can_be_dashed_when_down() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(1800, -2))
+	# Wait for the first spikes to sink, then run straight through the ripple.
+	var first: PopSpikes = null
+	for n in _demo.find_children("*", "PopSpikes", true, false):
+		if first == null or n.global_position.x < first.global_position.x:
+			first = n
+	for i in 400:
+		await get_tree().physics_frame
+		if not first.is_up() and fmod(first._t, first.up_time + first.down_time) < first.up_time + 0.1:
+			break
+	var ok: bool = await _hop_run(p, [], 2950, false, 4.0)
+	check(ok, "running with the wave as the spikes sink gets you past them unhurt (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_shaft_wall_jump_reaches_gem_0() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(3280, -202))
+	press(0, "jump")  # straight up into the shaft...
+	for i in 40:
+		await get_tree().physics_frame
+	release(0, "jump")
+	press(0, "move_right")  # ...then kick off the walls
+	for i in 600:
+		await get_tree().physics_frame
+		if i % 24 == 0:
+			press(0, "jump")
+		elif i % 24 == 6:
+			release(0, "jump")
+		if gm().gems[0]:
+			break
+	release(0, "move_right")
+	release(0, "jump")
+	check(gm().gems[0], "wall-jumping up the narrow shaft reaches gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_crushers_can_be_run_under() -> void:
+	var p: Player = await _load_demo(W3_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(3700, -2))
+	var ok: bool = await _hop_run(p, [], 5760, false, 12.0)
+	check(ok, "the crusher hall leads to the key hall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_vine_climbs_to_the_key_ledge() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(5880, -2))
+	press(0, "move_up")
+	press(0, "jump")
+	await frames(6)
+	release(0, "jump")
+	var top := 0.0
+	for i in 600:
+		await get_tree().physics_frame
+		top = minf(top, p.global_position.y)
+		if p.global_position.y < -800.0:
+			break
+	release(0, "move_up")
+	check(top < -800.0, "climbing the vine reaches the key ledge (highest %.0f)" % top)
+	await _finish_demo()
+
+
+func test_w3_3_key_opens_the_temple_door() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(5990, -782))
+	var ok: bool = await _hop_run(p, [], 6300, false, 6.0)
+	check(p.global_position.x > 6200.0, "carrying the key, the temple door opens (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_swim_under_the_lintel_through_the_crypt() -> void:
+	var p: Player = await _load_demo(W3_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6210, -2))
+	press(0, "move_right")
+	for i in 1500:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			# Dive under the lintel, then come up and leap out at the far bank.
+			if p.global_position.x < 6560.0:
+				press(0, "move_up")
+				release(0, "move_down")
+			elif p.global_position.x < 6960.0:
+				release(0, "move_up")
+				press(0, "move_down")
+			else:
+				release(0, "move_down")
+				press(0, "move_up")
+				if p.global_position.x > 7150.0 and i % 20 == 0:
+					press(0, "jump")
+		if i % 20 == 8:
+			release(0, "jump")
+		if p.global_position.x > 7400.0 and p.is_on_floor():
+			break
+	for a in ["move_right", "move_up", "move_down", "jump"]:
+		release(0, a)
+	check(p.global_position.x > 7350.0 and p.is_on_floor(), "you can swim under the stone lintel and climb out (at %s)" % p.global_position)
+	check(gm().gems[1], "gem 1 waits under the lintel")
+	await _finish_demo()
+
+
+func test_w3_3_lianas_swing_across_the_collapsed_hall() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(7700, -2))
+	var ok := await _liana_cross(p, 7950.0, 9150.0)
+	check(ok, "two lianas carry you over the collapsed floor (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_pyramid_steps_lead_to_the_gate() -> void:
+	var p: Player = await _load_demo(W3_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(9100, -2))
+	var ok: bool = await _hop_run(p, [9500, 9800, 10100, 11700], 12450, false, 14.0)
+	check(ok or gm().level_complete, "up and over the pyramid and the shrine (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes the Sunken Temple")
+	await _finish_demo()
+
+
+func test_w3_3_shrine_hides_gem_2() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(11740, -2))
+	p.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(0.5)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[2], "punching the shrine's cracked front reaches gem 2 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+## Bot: wait on the bank for a raft at bank_x..bank_x+100, hop on, ride to `off_x`, hop off.
+func _ride_raft(p: Player, home_x: float, off_x: float, surface_y: float) -> bool:
+	var rafts := _demo.find_children("*", "LogRaft", true, false)
+	var on_raft: LogRaft = null
+	for i in 1200:
+		await get_tree().physics_frame
+		for r in rafts:
+			var lr := r as LogRaft
+			if lr.global_position.x > home_x + 20.0 and lr.global_position.x < home_x + 110.0 and lr.modulate.a > 0.9 \
+					and lr.global_position.y < surface_y + 40.0:
+				on_raft = lr
+		if on_raft:
+			break
+	if on_raft == null:
+		return false
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 60:
+		await get_tree().physics_frame
+		if p.global_position.x > on_raft.global_position.x - 10.0:
+			release(0, "move_right")
+	release(0, "jump")
+	release(0, "move_right")
+	for i in 2400:
+		await get_tree().physics_frame
+		if DEBUG_LIANA and i % 30 == 0:
+			print("R ", i, " p", p.global_position.round(), " ", _state(p), " raft", on_raft.global_position.round())
+		if on_raft.global_position.x > off_x:
+			break
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(40)
+	release(0, "jump")
+	await seconds(0.8)
+	release(0, "move_right")
+	return p.global_position.y < surface_y - 10.0 and not p.is_bubbled()
+
+
+const W3_4 := "res://levels/w3_4_rumbletide_rapids.tscn"
+
+
+func test_w3_4_rafts_cross_the_lower_river() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(1250, -2))
+	var ok := await _ride_raft(p, 1360.0, 2800.0, 20.0)
+	check(ok and p.global_position.x > 3010.0, "riding a raft gets you across the lower river (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_monkey_bank_reaches_the_falls() -> void:
+	var p: Player = await _load_demo(W3_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(3080, -2))
+	var ok: bool = await _hop_run(p, [], 4600, false, 8.0)
+	check(ok, "along the monkey bank to the waterfall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_gem_0_on_the_bank_ledges() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(3700, -2))
+	var ok: bool = await _hop_run(p, [3750, 3970], 4120, false, 4.0)
+	check(gm().gems[0], "two hops up the ledges reach gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_net_climbs_the_waterfall() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(5130, -2))
+	press(0, "move_up")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	for i in 900:
+		await get_tree().physics_frame
+		if DEBUG_LIANA and i % 30 == 0:
+			print("N ", i, " ", _state(p), " ", p.global_position.round())
+		if p.global_position.y < -660.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(30)
+	release(0, "jump")
+	await seconds(0.8)
+	release(0, "move_right")
+	check(p.global_position.x > 5200.0 and p.global_position.y < -690.0, "climbing the net up the falls reaches the top (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_three_lianas_cross_the_gorge() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(5300, -702))
+	var ok := await _liana_cross(p, 6240.0, 7750.0)
+	check(ok, "three lianas swing you over the gorge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_rafts_cross_the_upper_river() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(8150, -702))
+	var ok := await _ride_raft(p, 8260.0, 9800.0, -680.0)
+	check(ok and p.global_position.x > 10000.0, "riding a raft gets you up the upper river (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_mudslide_and_the_gate() -> void:
+	var p: Player = await _load_demo(W3_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10080, -702))
+	var ok: bool = await _hop_run(p, [11900], 12650, false, 14.0)
+	check(ok or gm().level_complete, "down the mudslide and over the hollow (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Rumbletide Rapids")
+	await _finish_demo()
+
+
+const W3_5 := "res://levels/w3_5_firefly_bog.tscn"
+
+
+func test_w3_5_lily_leaves_cross_the_first_pool() -> void:
+	var p: Player = await _load_demo(W3_5)
+	await _clear_enemies()
+	await _place(p, Vector2(1320, -2))
+	await _leaf_hops(p, [1560, 1820, 2080, 2340, 2600, 2860, 3110, 3320])
+	check(p.global_position.x > 3200.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "hopping the lily leaves crosses the pool (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_5_flytrap_meadow_and_the_dead_tree_gem() -> void:
+	var p: Player = await _load_demo(W3_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(3300, -2))
+	var ok: bool = await _hop_run(p, [], 4790, false, 8.0)
+	check(ok, "across the flytrap meadow to the sinkhole (at %s)" % p.global_position)
+	check(gm().gems[0], "the mushroom pad on the way tosses you past gem 0 on the dead tree")
+	await _finish_demo()
+
+
+func test_w3_5_three_lianas_cross_the_sinkhole() -> void:
+	var p: Player = await _load_demo(W3_5)
+	await _clear_enemies()
+	await _place(p, Vector2(4600, -2))
+	var ok := await _liana_cross(p, 4760.0, 6300.0)
+	check(ok, "three lianas swing you over the sinkhole (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_5_log_stepping_stones_and_the_island() -> void:
+	var p: Player = await _load_demo(W3_5)
+	await _clear_enemies()
+	await _place(p, Vector2(6520, -2))
+	await _leaf_hops(p, [6800, 7060, 7320, 7560, 7840, 8080, 8300])
+	check(p.global_position.x > 8200.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "hopping log to log crosses the pool (at %s)" % p.global_position)
+	check(gm().gems[1], "gem 1 floats over the last log")
+	await _finish_demo()
+
+
+func test_w3_5_root_tunnel_and_the_gate() -> void:
+	var p: Player = await _load_demo(W3_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(8320, -2))
+	var ok: bool = await _hop_run(p, [10900], 12150, false, 14.0)
+	check(ok or gm().level_complete, "through the root tunnel and over the stump (at %s)" % p.global_position)
+	check(gm().level_complete, "the gate completes Firefly Bog")
+	await _finish_demo()
+
+
+func test_w3_5_hollow_stump_hides_gem_2() -> void:
+	var p: Player = await _load_demo(W3_5)
+	await _clear_enemies()
+	await _place(p, Vector2(10940, -2))
+	p.facing = 1
+	press(0, "attack")
+	await frames(4)
+	release(0, "attack")
+	await seconds(0.5)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[2], "punching the stump open reaches gem 2 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_every_snoozling_cage_can_be_punched_open() -> void:
+	for path in [W3_1, W3_2, W3_3, W3_4, W3_5]:
+		var p: Player = await _load_demo(path)
+		await _clear_enemies()
+		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
+		await _place(p, cage.global_position + Vector2(-55, -4))
+		if _state(p) == &"Swim":  # underwater: swim back down to it
+			press(0, "move_down")
+			for i in 400:
+				await get_tree().physics_frame
+				if p.global_position.distance_to(cage.global_position) < 90.0:
+					break
+			release(0, "move_down")
+		p.facing = 1
+		await _punch()
+		await frames(20)
+		check(cage._opened, "%s: the Snoozling's cage opens with a punch (player %s %s, cage %s)" % [path.get_file(), p.global_position, _state(p), cage.global_position])
+		await _finish_demo()
+
+
+const W3_6 := "res://levels/w3_6_chamelia_temple.tscn"
+
+
+func test_w3_6_temple_steps_lead_to_the_moat() -> void:
+	var p: Player = await _load_demo(W3_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok: bool = await _hop_run(p, [], 3150, false, 10.0)
+	check(ok, "up the temple steps to the moat (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_6_three_lianas_cross_the_moat() -> void:
+	var p: Player = await _load_demo(W3_6)
+	await _clear_enemies()
+	await _place(p, Vector2(2900, -2))
+	var ok := await _liana_cross(p, 3160.0, 4700.0)
+	check(ok, "three lianas swing you over the moat (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_6_terraces_climb_to_the_summit() -> void:
+	var p: Player = await _load_demo(W3_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4700, -2))
+	var ok: bool = await _hop_run(p, [4920, 5170, 5420, 5670, 5920], 6250, false, 10.0)
+	check(ok and p.global_position.y < -690.0, "hopping up the terraces reaches the summit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_6_chamelia_can_be_beaten_by_sticking_her_tongue_in_the_walls() -> void:
+	seed(20261002)
+	var p: Player = await _load_demo(W3_6)
+	var boss: Chamelia = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Chamelia:
+			boss = e
+		else:
+			e.queue_free()
+	check(boss != null and boss.asleep, "Chamelia should be asleep in her arena")
+	await _place(p, Vector2(6900, -702))
+	await frames(10)
+	check(not boss.asleep, "walking into the arena should wake her")
+	var gates := _demo.find_children("*", "Gate", true, false)
+	for round in 24:
+		if not is_instance_valid(boss) or boss.dead:
+			break
+		p.invulnerable_timer = 100.0
+		# Stand between her and a wall, let her lash: the tongue sticks in the wall.
+		var right := boss.global_position.x < 7100.0
+		p.global_position = Vector2(7620.0 if right else 6540.0, -702.0)
+		p.velocity = Vector2.ZERO
+		boss.st = Chamelia.St.WALK
+		boss._tongue = 0.0
+		boss._start_tell()
+		for i in 300:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.st == Chamelia.St.STUCK:
+				break
+		if not is_instance_valid(boss) or boss.st != Chamelia.St.STUCK:
+			continue
+		boss._on_stomped(p)
+		await seconds(0.6)
+	check(not is_instance_valid(boss) or boss.dead, "six stomps while she's stuck should beat Chamelia (hp %d)" % (boss.health if is_instance_valid(boss) else 0))
+	await seconds(1.5)
+	var exit_open := false
+	for g in gates:
+		if g.global_position.x > 7600.0 and g.is_open():
+			exit_open = true
+	check(exit_open, "beating her should open the exit gate")
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7600, -702))
+	var ok: bool = await _hop_run(p, [], 8240, false, 6.0)
+	check(gm().level_complete, "the gate past the arena completes World 3 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in(W3_6, Vector2(6300, -700), 6950.0)

@@ -17,12 +17,14 @@ BLOCK = RES + "world/block.tscn"
 ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
            ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo", "king_grumblo",
             "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
-            "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost"]}
+            "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost",
+            "cocobonk", "swoopbeak", "nibblefin", "chamelia"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
 class LevelKit:
-    SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7}
+    SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7,
+               "jungle": 8, "ruins": 9}
 
     def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
                  scenery="hills", backdrop=None):
@@ -157,6 +159,10 @@ class LevelKit:
         "snow": [("pine", 2.5), ("rock", 1.2), ("snowman", 0.25), ("fence", 0.4), ("crystals", 0.4), ("stump", 0.4)],
         "icecave": [("crystals", 3), ("rock", 1.5), ("snowman", 0.1)],
         "thorn": [("grass", 2), ("rock", 2), ("stump", 1), ("mushrooms", 1), ("fern", 0.6)],
+        "jungle": [("big_leaf", 3), ("fern", 3), ("grass", 2), ("bromeliad", 1.2), ("palm", 0.7), ("flowers", 0.8),
+                   ("mushrooms", 0.4), ("rock", 0.4)],
+        "ruins": [("fern", 2.5), ("big_leaf", 2), ("totem", 0.35), ("rock", 1.5), ("grass", 1.5), ("bromeliad", 0.6)],
+        "swamp": [("reeds", 3), ("fern", 2), ("mushrooms", 1.2), ("big_leaf", 1), ("log", 0.4), ("stump", 0.5)],
     }
 
     def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=6, skip=(), trees=True):
@@ -286,6 +292,20 @@ class LevelKit:
                           wait_time=float(wait), one_way=True, wait_for_rider=rider or None,
                           start_offset=float(offset) if offset else None)
 
+    def waterfall(self, x, y, w, h):
+        """A curtain of falling water (scenery); origin top-left."""
+        return self.s.node("Waterfall", "Node2D", "Decor", {"script": self.s.script(RES + "world/waterfall.gd"),
+                                                            "position": V(x, y), "size": V(w, h)})
+
+    def liana(self, x, y, length=300.0, sway=None, phase=None):
+        """Jungle vine hanging from (x, y): jump into its end to swing."""
+        return self._tool("Toys", "Liana", "Node2D", "liana", x, y, length=float(length), sway=sway, phase=phase)
+
+    def snaptrap(self, x, y, width=None, warn=None, shut=None):
+        """Flytrap on the ground at (x, y): snaps shut a moment after you step in."""
+        return self._tool("Hazards", "SnapTrap", "Area2D", "snap_trap", x, y, width=width, warn_time=warn,
+                          shut_time=shut)
+
     def bell(self, x, y, duration=None, recharge=None):
         """Dream Bell: touch/punch it for a Lum Rush (Lums count double for `duration` s)."""
         return self._tool("Toys", "DreamBell", "Area2D", "dream_bell", x, y, duration=duration, recharge=recharge)
@@ -329,7 +349,7 @@ class LevelKit:
         return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
 
     def ambience(self, kind="pollen", density=1.0, darkness=None, tint=None):
-        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow"]
+        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain"]
         props = {"script": self.s.script(RES + "world/ambience.gd"), "kind": kinds.index(kind),
                  "density": float(density) if density != 1.0 else None, "darkness": darkness, "tint": tint}
         return self.s.node("Ambience", "Node2D", "Decor", {k: v for k, v in props.items() if v is not None})
@@ -487,7 +507,8 @@ class LevelKit:
     def deco(self, kind, x, y, size=1.0, front=False, seed=0):
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
-                 "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS"]
+                 "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS",
+                 "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

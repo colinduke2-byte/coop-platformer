@@ -65,6 +65,11 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   2-3 Crystal Caverns, 2-4 Avalanche Alley (chase), 2-5 Hot Spring Hollow,
   2-6 Grumblefrost's Summit (boss: **Grumblefrost**, the Snowball King yeti).
   Reached by the gondola at the end of World 1's map once the Baron is beaten.
+- **World 3 - Rainbloom Jungle**: 3-1 Drizzle Thicket, 3-2 Canopy Highway,
+  3-3 Sunken Temple, 3-4 Rumbletide Rapids, 3-5 Firefly Bog (dark),
+  3-6 Chamelia's Temple (boss: **Chamelia**, the Colour Queen chameleon - her
+  tongue sticks in walls, then stomp her). New: swinging lianas, flytraps,
+  monkeys, toucans and piranhas. Reached from the top of World 2's map.
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.

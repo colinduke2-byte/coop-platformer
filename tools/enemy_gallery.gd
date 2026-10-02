@@ -5,7 +5,8 @@ extends Node2D
 
 const ENEMIES := ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonkhorn", "boingo",
 		"shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
-		"slidgewick", "snowl", "yetling", "grumblefrost"]
+		"slidgewick", "snowl", "yetling", "grumblefrost",
+		"cocobonk", "swoopbeak", "nibblefin", "chamelia"]
 
 
 func _ready() -> void:

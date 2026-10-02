@@ -43,10 +43,10 @@ world/       Geometry (block, terrain, slope, back_wall), toys (bounce_pad, swin
              looks (backdrop, ambience, glow_light, waterfall, level_theme + themes/),
              mesh_painter.gd (bakes static art to one ArrayMesh = one draw call)
 decor/       deco.gd (baked scenery props, sway via skew), signpost
-enemies/     enemy.gd base + 17 enemies + 3 bosses (king_grumblo, baron_bristleback, grumblefrost)
+enemies/     enemy.gd base + 20 enemies + 4 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia)
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
-             w1_*/w2_*.tscn (Worlds 1-2 - GENERATED, see below), bonus levels, demo_level
+             w1_*/w2_*/w3_*.tscn (Worlds 1-3 - GENERATED, see below), bonus levels, demo_level
 ui/          title -> character_select -> world_map (one per world, gates between) -> level -> results;
              hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus)
 tools/       check.sh, levelgen/ (Python level kit + level scripts), bench (draw
@@ -56,7 +56,7 @@ docs/        GAME_DESIGN, ROADMAP, LEVEL_BUILDING, CONTROLS, MOVEMENT
 ```
 
 **Levels are generated.** Edit `tools/levelgen/levels/<level>.py` and run it;
-don't hand-edit `levels/w1_*.tscn` / `w2_*.tscn` (changes get overwritten). See
+don't hand-edit `levels/w1_*.tscn` / `w2_*.tscn` / `w3_*.tscn` (changes get overwritten). See
 `docs/LEVEL_BUILDING.md` for the kit and the enemy/piece catalogue.
 
 **Performance (target 120 fps).** Static art goes through `MeshPainter` and is

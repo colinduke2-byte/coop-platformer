@@ -1,0 +1,25 @@
+"""Sandbox with every World 3 toy and enemy (not in the level list; open it with F6)."""
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from kit import LevelKit
+
+L = LevelKit("SandboxW3", "World 3 Toybox", theme="jungle", horizon=0, scenery="jungle", backdrop={"light_shafts": True})
+L.ambience("rain", 1.0)
+L.land([(-400, 0), (1600, 0)])
+L.snaptrap(600, 0)
+L.snaptrap(900, 0)
+L.enemy("cocobonk", 1300, 0)
+L.liana(1800, -620, 330)
+L.liana(2250, -620, 330, phase=0.8)
+L.land([(2600, 0), (3600, 0), (3600, 160), (4600, 160), (4600, 0), (5200, 0)])
+L.water(3600, 40, 1000, 120)
+L.enemy("nibblefin", 3900, 40)
+L.enemy("nibblefin", 4300, 40, phase=0.5)
+L.enemy("swoopbeak", 4800, -420)
+L.dress(-400, 5200, "jungle", seed=7)
+L.deco("palm", 300, 0)
+L.deco("totem", 2800, 0)
+L.deco("big_leaf", 3000, 0)
+L.deco("bromeliad", 3200, 0)
+L.finish(spawn=(0, -2), left=-400, right=5200, bottom=900, kill_y=1200)
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/sandbox_w3.tscn"))

@@ -64,7 +64,15 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] On a full-party respawn the boss walks back to his spot and naps (damage dealt is kept; minions / boulders cleared); boss bar hides until you return
 - [x] King Grumblo gets the boss health bar too
 - [ ] Playtest: should bosses heal on respawn instead? (set_active(false) in each boss script)
-- [ ] World 3 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
+
+## World 3 - Rainbloom Jungle ✅ (needs Colin's playtest)
+- [x] New pieces: lianas (long swinging vines), flytraps (snap shut after you step in), rain ambience, jungle + ruins backdrops, palm / big leaf / totem / bromeliad deco, waterfall helper
+- [x] New enemies: Cocobonk (coconut-lobbing monkey), Swoopbeak (diving toucan), Nibblefin (leaping piranha), boss Chamelia (tongue sticks in walls; invisible sneak; seed fan)
+- [x] 3-1 Drizzle Thicket, 3-2 Canopy Highway, 3-3 Sunken Temple, 3-4 Rumbletide Rapids, 3-5 Firefly Bog, 3-6 Chamelia's Temple; bot tests for every section
+- [x] Jungle world map + gate from the top of World 2's map; 6 new music tracks
+- [ ] Playtest: are the liana chains too hard for new players? (`Liana.sway`, spacing 420-480, grab = lower half of the vine)
+- [ ] Is Chamelia fair with 1 player? (`tongue_reach` 760, `stuck_time` 2.6)
+- [ ] World 4 ideas: Candy Clouds (expand the Candy Canopy bonus level), or a Clockwork Dream factory
 
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)

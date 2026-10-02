@@ -12,6 +12,7 @@ static var dev_unlock := false
 const WORLDS: Array[Dictionary] = [
 	{"id": "w1", "name": "The Lullaby Woods", "blurb": "Where every dream begins. Mind the thorns."},
 	{"id": "w2", "name": "Frostwhistle Peaks", "blurb": "Snowballs, ski lifts and a very grumpy yeti."},
+	{"id": "w3", "name": "Rainbloom Jungle", "blurb": "Warm rain, swinging vines and a queen you can't always see."},
 	{"id": "bonus", "name": "Bonus Dreams", "blurb": "Old favourites and tricky extras."},
 ]
 
@@ -52,6 +53,24 @@ const LEVELS: Array[Dictionary] = [
 	{"id": "w2_6", "world": "w2", "name": "Grumblefrost's Summit", "scene": "res://levels/w2_6_grumblefrost_summit.tscn",
 		"blurb": "The top of the mountain, where the Snowball King sits on his icy throne.",
 		"theme": "res://world/themes/summit.tres", "map": Vector2(1640, 300), "boss": true},
+	{"id": "w3_1", "world": "w3", "name": "Drizzle Thicket", "scene": "res://levels/w3_1_drizzle_thicket.tscn",
+		"blurb": "Warm rain, snapping flytraps and your first swing on a jungle liana.",
+		"theme": "res://world/themes/jungle.tres", "map": Vector2(240, 850)},
+	{"id": "w3_2", "world": "w3", "name": "Canopy Highway", "scene": "res://levels/w3_2_canopy_highway.tscn",
+		"blurb": "Rope bridges and vines between giant trees - don't look down!",
+		"theme": "res://world/themes/treetops.tres", "map": Vector2(540, 650)},
+	{"id": "w3_3", "world": "w3", "name": "Sunken Temple", "scene": "res://levels/w3_3_sunken_temple.tscn",
+		"blurb": "Old traps, a lost key and a flooded crypt under the roots.",
+		"theme": "res://world/themes/ruins.tres", "map": Vector2(850, 820)},
+	{"id": "w3_4", "world": "w3", "name": "Rumbletide Rapids", "scene": "res://levels/w3_4_rumbletide_rapids.tscn",
+		"blurb": "Log rafts, leaping fish and a climb up the roaring falls.",
+		"theme": "res://world/themes/rapids.tres", "map": Vector2(1130, 600)},
+	{"id": "w3_5", "world": "w3", "name": "Firefly Bog", "scene": "res://levels/w3_5_firefly_bog.tscn",
+		"blurb": "A dark, steamy swamp lit only by fireflies. Stay close!",
+		"theme": "res://world/themes/swamp.tres", "map": Vector2(1420, 800)},
+	{"id": "w3_6", "world": "w3", "name": "Chamelia's Temple", "scene": "res://levels/w3_6_chamelia_temple.tscn",
+		"blurb": "The great temple, where the Colour Queen hides in plain sight...",
+		"theme": "res://world/themes/temple.tres", "map": Vector2(1650, 330), "boss": true},
 	{"id": "demo", "world": "bonus", "name": "Dreamer's Playground", "scene": "res://levels/demo_level.tscn",
 		"blurb": "Every move in one long sunny playground.", "theme": "res://world/themes/meadow.tres"},
 	{"id": "candy", "world": "bonus", "name": "Candy Canopy", "scene": "res://levels/candy_canopy.tscn",
@@ -128,6 +147,12 @@ static func previous_world(world_id: String) -> String:
 	var ws := story_worlds()
 	var i := ws.find(world_id)
 	return ws[i - 1] if i > 0 else ""
+
+
+static func next_world(world_id: String) -> String:
+	var ws := story_worlds()
+	var i := ws.find(world_id)
+	return ws[i + 1] if i >= 0 and i + 1 < ws.size() else ""
 
 
 static func world_number(world_id: String) -> int:

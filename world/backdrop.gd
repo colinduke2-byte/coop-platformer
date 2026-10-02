@@ -19,6 +19,8 @@ enum Scenery {
 	CASTLE,     ## thorny hills and a dark castle on a crag
 	CANDY,      ## lollipop trees and gumdrop hills
 	ICE,        ## snowy peaks and pines
+	JUNGLE,     ## misty rainforest: waterfalls, giant trees, palms, hanging vines
+	RUINS,      ## jungle with old stepped temples and broken pillars
 }
 
 @export var horizon_y := 600.0:
@@ -89,6 +91,8 @@ func _rebuild() -> void:
 		Scenery.CASTLE: _castle_scene()
 		Scenery.CANDY: _candy_scene()
 		Scenery.ICE: _ice_scene()
+		Scenery.JUNGLE: _jungle_scene(false)
+		Scenery.RUINS: _jungle_scene(true)
 	if cloud_sea:
 		_build_cloud_sea()
 	if light_shafts:
@@ -372,6 +376,121 @@ func _ice_scene() -> void:
 	_hill_band(near, 1800.0, horizon_y - 80.0, 100.0, 3, _th.near_hills)
 	_pine_row(near, 1800.0, 7, 1.1, _th.foliage_dark, true)
 	_commit(near)
+
+
+func _jungle_scene(ruins: bool) -> void:
+	# Misty green mountains with waterfalls far away.
+	_mountain_layer(0.04, 3000.0, 0.62, 560.0, 5, false)
+	var far := _layer(0.12, 2600.0)
+	_hill_band(far, 2600.0, horizon_y - 300.0, 220.0, 4, _haze(_th.far_hills, 0.35))
+	for i in 3:
+		var x := (float(i) + _rng.randf_range(0.2, 0.8)) * 2600.0 / 3.0
+		_waterfall(far, x, horizon_y - 820.0, _ground_at(far, x) + 20.0, 46.0, 0.5)
+	if ruins:
+		for i in 2:
+			var x := (float(i) + _rng.randf_range(0.3, 0.7)) * 1300.0
+			_temple(far, Vector2(x, _ground_at(far, x) + 30.0), 1.1, _haze(_th.ledge_dark, 0.45))
+	_commit(far)
+	# Giant rainforest trees and palms in the middle distance.
+	var mid := _layer(0.26, 2200.0)
+	_hill_band(mid, 2200.0, horizon_y - 150.0, 110.0, 3, _haze(_th.near_hills, 0.22))
+	var bark := _th.ledge_dark.lerp(_th.near_hills, 0.35)
+	var xs := _trunk_row(mid, 2200.0, 5, 120.0, _haze(bark, 0.35))
+	for x in xs:
+		_crown(mid, Vector2(x, horizon_y - _rng.randf_range(900, 1200)), _haze(_th.foliage_dark, 0.3))
+	if ruins:
+		var tx := _rng.randf_range(300, 1900)
+		_temple(mid, Vector2(tx, _ground_at(mid, tx) + 20.0), 1.6, _haze(_th.ledge, 0.3))
+	for i in 6:
+		var x := _rng.randf_range(0, 2200)
+		_palm(mid, Vector2(x, _ground_at(mid, x) + 10.0), _rng.randf_range(0.9, 1.3), _haze(_th.foliage, 0.25), _haze(bark, 0.25))
+	_hanging_vines(mid, 2200.0, 16, horizon_y - 1250.0, _haze(_th.foliage_dark, 0.3))
+	_commit(mid)
+	# Big leaves and ferns up close.
+	var near := _layer(0.5, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 60.0, 70.0, 3, _th.near_hills.darkened(0.06))
+	if ruins:
+		for i in 4:
+			var x := _rng.randf_range(0, 1800)
+			var h := _rng.randf_range(160, 360)
+			var b := Vector2(x, _ground_at(near, x) + 10.0)
+			near.painter.draw_rect(Rect2(b + Vector2(-34, -h), Vector2(68, h)), _th.ledge.darkened(0.1))
+			near.painter.draw_rect(Rect2(b + Vector2(-46, -h - 20), Vector2(92, 22)), _th.ledge.darkened(0.2))
+			near.painter.draw_colored_polygon(Art.ellipse(b + Vector2(-10, -h - 18), 40, 12, 12), _th.top_dark)
+	_big_leaves(near, 1800.0, 14, _th.foliage_dark)
+	_ferns(near, 1800.0, 12, _th.foliage_dark.darkened(0.05))
+	_commit(near)
+
+
+func _waterfall(l: Layer, x: float, top: float, bottom: float, w: float, alpha: float) -> void:
+	var water := Color(0.9, 0.97, 1.0, alpha)
+	l.painter.draw_rect(Rect2(x - w * 0.5, top, w, bottom - top), water)
+	for k in 4:
+		var xx := x - w * 0.5 + (k + 0.5) * w / 4.0
+		l.painter.draw_line(Vector2(xx, top), Vector2(xx, bottom), Color(1, 1, 1, alpha * 0.8), 2.0)
+	l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, bottom), w * 1.4, 18, 14), Color(1, 1, 1, alpha))
+
+
+## A rounded rainforest crown (cluster of leafy blobs) on top of a trunk.
+func _crown(l: Layer, c: Vector2, color: Color) -> void:
+	for k in 7:
+		var p := c + Vector2(_rng.randf_range(-170, 170), _rng.randf_range(-80, 60))
+		l.painter.draw_colored_polygon(Art.ellipse(p, _rng.randf_range(90, 140), _rng.randf_range(60, 90), 16), color.lightened(k * 0.02))
+
+
+func _palm(l: Layer, base: Vector2, s: float, leaf: Color, trunk: Color) -> void:
+	var lean := _rng.randf_range(-0.3, 0.3)
+	var top := base + Vector2(lean * 200.0, -320.0) * s
+	var prev := base
+	for i in 8:
+		var t := float(i + 1) / 8.0
+		var p := base + Vector2(lean * 200.0 * t * t, -320.0 * t) * s
+		l.painter.draw_line(prev, p, trunk, lerpf(16.0, 10.0, t) * s)
+		prev = p
+	for k in 7:
+		var ang := -PI * 0.5 + (float(k) - 3.0) * 0.55
+		var tip := top + Vector2(cos(ang) * 150.0, sin(ang) * 50.0 + 60.0 + absf(float(k) - 3.0) * 14.0) * s
+		var mid := top.lerp(tip, 0.5) + Vector2(0, -36.0) * s
+		var n := (tip - top).normalized().orthogonal() * 18.0 * s
+		l.painter.draw_colored_polygon(PackedVector2Array([top, mid + n, tip, mid - n * 0.4]), leaf)
+
+
+func _hanging_vines(l: Layer, width: float, count: int, top: float, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var length := _rng.randf_range(300, 800)
+		var pts := PackedVector2Array()
+		for k in 12:
+			var t := float(k) / 11.0
+			pts.append(Vector2(x + sin(t * 5.0 + i) * 14.0, top + t * length))
+		l.painter.draw_polyline(pts, color, 4.0)
+		for k in range(2, 12, 2):
+			l.painter.draw_colored_polygon(Art.ellipse(pts[k] + Vector2(8, 0), 9, 5, 8), color.lightened(0.08))
+
+
+func _big_leaves(l: Layer, width: float, count: int, color: Color) -> void:
+	for i in count:
+		var x := _rng.randf_range(0, width)
+		var base := Vector2(x, _ground_at(l, x) + 16.0)
+		for k in 3:
+			var ang := -PI * 0.5 + (float(k) - 1.0) * 0.6 + _rng.randf_range(-0.15, 0.15)
+			var c := base + Vector2(cos(ang), sin(ang)) * _rng.randf_range(60, 100)
+			l.painter.draw_line(base, c, color.darkened(0.1), 4.0)
+			l.painter.draw_colored_polygon(Art.ellipse(c, 46, 28, 16), color.lightened(k * 0.04))
+
+
+## A stepped jungle temple silhouette (bottom-centre at `at`).
+func _temple(l: Layer, at: Vector2, s: float, color: Color) -> void:
+	var w := 360.0
+	for k in 5:
+		var ww := (w - k * 60.0) * s
+		var y := at.y - (k + 1) * 60.0 * s
+		l.painter.draw_rect(Rect2(at.x - ww * 0.5, y, ww, 62.0 * s), color.lightened(k * 0.03))
+	l.painter.draw_rect(Rect2(at.x - 40 * s, at.y - 360 * s, 80 * s, 60 * s), color.darkened(0.1))
+	l.painter.draw_rect(Rect2(at.x - 18 * s, at.y - 345 * s, 36 * s, 45 * s), color.darkened(0.35))
+	l.painter.draw_rect(Rect2(at.x - 26 * s, at.y - 60 * s, 52 * s, 60 * s), color.darkened(0.35))
+	for k in 5:  # moss on the steps
+		l.painter.draw_colored_polygon(Art.ellipse(Vector2(at.x + _rng.randf_range(-140, 140) * s, at.y - (k + 1) * 60.0 * s), 30 * s, 8 * s, 10), _th.top_dark.lerp(_th.sky_bottom, 0.3))
 
 
 # --- Layer plumbing -------------------------------------------------------------------

@@ -92,7 +92,9 @@ give it a `world` value, a `map` position and a `music` track.
 `snowpile(x, y, max_radius=)` (punch it: a growing snowball rolls out) · `gondola(x, y, waypoints, rider=True)` (ski-lift chair) ·
 `bell(x, y, duration=10)` (Dream Bell: touch or punch it for a Lum Rush, when every Lum counts double; put one just before a long Lum trail) ·
 `pendulum(rope, width, spiked=False)` · `leaf` (sinks under you) · `raft`
-(drifts on water with the current).
+(drifts on water with the current; `travel=0, current=0` = a floating stepping stone) ·
+`liana(x, y, length, sway, phase)` (jungle vine hanging from x, y: jump into its lower half and swing;
+bots chain them up to ~480 px apart) · `waterfall(x, y, w, h)` (scenery curtain).
 
 ### Hazards
 `spikes` · `pop_spikes` · `spikeball` · `saw` · `crusher` · `flame(steam=)` ·
@@ -100,6 +102,7 @@ give it a `world` value, a `map` position and a `music` track.
 `acorns(x, y, interval)` (acorn dropper) · `pit_kill(x0, x1, y)` ·
 `avalanche(x, y, distance, speed, height, depth)` (chase; start it with a `zone`, it
 rubber-bands to stay on screen and restarts behind mid-chase checkpoints).
+`snaptrap(x, y)` (flytrap: snaps shut 0.45 s after someone steps in - run across or jump).
 Icy ground: `terrain(..., slippery=True)` or `block(..., slippery=True)`.
 
 ### Logic
@@ -116,11 +119,11 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | Call | What |
 |---|---|
 | `LevelKit(..., theme=, scenery=, horizon=, backdrop={})` | Palette (`world/themes/*.tres`) + parallax scenery. |
-| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice` |
-| `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow` |
+| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice`, `jungle`, `ruins` |
+| `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow`, `rain` |
 | `glow(x, y, color, radius)` | Soft light (for dark levels). |
-| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis |
-| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave |
+| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis, palm, big_leaf, totem, bromeliad |
+| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave, jungle, ruins, swamp |
 | `extra(path, **props)` | Any other scene or script (e.g. `world/waterfall.gd`). |
 
 ## Enemy catalogue (`L.enemy(kind, x, y, facing=-1, **props)`)
@@ -145,6 +148,10 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | `snowl` | Snowl | Snowy owl gliding overhead; drops snowballs on anyone below (punch them back). |
 | `yetling` | Yetling | Little yeti lobbing snowballs in arcs; keeps its distance; 2 hits. |
 | `grumblefrost` | Grumblefrost | World 2 boss: boulders (punch them back to knock him down), belly-slide charge, bellow + icicle rain, leap slam. |
+| `cocobonk` | Cocobonk | Monkey on a ledge lobbing coconuts (raises it overhead first; punch them back); 2 hits. |
+| `swoopbeak` | Swoopbeak | Toucan flapping overhead; squawks (tell), dives at you, flaps back. Stomp or punch. |
+| `nibblefin` | Nibblefin | Piranha: place on the water surface; bubbles (tell), then leaps `leap_height` out. `phase` desyncs. |
+| `chamelia` | Chamelia | World 3 boss: tongue lash (sticks in a wall = stompable), invisible sneak (phase 2+), leap + seed fan (phase 3). |
 | `king_grumblo` | King Grumblo | Boss (bonus levels): slam shockwaves. |
 | `baron_bristleback` | Baron Bristleback | World 1 boss. Rolls (bounces off walls, count = phase), quill volley, leap slam, acorn rain. Stomp him while he's DAZED. |
 

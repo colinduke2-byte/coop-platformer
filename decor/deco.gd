@@ -8,10 +8,10 @@ extends Node2D
 
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
 		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
-		SNOWMAN, ICICLES, IGLOO, SKIS }
+		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
-		Kind.HANGING_VINES, Kind.BIG_FLOWER]
+		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD]
 
 @export var kind := Kind.FLOWERS:
 	set(v):
@@ -49,7 +49,7 @@ func _invalidate() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	if sway and kind in SWAYERS and View.sees(global_position, 300.0):
-		var amount := 0.05 if kind in [Kind.TREE, Kind.PINE, Kind.BUSH] else 0.12
+		var amount := 0.05 if kind in [Kind.TREE, Kind.PINE, Kind.BUSH, Kind.PALM] else 0.12
 		if kind == Kind.HANGING_VINES:
 			amount = -0.08  # hangs down: shear the other way
 		skew = sin(_t * 1.7) * amount
@@ -359,3 +359,62 @@ func _paint(mp: MeshPainter) -> void:
 						base + Vector2(-2 + d * 6, -126) * s]), th.accent if d < 0 else Color("5bc8ff"), o, 2.5)
 			mp.draw_line(Vector2(-26, -10) * s, Vector2(-40, -100) * s, o, 3.0 * s)
 			mp.draw_line(Vector2(30, -10) * s, Vector2(42, -96) * s, o, 3.0 * s)
+
+		Kind.PALM:
+			# A leaning palm: segmented trunk, a crown of drooping fronds, coconuts.
+			var lean := rng.randf_range(-0.25, 0.25)
+			var top := Vector2(lean * 160.0, -230.0) * s
+			var seg := 9
+			for i in seg:
+				var a := Vector2(lean * 160.0 * pow(float(i) / seg, 1.6), -230.0 * i / seg) * s
+				var b := Vector2(lean * 160.0 * pow(float(i + 1) / seg, 1.6), -230.0 * (i + 1) / seg) * s
+				var w := lerpf(15.0, 9.0, float(i) / seg) * s
+				var n := (b - a).normalized().orthogonal() * w
+				Art.shape(mp, PackedVector2Array([a - n, a + n, b + n * 0.9, b - n * 0.9]), th.ledge if i % 2 == 0 else th.ledge_dark, o, 2.0)
+			for k in 7:
+				var ang := -PI * 0.5 + (float(k) - 3.0) * 0.55
+				var tip := top + Vector2(cos(ang) * 120.0, sin(ang) * 40.0 + 46.0 + absf(float(k) - 3.0) * 12.0) * s
+				var mid := top.lerp(tip, 0.5) + Vector2(0, -30.0) * s
+				var nrm := (tip - top).normalized().orthogonal() * 16.0 * s
+				Art.shape(mp, PackedVector2Array([top, mid + nrm, tip, mid - nrm * 0.4]), th.foliage if k % 2 == 0 else th.foliage_dark, o, 2.0)
+			for k in 3:
+				Art.shape(mp, Art.ellipse(top + Vector2(-12 + k * 12, 12) * s, 8 * s, 9 * s, 10), th.ground_dark, o, 1.5)
+		Kind.BIG_LEAF:
+			# Monstera-style giant leaves on stems, fanning out from the ground.
+			for k in 4:
+				var ang := -PI * 0.5 + (float(k) - 1.5) * 0.5 + rng.randf_range(-0.1, 0.1)
+				var ln := rng.randf_range(70, 110) * s
+				var tip := Vector2(cos(ang), sin(ang)) * ln
+				mp.draw_line(Vector2.ZERO, tip * 0.55, th.foliage_dark, 4.0 * s)
+				var c := tip * 0.8
+				var leaf := Art.ellipse(c, 38 * s, 26 * s, 18)
+				var rot := PackedVector2Array()
+				for p in leaf:
+					rot.append(c + (p - c).rotated(ang + PI * 0.5))
+				Art.shape(mp, rot, th.foliage if k % 2 == 0 else th.foliage.darkened(0.08), o, 2.0)
+				mp.draw_line(tip * 0.55, tip * 1.05, th.foliage_dark, 2.0)
+				for h in 2:  # the monstera's holes
+					var hp := c + Vector2(cos(ang + PI * 0.5), sin(ang + PI * 0.5)) * (10.0 - h * 20.0) * s
+					mp.draw_colored_polygon(Art.ellipse(hp, 4 * s, 7 * s, 8), th.foliage_dark)
+		Kind.TOTEM:
+			# A mossy carved stone head from the old jungle temple.
+			var stone := th.ledge.lerp(Color("8c8a7a"), 0.5)
+			Art.shape(mp, Art.rounded_rect(Vector2(-34, -120) * s, Vector2(34, 0), 10.0 * s), stone, o, 3.0)
+			Art.shape(mp, Art.rect(Vector2(-42, -132) * s, Vector2(42, -112) * s), stone.darkened(0.1), o, 3.0)
+			for d: float in [-1.0, 1.0]:
+				Art.shape(mp, Art.rect(Vector2(d * 18 - 9, -92) * s, Vector2(d * 18 + 9, -80) * s), th.outline, o, 1.5)
+			Art.shape(mp, Art.rect(Vector2(-6, -78) * s, Vector2(6, -54) * s), stone.darkened(0.12), o, 2.0)
+			Art.shape(mp, Art.rect(Vector2(-20, -44) * s, Vector2(20, -32) * s), th.outline, o, 1.5)
+			mp.draw_colored_polygon(Art.ellipse(Vector2(-14, -128) * s, 26 * s, 9 * s, 12), th.top)
+			mp.draw_colored_polygon(Art.ellipse(Vector2(20, -10) * s, 20 * s, 8 * s, 12), th.top_dark)
+			mp.draw_circle(Vector2(18, -86) * s, 3.0 * s, th.accent)
+		Kind.BROMELIAD:
+			# A spiky rosette with a bright flower spike in the middle.
+			for k in 7:
+				var ang := -PI * 0.5 + (float(k) - 3.0) * 0.42
+				var tip := Vector2(cos(ang), sin(ang)) * rng.randf_range(30, 46) * s
+				var n := tip.normalized().orthogonal() * 6.0 * s
+				Art.shape(mp, PackedVector2Array([-n, tip, n]), th.foliage if k % 2 == 0 else th.foliage_dark, o, 1.5)
+			var fc: Color = th.flower_colors[rng.randi() % th.flower_colors.size()]
+			Art.shape(mp, PackedVector2Array([Vector2(-8, -10) * s, Vector2(0, -52) * s, Vector2(8, -10) * s]), fc, o, 2.0)
+			mp.draw_circle(Vector2(0, -50) * s, 4.0 * s, Color("ffd23f"))

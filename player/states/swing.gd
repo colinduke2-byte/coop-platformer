@@ -1,5 +1,5 @@
 extends PlayerState
-## Hanging from a SwingRing, swinging like a pendulum. Pump LEFT / RIGHT to
+## Hanging from a SwingRing (or the end of a Liana), swinging like a pendulum. Pump LEFT / RIGHT to
 ## swing higher, JUMP to let go with a boost (keeps your swing speed), DOWN to
 ## drop. Rides along if the ring moves.
 
@@ -11,6 +11,9 @@ var _length := 92.0
 func enter(_previous: StringName) -> void:
 	var t := player.tuning
 	_length = t.swing_length
+	var rope: Variant = player.swing_anchor.get(&"rope_length")  # lianas: a long vine
+	if rope is float:
+		_length = rope
 	var anchor := player.swing_anchor.global_position
 	var grip := player.global_position + Player.GRIP_OFFSET
 	var d := grip - anchor

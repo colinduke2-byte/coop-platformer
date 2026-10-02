@@ -152,3 +152,10 @@ track("gondola", "A", 112, [I, iii, vi, IV] * 2 + [I, V, vi, IV, ii, V, I, I], l
 track("avalanche", "C", 164, [vi, IV, V, V] * 2 + [vi, IV, I, V, ii, V, vi, V], lead="saw", seed=57, drums="busy", bass_shape="square")
 track("hotspring", "F", 98, [I, vi, ii, V] * 2 + [IV, iii, ii, V, I, vi, ii, V], lead="tri", seed=59, swing=0.14, bright=0.9)
 track("yeti", "G", 146, [vi, V, IV, V] * 2 + [vi, IV, (5, "maj7"), V, ii, iii, IV, V], lead="saw", seed=61, drums="busy", bass_shape="square")
+# World 3 - Rainbloom Jungle (marimba-ish leads, swung grooves).
+track("jungle", "G", 118, [I, IV, V, IV] * 2 + [vi, IV, I, V, ii, V, I, (7, "sus")], lead="tri", seed=71, swing=0.16, drums="busy")
+track("treetops", "D", 126, [I, iii, IV, V] * 2 + [vi, V, IV, V, I, vi, ii, V], lead="sine", seed=73, swing=0.1, bright=1.1)
+track("ruins", "E", 100, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), IV, V, ii, vi, IV, V], lead="sine", seed=75, bright=0.75)
+track("rapids", "A", 140, [I, V, vi, IV] * 2 + [IV, V, I, vi, ii, V, I, I], lead="tri", seed=77, drums="busy")
+track("swamp", "C", 92, [vi, ii, V, vi] * 2 + [IV, iii, ii, V, vi, (2, "min7"), IV, V], lead="sine", seed=79, swing=0.18, bright=0.6)
+track("chameleon", "F", 148, [vi, IV, V, iii] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=81, drums="busy", bass_shape="square")

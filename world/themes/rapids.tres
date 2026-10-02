@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/rapids.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+ground = Color(0.3686, 0.2549, 0.1569, 1)
+ground_dark = Color(0.2784, 0.1882, 0.1098, 1)
+top = Color(0.2784, 0.7490, 0.3333, 1)
+top_dark = Color(0.1843, 0.5647, 0.2510, 1)
+outline = Color(0.1020, 0.0745, 0.0392, 1)
+pattern = 1
+ledge = Color(0.7059, 0.4784, 0.2588, 1)
+ledge_dark = Color(0.5216, 0.3412, 0.1725, 1)
+accent = Color(1.0000, 0.5412, 0.2392, 1)
+accent_dark = Color(0.8000, 0.3922, 0.1255, 1)
+sky_top = Color(0.4000, 0.7686, 0.9098, 1)
+sky_bottom = Color(0.9020, 0.9647, 0.8784, 1)
+far_hills = Color(0.5961, 0.7961, 0.7216, 1)
+near_hills = Color(0.3098, 0.6118, 0.3882, 1)
+sun = Color(1.0000, 0.9647, 0.7843, 1)
+foliage = Color(0.2431, 0.6941, 0.3059, 1)
+foliage_dark = Color(0.1216, 0.4549, 0.2196, 1)
+flower_colors = Array[Color]([Color(1.0000, 0.5412, 0.2392, 1), Color(1.0000, 0.8235, 0.2471, 1), Color(0.3569, 0.7843, 1.0000, 1), Color(1.0000, 0.3647, 0.5608, 1)])
+music = ExtResource("2")
