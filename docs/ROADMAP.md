@@ -99,6 +99,6 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Host / join with 4-letter codes; lobby = character select; host drives menus and levels
 - [x] Friends as puppets (interpolated), relayed punches/stomps/revives/doors, level start barrier
 - [x] Host corrections for enemies, moving platforms and wheels; hit-stop off online
-- [ ] Test on real separate computers (latency feel); tune NetPeer.delay() in core/net.gd if friends look jerky
-- [ ] PeerJS path (public hosting e.g. GitHub Pages) is untested - the dev sandbox blocks its server
+- [x] Tested on real separate computers (Colin: works fine)
+- [x] PeerJS path (GitHub Pages) works with friends
 - [ ] Sync bosses' attack states (only position/health are corrected now)
