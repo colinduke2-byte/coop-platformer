@@ -91,7 +91,7 @@ L.block(4640 + DX, -1340, 60, 20, one_way=True)    # step up onto the roof
 L.block(3840 + DX, -1700, 860, 40)                 # tower ceiling (the roof deck sits above it)
 
 # ---- S4 BARON BRISTLEBACK on the roof ------------------------------------------------------------
-L.checkpoint(4710 + DX, -1400)
+L.checkpoint(4830 + DX, -1400)
 L.sign(4890 + DX, -1400, "BARON: stomp\nhim when he's\non his back!", 200)
 # The roof: reach it through a hatch at the top of the climb.
 entry = L.gate(5010 + DX, -1760, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))

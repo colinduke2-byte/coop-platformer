@@ -4546,12 +4546,12 @@ func _clear_enemies_except_bosses() -> void:
 
 
 func test_w1_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W1_6, Vector2(6310, -1400), 7000.0)
+	await _boss_arena_lets_you_back_in(W1_6, Vector2(6430, -1400), 7000.0)
 
 
 func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W2_6, Vector2(5780, -1400), 6700.0)
+	await _boss_arena_lets_you_back_in(W2_6, Vector2(5920, -1400), 6700.0)
 
 
 func test_glacier_dying_in_king_grumblos_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(8700, 0), 9600.0)
+	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(9040, 0), 9600.0)

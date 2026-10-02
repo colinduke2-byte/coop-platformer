@@ -340,11 +340,11 @@ text = "Slide down, then LONG JUMP\n(DOWN to slide, JUMP at the edge)"
 width = 380
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("10")]
-position = Vector2(8700, 0)
+position = Vector2(9040, 0)
 
 [node name="Sign7" type="Node2D" parent="Signs"]
 script = ExtResource("5")
-position = Vector2(9000, 0)
+position = Vector2(8760, 0)
 text = "Shh! The KING is napping...\nJump his shockwaves. Stomp him\nwhen he's dazed!"
 width = 380
 

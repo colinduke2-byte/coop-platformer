@@ -69,7 +69,7 @@ L.lums(4260 + DX, -800, 4260 + DX, -1300, 5)
 
 # ---- S4 the summit arena: GRUMBLEFROST ---------------------------------------------------------------
 L.land([(4300 + DX, -1400), (7000 + DX, -1400)], bottom=1500)
-L.checkpoint(4380 + DX, -1400)
+L.checkpoint(4520 + DX, -1400)
 L.sign(4480 + DX, -1400, "GRUMBLEFROST! Jump his boulders -\nor PUNCH THEM BACK at him!", 420)
 entry = L.gate(4700 + DX, -1760, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
 exit_gate = L.gate(5980 + DX, -1760, 48, 360)

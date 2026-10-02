@@ -410,11 +410,11 @@ position = Vector2(5440, -1700)
 size = Vector2(860, 40)
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("11")]
-position = Vector2(6310, -1400)
+position = Vector2(6430, -1400)
 
 [node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(6490, -1400)
+position = Vector2(6610, -1400)
 text = "BARON: stomp\nhim when he's\non his back!"
 width = 200
 

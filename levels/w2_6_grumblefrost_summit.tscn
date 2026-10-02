@@ -312,11 +312,11 @@ polygon = PackedVector2Array(5700, -1400, 8400, -1400, 8400, 1500, 5700, 1500)
 seed_value = 54
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
-position = Vector2(5780, -1400)
+position = Vector2(5920, -1400)
 
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(6000, -1400)
+position = Vector2(5730, -1400)
 text = "GRUMBLEFROST! Jump\nhis boulders - or\nPUNCH THEM BACK at\nhim!"
 width = 160
 

@@ -70,7 +70,7 @@ L.ground(8620, 9200, 0)
 L.sign(7000, -600, "Slide down, then LONG JUMP\n(DOWN to slide, JUMP at the edge)", 380)
 
 # ---- S6 KING GRUMBLO (9200..10600) -----------------------------------------------------------------------------
-L.checkpoint(8700, 0)
+L.checkpoint(9040, 0)
 L.sign(8880, 0, "Shh! The KING is napping...\nJump his shockwaves. Stomp him\nwhen he's dazed!", 380)
 L.ground(9200, 10700, 0)
 entry = L.gate(9220, -360, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
