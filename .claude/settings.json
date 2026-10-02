@@ -5,7 +5,8 @@
       "Bash(./tools/check.sh)",
       "Bash(bash tools/shots.sh:*)",
       "Bash(godot:*)",
-      "Bash($GODOT:*)"
+      "Bash($GODOT:*)",
+      "Artifact"
     ]
   },
   "hooks": {
