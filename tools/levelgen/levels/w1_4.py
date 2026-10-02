@@ -2,7 +2,8 @@
 Teaches: wobbly rope bridges (with a Prickleroll rolling along one!), riding a
 swinging log, a seesaw + frog deck, ziplines, a broken bridge under a spiky
 pendulum, climbing a giant trunk on vines, a canopy run to a long zipline, then Lantern Lane: swing rings over the
-drop, a Shieldbug guarding a treehouse and a last broken bridge under falling acorns.
+drop, a Shieldbug guarding a treehouse and a broken bridge under falling acorns,
+leaf-hops to the treetop market, a vine up to the Owl Lookout and a zipline home.
 Secrets: gem 0 high above the frog deck, gem 1 on a hidden ledge under the
 broken bridge (drop through a gap, a mushroom sends you back), gem 2 on a high
 leaf at the canopy top; the Snoozling hides in a hollow halfway up the trunk.
@@ -122,16 +123,57 @@ L.lums(12200, -510, 12900, -550, 8, 30)
 L.enemy("bumblebonk", 12550, -820)
 L.tree_platform(12950, 14200, -460, 13300, 220)
 L.checkpoint(13010, -460)
-L.goal(13900, -460)
 L.deco("hut", 13300, -460)
 L.deco("lantern", 13620, -460)
-L.deco("lantern", 14150, -460, 0.9)
 L.lums(13150, -560, 13700, -560, 6, 30)
-L.wall(14200, -2000, -460)
+L.sign(13850, -460, "The market's across the gorge -\nhop the leaves, don't dawdle!", 360)
 
-L.pit_kill(-300, 14260, 1250)
-L.dress(-250, 14200, "forest", spacing=190, seed=41, trees=False,
-        skip=[(3400, 3950), (5620, 6320), (7000, 7300), (10700, 11520), (12150, 12950)])
+# ---- S10 leaf-hops over the gorge (14200..15300) ------------------------------------------------------
+for x, y in [(14450, -480), (14750, -500), (15050, -480)]:
+    L.leaf(x, y, width=150, sink=70, depth=260)
+L.lums(14480, -580, 15160, -600, 6, 50)
+L.enemy("bumblebonk", 14800, -860)
 
-L.finish(spawn=(0, -2), left=-360, right=14260, bottom=900, kill_y=1300)
+# ---- S11 the treetop market (15300..16500) ----------------------------------------------------------
+L.tree_platform(15300, 16500, -460, 15720, 240)
+L.checkpoint(15360, -460)
+for x, k, s in [(15550, "hut", 1.0), (15900, "lantern", 1.0), (16150, "hut", 0.85), (16440, "lantern", 0.9)]:
+    L.deco(k, x, -460, s)
+L.crate(15680, -460, 64, lums=3)
+L.crate(15744, -460, 64, lums=3)
+L.crate(15712, -524, 64, lums=4)
+L.enemy("grunt", 15980, -460)
+L.enemy("prickleroll", 16250, -460)
+L.lums(15450, -560, 15950, -560, 5, 30)
+# The Owl Lookout: climb the vine up the big trunk.
+L.terrain([(16500, -1240), (16760, -1240), (16760, -460), (16500, -460)], rounding=8.0)
+L.vine(16475, -1280, 820)
+L.lums(16440, -700, 16440, -1150, 4)
+L.sign(16100, -460, "Climb to the Owl Lookout!", 280)
+
+# ---- S12 the Owl Lookout and the zipline home (16500..19400) -------------------------------------------
+L.land([(16500, -1300), (17450, -1300)], bottom=-1240, rounding=10.0)
+L.checkpoint(16600, -1300)
+L.enemy("shieldbug", 17000, -1300)
+L.lum_block(16850, -1600, lums=6)
+L.deco("lantern", 17380, -1300)
+L.deco("hut", 16700, -1300, 0.8)
+L.lums(16700, -1400, 17300, -1400, 6, 30)
+L.zipline(17420, -1360, 18450, -520)
+L.lums(17550, -1300, 18350, -620, 8)
+L.tree_platform(18400, 19400, -460, 18800, 240)
+L.checkpoint(18460, -460)
+L.goal(19050, -460)
+L.deco("hut", 18750, -460)
+L.deco("lantern", 18950, -460)
+L.deco("lantern", 19350, -460, 0.9)
+L.lums(18550, -560, 18950, -560, 5, 30)
+L.wall(19400, -2000, -460)
+
+L.pit_kill(-300, 19460, 1250)
+L.dress(-250, 19400, "forest", spacing=190, seed=41, trees=False,
+        skip=[(3400, 3950), (5620, 6320), (7000, 7300), (10700, 11520), (12150, 12950), (13250, 13350), (15500, 16500),
+              (16450, 17450), (19000, 19100)])
+
+L.finish(spawn=(0, -2), left=-360, right=19460, bottom=900, kill_y=1300)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_4_bramble_bridges.tscn"))

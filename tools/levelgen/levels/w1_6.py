@@ -1,6 +1,7 @@
 """World 1-6: THORNWOOD KEEP - the bramble castle and its lord.
 A gauntlet (bramble moat under a spiky pendulum, the castle ramparts, the
-courtyard with its wall-bonking Bonkhorn, pop spikes and fire jets),
+courtyard with its wall-bonking Bonkhorn, pop spikes and fire jets, the great
+hall, a timed portcullis and the thorn bridge),
 a haunted tower climb (elevator, zigzag ledges, spike balls, Wispets), then the
 boss fight on the tower roof: BARON BRISTLEBACK.
 Secrets: gem 0 in a rampart turret behind a cracked wall, gem 1 on a side ledge
@@ -16,11 +17,12 @@ L = LevelKit("ThornwoodKeep", "Thornwood Keep", theme="thorn", horizon=200, scen
 L.ambience("embers", 0.9)
 L.ambience("petals", 0.5, tint=C(1.0, 0.6, 0.75, 0.9))
 
-DX = 1600   # everything from the tower on sits DX further right (room for the courtyard)
+DX = 4200   # everything from the tower on sits DX further right (room for the courtyard and the great hall)
 
 # ---- The keep: approach, moat walls, ramparts, courtyard, tower shell, roof --------------------------
 L.wall(-360, -1500, 800)
-L.land([(-300, 0), (700, 0), (900, -40), (1400, -40), (1400, 280), (2400, 280), (2400, -40), (4700 + DX, -40)])
+L.land([(-300, 0), (700, 0), (900, -40), (1400, -40), (1400, 280), (2400, 280), (2400, -40), (7200, -40), (7200, 280),
+        (7900, 280), (7900, -40), (4700 + DX, -40)])
 # The tower's solid right side; its top is the roof deck (the arena floor).
 L.land([(4700 + DX, -1400), (7000 + DX, -1400)], bottom=900, rounding=6.0)
 
@@ -72,6 +74,33 @@ L.block(5010, -420, 180, 24, one_way=True)           # a perch over the pen
 L.lum_block(5070, -700, lums=5)
 L.deco("lantern", 5370, -40)
 
+# ---- S2c the great hall (5400..6300) ------------------------------------------------------------
+L.checkpoint(5440, -40)
+L.backwall(5500, -700, 1500, 660, shade=0.5)
+L.block(5500, -740, 1500, 40)                        # the hall's roof beam
+L.sign(5680, -40, "The Great Hall. Dodge the\nspike balls - hop the Shieldbug!", 340)
+L.spikeball(5950, -330, count=2, radius=160, speed=70)
+L.enemy("shieldbug", 6250, -40)
+L.lums(5800, -280, 6400, -280, 7, 30)
+for x in [5600, 6100, 6600]:
+    L.deco("lantern", x, -40)
+    L.glow(x, -200, C(1.0, 0.7, 0.4), radius=220, energy=0.5)
+
+# ---- S2d the portcullis: punch the lever, dash through (6300..7100) ------------------------------
+L.sign(6500, -40, "PUNCH the lever - the\nportcullis won't stay up long!", 320)
+portcullis = L.gate(6960, -232, 48, 192)
+L.switch(6800, -40, [portcullis], mode=2, duration=4.0)
+L.block(6960, -740, 48, 508)                         # wall above the portcullis
+L.lums(6760, -280, 6900, -280, 3)
+
+# ---- S2e the thorn bridge (7100..8000) --------------------------------------------------------
+L.checkpoint(7080, -40)
+L.brambles(7200, 150, 700, 130, seed=9)
+L.bridge(7200, -40, 7900, -40, broken=(7,))
+L.enemy("bumblebonk", 7550, -420)
+L.lums(7250, -150, 7850, -150, 7, 30)
+L.deco("lantern", 7950, -40)
+
 # ---- S3 the haunted tower (5400..6360) --------------------------------------------------------
 L.backwall(3840 + DX, -1660, 860, 1620)
 L.checkpoint(3860 + DX, -40)
@@ -116,6 +145,6 @@ L.deco("lantern", 6350 + DX, -1400)
 L.deco("lantern", 6950 + DX, -1400)
 L.wall(7000 + DX, -2600, -1400)
 
-L.dress(-250, 5400, "thorn", spacing=180, seed=61, skip=[(1400, 2400), (4150, 5400)])
+L.dress(-250, 8000, "thorn", spacing=180, seed=61, skip=[(1400, 2400), (4150, 5400), (5450, 7050), (7150, 7950)])
 L.finish(spawn=(0, -2), left=-360, right=7060 + DX, bottom=800, kill_y=1100)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_6_thornwood_keep.tscn"))

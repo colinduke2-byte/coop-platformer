@@ -167,7 +167,15 @@ class LevelKit:
         "factory": [("pipes", 1.0), ("gear", 1.4), ("toyblocks", 1.2), ("clock", 0.5), ("rock", 0.6), ("grass", 0.8)],
     }
 
-    def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=6, skip=(), trees=True):
+    # Small props drawn IN FRONT of the players every few dressed spots (low, so they never hide anything).
+    FRONT = {
+        "meadow": ["grass", "flowers", "grass"], "forest": ["fern", "grass"], "cave": ["mushrooms"],
+        "river": ["reeds", "grass"], "snow": ["rock"], "icecave": ["crystals"], "thorn": ["grass", "rock"],
+        "jungle": ["fern", "grass", "big_leaf"], "ruins": ["fern", "grass"], "swamp": ["reeds", "fern"],
+        "factory": ["grass"],
+    }
+
+    def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=4, skip=(), trees=True):
         """Scatter decorations along the walkable tops between x0 and x1."""
         import random
         rnd = random.Random(seed)
@@ -191,8 +199,12 @@ class LevelKit:
                 self._dressed.add(self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999)))
                 n += 1
                 if front_every and n % front_every == 0:
-                    self._dressed.add(self.deco("grass" if style != "cave" else "mushrooms", round(x + 40), round(y + 2),
-                                                1.3, front=True, seed=rnd.randint(1, 999)))
+                    fx = round(x + 40)
+                    fy = self.surface_y(fx)
+                    if fy is not None and abs(fy - y) < 12:
+                        kinds = self.FRONT.get(style, ["grass"])
+                        self._dressed.add(self.deco(kinds[(n // front_every) % len(kinds)], fx, round(fy + 2),
+                                                    round(rnd.uniform(0.75, 1.0), 2), front=True, seed=rnd.randint(1, 999)))
             x += spacing * rnd.uniform(0.6, 1.4)
 
     def wall(self, x, top, bottom, w=60.0):

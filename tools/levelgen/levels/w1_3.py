@@ -3,7 +3,8 @@ Teaches: timing past Puffcaps (or punching them between puffs), Wispets that
 creep up when you look away, Diggle tunnels, riding geysers up a shaft under
 falling stalactites, swimming an underground lake, and a bouncy-mushroom run
 over brambles, then the Glowroot Chasm (a broken rope bridge under loose
-stalactites) and the glow-worm grotto up and out into the daylight.
+stalactites), the glow-worm grotto, the Spore Mines (crumbling stones), a
+geyser up to the crystal gallery and out into the daylight.
 Secrets: gem 0 on a high ledge in the Wispet chamber (mushroom launch), gem 1
 behind a cracked wall at the end of the mole tunnel, gem 2 on a ledge beside
 the top of the geyser shaft (vine climb); the Snoozling sleeps at the bottom of
@@ -38,11 +39,12 @@ L.land([(-300, 0), (600, 0), (800, -30), (1300, -30), (1400, 0), (2700, 0), (385
 L.land([(4950, 0), (6600, 0), (6600, -1100), (6900, -1100), (7400, -640), (7600, -600), (7650, -200), (8550, -200),
         (8600, -600), (9000, -600), (9000, -150), (10000, -150), (10000, -600), (10250, -650), (10600, -780),
         (11600, -780)], bottom=1400)
-L.land([(12400, -780), (13450, -780), (13700, -880), (14000, -1000), (15200, -1000)], bottom=1400)
+L.land([(12400, -780), (13600, -780)], bottom=1400)
+L.land([(14500, -780), (15960, -780), (15960, -1400), (17900, -1400), (18300, -1560), (19800, -1560)], bottom=1400)
 L.ceiling([(-300, -520), (300, -600), (700, -540), (1100, -620), (1300, -560), (1500, -370), (2500, -380), (2700, -560),
            (2750, -1150), (3850, -1150), (3850, -1000), (5360, -1000), (5360, -1650), (6600, -1650), (6600, -1450),
            (6900, -1450), (7400, -1000), (8600, -1000), (8900, -950), (9000, -1150), (10300, -1150), (10700, -1250),
-           (13550, -1250), (13750, -1300), (14000, -1600)])
+           (13550, -1250), (15700, -1250), (15760, -1950), (17700, -1950), (18100, -2500)])
 
 # ---- S0 the glowing entrance (x -300..1300) ---------------------------------------------------
 L.sign(60, 0, "MOSSY HOLLOW. It's dark down here -\nstick together and follow the glow.", 420)
@@ -160,16 +162,57 @@ L.crate(12600, -780, 64, lums=3)
 L.lums(12700, -900, 13300, -900, 7, 30)
 shroom(12650, -780, PINK, 0.9)
 crystal(13250, -780, VIOLET)
-L.sign(13900, -960, "Daylight! Nearly home.", 280)
-L.goal(14750, -1000)
-L.glow(14650, -1250, C(1.0, 0.92, 0.7), radius=1000, energy=1.2)   # daylight pouring in
-L.lums(14100, -1100, 14550, -1100, 5, 30)
-L.deco("big_flower", 14500, -1000)
-L.deco("tree", 15000, -1000, 1.2)
-L.wall(15200, -2400, -1000)
 
-L.dress(-250, 15100, "cave", spacing=170, seed=31, skip=[(1600, 2450), (2750, 2860), (5450, 6100), (7600, 8600),
-        (9000, 10000), (11550, 12450), (12550, 13400)])
+# ---- S9 the Spore Mines: crumbling stones over the glowing brambles (13600..14500) ---------------------
+L.sign(13360, -780, "Old mine stones - they crumble!\nThen ride the geyser up.", 300)
+L.pit_kill(13600, 14500, 420)
+L.brambles(13600, 60, 900, 160)
+for x, y in [(13740, -800), (14040, -830), (14340, -800)]:
+    L.crumble(x, y, 150, respawn=2.2)
+L.lums(13720, -900, 14330, -900, 6, 40)
+L.enemy("wispet", 14050, -1150)
+L.glow(14050, -300, C(0.6, 1.0, 0.8), radius=600, energy=0.8)
+crystal(13750, 60, VIOLET)
+crystal(14350, 60, TEAL)
+L.deco("hanging_vines", 13900, -1250, 0.9)
 
-L.finish(spawn=(0, -2), left=-360, right=15260, bottom=700, kill_y=1000)
+# ---- S10 the mushroom works (14500..15950) ----------------------------------------------------------
+L.checkpoint(14540, -780)
+for i, x in enumerate([14850, 15100, 15350]):
+    L.enemy("puffcap", x, -780, phase=i * 0.7)
+L.enemy("diggle", 15560, -780)
+L.lum_block(15100, -1080, lums=5)
+L.lums(14900, -900, 15450, -900, 6, 30)
+shroom(14620, -780, TEAL, 0.7)
+shroom(15500, -780, PINK, 0.7)
+
+# ---- S11 the geyser shaft up to the crystal gallery (15950..16300) -------------------------------------
+L.geyser(15800, -780, height=760, calm=1.4)
+L.lums(15800, -950, 15800, -1500, 5)
+L.stalactite(16000, -1945, ice=False)
+
+# ---- S12 the crystal gallery (16000..18000) and up into the daylight -----------------------------------
+L.checkpoint(16100, -1400)
+L.enemy("wispet", 16700, -1700)
+L.enemy("prickleroll", 17100, -1400)
+for x in [16500, 17300]:
+    L.stalactite(x, -1945, ice=False)
+L.lums(16300, -1500, 17700, -1500, 12, 30)
+crystal(16350, -1400, VIOLET)
+crystal(16900, -1400, TEAL)
+crystal(17500, -1400, PINK)
+shroom(17750, -1400, VIOLET, 1.0)
+L.sign(18450, -1560, "Daylight! Nearly home.", 280)
+L.goal(19250, -1560)
+L.glow(19150, -1800, C(1.0, 0.92, 0.7), radius=1000, energy=1.2)   # daylight pouring in
+L.lums(18600, -1660, 19050, -1660, 5, 30)
+L.deco("big_flower", 19000, -1560)
+L.deco("tree", 19500, -1560, 1.2)
+L.deco("flowers", 18800, -1560)
+L.wall(19800, -3000, -1560)
+
+L.dress(-250, 19700, "cave", spacing=170, seed=31, skip=[(1600, 2450), (2750, 2860), (5450, 6100), (7600, 8600),
+        (9000, 10000), (11550, 12450), (12550, 13400), (14800, 15960), (18900, 19350)])
+
+L.finish(spawn=(0, -2), left=-360, right=19860, bottom=700, kill_y=1000)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_3_mossy_hollow.tscn"))

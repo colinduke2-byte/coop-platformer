@@ -2,7 +2,8 @@
 Teaches: hopping drifting log rafts, riding a giant water wheel up to the mill
 roof, crossing the rapids on rocks (geysers offer a high road), climbing a net
 beside a roaring waterfall, a calm upper pond and a zipline down to Lily
-Lagoon: sinking lily pads, bouncy Boingos over the water and the mill-house gate.
+Lagoon: sinking lily pads, bouncy Boingos over the water, the shell bowl, the
+Mill Race (rafts down the flume) and Kingfisher Bank up to the mill-house gate.
 Secrets: gem 0 above the water wheel, gem 1 on the high road over the rapids,
 gem 2 in a hidden alcove behind the waterfall; the Snoozling sleeps in a calm
 sunken cave under the rapids.
@@ -102,7 +103,8 @@ L.deco("hut", 8050, -1100, 0.9)
 L.zipline(10130, -1330, 11000, -520)
 L.lums(10250, -1250, 10900, -650, 7)
 L.land([(10900, -450), (11250, -470), (11700, -450), (11720, -415), (11740, 20), (13260, 20), (13280, -415),
-        (13300, -450), (15200, -450)], bottom=1400)
+        (13300, -450), (14900, -450), (14920, -415), (14940, 20), (16760, 20), (16780, -415),
+        (16800, -450), (17900, -450), (18200, -600), (19900, -600)], bottom=1400)
 L.checkpoint(10960, -450)
 
 # ---- S7 Lily Lagoon (11700..13300) and the mill-house gate ---------------------------------------
@@ -125,13 +127,41 @@ L.enemy("grunt", 14100, -450, walk_speed=0.0, sight=0.0)
 L.crate(14250, -450, 64, lums=4)
 L.lums(13500, -640, 14200, -640, 7)
 L.sign(13520, -450, "Kick the shell!", 220)
-L.goal(14750, -450)
 L.deco("hut", 14550, -450, 1.1)
-L.deco("hut", 15050, -450, 0.8)
-L.wall(15200, -2000, -450)
 
-L.dress(-250, 15200, "river", spacing=160, seed=51,
-        skip=[(1180, 3020), (4500, 5120), (5200, 6920), (7280, 7460), (8420, 9640), (11700, 13300), (13600, 14300)])
+# ---- S8 the Mill Race: rafts down the flume (14900..16800) --------------------------------------
+L.checkpoint(14640, -450)
+L.sign(14720, -450, "THE MILL RACE! Hop on\na log and ride it down.", 280)
+L.water(14940, -415, 1820, 435, current=(150, 0))
+for i in range(3):
+    L.raft(14960, -415, width=190, travel=1650, current=150, offset=i / 3)
+L.lums(15100, -540, 16600, -540, 12, 40)
+L.enemy("bumblebonk", 15600, -900)
+L.enemy("boingo", 16200, -560)
+L.deco("lilypads", 15300, -412)
+L.deco("lilypads", 16300, -412)
+L.deco("reeds", 16760, -450)
+L.deco("reeds", 14900, -450)
 
-L.finish(spawn=(0, -2), left=-360, right=15260, bottom=800, kill_y=1100)
+# ---- S9 Kingfisher Bank and the mill-house hill (16800..19900) ------------------------------------
+L.checkpoint(16860, -450)
+L.seesaw(17300, -450, 320)
+L.lums(17150, -620, 17450, -620, 4, 40)
+L.enemy("diggle", 17700, -450)
+L.enemy("ribbiton", 18450, -600, sit_time=2.0)
+L.enemy("grunt", 18800, -600)
+L.lum_block(18100, -900, lums=6)
+L.lums(17900, -560, 18200, -700, 4)
+L.lums(18500, -720, 19000, -720, 6, 40)
+L.goal(19350, -600)
+for x, k, s in [(17000, "tree", 1.2), (17600, "flowers", 1.0), (18300, "big_flower", 1.0), (19150, "hut", 1.2),
+                (19600, "hut", 0.9), (19800, "tree", 1.1), (18650, "fence", 1.0)]:
+    L.deco(k, x, L.surface_y(x), s)
+L.wall(19900, -2000, -600)
+
+L.dress(-250, 19900, "river", spacing=160, seed=51,
+        skip=[(1180, 3020), (4500, 5120), (5200, 6920), (7280, 7460), (8420, 9640), (11700, 13300), (13600, 14300),
+              (14600, 14920), (14920, 16800), (17100, 17500), (19300, 19420)])
+
+L.finish(spawn=(0, -2), left=-360, right=19960, bottom=800, kill_y=1100)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_5_millstream_rush.tscn"))

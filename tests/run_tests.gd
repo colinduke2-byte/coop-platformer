@@ -2691,7 +2691,7 @@ func test_w1_1_cliff_can_be_wall_climbed() -> void:
 func test_w1_1_frog_bounce_clears_the_cliff() -> void:
 	var p: Player = await _load_demo(W1_1)
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if e is Ribbiton:
+		if e is Ribbiton and e.global_position.x < 7000.0:
 			e.global_position = Vector2(5600, -2)
 			e.sit_time = 100.0
 			e._sit = 100.0
@@ -3357,10 +3357,10 @@ func test_w1_6_boss_fight_can_be_won() -> void:
 	for e in get_tree().get_nodes_in_group(&"enemies"):
 		if e is BaronBristleback:
 			baron = e
-		elif e.global_position.x < 6400.0:
+		elif e.global_position.x < 9000.0:
 			e.queue_free()
 	check(baron != null and baron.asleep, "the Baron should be asleep in his arena")
-	await _place(p, Vector2(6800, -1402))
+	await _place(p, Vector2(9400, -1402))
 	await frames(10)
 	check(not baron.asleep, "walking into the arena should wake him")
 	var gates := _demo.find_children("*", "Gate", true, false)
@@ -3392,7 +3392,7 @@ func test_w1_6_boss_fight_can_be_won() -> void:
 	await seconds(1.5)
 	var exit_open := false
 	for g in gates:
-		if g.global_position.x > 7600.0 and g.is_open():
+		if g.global_position.x > 10200.0 and g.is_open():
 			exit_open = true
 	check(exit_open, "beating him should open the exit gate")
 	await _finish_demo()
@@ -3404,14 +3404,14 @@ func test_w1_6_tower_climb_reaches_the_roof() -> void:
 	for n in _demo.find_children("*", "SpikeBall", true, false):
 		n.queue_free()
 	# Up the lift, then the zigzag ledges.
-	await _place(p, Vector2(5640, -82))
+	await _place(p, Vector2(8240, -82))
 	var lift: Node2D = _demo.find_children("*", "MovingPlatform", true, false)[0]
 	for i in 900:
 		await get_tree().physics_frame
 		if p.global_position.y < -600.0:
 			break
 	check(p.global_position.y < -600.0, "the lift should carry you up (at %s)" % p.global_position)
-	for target in [Vector2(5920, -700), Vector2(6170, -860), Vector2(5920, -1020), Vector2(6170, -1180), Vector2(6270, -1340), Vector2(6380, -1400)]:
+	for target in [Vector2(8520, -700), Vector2(8770, -860), Vector2(8520, -1020), Vector2(8770, -1180), Vector2(8870, -1340), Vector2(8980, -1400)]:
 		var dir := "move_right" if target.x > p.global_position.x else "move_left"
 		press(0, dir)
 		press(0, "jump")
@@ -3424,7 +3424,7 @@ func test_w1_6_tower_climb_reaches_the_roof() -> void:
 		release(0, "jump")
 		release(0, dir)
 		await frames(6)
-	check(p.global_position.y < -1390.0 and p.global_position.x > 6300.0, "you should reach the roof (at %s)" % p.global_position)
+	check(p.global_position.y < -1390.0 and p.global_position.x > 8900.0, "you should reach the roof (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -4256,8 +4256,36 @@ func test_w1_1_orchard_hill_runs_to_the_new_gate() -> void:
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(12300, -202))
 	var ok: bool = await _hop_run(p, [12860], 15450, false, 16.0)
-	check(ok or gm().level_complete, "Orchard Hill: crates, the apple-tree mushroom and the stairs lead to the gate (at %s)" % p.global_position)
-	check(gm().level_complete, "the Dream Gate at the end of Orchard Hill completes the level")
+	check(ok, "Orchard Hill: crates, the apple-tree mushroom and the stairs lead to Moonflower Brook (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_1_moonflower_brook_and_pillow_hills_reach_the_gate() -> void:
+	var p: Player = await _load_demo(W1_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(15450, -202))
+	var ok: bool = await _hop_run(p, [], 19720, false, 18.0)
+	check(ok or gm().level_complete, "over both rope bridges and the hills (at %s)" % p.global_position)
+	check(gm().level_complete, "the hilltop Dream Gate completes Pillow Meadow")
+	await _finish_demo()
+
+
+func test_w1_1_pillow_mushroom_reaches_the_sleepy_cloud() -> void:
+	var p: Player = await _load_demo(W1_1)
+	await _clear_enemies()
+	await _place(p, Vector2(19120, -182))
+	var high := 0.0
+	for i in 300:
+		await get_tree().physics_frame
+		high = minf(high, p.global_position.y)
+		if p.global_position.y < -760.0:
+			press(0, "move_right")
+		if p.global_position.x > 19400.0:
+			release(0, "move_right")
+		if i > 30 and p.is_on_floor():
+			break
+	release(0, "move_right")
+	check(p.global_position.y < -700.0, "the mushroom bounces you onto the cloud island (highest %.0f, at %s)" % [high, p.global_position])
 	await _finish_demo()
 
 
@@ -4335,21 +4363,24 @@ func test_w1_2_last_puff_drifts_down_to_the_gate() -> void:
 	var landed := false
 	for i in 1500:
 		await get_tree().physics_frame
+		if p.global_position.x > 14800.0:  # over the gate ground: let go of the puff
+			release(0, "move_right")
+			press(0, "jump")
 		if p.is_on_floor() and p.global_position.x > 14500.0:
 			landed = true
 			break
 	release(0, "move_right")
+	release(0, "jump")
 	check(landed and not p.is_bubbled(), "the last puff should carry you down to the gate ground (at %s)" % p.global_position)
 	await _finish_demo()
 
 
-func test_w1_3_rope_bridge_and_grotto_lead_out_to_the_gate() -> void:
+func test_w1_3_rope_bridge_and_grotto_lead_to_the_mines() -> void:
 	var p: Player = await _load_demo(W1_3)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(11100, -782))
-	var ok: bool = await _hop_run(p, [11930, 12480], 14900, false, 16.0)
-	check(ok or gm().level_complete, "the broken bridge and the grotto lead to the daylight gate (at %s)" % p.global_position)
-	check(gm().level_complete, "reaching the daylight gate completes Mossy Hollow")
+	var ok: bool = await _hop_run(p, [11930, 12480], 13500, false, 12.0)
+	check(ok, "the broken bridge and the grotto lead to the Spore Mines (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -4393,14 +4424,13 @@ func test_w1_4_swing_rings_cross_to_the_shieldbug_tree() -> void:
 	await _finish_demo()
 
 
-func test_w1_4_lantern_lane_bridge_reaches_the_gate() -> void:
+func test_w1_4_lantern_lane_bridge_reaches_the_gorge() -> void:
 	var p: Player = await _load_demo(W1_4)
 	p.invulnerable_timer = 100.0
 	await _clear_enemies()
 	await _place(p, Vector2(11600, -422))
 	var ok: bool = await _hop_run(p, [12330, 12620], 14000, false, 14.0)
-	check(ok or gm().level_complete, "the last bridge leads to the gate (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate on the last tree completes Bramble Bridges")
+	check(ok, "the broken bridge leads to the gorge tree (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -4591,7 +4621,7 @@ func _clear_enemies_except_bosses() -> void:
 
 
 func test_w1_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W1_6, Vector2(6430, -1400), 7000.0)
+	await _boss_arena_lets_you_back_in(W1_6, Vector2(9030, -1400), 9600.0)
 
 
 func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
@@ -5787,8 +5817,8 @@ const W4_3 := "res://levels/w4_3_steam_pipes.tscn"
 
 
 ## Stand on a geyser at `gx`, wait for it to throw you above `above_y`, then steer right.
-func _geyser_ride(p: Player, gx: float, above_y: float, steer_to: float, max_s := 6.0) -> void:
-	await _place(p, Vector2(gx, -2))
+func _geyser_ride(p: Player, gx: float, above_y: float, steer_to: float, max_s := 6.0, gy := 0.0) -> void:
+	await _place(p, Vector2(gx, gy - 2.0))
 	var risen := false
 	for i in int(max_s * 60.0):
 		await get_tree().physics_frame
@@ -6131,3 +6161,218 @@ func test_w4_secret_toolboxes_hold_gem_2() -> void:
 		release(0, "move_right")
 		check(gm().gems[2], "%s: punching the toolbox open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
 		await _finish_demo()
+
+
+## Stand on a bounce pad at `pad`, and once it throws you above `steer_above_y`, steer right
+## until `stop_x`. Returns once you land.
+func _pad_hop(p: Player, pad: Vector2, steer_above_y: float, stop_x: float, max_s := 4.0) -> void:
+	await _place(p, pad + Vector2(0, -2))
+	var risen := false
+	for i in int(max_s * 60.0):
+		await get_tree().physics_frame
+		if p.global_position.y < steer_above_y:
+			risen = true
+		if risen and p.global_position.x < stop_x:
+			press(0, "move_right")
+		else:
+			release(0, "move_right")
+		if risen and i > 20 and p.is_on_floor():
+			break
+	release(0, "move_right")
+	await frames(4)
+
+
+func test_w1_2_cloud_island_hops() -> void:
+	var p: Player = await _load_demo(W1_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(15600, -152))
+	var ok: bool = await _hop_run(p, [15860, 16310, 16810, 17310], 17700, false, 10.0)
+	check(ok, "hopping the cloud islands reaches the mushroom island (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_2_mushroom_steps_reach_the_sky_garden() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(18000, -150), -600.0, 18300.0)
+	check(p.global_position.y < -550.0 and p.is_on_floor(), "the first mushroom bounces you onto the middle island (at %s)" % p.global_position)
+	await _pad_hop(p, Vector2(18440, -560), -990.0, 18700.0)
+	check(p.global_position.y < -940.0 and p.is_on_floor(), "the second mushroom reaches the Sky Garden (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_2_garden_puff_floats_home_to_the_gate() -> void:
+	var p: Player = await _load_demo(W1_2)
+	await _clear_enemies()
+	await _place(p, Vector2(19250, -952))
+	press(0, "move_right")
+	await frames(20)
+	press(0, "jump")
+	await frames(12)
+	release(0, "jump")
+	var landed := false
+	for i in 1500:
+		await get_tree().physics_frame
+		if p.global_position.x > 20050.0:  # over the gate ground: let go of the puff
+			release(0, "move_right")
+			press(0, "jump")
+		if p.is_on_floor() and p.global_position.x > 19900.0:
+			landed = true
+			break
+	release(0, "move_right")
+	release(0, "jump")
+	check(landed and not p.is_bubbled(), "the garden puff floats you down to the gate ground (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [], 20470, false, 4.0)
+	check(gm().level_complete, "the Dream Gate completes Dandelion Drift (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_3_crumbling_mine_stones() -> void:
+	var p: Player = await _load_demo(W1_3)
+	await _clear_enemies()
+	await _place(p, Vector2(13450, -782))
+	var ok: bool = await _hop_run(p, [13560, 13840, 14140, 14440], 14600, false, 8.0)
+	check(ok, "hopping the crumbling stones crosses the Spore Mines (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_3_puffcaps_and_the_geyser_to_the_gallery() -> void:
+	var p: Player = await _load_demo(W1_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14560, -782))
+	var ok: bool = await _hop_run(p, [], 15700, false, 6.0)
+	check(ok, "past the puffcaps to the geyser (at %s)" % p.global_position)
+	await _clear_enemies()
+	await _geyser_ride(p, 15800, -1420, 16150, 10.0, -780.0)
+	check(p.global_position.y < -1390.0 and p.is_on_floor(), "the geyser throws you up into the crystal gallery (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_3_crystal_gallery_out_to_the_daylight_gate() -> void:
+	var p: Player = await _load_demo(W1_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(16150, -1402))
+	var ok: bool = await _hop_run(p, [], 19300, false, 12.0)
+	check(ok or gm().level_complete, "along the crystal gallery and up into the daylight (at %s)" % p.global_position)
+	check(gm().level_complete, "the daylight gate completes Mossy Hollow")
+	await _finish_demo()
+
+
+func test_w1_4_leaf_hops_over_the_gorge() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(13950, -462))
+	var ok: bool = await _hop_run(p, [14160, 14440, 14740, 15040], 15500, false, 8.0)
+	check(ok, "the sinking leaves carry you over to the treetop market (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_market_vine_to_the_owl_lookout() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(16330, -462))
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"Climb":
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	check(p.state_machine.current_name() == &"Climb", "jumping at the vine grabs it (%s)" % p.state_machine.current_name())
+	press(0, "move_up")
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -1250.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(p.is_on_floor() and p.global_position.y < -1290.0 and p.global_position.x > 16500.0, "climbing to the top gets you onto the Owl Lookout (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_4_lookout_zipline_to_the_gate() -> void:
+	var p: Player = await _load_demo(W1_4)
+	await _clear_enemies()
+	await _place(p, Vector2(17350, -1302))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 18400.0:
+			landed = true
+			break
+	check(landed, "the lookout zipline reaches the last tree (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [], 19100, false, 4.0)
+	check(gm().level_complete, "the gate on the last tree completes Bramble Bridges (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_lily_lagoon_and_the_shell_bowl() -> void:
+	var p: Player = await _load_demo(W1_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(11600, -452))
+	var swam := await _swim_across(p, 13150.0, 13350.0, 14.0)
+	check(swam, "you can swim across Lily Lagoon (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [14130], 14700, false, 10.0)
+	check(ok, "across Lily Lagoon and past the shell bowl to the Mill Race (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_mill_race_raft_ride() -> void:
+	var p: Player = await _load_demo(W1_5)
+	await _clear_enemies()
+	await _place(p, Vector2(14880, -452))
+	var ok := await _ride_raft(p, 14960.0, 16520.0, -415.0)
+	check(ok and p.global_position.x > 16790.0 and p.global_position.y < -440.0, "a log carries you down the Mill Race (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_5_kingfisher_bank_to_the_mill_gate() -> void:
+	var p: Player = await _load_demo(W1_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(16860, -452))
+	var ok: bool = await _hop_run(p, [17060], 19400, false, 12.0)
+	check(ok or gm().level_complete, "over the seesaw and up the mill-house hill (at %s)" % p.global_position)
+	check(gm().level_complete, "the mill-house gate completes Millstream Rush")
+	await _finish_demo()
+
+
+func test_w1_6_great_hall_and_the_timed_portcullis() -> void:
+	var p: Player = await _load_demo(W1_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5460, -42))
+	var ok: bool = await _hop_run(p, [], 6740, false, 6.0)
+	check(ok, "through the great hall to the lever (at %s)" % p.global_position)
+	p.facing = 1
+	await _punch()
+	await frames(10)
+	ok = await _hop_run(p, [], 7120, false, 4.0)
+	check(ok, "punching the lever lifts the portcullis long enough to dash through (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_6_portcullis_blocks_you_without_the_lever() -> void:
+	var p: Player = await _load_demo(W1_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6860, -42))
+	var ok: bool = await _hop_run(p, [], 7100, false, 2.0)
+	check(not ok and p.global_position.x < 6960.0, "the shut portcullis stops you (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w1_6_thorn_bridge_to_the_tower() -> void:
+	var p: Player = await _load_demo(W1_6)
+	await _clear_enemies()
+	await _place(p, Vector2(7100, -42))
+	var ok: bool = await _hop_run(p, [7470], 8200, false, 8.0)
+	check(ok, "over the thorn bridge (and its broken plank) to the tower door (at %s)" % p.global_position)
+	await _finish_demo()

@@ -2,7 +2,8 @@
 Teaches: sinking leaf platforms, updrafts (glide or parachute into them),
 chains of dandelions carried by the wind, Bumblebonk dashes, a frog boost,
 one huge windy valley to cross, then Windmill Heights: a turning sail-wheel,
-a balloon up to the sky meadow and a last puff down to the gate.
+a balloon up to the sky meadow, a puff down to the cloud islands, mushroom
+steps up to the Sky Garden and one long float home to the gate.
 Secrets: gem 0 at the top of the first updraft, gem 1 high above the frog
 island, gem 2 at the top of the valley updraft; the Snoozling's cage hangs in
 the sky beside a hidden updraft near island B.
@@ -86,7 +87,7 @@ L.gem(9305, -1080)
 L.lums(8400, -620, 10100, -420, 14, -80)
 L.enemy("bumblebonk", 8900, -760)
 L.enemy("bumblebonk", 9900, -700)
-L.pit_kill(-300, 16000, 880)
+L.pit_kill(-300, 21000, 880)
 L.land([(10200, -150), (10600, -170), (11000, -150), (11350, -150), (11350, -500), (11700, -500)], bottom=1300)
 L.checkpoint(10280, -150)
 L.lums(10400, -250, 10800, -250, 5, 40)
@@ -117,13 +118,54 @@ L.dandelion(13760, -1300, height=180)
 L.sign(13200, -1300, "Last puff! Float\ndown to the gate.", 220)
 L.lums(13900, -1250, 14600, -380, 9, -40)
 L.enemy("bumblebonk", 14300, -800)
-L.land([(14500, -150), (15600, -150)], bottom=1300)
+L.land([(14500, -150), (15900, -150)], bottom=1300)
 L.checkpoint(14560, -150)
-L.goal(15250, -150)
 L.lums(14700, -250, 15100, -250, 5, 40)
-L.wall(15600, -2000, -150)
+L.sign(15000, -150, "The sky goes on! Hop the cloud\nislands, bounce the mushrooms up to\nthe Sky Garden (steer right!), then\nride the last puff home.", 340)
+for x, k, s in [(14650, "big_flower", 1.0), (15300, "tree", 1.1), (15800, "flowers", 1.0)]:
+    L.deco(k, x, -150, s)
 
-L.dress(-250, 15600, "meadow", spacing=150, seed=21, skip=[(10850, 11700), (14500, 14700)])
+# ---- S8 Cloud hops (15900..18100) ---------------------------------------------------------
+L.wind(15900, -2100, 2200, 2400, wind=(40, 0))
+for x0, y in [(16100, -220), (16600, -300), (17100, -220)]:
+    L.island(x0, x0 + 250, y, depth=120)
+    L.lums(x0 + 40, y - 100, x0 + 210, y - 100, 3, 30)
+    L.deco("flowers", x0 + 125, y, 0.8)
+L.enemy("bumblebonk", 16720, -620)
+L.lums(15920, -330, 16080, -330, 2)
+L.island(17600, 18100, -150, depth=200)
+L.checkpoint(17630, -150)
+L.enemy("grunt", 17760, -150, facing=1)
 
-L.finish(spawn=(0, -2), left=-360, right=15660, bottom=700, kill_y=1000)
+# ---- S9 Pillow-mushroom steps up to the Sky Garden (18000..19500) ---------------------------------
+L.pad(18000, -150, height=560)
+L.island(18120, 18520, -560, depth=150)
+L.lums(18000, -300, 18000, -620, 4)
+L.pad(18440, -560, height=560)
+L.lums(18440, -700, 18440, -1020, 4)
+L.island(18560, 19460, -950, depth=230, bumps=[(18900, -962), (19150, -956)])
+L.checkpoint(18620, -950)
+L.enemy("prickleroll", 19000, -950)
+L.lum_block(18900, -1250, lums=6)
+L.lums(18700, -1080, 19300, -1080, 7, 40)
+for x, k, s in [(18700, "big_flower", 1.2), (18820, "flowers", 1.0), (19100, "tree", 1.0), (19250, "bush", 0.9)]:
+    L.deco(k, x, L.surface_y(x), s)
+L.dandelion(19400, -950, height=180)
+
+# ---- S10 the long float down to the Dream Gate (19500..20800) -------------------------------
+L.wind(19400, -2100, 600, 2400, wind=(150, 0))
+L.lums(19550, -880, 20100, -330, 9, -40)
+L.enemy("bumblebonk", 19800, -760)
+L.island(19900, 20800, -150, depth=320, bumps=[(20150, -156)])
+L.checkpoint(19960, -150)
+L.goal(20500, -150)
+L.lums(20100, -250, 20380, -250, 4, 40)
+for x, k, s in [(20250, "big_flower", 1.0), (20650, "tree", 1.2), (20560, "fence", 1.0)]:
+    L.deco(k, x, -150, s)
+L.wall(20760, -2000, -150, 40)
+
+L.dress(-250, 20800, "meadow", spacing=150, seed=21, skip=[(10850, 11700), (14500, 14700), (17700, 18080), (18380, 18480),
+        (19350, 19440), (19900, 20020), (20400, 20520)])
+
+L.finish(spawn=(0, -2), left=-360, right=20860, bottom=700, kill_y=1000)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w1_2_dandelion_drift.tscn"))

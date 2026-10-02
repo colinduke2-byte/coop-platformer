@@ -463,241 +463,241 @@ size = 0.9
 position = Vector2(13100, -1400)
 size = Vector2(60, 1400)
 
-[node name="Deco8" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(345, 0)
-kind = 27
-size = 1.13
-seed_value = 172
-
 [node name="Deco9" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(474, 0)
-kind = 0
-size = 1.06
-seed_value = 123
+position = Vector2(451, 0)
+kind = 12
+size = 0.92
+seed_value = 708
 
 [node name="Deco10" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(514, 2)
-kind = 0
-size = 1.3
-front = true
-seed_value = 804
+position = Vector2(626, 0)
+kind = 27
+size = 1.15
+seed_value = 34
 
 [node name="Deco11" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(645, 0)
+position = Vector2(778, 0)
 kind = 12
-size = 0.93
-seed_value = 753
+size = 1.13
+seed_value = 75
 
 [node name="Deco12" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(769, 0)
+position = Vector2(967, 0)
 kind = 29
-size = 1.13
-seed_value = 129
+size = 0.86
+seed_value = 687
 
 [node name="Deco13" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(936, 0)
+position = Vector2(1007, 2)
 kind = 27
-size = 0.84
-seed_value = 148
+size = 0.75
+front = true
+seed_value = 102
 
 [node name="Deco14" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(1120, 0)
-kind = 6
-size = 0.82
-seed_value = 326
+position = Vector2(1179, 0)
+kind = 0
+size = 1.24
+seed_value = 55
 
-[node name="Deco15" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(1245, 0)
-kind = 27
-size = 1.06
-seed_value = 446
-
-[node name="Deco19" type="Node2D" parent="Decor"]
+[node name="Deco18" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(3489, 0)
 kind = 0
 size = 1.05
 seed_value = 734
 
+[node name="Deco19" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3529, 2)
+kind = 0
+size = 0.91
+front = true
+seed_value = 559
+
 [node name="Deco20" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(3668, 0)
-kind = 0
-size = 0.9
-seed_value = 604
+position = Vector2(3639, 0)
+kind = 12
+size = 0.93
+seed_value = 891
 
 [node name="Deco21" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(3800, 0)
-kind = 1
-size = 1.14
-seed_value = 164
+position = Vector2(3736, 0)
+kind = 26
+size = 1.11
+seed_value = 349
 
 [node name="Deco22" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(3840, 2)
-kind = 0
-size = 1.3
-front = true
-seed_value = 715
+position = Vector2(3867, 0)
+kind = 27
+size = 1.14
+seed_value = 105
 
 [node name="Deco23" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(3950, 0)
-kind = 12
-size = 0.9
-seed_value = 782
+position = Vector2(3975, 0)
+kind = 27
+size = 1.18
+seed_value = 619
 
 [node name="Deco24" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(4089, 0)
+position = Vector2(4015, 2)
 kind = 27
-size = 0.84
-seed_value = 868
+size = 0.82
+front = true
+seed_value = 45
 
 [node name="Deco25" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(4359, 0)
-kind = 27
-size = 1.01
-seed_value = 128
-
-[node name="Deco29" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(4982, 2)
+position = Vector2(4164, 0)
 kind = 0
-size = 1.3
-front = true
-seed_value = 82
+size = 1.24
+seed_value = 388
 
-[node name="Deco30" type="Node2D" parent="Decor"]
+[node name="Deco26" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(4404, 0)
+kind = 0
+size = 1.2
+seed_value = 371
+
+[node name="Deco31" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5226, -700)
 kind = 29
 size = 0.86
 seed_value = 474
 
-[node name="Deco31" type="Node2D" parent="Decor"]
+[node name="Deco32" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5370, -700)
 kind = 29
 size = 0.84
 seed_value = 614
 
-[node name="Deco32" type="Node2D" parent="Decor"]
+[node name="Deco33" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5529, -700)
 kind = 27
 size = 0.99
 seed_value = 382
 
-[node name="Deco33" type="Node2D" parent="Decor"]
+[node name="Deco34" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5705, -700)
 kind = 5
 size = 1.2
 seed_value = 974
 
-[node name="Deco34" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(5857, -700)
-kind = 27
-size = 1.18
-seed_value = 840
-
 [node name="Deco35" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(5969, -700)
-kind = 27
-size = 0.87
-seed_value = 855
+position = Vector2(5745, -698)
+kind = 0
+size = 0.86
+front = true
+seed_value = 181
 
 [node name="Deco36" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(6009, -698)
-kind = 0
-size = 1.3
-front = true
-seed_value = 508
+position = Vector2(5809, -700)
+kind = 27
+size = 0.86
+seed_value = 158
 
 [node name="Deco37" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(6081, -700)
+position = Vector2(5917, -700)
 kind = 12
-size = 1.24
-seed_value = 279
+size = 1.02
+seed_value = 791
 
 [node name="Deco38" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(6251, -700)
-kind = 12
-size = 0.82
-seed_value = 63
+position = Vector2(6062, -700)
+kind = 6
+size = 0.92
+seed_value = 187
 
 [node name="Deco39" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(6207, -700)
+kind = 27
+size = 0.83
+seed_value = 965
+
+[node name="Deco40" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(6247, -698)
+kind = 27
+size = 0.77
+front = true
+seed_value = 170
+
+[node name="Deco41" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(11350, 0)
 kind = 27
 size = 1.03
 seed_value = 311
 
-[node name="Deco40" type="Node2D" parent="Decor"]
+[node name="Deco42" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(11546, 0)
 kind = 12
 size = 0.98
 seed_value = 708
 
-[node name="Deco41" type="Node2D" parent="Decor"]
+[node name="Deco43" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(11890, 0)
 kind = 12
 size = 0.93
 seed_value = 163
 
-[node name="Deco42" type="Node2D" parent="Decor"]
+[node name="Deco44" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(12466, 0)
 kind = 27
 size = 1.08
 seed_value = 993
 
-[node name="Deco43" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(12608, 0)
-kind = 12
-size = 0.84
-seed_value = 488
-
-[node name="Deco44" type="Node2D" parent="Decor"]
-script = ExtResource("8")
-position = Vector2(12834, 0)
-kind = 27
-size = 0.92
-seed_value = 254
-
 [node name="Deco45" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(12874, 2)
+position = Vector2(12506, 2)
 kind = 0
-size = 1.3
+size = 0.82
 front = true
-seed_value = 796
+seed_value = 353
 
 [node name="Deco46" type="Node2D" parent="Decor"]
 script = ExtResource("8")
-position = Vector2(12943, 0)
-kind = 0
-size = 1.17
-seed_value = 447
+position = Vector2(12621, 0)
+kind = 12
+size = 1.21
+seed_value = 194
+
+[node name="Deco47" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(12740, 0)
+kind = 29
+size = 1.15
+seed_value = 45
+
+[node name="Deco48" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(12934, 0)
+kind = 26
+seed_value = 39
 
 [node name="KillZone" type="Area2D" parent="."]
 position = Vector2(6400, 1500)
