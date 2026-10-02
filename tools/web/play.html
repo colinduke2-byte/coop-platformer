@@ -43,7 +43,7 @@
 <div id="cover">
   <div class="card">
     <h1 aria-label="DREAMERS"><span>D</span><span>R</span><span>E</span><span>A</span><span>M</span><span>E</span><span>R</span><span>S</span></h1>
-    <p class="sub">a co-op dream adventure &middot; Worlds 1 &amp; 2</p>
+    <p class="sub">a co-op dream adventure &middot; Worlds 1, 2 &amp; 3</p>
     <div id="invite" hidden>
       <p>You're invited to online game <b id="inviteCode"></b>!</p>
       <button id="joinInvite" class="big" disabled>Join the game</button>
@@ -340,10 +340,11 @@ window.dreamNet = (function () {
     for (let attempt = 1; ; attempt++) {
       try {
         const res = await realFetch(url, init);
+        if (res.status === 404) { const e = new Error(url + ": 404"); e.missing = true; throw e; }
         if (!res.ok) throw new Error(url + ": " + res.status);
         return res;
       } catch (err) {
-        if (attempt >= 5) throw err;
+        if (attempt >= 5 || err.missing) throw err;
         status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
         await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
       }
@@ -387,7 +388,7 @@ window.dreamNet = (function () {
           }
           break;
         } catch (err) {
-          if (attempt >= 5) throw err;
+          if (attempt >= 5 || err.missing) throw err;
           status.textContent = "Connection hiccup - retrying (" + attempt + "/4)...";
           await new Promise(function (ok) { setTimeout(ok, 1200 * attempt); });
         }
@@ -399,12 +400,23 @@ window.dreamNet = (function () {
     return new Blob(parts);
   }
 
+  // The same file under the names each host can serve (GitHub Pages: .bin; claude.ai: .webm).
+  async function downloadAny(names, weight, base) {
+    for (let i = 0; ; i++) {
+      try {
+        return await download(names[i], weight, base);
+      } catch (err) {
+        if (i + 1 >= names.length) throw err;
+      }
+    }
+  }
+
   async function prepare() {
-    const gz = await download("engine.gz.wasm", 60, 0);
+    const gz = await downloadAny(["part1.bin", "part1.webm"], 60, 0);
     status.textContent = "Unpacking the engine...";
     const wasm = await new Response(gz.stream().pipeThrough(new DecompressionStream("gzip"))).blob();
     files["index.wasm"] = wasm;
-    files["index.pck"] = await download("game.pck.wasm", 35, 60);
+    files["index.pck"] = await downloadAny(["part2.bin", "part2.webm"], 35, 60);
     bar.style.width = "100%";
     await new Promise(function (ok, bad) {
       const s = document.createElement("script");
