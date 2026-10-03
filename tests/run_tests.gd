@@ -4546,8 +4546,7 @@ func test_w2_5_boardwalk_and_seesaw_hill_reach_the_upper_bath_house() -> void:
 		e.queue_free()
 	await _place(p, Vector2(10700, -202))
 	var ok: bool = await _hop_run(p, [10980, 11190, 11490, 11790, 12090, 12720], 14500, false, 16.0)
-	check(ok or gm().level_complete, "over the back room, along the boardwalk and up the hill to the goal (at %s)" % p.global_position)
-	check(gm().level_complete, "the upper bath-house gate completes Hot Spring Hollow")
+	check(ok, "over the back room, along the boardwalk and up the hill to the upper bath-house (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6483,4 +6482,28 @@ func test_w2_4_second_avalanche_restarts_behind_its_checkpoint() -> void:
 	await seconds(ava.restart_delay + 0.3)
 	check(ava.active, "the second avalanche comes again behind the mid-gorge checkpoint")
 	check(not first.active, "the first one stays put")
+	await _finish_demo()
+
+
+func test_w2_5_steam_gorge_rocks() -> void:
+	var p: Player = await _load_demo(W2_5)
+	p.invulnerable_timer = 100.0
+	await _clear_enemies()
+	await _place(p, Vector2(14700, -402))
+	var ok: bool = await _hop_run(p, [14960, 15260, 15560, 15860, 16160], 16500, false, 8.0)
+	check(ok, "hopping the rocks crosses the steam gorge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_5_snow_fort_and_the_geyser_to_the_spa() -> void:
+	var p: Player = await _load_demo(W2_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(16480, -402))
+	var ok: bool = await _hop_run(p, [16930, 17380], 17800, false, 6.0)
+	check(ok, "through the Yetlings' snow fort (at %s)" % p.global_position)
+	await _clear_enemies()
+	await _geyser_ride(p, 17840, -920, 18100, 10.0, -400.0)
+	check(p.global_position.y < -890.0 and p.is_on_floor(), "the geyser throws you up to the summit spa (at %s)" % p.global_position)
+	ok = await _hop_run(p, [18360], 19100, false, 8.0)
+	check(gm().level_complete, "the summit spa gate completes Hot Spring Hollow (at %s)" % p.global_position)
 	await _finish_demo()

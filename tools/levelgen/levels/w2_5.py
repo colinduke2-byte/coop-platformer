@@ -3,7 +3,8 @@ Teaches: riding geysers up the terraces, a Yetling lobbing from above, seesaws
 on the plateau, a steaming canyon (hop the floating rocks - or glide the
 thermal updrafts for the high road), a snowball bowling slope down to
 the bath-house, then the boardwalk over the steaming pool (time the steam
-jets), a seesaw hill and the upper bath-house.
+jets), a seesaw hill and the upper bath-house, the steam gorge, the Yetlings'
+snow fort and a geyser up to the summit spa.
 Secrets: gem 0 at the top of the first thermal, gem 1 on the bottom of the
 village hot pool, gem 2 behind the bath-house; the Snoozling snoozes on a warm
 rock at the bottom of the canyon (glide into the thermal to get back up).
@@ -76,7 +77,7 @@ L.sign(6150, -800, "Bowling time!\nPunch the snow pile.", 280)
 
 # ---- S5 the bath-house (7800..10600) ------------------------------------------------------------
 L.land([(8300, -200), (8315, -60), (8700, -60), (8715, -200), (11000, -200), (11020, -60), (12380, -60), (12400, -200),
-        (13400, -200), (13700, -400), (14800, -400)], bottom=1500)   # a hot tub in the deck, then the steaming pool
+        (13400, -200), (13700, -400), (15000, -400), (15040, 600)], bottom=1500)   # a hot tub in the deck, then the steaming pool
 L.water(8315, -200, 385, 140)
 L.checkpoint(7900, -200)
 L.enemy("yetling", 9300, -200)
@@ -113,12 +114,48 @@ L.enemy("yetling", 13950, -400)
 L.enemy("slidgewick", 14200, -400)
 L.bell(13850, -400)
 L.lums(13800, -500, 14300, -500, 6, 40)
-L.goal(14450, -400)
-L.deco("hut", 14650, -400, 1.1)
+L.deco("hut", 14450, -400, 1.0)
 L.deco("lantern", 14300, -400)
-L.wall(14800, -1600, -400)
 
-L.dress(-250, 14750, "snow", spacing=180, seed=25, skip=[(300, 760), (1500, 2850), (3150, 3600), (4150, 6050), (8250, 8760),
-        (10350, 10650), (10980, 12420), (12750, 13150), (13800, 14300)])
-L.finish(spawn=(0, -2), left=-360, right=14860, bottom=1100, kill_y=1500)
+# ---- S8 the steam gorge: hop the rocks between the jets (15000..16400) -------------------------------
+L.checkpoint(14650, -400)
+L.sign(14800, -400, "THE STEAM GORGE! Hop the\nrocks between the puffs.", 300)
+L.pit_kill(15040, 16360, 900)
+for i, x0 in enumerate([15200, 15500, 15800, 16100]):
+    L.island(x0, x0 + 170, -400, depth=110)
+    if i % 2 == 1:
+        L.flame(x0 + 85, -400, length=260, steam=True, on=0.9, off=1.8, phase=i * 0.4)
+L.lums(15230, -500, 16240, -500, 8, 40)
+L.enemy("snowl", 15700, -900)
+for x in [15350, 15950]:
+    L.glow(x, 300, C(1.0, 0.8, 0.6), radius=400, energy=0.6)   # warm water glowing far below
+
+# ---- S9 the Yetlings' snow fort (16400..17800) --------------------------------------------------------
+L.land([(16360, 600), (16400, -400), (17950, -400), (17950, -900), (18400, -900), (18415, -780), (18645, -780), (18660, -900),
+        (19400, -900)], bottom=1500)
+L.checkpoint(16480, -400)
+L.snowpile(16650, -400, max_radius=80)
+L.block(17000, -500, 40, 100)
+L.enemy("yetling", 17150, -400)
+L.block(17450, -500, 40, 100)
+L.enemy("yetling", 17600, -400)
+L.lums(16800, -520, 17550, -520, 7)
+L.deco("snowman", 16900, -400, 1.0)
+
+# ---- S10 the summit spa: geyser up to the top bath-house (17800..19400) ---------------------------------
+L.geyser(17840, -400, height=640, calm=1.4)
+L.sign(17760, -400, "Ride the geyser up!", 240)
+L.lums(17840, -560, 17840, -980, 4)
+L.checkpoint(18060, -900)
+L.water(18415, -900, 230, 120)                           # the warm spa pool: hop in!
+L.lums(18430, -1000, 18630, -1000, 4, 40)
+L.goal(19050, -900)
+for x, k, s in [(18200, "lantern", 1.0), (18850, "hut", 1.1), (19300, "hut", 0.8), (19200, "snowman", 0.9)]:
+    L.deco(k, x, -900, s)
+L.wall(19400, -2200, -900)
+
+L.dress(-250, 19350, "snow", spacing=180, seed=25, skip=[(300, 760), (1500, 2850), (3150, 3600), (4150, 6050), (8250, 8760),
+        (10350, 10650), (10980, 12420), (12750, 13150), (13800, 14300), (14700, 16400), (16600, 17700), (17700, 17960),
+        (18380, 18680), (19000, 19100)])
+L.finish(spawn=(0, -2), left=-360, right=19460, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_5_hot_spring_hollow.tscn"))
