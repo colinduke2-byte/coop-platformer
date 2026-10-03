@@ -6421,3 +6421,39 @@ func test_w2_2_summit_plateau_to_the_gate() -> void:
 	check(ok or gm().level_complete, "across the summit plateau (at %s)" % p.global_position)
 	check(gm().level_complete, "the summit gate completes Cablecar Cliffs")
 	await _finish_demo()
+
+
+func test_w2_3_ice_chute_and_the_floes() -> void:
+	var p: Player = await _load_demo(W2_3)
+	await _clear_enemies()
+	await _place(p, Vector2(13450, -402))
+	var ok: bool = await _hop_run(p, [14760, 15060, 15360, 15660, 15960], 16300, false, 12.0)
+	check(ok, "down the ice chute and over the floes (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w2_3_cracked_geode_hides_gem_2() -> void:
+	var p: Player = await _load_demo(W2_3)
+	await _clear_enemies()
+	await _place(p, Vector2(16450, 98))
+	p.facing = 1
+	await _run_to(p, 16540, "move_right", 1.0)
+	release(0, "move_right")
+	await _punch()
+	await frames(20)
+	press(0, "move_right")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[2], "punching the geode open reaches gem 2 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_3_geode_hall_crushers_to_the_gate() -> void:
+	var p: Player = await _load_demo(W2_3)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	await _place(p, Vector2(16300, 98))
+	var ok: bool = await _hop_run(p, [16520], 18050, true, 8.0)
+	check(ok or gm().level_complete, "over the geode and sprinting under the crushers (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	check(gm().level_complete, "the gate completes Crystal Caverns")
+	await _finish_demo()
