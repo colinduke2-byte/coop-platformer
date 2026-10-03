@@ -212,7 +212,7 @@ position = Vector2(4900, 0)
 
 [node name="Terrain2" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
-polygon = PackedVector2Array(5100, -900, 5110, -380, 6500, -380, 6510, -900, 6510, -2600, 5100, -2600)
+polygon = PackedVector2Array(5100, -900, 5110, -380, 6500, -380, 6510, -900, 6510, -1000, 5100, -1000)
 lip = false
 seed_value = 35
 

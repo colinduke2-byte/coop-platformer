@@ -2,7 +2,8 @@
 Teaches: running against conveyor belts under ceiling crushers, zap arcs with
 Sparkbots zipping between them, an elevator up to the catwalks, tick-tock
 blocks across the gap in the catwalk, then the sorting line (Springbots riding
-belts, saw blades on rails) and the gate.
+belts, saw blades on rails), the packing line's crushers and the shipping lift
+up to the loading-catwalk gate.
 Secrets: gem 0 on the shelf above the zap arcs (tick-tock steps), gem 1 at the
 far end of the catwalk, gem 2 in a parts crate at the finish; the Snoozling
 waits on the catwalk.
@@ -26,7 +27,7 @@ L.lums(300, -110, 1100, -110, 6, 40)
 L.enemy("windup", 1300, 0)
 
 # ---- S1 belts under the crushers (1500..3200) -------------------------------------------------------
-L.ceiling([(1500, -900), (1510, -420), (3300, -420), (3310, -900)], top=-2600)
+L.ceiling([(1500, -900), (1510, -420), (3300, -420), (3310, -900)], top=-1000)
 L.backwall(1500, -900, 1800, 900, shade=0.5)
 L.block(1700, 0, 1400, 16, conveyor=-140.0)        # one long belt running against you
 for x in [1950, 2400, 2850]:
@@ -64,7 +65,8 @@ for i, x in enumerate([6680, 6920, 7160, 7400]):
 L.lums(6740, -730, 7460, -730, 7, 30)
 
 # ---- S5 down the ramp to the sorting line (7600..10200) ----------------------------------------------------
-L.land([(7600, -600), (8200, -600), (9000, 0), (9400, 0), (9400, 16), (9900, 16), (9900, 0), (12600, 0)], bottom=1500)
+L.land([(7600, -600), (8200, -600), (9000, 0), (9400, 0), (9400, 16), (9900, 16), (9900, 0), (12700, 0), (12700, 16), (14100, 16),
+        (14100, 0), (14600, 0), (14600, 30), (14820, 30), (14820, 0), (14840, -600), (16500, -600)], bottom=1500)
 L.checkpoint(7680, -600)
 L.gem(8150, -650)                                  # gem 1 at the end of the catwalk
 L.enemy("springbot", 8700, -150)
@@ -84,13 +86,36 @@ L.block(11080, -160, 20, 160)
 L.gem(10940, -60)
 L.secret(10840, -140, 240, 140)
 L.enemy("windup", 11500, 0)
-L.goal(12200, 0)
 L.lums(11800, -110, 12130, -110, 4, 30)
-L.deco("clock", 12420, 0, 1.1)
-L.wall(12600, -1200, 0)
+
+# ---- S7 the crusher line: the belt RUSHES you along (12600..14200) ---------------------------------------
+L.checkpoint(12300, 0)
+L.sign(12450, 0, "The packing line! The belt\nrushes you - time the crushers.", 340)
+L.ceiling([(12600, -900), (12610, -420), (14200, -420), (14210, -900)], top=-1000)
+L.backwall(12600, -900, 1600, 900, shade=0.5)
+L.block(12700, 0, 1400, 16, conveyor=170.0)
+for i, x in enumerate([12950, 13350, 13750]):
+    L.crusher(x, -420, w=140, h=112, drop=292, period=1.6 + i * 0.3)
+L.lums(12750, -100, 14050, -100, 11, 20)
+L.deco("toyblocks", 14300, 0, 1.0)
+
+# ---- S8 the shipping lift up to the loading catwalk (14200..16500) ---------------------------------------
+L.checkpoint(14250, 0)
+L.sign(14380, 0, "Shipping lift -\nall aboard!", 220)
+L.moving(14610, 0, w=200, h=30, waypoints=((0, -600),), speed=170, wait=1.0, rider=True)
+L.lums(14710, -150, 14710, -500, 4)
+L.checkpoint(14950, -600)
+L.enemy("springbot", 15400, -600)
+L.enemy("sparkbot", 15700, -760, travel=V(0, -160), speed=110.0)
+L.goal(16100, -600)
+L.lums(15100, -700, 16000, -700, 8, 30)
+for x, k, s in [(15200, "toyblocks", 1.0), (15900, "clock", 1.1), (16350, "pipes", 1.1)]:
+    L.deco(k, x, -600, s)
+L.wall(16500, -1800, -600)
 
 L.dress(-250, 1450, "factory", spacing=160, seed=81)
 L.dress(3220, 4860, "factory", spacing=170, seed=82, skip=[(3550, 4800)])
-L.dress(9000, 12550, "factory", spacing=170, seed=83, skip=[(9350, 10000), (10750, 11150)])
-L.finish(spawn=(0, -2), left=-360, right=12660, bottom=1100, kill_y=1500)
+L.dress(9000, 16450, "factory", spacing=170, seed=83, skip=[(9350, 10000), (10750, 11150), (12400, 12550), (12650, 14150),
+        (14350, 14850), (16050, 16150)])
+L.finish(spawn=(0, -2), left=-360, right=16560, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w4_2_conveyor_chaos.tscn"))

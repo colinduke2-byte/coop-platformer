@@ -61,7 +61,7 @@ for i, x in enumerate([5300, 6100]):
     L.zap(x, -10, x, -240, on=0.9, off=1.5, phase=i * 0.4)
     L.glow(x, -120, BLUE, radius=200, energy=0.8)
 L.enemy("windup", 5800, 0)
-L.ceiling([(6300, -900), (6310, -420), (6800, -420), (6810, -900)], top=-2600)
+L.ceiling([(6300, -900), (6310, -420), (6800, -420), (6810, -900)], top=-1000)
 L.backwall(6300, -900, 510, 900, shade=0.5)
 for x in [6380, 6600]:
     L.crusher(x, -420, w=140, h=112, drop=292)

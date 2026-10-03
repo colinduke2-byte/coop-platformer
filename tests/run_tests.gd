@@ -5794,14 +5794,13 @@ func test_w4_2_tick_tock_catwalk_gap() -> void:
 	await _finish_demo()
 
 
-func test_w4_2_ramp_sorting_line_and_the_gate() -> void:
+func test_w4_2_ramp_sorting_line_and_the_crate() -> void:
 	var p: Player = await _load_demo(W4_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(7700, -602))
-	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
+	var ok: bool = await _hop_run(p, [10700], 12300, false, 16.0)
 	check(gm().gems[1], "gem 1 waits at the end of the catwalk")
-	check(ok or gm().level_complete, "down the ramp, along the sorting line, over the crate (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Conveyor Chaos")
+	check(ok, "down the ramp, along the sorting line, over the crate (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6724,4 +6723,24 @@ func test_w3_4_village_mushroom_reaches_the_lookout() -> void:
 	await _clear_enemies()
 	await _pad_hop(p, Vector2(15750, 0), -660.0, 15950.0)
 	check(p.global_position.y < -630.0 and p.is_on_floor(), "the mushroom throws you up onto the village lookout (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_packing_line_crushers() -> void:
+	var p: Player = await _load_demo(W4_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(12320, -2))
+	var ok: bool = await _hop_run(p, [], 14250, false, 8.0)
+	check(ok, "along the rushing belt under the crushers (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_2_shipping_lift_to_the_catwalk_gate() -> void:
+	var p: Player = await _load_demo(W4_2)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(14710, -2), 14930.0, -600.0)
+	check(ok, "the shipping lift reaches the loading catwalk (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	ok = await _hop_run(p, [], 16150, false, 8.0)
+	check(gm().level_complete, "the loading-catwalk gate completes Conveyor Chaos (at %s)" % p.global_position)
 	await _finish_demo()
