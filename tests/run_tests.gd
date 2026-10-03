@@ -6858,3 +6858,13 @@ func test_w4_6_gear_plaza_and_the_tick_tock_bridge() -> void:
 	ok = await _hop_run(p, [], 8850, false, 6.0)
 	check(ok, "the landing leads to the bell loft (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+func test_sunset_moat_bridge_and_courtyard_to_the_gate() -> void:
+	var p: Player = await _load_demo("res://levels/sunset_gusts.tscn")
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10600, -2))
+	var ok: bool = await _hop_run(p, [11470, 12250], 13950, false, 12.0)
+	check(ok or gm().level_complete, "over the moat bridge and through the courtyard (at %s)" % p.global_position)
+	check(gm().level_complete, "the courtyard gate completes Sunset Gusts")
+	await _finish_demo()

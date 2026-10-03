@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://levels/level.gd" id="1"]
 [ext_resource type="Resource" path="res://world/themes/sunset.tres" id="2"]
@@ -26,9 +26,17 @@
 [ext_resource type="Script" path="res://world/zone_trigger.gd" id="24"]
 [ext_resource type="PackedScene" path="res://enemies/spitpod.tscn" id="25"]
 [ext_resource type="Script" path="res://world/bounce_pad.gd" id="26"]
-[ext_resource type="Script" path="res://world/level_goal.gd" id="27"]
-[ext_resource type="Script" path="res://camera/coop_camera.gd" id="28"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="29"]
+[ext_resource type="Script" path="res://world/terrain.gd" id="27"]
+[ext_resource type="Script" path="res://world/brambles.gd" id="28"]
+[ext_resource type="Script" path="res://world/rope_bridge.gd" id="29"]
+[ext_resource type="Script" path="res://world/pendulum.gd" id="30"]
+[ext_resource type="PackedScene" path="res://enemies/bumblebonk.tscn" id="31"]
+[ext_resource type="Script" path="res://world/seesaw.gd" id="32"]
+[ext_resource type="Script" path="res://world/lum_block.gd" id="33"]
+[ext_resource type="PackedScene" path="res://enemies/prickleroll.tscn" id="34"]
+[ext_resource type="Script" path="res://world/level_goal.gd" id="35"]
+[ext_resource type="Script" path="res://camera/coop_camera.gd" id="36"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="37"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(1300, 60)
@@ -43,7 +51,10 @@ size = Vector2(1000, 60)
 size = Vector2(1000, 60)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5"]
-size = Vector2(13300, 200)
+size = Vector2(1000, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6"]
+size = Vector2(16600, 200)
 
 [node name="SunsetGusts" type="Node2D"]
 script = ExtResource("1")
@@ -478,17 +489,13 @@ position = Vector2(10150, 0)
 text = "Big mushroom...\nwhat's up there?"
 width = 260
 
-[node name="Goal1" type="Area2D" parent="."]
+[node name="Terrain1" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("27")
-position = Vector2(10650, 0)
+polygon = PackedVector2Array(10400, 0, 11200, 0, 11200, 700, 10400, 700)
+seed_value = 89
 
-[node name="Block18" parent="Blocks" instance=ExtResource("4")]
-position = Vector2(10400, 0)
-size = Vector2(600, 500)
-
-[node name="Block19" parent="Blocks" instance=ExtResource("4")]
-position = Vector2(11000, -1200)
-size = Vector2(60, 1700)
+[node name="Checkpoint8" parent="Checkpoints" instance=ExtResource("10")]
+position = Vector2(10620, 0)
 
 [node name="LumLine7" type="Node2D" parent="Pickups"]
 script = ExtResource("6")
@@ -497,15 +504,132 @@ count = 4
 end = Vector2(250, 0)
 arc_height = 0
 
+[node name="Sign9" type="Node2D" parent="Signs"]
+script = ExtResource("5")
+position = Vector2(10860, 0)
+text = "The old moat bridge.\nDuck the spiky log!"
+width = 260
+
+[node name="PitKill5" type="Area2D" parent="Hazards"]
+script = ExtResource("9")
+position = Vector2(11600, 600)
+collision_layer = 32
+collision_mask = 2
+monitorable = false
+
+[node name="Shape1" type="CollisionShape2D" parent="Hazards/PitKill5"]
+shape = SubResource("RectangleShape2D_5")
+
+[node name="Brambles1" type="Area2D" parent="Hazards"]
+script = ExtResource("28")
+position = Vector2(11200, 300)
+size = Vector2(800, 200)
+seed_value = 7
+
+[node name="RopeBridge1" type="Node2D" parent="Toys"]
+script = ExtResource("29")
+position = Vector2(11200, 0)
+span = Vector2(800, 0)
+plank_count = 17
+slack = 26
+broken_planks = PackedInt32Array(7)
+
+[node name="Pendulum1" type="Node2D" parent="Hazards"]
+script = ExtResource("30")
+position = Vector2(11600, -560)
+rope_length = 420
+log_width = 150
+amplitude = 0.9
+period = 2.8
+phase = 0
+spiked = true
+
+[node name="Bumblebonk1" parent="Enemies" instance=ExtResource("31")]
+position = Vector2(11400, -460)
+start_facing = -1
+
+[node name="LumLine8" type="Node2D" parent="Pickups"]
+script = ExtResource("6")
+position = Vector2(11250, -120)
+count = 7
+end = Vector2(700, 0)
+arc_height = 30
+
+[node name="Terrain2" type="StaticBody2D" parent="Blocks"]
+script = ExtResource("27")
+polygon = PackedVector2Array(12000, 0, 14300, 0, 14300, 700, 12000, 700)
+seed_value = 100
+
+[node name="Checkpoint9" parent="Checkpoints" instance=ExtResource("10")]
+position = Vector2(12100, 0)
+
+[node name="Seesaw1" type="AnimatableBody2D" parent="Toys"]
+script = ExtResource("32")
+position = Vector2(12500, -44)
+length = 320
+
+[node name="Block18" parent="Blocks" instance=ExtResource("4")]
+position = Vector2(12450, -420)
+size = Vector2(180, 20)
+one_way = true
+
+[node name="LumBlock1" type="AnimatableBody2D" parent="Toys"]
+script = ExtResource("33")
+position = Vector2(12540, -700)
+lums = 5
+
+[node name="Prickleroll1" parent="Enemies" instance=ExtResource("34")]
+position = Vector2(13000, 0)
+start_facing = -1
+
+[node name="Shieldbug2" parent="Enemies" instance=ExtResource("21")]
+position = Vector2(13400, 0)
+start_facing = -1
+
+[node name="Goal1" type="Area2D" parent="."]
+script = ExtResource("35")
+position = Vector2(13900, 0)
+
+[node name="LumLine9" type="Node2D" parent="Pickups"]
+script = ExtResource("6")
+position = Vector2(13100, -100)
+count = 7
+end = Vector2(700, 0)
+arc_height = 30
+
+[node name="Deco5" type="Node2D" parent="Decor"]
+script = ExtResource("7")
+position = Vector2(12200, 0)
+kind = 21
+
+[node name="Deco6" type="Node2D" parent="Decor"]
+script = ExtResource("7")
+position = Vector2(13200, 0)
+kind = 4
+
+[node name="Deco7" type="Node2D" parent="Decor"]
+script = ExtResource("7")
+position = Vector2(13700, 0)
+kind = 21
+
+[node name="Deco8" type="Node2D" parent="Decor"]
+script = ExtResource("7")
+position = Vector2(14150, 0)
+kind = 7
+
+[node name="Block19" parent="Blocks" instance=ExtResource("4")]
+position = Vector2(14300, -1200)
+size = Vector2(60, 1700)
+
 [node name="KillZone" type="Area2D" parent="."]
-position = Vector2(5350, 900)
+position = Vector2(7000, 900)
 collision_layer = 32
 collision_mask = 2
 monitorable = false
 script = ExtResource("9")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
-shape = SubResource("RectangleShape2D_5")
+shape = SubResource("RectangleShape2D_6")
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(0, -2)
@@ -515,8 +639,8 @@ position = Vector2(0, -2)
 [node name="CoopCamera" type="Camera2D" parent="."]
 position = Vector2(0, -152)
 limit_left = -300
-limit_right = 11000
+limit_right = 14300
 limit_bottom = 560
-script = ExtResource("28")
+script = ExtResource("36")
 
-[node name="HUD" parent="." instance=ExtResource("29")]
+[node name="HUD" parent="." instance=ExtResource("37")]

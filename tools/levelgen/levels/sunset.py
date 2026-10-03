@@ -88,11 +88,31 @@ L.gem(10050, -760)
 L.lums(10050, -300, 10050, -650, 4)
 L.sign(10150, 0, "Big mushroom...\nwhat's up there?", 260)
 
-# ---- goal ---------------------------------------------------------------------------------------------------------
-L.goal(10650, 0)
-L.ground(10400, 11000, 0)
-L.wall(11000, -1200, 500)
+# ---- S8 the moat bridge under the spiked pendulum (10400..12000) ------------------------------------------------
+L.land([(10400, 0), (11200, 0)], bottom=700)
+L.checkpoint(10620, 0)
 L.lums(10300, -80, 10550, -80, 4)
+L.sign(10800, 0, "The old moat bridge.\nDuck the spiky log!", 260)
+L.pit_kill(11200, 12000, 600)
+L.brambles(11200, 300, 800, 200, seed=7)
+L.bridge(11200, 0, 12000, 0, broken=(7,))
+L.pendulum(11600, -560, rope=420, width=150, amplitude=0.9, period=2.8, spiked=True)
+L.enemy("bumblebonk", 11400, -460)
+L.lums(11250, -120, 11950, -120, 7, 30)
 
-L.finish(spawn=(0, -2), left=-300, right=11000, bottom=560, kill_y=900)
+# ---- S9 the sunset courtyard and the gate (12000..14300) -------------------------------------------------------
+L.land([(12000, 0), (14300, 0)], bottom=700)
+L.checkpoint(12100, 0)
+L.seesaw(12500, 0, 320)
+L.ledge(12450, -420, 180)
+L.lum_block(12540, -700, lums=5)
+L.enemy("prickleroll", 13000, 0)
+L.enemy("shieldbug", 13400, 0)
+L.goal(13900, 0)
+L.lums(13100, -100, 13800, -100, 7, 30)
+for x, k in [(12200, "lantern"), (13200, "pine"), (13700, "lantern"), (14150, "fence")]:
+    L.deco(k, x, 0)
+L.wall(14300, -1200, 500)
+
+L.finish(spawn=(0, -2), left=-300, right=14300, bottom=560, kill_y=900)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/sunset_gusts.tscn"))
