@@ -1,7 +1,8 @@
 """World 4-5: NIGHT SHIFT - the Works after dark: only the lamps, the sparks and the eyes of the bots.
 Teaches: belts with saw blades on rails over them, crumbling crates over the dark
 scrap pit, the sorting floor (zaps, Windups, a crusher pair), tick-tock blocks lit
-by their own glow, then the long night line of saws and Springbots to the gate.
+by their own glow, the long night line of saws and Springbots, a dark shaft up
+to the high catwalk and a zipline over the abyss to the gate.
 Secrets: gem 0 up a bounce pad past the crumbling crates, gem 1 on the shelves
 above the sorting floor, gem 2 in a toolbox at the finish; the Snoozling is on a
 shelf in the night line.
@@ -82,7 +83,8 @@ for i, x in enumerate([6940, 7180, 7420, 7660]):
 L.lums(7000, -140, 7720, -140, 7, 30)
 
 # ---- S5 the night line (7900..12600) ---------------------------------------------------------------------
-L.land([(7900, 0), (12600, 0)], bottom=1500)
+L.land([(7900, 0), (13100, 0)], bottom=1500)
+L.land([(15000, 0), (16500, 0)], bottom=1500)
 L.checkpoint(8000, 0)
 L.bell(8120, 0)
 L.enemy("springbot", 8600, 0)
@@ -104,14 +106,40 @@ L.gem(10940, -60)
 L.secret(10840, -140, 240, 140)
 L.glow(10950, -240, LAMP, radius=240, energy=0.8)
 L.enemy("windup", 11500, 0)
-L.goal(12200, 0)
-for x in [11600, 12200]:
-    L.glow(x, -200, LAMP, radius=300, energy=1.0)
 L.lums(11800, -110, 12130, -110, 4, 30)
-L.wall(12600, -1200, 0)
+
+# ---- S7 the dark shaft up to the high catwalk (12300..13700) --------------------------------------------
+L.checkpoint(12350, 0)
+L.sign(12480, 0, "Up the shelves to the high\ncatwalk - then zip down!", 300)
+for i, (x, y) in enumerate([(12700, -180), (12920, -360), (12700, -540), (12920, -720)]):
+    L.ledge(x, y, 180)
+    L.glow(x + 90, y - 60, LAMP if i % 2 == 0 else BLUE, radius=180, energy=0.7)
+    L.lums(x + 40, y - 70, x + 140, y - 70, 2)
+L.enemy("sparkbot", 12880, -460, travel=V(0, -260), speed=80.0)
+L.block(13100, -900, 560, 30)                       # the high catwalk
+L.glow(13380, -980, LAMP, radius=260, energy=0.9)
+L.lums(13150, -990, 13550, -990, 4, 20)
+
+# ---- S8 the zipline over the abyss (13600..15000) ----------------------------------------------------------
+L.pit_kill(13100, 15000, 700)
+L.zipline(13620, -960, 15100, -260)
+L.lums(13750, -900, 14950, -330, 9)
+for x in [14000, 14600]:
+    L.glow(x, -500, PINK, radius=220, energy=0.6)
+
+# ---- S9 the night yard and the gate (15000..16500) --------------------------------------------------------
+L.checkpoint(15200, 0)
+L.enemy("windup", 15600, 0)
+L.goal(16100, 0)
+L.lums(15350, -110, 16000, -110, 6, 30)
+for x in [15200, 15800, 16100]:
+    L.glow(x, -200, LAMP, radius=300, energy=1.0)
+L.deco("clock", 16350, 0, 1.1)
+L.wall(16500, -1200, 0)
 
 L.dress(-250, 1450, "factory", spacing=170, seed=111)
 L.dress(4450, 6250, "factory", spacing=180, seed=112, skip=[(4550, 4850), (5250, 5350)])
-L.dress(7950, 12550, "factory", spacing=170, seed=113, skip=[(9400, 9600), (10200, 10400), (10750, 11150)])
-L.finish(spawn=(0, -2), left=-360, right=12660, bottom=1100, kill_y=1500)
+L.dress(7950, 16450, "factory", spacing=170, seed=113, skip=[(9400, 9600), (10200, 10400), (10750, 11150), (12450, 13100),
+        (15150, 15250), (16050, 16150)])
+L.finish(spawn=(0, -2), left=-360, right=16560, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w4_5_night_shift.tscn"))

@@ -6005,13 +6005,12 @@ func test_w4_5_glowing_tick_tock_blocks() -> void:
 	await _finish_demo()
 
 
-func test_w4_5_night_line_and_the_gate() -> void:
+func test_w4_5_night_line_and_the_toolbox() -> void:
 	var p: Player = await _load_demo(W4_5)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(8000, -2))
-	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
-	check(ok or gm().level_complete, "down the night line and over the toolbox (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Night Shift")
+	var ok: bool = await _hop_run(p, [10700], 12300, false, 16.0)
+	check(ok, "down the night line and over the toolbox (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6811,4 +6810,35 @@ func test_w4_4_bell_yard_steps_and_the_gate() -> void:
 	p.invulnerable_timer = 100.0
 	var ok: bool = await _hop_run(p, [], 16150, false, 8.0)
 	check(gm().level_complete, "the bell yard gate completes Tick-Tock Tower (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_dark_shaft_up_to_the_catwalk() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(12600, -2))
+	var ok := true
+	for t: Vector2 in [Vector2(12790, -180), Vector2(13010, -360), Vector2(12790, -540), Vector2(13010, -720), Vector2(13200, -900)]:
+		ok = ok and await _hop_to(p, t.x, t.y)
+	check(ok and p.global_position.y < -890.0, "up the shelves to the high catwalk (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_5_zipline_over_the_abyss_to_the_gate() -> void:
+	var p: Player = await _load_demo(W4_5)
+	await _clear_enemies()
+	await _place(p, Vector2(13550, -902))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 15000.0:
+			landed = true
+			break
+	check(landed, "the zipline carries you over the abyss (at %s)" % p.global_position)
+	var ok: bool = await _hop_run(p, [], 16150, false, 6.0)
+	check(gm().level_complete, "the night yard gate completes Night Shift (at %s)" % p.global_position)
 	await _finish_demo()
