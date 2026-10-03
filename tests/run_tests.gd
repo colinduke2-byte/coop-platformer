@@ -5044,13 +5044,12 @@ func test_w3_2_three_liana_swing_reaches_the_sixth_tree() -> void:
 	await _finish_demo()
 
 
-func test_w3_2_broken_bridge_and_the_treehouse_gate() -> void:
+func test_w3_2_broken_bridge_and_the_treehouse_deck() -> void:
 	var p: Player = await _load_demo(W3_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(8650, -42))
-	var ok: bool = await _hop_run(p, [9380, 10600], 11600, false, 12.0)
-	check(ok or gm().level_complete, "over the broken bridge and the stump to the gate (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Canopy Highway")
+	var ok: bool = await _hop_run(p, [9380, 10600], 11700, false, 12.0)
+	check(ok, "over the broken bridge and the stump to the end of the deck (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6544,4 +6543,55 @@ func test_w3_1_grove_and_the_rainbow_falls_gate() -> void:
 	var ok: bool = await _hop_run(p, [14400], 16300, false, 10.0)
 	check(ok or gm().level_complete, "through the monkey grove to the falls (at %s)" % p.global_position)
 	check(gm().level_complete, "the rainbow falls gate completes Drizzle Thicket")
+	await _finish_demo()
+
+
+func test_w3_2_zipline_down_to_the_fig_tree() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(11850, -42))
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	var landed := false
+	for i in 900:
+		await get_tree().physics_frame
+		if p.is_on_floor() and p.global_position.x > 12800.0:
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed and p.global_position.y > 300.0, "the zipline drops you on the fig tree (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_2_vine_up_the_fig_trunk_to_the_crown_gate() -> void:
+	var p: Player = await _load_demo(W3_2)
+	await _clear_enemies()
+	await _place(p, Vector2(13530, 358))
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		if p.state_machine.current_name() == &"Climb":
+			break
+	release(0, "jump")
+	release(0, "move_right")
+	check(p.state_machine.current_name() == &"Climb", "jumping at the vine grabs it (%s)" % p.state_machine.current_name())
+	press(0, "move_up")
+	for i in 900:
+		await get_tree().physics_frame
+		if p.global_position.y < -470.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(10)
+	release(0, "jump")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(p.is_on_floor() and p.global_position.y < -510.0, "climbing to the top gets you onto the crown branch (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	var ok: bool = await _hop_run(p, [], 15520, false, 8.0)
+	check(gm().level_complete, "the bridge leads to the crown gate (at %s)" % p.global_position)
 	await _finish_demo()

@@ -1,7 +1,8 @@
 """World 3-2: CANOPY HIGHWAY - a road through the treetops, far above the jungle floor.
 Teaches: rope bridges with Swoopbeak toucans diving at you, liana gaps between
 the giant trees, a zipline down to the next tree, crumbling branches, a long
-three-liana swing, then a broken bridge and the treehouse gate.
+three-liana swing, a broken bridge, the treehouse deck, a zipline down to the
+old fig tree, a vine up its trunk and a last bridge to the crown gate.
 Secrets: gem 0 on a high branch above the third tree (mushroom pad), gem 1 on
 a branch under the broken bridge (drop through the gap, a pad bounces you
 back), gem 2 inside the hollow stump on the last tree; the Snoozling is caged
@@ -102,13 +103,41 @@ L.block(10980, -200, 20, 160)
 L.gem(10840, -100)
 L.secret(10740, -180, 240, 140)
 L.enemy("swoopbeak", 11200, -480)
-L.goal(11650, -40)
 L.lums(11300, -150, 11550, -150, 4, 30)
-L.deco("hut", 11880, -40, 1.0)
-L.wall(12000, -1400, -40)
+L.deco("hut", 11450, -40, 0.9)
+
+# ---- S8 the zipline down to the fig tree (11900..13700) ---------------------------------------------
+L.checkpoint(11700, -40)
+L.sign(11780, -40, "Zip down to the old\nfig tree - then climb!", 260)
+L.zipline(11950, -110, 12850, 290)
+L.lums(12050, -60, 12750, 230, 7)
+L.tree_platform(12800, 13700, 360, 13250, trunk_w=220)
+L.checkpoint(12900, 360)
+L.enemy("cocobonk", 13300, 360)
+L.snaptrap(13050, 360)
+L.lums(12950, 260, 13550, 260, 6, 30)
+# The giant trunk with its hanging vine.
+L.terrain([(13700, -500), (13960, -500), (13960, 360), (13700, 360)], rounding=8.0)
+L.vine(13675, -480, 840)
+L.lums(13640, 200, 13640, -380, 5)
+
+# ---- S9 the crown: a last bridge to the gate (13700..15700) ------------------------------------------
+L.land([(13700, -520), (14800, -520)], bottom=-460, rounding=10.0)
+L.checkpoint(13800, -520)
+L.enemy("swoopbeak", 14300, -960)
+L.lum_block(14250, -820, lums=6)
+L.lums(13900, -620, 14700, -620, 7, 30)
+L.bridge(14800, -520, 15300, -520)
+L.lums(14850, -600, 15250, -600, 4, 20)
+L.tree_platform(15300, 15700, -520, 15500, trunk_w=200)
+L.goal(15480, -520)
+L.deco("hut", 15640, -520, 0.8)
+L.deco("bromeliad", 15340, -520)
+L.wall(15700, -1600, -520)
 
 for x0, x1, y in [(-280, 980, 0), (1720, 2280, -40), (3370, 3980, -40), (4970, 5580, -100), (6480, 7080, -80),
-                  (8570, 9180, -40), (9920, 11980, -40)]:
-    L.dress(x0, x1, "jungle", spacing=170, seed=int(x0) % 97 + 3, skip=[(3800, 4000), (6950, 7030), (10650, 11050)])
-L.finish(spawn=(0, -2), left=-360, right=12060, bottom=1000, kill_y=1500)
+                  (8570, 9180, -40), (9920, 11980, -40), (12820, 13680, 360), (13720, 14780, -520)]:
+    L.dress(x0, x1, "jungle", spacing=170, seed=int(x0) % 97 + 3, skip=[(3800, 4000), (6950, 7030), (10650, 11050),
+            (11400, 11500), (13000, 13100)])
+L.finish(spawn=(0, -2), left=-360, right=15760, bottom=1000, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_2_canopy_highway.tscn"))
