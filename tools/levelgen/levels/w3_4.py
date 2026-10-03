@@ -2,7 +2,8 @@
 Teaches: hopping drifting log rafts while Nibblefins leap between them, a
 monkey-guarded bank, climbing the net beside a waterfall, a three-liana swing
 over the roaring gorge, a fast upper river with rocky islets, then a long
-muddy slide back down to the gate.
+muddy slide down to the river mouth (sinking lily leaves) and the fishing
+village gate.
 Secrets: gem 0 on the high ledges over the bank, gem 1 on the tallest rock in
 the upper river, gem 2 in a mossy hollow at the finish; the Snoozling is on
 the little islet in the upper river.
@@ -68,7 +69,7 @@ L.lums(6420, -1000, 7580, -1000, 10, 80)
 
 # ---- S5 the upper river (7700..10000) -------------------------------------------------------------------
 L.land([(7700, -700), (8200, -700), (8220, -380), (9980, -380), (10000, -700), (10300, -700), (11300, 0),
-        (13100, 0)], bottom=1500)
+        (12950, 0), (12970, 380), (14630, 380), (14650, 0), (17100, 0)], bottom=1500)
 L.checkpoint(7760, -700)
 L.water(8200, -680, 1800, 300, current=(190, 0))
 for i in range(3):
@@ -95,14 +96,40 @@ L.block(12000, -160, 300, 20)
 L.block(12280, -160, 20, 160)
 L.gem(12140, -60)
 L.secret(12040, -140, 240, 140)
-L.goal(12700, 0)
 L.lums(12400, -110, 12630, -110, 4, 30)
-L.deco("hut", 12940, 0, 0.9)
-L.wall(13100, -1400, 0)
+
+# ---- S7 the river mouth: sinking leaves over the water (12950..14650) -------------------------------------
+L.checkpoint(12500, 0)
+L.sign(12700, 0, "The river mouth! Hop the\nlily leaves - they sink!", 300)
+L.water(12970, 20, 1660, 360, current=(70, 0))
+for x in [13180, 13480, 13780, 14080, 14380]:
+    L.leaf(x, -30, width=160, sink=50, depth=240)
+for i, x in enumerate([13400, 14000]):
+    L.enemy("nibblefin", x, 20, leap_height=240.0, phase=i * 0.5)
+L.lums(13180, -140, 14460, -140, 10, 40)
+L.deco("lilypads", 13060, 22)
+L.deco("lilypads", 14560, 22)
+
+# ---- S8 the fishing village and the gate (14650..17100) ----------------------------------------------------
+L.checkpoint(14740, 0)
+L.snaptrap(15050, 0)
+L.ledge(15300, -220, 200)
+L.enemy("cocobonk", 15400, -220)
+L.pad(15750, 0, height=620)
+L.island(15850, 16250, -640, depth=120)
+L.lum_block(16050, -940, lums=6)
+L.lums(15880, -720, 16220, -720, 5, 30)
+L.enemy("swoopbeak", 16200, -460)
+L.goal(16700, 0)
+L.lums(16350, -110, 16620, -110, 4, 30)
+for x, k, s in [(14900, "hut", 0.9), (15550, "palm", 1.2), (16450, "hut", 1.0), (16950, "palm", 1.1), (16880, "big_leaf", 1.0)]:
+    L.deco(k, x, 0, s)
+L.wall(17100, -1400, 0)
 
 L.dress(-250, 1280, "jungle", spacing=160, seed=41)
 L.dress(3040, 4980, "jungle", spacing=160, seed=42, skip=[(3500, 3600), (4200, 4300)])
 L.dress(5220, 6280, "jungle", spacing=160, seed=43)
-L.dress(10300, 13050, "jungle", spacing=170, seed=44, skip=[(11650, 11750), (11950, 12350)])
-L.finish(spawn=(0, -2), left=-360, right=13160, bottom=1100, kill_y=1500)
+L.dress(10300, 17050, "jungle", spacing=170, seed=44, skip=[(11650, 11750), (11950, 12350), (12600, 12800), (12930, 14680),
+        (15000, 15100), (15700, 15800), (16650, 16750)])
+L.finish(spawn=(0, -2), left=-360, right=17160, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_4_rumbletide_rapids.tscn"))

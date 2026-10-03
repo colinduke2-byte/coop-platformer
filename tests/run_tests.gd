@@ -5335,13 +5335,12 @@ func test_w3_4_rafts_cross_the_upper_river() -> void:
 	await _finish_demo()
 
 
-func test_w3_4_mudslide_and_the_gate() -> void:
+func test_w3_4_mudslide_and_the_hollow() -> void:
 	var p: Player = await _load_demo(W3_4)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(10080, -702))
-	var ok: bool = await _hop_run(p, [11900], 12650, false, 14.0)
-	check(ok or gm().level_complete, "down the mudslide and over the hollow (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Rumbletide Rapids")
+	var ok: bool = await _hop_run(p, [11900], 12700, false, 14.0)
+	check(ok, "down the mudslide and over the hollow (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6625,4 +6624,32 @@ func test_w3_3_colonnade_and_the_altar_gate() -> void:
 	var ok: bool = await _hop_run(p, [15340, 15540], 16350, false, 10.0)
 	check(ok or gm().level_complete, "under the pendulums and up the altar steps (at %s)" % p.global_position)
 	check(gm().level_complete, "the altar gate completes the Sunken Temple")
+	await _finish_demo()
+
+
+func test_w3_4_lily_leaves_cross_the_river_mouth() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(12600, -2))
+	var ok: bool = await _hop_run(p, [12930, 13220, 13520, 13820, 14120, 14420], 14800, false, 10.0)
+	check(ok, "the sinking lily leaves cross the river mouth (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w3_4_fishing_village_gate() -> void:
+	var p: Player = await _load_demo(W3_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14740, -2))
+	var ok: bool = await _hop_run(p, [], 16750, false, 8.0)
+	check(ok or gm().level_complete, "through the fishing village (at %s)" % p.global_position)
+	check(gm().level_complete, "the village gate completes Rumbletide Rapids")
+	await _finish_demo()
+
+
+func test_w3_4_river_mouth_can_be_swum_if_you_fall_in() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _place(p, Vector2(12900, -2))
+	var ok := await _swim_across(p, 14550.0, 14700.0, 14.0)
+	check(ok, "you can swim the river mouth and climb out (at %s, %s)" % [p.global_position, _state(p)])
 	await _finish_demo()
