@@ -550,7 +550,7 @@ start_facing = -1
 [node name="BouncePad1" type="Area2D" parent="Toys"]
 script = ExtResource("27")
 position = Vector2(15750, 0)
-launch_height = 620
+launch_height = 720
 
 [node name="Terrain6" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")

@@ -5738,13 +5738,12 @@ func test_w4_1_tick_tock_blocks_cross_the_pit() -> void:
 	await _finish_demo()
 
 
-func test_w4_1_yard_zaps_and_the_gate() -> void:
+func test_w4_1_yard_zaps_and_the_crate() -> void:
 	var p: Player = await _load_demo(W4_1)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(7100, -2))
-	var ok: bool = await _hop_run(p, [11100], 12350, false, 16.0)
-	check(ok or gm().level_complete, "through the yard, past the zaps and over the crate (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Cogwheel Courtyard")
+	var ok: bool = await _hop_run(p, [11100], 12450, false, 16.0)
+	check(ok, "through the yard, past the zaps and over the crate (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6687,4 +6686,42 @@ func test_w3_6_colour_garden_and_the_summit_lianas() -> void:
 	p.invulnerable_timer = 100.0
 	ok = await _hop_run(p, [], 8850, false, 6.0)
 	check(ok, "the guard terrace leads to the arena door (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_backwards_conveyor_bridge() -> void:
+	var p: Player = await _load_demo(W4_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(12450, -2))
+	var ok: bool = await _hop_run(p, [], 14100, false, 8.0)
+	check(ok, "running against the conveyor bridge gets you across (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_conveyor_bridge_carries_idle_players_back() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	await _place(p, Vector2(13000, -26))
+	await seconds(1.0)
+	check(p.global_position.x < 12920.0, "standing still on the bridge rolls you back toward the start (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_1_parade_mushroom_and_the_clock_plaza_gate() -> void:
+	var p: Player = await _load_demo(W4_1)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(15200, 0), -660.0, 15400.0)
+	check(p.global_position.y < -610.0 and p.is_on_floor(), "the mushroom reaches the shelf (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14100, -2))
+	var ok: bool = await _hop_run(p, [], 16350, false, 8.0)
+	check(gm().level_complete, "the parade route leads to the clock plaza gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_4_village_mushroom_reaches_the_lookout() -> void:
+	var p: Player = await _load_demo(W3_4)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(15750, 0), -660.0, 15950.0)
+	check(p.global_position.y < -630.0 and p.is_on_floor(), "the mushroom throws you up onto the village lookout (at %s)" % p.global_position)
 	await _finish_demo()
