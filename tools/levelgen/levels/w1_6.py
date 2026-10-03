@@ -42,7 +42,6 @@ L.crumble(2060, -60, 150, respawn=2.0)
 L.pendulum(1875, -470, rope=300, width=150, amplitude=1.0, period=2.6, spiked=True)
 L.snoozling(2300, -250, hanging=True, fur=C(1.0, 0.6, 0.6))
 L.lums(1560, -160, 2220, -160, 7, 30)
-L.sign(1100, -40, "Crumbling stones!\nMind the spikes!", 240)
 
 # ---- S2 the ramparts (2400..3800) -----------------------------------------------------------
 L.enemy("prickleroll", 2750, -40)
@@ -78,7 +77,7 @@ L.deco("lantern", 5370, -40)
 L.checkpoint(5440, -40)
 L.backwall(5500, -700, 1500, 660, shade=0.5)
 L.block(5500, -740, 1500, 40)                        # the hall's roof beam
-L.sign(5680, -40, "The Great Hall. Dodge the\nspike balls - hop the Shieldbug!", 340)
+L.sign(5680, -40, "The Great Hall. Dodge\nthe swinging spike balls!", 340)
 L.spikeball(5950, -330, count=2, radius=160, speed=70)
 L.enemy("shieldbug", 6250, -40)
 L.lums(5800, -280, 6400, -280, 7, 30)
@@ -104,7 +103,6 @@ L.deco("lantern", 7950, -40)
 # ---- S3 the haunted tower (5400..6360) --------------------------------------------------------
 L.backwall(3840 + DX, -1660, 860, 1620)
 L.checkpoint(3860 + DX, -40)
-L.sign(3900 + DX, -40, "The tower! Ride the lift, climb\nthe ledges... watch for ghosts.", 380)
 L.moving(3950 + DX, -80, 180, 30, waypoints=((0, -560),), speed=150, wait=0.8, one_way=True, rider=True)
 for x, y in [(4230, -700), (4480, -860), (4230, -1020), (4480, -1180)]:
     L.ledge(x + DX, y, 190)

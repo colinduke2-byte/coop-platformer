@@ -60,6 +60,9 @@ give it a `world` value, a `map` position and a `music` track.
   board up to ±700 px (and rewraps the text) until it stands on ground, clear of
   terrain, checkpoints, the goal, water, hazards, props and Lum trails. It prints
   `note: no clear spot` if it can't; move the sign by hand then.
+- **Explain each enemy or obstacle once.** A sign teaches something the first time it
+  appears in play order (1-1 to 4-6; each bonus level counts on its own). Later levels
+  just use it - no repeat tips. Level-title signs and secret hints are fine.
 - **One ground piece per stretch.** Two `land()` pieces meeting at the same point
   leave a seam players snag on; the kit warns about it. Merge them into one profile.
 - **Exactly one goal** per level.

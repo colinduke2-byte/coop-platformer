@@ -34,7 +34,6 @@ L.enemy("windup", 1100, 0)
 # ---- S1 the staircase shaft (1400..2500) -------------------------------------------------------------
 L.checkpoint(1420, 0)
 L.backwall(1380, -1300, 1120, 1300, shade=0.5)
-L.sign(1480, 0, "Up the shelves!", 200)
 STAIRS = [(1600, -170), (1830, -340), (2060, -510), (2290, -680)]
 for x, y in STAIRS:
     L.ledge(x, y, 200)
@@ -51,14 +50,12 @@ L.checkpoint(2600, -850)
 L.snoozling(3660, -850, fur=C(1.0, 0.8, 0.5))
 L.block(2550, -1290, 1250, 40)                     # the hall ceiling the pendulums hang from
 L.backwall(2550, -1250, 1250, 400, shade=0.5)
-L.sign(2720, -850, "Spiked pendulums!\nDash past on the\nback-swing.", 240)
 for i, x in enumerate([3100, 3450]):
     L.pendulum(x, -1250, rope=260, width=110, amplitude=1.0, period=2.6, phase=i * 0.5, spiked=True)
 L.lums(3000, -950, 3560, -950, 6)
 
 # ---- S3 the tick-tock climb (3800..4700) ----------------------------------------------------------------
 L.checkpoint(3780, -850)
-L.sign(3830, -850, "Tick-tock blocks swap\non the beat. Jump\nas yours blinks!", 260)
 for i, (x, y) in enumerate([(3920, -1000), (4120, -1150), (4320, -1300), (4520, -1450)]):
     L.beat(x, y, 140, 32, group=i % 2)
     L.lums(x + 30, y - 70, x + 110, y - 70, 2)
@@ -66,7 +63,6 @@ for i, (x, y) in enumerate([(3920, -1000), (4120, -1150), (4320, -1300), (4520, 
 # ---- S4 the clock deck and the gallery lift (4700..6400) ---------------------------------------------------
 L.checkpoint(4780, -1600)
 L.moving(5010, -1600, w=200, h=30, waypoints=((0, -590),), speed=170, wait=1.0, rider=True)   # in a notch
-L.sign(4860, -1600, "Lift to the\nclock gallery", 200)
 L.block(5250, -2190, 520, 40)                      # the clock gallery
 L.gem(5640, -2250)                                 # gem 1
 L.deco("clock", 5500, -2190, 1.4)

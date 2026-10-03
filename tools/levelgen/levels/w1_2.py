@@ -55,7 +55,6 @@ L.lums(4500, -720, 4950, -720, 5)
 
 # ---- S4 the dandelion chain (5100..7700) ---------------------------------------------------
 L.wind(5100, -1700, 3200, 2400, wind=(140, 0))
-L.sign(4470, -500, "Ride the puffs across!\nJUMP lets go.", 260)
 L.island(5900, 6150, -380, depth=160)
 L.dandelion(6090, -380, height=170)
 L.island(6850, 7100, -300, depth=160)
@@ -79,7 +78,6 @@ L.dandelion(8280, -250, height=190)
 
 # ---- S6 Gale Valley to the goal (8300..11200) ----------------------------------------------
 L.wind(8300, -1700, 2000, 2400, wind=(220, 0))
-L.sign(7840, -250, "GALE VALLEY! Grab the last\npuff and ride the wind!", 300)
 L.leaf(9000, -360, width=170, sink=60, depth=280)
 L.leaf(9650, -300, width=170, sink=60, depth=280)
 L.updraft(9230, -1050, 150, 1350, rise=400)
@@ -115,13 +113,11 @@ L.enemy("prickleroll", 13600, -1300)
 L.lums(13320, -1500, 13700, -1500, 5, 30)
 L.lum_block(13640, -1620, lums=5)
 L.dandelion(13760, -1300, height=180)
-L.sign(13200, -1300, "Last puff! Float\ndown to the gate.", 220)
 L.lums(13900, -1250, 14600, -380, 9, -40)
 L.enemy("bumblebonk", 14300, -800)
 L.land([(14500, -150), (15900, -150)], bottom=1300)
 L.checkpoint(14560, -150)
 L.lums(14700, -250, 15100, -250, 5, 40)
-L.sign(15000, -150, "The sky goes on! Hop the cloud\nislands, bounce the mushrooms up to\nthe Sky Garden (steer right!), then\nride the last puff home.", 340)
 for x, k, s in [(14650, "big_flower", 1.0), (15300, "tree", 1.1), (15800, "flowers", 1.0)]:
     L.deco(k, x, -150, s)
 

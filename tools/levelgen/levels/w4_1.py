@@ -40,7 +40,6 @@ L.enemy("springbot", 3050, 0)
 
 # ---- S2 the scrap pit: ride the cart (3200..4700) --------------------------------------------------
 L.checkpoint(3260, 0)
-L.sign(3380, 0, "Hop on the cart\nto cross the pit.", 240)
 L.pit_kill(3600, 4600, 700)
 L.moving(3602, -2, w=200, h=30, waypoints=((800, 0),), speed=170, wait=1.0, rider=True)
 L.lums(3700, -100, 4500, -100, 7)
@@ -95,7 +94,7 @@ L.lums(12100, -110, 12330, -110, 4, 30)
 
 # ---- S7 the conveyor bridge under the zaps (12800..14000) ----------------------------------------
 L.checkpoint(12420, 0)
-L.sign(12560, 0, "The bridge runs BACKWARDS -\nkeep running, mind the zaps!", 340)
+L.sign(12560, 0, "The bridge runs BACKWARDS -\nkeep running!", 340)
 L.pit_kill(12800, 14000, 700)
 L.block(12800, 0, 1200, 24, conveyor=-140.0)
 for i, x in enumerate([13150, 13450, 13750]):

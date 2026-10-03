@@ -194,12 +194,6 @@ radius = 300
 energy = 0.8
 color = Color(0.4, 1, 0.85, 1)
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(1760, 0)
-text = "Pop-spikes! Wait\nfor them to sink,\nthen dash."
-width = 260
-
 [node name="PopSpikes1" type="Area2D" parent="Hazards"]
 script = ExtResource("13")
 position = Vector2(2050, 0)
@@ -258,12 +252,6 @@ arc_height = 0
 
 [node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("17")]
 position = Vector2(3660, 0)
-
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(3420, 0)
-text = "Crushers slam when you pass\nunder - don't stop running!"
-width = 360
 
 [node name="Crusher1" type="AnimatableBody2D" parent="Hazards"]
 script = ExtResource("18")
@@ -363,12 +351,6 @@ arc_height = -40
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("17")]
 position = Vector2(7660, 0)
 
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(7880, 0)
-text = "The floor's gone!\nSwing across."
-width = 240
-
 [node name="PitKill1" type="Area2D" parent="Hazards"]
 script = ExtResource("24")
 position = Vector2(8500, 700)
@@ -411,7 +393,7 @@ start_facing = -1
 [node name="Terrain3" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(9000, 0, 9600, 0, 9600, -120, 9900, -120, 9900, -240, 10200, -240, 10200, -360, 10900, -360, 10900, -240, 11200, -240, 11200, -120, 11500, -120, 11500, 0, 12800, 0, 12820, 240, 13980, 240, 14000, 0, 15400, 0, 15400, -120, 15600, -120, 15600, -240, 16700, -240, 16700, 1500, 9000, 1500)
-seed_value = 69
+seed_value = 66
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("17")]
 position = Vector2(9080, 0)
@@ -495,12 +477,6 @@ kind = 28
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("17")]
 position = Vector2(12400, 0)
 
-[node name="Sign5" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(12740, 0)
-text = "Hop the stones - mind the Nibble-\nfins! Then time the pendulums."
-width = 340
-
 [node name="Water2" type="Area2D" parent="Toys"]
 script = ExtResource("22")
 position = Vector2(12820, 20)
@@ -510,19 +486,19 @@ size = Vector2(1160, 220)
 script = ExtResource("6")
 polygon = PackedVector2Array(13000, -20, 13016, -30, 13134, -30, 13150, -20, 13150, -10, 13100, 54.2029, 13050, 42.6101, 13000, -10)
 rounding = 10
-seed_value = 89
+seed_value = 85
 
 [node name="Terrain5" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(13300, -20, 13316, -30, 13434, -30, 13450, -20, 13450, -10, 13400, 51.1531, 13350, 55.6488, 13300, -10)
 rounding = 10
-seed_value = 90
+seed_value = 86
 
 [node name="Terrain6" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(13600, -20, 13616, -30, 13734, -30, 13750, -20, 13750, -10, 13700, 54.7254, 13650, 44.587, 13600, -10)
 rounding = 10
-seed_value = 91
+seed_value = 87
 
 [node name="Nibblefin3" parent="Enemies" instance=ExtResource("23")]
 position = Vector2(13240, 20)
@@ -745,6 +721,27 @@ kind = 12
 size = 0.87
 seed_value = 123
 
+[node name="Deco29" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(7699, 0)
+kind = 6
+size = 1.18
+seed_value = 921
+
+[node name="Deco30" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(7793, 0)
+kind = 27
+size = 1.23
+seed_value = 67
+
+[node name="Deco31" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(7934, 0)
+kind = 27
+size = 0.84
+seed_value = 524
+
 [node name="Deco32" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(9093, 0)
@@ -852,6 +849,20 @@ kind = 0
 size = 0.81
 front = true
 seed_value = 598
+
+[node name="Deco47" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(12484, 0)
+kind = 12
+size = 1.06
+seed_value = 178
+
+[node name="Deco48" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(12588, 0)
+kind = 6
+size = 0.84
+seed_value = 972
 
 [node name="Deco49" type="Node2D" parent="Decor"]
 script = ExtResource("8")

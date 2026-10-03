@@ -299,12 +299,6 @@ color = Color(1, 0.82, 0.5, 1)
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(4950, 0)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(4810, 0)
-text = "Sorting floor.\nTime the zaps!"
-width = 220
-
 [node name="ZapArc1" type="Node2D" parent="Hazards"]
 script = ExtResource("19")
 position = Vector2(5300, -10)
@@ -343,7 +337,7 @@ start_facing = -1
 script = ExtResource("6")
 polygon = PackedVector2Array(6300, -900, 6310, -420, 6800, -420, 6810, -900, 6810, -1000, 6300, -1000)
 lip = false
-seed_value = 55
+seed_value = 54
 
 [node name="BackWall1" type="Node2D" parent="Decor"]
 script = ExtResource("20")
@@ -472,12 +466,12 @@ arc_height = 30
 [node name="Terrain4" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(7900, 0, 13100, 0, 13100, 1500, 7900, 1500)
-seed_value = 77
+seed_value = 76
 
 [node name="Terrain5" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(15000, 0, 16500, 0, 16500, 1500, 15000, 1500)
-seed_value = 78
+seed_value = 77
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(8000, 0)
@@ -603,12 +597,6 @@ arc_height = 30
 
 [node name="Checkpoint7" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(12350, 0)
-
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(13080, 0)
-text = "Up the shelves to the\nhigh catwalk - then zip\ndown!"
-width = 160
 
 [node name="Block9" parent="Blocks" instance=ExtResource("5")]
 position = Vector2(12700, -180)
@@ -859,6 +847,13 @@ position = Vector2(4537, 0)
 kind = 32
 size = 1.08
 seed_value = 717
+
+[node name="Deco16" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(4880, 0)
+kind = 32
+size = 0.96
+seed_value = 539
 
 [node name="Deco17" type="Node2D" parent="Decor"]
 script = ExtResource("9")

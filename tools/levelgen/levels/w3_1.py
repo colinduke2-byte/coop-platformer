@@ -86,7 +86,6 @@ L.deco("palm", 8760, 0)
 
 # ---- S5 sinking leaves over the bog (9100..10600) --------------------------------------------------
 L.checkpoint(9040, 0)
-L.sign(9270, 0, "Leaves sink\nunder you!", 200)
 L.pit_kill(9400, 10600, 700)
 for x in [9560, 9820, 10080, 10340]:
     L.leaf(x, -40, width=150, sink=80, depth=320)
@@ -112,7 +111,6 @@ L.deco("hut", 12450, 0, 0.8)
 
 # ---- S7 the liana ravine (12600..14100) ---------------------------------------------------------
 L.checkpoint(12640, 0)
-L.sign(12780, 0, "Swing the lianas, then punch\nthe coconuts back at the monkeys!", 320)
 L.pit_kill(13100, 14100, 700)
 L.liana(13330, -500, 330, sway=0.12, phase=0.6)
 L.liana(13790, -500, 330, sway=0.15, phase=1.4)

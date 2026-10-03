@@ -45,7 +45,6 @@ L.snoozling(3850, -930, hanging=True, fur=C(0.9, 0.7, 1.0))
 L.ledge(3500, -960, 150)                            # gem 1 up on the ridge
 L.gem(3575, -1020)
 L.lums(3150, -880, 4100, -880, 9)
-L.sign(3450, -700, "Windy up here! Gusts push you back.", 330)
 
 # ---- S2b the frozen tollgate (4400..5700) -----------------------------------------------------------
 L.pit_kill(4400, 4700, 1300)
@@ -65,7 +64,6 @@ L.lums(4800, -800, 5380, -800, 5, 30)
 
 # ---- S2c the icicle bridge in the gale (5600..6700) ------------------------------------------------
 L.checkpoint(5640, -700)
-L.sign(5760, -700, "The old rope bridge... hold\non tight - then bowl the outpost!", 320)
 L.pit_kill(6040, 6700, 1300)
 L.bridge(6000, -700, 6700, -700, broken=(6,))
 L.wind(6000, -1600, 700, 1100, wind=(-150, 0), gust=2.0)

@@ -472,12 +472,6 @@ polygon = PackedVector2Array(8500, -900, 8510, -320, 10100, -320, 10110, -900, 1
 lip = false
 seed_value = 76
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(8510, 0)
-text = "Root tunnel.\nFlytraps ahead!"
-width = 220
-
 [node name="SnapTrap3" type="Area2D" parent="Hazards"]
 script = ExtResource("16")
 position = Vector2(8800, 0)
@@ -597,12 +591,6 @@ arc_height = 30
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(12450, 0)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(12690, 0)
-text = "Ride the drifting logs\nover the sinkhole."
-width = 260
-
 [node name="PitKill2" type="Area2D" parent="Hazards"]
 script = ExtResource("20")
 position = Vector2(13850, 700)
@@ -627,7 +615,7 @@ wait_for_rider = true
 script = ExtResource("6")
 polygon = PackedVector2Array(13600, 10, 13616, 0, 13884, 0, 13900, 10, 13900, 20, 13840, 99.8897, 13780, 121.064, 13720, 145.4092, 13660, 77.6575, 13600, 20)
 rounding = 10
-seed_value = 105
+seed_value = 103
 
 [node name="Glow15" type="PointLight2D" parent="Decor"]
 script = ExtResource("8")
@@ -963,6 +951,20 @@ position = Vector2(12239, 0)
 kind = 11
 size = 1.21
 seed_value = 204
+
+[node name="Deco49" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(12460, 0)
+kind = 11
+size = 0.96
+seed_value = 196
+
+[node name="Deco50" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(12780, 0)
+kind = 13
+size = 0.88
+seed_value = 206
 
 [node name="Deco51" type="Node2D" parent="Decor"]
 script = ExtResource("9")

@@ -48,7 +48,7 @@ L.lums(3470, -300, 3470, -560, 4)
 L.seesaw(3760, -60, 300)
 L.lums(3880, -420, 3880, -640, 4)                 # up where the seesaw flings a friend
 L.acorns(3860, -470, interval=2.4)                 # over the seesaw, not the landing spot
-L.sign(3470, -60, "Bounce on the frog,\nor slam the seesaw\nto fling a friend!", 300)
+L.sign(3470, -60, "Slam the seesaw\nto fling a friend!", 300)
 
 # ---- S4 zipline to the next tree (3950..5600) ------------------------------------------------
 L.block(3850, -300, 110, 240)
@@ -126,7 +126,6 @@ L.checkpoint(13010, -460)
 L.deco("hut", 13300, -460)
 L.deco("lantern", 13620, -460)
 L.lums(13150, -560, 13700, -560, 6, 30)
-L.sign(13850, -460, "The market's across the gorge -\nhop the leaves, don't dawdle!", 360)
 
 # ---- S10 leaf-hops over the gorge (14200..15300) ------------------------------------------------------
 for x, y in [(14450, -480), (14750, -500), (15050, -480)]:
@@ -149,7 +148,6 @@ L.lums(15450, -560, 15950, -560, 5, 30)
 L.terrain([(16500, -1240), (16760, -1240), (16760, -460), (16500, -460)], rounding=8.0)
 L.vine(16475, -1280, 820)
 L.lums(16440, -700, 16440, -1150, 4)
-L.sign(16100, -460, "Climb to the Owl Lookout!", 280)
 
 # ---- S12 the Owl Lookout and the zipline home (16500..19400) -------------------------------------------
 L.land([(16500, -1300), (17450, -1300)], bottom=-1240, rounding=10.0)

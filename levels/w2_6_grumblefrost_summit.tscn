@@ -218,12 +218,6 @@ count = 9
 end = Vector2(950, 0)
 arc_height = 0
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(3450, -700)
-text = "Windy up here! Gusts push you back."
-width = 330
-
 [node name="PitKill3" type="Area2D" parent="Hazards"]
 script = ExtResource("10")
 position = Vector2(4550, 1300)
@@ -249,12 +243,12 @@ respawn_time = 2
 [node name="Terrain4" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(4700, -700, 6000, -700, 6040, 400, 6040, 1500, 4700, 1500)
-seed_value = 41
+seed_value = 40
 
 [node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(4760, -700)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
+[node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(4390, -700)
 text = "Locked! Fetch the key\nfrom the high ledge."
@@ -304,12 +298,6 @@ arc_height = 30
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(5640, -700)
 
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(5850, -700)
-text = "The old rope\nbridge... hold on\ntight - then bowl\nthe outpost!"
-width = 160
-
 [node name="PitKill4" type="Area2D" parent="Hazards"]
 script = ExtResource("10")
 position = Vector2(6370, 1300)
@@ -349,7 +337,7 @@ arc_height = 30
 [node name="Terrain5" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(6660, 400, 6700, -700, 8200, -700, 8200, 1500, 6660, 1500)
-seed_value = 60
+seed_value = 58
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(6780, -700)
@@ -427,12 +415,12 @@ arc_height = 0
 [node name="Terrain6" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(8200, -1400, 10900, -1400, 10900, 1500, 8200, 1500)
-seed_value = 75
+seed_value = 73
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(8420, -1400)
 
-[node name="Sign5" type="Node2D" parent="Signs"]
+[node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(8230, -1400)
 text = "GRUMBLEFROST! Jump\nhis boulders - or\nPUNCH THEM BACK at\nhim!"
@@ -623,6 +611,20 @@ kind = 6
 size = 0.84
 front = true
 seed_value = 800
+
+[node name="Deco23" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3483, -700)
+kind = 8
+size = 0.95
+seed_value = 418
+
+[node name="Deco24" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3703, -700)
+kind = 14
+size = 1.12
+seed_value = 596
 
 [node name="Deco25" type="Node2D" parent="Decor"]
 script = ExtResource("8")

@@ -55,7 +55,7 @@ L.deco("snowman", 4480, 0, 0.8)
 L.checkpoint(4650, 0)
 L.snowpile(4800, 0, max_radius=90)
 L.bell(4700, 0)
-L.sign(5050, 70, "Downhill! Roll a\nsnowball - or belly-\nslide (DOWN + run)!", 300)
+L.sign(5050, 70, "Downhill! Belly-\nslide (DOWN\n+ run)!", 300)
 L.enemy("grunt", 5400, 213, walk_speed=0.0, sight=0.0)
 L.enemy("grunt", 5800, 384, walk_speed=0.0, sight=0.0)
 L.enemy("snowl", 5900, 0)
@@ -74,7 +74,7 @@ L.pit_kill(7650, 8020, 1300)
 L.block(7650, 1000, 370, 40)                                       # a soft landing below...
 L.pad(7720, 1000, height=640, rotation=-30)                         # ...and a mushroom back up
 L.deco("skis", 7300, 640)
-L.sign(7240, 640, "SKI JUMP! Sprint, long-jump or glide\nacross (JUMP again in the air).", 400)
+L.sign(7240, 640, "SKI JUMP! Sprint, long-jump\nor glide across!", 400)
 L.gem(7840, 300)                                                   # the top of a great jump
 L.lums(7700, 470, 7960, 470, 4, -60)
 L.land([(8020, 620), (8300, 640), (8700, 640)], bottom=1500)
@@ -107,7 +107,6 @@ L.secret(11420, 420, 220, 140)
 # ---- S7 the sledge run: Snowman Hill, the penguin lake, the gate (11700..15200) ------------------
 L.checkpoint(11760, 560)
 L.snowpile(11960, 560, max_radius=85)
-L.sign(11820, 560, "SNOWMAN HILL! Send a snowball\ndown to clear the way.", 360)
 for x in [12400, 12700, 12950]:
     L.enemy("grunt", x, 560 + (x - 12000) * 340 / 1200, walk_speed=0.0, sight=0.0)
 L.deco("snowman", 12200, 560 + 200 * 340 / 1200, 1.1)
@@ -129,7 +128,6 @@ L.deco("lantern", 14700, 760)
 
 # ---- S8 Bowling Hill: one more snowball, a whole line of pins (15000..16400) ----------------------
 L.checkpoint(14980, 760)
-L.sign(15120, 760, "BOWLING HILL! Punch the pile,\nwatch them all go flying!", 340)
 L.snowpile(15420, 760, max_radius=95)
 for i, x in enumerate([15800, 15950, 16100, 16250]):
     y = 760 + (x - 15500) * 240 / 800

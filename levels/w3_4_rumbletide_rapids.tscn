@@ -163,12 +163,6 @@ arc_height = 0
 [node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(3070, 0)
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(3270, 0)
-text = "Mind the monkeys -\nand the flytraps!"
-width = 260
-
 [node name="SnapTrap1" type="Area2D" parent="Hazards"]
 script = ExtResource("15")
 position = Vector2(3550, 0)
@@ -249,16 +243,10 @@ count = 6
 end = Vector2(0, -450)
 arc_height = 0
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(4770, 0)
-text = "Climb the net up\nthe falls!"
-width = 240
-
 [node name="Terrain2" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(5200, -700, 6300, -700, 6300, 1500, 5200, 1500)
-seed_value = 45
+seed_value = 43
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(5280, -700)
@@ -313,7 +301,7 @@ arc_height = 80
 [node name="Terrain3" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(7700, -700, 8200, -700, 8220, -380, 9980, -380, 10000, -700, 10300, -700, 11300, 0, 12950, 0, 12970, 380, 14630, 380, 14650, 0, 17100, 0, 17100, 1500, 7700, 1500)
-seed_value = 55
+seed_value = 53
 
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(7760, -700)
@@ -352,7 +340,7 @@ start_offset = 0.6667
 script = ExtResource("6")
 polygon = PackedVector2Array(8940, -810, 8956, -820, 9084, -820, 9100, -810, 9100, -800, 9046.6667, -767.6864, 8993.3333, -766.8649, 8940, -800)
 rounding = 10
-seed_value = 61
+seed_value = 59
 
 [node name="Snoozling1" type="Area2D" parent="Pickups"]
 script = ExtResource("23")
@@ -364,7 +352,7 @@ fur = Color(0.6, 0.9, 1, 1)
 script = ExtResource("6")
 polygon = PackedVector2Array(9300, -930, 9316, -940, 9404, -940, 9420, -930, 9420, -920, 9380, -892.5443, 9340, -888.1002, 9300, -920)
 rounding = 10
-seed_value = 63
+seed_value = 61
 
 [node name="Gem2" type="Area2D" parent="Pickups"]
 script = ExtResource("16")
@@ -396,12 +384,6 @@ arc_height = 0
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(10080, -700)
-
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(10300, -700)
-text = "MUDSLIDE! Run down\n- or belly-slide\n(DOWN)."
-width = 160
 
 [node name="Cocobonk3" parent="Enemies" instance=ExtResource("17")]
 position = Vector2(10900, -280)
@@ -454,12 +436,6 @@ arc_height = 30
 
 [node name="Checkpoint7" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(12500, 0)
-
-[node name="Sign5" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(12850, 0)
-text = "The river mouth! Hop the\nlily leaves - they sink!"
-width = 300
 
 [node name="Water3" type="Area2D" parent="Toys"]
 script = ExtResource("11")
@@ -556,7 +532,7 @@ launch_height = 720
 script = ExtResource("6")
 polygon = PackedVector2Array(15850, -630, 15866, -640, 16234, -640, 16250, -630, 16250, -620, 16183.3333, -550.1135, 16116.6667, -539.2732, 16050, -525.059, 15983.3333, -531.5994, 15916.6667, -561.9248, 15850, -620)
 rounding = 10
-seed_value = 99
+seed_value = 95
 
 [node name="LumBlock1" type="AnimatableBody2D" parent="Toys"]
 script = ExtResource("28")
@@ -660,6 +636,27 @@ kind = 0
 size = 1.24
 seed_value = 55
 
+[node name="Deco21" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3142, 0)
+kind = 27
+size = 0.92
+seed_value = 229
+
+[node name="Deco22" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3256, 0)
+kind = 27
+size = 1.13
+seed_value = 559
+
+[node name="Deco23" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(3363, 0)
+kind = 12
+size = 0.81
+seed_value = 224
+
 [node name="Deco24" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(3489, 0)
@@ -724,6 +721,35 @@ position = Vector2(4404, 0)
 kind = 0
 size = 1.2
 seed_value = 371
+
+[node name="Deco33" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(4574, 0)
+kind = 29
+size = 0.82
+seed_value = 234
+
+[node name="Deco34" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(4769, 0)
+kind = 6
+size = 1.18
+seed_value = 888
+
+[node name="Deco35" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(4809, 2)
+kind = 12
+size = 0.78
+front = true
+seed_value = 285
+
+[node name="Deco36" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(4923, 0)
+kind = 26
+size = 0.87
+seed_value = 364
 
 [node name="Deco37" type="Node2D" parent="Decor"]
 script = ExtResource("8")

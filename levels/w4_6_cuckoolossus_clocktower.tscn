@@ -280,12 +280,6 @@ arc_height = 0
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("10")]
 position = Vector2(6030, -700)
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(6280, -700)
-text = "The gear plaza!\nThen the tick-tock\nbridge to the\nloft."
-width = 160
-
 [node name="Windup2" parent="Enemies" instance=ExtResource("18")]
 position = Vector2(6550, -700)
 start_facing = -1
@@ -394,7 +388,7 @@ kind = 31
 [node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("10")]
 position = Vector2(8900, -700)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
+[node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(8620, -700)
 text = "CUCKOOLOSSUS! Jump the\npendulum. When the\ncuckoo sticks in the\nfloor - STOMP it!"

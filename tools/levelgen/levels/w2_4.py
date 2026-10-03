@@ -63,14 +63,13 @@ L.lums(7440, 700, 7640, 700, 3, -60)
 L.enemy("grunt", 8250, 910, walk_speed=0.0)
 L.lums(7750, 740, 9250, 900, 14)
 L.lums(9560, 780, 9860, 780, 4, -80)                # the big jump
-L.sign(9050, 1000, "SKI JUMP! Sprint and leap!", 300)
 
 # ---- Safe at the bottom (9900..11400) ----------------------------------------------------------------
 L.checkpoint(9980, 900)
 L.deco("hut", 10400, 900)
 L.deco("igloo", 10900, 900, 0.9)
 L.lums(10100, 800, 10500, 800, 5, 40)
-L.sign(10650, 900, "Phew! Safe... Now hop the\nice floes across the lake.", 340)
+L.sign(10650, 900, "Phew! Safe...\nfor now.", 340)
 # Gem 2: tucked in the lodge's snow shed - over its roof, or in through the front.
 L.block(11180, 760, 20, 140)
 L.block(11180, 740, 240, 20)
@@ -98,7 +97,6 @@ L.deco("lantern", 14550, 900)
 
 # ---- S8 IT'S NOT OVER: a second avalanche down the Lower Gorge (14800..18800) ------------------------
 L.checkpoint(14820, 900)
-L.sign(14950, 900, "Uh-oh... the Yetlings woke\nthe mountain AGAIN. RUN!", 340)
 ava2 = L.avalanche(13900, 900, distance=4900, speed=440, height=900, depth=1600)
 L.zone(15250, 200, 200, 1200, [ava2])
 L.lums(15400, 820, 16350, 1060, 10)

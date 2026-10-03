@@ -92,7 +92,6 @@ L.block(5100, -660, 260, 60)
 L.breakable(5160, -1000, 50, 340)
 L.gem(5290, -730)
 L.block(5360, -1000, 40, 400)
-L.sign(4700, -660, "Drop down the hole... (but what's\nbehind that cracked wall?)", 380)
 crystal(4100, -660, PINK)
 
 # ---- S4 the geyser shaft (4950..6600) ---------------------------------------------------------
@@ -138,7 +137,6 @@ shroom(10900, -780, VIOLET, 1.0)
 
 # ---- S7 the Glowroot Chasm (11000..12400) --------------------------------------------------------
 L.checkpoint(11050, -780)
-L.sign(11250, -780, "A rickety old bridge. Mind\nthe gap - and the rocks above!", 360)
 L.bridge(11600, -780, 12400, -780, broken=(8, 9), slack=30.0)
 L.brambles(11600, 60, 800, 160)
 L.pit_kill(11600, 12400, 420)
@@ -164,7 +162,7 @@ shroom(12650, -780, PINK, 0.9)
 crystal(13250, -780, VIOLET)
 
 # ---- S9 the Spore Mines: crumbling stones over the glowing brambles (13600..14500) ---------------------
-L.sign(13360, -780, "Old mine stones - they crumble!\nThen ride the geyser up.", 300)
+L.sign(13360, -780, "Old mine stones -\nthey crumble!", 300)
 L.pit_kill(13600, 14500, 420)
 L.brambles(13600, 60, 900, 160)
 for x, y in [(13740, -800), (14040, -830), (14340, -800)]:

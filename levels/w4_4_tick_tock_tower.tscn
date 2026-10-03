@@ -122,12 +122,6 @@ position = Vector2(1380, -1300)
 size = Vector2(1120, 1300)
 shade = 0.5
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(1630, 0)
-text = "Up the shelves!"
-width = 200
-
 [node name="Block2" parent="Blocks" instance=ExtResource("5")]
 position = Vector2(1600, -170)
 size = Vector2(200, 20)
@@ -225,12 +219,6 @@ position = Vector2(2550, -1250)
 size = Vector2(1250, 400)
 shade = 0.5
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(2810, -850)
-text = "Spiked pendulums!\nDash past on the\nback-swing."
-width = 240
-
 [node name="Pendulum1" type="Node2D" parent="Hazards"]
 script = ExtResource("17")
 position = Vector2(3100, -1250)
@@ -260,12 +248,6 @@ arc_height = 0
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("11")]
 position = Vector2(3780, -850)
-
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(4220, -850)
-text = "Tick-tock blocks\nswap on the beat.\nJump as yours\nblinks!"
-width = 160
 
 [node name="BeatBlock1" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("18")
@@ -329,12 +311,6 @@ speed = 170
 wait_time = 1
 mode = 0
 wait_for_rider = true
-
-[node name="Sign5" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(4980, -1600)
-text = "Lift to the\nclock gallery"
-width = 200
 
 [node name="Block8" parent="Blocks" instance=ExtResource("5")]
 position = Vector2(5250, -2190)
@@ -482,7 +458,7 @@ arc_height = 30
 [node name="Checkpoint7" parent="Checkpoints" instance=ExtResource("11")]
 position = Vector2(12330, 0)
 
-[node name="Sign6" type="Node2D" parent="Signs"]
+[node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(12120, 0)
 text = "The GREAT\nPENDULUM! Climb\nup, hop on, ride\nit over."

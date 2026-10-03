@@ -329,12 +329,6 @@ count = 4
 end = Vector2(300, 0)
 arc_height = -80
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("8")
-position = Vector2(9410, 965)
-text = "SKI JUMP! Sprint\nand leap!"
-width = 160
-
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("18")]
 position = Vector2(9980, 900)
 
@@ -356,10 +350,10 @@ count = 5
 end = Vector2(400, 0)
 arc_height = 40
 
-[node name="Sign4" type="Node2D" parent="Signs"]
+[node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("8")
-position = Vector2(10740, 900)
-text = "Phew! Safe... Now hop the\nice floes across the lake."
+position = Vector2(10710, 900)
+text = "Phew! Safe...\nfor now."
 width = 340
 
 [node name="Block3" parent="Blocks" instance=ExtResource("5")]
@@ -401,28 +395,28 @@ size = Vector2(1600, 400)
 script = ExtResource("6")
 polygon = PackedVector2Array(11890, 900, 12050, 900, 12040, 960, 11900, 960)
 rounding = 8
-seed_value = 71
+seed_value = 70
 slippery = true
 
 [node name="Terrain9" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(12240, 880, 12390, 880, 12380, 940, 12250, 940)
 rounding = 8
-seed_value = 72
+seed_value = 71
 slippery = true
 
 [node name="Terrain10" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(12590, 900, 12750, 900, 12740, 960, 12600, 960)
 rounding = 8
-seed_value = 73
+seed_value = 72
 slippery = true
 
 [node name="Terrain11" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(12950, 880, 13100, 880, 13090, 940, 12960, 940)
 rounding = 8
-seed_value = 74
+seed_value = 73
 slippery = true
 
 [node name="LumLine12" type="Node2D" parent="Pickups"]
@@ -479,12 +473,6 @@ kind = 21
 
 [node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("18")]
 position = Vector2(14820, 900)
-
-[node name="Sign5" type="Node2D" parent="Signs"]
-script = ExtResource("8")
-position = Vector2(15100, 900)
-text = "Uh-oh... the Yetlings woke\nthe mountain AGAIN. RUN!"
-width = 340
 
 [node name="Avalanche2" type="Node2D" parent="Hazards"]
 script = ExtResource("14")
@@ -1009,6 +997,35 @@ position = Vector2(14705, 900)
 kind = 6
 size = 0.9
 seed_value = 616
+
+[node name="Deco78" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(14864, 900)
+kind = 4
+size = 1.09
+seed_value = 116
+
+[node name="Deco79" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(15021, 900)
+kind = 22
+size = 1.1
+seed_value = 785
+
+[node name="Deco80" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(15061, 902)
+kind = 6
+size = 0.81
+front = true
+seed_value = 593
+
+[node name="Deco81" type="Node2D" parent="Decor"]
+script = ExtResource("9")
+position = Vector2(15158, 900)
+kind = 4
+size = 0.99
+seed_value = 998
 
 [node name="Deco82" type="Node2D" parent="Decor"]
 script = ExtResource("9")

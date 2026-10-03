@@ -179,12 +179,6 @@ count = 7
 end = Vector2(660, 0)
 arc_height = 30
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(1130, -40)
-text = "Crumbling stones!\nMind the spikes!"
-width = 240
-
 [node name="Prickleroll1" parent="Enemies" instance=ExtResource("15")]
 position = Vector2(2750, -40)
 start_facing = -1
@@ -239,7 +233,7 @@ size = Vector2(130, 230)
 [node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("11")]
 position = Vector2(3830, -40)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
+[node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(4040, -40)
 text = "Courtyard! Mind\nthe spikes and\nthe fire jets."
@@ -328,11 +322,11 @@ shade = 0.5
 position = Vector2(5500, -740)
 size = Vector2(1500, 40)
 
-[node name="Sign4" type="Node2D" parent="Signs"]
+[node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(6310, -40)
-text = "The Great Hall. Dodge\nthe spike balls - hop\nthe Shieldbug!"
-width = 160
+position = Vector2(6340, -40)
+text = "The Great Hall. Dodge\nthe swinging spike balls!"
+width = 340
 
 [node name="SpikeBall1" type="Node2D" parent="Hazards"]
 script = ExtResource("28")
@@ -388,9 +382,9 @@ radius = 220
 energy = 0.5
 color = Color(1, 0.7, 0.4, 1)
 
-[node name="Sign5" type="Node2D" parent="Signs"]
+[node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(6740, -40)
+position = Vector2(6800, -40)
 text = "PUNCH the lever - the\nportcullis won't stay up long!"
 width = 320
 
@@ -459,12 +453,6 @@ shade = 0.45
 
 [node name="Checkpoint5" parent="Checkpoints" instance=ExtResource("11")]
 position = Vector2(8060, -40)
-
-[node name="Sign6" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(8430, -40)
-text = "The tower! Ride the\nlift, climb the\nledges... watch for\nghosts."
-width = 160
 
 [node name="MovingPlatform1" type="AnimatableBody2D" parent="Toys"]
 script = ExtResource("34")
@@ -552,7 +540,7 @@ size = Vector2(860, 40)
 [node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("11")]
 position = Vector2(9030, -1400)
 
-[node name="Sign7" type="Node2D" parent="Signs"]
+[node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(9210, -1400)
 text = "BARON: stomp\nhim when he's\non his back!"
@@ -696,6 +684,35 @@ kind = 6
 size = 0.97
 seed_value = 840
 
+[node name="Deco18" type="Node2D" parent="Decor"]
+script = ExtResource("10")
+position = Vector2(938, -40)
+kind = 0
+size = 1.12
+seed_value = 265
+
+[node name="Deco19" type="Node2D" parent="Decor"]
+script = ExtResource("10")
+position = Vector2(978, -38)
+kind = 0
+size = 0.85
+front = true
+seed_value = 240
+
+[node name="Deco20" type="Node2D" parent="Decor"]
+script = ExtResource("10")
+position = Vector2(1064, -40)
+kind = 0
+size = 0.97
+seed_value = 15
+
+[node name="Deco21" type="Node2D" parent="Decor"]
+script = ExtResource("10")
+position = Vector2(1250, -40)
+kind = 0
+size = 0.94
+seed_value = 8
+
 [node name="Deco22" type="Node2D" parent="Decor"]
 script = ExtResource("10")
 position = Vector2(2464, -40)
@@ -766,13 +783,6 @@ position = Vector2(3796, -40)
 kind = 14
 size = 0.92
 seed_value = 786
-
-[node name="Deco33" type="Node2D" parent="Decor"]
-script = ExtResource("10")
-position = Vector2(7089, -40)
-kind = 14
-size = 0.97
-seed_value = 948
 
 [node name="Deco34" type="Node2D" parent="Decor"]
 script = ExtResource("10")

@@ -3387,7 +3387,9 @@ func test_w1_6_boss_fight_can_be_won() -> void:
 			if not is_instance_valid(baron) or baron.health < hp:
 				break
 		if p.is_bubbled():
-			await seconds(2.5)  # (respawn) then try again
+			await seconds(2.5)  # (respawn - he naps again) then walk back in and try again
+			await _place(p, Vector2(9400, -1402))
+			await frames(10)
 	check(baron == null or not is_instance_valid(baron) or baron.dead, "six belly-stomps should defeat the Baron (hp %d)" % (baron.health if is_instance_valid(baron) else 0))
 	await seconds(1.5)
 	var exit_open := false

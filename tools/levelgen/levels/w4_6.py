@@ -66,7 +66,6 @@ L.lums(5000, -240, 5880, -660, 8)
 
 # ---- S3b the gear plaza (6000..6940) ----------------------------------------------------------------------
 L.checkpoint(6030, -700)
-L.sign(6280, -700, "The gear plaza! Then the\ntick-tock bridge to the loft.", 300)
 L.enemy("windup", 6550, -700)
 L.zap(6750, -710, 6750, -940, on=0.9, off=1.5, phase=0.2)
 L.lums(6450, -820, 6880, -820, 5, 30)

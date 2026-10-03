@@ -45,7 +45,6 @@ L.deco("icicles", 1250, -520, 0.8)
 
 # ---- S1 the icicle corridor (1400..3200) -----------------------------------------------------
 L.checkpoint(1300, 0)
-L.sign(1800, 0, "ICICLES drop when you pass under.\nDon't stop!", 360)
 for x in [2150, 2450, 2750, 3000]:
     L.stalactite(x, -420)
 L.enemy("yetling", 3120, 0)
@@ -60,7 +59,6 @@ crystal(2600, 0, TEAL, 0.8)
 L.checkpoint(3120, 0)
 L.bell(3300, 0)
 L.terrain([(3200, 0), (5000, 500), (5000, 540), (3200, 40)], rounding=4.0, slippery=True)
-L.sign(3520, 83, "Slippery slide!\nBelly-slide (DOWN\nwhile running)!", 260)
 L.enemy("slidgewick", 3900, 194)
 L.enemy("slidgewick", 4500, 361)
 L.lums(3720, 40, 4600, 290, 9)
@@ -75,7 +73,6 @@ L.snoozling(6050, 900, fur=C(0.75, 0.9, 1.0))
 crystal(5950, 900, TEAL)
 crystal(6450, 900, PINK, 0.8)
 L.lums(5300, 560, 6550, 560, 10)
-L.sign(4900, 457, "A frozen lake! Dive in - but mind\nthe spiky balls.", 360)
 
 # ---- S4 the crystal climb (6650..7650) --------------------------------------------------------
 L.checkpoint(6720, 480)
@@ -90,7 +87,7 @@ crystal(6850, 480, VIOLET)
 L.checkpoint(7680, -400)
 for i, x in enumerate([8000, 8250, 8500]):
     L.pop_spikes(x, -400, length=168, up=1.0, down=1.6, phase=i * 0.45)
-L.sign(7870, -400, "Pop-up spikes\nin waves - then\nCRUSHERS!", 230)
+L.sign(7870, -400, "CRUSHERS!\nDon't stop\nunderneath!", 230)
 for x in [8950, 9350]:
     L.crusher(x, -900, w=140, h=112, drop=388)
 L.lums(8000, -520, 8700, -520, 7)
@@ -100,7 +97,6 @@ crystal(9750, -400, TEAL)
 
 # ---- S6 the old crystal mine: a minecart over the chasm (10000..11450) ---------------------------
 L.checkpoint(9880, -400)
-L.sign(10080, -400, "The old mine! Ride the\ncart over the chasm.", 300)
 L.block(10300, 300, 1150, 200)                      # the chasm floor...
 L.spikes(10300, 300, 1150)                          # ...all crystal spikes
 L.pit_kill(10300, 11450, 700)
@@ -125,7 +121,6 @@ crystal(11700, -400, TEAL)
 crystal(13100, -400, PINK)
 
 # ---- S8 the ice chute down to the frozen lake (13600..14800) --------------------------------------
-L.sign(13380, -400, "The ICE CHUTE! Slide down,\nthen hop the floes.", 300)
 L.terrain([(13600, -400), (14600, 100), (14600, 130), (13600, -370)], rounding=4.0, slippery=True)
 L.lums(13700, -420, 14500, 40, 8)
 crystal(13650, -400, VIOLET)

@@ -235,7 +235,7 @@ position = Vector2(4700, 0)
 [node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(5050, 64)
-text = "Downhill! Roll a\nsnowball - or belly-\nslide (DOWN + run)!"
+text = "Downhill! Belly-\nslide (DOWN\n+ run)!"
 width = 300
 
 [node name="Grunt4" parent="Enemies" instance=ExtResource("11")]
@@ -320,9 +320,9 @@ kind = 25
 
 [node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(7360, 640)
-text = "SKI JUMP! Sprint,\nlong-jump or glide\nacross (JUMP again in\nthe air)."
-width = 160
+position = Vector2(7420, 633.6)
+text = "SKI JUMP! Sprint, long-jump\nor glide across!"
+width = 400
 
 [node name="Gem2" type="Area2D" parent="Pickups"]
 script = ExtResource("16")
@@ -456,12 +456,6 @@ script = ExtResource("10")
 position = Vector2(11960, 560)
 ball_max_radius = 85
 
-[node name="Sign8" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(11220, 560)
-text = "SNOWMAN HILL! Send\na snowball down to\nclear the way."
-width = 160
-
 [node name="Grunt6" parent="Enemies" instance=ExtResource("11")]
 position = Vector2(12400, 673.3333)
 start_facing = -1
@@ -507,7 +501,7 @@ start_facing = -1
 script = ExtResource("6")
 polygon = PackedVector2Array(13200, 900, 14010, 900, 14010, 940, 13200, 940)
 rounding = 4
-seed_value = 92
+seed_value = 91
 slippery = true
 
 [node name="Checkpoint7" parent="Checkpoints" instance=ExtResource("14")]
@@ -538,7 +532,7 @@ script = ExtResource("24")
 position = Vector2(13520, 560)
 lums = 5
 
-[node name="Sign9" type="Node2D" parent="Signs"]
+[node name="Sign8" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(14150, 880)
 text = "Brr! Nearly there."
@@ -562,12 +556,6 @@ kind = 21
 
 [node name="Checkpoint8" parent="Checkpoints" instance=ExtResource("14")]
 position = Vector2(14980, 760)
-
-[node name="Sign10" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(15270, 760)
-text = "BOWLING HILL! Punch the pile,\nwatch them all go flying!"
-width = 340
 
 [node name="SnowPile4" type="Area2D" parent="Toys"]
 script = ExtResource("10")
@@ -617,7 +605,7 @@ position = Vector2(16380, 1000)
 script = ExtResource("6")
 polygon = PackedVector2Array(16600, 640, 17200, 640, 17260, 700, 17200, 760, 16600, 760, 16540, 700)
 rounding = 12
-seed_value = 113
+seed_value = 111
 
 [node name="Stalactite1" type="Node2D" parent="Hazards"]
 script = ExtResource("25")
@@ -647,7 +635,7 @@ arc_height = 20
 script = ExtResource("6")
 polygon = PackedVector2Array(17300, 1000, 18600, 1000, 18600, 1040, 17300, 1040)
 rounding = 4
-seed_value = 119
+seed_value = 117
 slippery = true
 
 [node name="Checkpoint10" parent="Checkpoints" instance=ExtResource("14")]
@@ -819,6 +807,28 @@ kind = 4
 size = 1.06
 seed_value = 143
 
+[node name="Deco46" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11059, 560)
+kind = 4
+size = 1.11
+seed_value = 977
+
+[node name="Deco47" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11258, 560)
+kind = 4
+size = 0.95
+seed_value = 256
+
+[node name="Deco48" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11298, 562)
+kind = 6
+size = 0.96
+front = true
+seed_value = 599
+
 [node name="Deco49" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(11817, 560)
@@ -854,6 +864,28 @@ position = Vector2(14903, 760)
 kind = 4
 size = 1.13
 seed_value = 303
+
+[node name="Deco56" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(15116, 760)
+kind = 7
+size = 1.02
+seed_value = 587
+
+[node name="Deco57" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(15231, 760)
+kind = 6
+size = 1.03
+seed_value = 753
+
+[node name="Deco58" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(15271, 762)
+kind = 6
+size = 0.83
+front = true
+seed_value = 530
 
 [node name="Deco59" type="Node2D" parent="Decor"]
 script = ExtResource("8")

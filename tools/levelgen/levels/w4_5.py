@@ -57,7 +57,6 @@ L.glow(4730, -560, LAMP, radius=220, energy=0.8)
 
 # ---- S3 the sorting floor (4900..6900) ------------------------------------------------------------------
 L.checkpoint(4950, 0)
-L.sign(5050, 0, "Sorting floor.\nTime the zaps!", 220)
 for i, x in enumerate([5300, 6100]):
     L.zap(x, -10, x, -240, on=0.9, off=1.5, phase=i * 0.4)
     L.glow(x, -120, BLUE, radius=200, energy=0.8)
@@ -110,7 +109,6 @@ L.lums(11800, -110, 12130, -110, 4, 30)
 
 # ---- S7 the dark shaft up to the high catwalk (12300..13700) --------------------------------------------
 L.checkpoint(12350, 0)
-L.sign(12480, 0, "Up the shelves to the high\ncatwalk - then zip down!", 300)
 for i, (x, y) in enumerate([(12700, -180), (12920, -360), (12700, -540), (12920, -720)]):
     L.ledge(x, y, 180)
     L.glow(x + 90, y - 60, LAMP if i % 2 == 0 else BLUE, radius=180, energy=0.7)

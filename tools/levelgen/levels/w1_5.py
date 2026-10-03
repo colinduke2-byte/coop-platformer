@@ -49,7 +49,6 @@ L.enemy("shellbert", 3750, 0, facing=1)
 L.wheel(4200, -290, count=6, radius=250, speed=24)
 L.gem(4200, -760)
 L.ledge(4380, -560, 150)                           # roof overhang: step off the top of the wheel
-L.sign(3850, 0, "Ride the water wheel up to the mill roof.", 380)
 L.enemy("diggle", 4800, -560)
 L.deco("hut", 4980, -560, 1.1)
 L.deco("lantern", 4600, -560)
@@ -71,7 +70,7 @@ L.gem(6310, -760)
 L.lums(5990, -680, 6380, -780, 5)
 L.lums(5500, -120, 6680, -120, 8)
 L.enemy("bumblebonk", 6050, -330)
-L.sign(4680, -560, "RAPIDS ahead! Hop the rocks\n(or ride the geyser up high).", 380)
+L.sign(4680, -560, "RAPIDS ahead!\nHop the rocks.", 380)
 
 # ---- S4 the waterfall climb (6900..8400) -------------------------------------------------------
 L.checkpoint(6950, 0)
@@ -85,7 +84,7 @@ L.lums(7410, -200, 7410, -1000, 8)
 # Alcove hidden behind the waterfall, inside the cliff.
 L.gem(7600, -520)
 L.secret(7440, -620, 260, 180)
-L.sign(7160, 0, "Climb the net by the falls.\n(Anything behind the water?)", 300)
+L.sign(7160, 0, "Anything behind\nthe waterfall...?", 300)
 L.deco("lilypads", 7150, 4)
 
 # ---- S5 the upper pond and the dam (8400..10200) ------------------------------------------------
@@ -108,7 +107,7 @@ L.land([(10900, -450), (11250, -470), (11700, -450), (11720, -415), (11740, 20),
 L.checkpoint(10960, -450)
 
 # ---- S7 Lily Lagoon (11700..13300) and the mill-house gate ---------------------------------------
-L.sign(11400, -450, "LILY LAGOON! Lily pads sink -\nkeep hopping. Boingos bounce!", 380)
+L.sign(11400, -450, "LILY LAGOON! Boingos\nbounce you sky-high!", 380)
 L.water(11740, -415, 1520, 435, current=(40, 0))
 for x, y in [(11860, -440), (12120, -470), (12380, -440)]:
     L.leaf(x, y, width=150, sink=70, depth=240)
@@ -126,12 +125,10 @@ L.enemy("grunt", 14000, -450, walk_speed=0.0, sight=0.0)
 L.enemy("grunt", 14100, -450, walk_speed=0.0, sight=0.0)
 L.crate(14250, -450, 64, lums=4)
 L.lums(13500, -640, 14200, -640, 7)
-L.sign(13520, -450, "Kick the shell!", 220)
 L.deco("hut", 14550, -450, 1.1)
 
 # ---- S8 the Mill Race: rafts down the flume (14900..16800) --------------------------------------
 L.checkpoint(14640, -450)
-L.sign(14720, -450, "THE MILL RACE! Hop on\na log and ride it down.", 280)
 L.water(14940, -415, 1820, 435, current=(150, 0))
 for i in range(3):
     L.raft(14960, -415, width=190, travel=1650, current=150, offset=i / 3)

@@ -35,7 +35,6 @@ L.gem(1900, -600)                                  # jump off the chair halfway 
 L.land([(2470, 400), (2540, -600), (3000, -600), (3080, 400)], bottom=1500)
 L.checkpoint(2600, -600)
 L.deco("hut", 2860, -600, 0.8)
-L.sign(2700, -600, "Crumbling ice in a headwind!\nKeep moving.", 340)
 L.pit_kill(3000, 3850, 1300)
 L.wind(3000, -1500, 850, 1300, wind=(-230, 0), gust=2.4)
 for x, y in [(3080, -620), (3330, -660), (3590, -640)]:
@@ -62,7 +61,6 @@ for x0, y in [(6520, -1400), (6920, -1550), (7320, -1700)]:
 L.lums(6560, -1480, 7520, -1780, 9)
 L.gem(7450, -1870)                                  # a big jump off the top step
 L.pit_kill(6400, 7700, 1300)
-L.sign(6200, -1250, "Icy steps: land gently!", 280)
 
 # ---- S5 the summit deck (7700..8700) -------------------------------------------------------------
 L.land([(7600, 400), (7700, -1850), (8700, -1850), (8820, 400)], bottom=1500)
@@ -88,7 +86,6 @@ L.block(11250, -1170, 20, 220)
 L.gem(11120, -1030)
 
 # ---- S7 the third lift and the Frost Fort (10300..14600) -----------------------------------------
-L.sign(10560, -950, "Last lift! Up to\nthe Frost Fort.", 220)
 L.gondola(10300, -950, waypoints=((1280, -700),), speed=160, wait=0.8, rider=True)
 L.pit_kill(11270, 11800, 1300)
 L.lums(10500, -1150, 11500, -1700, 8)
@@ -96,7 +93,6 @@ L.enemy("snowl", 11100, -1900)
 L.land([(11720, 400), (11780, -1650), (14600, -1650), (14640, 400)], bottom=1500)
 L.checkpoint(11850, -1650)
 L.snowpile(12150, -1650, max_radius=95)
-L.sign(11990, -1650, "THE FROST FORT!\nBowl the guards!", 240)
 for x in [12450, 12570, 12690]:
     L.enemy("grunt", x, -1650, walk_speed=0.0, sight=0.0)
 L.breakable(12900, -1850, 70, 200, iron=True)           # the packed-ice gate
@@ -109,13 +105,11 @@ L.block(13800, -1750, 40, 100)
 L.enemy("yetling", 13920, -1650)
 L.bell(13150, -1650)
 L.lums(13250, -1840, 14100, -1840, 9)
-L.sign(13620, -1650, "Yetlings! Punch their\nsnowballs back at them.", 300)
 L.deco("igloo", 14350, -1650, 0.9)
 L.deco("lantern", 14150, -1650)
 
 # ---- S8 the high gondolas over the Snowl gorge (14600..17300) --------------------------------------
 L.checkpoint(14480, -1650)
-L.sign(14250, -1650, "Two more gondolas to the\nsummit. Snowls overhead!", 320)
 L.gondola(14610, -1650, waypoints=((1270, 0),), speed=170, wait=0.8, rider=True)
 L.pit_kill(14640, 17300, 1300)
 L.enemy("snowl", 15250, -2150)

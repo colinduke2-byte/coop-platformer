@@ -38,7 +38,6 @@ L.ceiling([(1650, -900), (1660, -380), (3200, -380), (3200, -1000), (3360, -1000
 L.backwall(1650, -1100, 5950, 1100, shade=0.5)
 for x in [1900, 2700, 3500, 4400, 5300, 6000, 6800, 7400]:
     L.glow(x, -240, TEAL, radius=300, energy=0.8)
-L.sign(1760, 0, "Pop-spikes! Wait\nfor them to sink,\nthen dash.", 260)
 for i, x in enumerate([2050, 2350, 2650]):
     L.pop_spikes(x, 0, length=168, up=1.0, down=1.5, phase=0.56 - i * 0.28)   # a wave you can run with
 L.lums(2050, -120, 2820, -120, 7)
@@ -51,7 +50,6 @@ L.lums(3280, -500, 3280, -780, 3)
 
 # ---- S2 the crushers (3600..5700) --------------------------------------------------------------------
 L.checkpoint(3660, 0)
-L.sign(3780, 0, "Crushers slam when you pass\nunder - don't stop running!", 360)
 for x in [4150, 4550, 4950, 5350]:
     L.crusher(x, -380, w=140, h=112, drop=268)
 L.lums(4100, -100, 5480, -100, 10)
@@ -74,7 +72,6 @@ L.lums(6350, 100, 7150, 100, 6, -40)
 
 # ---- S5 the collapsed hall: lianas (7600..9100) --------------------------------------------------------
 L.checkpoint(7660, 0)
-L.sign(7760, 0, "The floor's gone!\nSwing across.", 240)
 L.pit_kill(8000, 9000, 700)
 L.block(7980, -620, 1040, 60)                      # a fallen stone beam the vines hang from
 L.liana(8230, -560, 360, sway=0.12, phase=0.5)
@@ -107,7 +104,6 @@ L.deco("totem", 12560, 0)
 
 # ---- S7 the piranha pool: hop the stepping stones (12800..14000) -------------------------------------------
 L.checkpoint(12400, 0)
-L.sign(12650, 0, "Hop the stones - mind the Nibble-\nfins! Then time the pendulums.", 340)
 L.water(12820, 20, 1160, 220)
 for x0 in [13000, 13300, 13600]:
     L.island(x0, x0 + 150, -30, depth=70)

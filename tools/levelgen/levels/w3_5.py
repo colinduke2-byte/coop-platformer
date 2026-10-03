@@ -86,7 +86,6 @@ L.lums(7740, -100, 8100, -100, 3, 20)
 # ---- S5 the root tunnel (8400..10200) ---------------------------------------------------------------------
 L.checkpoint(8300, 0)
 L.ceiling([(8500, -900), (8510, -320), (10100, -320), (10110, -900)], top=-2600)
-L.sign(8420, 0, "Root tunnel.\nFlytraps ahead!", 220)
 for x in [8800, 9100, 9450, 9750]:
     L.snaptrap(x, 0)
 for x in [8650, 9300, 9950]:
@@ -110,7 +109,6 @@ L.lums(11800, -110, 12120, -110, 4, 30)
 
 # ---- S7 the drifting logs over the sinkhole (12900..14800) ---------------------------------------------
 L.checkpoint(12450, 0)
-L.sign(12600, 0, "Ride the drifting logs\nover the sinkhole.", 260)
 L.pit_kill(12900, 14800, 700)
 L.moving(12910, 0, w=200, h=30, waypoints=((680, 0),), speed=150, wait=1.0, rider=True)
 L.island(13600, 13900, 0, depth=120)

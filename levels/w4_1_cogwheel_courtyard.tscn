@@ -172,12 +172,6 @@ start_facing = -1
 [node name="Checkpoint1" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(3260, 0)
 
-[node name="Sign3" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(3470, 0)
-text = "Hop on the cart\nto cross the pit."
-width = 240
-
 [node name="PitKill1" type="Area2D" parent="Hazards"]
 script = ExtResource("14")
 position = Vector2(4100, 700)
@@ -208,12 +202,12 @@ arc_height = 0
 [node name="Terrain2" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(4600, 0, 6000, 0, 6000, 1500, 4600, 1500)
-seed_value = 35
+seed_value = 34
 
 [node name="Checkpoint2" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(4680, 0)
 
-[node name="Sign4" type="Node2D" parent="Signs"]
+[node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(4950, 0)
 text = "TICK-TOCK BLOCKS take\nturns being solid. Jump\nwhen they BLINK!"
@@ -289,12 +283,12 @@ arc_height = 30
 [node name="Terrain3" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(7000, 0, 12800, 0, 12800, 1500, 7000, 1500)
-seed_value = 50
+seed_value = 49
 
 [node name="Terrain4" type="StaticBody2D" parent="Blocks"]
 script = ExtResource("6")
 polygon = PackedVector2Array(14000, 0, 16700, 0, 16700, 1500, 14000, 1500)
-seed_value = 51
+seed_value = 50
 
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(7060, 0)
@@ -342,7 +336,7 @@ size = 1.2
 [node name="Checkpoint4" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(9060, 0)
 
-[node name="Sign5" type="Node2D" parent="Signs"]
+[node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(9360, 0)
 text = "ZAP ARCS crackle, then fire.\nCross when they're off!"
@@ -426,10 +420,10 @@ arc_height = 30
 [node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("13")]
 position = Vector2(12420, 0)
 
-[node name="Sign6" type="Node2D" parent="Signs"]
+[node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(12650, 0)
-text = "The bridge runs\nBACKWARDS - keep\nrunning, mind the\nzaps!"
+position = Vector2(12620, 0)
+text = "The bridge runs\nBACKWARDS - keep\nrunning!"
 width = 160
 
 [node name="PitKill3" type="Area2D" parent="Hazards"]

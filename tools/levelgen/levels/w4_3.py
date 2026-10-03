@@ -26,7 +26,6 @@ L.deco("gear", 900, 0)
 L.lums(300, -110, 1000, -110, 6, 40)
 
 # ---- S1 the fire vents (1400..3000) ---------------------------------------------------------------
-L.sign(1350, 0, "Fire vents sputter,\nthen blast. Wait,\nthen dash!", 260)
 for i, x in enumerate([1800, 2100, 2400, 2700]):
     L.flame(x, 0, length=200, on=0.8, off=1.6, phase=0.6 - i * 0.18)   # a wave you can run with
 L.lums(1750, -120, 2750, -120, 8)
@@ -34,7 +33,6 @@ L.enemy("windup", 2950, 0)
 
 # ---- S2 the steam geyser and the pipe walkway (3000..4800) ---------------------------------------------
 L.checkpoint(3060, 0)
-L.sign(3150, 0, "Steam geysers throw\nyou up - steer onto\nthe pipes!", 260)
 L.geyser(3320, 0, height=620, calm=1.4)
 L.block(3420, -520, 1380, 40)                      # the pipe walkway
 L.enemy("windup", 4100, -520)
@@ -87,7 +85,6 @@ L.lums(11800, -110, 12130, -110, 4, 30)
 
 # ---- S7 the boiler heart: geysers up and over the great boiler (12300..14700) --------------------------
 L.checkpoint(12350, 0)
-L.sign(12500, 0, "The great boiler! Ride the\ngeysers up and over it.", 300)
 L.geyser(12780, 0, height=640, calm=1.4)
 L.block(12880, -520, 620, 40)                       # walkway A
 L.lums(12780, -150, 12780, -470, 3)

@@ -58,7 +58,6 @@ L.checkpoint(5020, -100)
 L.enemy("cocobonk", 5520, -100)
 
 # ---- S4 crumbling branches (5600..6500) -------------------------------------------------------------
-L.sign(5230, -100, "Rotten branches\ncrumble - keep\nmoving!", 260)
 L.crumble(5700, -100, 150)
 L.crumble(5960, -110, 150)
 L.crumble(6220, -110, 150)
@@ -82,7 +81,6 @@ L.lums(7230, -360, 8380, -360, 10, 80)
 # ---- S6 the broken bridge (8550..9950) -------------------------------------------------------------
 L.tree_platform(8550, 9200, -40, 8800, trunk_w=200)
 L.checkpoint(8640, -40)
-L.sign(8760, -40, "Broken planks!\nJump the gaps.", 220)
 L.bridge(9200, -40, 9900, -40, broken=(5, 6))
 L.lums(9260, -110, 9840, -110, 6, 20)
 # Gem 1: a branch under the gap, a mushroom bounces you back up.
@@ -108,7 +106,6 @@ L.deco("hut", 11450, -40, 0.9)
 
 # ---- S8 the zipline down to the fig tree (11900..13700) ---------------------------------------------
 L.checkpoint(11700, -40)
-L.sign(11780, -40, "Zip down to the old\nfig tree - then climb!", 260)
 L.zipline(11950, -110, 12850, 290)
 L.lums(12050, -60, 12750, 230, 7)
 L.tree_platform(12800, 13700, 360, 13250, trunk_w=220)

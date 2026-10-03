@@ -32,7 +32,6 @@ L.lums(820, -110, 1150, -110, 4, 30)
 
 # ---- S1 the geyser terraces (1700..2800) ------------------------------------------------------
 L.checkpoint(1560, 0)
-L.sign(1340, 0, "GEYSERS! Stand on\nthe vent and ride\nthe eruption up.", 280)
 L.geyser(1620, 0, height=420, calm=1.2)
 L.geyser(2150, -300, height=420, calm=1.2, phase=0.6)
 L.geyser(2650, -600, height=420, calm=1.2, phase=1.2)
@@ -47,7 +46,6 @@ L.seesaw(3350, -900, 320)
 L.lums(3200, -1250, 3500, -1250, 4)
 L.enemy("slidgewick", 4000, -900)
 L.bell(3750, -900)
-L.sign(3050, -900, "Land on the high end of a SEESAW to\nfling a friend sky-high!", 380)
 
 # ---- S3 the steaming canyon (4200..5920) -------------------------------------------------------
 L.pit_kill(4200, 5800, 1300)
@@ -60,7 +58,6 @@ L.lums(4330, -1100, 4330, -1450, 4)
 L.lums(4500, -1500, 5700, -1500, 10)
 L.lums(4540, -930, 5480, -930, 6, -60)
 L.enemy("snowl", 4900, -1250)
-L.sign(4000, -900, "Hop the rocks - or GLIDE into the\nsteam (JUMP again in the air) and rise!", 420)
 # The warm rock at the bottom of the canyon, with the Snoozling.
 L.island(5210, 5400, 300, depth=90)
 L.snoozling(5310, 300, fur=C(1.0, 0.75, 0.6))
@@ -73,7 +70,6 @@ L.snowpile(6500, -800, max_radius=80)
 for x in [6900, 7200, 7500]:
     L.enemy("grunt", x, -800 + (x - 6600) * 0.5, walk_speed=0.0, sight=0.0)
 L.lums(6650, -870, 7750, -320, 12)
-L.sign(6150, -800, "Bowling time!\nPunch the snow pile.", 280)
 
 # ---- S5 the bath-house (7800..10600) ------------------------------------------------------------
 L.land([(8300, -200), (8315, -60), (8700, -60), (8715, -200), (11000, -200), (11020, -60), (12380, -60), (12400, -200),
@@ -94,7 +90,6 @@ L.secret(10400, -340, 200, 140)
 
 # ---- S6 the steaming pool boardwalk (10620..12400) ----------------------------------------------
 L.checkpoint(10700, -200)
-L.sign(10850, -200, "STEAM JETS! Cross the\nboardwalk between puffs.", 320)
 L.water(11020, -170, 1360, 110)                      # warm and shallow: fall in and just climb out
 for i, x0 in enumerate([11040, 11340, 11640, 11940, 12240]):
     L.ledge(x0, -210, 160 if x0 < 12240 else 150)
@@ -109,7 +104,6 @@ L.seesaw(12950, -200, 320)
 L.ledge(12900, -600, 200)
 L.lum_block(12960, -900, lums=5)
 L.lums(12920, -680, 13080, -680, 3)
-L.sign(12650, -200, "Slam the SEESAW\nto fling a friend!", 260)
 L.enemy("yetling", 13950, -400)
 L.enemy("slidgewick", 14200, -400)
 L.bell(13850, -400)
@@ -119,7 +113,6 @@ L.deco("lantern", 14300, -400)
 
 # ---- S8 the steam gorge: hop the rocks between the jets (15000..16400) -------------------------------
 L.checkpoint(14650, -400)
-L.sign(14800, -400, "THE STEAM GORGE! Hop the\nrocks between the puffs.", 300)
 L.pit_kill(15040, 16360, 900)
 for i, x0 in enumerate([15200, 15500, 15800, 16100]):
     L.island(x0, x0 + 170, -400, depth=110)
@@ -144,7 +137,6 @@ L.deco("snowman", 16900, -400, 1.0)
 
 # ---- S10 the summit spa: geyser up to the top bath-house (17800..19400) ---------------------------------
 L.geyser(17840, -400, height=640, calm=1.4)
-L.sign(17760, -400, "Ride the geyser up!", 240)
 L.lums(17840, -560, 17840, -980, 4)
 L.checkpoint(18060, -900)
 L.water(18415, -900, 230, 120)                           # the warm spa pool: hop in!

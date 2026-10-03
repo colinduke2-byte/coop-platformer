@@ -36,7 +36,6 @@ L.lums(1400, -90, 2900, -90, 12)
 
 # ---- S2 the monkey bank (3000..4500) ---------------------------------------------------------------
 L.checkpoint(3070, 0)
-L.sign(3270, 0, "Mind the monkeys -\nand the flytraps!", 260)
 L.snaptrap(3550, 0)
 L.ledge(3800, -190, 160)
 L.ledge(4040, -370, 150)                           # gem 0 up top
@@ -55,7 +54,6 @@ L.net(5100, -780, 60, 750)
 L.ledge(4930, -300, 130)
 L.ledge(4930, -560, 130)
 L.lums(5130, -150, 5130, -600, 6)
-L.sign(4680, 0, "Climb the net up\nthe falls!", 240)
 
 # ---- S4 the gorge: three lianas (5200..7700) ---------------------------------------------------------
 L.land([(5200, -700), (6300, -700)], bottom=1500)
@@ -85,7 +83,6 @@ L.lums(9500, -780, 9920, -780, 4)
 
 # ---- S6 the mudslide and the gate (10000..13100) ---------------------------------------------------------
 L.checkpoint(10080, -700)
-L.sign(10180, -700, "MUDSLIDE! Run down\n- or belly-slide (DOWN).", 300)
 L.enemy("cocobonk", 10900, -280)
 L.lums(10350, -740, 11250, -60, 9)
 L.checkpoint(11380, 0)
@@ -100,7 +97,6 @@ L.lums(12400, -110, 12630, -110, 4, 30)
 
 # ---- S7 the river mouth: sinking leaves over the water (12950..14650) -------------------------------------
 L.checkpoint(12500, 0)
-L.sign(12700, 0, "The river mouth! Hop the\nlily leaves - they sink!", 300)
 L.water(12970, 20, 1660, 360, current=(70, 0))
 for x in [13180, 13480, 13780, 14080, 14380]:
     L.leaf(x, -30, width=160, sink=50, depth=240)

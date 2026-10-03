@@ -375,12 +375,6 @@ gem_index = 1
 position = Vector2(5360, -1000)
 size = Vector2(40, 400)
 
-[node name="Sign4" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(5120, -660)
-text = "Drop down the hole...\n(but what's behind that\ncracked wall?)"
-width = 160
-
 [node name="Deco12" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(4100, -660)
@@ -397,7 +391,7 @@ color = Color(1, 0.55, 0.85, 1)
 [node name="Checkpoint3" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(5250, 0)
 
-[node name="Sign5" type="Node2D" parent="Signs"]
+[node name="Sign4" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(5770, 0)
 text = "GEYSERS launch you up.\nWatch the stalactites\noverhead!"
@@ -507,7 +501,7 @@ size = Vector2(1000, 420)
 script = ExtResource("6")
 polygon = PackedVector2Array(8000, -630, 8016, -640, 8154, -640, 8170, -630, 8170, -620, 8113.3333, -565.4463, 8056.6667, -551.2291, 8000, -620)
 rounding = 10
-seed_value = 88
+seed_value = 87
 
 [node name="Puffcap4" parent="Enemies" instance=ExtResource("13")]
 position = Vector2(8085, -640)
@@ -527,7 +521,7 @@ count = 8
 end = Vector2(800, 120)
 arc_height = 60
 
-[node name="Sign6" type="Node2D" parent="Signs"]
+[node name="Sign5" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(6900, -1100)
 text = "Underground lake!\nDive in - something glows."
@@ -631,12 +625,6 @@ color = Color(0.75, 0.55, 1, 1)
 
 [node name="Checkpoint6" parent="Checkpoints" instance=ExtResource("12")]
 position = Vector2(11050, -780)
-
-[node name="Sign7" type="Node2D" parent="Signs"]
-script = ExtResource("7")
-position = Vector2(11370, -780)
-text = "A rickety old bridge. Mind\nthe gap - and the rocks above!"
-width = 360
 
 [node name="RopeBridge1" type="Node2D" parent="Toys"]
 script = ExtResource("25")
@@ -789,11 +777,11 @@ radius = 220
 energy = 0.8
 color = Color(0.75, 0.55, 1, 1)
 
-[node name="Sign8" type="Node2D" parent="Signs"]
+[node name="Sign6" type="Node2D" parent="Signs"]
 script = ExtResource("7")
-position = Vector2(13510, -780)
-text = "Old mine stones - they\ncrumble! Then ride the\ngeyser up."
-width = 160
+position = Vector2(13480, -780)
+text = "Old mine stones -\nthey crumble!"
+width = 300
 
 [node name="PitKill2" type="Area2D" parent="Hazards"]
 script = ExtResource("26")
@@ -1039,7 +1027,7 @@ radius = 320
 energy = 0.9
 color = Color(0.75, 0.55, 1, 1)
 
-[node name="Sign9" type="Node2D" parent="Signs"]
+[node name="Sign7" type="Node2D" parent="Signs"]
 script = ExtResource("7")
 position = Vector2(18390, -1560)
 text = "Daylight! Nearly home."
@@ -1234,6 +1222,13 @@ kind = 5
 size = 0.93
 seed_value = 181
 
+[node name="Deco68" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(5280, -660)
+kind = 5
+size = 1.06
+seed_value = 629
+
 [node name="Deco69" type="Node2D" parent="Decor"]
 script = ExtResource("8")
 position = Vector2(5389, 0)
@@ -1348,6 +1343,27 @@ kind = 5
 size = 0.98
 front = true
 seed_value = 594
+
+[node name="Deco86" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11088, -780)
+kind = 12
+size = 1.24
+seed_value = 245
+
+[node name="Deco87" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11272, -780)
+kind = 12
+size = 1.04
+seed_value = 328
+
+[node name="Deco88" type="Node2D" parent="Decor"]
+script = ExtResource("8")
+position = Vector2(11490, -780)
+kind = 6
+size = 1.12
+seed_value = 22
 
 [node name="Deco92" type="Node2D" parent="Decor"]
 script = ExtResource("8")

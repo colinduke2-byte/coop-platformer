@@ -36,7 +36,7 @@ L.lums(1800, -100, 3000, -100, 10)
 
 # ---- S2 zap arcs and Sparkbots (3200..4800) --------------------------------------------------------
 L.checkpoint(3360, 0)
-L.sign(3480, 0, "Zaps and Sparkbots! Punch the\nSparkbots - never stomp them.", 380)
+L.sign(3480, 0, "SPARKBOTS! Punch them -\nnever stomp them.", 380)
 for i, x in enumerate([3900, 4300, 4700]):
     L.zap(x, -10, x, -240, on=0.9, off=1.5, phase=i * 0.25)
 L.enemy("sparkbot", 4100, -80, travel=V(0, -150), speed=110.0)
@@ -50,7 +50,6 @@ L.gem(4090, -520)
 
 # ---- S3 the elevator up to the catwalks (4800..6600) --------------------------------------------------
 L.checkpoint(4800, 0)
-L.sign(5000, 0, "Ride the lift\nup!", 200)
 L.moving(5120, 0, w=200, h=30, waypoints=((0, -600),), speed=170, wait=1.0, rider=True)   # sits in a notch
 L.block(5340, -600, 1300, 40)                      # the catwalk
 L.snoozling(5700, -600, fur=C(0.6, 0.9, 1.0))
@@ -90,7 +89,6 @@ L.lums(11800, -110, 12130, -110, 4, 30)
 
 # ---- S7 the crusher line: the belt RUSHES you along (12600..14200) ---------------------------------------
 L.checkpoint(12300, 0)
-L.sign(12450, 0, "The packing line! The belt\nrushes you - time the crushers.", 340)
 L.ceiling([(12600, -900), (12610, -420), (14200, -420), (14210, -900)], top=-1000)
 L.backwall(12600, -900, 1600, 900, shade=0.5)
 L.block(12700, 0, 1400, 16, conveyor=170.0)
@@ -101,7 +99,6 @@ L.deco("toyblocks", 14300, 0, 1.0)
 
 # ---- S8 the shipping lift up to the loading catwalk (14200..16500) ---------------------------------------
 L.checkpoint(14250, 0)
-L.sign(14380, 0, "Shipping lift -\nall aboard!", 220)
 L.moving(14610, 0, w=200, h=30, waypoints=((0, -600),), speed=170, wait=1.0, rider=True)
 L.lums(14710, -150, 14710, -500, 4)
 L.checkpoint(14950, -600)
