@@ -4448,8 +4448,7 @@ func test_w2_1_sledge_run_reaches_the_new_gate() -> void:
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(10460, 558))
 	var ok: bool = await _hop_run(p, [11290], 15000, false, 16.0)
-	check(ok or gm().level_complete, "over the snow hut, down Snowman Hill and across the penguin lake (at %s)" % p.global_position)
-	check(gm().level_complete, "the new gate completes Snowball Slopes")
+	check(ok, "over the snow hut, down Snowman Hill and across the penguin lake (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6375,4 +6374,30 @@ func test_w1_6_thorn_bridge_to_the_tower() -> void:
 	await _place(p, Vector2(7100, -42))
 	var ok: bool = await _hop_run(p, [7470], 8200, false, 8.0)
 	check(ok, "over the thorn bridge (and its broken plank) to the tower door (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_1_bowling_hill_snowball_knocks_down_the_pins() -> void:
+	var p: Player = await _load_demo(W2_1)
+	await _place(p, Vector2(15330, 758))
+	p.invulnerable_timer = 100.0
+	p.facing = 1
+	await frames(10)
+	await _punch()
+	await seconds(4.0)
+	var standing := 0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e.global_position.x > 15700.0 and e.global_position.x < 16300.0 and not e.dead:
+			standing += 1
+	check(standing == 0, "the snowball bowls over every pin on Bowling Hill (%d left)" % standing)
+	await _finish_demo()
+
+
+func test_w2_1_icicles_rink_and_the_camp_gate() -> void:
+	var p: Player = await _load_demo(W2_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(15000, 758))
+	var ok: bool = await _hop_run(p, [], 19560, false, 18.0)
+	check(ok or gm().level_complete, "down Bowling Hill, under the icicles and across the rink (at %s)" % p.global_position)
+	check(gm().level_complete, "the Yetling camp gate completes Snowball Slopes")
 	await _finish_demo()

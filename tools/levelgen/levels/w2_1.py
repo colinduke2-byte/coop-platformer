@@ -3,7 +3,8 @@ Teaches: punching snow piles (the snowball grows and bowls everything over),
 the slippery frozen pond with a tobogganing Slidgewick, a long downhill where a
 huge snowball smashes a packed-ice wall, a ski jump over a gap (sprint, slide
 or glide), Snowls dropping snowballs over the floating drifts, then the sledge
-run: a snowball down Snowman Hill, a frozen lake full of penguins and the gate.
+run: a snowball down Snowman Hill, a frozen lake full of penguins, Bowling
+Hill, the icicle overhang, the skating rink and the Yetling camp gate.
 Secrets: gem 0 on the high ledges over the pond, gem 1 at the top of the ski
 jump's arc, gem 2 behind a snowdrift at the finish; the Snoozling is locked in
 the ice cave at the bottom of the big slope (smash the wall with a snowball).
@@ -91,7 +92,8 @@ L.lums(8760, 440, 10250, 440, 12)
 L.sign(8620, 640, "Snowls drop snowballs.\nPunch them back up!", 320)
 
 # ---- S6 the finish (10300..11600) ---------------------------------------------------------------
-L.land([(10400, 560), (12000, 560), (13200, 900), (14010, 900), (14100, 880), (14400, 880), (14620, 760), (15200, 760)], bottom=1500)
+L.land([(10400, 560), (12000, 560), (13200, 900), (14010, 900), (14100, 880), (14400, 880), (14620, 760), (15500, 760), (16300, 1000), (18800, 1000),
+        (19100, 880), (19800, 880)], bottom=2000)
 L.checkpoint(10460, 560)
 L.lums(10600, 460, 11000, 460, 5, 40)
 L.deco("igloo", 10800, 560, 0.8)
@@ -122,14 +124,51 @@ L.ledge(13480, 740, 160)
 L.lum_block(13520, 560, lums=5)
 L.sign(14150, 880, "Brr! Nearly there.", 240)
 L.enemy("yetling", 14350, 880)
-L.goal(14900, 760)
 L.lums(14550, 660, 14800, 660, 4, 30)
-L.deco("igloo", 15080, 760, 0.9)
 L.deco("lantern", 14700, 760)
-L.wall(15200, -1200, 760)
 
-L.dress(-250, 15150, "snow", spacing=170, seed=21,
+# ---- S8 Bowling Hill: one more snowball, a whole line of pins (15000..16400) ----------------------
+L.checkpoint(14980, 760)
+L.sign(15120, 760, "BOWLING HILL! Punch the pile,\nwatch them all go flying!", 340)
+L.snowpile(15420, 760, max_radius=95)
+for i, x in enumerate([15800, 15950, 16100, 16250]):
+    y = 760 + (x - 15500) * 240 / 800
+    L.enemy("grunt", x, round(y), walk_speed=0.0, sight=0.0)
+L.lums(15600, 700, 16300, 900, 8)
+L.deco("snowman", 15300, 760, 1.0)
+
+# ---- S9 the icicle overhang: dash underneath (16400..17300) --------------------------------------
+L.checkpoint(16380, 1000)
+L.terrain([(16600, 640), (17200, 640), (17260, 700), (17200, 760), (16600, 760), (16540, 700)], rounding=12.0)
+for x in [16720, 16900, 17080]:
+    L.stalactite(x, 760, ice=True)
+L.deco("icicles", 16900, 760, 1.0)
+L.lums(16650, 900, 17150, 900, 6, 20)
+
+# ---- S10 the skating rink (17300..18700) -----------------------------------------------------------
+L.terrain([(17300, 1000), (18600, 1000), (18600, 1040), (17300, 1040)], rounding=4.0, slippery=True)
+L.checkpoint(17340, 1000)
+L.enemy("slidgewick", 17900, 1000)
+L.enemy("slidgewick", 18400, 1000, facing=-1)
+L.enemy("snowl", 18000, 620)
+for x in [17600, 18150]:
+    L.ledge(x, 840, 170)
+    L.lums(x + 30, 780, x + 140, 780, 3)
+L.lum_block(18235, 600, lums=6)
+L.lums(17400, 900, 18550, 900, 10)
+
+# ---- S11 the Yetling camp and the gate (18700..19800) ----------------------------------------------
+L.checkpoint(18740, 1000)
+L.enemy("yetling", 19250, 880)
+L.goal(19500, 880)
+L.lums(19100, 780, 19420, 780, 4, 30)
+for x, k, s in [(19000, "igloo", 0.9), (19320, "lantern", 1.0), (19660, "igloo", 1.0), (19760, "pine", 1.1),
+                (18700, "snowman", 1.0)]:
+    L.deco(k, x, L.surface_y(x), s)
+L.wall(19800, -1200, 880)
+
+L.dress(-250, 19750, "snow", spacing=170, seed=21,
         skip=[(1400, 2900), (3000, 4600), (6500, 7120), (7600, 8050), (8700, 10380), (11350, 11700),
-              (11900, 13150), (13200, 14050)])
-L.finish(spawn=(0, -2), left=-360, right=15260, bottom=1300, kill_y=1600)
+              (11900, 13150), (13200, 14050), (15350, 16350), (16540, 17260), (17300, 18620), (19450, 19560)])
+L.finish(spawn=(0, -2), left=-360, right=19860, bottom=1400, kill_y=1700)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_1_snowball_slopes.tscn"))
