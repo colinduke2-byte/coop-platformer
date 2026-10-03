@@ -3990,15 +3990,15 @@ const W2_6 := "res://levels/w2_6_grumblefrost_summit.tscn"
 func test_w2_6_lift_ridge_and_net_reach_the_summit() -> void:
 	var p: Player = await _load_demo(W2_6)
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if e.global_position.x < 6000.0:
+		if e.global_position.x < 8500.0:
 			e.queue_free()
 	var ok := await _ride_lift(p, Vector2(1620, -4), 2760.0, -700.0)
 	check(ok, "the last lift should reach the ridge (at %s)" % p.global_position)
 	p.invulnerable_timer = 100.0
 	ok = await _hop_run(p, [3090, 3330], 4150, true, 6.0)
 	check(ok, "the ridge should be crossable in the wind (at %s)" % p.global_position)
-	await _place(p, Vector2(5580, -702))  # (past the tollgate - it has its own test)
-	await _run_to(p, 5655, "move_right", 2.0)
+	await _place(p, Vector2(8080, -702))  # (past the tollgate and the outpost - they have their own tests)
+	await _run_to(p, 8155, "move_right", 2.0)
 	release(0, "move_right")
 	press(0, "move_up")
 	for i in 600:
@@ -4023,7 +4023,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 		else:
 			e.queue_free()
 	check(boss != null and boss.asleep, "Grumblefrost should be asleep in his arena")
-	await _place(p, Vector2(6350, -1402))
+	await _place(p, Vector2(8850, -1402))
 	await frames(10)
 	check(not boss.asleep, "walking into the arena should wake him")
 	var reflected := 0
@@ -4066,7 +4066,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 	await seconds(1.5)
 	var exit_open := false
 	for g in _demo.find_children("*", "Gate", true, false):
-		if g.global_position.x > 7300.0 and g.is_open():
+		if g.global_position.x > 9800.0 and g.is_open():
 			exit_open = true
 	check(exit_open, "beating him should open the exit gate")
 	await _finish_demo()
@@ -4623,7 +4623,7 @@ func test_w1_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
 
 
 func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W2_6, Vector2(5920, -1400), 6700.0)
+	await _boss_arena_lets_you_back_in(W2_6, Vector2(8420, -1400), 9200.0)
 
 
 func test_glacier_dying_in_king_grumblos_arena_lets_you_back_in() -> void:
@@ -6506,4 +6506,16 @@ func test_w2_5_snow_fort_and_the_geyser_to_the_spa() -> void:
 	check(p.global_position.y < -890.0 and p.is_on_floor(), "the geyser throws you up to the summit spa (at %s)" % p.global_position)
 	ok = await _hop_run(p, [18360], 19100, false, 8.0)
 	check(gm().level_complete, "the summit spa gate completes Hot Spring Hollow (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_6_gale_bridge_and_the_yetling_outpost() -> void:
+	var p: Player = await _load_demo(W2_6)
+	await _clear_enemies()
+	await _place(p, Vector2(5650, -702))
+	var ok: bool = await _hop_run(p, [6280], 6800, true, 8.0)
+	check(ok, "over the broken bridge in the gale (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	ok = await _hop_run(p, [7750], 8080, false, 6.0)
+	check(ok, "through the outpost to the ice wall (at %s)" % p.global_position)
 	await _finish_demo()

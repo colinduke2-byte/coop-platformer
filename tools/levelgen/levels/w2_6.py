@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 from tscn import C
 
-DX = 1400   # the ice wall and the summit sit DX further right (room for the tollgate)
+DX = 3900   # the ice wall and the summit sit DX further right (room for the tollgate, bridge and outpost)
 
 L = LevelKit("GrumblefrostSummit", "Grumblefrost's Summit", theme="summit", horizon=-200, scenery="ice")
 L.ambience("snow", 1.2)
@@ -51,7 +51,7 @@ L.sign(3450, -700, "Windy up here! Gusts push you back.", 330)
 L.pit_kill(4400, 4700, 1300)
 L.crumble(4440, -720, 120, respawn=2.0)
 L.crumble(4580, -720, 120, respawn=2.0)
-L.land([(4700, -700), (5700, -700)], bottom=1500)
+L.land([(4700, -700), (6000, -700), (6040, 400)], bottom=1500)
 L.checkpoint(4760, -700)
 L.sign(4900, -700, "Locked! Fetch the key\nfrom the high ledge.", 300)
 L.pad(5060, -700, height=420)
@@ -62,6 +62,28 @@ L.enemy("yetling", 5300, -700)
 L.key_door(5440, -920, 64, 220)
 L.lums(4990, -1160, 5190, -1160, 3)
 L.lums(4800, -800, 5380, -800, 5, 30)
+
+# ---- S2c the icicle bridge in the gale (5600..6700) ------------------------------------------------
+L.checkpoint(5640, -700)
+L.sign(5760, -700, "The old rope bridge... hold\non tight - then bowl the outpost!", 320)
+L.pit_kill(6040, 6700, 1300)
+L.bridge(6000, -700, 6700, -700, broken=(6,))
+L.wind(6000, -1600, 700, 1100, wind=(-150, 0), gust=2.0)
+L.enemy("snowl", 6350, -1100)
+L.lums(6050, -800, 6650, -800, 7, 30)
+
+# ---- S2d the Yetling outpost (6700..8100) ---------------------------------------------------------
+L.land([(6660, 400), (6700, -700), (8200, -700)], bottom=1500)
+L.checkpoint(6780, -700)
+L.snowpile(6950, -700, max_radius=85)
+for x in [7350, 7480, 7610]:
+    L.enemy("grunt", x, -700, walk_speed=0.0, sight=0.0)
+L.block(7800, -800, 40, 100)
+L.enemy("yetling", 7950, -700)
+L.lums(7100, -820, 7750, -820, 7)
+L.lum_block(7480, -1050, lums=5)
+for x, k in [(6740, "lantern"), (7200, "igloo"), (8050, "pine")]:
+    L.deco(k, x, -700)
 
 # ---- S3 the ice wall ---------------------------------------------------------------------------------
 L.net(4230 + DX, -1380, 60, 680)
@@ -93,6 +115,6 @@ L.deco("lantern", 6100 + DX, -1400)
 L.wall(7000 + DX, -2800, -1400)
 
 L.dress(-250, 6950 + DX, "snow", spacing=180, seed=26, skip=[(1450, 2760), (3050, 3450), (4350, 4750), (5000, 5750),
-        (4650 + DX, 6060 + DX)])
+        (5600, 8200), (4650 + DX, 6060 + DX)])
 L.finish(spawn=(0, -2), left=-360, right=7060 + DX, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_6_grumblefrost_summit.tscn"))
