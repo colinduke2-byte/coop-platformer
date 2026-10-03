@@ -57,7 +57,17 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Every W1/W2 level 10–25% longer with a new closing section (W1: stream swim + ferry, sky meadow, glowroot bridge + grotto, swing rings + shieldbug tree, lily lagoon, keep courtyard; W2: sledge run + snow hut, frost fort, minecart chasm + crystal chamber, ice floes + yetling camp, steam boardwalk + seesaw hill, frozen tollgate)
 - [x] Signs auto-placed clear of terrain / props; layout audit (`tools/level_audit.gd`) runs in the tests
 - [x] Fixes: stuck wall-sliding at cliff feet (terrain collision keeps inside corners sharp), rope-bridge end lip, ground-piece seams
-- [ ] Bonus levels (Candy, Sunset, Glacier) only got layout fixes - extend them next
+- [x] Bonus levels (Candy, Sunset, Glacier) extended (see refinement pass 2)
+
+## Level refinement pass 2 ✅ (every story + bonus level ~30% longer)
+- [x] W1: 1-1 Moonflower Brook + Pillow Hills, 1-2 cloud hops + Sky Garden + a long float home, 1-3 Spore Mines + geyser to the crystal gallery, 1-4 leaf gorge + treetop market + Owl Lookout zipline, 1-5 Mill Race rafts + Kingfisher Bank, 1-6 great hall + timed portcullis (punch the lever) + thorn bridge
+- [x] W2: 2-1 Bowling Hill + icicle overhang + skating rink, 2-2 high gondolas under Snowls + summit plateau, 2-3 ice chute + floe lake + geode hall, 2-4 a SECOND avalanche chase, 2-5 steam gorge + snow fort + summit spa, 2-6 gale bridge + Yetling outpost
+- [x] W3: 3-1 liana ravine + monkey grove + rainbow falls, 3-2 fig-tree zipline + vine climb + crown gate, 3-3 piranha pool + pendulum colonnade + altar, 3-4 lily-leaf river mouth + fishing village, 3-5 drifting logs + glowcap clearing, 3-6 colour garden + summit lianas
+- [x] W4: 4-1 backwards conveyor bridge + wind-up parade, 4-2 packing-line crushers + shipping lift, 4-3 geysers over the great boiler, 4-4 the great pendulum ride + bell yard, 4-5 dark shaft + zipline over the abyss, 4-6 gear plaza + tick-tock bridge
+- [x] Bonus: Candy gumdrop hops, Sunset moat bridge + courtyard, Glacier frozen approach
+- [x] Looks: dressing puts style-matched props in front of the players (flowers, ferns, reeds...), thinner factory hall roofs
+- [ ] Playtest: is the new length right, or do some levels need a mid-level shortcut?
+- [ ] Dreamer's Playground (demo) wasn't extended - it's already the longest level
 
 ## Boss fights
 - [x] Dying in an arena no longer locks you out: the entry gate reopens on respawn (ZoneTrigger ignored stale overlaps and slammed it shut again)
