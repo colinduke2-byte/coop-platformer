@@ -1,7 +1,8 @@
 """World 3-5: FIREFLY BOG - a dark, steamy swamp lit only by fireflies and glowing flowers.
 Teaches: lily-leaf hops over Nibblefin pools in the dark, a flytrap meadow with
 monkeys, a three-liana swing over the sinkhole, floating log stepping stones,
-a root tunnel full of flytraps, then the bog's last pool and the gate.
+a root tunnel full of flytraps, drifting logs over the sinkhole and the
+glowcap clearing to the stilt-village gate.
 Secrets: gem 0 on top of the dead tree (mushroom pad), gem 1 on a log far out
 in the stepping-stone pool, gem 2 in a hollow stump at the finish; the
 Snoozling is on the little island in the middle of the log pool.
@@ -66,7 +67,8 @@ L.enemy("swoopbeak", 5700, -620)
 L.lums(4920, -300, 6080, -300, 10, 80)
 
 # ---- S4 the log stepping stones (6200..8400) -----------------------------------------------------------
-L.land([(6200, 0), (6600, 0), (6620, 260), (8180, 260), (8200, 0), (12600, 0)], bottom=1500)
+L.land([(6200, 0), (6600, 0), (6620, 260), (8180, 260), (8200, 0), (12900, 0)], bottom=1500)
+L.land([(14800, 0), (16500, 0)], bottom=1500)
 L.checkpoint(6280, 0)
 lamp(6450, 0)
 L.water(6600, 20, 1600, 240)
@@ -103,14 +105,39 @@ L.gem(11140, -60)
 L.secret(11040, -140, 240, 140)
 L.snaptrap(11550, 0)
 L.enemy("swoopbeak", 11700, -460)
-L.goal(12200, 0)
 lamp(12000, 0)
 L.lums(11800, -110, 12120, -110, 4, 30)
-L.deco("hut", 12450, 0, 0.9)
-L.wall(12600, -1400, 0)
+
+# ---- S7 the drifting logs over the sinkhole (12900..14800) ---------------------------------------------
+L.checkpoint(12450, 0)
+L.sign(12600, 0, "Ride the drifting logs\nover the sinkhole.", 260)
+L.pit_kill(12900, 14800, 700)
+L.moving(12910, 0, w=200, h=30, waypoints=((680, 0),), speed=150, wait=1.0, rider=True)
+L.island(13600, 13900, 0, depth=120)
+lamp(13750, 0, PINK)
+L.moving(13910, 0, w=200, h=30, waypoints=((690, 0),), speed=150, wait=1.0, rider=True)
+L.enemy("swoopbeak", 13300, -480)
+L.lums(12950, -120, 14700, -120, 12, 30)
+for x in [13250, 14300]:
+    L.glow(x, -150, LIME, radius=260, energy=0.7)
+
+# ---- S8 the glowcap clearing and the stilt-village gate (14800..16500) -----------------------------------
+L.checkpoint(14880, 0)
+lamp(15050, 0, PINK)
+L.snaptrap(15300, 0)
+L.enemy("cocobonk", 15600, 0)
+L.snaptrap(15850, 0)
+L.lums(15150, -110, 15950, -110, 8, 30)
+L.goal(16150, 0)
+lamp(15950, 0)
+lamp(16400, 0, PINK)
+L.deco("hut", 16300, 0, 0.9)
+L.deco("reeds", 16480, 0)
+L.wall(16500, -1400, 0)
 
 L.dress(-250, 1380, "swamp", spacing=150, seed=51)
 L.dress(3220, 4780, "swamp", spacing=150, seed=52, skip=[(3650, 4000), (4100, 4600)])
-L.dress(10150, 12550, "swamp", spacing=160, seed=53, skip=[(10950, 11350), (11500, 11600)])
-L.finish(spawn=(0, -2), left=-360, right=12660, bottom=1100, kill_y=1500)
+L.dress(10150, 16450, "swamp", spacing=160, seed=53, skip=[(10950, 11350), (11500, 11600), (12550, 12700), (12880, 14820),
+        (15250, 15350), (15800, 15900), (16100, 16200)])
+L.finish(spawn=(0, -2), left=-360, right=16560, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_5_firefly_bog.tscn"))

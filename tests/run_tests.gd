@@ -5385,13 +5385,12 @@ func test_w3_5_log_stepping_stones_and_the_island() -> void:
 	await _finish_demo()
 
 
-func test_w3_5_root_tunnel_and_the_gate() -> void:
+func test_w3_5_root_tunnel_and_the_stump() -> void:
 	var p: Player = await _load_demo(W3_5)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(8320, -2))
-	var ok: bool = await _hop_run(p, [10900], 12150, false, 14.0)
-	check(ok or gm().level_complete, "through the root tunnel and over the stump (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Firefly Bog")
+	var ok: bool = await _hop_run(p, [10900], 12500, false, 14.0)
+	check(ok, "through the root tunnel and over the stump (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6652,4 +6651,24 @@ func test_w3_4_river_mouth_can_be_swum_if_you_fall_in() -> void:
 	await _place(p, Vector2(12900, -2))
 	var ok := await _swim_across(p, 14550.0, 14700.0, 14.0)
 	check(ok, "you can swim the river mouth and climb out (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w3_5_drifting_logs_cross_the_sinkhole() -> void:
+	var p: Player = await _load_demo(W3_5)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(13010, -2), 13650.0, -2.0)
+	check(ok, "the first log carries you to the island (at %s)" % p.global_position)
+	ok = await _ride_lift(p, Vector2(14010, -2), 14955.0, -2.0)
+	check(ok, "the second log carries you over to the clearing (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_5_glowcap_clearing_gate() -> void:
+	var p: Player = await _load_demo(W3_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14880, -2))
+	var ok: bool = await _hop_run(p, [], 16200, false, 8.0)
+	check(ok or gm().level_complete, "through the glowcap clearing (at %s)" % p.global_position)
+	check(gm().level_complete, "the stilt-village gate completes Firefly Bog")
 	await _finish_demo()
