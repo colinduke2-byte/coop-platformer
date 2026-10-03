@@ -3,7 +3,7 @@ Teaches: riding chairlifts (they wait for a rider), crumbling ice ledges in a
 gusty headwind, a Yetling lobbing snowballs at the chair, a slippery ice
 staircase, bowling a Slidgewick with a snowball, a long zipline down, then a
 third lift up to the Frost Fort: bowl the guards, break the ice gate, dodge
-the Yetlings' snowballs.
+the Yetlings' snowballs, then two high gondolas under the Snowls to the summit.
 Secrets: gem 0 above the first lift's cable (jump off the chair!), gem 1 up
 over the ice staircase, gem 2 behind the cracked wall at the bottom station;
 the Snoozling's cage hangs beside the second lift - punch it open mid-ride.
@@ -93,7 +93,7 @@ L.gondola(10300, -950, waypoints=((1280, -700),), speed=160, wait=0.8, rider=Tru
 L.pit_kill(11270, 11800, 1300)
 L.lums(10500, -1150, 11500, -1700, 8)
 L.enemy("snowl", 11100, -1900)
-L.land([(11720, 400), (11780, -1650), (14600, -1650)], bottom=1500)
+L.land([(11720, 400), (11780, -1650), (14600, -1650), (14640, 400)], bottom=1500)
 L.checkpoint(11850, -1650)
 L.snowpile(12150, -1650, max_radius=95)
 L.sign(11990, -1650, "THE FROST FORT!\nBowl the guards!", 240)
@@ -110,12 +110,38 @@ L.enemy("yetling", 13920, -1650)
 L.bell(13150, -1650)
 L.lums(13250, -1840, 14100, -1840, 9)
 L.sign(13620, -1650, "Yetlings! Punch their\nsnowballs back at them.", 300)
-L.goal(14300, -1650)
-L.deco("igloo", 14500, -1650, 0.9)
+L.deco("igloo", 14350, -1650, 0.9)
 L.deco("lantern", 14150, -1650)
-L.wall(14600, -2800, -1650)
 
-L.dress(-250, 14550, "snow", spacing=170, seed=22, skip=[(1180, 2560), (2980, 3880), (4430, 5710), (6380, 7720), (8680, 9820),
-        (10280, 11800), (12100, 12950), (13350, 14000)])
-L.finish(spawn=(0, -2), left=-360, right=14660, bottom=1300, kill_y=1600)
+# ---- S8 the high gondolas over the Snowl gorge (14600..17300) --------------------------------------
+L.checkpoint(14480, -1650)
+L.sign(14250, -1650, "Two more gondolas to the\nsummit. Snowls overhead!", 320)
+L.gondola(14610, -1650, waypoints=((1270, 0),), speed=170, wait=0.8, rider=True)
+L.pit_kill(14640, 17300, 1300)
+L.enemy("snowl", 15250, -2150)
+L.lums(14800, -1760, 15800, -1760, 9)
+L.land([(15880, 400), (15920, -1650), (16190, -1650), (16230, 400)], bottom=1500)
+L.checkpoint(15960, -1650)
+L.deco("lantern", 15940, -1650)
+L.gondola(16200, -1650, waypoints=((1150, -250),), speed=160, wait=0.8, rider=True)
+L.enemy("snowl", 16850, -2350)
+L.lums(16450, -1780, 17250, -1960, 8)
+
+# ---- S9 the summit plateau and the gate (17300..19000) ----------------------------------------------
+L.land([(17300, 400), (17340, -1900), (17900, -1900), (18200, -2000), (19000, -2000)], bottom=1500)
+L.checkpoint(17420, -1900)
+L.snowpile(17620, -1900, max_radius=80)
+L.enemy("slidgewick", 18100, -1965)
+L.enemy("yetling", 18450, -2000)
+L.lum_block(18300, -2300, lums=6)
+L.lums(17700, -2000, 18150, -2100, 5)
+L.lums(18350, -2100, 18600, -2100, 4, 30)
+L.goal(18700, -2000)
+for x, k, s in [(18550, "igloo", 1.0), (18900, "igloo", 0.8), (18620, "lantern", 1.0), (17380, "pine", 1.1), (18980, "pine", 1.0)]:
+    L.deco(k, x, L.surface_y(x), s)
+L.wall(19000, -3000, -2000)
+
+L.dress(-250, 18950, "snow", spacing=170, seed=22, skip=[(1180, 2560), (2980, 3880), (4430, 5710), (6380, 7720), (8680, 9820),
+        (10280, 11800), (12100, 12950), (13350, 14000), (14250, 14650), (15900, 16240), (17550, 17700), (18650, 18760)])
+L.finish(spawn=(0, -2), left=-360, right=19060, bottom=1300, kill_y=1600)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_2_cablecar_cliffs.tscn"))

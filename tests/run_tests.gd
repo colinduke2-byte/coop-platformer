@@ -6401,3 +6401,23 @@ func test_w2_1_icicles_rink_and_the_camp_gate() -> void:
 	check(ok or gm().level_complete, "down Bowling Hill, under the icicles and across the rink (at %s)" % p.global_position)
 	check(gm().level_complete, "the Yetling camp gate completes Snowball Slopes")
 	await _finish_demo()
+
+
+func test_w2_2_high_gondolas_cross_the_snowl_gorge() -> void:
+	var p: Player = await _load_demo(W2_2)
+	await _clear_enemies()
+	var ok := await _ride_lift(p, Vector2(14710, -1654), 16050.0, -1650.0)
+	check(ok, "the first high gondola reaches the middle station (at %s)" % p.global_position)
+	ok = await _ride_lift(p, Vector2(16300, -1654), 17550.0, -1900.0)
+	check(ok, "the second high gondola climbs to the summit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_2_summit_plateau_to_the_gate() -> void:
+	var p: Player = await _load_demo(W2_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(17420, -1902))
+	var ok: bool = await _hop_run(p, [], 18750, false, 8.0)
+	check(ok or gm().level_complete, "across the summit plateau (at %s)" % p.global_position)
+	check(gm().level_complete, "the summit gate completes Cablecar Cliffs")
+	await _finish_demo()
