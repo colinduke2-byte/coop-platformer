@@ -5470,7 +5470,7 @@ func test_w3_6_chamelia_can_be_beaten_by_sticking_her_tongue_in_the_walls() -> v
 		else:
 			e.queue_free()
 	check(boss != null and boss.asleep, "Chamelia should be asleep in her arena")
-	await _place(p, Vector2(6900, -702))
+	await _place(p, Vector2(9500, -702))
 	await frames(10)
 	check(not boss.asleep, "walking into the arena should wake her")
 	var gates := _demo.find_children("*", "Gate", true, false)
@@ -5479,8 +5479,8 @@ func test_w3_6_chamelia_can_be_beaten_by_sticking_her_tongue_in_the_walls() -> v
 			break
 		p.invulnerable_timer = 100.0
 		# Stand between her and a wall, let her lash: the tongue sticks in the wall.
-		var right := boss.global_position.x < 7100.0
-		p.global_position = Vector2(7620.0 if right else 6540.0, -702.0)
+		var right := boss.global_position.x < 9700.0
+		p.global_position = Vector2(10220.0 if right else 9140.0, -702.0)
 		p.velocity = Vector2.ZERO
 		boss.st = Chamelia.St.WALK
 		boss._tongue = 0.0
@@ -5497,18 +5497,18 @@ func test_w3_6_chamelia_can_be_beaten_by_sticking_her_tongue_in_the_walls() -> v
 	await seconds(1.5)
 	var exit_open := false
 	for g in gates:
-		if g.global_position.x > 7600.0 and g.is_open():
+		if g.global_position.x > 10200.0 and g.is_open():
 			exit_open = true
 	check(exit_open, "beating her should open the exit gate")
 	p.invulnerable_timer = 100.0
-	await _place(p, Vector2(7600, -702))
-	var ok: bool = await _hop_run(p, [], 8240, false, 6.0)
+	await _place(p, Vector2(10200, -702))
+	var ok: bool = await _hop_run(p, [], 10840, false, 6.0)
 	check(gm().level_complete, "the gate past the arena completes World 3 (at %s)" % p.global_position)
 	await _finish_demo()
 
 
 func test_w3_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W3_6, Vector2(6300, -700), 6950.0)
+	await _boss_arena_lets_you_back_in(W3_6, Vector2(8900, -700), 9550.0)
 
 
 # --- World 4: Clockwhirl Works pieces and enemies --------------------------------------------
@@ -6671,4 +6671,20 @@ func test_w3_5_glowcap_clearing_gate() -> void:
 	var ok: bool = await _hop_run(p, [], 16200, false, 8.0)
 	check(ok or gm().level_complete, "through the glowcap clearing (at %s)" % p.global_position)
 	check(gm().level_complete, "the stilt-village gate completes Firefly Bog")
+	await _finish_demo()
+
+
+func test_w3_6_colour_garden_and_the_summit_lianas() -> void:
+	var p: Player = await _load_demo(W3_6)
+	await _clear_enemies_except_bosses()
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6060, -702))
+	var ok: bool = await _hop_run(p, [], 6640, false, 6.0)
+	check(ok, "through the colour garden (at %s)" % p.global_position)
+	p.invulnerable_timer = 0.0
+	ok = await _liana_cross(p, 6880.0, 8000.0)
+	check(ok, "over the summit chasm on the lianas (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	ok = await _hop_run(p, [], 8850, false, 6.0)
+	check(ok, "the guard terrace leads to the arena door (at %s)" % p.global_position)
 	await _finish_demo()

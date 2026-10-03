@@ -1,6 +1,7 @@
 """World 3-6: CHAMELIA'S TEMPLE - the great stepped temple at the heart of the Rainbloom Jungle.
 The temple steps (flytraps, monkeys, pop-spikes), three lianas over the moat,
-the long climb up the pyramid's terraces under diving toucans, and then the
+the long climb up the pyramid's terraces under diving toucans, the colour
+garden, two lianas over the summit chasm, and then the
 boss on the summit: CHAMELIA, the Colour Queen. Jump her tongue - if it hits a
 WALL it sticks, and she's stuck: STOMP her! Later she turns invisible (watch
 for the shimmer) and leaps to spit seeds.
@@ -11,6 +12,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 from tscn import C
+
+DX = 2600   # the summit arena and the victory ledge sit DX further right (room for the colour garden)
 
 L = LevelKit("ChameliaTemple", "Chamelia's Temple", theme="temple", horizon=-200, scenery="ruins")
 L.ambience("petals", 0.8)
@@ -47,7 +50,8 @@ L.lums(3320, -300, 4480, -300, 10, 80)
 
 # ---- S3 the terraces (4600..6000) ---------------------------------------------------------------------
 L.land([(4600, 0), (5000, 0), (5000, -140), (5250, -140), (5250, -280), (5500, -280), (5500, -420),
-        (5750, -420), (5750, -560), (6000, -560), (6000, -700), (9000, -700)], bottom=1500)
+        (5750, -420), (5750, -560), (6000, -560), (6000, -700), (6900, -700), (6940, 400)], bottom=1500)
+L.land([(7840, 400), (7880, -700), (9000 + DX, -700)], bottom=1500)
 L.checkpoint(4680, 0)
 L.snaptrap(5130, -140)
 L.snaptrap(5630, -420)
@@ -55,31 +59,56 @@ L.enemy("swoopbeak", 5300, -760)
 L.snoozling(5380, -450, hanging=True, fur=C(1.0, 0.6, 0.85))
 L.lums(5000, -240, 5880, -660, 8)
 
+# ---- S3b the colour garden (6000..7000) -----------------------------------------------------------------
+L.checkpoint(6030, -700)
+L.sign(6250, -700, "The Colour Garden. Chamelia's\nguards are everywhere!", 320)
+L.pop_spikes(6300, -700, length=150, up=1.0, down=1.5)
+L.snaptrap(6520, -700)
+L.enemy("cocobonk", 6760, -700)
+L.lums(6450, -840, 6800, -840, 4, 30)
+for x, k in [(6150, "totem"), (6620, "bromeliad")]:
+    L.deco(k, x, -700, 1.1)
+
+# ---- S3c the summit chasm: two lianas (6940..7880) ------------------------------------------------------
+L.pit_kill(6940, 7880, 900)
+L.liana(7140, -1220, 330, sway=0.13, phase=0.2)
+L.liana(7610, -1220, 330, sway=0.15, phase=1.0)
+L.enemy("swoopbeak", 7400, -1400)
+L.lums(7060, -1000, 7780, -1000, 7, 80)
+
+# ---- S3d the guard terrace (7880..8800) ------------------------------------------------------------------
+L.checkpoint(7960, -700)
+L.enemy("cocobonk", 8400, -700)
+L.ledge(8250, -900, 180)
+L.lum_block(8340, -1150, lums=5)
+L.lums(8050, -800, 8450, -800, 4, 30)
+L.deco("totem", 8500, -700, 1.0)
+
 # ---- S4 the summit arena: CHAMELIA ------------------------------------------------------------------------
-L.checkpoint(6300, -700)
-L.sign(6130, -700, "CHAMELIA! Jump her tongue -\nnear a wall it STICKS.\nThen STOMP her!", 300)
-entry = L.gate(6420, -1060, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
-exit_gate = L.gate(7700, -1060, 48, 360)
-L.arena(7100, -700, [exit_gate], enemies=[("chamelia", 7150, -700, {"asleep": True})])
+L.checkpoint(6300 + DX, -700)
+L.sign(6050 + DX, -700, "CHAMELIA! Jump her tongue -\nnear a wall it STICKS.\nThen STOMP her!", 300)
+entry = L.gate(6420 + DX, -1060, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
+exit_gate = L.gate(7700 + DX, -1060, 48, 360)
+L.arena(7100 + DX, -700, [exit_gate], enemies=[("chamelia", 7150 + DX, -700, {"asleep": True})])
 boss = L.arena_children[0]
-L.zone(6490, -1200, 1150, 500, [entry], everyone=True, send_on=False)
-L.zone(6490, -1200, 1150, 500, [boss], everyone=True)
-L.block(6420, -1700, 48, 640)                      # arena walls above the gates
-L.block(7700, -1700, 48, 640)
-L.ledge(6600, -900, 170)
-L.ledge(7400, -900, 170)
-L.lums(6560, -800, 7600, -800, 8, 40)
+L.zone(6490 + DX, -1200, 1150, 500, [entry], everyone=True, send_on=False)
+L.zone(6490 + DX, -1200, 1150, 500, [boss], everyone=True)
+L.block(6420 + DX, -1700, 48, 640)                      # arena walls above the gates
+L.block(7700 + DX, -1700, 48, 640)
+L.ledge(6600 + DX, -900, 170)
+L.ledge(7400 + DX, -900, 170)
+L.lums(6560 + DX, -800, 7600 + DX, -800, 8, 40)
 
 # ---- the victory ledge -------------------------------------------------------------------------------------
-L.goal(8250, -700)
-L.ledge(8000, -940, 150)
-L.gem(8075, -1000)                                 # gem 2
-L.lums(7850, -800, 8650, -800, 6)
-L.deco("totem", 8600, -700, 1.1)
-L.deco("palm", 8800, -700)
-L.wall(9000, -2200, -700)
+L.goal(8250 + DX, -700)
+L.ledge(8000 + DX, -940, 150)
+L.gem(8075 + DX, -1000)                                 # gem 2
+L.lums(7850 + DX, -800, 8650 + DX, -800, 6)
+L.deco("totem", 8600 + DX, -700, 1.1)
+L.deco("palm", 8800 + DX, -700)
+L.wall(9000 + DX, -2200, -700)
 
 L.dress(-250, 1450, "ruins", spacing=150, seed=61)
-L.dress(7780, 8950, "ruins", spacing=170, seed=62)
-L.finish(spawn=(0, -2), left=-360, right=9060, bottom=1100, kill_y=1500)
+L.dress(7780 + DX, 8950 + DX, "ruins", spacing=170, seed=62)
+L.finish(spawn=(0, -2), left=-360, right=9060 + DX, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_6_chamelia_temple.tscn"))
