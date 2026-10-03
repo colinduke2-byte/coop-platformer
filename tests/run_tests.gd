@@ -6072,7 +6072,7 @@ func test_w4_6_cuckoolossus_can_be_beaten_by_stomping_the_cuckoo() -> void:
 		else:
 			e.queue_free()
 	check(boss != null and boss.asleep, "Cuckoolossus should be asleep in the bell loft")
-	await _place(p, Vector2(6800, -702))
+	await _place(p, Vector2(9400, -702))
 	await frames(10)
 	check(not boss.asleep, "walking into the loft should wake it")
 	var gates := _demo.find_children("*", "Gate", true, false)
@@ -6081,7 +6081,7 @@ func test_w4_6_cuckoolossus_can_be_beaten_by_stomping_the_cuckoo() -> void:
 			break
 		p.invulnerable_timer = 100.0
 		# Stand a little way off, let the cuckoo shoot out and stick, then drop on its head.
-		var side := -1.0 if boss.global_position.x > 7080.0 else 1.0
+		var side := -1.0 if boss.global_position.x > 9680.0 else 1.0
 		p.global_position = Vector2(boss.global_position.x + side * 340.0, -702.0)
 		p.velocity = Vector2.ZERO
 		await frames(2)
@@ -6107,18 +6107,18 @@ func test_w4_6_cuckoolossus_can_be_beaten_by_stomping_the_cuckoo() -> void:
 	await seconds(1.5)
 	var exit_open := false
 	for g in gates:
-		if g.global_position.x > 7600.0 and g.is_open():
+		if g.global_position.x > 10200.0 and g.is_open():
 			exit_open = true
 	check(exit_open, "beating it should open the exit gate")
 	p.invulnerable_timer = 100.0
-	await _place(p, Vector2(7650, -702))
-	var ok: bool = await _hop_run(p, [7880], 8560, false, 6.0)
+	await _place(p, Vector2(10250, -702))
+	var ok: bool = await _hop_run(p, [10480], 11160, false, 6.0)
 	check(gm().level_complete, "over the toolbox to the gate completes World 4 (at %s)" % p.global_position)
 	await _finish_demo()
 
 
 func test_w4_6_dying_in_the_bell_loft_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in(W4_6, Vector2(6300, -700), 6950.0)
+	await _boss_arena_lets_you_back_in(W4_6, Vector2(8900, -700), 9550.0)
 
 
 func test_w4_every_snoozling_cage_can_be_punched_open() -> void:
@@ -6135,7 +6135,7 @@ func test_w4_every_snoozling_cage_can_be_punched_open() -> void:
 
 
 func test_w4_secret_toolboxes_hold_gem_2() -> void:
-	for spot: Array in [[W4_3, Vector2(10700, -2)], [W4_4, Vector2(10700, -2)], [W4_5, Vector2(10700, -2)], [W4_6, Vector2(7850, -702)]]:
+	for spot: Array in [[W4_3, Vector2(10700, -2)], [W4_4, Vector2(10700, -2)], [W4_5, Vector2(10700, -2)], [W4_6, Vector2(10450, -702)]]:
 		var p: Player = await _load_demo(spot[0])
 		await _clear_enemies_except_bosses()
 		await _place(p, spot[1])
@@ -6841,4 +6841,20 @@ func test_w4_5_zipline_over_the_abyss_to_the_gate() -> void:
 	check(landed, "the zipline carries you over the abyss (at %s)" % p.global_position)
 	var ok: bool = await _hop_run(p, [], 16150, false, 6.0)
 	check(gm().level_complete, "the night yard gate completes Night Shift (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_6_gear_plaza_and_the_tick_tock_bridge() -> void:
+	var p: Player = await _load_demo(W4_6)
+	await _clear_enemies_except_bosses()
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6050, -702))
+	var ok: bool = await _hop_run(p, [], 6860, false, 6.0)
+	check(ok, "across the gear plaza (at %s)" % p.global_position)
+	p.invulnerable_timer = 0.0
+	await _beat_hops(p, [[7060, 0], [7300, 1], [7540, 0], [7780, 1], [8000, -1]])
+	check(p.global_position.x > 7880.0 and p.global_position.y < -690.0 and not p.is_bubbled(), "the tick-tock bridge crosses the gear pit (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	ok = await _hop_run(p, [], 8850, false, 6.0)
+	check(ok, "the landing leads to the bell loft (at %s)" % p.global_position)
 	await _finish_demo()
