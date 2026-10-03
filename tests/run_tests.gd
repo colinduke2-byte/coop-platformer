@@ -4940,13 +4940,12 @@ func test_w3_1_leaves_cross_the_bog() -> void:
 	await _finish_demo()
 
 
-func test_w3_1_finish_reaches_the_gate() -> void:
+func test_w3_1_mossy_mound_and_the_flytraps() -> void:
 	var p: Player = await _load_demo(W3_1)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(10700, -2))
-	var ok: bool = await _hop_run(p, [11200], 12450, false, 10.0)
-	check(ok or gm().level_complete, "over the mossy mound and past the flytraps (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Drizzle Thicket")
+	var ok: bool = await _hop_run(p, [11200], 12600, false, 10.0)
+	check(ok, "over the mossy mound and past the flytraps (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6518,4 +6517,31 @@ func test_w2_6_gale_bridge_and_the_yetling_outpost() -> void:
 	p.invulnerable_timer = 100.0
 	ok = await _hop_run(p, [7750], 8080, false, 6.0)
 	check(ok, "through the outpost to the ice wall (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_liana_ravine() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _place(p, Vector2(12700, -2))
+	var ok := await _liana_cross(p, 13040.0, 14250.0)
+	check(ok, "two lianas swing you over the ravine (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_grove_mushroom_reaches_the_treetop() -> void:
+	var p: Player = await _load_demo(W3_1)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(14850, 0), -660.0, 15100.0)
+	check(p.global_position.y < -630.0 and p.is_on_floor(), "the mushroom throws you up onto the grove treetop (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_1_grove_and_the_rainbow_falls_gate() -> void:
+	var p: Player = await _load_demo(W3_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14200, -2))
+	var ok: bool = await _hop_run(p, [14400], 16300, false, 10.0)
+	check(ok or gm().level_complete, "through the monkey grove to the falls (at %s)" % p.global_position)
+	check(gm().level_complete, "the rainbow falls gate completes Drizzle Thicket")
 	await _finish_demo()

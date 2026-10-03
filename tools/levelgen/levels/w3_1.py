@@ -2,7 +2,8 @@
 Teaches: flytraps (step in and they snap a moment later - run across or jump
 over), Cocobonk monkeys lobbing coconuts, swinging on LIANAS (first over safe
 ground, then over a pit), a stream full of leaping Nibblefins, mushroom pads
-up the jungle trees, then sinking leaves over a bog and the gate.
+up the jungle trees, sinking leaves over a bog, a liana ravine, the monkey
+grove and the rainbow falls at the gate.
 Secrets: gem 0 on the high ledges over the flytraps, gem 1 on top of the tall
 tree (mushroom pad), gem 2 in a hollow behind a mossy wall at the finish; the
 Snoozling's cage sits on the mossy rock in the stream.
@@ -93,7 +94,8 @@ L.enemy("swoopbeak", 9950, -460)
 L.lums(9500, -150, 10420, -150, 8, 30)
 
 # ---- S6 the finish (10600..12800) ------------------------------------------------------------------
-L.land([(10600, 0), (12800, 0)], bottom=1500)
+L.land([(10600, 0), (13100, 0)], bottom=1500)
+L.land([(14100, 0), (16800, 0)], bottom=1500)
 L.checkpoint(10700, 0)
 L.enemy("swoopbeak", 10950, -460)
 L.lums(10800, -110, 11200, -110, 5, 40)
@@ -106,13 +108,44 @@ L.secret(11340, -140, 240, 140)
 L.snaptrap(11900, 0)
 L.snaptrap(12120, 0)
 L.lums(11830, -170, 12190, -170, 5, 40)
-L.goal(12500, 0)
-L.lums(12300, -110, 12450, -110, 3, 30)
-L.deco("hut", 12680, 0, 0.8)
-L.wall(12800, -1200, 0)
+L.deco("hut", 12450, 0, 0.8)
 
-L.dress(-250, 12750, "jungle", spacing=160, seed=31,
+# ---- S7 the liana ravine (12600..14100) ---------------------------------------------------------
+L.checkpoint(12640, 0)
+L.sign(12780, 0, "Swing the lianas, then punch\nthe coconuts back at the monkeys!", 320)
+L.pit_kill(13100, 14100, 700)
+L.liana(13330, -500, 330, sway=0.12, phase=0.6)
+L.liana(13790, -500, 330, sway=0.15, phase=1.4)
+L.lums(13200, -300, 13930, -300, 7, 80)
+L.enemy("swoopbeak", 13560, -760)
+L.waterfall(13450, -2200, 160, 2800)
+for x in [13080, 14120]:
+    L.deco("hanging_vines", x, 0, 1.0)
+
+# ---- S8 the monkey grove (14100..15400) --------------------------------------------------------
+L.checkpoint(14200, 0)
+L.ledge(14560, -250, 220)
+L.enemy("cocobonk", 14680, -250)
+L.snaptrap(14450, 0)
+L.pad(14850, 0, height=700)
+L.island(14960, 15420, -640, depth=140)
+L.lum_block(15190, -930, lums=6)
+L.lums(15000, -720, 15380, -720, 5, 30)
+L.enemy("cocobonk", 15350, 0)
+L.lums(14560, -110, 14980, -110, 4, 30)
+
+# ---- S9 the rainbow falls and the gate (15400..16800) ----------------------------------------------
+L.checkpoint(15520, 0)
+L.waterfall(16380, -2200, 260, 2200)
+L.goal(16250, 0)
+L.lums(15650, -150, 16150, -300, 7, -60)
+for x, k, s in [(15600, "palm", 1.2), (15800, "bromeliad", 1.0), (15950, "big_leaf", 1.1), (16100, "hut", 0.9),
+                (16650, "palm", 1.1), (16720, "big_leaf", 1.0)]:
+    L.deco(k, x, 0, s)
+L.wall(16800, -1200, 0)
+
+L.dress(-250, 16750, "jungle", spacing=160, seed=31,
         skip=[(1850, 2750), (4100, 5200), (5650, 6650), (7350, 7900), (8100, 8650), (9380, 10620), (11250, 11650),
-              (11850, 12200)])
-L.finish(spawn=(0, -2), left=-360, right=12860, bottom=1100, kill_y=1500)
+              (11850, 12200), (12750, 12850), (13050, 14150), (14400, 14900), (15550, 16200), (16250, 16800)])
+L.finish(spawn=(0, -2), left=-360, right=16860, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_1_drizzle_thicket.tscn"))
