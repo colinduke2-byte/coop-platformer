@@ -109,13 +109,35 @@ L.pad(10800, -1000, height=460)
 L.gem(10870, -1060)
 L.lums(10730, -1060, 10730, -1180, 3)
 L.secret(10700, -1210, 200, 210)
-L.block(10900, -1250, 700, 1750)
+L.block(10900, -1250, 700, 1750)                # the summit (its far edge drops to the gumdrops)
 L.checkpoint(10300, -1250)
 L.lums(10400, -1330, 11000, -1330, 7, 60)
-L.goal(11350, -1250)
-L.wall(11600, -2200, -1200)
 for x in [10450, 11150]:
     L.deco("lollipop", x, -1250, 1.2)
+L.sign(11400, -1250, "Gumdrop hops all the way\ndown to the candy meadow!", 320)
 
-L.finish(spawn=(0, -2), left=-300, right=11600, bottom=600, kill_y=1000)
+# ---- S8 gumdrop hops down the far side (11600..13800) ----------------------------------------------------------
+L.pit_kill(11600, 13800, 900)
+for i, x0 in enumerate([11800, 12300, 12800, 13300]):
+    y = -1100 + i * 150
+    L.island(x0, x0 + 250, y, depth=110)
+    L.lums(x0 + 40, y - 100, x0 + 210, y - 100, 3, 30)
+    L.deco("candy_cane" if i % 2 == 0 else "lollipop", x0 + 200, y, 0.9)
+L.enemy("bumblebonk", 12550, -1350)
+L.enemy("boingo", 13150, -1050)
+
+# ---- S9 the candy meadow and the gate (13800..15000) --------------------------------------------------------------
+L.land([(13800, -500), (15000, -500)], bottom=1000)
+L.checkpoint(13880, -500)
+L.crate(14100, -500, 64, lums=3)
+L.crate(14164, -500, 64, lums=3)
+L.enemy("grunt", 14350, -500)
+L.lum_block(14250, -800, lums=6)
+L.goal(14600, -500)
+L.lums(14400, -600, 14550, -600, 3)
+for x, k in [(13950, "lollipop"), (14450, "candy_cane"), (14850, "lollipop")]:
+    L.deco(k, x, -500, 1.1)
+L.wall(15000, -2200, -500)
+
+L.finish(spawn=(0, -2), left=-300, right=15000, bottom=600, kill_y=1000)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/candy_canopy.tscn"))

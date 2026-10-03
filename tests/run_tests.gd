@@ -6886,3 +6886,13 @@ func test_glacier_frozen_approach_bowl_and_icicle_hall() -> void:
 	var ok: bool = await _hop_run(p, [], 12300, false, 12.0)
 	check(ok, "across the rink and through the icicle hall to the King's door (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+func test_candy_gumdrop_hops_down_to_the_meadow_gate() -> void:
+	var p: Player = await _load_demo("res://levels/candy_canopy.tscn")
+	await _clear_enemies()
+	await _place(p, Vector2(11300, -1252))
+	var ok: bool = await _hop_run(p, [11560, 12010, 12510, 13010, 13510, 14020], 14650, false, 14.0)
+	check(ok or gm().level_complete, "hopping the gumdrops down to the candy meadow (at %s)" % p.global_position)
+	check(gm().level_complete, "the meadow gate completes Candy Canopy")
+	await _finish_demo()
