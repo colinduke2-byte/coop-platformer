@@ -6457,3 +6457,30 @@ func test_w2_3_geode_hall_crushers_to_the_gate() -> void:
 	check(ok or gm().level_complete, "over the geode and sprinting under the crushers (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
 	check(gm().level_complete, "the gate completes Crystal Caverns")
 	await _finish_demo()
+
+
+func test_w2_4_second_avalanche_can_be_outrun_to_the_lower_lodge() -> void:
+	var p: Player = await _load_demo(W2_4)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		e.queue_free()
+	var ava: Avalanche = _nodes_of("Avalanche")[1]
+	await _place(p, Vector2(14830, 898))
+	var ok := await _hop_run(p, [17470], 18900, true, 20.0)
+	check(ava.active or ava._done, "running into the Lower Gorge sets off the second avalanche")
+	check(ok, "sprinting and hopping the crevasse outruns it (at %s, bubbled %s)" % [p.global_position, p.is_bubbled()])
+	ok = await _hop_run(p, [], 19400, false, 4.0)
+	check(gm().level_complete, "the lower lodge gate completes Avalanche Alley (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w2_4_second_avalanche_restarts_behind_its_checkpoint() -> void:
+	var p: Player = await _load_demo(W2_4)
+	var first: Avalanche = _nodes_of("Avalanche")[0]
+	var ava: Avalanche = _nodes_of("Avalanche")[1]
+	gm().checkpoint = Vector2(16600, 1178)
+	EventBus.level_reset.emit()
+	await frames(2)
+	await seconds(ava.restart_delay + 0.3)
+	check(ava.active, "the second avalanche comes again behind the mid-gorge checkpoint")
+	check(not first.active, "the first one stays put")
+	await _finish_demo()

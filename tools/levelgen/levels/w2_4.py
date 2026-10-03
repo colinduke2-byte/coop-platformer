@@ -2,7 +2,8 @@
 A calm start, then a roaring avalanche chases you all the way down the
 mountain: keep running, hop the crevasses, bop what's in your way, and leap
 off the ski jump at the bottom as the snow crashes behind you. Then, safe at
-the lodge, hop the ice floes across Frostbite Lake to the Yetlings' camp.
+the lodge, hop the ice floes across Frostbite Lake to the Yetlings' camp...
+where a SECOND avalanche chases you down the Lower Gorge to the gate.
 Checkpoints mid-chase: the avalanche restarts a safe way behind them.
 Secrets: gem 0 on a high ledge before the chase (mushroom), gem 1 high over
 the second crevasse (a sprint jump), gem 2 behind the lodge at the finish; the
@@ -23,7 +24,9 @@ L.land([(3260, 320), (4200, 420), (4500, 340), (5200, 600)], bottom=1800)
 L.land([(5480, 620), (6800, 800), (7400, 800)], bottom=1800)
 L.land([(7680, 820), (8800, 1000), (9300, 1000), (9520, 930)], bottom=1800)          # ends in a ski jump
 L.land([(9900, 900), (11700, 900)], bottom=1800)
-L.land([(13300, 900), (15200, 900)], bottom=1800)
+L.land([(13300, 900), (15300, 900), (16400, 1150), (17500, 1300)], bottom=2200)
+L.land([(17760, 1320), (18700, 1450), (19800, 1450)], bottom=2200)
+L.pit_kill(17500, 17760, 2100)
 for x0, x1 in [(3000, 3260), (5200, 5480), (7400, 7680), (9520, 9900)]:
     L.pit_kill(x0, x1, 1700)
 
@@ -90,12 +93,32 @@ L.block(14250, 800, 40, 100)
 L.enemy("yetling", 14400, 900)
 L.snowpile(13600, 900, max_radius=80)
 L.lums(13500, 780, 14500, 780, 9)
-L.goal(14800, 900)
-L.deco("igloo", 15050, 900, 1.0)
-L.deco("lantern", 14650, 900)
-L.wall(15200, -1400, 900)
+L.deco("igloo", 14700, 900, 1.0)
+L.deco("lantern", 14550, 900)
 
-L.dress(-250, 15150, "snow", spacing=180, seed=24, skip=[(-300, 200), (2950, 3300), (5150, 5520), (7350, 7720), (9300, 9950),
-        (11150, 11450), (11650, 13350), (13550, 14500)])
-L.finish(spawn=(0, -2), left=-360, right=15260, bottom=1500, kill_y=1900)
+# ---- S8 IT'S NOT OVER: a second avalanche down the Lower Gorge (14800..18800) ------------------------
+L.checkpoint(14820, 900)
+L.sign(14950, 900, "Uh-oh... the Yetlings woke\nthe mountain AGAIN. RUN!", 340)
+ava2 = L.avalanche(13900, 900, distance=4900, speed=440, height=900, depth=1600)
+L.zone(15250, 200, 200, 1200, [ava2])
+L.lums(15400, 820, 16350, 1060, 10)
+L.enemy("grunt", 15900, 1028, walk_speed=0.0)
+L.enemy("slidgewick", 16800, 1205)
+L.checkpoint(16600, 1178)
+L.lums(16500, 1080, 17450, 1220, 9)
+L.lums(17540, 1150, 17720, 1150, 3, -70)            # over the crevasse
+L.enemy("grunt", 18200, 1385, walk_speed=0.0)
+L.lums(17850, 1230, 18650, 1360, 8)
+
+# ---- S9 the lower lodge and the gate (18800..19800) ----------------------------------------------
+L.checkpoint(18850, 1450)
+L.goal(19350, 1450)
+L.lums(18950, 1350, 19250, 1350, 4, 30)
+for x, k, s in [(19050, "hut", 1.0), (19600, "igloo", 1.0), (19500, "lantern", 1.0), (19750, "pine", 1.2), (18760, "snowman", 1.0)]:
+    L.deco(k, x, L.surface_y(x), s)
+L.wall(19800, -1400, 1450)
+
+L.dress(-250, 19750, "snow", spacing=180, seed=24, skip=[(-300, 200), (2950, 3300), (5150, 5520), (7350, 7720), (9300, 9950),
+        (11150, 11450), (11650, 13350), (13550, 14500), (15200, 15500), (17450, 17800), (19300, 19420)])
+L.finish(spawn=(0, -2), left=-360, right=19860, bottom=1950, kill_y=2300)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w2_4_avalanche_alley.tscn"))
