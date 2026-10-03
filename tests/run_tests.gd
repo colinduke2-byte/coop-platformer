@@ -5872,13 +5872,12 @@ func test_w4_3_pit_edge_geyser_reaches_gem_1() -> void:
 	await _finish_demo()
 
 
-func test_w4_3_pipe_yard_and_the_gate() -> void:
+func test_w4_3_pipe_yard_and_the_toolbox() -> void:
 	var p: Player = await _load_demo(W4_3)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(7700, -2))
-	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
-	check(ok or gm().level_complete, "through the pipe yard and over the toolbox (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Steam Pipes")
+	var ok: bool = await _hop_run(p, [10700], 12300, false, 16.0)
+	check(ok, "through the pipe yard and over the toolbox (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6743,4 +6742,23 @@ func test_w4_2_shipping_lift_to_the_catwalk_gate() -> void:
 	p.invulnerable_timer = 100.0
 	ok = await _hop_run(p, [], 16150, false, 8.0)
 	check(gm().level_complete, "the loading-catwalk gate completes Conveyor Chaos (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_geysers_up_and_over_the_great_boiler() -> void:
+	var p: Player = await _load_demo(W4_3)
+	await _clear_enemies()
+	await _geyser_ride(p, 12780, -540, 13000, 10.0)
+	check(p.global_position.y < -510.0 and p.is_on_floor(), "the first geyser reaches walkway A (at %s)" % p.global_position)
+	await _geyser_ride(p, 13430, -1020, 13700, 10.0, -520.0)
+	check(p.global_position.y < -990.0 and p.is_on_floor(), "the second geyser reaches the top of the boiler (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_3_boiler_top_and_the_gauge_yard_gate() -> void:
+	var p: Player = await _load_demo(W4_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(13620, -1002))
+	var ok: bool = await _hop_run(p, [], 16150, false, 12.0)
+	check(gm().level_complete, "over the boiler's vents, down and through the gauge yard to the gate (at %s)" % p.global_position)
 	await _finish_demo()

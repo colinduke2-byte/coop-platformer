@@ -1,7 +1,8 @@
 """World 4-3: STEAM PIPES - the boiler rooms deep in the Works, hissing and clanking.
 Teaches: rippling fire vents in the floor, a steam geyser that throws you up to
 the pipe walkway, a corridor of vents above AND below with Sparkbots, a
-pressure-cart over the boiling pit, a springbot pipe yard with zaps, then the gate.
+pressure-cart over the boiling pit, a springbot pipe yard with zaps, geysers up
+and over the great boiler, then the pressure-gauge yard and the gate.
 Secrets: gem 0 at the far end of the pipe walkway, gem 1 high above the cart
 (a steam geyser at the pit's edge), gem 2 in a toolbox at the finish; the
 Snoozling is on the walkway.
@@ -63,7 +64,7 @@ L.gem(6560, -820)
 L.lums(6700, -100, 7500, -100, 7)
 
 # ---- S5 the springbot pipe yard (7600..10200) --------------------------------------------------------------
-L.land([(7600, 0), (12600, 0)], bottom=1500)
+L.land([(7600, 0), (16500, 0)], bottom=1500)
 L.checkpoint(7680, 0)
 L.bell(7800, 0)
 L.enemy("springbot", 8200, 0)
@@ -82,12 +83,39 @@ L.block(11080, -160, 20, 160)
 L.gem(10940, -60)
 L.secret(10840, -140, 240, 140)
 L.enemy("windup", 11500, 0)
-L.goal(12200, 0)
 L.lums(11800, -110, 12130, -110, 4, 30)
-L.deco("clock", 12420, 0, 1.1)
-L.wall(12600, -1200, 0)
+
+# ---- S7 the boiler heart: geysers up and over the great boiler (12300..14700) --------------------------
+L.checkpoint(12350, 0)
+L.sign(12500, 0, "The great boiler! Ride the\ngeysers up and over it.", 300)
+L.geyser(12780, 0, height=640, calm=1.4)
+L.block(12880, -520, 620, 40)                       # walkway A
+L.lums(12780, -150, 12780, -470, 3)
+L.geyser(13430, -520, height=600, calm=1.4, phase=0.7)
+L.block(13560, -1000, 1100, 1000)                   # the boiler (its top is the high walkway)
+for i, x in enumerate([13800, 14100, 14400]):
+    L.flame(x, -1000, length=200, on=0.8, off=1.6, phase=0.6 - i * 0.25)
+L.enemy("windup", 13000, -520)
+L.enemy("sparkbot", 14250, -1200, travel=V(260, 0), speed=110.0)
+L.lums(13620, -1110, 14600, -1110, 9, 20)
+for x in [13700, 14500]:
+    L.glow(x, -500, ORANGE, radius=320, energy=0.7)
+L.deco("pipes", 13600, -1000, 1.1)
+L.deco("gear", 14620, -1000, 1.0)
+
+# ---- S8 the pressure gauge yard and the gate (14700..16500) ----------------------------------------------
+L.checkpoint(14800, 0)
+for i, x in enumerate([15150, 15450]):
+    L.zap(x, -10, x, -240, on=0.9, off=1.5, phase=i * 0.35)
+L.enemy("springbot", 15700, 0)
+L.goal(16100, 0)
+L.lums(14900, -110, 16000, -110, 10, 20)
+for x, k, s in [(14950, "pipes", 1.2), (15850, "clock", 1.1), (16350, "gear", 1.2)]:
+    L.deco(k, x, 0, s)
+L.wall(16500, -1200, 0)
 
 L.dress(-250, 1350, "factory", spacing=160, seed=91)
-L.dress(7620, 12550, "factory", spacing=170, seed=93, skip=[(9150, 9850), (10750, 11150)])
-L.finish(spawn=(0, -2), left=-360, right=12660, bottom=1100, kill_y=1500)
+L.dress(7620, 16450, "factory", spacing=170, seed=93, skip=[(9150, 9850), (10750, 11150), (12450, 12900), (13550, 14700),
+        (15100, 15500), (16050, 16150)])
+L.finish(spawn=(0, -2), left=-360, right=16560, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w4_3_steam_pipes.tscn"))
