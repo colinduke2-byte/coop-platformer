@@ -2093,12 +2093,12 @@ func test_glacier_boss_sleeps_wakes_and_unlocks_exit() -> void:
 	var p: Player = await _load_demo("res://levels/glacier_grotto.tscn")
 	var king: KingGrumblo = _demo.find_children("*", "KingGrumblo", true, false)[0]
 	await seconds(0.5)
-	check(king.asleep and absf(king.global_position.x - 9900.0) < 5.0, "the King should be asleep in his arena")
-	await _place(p, Vector2(9500, -2))
+	check(king.asleep and absf(king.global_position.x - 13200.0) < 5.0, "the King should be asleep in his arena")
+	await _place(p, Vector2(12800, -2))
 	p.invulnerable_timer = 999.0
 	await seconds(0.5)
 	check(not king.asleep, "entering the arena should wake him")
-	var exit_g: Gate = _demo.find_children("*", "Gate", true, false).filter(func(g: Node) -> bool: return g.position.x > 10000.0)[0]
+	var exit_g: Gate = _demo.find_children("*", "Gate", true, false).filter(func(g: Node) -> bool: return g.position.x > 13300.0)[0]
 	check(not exit_g.is_open(), "exit shut during the fight")
 	for k in 40:
 		for e in get_tree().get_nodes_in_group(&"enemies"):
@@ -4627,7 +4627,7 @@ func test_w2_6_dying_in_the_boss_arena_lets_you_back_in() -> void:
 
 
 func test_glacier_dying_in_king_grumblos_arena_lets_you_back_in() -> void:
-	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(9040, 0), 9600.0)
+	await _boss_arena_lets_you_back_in("res://levels/glacier_grotto.tscn", Vector2(12340, 0), 12900.0)
 
 
 # --- World 3: Rainbloom Jungle pieces and enemies -------------------------------------------
@@ -6867,4 +6867,22 @@ func test_sunset_moat_bridge_and_courtyard_to_the_gate() -> void:
 	var ok: bool = await _hop_run(p, [11470, 12250], 13950, false, 12.0)
 	check(ok or gm().level_complete, "over the moat bridge and through the courtyard (at %s)" % p.global_position)
 	check(gm().level_complete, "the courtyard gate completes Sunset Gusts")
+	await _finish_demo()
+
+
+func test_glacier_frozen_approach_bowl_and_icicle_hall() -> void:
+	var p: Player = await _load_demo("res://levels/glacier_grotto.tscn")
+	await _place(p, Vector2(9060, -2))
+	p.invulnerable_timer = 100.0
+	p.facing = 1
+	await frames(10)
+	await _punch()
+	await seconds(4.0)
+	var standing := 0
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Grunt and e.global_position.x > 9700.0 and e.global_position.x < 10200.0 and not e.dead:
+			standing += 1
+	check(standing == 0, "the snowball bowls the rink guards over (%d left)" % standing)
+	var ok: bool = await _hop_run(p, [], 12300, false, 12.0)
+	check(ok, "across the rink and through the icicle hall to the King's door (at %s)" % p.global_position)
 	await _finish_demo()

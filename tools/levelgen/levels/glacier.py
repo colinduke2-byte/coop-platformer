@@ -4,6 +4,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 
+DX = 3300   # King Grumblo's arena and the goal sit DX further right (room for the frozen approach)
+
 L = LevelKit("GlacierGrotto", "Glacier Grotto", theme="glacier", horizon=600, scenery="ice")
 
 # ---- start --------------------------------------------------------------------------------------------
@@ -66,28 +68,45 @@ L.slope(7120, 0, 1100, 600, rising_right=False, fill_below=600)
 L.lums(7200, -620, 8100, -140, 8)
 L.ground(8220, 8300, 0)
 L.pit_kill(8300, 8620, 450)
-L.ground(8620, 9200, 0)
+L.land([(8620, 0), (9200 + DX, 0)], bottom=1220)
 L.sign(7000, -600, "Slide down, then LONG JUMP\n(DOWN to slide, JUMP at the edge)", 380)
 
+# ---- S5b the frozen approach: rink, bowling and the icicle hall (9200..12500) -----------------------------------
+L.checkpoint(8700, 0)
+L.sign(8840, 0, "The King's frozen approach.\nBowl the guards on the rink!", 320)
+L.snowpile(9150, 0, max_radius=85)
+L.terrain([(9500, 0), (10900, 0), (10900, 40), (9500, 40)], rounding=4.0, slippery=True)
+for x in [9800, 9930, 10060]:
+    L.enemy("grunt", x, 0, walk_speed=0.0, sight=0.0)
+L.enemy("slidgewick", 10600, 0)
+L.lums(9550, -110, 10850, -110, 10, 20)
+L.checkpoint(10980, 0)
+L.block(11100, -340, 900, 60)                      # the icicle hall's roof
+for x in [11250, 11500, 11750, 11950]:
+    L.stalactite(x, -280)
+L.deco("icicles", 11550, -280, 1.0)
+L.lums(11150, -120, 11950, -120, 6, 20)
+L.enemy("snowl", 12200, -420)
+L.deco("crystals", 12300, 0, 1.2)
+
 # ---- S6 KING GRUMBLO (9200..10600) -----------------------------------------------------------------------------
-L.checkpoint(9040, 0)
-L.sign(8880, 0, "Shh! The KING is napping...\nJump his shockwaves. Stomp him\nwhen he's dazed!", 380)
-L.ground(9200, 10700, 0)
-entry = L.gate(9220, -360, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
-exit_gate = L.gate(10500, -360, 48, 360)
-L.arena(9900, 0, [exit_gate], enemies=[("king_grumblo", 9900, 0, {"asleep": True})])
+L.checkpoint(9040 + DX, 0)
+L.sign(8880 + DX, 0, "Shh! The KING is napping...\nJump his shockwaves. Stomp him\nwhen he's dazed!", 380)
+entry = L.gate(9220 + DX, -360, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
+exit_gate = L.gate(10500 + DX, -360, 48, 360)
+L.arena(9900 + DX, 0, [exit_gate], enemies=[("king_grumblo", 9900 + DX, 0, {"asleep": True})])
 king = L.arena_children[0]
-L.zone(9300, -500, 1150, 500, [entry], everyone=True, send_on=False)
-L.zone(9300, -500, 1150, 500, [king], everyone=True)
-L.block(9220, -800, 48, 440)                   # arena walls above the gates
-L.block(10500, -800, 48, 440)
-L.lums(9400, -250, 10400, -250, 8, 60)
+L.zone(9300 + DX, -500, 1150, 500, [entry], everyone=True, send_on=False)
+L.zone(9300 + DX, -500, 1150, 500, [king], everyone=True)
+L.block(9220 + DX, -800, 48, 440)                   # arena walls above the gates
+L.block(10500 + DX, -800, 48, 440)
+L.lums(9400 + DX, -250, 10400 + DX, -250, 8, 60)
 
 # ---- goal ------------------------------------------------------------------------------------------------------
-L.ground(10700, 11300, 0)
-L.goal(11000, 0)
-L.wall(11300, -1200, 500)
-L.deco("crystals", 10750, 0, 1.3)
+L.ground(9200 + DX, 11300 + DX, 0)
+L.goal(11000 + DX, 0)
+L.wall(11300 + DX, -1200, 500)
+L.deco("crystals", 10750 + DX, 0, 1.3)
 
-L.finish(spawn=(0, -2), left=-300, right=11300, bottom=1220, kill_y=1500)
+L.finish(spawn=(0, -2), left=-300, right=11300 + DX, bottom=1220, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/glacier_grotto.tscn"))
