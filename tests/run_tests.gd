@@ -5935,13 +5935,12 @@ func test_w4_4_lift_to_the_gallery_and_gem_1() -> void:
 	await _finish_demo()
 
 
-func test_w4_4_roof_steps_and_the_gate() -> void:
+func test_w4_4_roof_steps_and_the_crate() -> void:
 	var p: Player = await _load_demo(W4_4)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(5900, -1602))
-	var ok: bool = await _hop_run(p, [10700], 12150, false, 16.0)
-	check(ok or gm().level_complete, "down the roof steps and over the crate (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes Tick-Tock Tower")
+	var ok: bool = await _hop_run(p, [10700], 12250, false, 16.0)
+	check(ok, "down the roof steps and over the crate (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6761,4 +6760,55 @@ func test_w4_3_boiler_top_and_the_gauge_yard_gate() -> void:
 	await _place(p, Vector2(13620, -1002))
 	var ok: bool = await _hop_run(p, [], 16150, false, 12.0)
 	check(gm().level_complete, "over the boiler's vents, down and through the gauge yard to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_great_pendulum_carries_you_over_the_drop() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	var pd: Pendulum = null
+	for n in _demo.find_children("*", "Pendulum", true, false):
+		if not n.spiked:
+			pd = n
+	check(pd != null, "the level should have a rideable pendulum")
+	for i in 600:
+		await get_tree().physics_frame
+		if pd.angle() > pd.amplitude * 0.97:
+			break
+	p.global_position = pd.global_position + pd.log_position() + Vector2(0, -30)
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	for i in 600:
+		await get_tree().physics_frame
+		if pd.angle() < -pd.amplitude * 0.9:
+			break
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(20)
+	release(0, "jump")
+	await seconds(1.5)
+	release(0, "move_right")
+	check(p.global_position.x > 14000.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "jumping off at the far end reaches the bell yard (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_ledges_reach_the_pendulum() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	await _place(p, Vector2(12400, -2))
+	var ok: bool = await _hop_to(p, 12610, -180)
+	ok = ok and await _hop_to(p, 12770, -360)
+	check(ok and p.global_position.y < -350.0, "two ledges lead up to the pendulum's reach (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w4_4_bell_yard_steps_and_the_gate() -> void:
+	var p: Player = await _load_demo(W4_4)
+	await _clear_enemies()
+	await _place(p, Vector2(14250, -2))
+	await _beat_hops(p, [[14520, 0], [14720, 1], [14920, 0], [15120, -1]])
+	check(p.global_position.y < -590.0, "the tick-tock steps reach the bell balcony (at %s)" % p.global_position)
+	p.invulnerable_timer = 100.0
+	var ok: bool = await _hop_run(p, [], 16150, false, 8.0)
+	check(gm().level_complete, "the bell yard gate completes Tick-Tock Tower (at %s)" % p.global_position)
 	await _finish_demo()

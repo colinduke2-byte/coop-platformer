@@ -2,7 +2,8 @@
 Teaches: a staircase of shelves up the tower shaft (Sparkbots zipping about), the
 pendulum hall (spiked pendulums swing over the floor - wait for the swing),
 a tall climb of tick-tock blocks, a lift to the clock gallery, then down the
-roof steps past zaps and Springbots to the gate.
+roof steps past zaps and Springbots, ride the great pendulum over the drop and
+cross the bell yard to the gate.
 Secrets: gem 0 on a shelf off the left of the staircase, gem 1 up the lift in the
 clock gallery, gem 2 in a cog crate at the finish; the Snoozling sits at the far end of
 the pendulum hall.
@@ -20,7 +21,8 @@ L.ambience("spores", 0.7, tint=C(1, 0.95, 0.8, 0.5))
 L.wall(-360, -2600, 600)
 L.land([(-300, 0), (2500, 0), (2500, -850), (4700, -850), (4700, -1600), (5000, -1600), (5000, -1570),
         (5220, -1570), (5220, -1600), (6400, -1600), (6400, -1200), (6900, -1200), (6900, -800),
-        (7400, -800), (7400, -400), (7900, -400), (7900, 0), (12600, 0)], bottom=1500)
+        (7400, -800), (7400, -400), (7900, -400), (7900, 0), (12800, 0)], bottom=1500)
+L.land([(14000, 0), (16500, 0)], bottom=1500)
 
 # ---- S0 the tower courtyard (x -300..1400) ----------------------------------------------------------
 L.sign(90, 0, "TICK-TOCK TOWER. Climb the clock -\nevery tick counts!", 420)
@@ -95,13 +97,38 @@ L.block(11080, -160, 20, 160)
 L.gem(10940, -60)
 L.secret(10840, -140, 240, 140)
 L.enemy("windup", 11500, 0)
-L.goal(12200, 0)
-L.lums(11800, -110, 12130, -110, 4, 30)
-L.deco("clock", 12420, 0, 1.1)
-L.wall(12600, -1200, 0)
+L.lums(11700, -110, 11950, -110, 3, 30)
+
+# ---- S7 the great pendulum: ride it over the drop (12300..14000) -------------------------------------
+L.checkpoint(12330, 0)
+L.sign(12120, 0, "The GREAT PENDULUM! Climb\nup, hop on, ride it over.", 260)
+L.ledge(12520, -180, 200)
+L.ledge(12700, -360, 160)
+L.pit_kill(12800, 14000, 700)
+L.block(13300, -940, 200, 40)                        # the pendulum's beam
+L.deco("clock", 13400, -940, 1.4)
+L.pendulum(13400, -900, rope=600, width=220, amplitude=0.8, period=3.4)
+L.lums(12980, -560, 13820, -560, 7, -80)
+L.enemy("sparkbot", 13400, -1150, travel=V(260, 0), speed=90.0)
+
+# ---- S8 the bell yard and the gate (14000..16500) --------------------------------------------------
+L.checkpoint(14080, 0)
+for i, (x, y) in enumerate([(14450, -150), (14650, -300), (14850, -450)]):
+    L.beat(x, y, 140, 32, group=i % 2)
+L.block(15020, -600, 300, 30)                        # the bell balcony
+L.lum_block(15170, -880, lums=6)
+L.lums(15040, -680, 15300, -680, 4, 30)
+L.enemy("windup", 15600, 0)
+L.enemy("springbot", 15850, 0)
+L.goal(16100, 0)
+L.lums(15400, -110, 16030, -110, 6, 30)
+for x, k, s in [(14250, "clock", 1.1), (15500, "gear", 1.2), (16350, "clock", 1.3)]:
+    L.deco(k, x, 0, s)
+L.wall(16500, -1200, 0)
 
 L.dress(-250, 1350, "factory", spacing=160, seed=101)
 L.dress(4750, 6350, "factory", spacing=180, seed=102, skip=[(4950, 5300)])
-L.dress(7950, 12550, "factory", spacing=170, seed=103, skip=[(9400, 9600), (10750, 11150)])
-L.finish(spawn=(0, -2), left=-360, right=12660, bottom=1100, kill_y=1500)
+L.dress(7950, 16450, "factory", spacing=170, seed=103, skip=[(9400, 9600), (10750, 11150), (12350, 12800), (14400, 15350),
+        (16050, 16150)])
+L.finish(spawn=(0, -2), left=-360, right=16560, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w4_4_tick_tock_tower.tscn"))
