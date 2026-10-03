@@ -5199,13 +5199,12 @@ func test_w3_3_lianas_swing_across_the_collapsed_hall() -> void:
 	await _finish_demo()
 
 
-func test_w3_3_pyramid_steps_lead_to_the_gate() -> void:
+func test_w3_3_pyramid_steps_lead_to_the_pool() -> void:
 	var p: Player = await _load_demo(W3_3)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(9100, -2))
-	var ok: bool = await _hop_run(p, [9500, 9800, 10100, 11700], 12450, false, 14.0)
-	check(ok or gm().level_complete, "up and over the pyramid and the shrine (at %s)" % p.global_position)
-	check(gm().level_complete, "the gate completes the Sunken Temple")
+	var ok: bool = await _hop_run(p, [9500, 9800, 10100, 11700], 12500, false, 14.0)
+	check(ok, "up and over the pyramid and the shrine (at %s)" % p.global_position)
 	await _finish_demo()
 
 
@@ -6594,4 +6593,36 @@ func test_w3_2_vine_up_the_fig_trunk_to_the_crown_gate() -> void:
 	p.invulnerable_timer = 100.0
 	var ok: bool = await _hop_run(p, [], 15520, false, 8.0)
 	check(gm().level_complete, "the bridge leads to the crown gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_stepping_stones_over_the_piranha_pool() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(12450, -2))
+	var ok: bool = await _hop_run(p, [12760, 13060, 13360, 13660], 14100, false, 8.0)
+	check(ok, "the stepping stones cross the piranha pool (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w3_3_pendulums_hit_anyone_standing_underneath() -> void:
+	var p: Player = await _load_demo(W3_3)
+	await _clear_enemies()
+	await _place(p, Vector2(14550, -2))
+	p.invulnerable_timer = 0.0
+	var hit := false
+	for i in 360:
+		await get_tree().physics_frame
+		hit = hit or p.is_bubbled() or p.global_position.x < 14000.0
+	check(hit, "standing under a spiked pendulum gets you hit (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w3_3_colonnade_and_the_altar_gate() -> void:
+	var p: Player = await _load_demo(W3_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(14080, -2))
+	var ok: bool = await _hop_run(p, [15340, 15540], 16350, false, 10.0)
+	check(ok or gm().level_complete, "under the pendulums and up the altar steps (at %s)" % p.global_position)
+	check(gm().level_complete, "the altar gate completes the Sunken Temple")
 	await _finish_demo()

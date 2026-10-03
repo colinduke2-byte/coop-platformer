@@ -2,7 +2,8 @@
 Teaches: pop-spike corridors and flytraps in the dark, ceiling crushers that
 slam when you pass under, climbing a hanging vine to a key that opens the
 temple door, a flooded crypt where a stone lintel forces you to SWIM UNDER,
-lianas across the collapsed hall, then up the stepped pyramid to the gate.
+lianas across the collapsed hall, up the stepped pyramid, across the piranha
+pool, through the colonnade of pendulums and up the altar steps to the gate.
 Secrets: gem 0 at the top of a narrow shaft in the entrance hall (wall-jump
 up), gem 1 deep in the flooded crypt, gem 2 in the little shrine at the pyramid's foot;
 the Snoozling waits on the pyramid's top step.
@@ -83,7 +84,8 @@ L.enemy("swoopbeak", 9300, -480)
 
 # ---- S6 the stepped pyramid (9000..12000) -----------------------------------------------------------------
 L.land([(9000, 0), (9600, 0), (9600, -120), (9900, -120), (9900, -240), (10200, -240), (10200, -360),
-        (10900, -360), (10900, -240), (11200, -240), (11200, -120), (11500, -120), (11500, 0), (12800, 0)],
+        (10900, -360), (10900, -240), (11200, -240), (11200, -120), (11500, -120), (11500, 0), (12800, 0), (12820, 240), (13980, 240), (14000, 0),
+        (15400, 0), (15400, -120), (15600, -120), (15600, -240), (16700, -240)],
        bottom=1500)
 L.checkpoint(9080, 0)
 L.bell(9200, 0)
@@ -100,13 +102,46 @@ L.block(12080, -160, 20, 160)
 L.gem(11940, -60)
 L.secret(11840, -140, 240, 140)
 L.enemy("cocobonk", 12300, 0)
-L.goal(12500, 0)
 L.lums(12150, -110, 12430, -110, 4, 30)
-L.deco("totem", 12680, 0)
-L.wall(12800, -1400, 0)
+L.deco("totem", 12560, 0)
+
+# ---- S7 the piranha pool: hop the stepping stones (12800..14000) -------------------------------------------
+L.checkpoint(12400, 0)
+L.sign(12650, 0, "Hop the stones - mind the Nibble-\nfins! Then time the pendulums.", 340)
+L.water(12820, 20, 1160, 220)
+for x0 in [13000, 13300, 13600]:
+    L.island(x0, x0 + 150, -30, depth=70)
+for i, x in enumerate([13240, 13540, 13840]):
+    L.enemy("nibblefin", x, 20, phase=i * 0.6)
+L.lums(13020, -140, 13730, -140, 6, 40)
+L.deco("lilypads", 12900, 22)
+L.deco("lilypads", 13470, 22)
+
+# ---- S8 the colonnade of pendulums (14000..15400) -------------------------------------------------------
+L.checkpoint(14080, 0)
+L.backwall(14200, -700, 1000, 700, shade=0.5)
+L.block(14200, -740, 1000, 40)                     # the colonnade's lintel
+for x in [14300, 15100]:
+    L.deco("totem", x, 0, 1.2)
+for i, x in enumerate([14550, 14900]):
+    L.pendulum(x, -700, rope=630, width=110, amplitude=0.6, period=2.4, phase=i * 0.5, spiked=True)
+L.pop_spikes(15200, 0, length=150, up=1.0, down=1.6)
+L.lums(14400, -150, 15000, -150, 6, 20)
+
+# ---- S9 the altar steps and the gate (15400..16700) -----------------------------------------------------
+L.checkpoint(15460, -120)
+L.enemy("cocobonk", 16050, -240)
+L.goal(16300, -240)
+L.lums(15650, -340, 16200, -340, 5, 30)
+for x, k, s in [(15800, "totem", 1.1), (16550, "totem", 1.2), (16450, "bromeliad", 1.0), (15950, "big_leaf", 1.0)]:
+    L.deco(k, x, -240, s)
+for x in [15800, 16550]:
+    L.glow(x, -420, C(1.0, 0.85, 0.5), radius=260, energy=0.6)
+L.wall(16700, -1400, -240)
 
 L.dress(-250, 1640, "ruins", spacing=150, seed=33)
 L.dress(7620, 7980, "ruins", spacing=150, seed=34)
-L.dress(9000, 12600, "ruins", spacing=170, seed=35, skip=[(9700, 10100), (11750, 12150)])
-L.finish(spawn=(0, -2), left=-360, right=12860, bottom=1100, kill_y=1500)
+L.dress(9000, 16600, "ruins", spacing=170, seed=35, skip=[(9700, 10100), (11750, 12150), (12600, 12700), (12780, 14020),
+        (14200, 15400), (16250, 16350)])
+L.finish(spawn=(0, -2), left=-360, right=16760, bottom=1100, kill_y=1500)
 L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w3_3_sunken_temple.tscn"))
