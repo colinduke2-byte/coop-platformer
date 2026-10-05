@@ -7,25 +7,12 @@ import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm } from '../util.js';
 import Projectile from './Projectile.js';
+import { TUNE } from '../data/tuning.js';
+import { damageTaken, meleeDamage } from '../systems/damage.js';
+import { settings } from '../systems/settings.js';
 
-// Feel numbers in one place.
-export const P = {
-  speed: 72, sneakSpeed: 38, accel: 900,
-  regen: 30, regenDelay: 0.75,
-  mpRegen: 4.5, mpDelay: 1.2,
-  roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },
-  sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4 },
-  // 3-hit combo: tap J again inside the chain window. The third swing is a heavy finisher.
-  combo: [
-    { dmg: 1, kb: 120, size: 18, total: 0.3, cost: 1, flip: false, scale: 1, stun: 0.22 },
-    { dmg: 1.1, kb: 135, size: 18, total: 0.3, cost: 1, flip: true, scale: 1, stun: 0.24 },
-    { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
-  ],
-  hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
-  bow: { minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
-  shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },
-  cast: { lock: 0.28, move: 0.4 },
-};
+// Feel numbers live in data/tuning.js
+export const P = TUNE.player;
 
 // Spells. cost = mana, dmg = base damage (scaled by Destruction).
 export const SPELLS = {
@@ -216,7 +203,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
       const mult = sneak ? 3 + bonus.sneakAttack() : 1;
-      const dmg = stats.weaponDmg() * bonus.melee() * mult * s.c.dmg * (0.9 + Math.random() * 0.2);
+      const dmg = meleeDamage({ weapon: stats.weaponDmg(), skill: bonus.melee(), combo: s.c.dmg, noise: 0.9 + Math.random() * 0.2 }) * mult;
       const dealt = e.takeHit({ dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun });
       this.scene.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);
       if (sneak) { this.scene.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); this.gainXp('sneak', 10); sfx.play('crit'); }
@@ -294,7 +281,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     sc.fx.ring(this.x, this.y + 4, P.shout.radius / 32 * 0.7, 0.4, 'ring', 0x5cc8d8);
     sc.fx.text(this.x, this.y - 18, 'FUS!', 13, 1);
     sc.shake(320, 0.014);
-    sc.cameras.main.flash(90, 234, 242, 248, true);
+    sc.flashScreen(90);
     for (const e of sc.enemies.getChildren()) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (e.dead || d > P.shout.radius) continue;
@@ -323,7 +310,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   hurt(dmg, sx, sy, opts = {}) {
     if (this.mode === 'dead' || this.mode === 'lying') return false;
     if (this.iframes > 0 || this.invuln > 0) return false;
-    const taken = Math.max(1, Math.round(dmg * (1 - stats.armor())));
+    const taken = damageTaken(dmg, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken);
     S.hp -= taken;
     this.flashT = 0.12;
     this.invuln = P.hurt.invuln;

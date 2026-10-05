@@ -12,6 +12,7 @@ import EndingScene from './scenes/EndingScene.js';
 import { wireQuests } from './systems/quests.js';
 import { unlock } from './audio/sfx.js';
 import { ui } from './systems/ui.js';
+import { settings } from './systems/settings.js';
 
 const q = new URLSearchParams(location.search);
 
@@ -30,6 +31,24 @@ const game = new Phaser.Game({
 });
 
 installKeys(game);
+
+// Integer (pixel-perfect) scaling option: whole-number zoom with letterboxing.
+export function applyScaling() {
+  const sc = game.scale;
+  if (settings.intScale) {
+    const z = Math.max(1, Math.floor(Math.min(window.innerWidth / W, window.innerHeight / H)));
+    sc.setGameSize(W, H);
+    sc.scaleMode = Phaser.Scale.NONE;
+    sc.setZoom(z);
+  } else {
+    sc.setZoom(1);
+    sc.scaleMode = Phaser.Scale.FIT;
+    sc.refresh();
+  }
+}
+window.addEventListener('resize', () => settings.intScale && applyScaling());
+game.events.once('ready', () => applyScaling());
+window.__applyScaling = applyScaling;
 window.addEventListener('keydown', unlock);
 window.addEventListener('pointerdown', unlock);
 // Alt-tabbing away opens the pause menu so you never get ambushed.

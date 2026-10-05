@@ -6,17 +6,12 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { dist, norm, dir8, rand } from '../util.js';
+import { TUNE } from '../data/tuning.js';
 
 // Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
 //  Phase 2: roars and summons draugr; faster; adds frost nova (ring of orbs) and a charge.
-const B = {
-  slam: { windup: 0.85, recover: 0.8, dmg: 24, r: 30, reach: 24 },
-  sweep: { windup: 0.6, recover: 0.7, dmg: 18, w: 52, h: 38, reach: 26 },
-  volley: { windup: 0.75, recover: 0.7, dmg: 11, speed: 100, spread: 0.26 },
-  nova: { windup: 1.05, recover: 1.0, dmg: 12, speed: 78, count: 14 },
-  charge: { windup: 0.75, recover: 1.4, dmg: 26, speed: 190, time: 0.6 },
-};
+const B = TUNE.boss;
 
 export default class Boss extends Enemy {
   constructor(scene, x, y) {

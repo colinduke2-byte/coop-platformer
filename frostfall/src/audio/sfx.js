@@ -1,10 +1,8 @@
 // Chiptune sound effects (and a tiny music box) synthesised live with Web Audio.
 // No audio files. The AudioContext is created lazily on the first sound, which
 // always follows a key press, so browsers' autoplay rules are satisfied.
-const KEY = 'frostfall_settings';
-export const settings = { volume: 0.6, music: true };
-try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { /* ignore */ }
-export const saveSettings = () => { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* ignore */ } };
+import { settings, saveSettings } from '../systems/settings.js';
+export { settings, saveSettings };
 
 let ctx = null, master = null, sfxBus = null, musicBus = null;
 function ac() {

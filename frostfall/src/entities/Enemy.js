@@ -6,6 +6,8 @@ import { txtS } from '../art/font.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import Projectile from './Projectile.js';
+import { TUNE } from '../data/tuning.js';
+import { settings } from '../systems/settings.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind) {
@@ -18,8 +20,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const [bw, bh, ox, oy] = cfg.body;
     this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
-    this.maxHp = cfg.hp;
-    this.hp = cfg.hp;
+    this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
+    this.hp = this.maxHp;
     this.home = { x, y };
     this.alerted = false;
     this.notice = 0;
