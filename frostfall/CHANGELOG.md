@@ -3,6 +3,34 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 3: controls, UI and gameplay (the "do all of it" pass)
+
+### Controls
+- **Lock-on (T, R3 on a pad, LOCK on touch).** Picks the nearest foe, makes you face it while it lives (including for the bow), shows gold target brackets and a name + health bar at the top. Press again to drop it; it also drops when the target dies or gets far away.
+- **Hold the sword key to keep chaining the combo** (option: HOLD TO CHAIN).
+- **Roll cancel.** You can dodge out of the recovery half of a swing. Rolling with no direction held goes the way you face.
+- **Sneak toggle** option (SNEAK MODE: HOLD / TOGGLE).
+- **Quick-cast keys 4-8** cast Fireball / Frost / Lightning / Healing / Ward directly.
+- **Overcast.** Chained casts raise the mana cost (up to +105%) and cool down again; a heat bar under the spell icon shows it.
+- **Simplified touch layout.** ROLL, HIT, E, LOCK and a pause button; everything else (bow, magic, swap, shout, block, sneak, ammo, pack, map) lives in a ring that opens from MORE.
+- **Menus use the mouse.** Hover and click tabs, rows, shop lists, the title screen; right-click goes back.
+
+### UI
+- **Shop, forge, enchant, alchemy and fletching list screens** with item icons, prices, greyed-out unaffordable rows, a detail pane and a "need X more" line. Selling has sell-one / sell-all.
+- **Status row** under the bars: ward timer, enchant, sneak, guard, well-rested. **Shout cooldown number** on the shout icon.
+- **Large UI option** (bigger bars). **Damage numbers merge** in crowds and are capped.
+- **Map:** Q cycles 1x/2x/3x zoom, E starts a cursor and places or removes a **waypoint** (shown in the world with a green marker), exits are labelled with where they lead.
+
+### Gameplay
+- **First-minute tutorial taught by doing**: walk, roll, then a lone weakened wolf that teaches lock-on, swinging and rolling its lunge.
+- **Combat variety.** *Rime Reaver* waits out your roll and strikes as you land. *Rime Knight* is armoured (only a parry or an elemental hit gets through). *Snow Fencer* sidesteps your swing. Each has a first-sight tip and a bestiary entry.
+- **Stealth with a cost.** Shouts, explosions and smashed pots wake sleepers nearby; bandit archers sound the alarm for the whole camp.
+- **Bow limits and ammo.** Quiver capped at 30; Hilda fletches **fire arrows** (burn) and **barbed arrows** (bleed); V switches ammo.
+- **Crypt puzzle.** Three rune plates (Moon, Crown, Wolf, in that order) open a hidden vault with a Nordic Shield and special arrows. A **checkpoint brazier** before the boss gate means a retry no longer starts at the entrance.
+- **Armour sets.** Hunter's Leathers (fast, stealthy), Frostweave Robe (mana, cheaper spells), Bulwark Plate (heavy, 34% absorb, slower).
+- **Snowdrift Cottage.** Buy it (300G), sleep for a Well Rested bonus, furnish it (table, shelves, bookshelf, a home cauldron, a home anvil).
+- **Companion revive.** If you have hired Ragna she drags you up once every two minutes with 40% health.
+
 ## Combat
 - **Shields, blocking and parrying.** Hold F with a shield equipped. A frontal hit is reduced by the shield's
   absorb value (60/72/82%) and costs stamina. Raising the shield just before a hit is a **parry**: no damage, and the

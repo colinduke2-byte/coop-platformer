@@ -32,6 +32,9 @@ changing weather affect stealth; villagers go indoors at night.
 | J | Sword. Tap 3 times for a combo with a heavy finisher |
 | K (hold, release) | Bow: hold to charge, release to fire |
 | L | Cast the selected spell. Q / Tab swaps (locked spells are skipped) |
+| T | Lock on / drop target (faces the foe, aims the bow) |
+| 4 5 6 7 8 | Quick-cast Fireball / Frost / Lightning / Healing / Ward |
+| V | Switch arrows (plain / fire / barbed) |
 | R | Shout "FUS": pushes enemies back, shakes the screen (12 s cooldown) |
 | F (hold) | Block with a shield. Raise it just before a hit to parry |
 | C / Shift (hold) | Sneak: sneak attacks x3 (melee) / x2 (bow). Also: E on a villager = pickpocket |

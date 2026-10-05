@@ -15,7 +15,8 @@ Almost everything from the first backlog is built (see CHANGELOG.md). What is le
 - **Code health**: `GameScene` is smaller (pathing, fog, loot, zones, lighting are mixins) but still owns entity spawning and the update loop;
   `Player` could be split further (movement / melee / ranged / magic).
 - **UI scale**: integer scaling and fullscreen exist, but text size is tied to the 320x180 canvas.
-- **Mouse**: gameplay works, menus are keyboard / gamepad / touch-button only.
+- **Mouse**: menus and shops now work with the mouse; the Items tab right-click and mouse wheel scrolling are not wired up.
+- **Large UI** only enlarges the bars and target bar; dialogue text and the pause menu stay at the base size.
 
 ## Ideas not started
 - More zones (frozen lake village, mountain monastery), a third boss, a hard-mode NPC-escort quest.
