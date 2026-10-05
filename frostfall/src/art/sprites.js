@@ -114,14 +114,10 @@ function buildCharacters(scene) {
   const make = (key, fn, frames = ['down', 'up', 'side']) => {
     const cv = canvas(16 * frames.length * 3, 16);
     const ctx = cv.getContext('2d');
+    // Draw first, upload second: WebGL snapshots the canvas when it is added.
+    frames.forEach((d, di) => { for (let f = 0; f < 3; f++) fn(ctx, (di * 3 + f) * 16, d, f); });
     const tex = scene.textures.addCanvas(key, cv);
-    frames.forEach((d, di) => {
-      for (let f = 0; f < 3; f++) {
-        const x = (di * 3 + f) * 16;
-        fn(ctx, x, d, f);
-        tex.add(`${d}${f}`, 0, x, 0, 16, 16);
-      }
-    });
+    frames.forEach((d, di) => { for (let f = 0; f < 3; f++) tex.add(`${d}${f}`, 0, (di * 3 + f) * 16, 0, 16, 16); });
   };
   for (const [name, st] of Object.entries(STYLES)) {
     make('spr_' + name, (ctx, x, d, f) => humanoid(ctx, x, d, f, st));

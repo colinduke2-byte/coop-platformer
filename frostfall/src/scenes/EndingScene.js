@@ -29,8 +29,7 @@ export default class EndingScene extends Phaser.Scene {
     this.add.rectangle(0, 0, W, H, 0x0b0e1a, 1).setOrigin(0);
     this.cameras.main.fadeIn(800, 11, 14, 26);
     sfx.play('ending');
-    const t = txt(this, 0, 18, e.title, e.col).setScale(2);
-    t.x = Math.round((W - t.width * 2) / 2);
+    txt(this, W / 2, 18, e.title, e.col).setScale(2).setOrigin(0.5, 0);
     this.body = txt(this, 14, 48, '', 5);
     this.full = wrap(e.text, 49);
     this.n = 0; this.t = 0; this.warm = 20;

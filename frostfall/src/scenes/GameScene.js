@@ -23,6 +23,7 @@ import { keys } from '../systems/keys.js';
 import { txtS } from '../art/font.js';
 import { sfx, music } from '../audio/sfx.js';
 import { randInt, rand, dist } from '../util.js';
+import { saveGame } from '../systems/save.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -271,6 +272,7 @@ export default class GameScene extends Phaser.Scene {
     this.setGate(false);
     music.play('crypt');
     bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
+    this.time.delayedCall(3000, () => { if (this.scene.isActive('Game')) saveGame(this, { auto: false }); });
     this.time.delayedCall(1500, () => {
       if (!this.scene.isActive('Game')) return;
       sfx.play('levelup');
@@ -302,6 +304,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.fadeOut(280, 11, 14, 26);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       S.map = to; S.spawn = spawn; S.x = S.y = null;
+      saveGame(this, { auto: true });
       this.scene.restart({ map: to, spawn });
     });
   }
@@ -318,6 +321,11 @@ export default class GameScene extends Phaser.Scene {
       g.fillStyle(k >= 1 ? C[13] : C[12]); g.fillRect(x, y, Math.round(16 * k), 3);
     }
     for (const e of this.enemies.getChildren()) {
+      if (!e.dead && e.cfg.kind === 'shoot' && e.state === 'windup' && e.dashDir) {
+        const k = 1 - e.stateT / e.cfg.windup;
+        g.lineStyle(1, C[11], 0.35 + 0.5 * k);
+        g.beginPath(); g.moveTo(Math.round(e.x), Math.round(e.y + 3)); g.lineTo(Math.round(e.x + e.dashDir.x * 90), Math.round(e.y + 3 + e.dashDir.y * 90)); g.strokePath();
+      }
       if (e.dead || e.hp >= e.maxHp || e.isBoss) continue;
       const w = 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
       g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, 4);

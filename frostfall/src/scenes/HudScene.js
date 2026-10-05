@@ -69,8 +69,7 @@ export default class HudScene extends Phaser.Scene {
     bus.on('hint', this.onHint);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
-    const d1 = txt(this, 0, 74, 'YOU DIED', 11).setScale(3);
-    d1.x = Math.floor((W - d1.width * 3) / 2);
+    const d1 = txt(this, W / 2, 74, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
     this.dead.add(d1);
 
     this.handlers = {};
@@ -225,6 +224,13 @@ export default class HudScene extends Phaser.Scene {
       if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
     }
 
+    // low-health warning pulse
+    if (S.hp > 0 && S.hp / S.maxHp < 0.3) {
+      const a = 0.18 + 0.14 * Math.sin(this.time.now / 160);
+      g.fillStyle(C[11], a);
+      g.fillRect(0, 0, W, 3); g.fillRect(0, H - 3, W, 3); g.fillRect(0, 0, 3, H); g.fillRect(W - 3, 0, 3, H);
+    }
+
     // quest tracker
     const ids = activeQuestIds().slice(0, 2);
     this.questTxt.forEach((t, i) => {
@@ -246,12 +252,11 @@ export default class HudScene extends Phaser.Scene {
       const b = this.banners.shift();
       const d = SKILL_DEFS[b.skill];
       const c = this.add.container(0, 0);
-      const t1 = txt(this, 0, 54, d.name + ' ' + b.lv, 13).setScale(2);
-      t1.x = Math.round((W - t1.width * 2) / 2);
+      const t1 = txt(this, W / 2, 54, d.name + ' ' + b.lv, 13).setScale(2).setOrigin(0.5, 0);
       const t0 = txt(this, 0, 44, 'SKILL INCREASED', 15); t0.x = Math.round((W - t0.width) / 2);
       const t2 = txt(this, 0, 73, d.perk, 5); t2.x = Math.round((W - t2.width) / 2);
       c.add([t0, t1, t2]);
-      this.bannerObj = { c, t: 3.2, w: Math.max(t1.width * 2, t2.width) + 20 };
+      this.bannerObj = { c, t: 3.2, w: Math.max(t1.displayWidth, t2.width) + 20 };
     }
     if (this.bannerObj) {
       const b = this.bannerObj;

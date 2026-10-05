@@ -87,6 +87,8 @@ const SOUNDS = {
   nova: () => { tone('sawtooth', 600, 100, 0.5, 0.14); noise(0.4, 0.2, 0, 6000, 400); },
 };
 
+export function unlock() { try { if (ctx && ctx.state === 'suspended') ctx.resume(); else if (!ctx) ac(); } catch { /* ignore */ } }
+
 export const sfx = {
   play(name) {
     if (settings.volume <= 0) return;

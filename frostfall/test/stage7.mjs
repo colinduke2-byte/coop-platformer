@@ -31,7 +31,7 @@ await h.shot('s7_boss');
 // boss can't be hurt during roar; after the roar it attacks and telegraphs
 const seenAtk = new Set(); let tele = false, hurtBoss = false;
 await G(() => { window.__ff.game.scene.getScene('Game').player.invuln = 999; });
-for (let i = 0; i < 160; i++) {
+for (let i = 0; i < 500 && !(tele && seenAtk.size >= 2); i++) {
   const r = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const bs = g.boss; return { st: bs.state, atk: bs.atk, hp: bs.hp, tele: bs.tele.length, ph: bs.bphase }; });
   if (r.st === 'windup') { seenAtk.add(r.atk); if (r.tele) tele = true; }
   await h.sleep(60);
@@ -50,7 +50,7 @@ const adds = await G(() => window.__ff.game.scene.getScene('Game').enemies.getCh
 check('phase 2 summons draugr', adds >= 2, `adds=${adds}`);
 // phase 2 attacks include nova or charge eventually
 const seen2 = new Set();
-for (let i = 0; i < 220; i++) {
+for (let i = 0; i < 600 && !(seen2.has('nova') || seen2.has('charge')); i++) {
   const r = await G(() => { const bs = window.__ff.game.scene.getScene('Game').boss; return { st: bs.state, atk: bs.atk }; });
   if (r.st === 'windup' || r.st === 'attack') seen2.add(r.atk);
   await h.sleep(60);

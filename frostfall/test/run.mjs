@@ -1,0 +1,11 @@
+// Runs every stage test in order. Usage: npm test
+import { spawnSync } from 'node:child_process';
+const tests = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8', 'stage9_death', 'webgl'];
+let failed = 0;
+for (const t of tests) {
+  console.log(`\n=== ${t} ===`);
+  const r = spawnSync('node', [new URL(`./${t}.mjs`, import.meta.url).pathname], { stdio: 'inherit' });
+  if (r.status !== 0) failed++;
+}
+console.log(failed ? `\n${failed} test file(s) FAILED` : '\nALL STAGE TESTS PASSED');
+process.exit(failed ? 1 : 0);

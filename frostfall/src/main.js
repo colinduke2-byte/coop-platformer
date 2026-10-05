@@ -10,6 +10,8 @@ import MenuScene from './scenes/MenuScene.js';
 import IntroScene from './scenes/IntroScene.js';
 import EndingScene from './scenes/EndingScene.js';
 import { wireQuests } from './systems/quests.js';
+import { unlock } from './audio/sfx.js';
+import { ui } from './systems/ui.js';
 
 const q = new URLSearchParams(location.search);
 
@@ -28,6 +30,13 @@ const game = new Phaser.Game({
 });
 
 installKeys(game);
+window.addEventListener('keydown', unlock);
+window.addEventListener('pointerdown', unlock);
+// Alt-tabbing away opens the pause menu so you never get ambushed.
+window.addEventListener('blur', () => {
+  const gs = game.scene.getScene('Game');
+  if (gs && game.scene.isActive('Game') && !ui.modal && gs.player?.mode === 'free') gs.openMenu(-1, 'SYSTEM');
+});
 wireQuests();
 
 // Handy handle for the console and the automated tests.

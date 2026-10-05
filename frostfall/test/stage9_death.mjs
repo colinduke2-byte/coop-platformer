@@ -1,0 +1,17 @@
+import { launch, check, failCount } from './harness.mjs';
+const h = await launch();
+await h.open('scene=game');
+await h.sleep(600);
+const G = (fn, a) => h.ev(fn, a);
+await G(() => { const S = window.__ff.S; S.gold = 100; S.hp = 3; const g = window.__ff.game.scene.getScene('Game'); g.player.invuln = 0; g.player.iframes = 0; g.player.hurt(50, g.player.x - 10, g.player.y); });
+await h.sleep(500);
+let r = await G(() => ({ mode: window.__ff.game.scene.getScene('Game').player.mode, hp: window.__ff.S.hp }));
+check('lethal damage kills the player', r.mode === 'dead' && r.hp === 0, JSON.stringify(r));
+await h.shot('s9_died');
+await h.sleep(3600);
+r = await G(() => ({ mode: window.__ff.game.scene.getScene('Game').player.mode, hp: window.__ff.S.hp, gold: window.__ff.S.gold, map: window.__ff.S.map }));
+check('player respawns in the village with full health and a gold penalty', r.mode === 'free' && r.hp === 100 && r.gold === 90 && r.map === 'village', JSON.stringify(r));
+check('no page errors', h.errors.length === 0, h.errors.join('\n'));
+await h.close();
+console.log(failCount() ? 'DEATH FAILED' : 'DEATH PASSED');
+process.exit(failCount() ? 1 : 0);

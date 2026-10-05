@@ -4,6 +4,7 @@ import { QUESTS } from '../data/quests.js';
 import { keys } from '../systems/keys.js';
 import { wrap, textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
+import { systemTab } from './menuSystem.js';
 
 const STATUS = { active: 'ACTIVE', ready: 'READY', relic: 'ACTIVE', done: 'DONE' };
 
@@ -45,5 +46,6 @@ export function tabs(m) {
         if (S.flags.ending && id === 'king') m.T(128, 146, 'ENDING: ' + { give: 'THE HEARTH', keep: 'THE WINTER KING', sell: 'A COLD BARGAIN' }[S.flags.ending], 15);
       },
     },
+    systemTab(m),
   ];
 }
