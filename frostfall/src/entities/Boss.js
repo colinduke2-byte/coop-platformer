@@ -71,7 +71,8 @@ export default class Boss extends Enemy {
     this.scene.shake(1000, 0.016);
     this.scene.fx.ring(this.x, this.y + 6, 4.5, 1.0, 'ring', 0xc8383c);
     this.scene.fx.text(this.x, this.y - 30, 'ENRAGED', 11, 1.4);
-    this.cdMul = 0.65; this.speedMul = 1.55;
+    this.phase2Stats();
+    this.scene.arenaPhase?.(2);
     bus.emit('boss:phase', 2);
   }
 
@@ -281,7 +282,15 @@ export default class Boss extends Enemy {
     if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 36));
   }
 
-  markDefeated() { S.flags.bossDead = true; }
+  markDefeated() { S.flags.bossDead = true; S.bossState = null; }
+
+  phase2Stats() { this.cdMul = 0.65; this.speedMul = 1.55; }
+
+  // Resume a fight that was saved mid-way.
+  restoreState(st) {
+    this.hp = Math.max(1, Math.min(this.maxHp, st.hp));
+    if (st.phase === 2) { this.bphase = 2; this.phase2Stats(); this.summoned = true; this.scene.arenaPhase?.(2); }
+  }
 
   // Called by the scene once the death animation starts: loot, doors, story beats.
   victory(sc) {

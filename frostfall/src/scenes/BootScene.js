@@ -10,6 +10,7 @@ export default class BootScene extends Phaser.Scene {
     generateArt(this);
     for (const [id, it] of Object.entries(ITEMS)) buildIcon(this, iconKey(id), it.icon[0], it.icon[1]);
     buildHeld(this, 'blade_default', 'blade', 5);
+    for (const col of [3, 4, 5]) buildHeld(this, 'held_e' + col, 'blade', col);
     for (const [id, it] of Object.entries(ITEMS)) {
       if (it.type === 'weapon') buildHeld(this, 'held_' + id, 'blade', it.icon[1]);
       else if (it.type === 'weapon2h') buildHeld(this, 'held_' + id, 'greatblade', it.icon[1]);

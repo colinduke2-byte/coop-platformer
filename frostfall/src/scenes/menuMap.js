@@ -1,6 +1,7 @@
 import { C, T, TILE } from '../config.js';
 import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
+import { TARGETS, trackedId } from '../data/quests.js';
 import { panel } from './MenuScene.js';
 
 const COL = {
@@ -44,12 +45,19 @@ export function mapTab(m) {
         else if (e.t === 'fire' && e.rest) dot(e.x, e.y, 12, sc + 1);
         else if (e.t === 'boss' && !S.flags.bossDead) dot(e.x, e.y, 11, sc + 2);
       }
+      const tid = trackedId();
+      const tg = tid && TARGETS[tid]?.(S.quests[tid]);
+      if (tg && tg.map === gs.mapId) {
+        const qx = ox + Math.floor((tg.x + 0.5) * sc), qy = oy + Math.floor((tg.y + 0.5) * sc), pulse = Math.floor(m.time.now / 300) % 2;
+        g.fillStyle(C[0]); g.fillRect(qx - 3 - pulse, qy - 3 - pulse, 7 + 2 * pulse, 7 + 2 * pulse);
+        g.fillStyle(C[15]); g.fillRect(qx - 2, qy - 2, 5, 5);
+      }
       const p = gs.player;
       if (Math.floor(m.time.now / 350) % 2 === 0) { g.fillStyle(C[0]); g.fillRect(ox + Math.floor(p.x / T * sc) - 1, oy + Math.floor((p.y + 3) / T * sc) - 1, 4, 4); g.fillStyle(C[13]); g.fillRect(ox + Math.floor(p.x / T * sc), oy + Math.floor((p.y + 3) / T * sc), 2, 2); }
       m.T(10, 26, MAPS[gs.mapId].name, 13);
       const ly = 143;
       let lx = 12;
-      [[13, 'YOU'], [15, 'EXIT'], [12, 'CAMPFIRE'], [6, 'PERSON'], [13, 'CHEST'], [11, 'BOSS']].forEach(([c, t]) => {
+      [[13, 'YOU'], [15, 'EXIT'], [12, 'CAMPFIRE'], [6, 'PERSON'], [13, 'CHEST'], [11, 'BOSS'], [15, 'QUEST']].forEach(([c, t]) => {
         g.fillStyle(C[c]); g.fillRect(lx, ly + 1, 4, 4);
         m.T(lx + 7, ly, t, 4);
         lx += 7 + t.length * 6 + 9;

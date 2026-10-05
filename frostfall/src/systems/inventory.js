@@ -3,6 +3,7 @@ import { bus } from './bus.js';
 import { ITEMS, SLOT_OF } from '../data/items.js';
 import { recalc } from './stats.js';
 import { sfx } from '../audio/sfx.js';
+import { tip } from './tips.js';
 
 export const count = (id) => S.inv[id] || 0;
 
@@ -44,6 +45,7 @@ export function equip(id, forceSlot = null) {
   if (it.type === 'weapon2h') S.equip.offhand = null;       // greatswords need both hands
   if (slot === 'weapon' && S.equip.offhand === id && count(id) < 2) S.equip.offhand = null;
   S.equip[slot] = id;
+  if (it.type === 'shield') tip('block');
   recalc();
   sfx.play('equip');
   return true;

@@ -6,6 +6,7 @@ import { sfx } from '../audio/sfx.js';
 import Phaser from 'phaser';
 import { addItem } from '../systems/inventory.js';
 import { LORE } from '../data/lore.js';
+import { tip } from '../systems/tips.js';
 import { brewMenu } from '../data/services.js';
 import { C } from '../config.js';
 
@@ -49,6 +50,7 @@ export class RestSpot {
       S.respawn = { map: sc.mapId, x: Math.round(sc.player.x), y: Math.round(sc.player.y) };
       saveGame(sc);
       bus.emit('toast', 'RESTED BY THE FIRE', 12);
+      tip('rest');
       await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); });
       sfx.play('potion');
       sc.fx.puff(sc.player.x, sc.player.y, 12, 8, 30, 0.6, -20);

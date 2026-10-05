@@ -1,0 +1,21 @@
+// One-time tutorial hints shown the first time a mechanic matters.
+import { S } from './state.js';
+import { bus } from './bus.js';
+
+export const TIPS = {
+  sneak: 'HOLD C TO SNEAK: UNAWARE FOES TAKE 3X DAMAGE.\nROLL (SPACE) THROUGH A TELEGRAPHED HIT.',
+  stamina: 'STAMINA REFILLS WHEN YOU STOP ACTING.\nPRESS 3 FOR A STAMINA POTION.',
+  perks: 'OPEN THE PACK (I) AND SPEND YOUR PERK POINT\nON THE PERKS TAB.',
+  lock: 'LOCKPICKING: PRESS E WHEN THE MARKER\nIS INSIDE THE GREEN ZONE.',
+  block: 'HOLD F TO BLOCK. RAISE THE SHIELD JUST BEFORE\nA HIT TO PARRY AND STAGGER THE ATTACKER.',
+  bow: 'HOLD K TO DRAW, RELEASE TO SHOOT.\nARROWS THAT MISS CAN BE PICKED UP AGAIN.',
+  night: 'NIGHT: ENEMIES SEE LESS FAR WHEN YOU SNEAK.\nVILLAGERS ARE INDOORS.',
+  potion: 'POTIONS: 1 HEALTH, 2 MANA, 3 STAMINA.\nRESTING AT A CAMPFIRE ALSO HEALS.',
+  rest: 'RESTING SAVES YOUR GAME AND SETS\nWHERE YOU WAKE IF YOU FALL.',
+  quest: 'PRESS O FOR THE JOURNAL.\nPRESS E ON A QUEST TO TRACK IT.',
+};
+export function tip(id) {
+  if (S.tips[id] || !TIPS[id]) return;
+  S.tips[id] = true;
+  bus.emit('hint', TIPS[id]);
+}

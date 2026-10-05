@@ -66,5 +66,12 @@ export const TARGETS = {
   alpha: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'pass', x: 36, y: 8 }),
 };
 
+// Which quest the HUD arrow follows: the one you pinned, else the first active.
+export function trackedId() {
+  const act = activeQuestIds();
+  if (S.tracked && act.includes(S.tracked)) return S.tracked;
+  return act[0] || null;
+}
+
 export const quest = (id) => S.quests[id];
 export const activeQuestIds = () => Object.keys(QUESTS).filter((id) => ['active', 'ready', 'relic'].includes(S.quests[id]?.status));

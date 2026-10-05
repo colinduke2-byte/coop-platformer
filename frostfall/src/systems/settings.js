@@ -7,6 +7,8 @@ export const settings = {
   flashes: true,          // screen flashes
   intScale: false,        // integer pixel scaling
   mouse: false,           // mouse controls (click = sword, right-click = bow)
+  slot: 1,                // active save slot (1-3)
+  keys: {},               // custom key bindings { action: [codes] }
 };
 try { Object.assign(settings, JSON.parse((typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || '{}')); } catch { /* ignore */ }
 export const saveSettings = () => { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* ignore */ } };

@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
+import { tip } from '../systems/tips.js';
 
 const DAY_MIN = 1440;
 const lerpColor = (a, b, t) => {
@@ -78,7 +79,7 @@ export const lightingMethods = {
     S.time = (S.time + dt * 2) % DAY_MIN;
     const h = hourOf();
     if (Math.floor(before) !== Math.floor(h)) {
-      if (Math.floor(h) === 21) bus.emit('toast', 'NIGHT FALLS', 4);
+      if (Math.floor(h) === 21) { bus.emit('toast', 'NIGHT FALLS', 4); tip('night'); }
       if (Math.floor(h) === 6) bus.emit('toast', 'DAWN BREAKS', 13);
     }
     this.weatherT -= dt;

@@ -13,6 +13,7 @@ import { wireQuests } from './systems/quests.js';
 import { unlock } from './audio/sfx.js';
 import { ui } from './systems/ui.js';
 import { settings } from './systems/settings.js';
+import { installTouch } from './ui/touch.js';
 
 const q = new URLSearchParams(location.search);
 
@@ -31,6 +32,7 @@ const game = new Phaser.Game({
 });
 
 installKeys(game);
+installTouch();
 
 // Integer (pixel-perfect) scaling option: whole-number zoom with letterboxing.
 export function applyScaling() {

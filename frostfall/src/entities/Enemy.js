@@ -325,7 +325,22 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     else this.clearTint();
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
+    this.updateBlade();
     if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 18 - (this.scaleX > 1 ? 10 : 0))).setDepth(99300);
+  }
+
+  // Held weapon raised during the telegraph and swung during the attack.
+  updateBlade() {
+    const cfg = this.cfg;
+    const show = cfg.blade && !this.isBoss && !this.dead && (this.state === 'windup' || this.state === 'attack') && this.stun <= 0;
+    if (!show) { this.weaponImg?.setVisible(false); return; }
+    if (!this.weaponImg) this.weaponImg = this.scene.add.image(this.x, this.y, 'held_e' + cfg.blade).setOrigin(0.08, 0.5);
+    const f = this.face, base = Math.atan2(f.y, f.x);
+    let ang;
+    if (this.state === 'windup') { const k = 1 - this.stateT / cfg.windup; ang = base - 1.35 - k * 0.3 + Math.sin(k * 40) * 0.05; }
+    else { const k = Math.min(1, 1 - this.stateT / cfg.atkDur); ang = base - 1.35 + k * 2.7; }
+    this.weaponImg.setVisible(true).setPosition(this.x + Math.cos(ang) * 3, this.y + 3 + Math.sin(ang) * 3).setRotation(ang)
+      .setDepth(this.y + (f.y < 0 ? 4 : 12));
   }
 
   // info: { dmg, kx, ky, kb, src, stun, slow, sneak }  -> returns damage dealt
@@ -381,9 +396,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.clearTint();
     this.setTintFill(0xb4c7e0);
     this.shadow.destroy();
-    this.scene.tweens.add({
-      targets: this, alpha: 0, angle: this.flipX ? -90 : 90, y: this.y + 3, duration: 450,
-      onComplete: () => this.destroy(),
+    this.weaponImg?.destroy(); this.weaponImg = null;
+    const sc = this.scene, dir = this.flipX ? -1 : 1;
+    // fall over, lie there a moment, then crumble away
+    sc.tweens.add({
+      targets: this, angle: 90 * dir, y: this.y + 4, duration: 260, ease: 'Back.easeOut',
+      onComplete: () => {
+        sc.fx.puff(this.x, this.y + 4, 5, 6, 30, 0.4);
+        sc.time.delayedCall(900, () => {
+          if (!this.scene) return;
+          sc.tweens.add({ targets: this, alpha: 0, duration: 600, onComplete: () => this.destroy() });
+        });
+      },
     });
     this.scene.onEnemyKilled(this, info);
     if (this.stuck) {

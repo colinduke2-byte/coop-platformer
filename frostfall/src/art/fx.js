@@ -8,18 +8,27 @@ export class Fx {
     this.parts = [];
     this.texts = [];
     this.temp = [];
+    this.pool = [];
   }
+
+  acquire(col, x, y) {
+    const sp = this.pool.pop();
+    if (!sp) return this.s.add.image(x, y, 'p' + col).setDepth(99000);
+    return sp.setTexture('p' + col).setPosition(x, y).setVisible(true).setActive(true).setAlpha(1);
+  }
+
+  release(sp) { sp.setVisible(false).setActive(false); this.pool.push(sp); }
 
   puff(x, y, col, n = 6, speed = 40, life = 0.4, grav = 0) {
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, v = speed * (0.4 + Math.random() * 0.8);
-      const sp = this.s.add.image(x, y, 'p' + col).setDepth(99000);
+      const sp = this.acquire(col, x, y);
       this.parts.push({ sp, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: life * (0.6 + Math.random() * 0.6), life, grav });
     }
   }
 
   trail(x, y, col, life = 0.25) {
-    const sp = this.s.add.image(x, y, 'p' + col).setDepth(99000);
+    const sp = this.acquire(col, x, y);
     this.parts.push({ sp, vx: 0, vy: -4, t: life, life, grav: 0 });
   }
 
@@ -62,7 +71,7 @@ export class Fx {
     for (let i = this.parts.length - 1; i >= 0; i--) {
       const p = this.parts[i];
       p.t -= dt;
-      if (p.t <= 0) { p.sp.destroy(); this.parts.splice(i, 1); continue; }
+      if (p.t <= 0) { this.release(p.sp); this.parts.splice(i, 1); continue; }
       p.vy += p.grav * dt;
       p.sp.x += p.vx * dt; p.sp.y += p.vy * dt;
       p.sp.setAlpha(Math.min(1, (p.t / p.life) * 1.6));
@@ -88,7 +97,7 @@ export class Fx {
   }
 
   clear() {
-    [...this.parts.map((p) => p.sp), ...this.texts.map((f) => f.t), ...this.temp.map((e) => e.sp)].forEach((o) => o.destroy());
-    this.parts.length = this.texts.length = this.temp.length = 0;
+    [...this.parts.map((p) => p.sp), ...this.pool, ...this.texts.map((f) => f.t), ...this.temp.map((e) => e.sp)].forEach((o) => o.destroy());
+    this.parts.length = this.texts.length = this.temp.length = this.pool.length = 0;
   }
 }

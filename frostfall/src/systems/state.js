@@ -24,7 +24,7 @@ export function newState() {
     upgrades: {}, enchants: {},
     lore: {}, kills: {}, seen: {}, tips: {},
     time: 9 * 60, weather: 'snow', respawn: { map: 'village', spawn: 'start' },
-    follower: false, bossState: null,
+    follower: false, bossState: null, tracked: null,
     playtime: 0,
   };
 }

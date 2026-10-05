@@ -8,7 +8,7 @@ export const ENEMIES = {
     body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
   },
   draugr: {
-    name: 'Draugr', tex: 'spr_draugr', bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 13, detect: 66,
+    name: 'Draugr', tex: 'spr_draugr', blade: 3, bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 13, detect: 66,
     kind: 'melee', range: 19, windup: 0.55, atkDur: 0.16, recover: 0.65, cooldown: 0.5, kbResist: 0.15,
     body: [8, 7, 4, 9], loot: { gold: [3, 9], drops: [['mp_potion', 0.1], ['arrows', 0.2, [2, 5]], ['hp_potion', 0.08], ['iron_sword', 0.04]] },
   },
@@ -18,7 +18,7 @@ export const ENEMIES = {
     body: [12, 6, 2, 8], loot: { gold: [1, 4], drops: [['hp_potion', 0.1], ['arrows', 0.25, [2, 4]]] },
   },
   bandit: {
-    name: 'Bandit', tex: 'spr_bandit', bark: 'human', flee: true, hp: 34, speed: 38, chase: 54, dmg: 11, detect: 74,
+    name: 'Bandit', tex: 'spr_bandit', blade: 5, bark: 'human', flee: true, hp: 34, speed: 38, chase: 54, dmg: 11, detect: 74,
     kind: 'melee', range: 20, windup: 0.38, atkDur: 0.14, recover: 0.5, cooldown: 0.35, kbResist: 0.1,
     body: [8, 7, 4, 9], loot: { gold: [6, 16], drops: [['hp_potion', 0.22], ['sp_potion', 0.15], ['arrows', 0.25, [2, 5]], ['iron_cuirass', 0.04], ['iron_sword', 0.06]] },
   },
@@ -38,7 +38,7 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [90, 130], drops: [['nordic_blade', 1], ['hp_potion', 1], ['hp_potion', 1], ['nordic_plate', 0.0]] },
   },
   warden: {
-    name: 'Draugr Warden', tex: 'spr_warden', bark: 'undead', weak: { fire: 1.4, shock: 1.3, frost: 0.6 }, shield: true,
+    name: 'Draugr Warden', tex: 'spr_warden', blade: 4, bark: 'undead', weak: { fire: 1.4, shock: 1.3, frost: 0.6 }, shield: true,
     hp: 60, speed: 26, chase: 34, dmg: 15, detect: 62,
     kind: 'melee', range: 19, windup: 0.65, atkDur: 0.16, recover: 0.8, cooldown: 0.7, kbResist: 0.5,
     body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5]] },
@@ -50,7 +50,7 @@ export const ENEMIES = {
     body: [12, 6, 2, 8], loot: { gold: [6, 14], drops: [['wolf_fang', 1], ['hp_potion', 0.25]] },
   },
   chief: {
-    name: 'Bandit Chief', tex: 'spr_chief', bark: 'human', call: 120,
+    name: 'Bandit Chief', tex: 'spr_chief', blade: 5, bark: 'human', call: 120,
     hp: 95, speed: 36, chase: 56, dmg: 17, detect: 80,
     kind: 'melee', range: 22, windup: 0.42, atkDur: 0.16, recover: 0.55, cooldown: 0.3, kbResist: 0.4,
     body: [8, 7, 4, 9], loot: { gold: [30, 60], drops: [['iron_shield', 0.5], ['steel_sword', 0.25], ['lockpick', 1], ['hp_potion', 0.6], ['iron_ingot', 0.7]] },

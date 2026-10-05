@@ -33,7 +33,7 @@ function tone(type, f0, f1, dur, vol = 0.15, delay = 0, dest = null) {
   o.connect(g); g.connect(dest || sfxBus);
   o.start(t); o.stop(t + dur + 0.02);
 }
-function noise(dur, vol = 0.2, delay = 0, lp0 = 4000, lp1 = 400) {
+function noise(dur, vol = 0.2, delay = 0, lp0 = 4000, lp1 = 400, dest = null) {
   const a = ac(); if (!a) return;
   const t = a.currentTime + delay;
   const len = Math.max(1, Math.floor(a.sampleRate * dur));
@@ -45,7 +45,7 @@ function noise(dur, vol = 0.2, delay = 0, lp0 = 4000, lp1 = 400) {
   f.frequency.setValueAtTime(lp0, t); f.frequency.exponentialRampToValueAtTime(Math.max(60, lp1), t + dur);
   const g = a.createGain();
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
-  s.connect(f); f.connect(g); g.connect(sfxBus);
+  s.connect(f); f.connect(g); g.connect(dest || sfxBus);
   s.start(t); s.stop(t + dur + 0.02);
 }
 
@@ -108,39 +108,53 @@ export const sfx = {
 };
 
 // ------------------------------------------------------------------- music
-// A slow 2-voice chiptune loop per zone, scheduled a bar ahead.
+// Chiptune loops, one per zone, two sections (A, B) each. A drum + arpeggio layer
+// fades in during combat, and a short brass stinger marks the first alert.
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 const SONGS = {
   village: { bpm: 84, lead: 'square', bass: 'triangle', root: 57,
-    chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -2, 2]],
-    melody: [12, null, 15, 14, 12, null, 10, null, 8, null, 12, 10, 8, null, 7, null] },
+    A: { chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -2, 2]], melody: [12, null, 15, 14, 12, null, 10, null, 8, null, 12, 10, 8, null, 7, null] },
+    B: { chords: [[-4, 0, 3], [-2, 2, 5], [0, 3, 7], [-5, -2, 2]], melody: [15, null, 14, 12, null, 10, 12, null, 14, null, 12, 10, null, 8, 10, null] } },
+  interior: { bpm: 90, lead: 'square', bass: 'triangle', root: 55,
+    A: { chords: [[0, 4, 7], [-3, 0, 4], [-5, -1, 2], [-7, -3, 0]], melody: [12, null, 14, 16, 14, null, 12, null, 11, null, 12, 14, 12, null, 9, null] } },
+  night: { bpm: 58, lead: 'triangle', bass: 'triangle', root: 45,
+    A: { chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -2, 2]], melody: [null, null, 12, null, null, null, 10, null, null, null, 8, null, null, null, null, null] },
+    B: { chords: [[-4, 0, 3], [0, 3, 7], [-5, -2, 2], [-2, 2, 5]], melody: [null, 15, null, null, null, 12, null, null, null, 10, null, null, 8, null, null, null] } },
   forest: { bpm: 72, lead: 'triangle', bass: 'square', root: 50,
-    chords: [[0, 3, 7], [-2, 2, 5], [-4, 0, 3], [-5, -2, 2]],
-    melody: [null, 7, null, 10, 12, null, 10, null, null, 5, null, 8, 10, null, 8, null] },
+    A: { chords: [[0, 3, 7], [-2, 2, 5], [-4, 0, 3], [-5, -2, 2]], melody: [null, 7, null, 10, 12, null, 10, null, null, 5, null, 8, 10, null, 8, null] },
+    B: { chords: [[-2, 2, 5], [0, 3, 7], [-5, -2, 2], [-4, 0, 3]], melody: [null, 10, null, 12, 14, null, 12, null, null, 8, null, 10, 12, null, 7, null] } },
   pass: { bpm: 76, lead: 'triangle', bass: 'square', root: 52,
-    chords: [[0, 3, 7], [-2, 2, 5], [-4, 0, 3], [-7, -4, 0]],
-    melody: [null, 12, null, 10, 7, null, 10, null, 12, null, 15, 14, 12, null, 10, null] },
+    A: { chords: [[0, 3, 7], [-2, 2, 5], [-4, 0, 3], [-7, -4, 0]], melody: [null, 12, null, 10, 7, null, 10, null, 12, null, 15, 14, 12, null, 10, null] },
+    B: { chords: [[-4, 0, 3], [0, 3, 7], [-2, 2, 5], [-7, -4, 0]], melody: [12, null, null, 10, null, 7, null, null, 15, null, 14, null, 12, null, 10, null] } },
   crypt: { bpm: 66, lead: 'sawtooth', bass: 'triangle', root: 43,
-    chords: [[0, 3, 6], [-1, 2, 5], [0, 3, 6], [-3, 0, 3]],
-    melody: [12, null, null, 11, null, null, 9, null, 12, null, null, 14, null, 11, null, null] },
+    A: { chords: [[0, 3, 6], [-1, 2, 5], [0, 3, 6], [-3, 0, 3]], melody: [12, null, null, 11, null, null, 9, null, 12, null, null, 14, null, 11, null, null] },
+    B: { chords: [[-3, 0, 3], [0, 3, 6], [-1, 2, 5], [0, 3, 6]], melody: [null, null, 11, null, null, 9, null, null, 12, null, null, 11, null, null, 9, null] } },
   boss: { bpm: 132, lead: 'square', bass: 'sawtooth', root: 43,
-    chords: [[0, 3, 7], [0, 3, 7], [-2, 1, 5], [-1, 2, 6]],
-    melody: [12, 12, null, 15, 12, null, 10, 12, 13, 13, null, 16, 13, null, 11, 13] },
+    A: { chords: [[0, 3, 7], [0, 3, 7], [-2, 1, 5], [-1, 2, 6]], melody: [12, 12, null, 15, 12, null, 10, 12, 13, 13, null, 16, 13, null, 11, 13] },
+    B: { chords: [[-2, 1, 5], [-1, 2, 6], [0, 3, 7], [0, 3, 7]], melody: [13, 13, null, 16, 13, null, 11, 13, 12, 12, null, 15, 12, null, 10, 12] } },
 };
-let song = null, songName = null, nextT = 0, step = 0, timer = null;
+let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0;
 function schedule() {
   const a = ac(); if (!a || !song) return;
   const stepDur = 60 / song.bpm / 2;
   while (nextT < a.currentTime + 0.6) {
-    const bar = Math.floor(step / 16) % song.chords.length;
+    const secB = song.B && Math.floor(step / 64) % 2 === 1;
+    const sec = secB ? song.B : song.A;
+    const bar = Math.floor((step % 64) / 16) % sec.chords.length;
     const s = step % 16;
-    const ch = song.chords[bar];
+    const ch = sec.chords[bar];
     const t = Math.max(0, nextT - a.currentTime);
     if (s % 4 === 0) tone(song.bass, NOTE(song.root + ch[0] - 12), NOTE(song.root + ch[0] - 12), stepDur * 3.6, 0.09, t, musicBus);
-    if (s % 2 === 1 && songName !== 'village') tone('square', NOTE(song.root + ch[(s >> 1) % 3] + 12), NOTE(song.root + ch[(s >> 1) % 3] + 12), stepDur * 0.7, 0.025, t, musicBus);
-    if (s % 2 === 0 && songName === 'village') tone('square', NOTE(song.root + ch[(s >> 1) % 3] + 12), NOTE(song.root + ch[(s >> 1) % 3] + 12), stepDur * 0.6, 0.02, t, musicBus);
-    const m = song.melody[s];
+    if (s % 2 === 1 && songName !== 'village' && songName !== 'night') tone('square', NOTE(song.root + ch[(s >> 1) % 3] + 12), NOTE(song.root + ch[(s >> 1) % 3] + 12), stepDur * 0.7, 0.025, t, musicBus);
+    if (s % 2 === 0 && (songName === 'village' || songName === 'interior')) tone('square', NOTE(song.root + ch[(s >> 1) % 3] + 12), NOTE(song.root + ch[(s >> 1) % 3] + 12), stepDur * 0.6, 0.02, t, musicBus);
+    const m = sec.melody[s];
     if (m != null) tone(song.lead, NOTE(song.root + ch[0] + m), NOTE(song.root + ch[0] + m), stepDur * 1.6, 0.05, t, musicBus);
+    if (intensity > 0) {                                  // combat layer: drums + a driving arpeggio
+      if (s % 4 === 0) tone('triangle', 150, 45, 0.12, 0.13, t, musicBus);
+      if (s % 8 === 4) noise(0.1, 0.08, t, 5000, 800, musicBus);
+      if (s % 2 === 1) noise(0.03, 0.025, t, 9000, 4000, musicBus);
+      if (songName !== 'boss') tone('square', NOTE(song.root + ch[(s >> 1) % 3] + 24), NOTE(song.root + ch[(s >> 1) % 3] + 24), stepDur * 0.5, 0.022, t, musicBus);
+    }
     nextT += stepDur; step++;
   }
 }
@@ -153,7 +167,16 @@ export const music = {
     if (!timer) timer = setInterval(schedule, 150);
     schedule();
   },
-  stop() { songName = null; song = null; ambience.stop(); },
+  current() { return songName; },
+  setIntensity(v) { intensity = v ? 1 : 0; },
+  intensity() { return intensity; },
+  // A short brass call when a fight begins.
+  stinger() {
+    if (!settings.music) return;
+    [[392, 0], [392, 0.12], [311, 0.24], [262, 0.4]].forEach(([f, d]) => { tone('sawtooth', f, f * 0.99, 0.28, 0.07, d, musicBus); tone('square', f / 2, f / 2, 0.28, 0.05, d, musicBus); });
+    noise(0.3, 0.08, 0, 3000, 300, musicBus);
+  },
+  stop() { songName = null; song = null; intensity = 0; ambience.stop(); },
 };
 
 // ---------------------------------------------------------------- ambience

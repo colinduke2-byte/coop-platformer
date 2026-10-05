@@ -1,29 +1,57 @@
-// Save / load via localStorage (single slot).
+// Save / load via localStorage: 3 slots, a backup copy of each, and corruption recovery.
 import { S, loadInto } from './state.js';
 import { recalc } from './stats.js';
 import { bus } from './bus.js';
 import { sfx } from '../audio/sfx.js';
+import { settings, saveSettings } from './settings.js';
+import { MAPS } from '../data/maps.js';
 
-const KEY = 'frostfall_save_v1';
+export const SLOTS = 3;
+const keyFor = (slot) => (slot === 1 ? 'frostfall_save_v1' : `frostfall_save_s${slot}`);
+const bakFor = (slot) => keyFor(slot) + '_bak';
 
-export function hasSave() {
-  try { return !!localStorage.getItem(KEY); } catch { return false; }
+// A save must look sane before we trust it.
+export function validate(d) {
+  return !!(d && d.s && typeof d.s === 'object' && MAPS[d.s.map] && Number.isFinite(d.s.maxHp) && Number.isFinite(d.s.hp)
+    && d.s.skills && d.s.inv && typeof d.s.inv === 'object' && d.s.quests);
 }
 
-export function saveInfo() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY));
-    return d ? { t: d.t, map: d.s.map, playtime: d.s.playtime } : null;
-  } catch { return null; }
+// Returns { data, recovered } or null.
+export function readSlot(slot = settings.slot) {
+  for (const [k, recovered] of [[keyFor(slot), false], [bakFor(slot), true]]) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const d = JSON.parse(raw);
+      if (validate(d)) return { data: d, recovered };
+    } catch { /* corrupt: try the backup */ }
+  }
+  return null;
 }
 
-// opts.pos: {x,y} to remember the exact spot; null => start at the map's spawn.
-export function saveGame(scene, { auto = false } = {}) {
+export function hasSave(slot = settings.slot) { return !!readSlot(slot); }
+export function anySave() { for (let i = 1; i <= SLOTS; i++) if (readSlot(i)) return true; return false; }
+
+export function saveInfo(slot = settings.slot) {
+  const r = readSlot(slot);
+  return r ? { t: r.data.t, map: r.data.s.map, playtime: r.data.s.playtime, level: r.data.s.charLevel || 1, recovered: r.recovered } : null;
+}
+export function listSaves() { return Array.from({ length: SLOTS }, (_, i) => ({ slot: i + 1, info: saveInfo(i + 1) })); }
+
+// auto: silent save to the current slot (e.g. when travelling).
+export function saveGame(scene, { auto = false, slot = settings.slot } = {}) {
   try {
-    if (auto) { S.x = S.y = null; } else if (scene?.player) { S.x = Math.round(scene.player.x); S.y = Math.round(scene.player.y); }
+    if (auto) { S.x = S.y = null; S.bossState = null; }
+    else if (scene?.player) { S.x = Math.round(scene.player.x); S.y = Math.round(scene.player.y); }
     if (!auto && scene?.mapId) S.map = scene.mapId;
-    localStorage.setItem(KEY, JSON.stringify({ v: 1, t: Date.now(), s: S }));
-    if (!auto) { bus.emit('toast', 'GAME SAVED', 15); sfx.play('save'); }
+    // remember an ongoing boss fight (hp + phase) so a reload resumes it
+    const b = scene?.boss;
+    if (!auto && b && b.engaged && !b.dead && !b.yieldDone) S.bossState = { map: scene.mapId, hp: Math.round(b.hp), phase: b.bphase };
+    else if (!auto) S.bossState = null;
+    const prev = localStorage.getItem(keyFor(slot));
+    if (prev) { try { if (validate(JSON.parse(prev))) localStorage.setItem(bakFor(slot), prev); } catch { /* ignore */ } }
+    localStorage.setItem(keyFor(slot), JSON.stringify({ v: 2, t: Date.now(), s: S }));
+    if (!auto) { bus.emit('toast', slot > 1 || settings.slot > 1 ? `GAME SAVED (SLOT ${slot})` : 'GAME SAVED', 15); sfx.play('save'); }
     return true;
   } catch (e) {
     bus.emit('toast', 'SAVE FAILED', 11);
@@ -31,18 +59,18 @@ export function saveGame(scene, { auto = false } = {}) {
   }
 }
 
-// Returns true if a save was loaded into S.
-export function loadGame() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY));
-    if (!d?.s) return false;
-    loadInto(d.s);
-    recalc();
-    return true;
-  } catch { return false; }
+// Returns true if a save was loaded into S. Falls back to the backup when the main file is damaged.
+export function loadGame(slot = settings.slot) {
+  const r = readSlot(slot);
+  if (!r) return false;
+  loadInto(r.data.s);
+  recalc();
+  settings.slot = slot; saveSettings();
+  if (r.recovered) bus.emit('toast', 'SAVE RECOVERED FROM BACKUP', 13);
+  return true;
 }
 
-export function deleteSave() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } }
+export function deleteSave(slot = settings.slot) { try { localStorage.removeItem(keyFor(slot)); localStorage.removeItem(bakFor(slot)); } catch { /* ignore */ } }
 
 export const fmtTime = (sec) => {
   const m = Math.floor(sec / 60);

@@ -5,7 +5,8 @@ import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
 import { dialogue } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
-import { QUESTS, activeQuestIds } from '../data/quests.js';
+import { QUESTS, activeQuestIds, TARGETS, trackedId } from '../data/quests.js';
+import { MAPS } from '../data/maps.js';
 import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
@@ -70,6 +71,9 @@ export default class HudScene extends Phaser.Scene {
     this.hint = null;
     this.onHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 5, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; };
     bus.on('hint', this.onHint);
+    this.debugTxt = txt(this, 4, 32, '', 15).setVisible(false);
+    this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); } };
+    window.addEventListener('keydown', this.onKey);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, W / 2, 74, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
@@ -77,7 +81,7 @@ export default class HudScene extends Phaser.Scene {
 
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
 
   // ------------------------------------------------------- dialogue API
@@ -141,6 +145,39 @@ export default class HudScene extends Phaser.Scene {
         L.hits = 0;
         if (!count('lockpick')) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); }
       }
+    }
+  }
+
+  // Diamond over the objective when it is on screen, an edge arrow when it is not, a label when it is in another area.
+  drawQuestMarker(g, tid, dt) {
+    if (!this.qm) { this.qm = txt(this, 0, 0, '', 15); }
+    this.qm.setText('');
+    if (!tid || ui.modal || this.dlg) return;
+    const gs = this.gs, T = TARGETS[tid]?.(S.quests[tid]);
+    if (!T || !gs.player) return;
+    if (T.map !== gs.mapId) {
+      const label = 'GO TO ' + (MAPS[T.map]?.name || T.map).toUpperCase();
+      this.qm.setText(label).setFont('f15'); this.qm.x = Math.round((W - this.qm.width) / 2); this.qm.y = H - 38;
+      g.fillStyle(C[0], 0.6); g.fillRect(this.qm.x - 3, this.qm.y - 2, this.qm.width + 6, 11);
+      return;
+    }
+    const cam = gs.cameras.main.worldView;
+    const wx = (T.x + 0.5) * 16, wy = (T.y + 0.5) * 16;
+    const sx = wx - cam.x, sy = wy - cam.y;
+    const bob = Math.sin(this.time.now / 220) * 2;
+    if (sx > 6 && sx < W - 6 && sy > 14 && sy < H - 6) {
+      const x = Math.round(sx), y = Math.round(sy - 16 + bob);
+      g.fillStyle(C[0]); g.fillRect(x - 4, y - 1, 9, 9); g.fillRect(x - 1, y - 4, 3, 15);
+      g.fillStyle(C[15]); g.fillRect(x - 3, y, 7, 7); g.fillRect(x - 1, y - 3, 3, 13);
+      g.fillStyle(C[6]); g.fillRect(x - 1, y + 1, 2, 2);
+    } else {
+      const cx = W / 2, cy = H / 2, dx = sx - cx, dy = sy - cy;
+      const k = Math.min((W / 2 - 14) / Math.abs(dx || 1e-6), (H / 2 - 14) / Math.abs(dy || 1e-6));
+      const ax = cx + dx * k, ay = cy + dy * k, a = Math.atan2(dy, dx);
+      const p = (r, off) => [ax + Math.cos(a + off) * r, ay + Math.sin(a + off) * r];
+      const [x1, y1] = p(7, 0), [x2, y2] = p(6, 2.5), [x3, y3] = p(6, -2.5);
+      g.fillStyle(C[0]); g.fillTriangle(x1 + Math.cos(a) * 1.5, y1 + Math.sin(a) * 1.5, x2 - Math.cos(a), y2 - Math.sin(a), x3 - Math.cos(a), y3 - Math.sin(a));
+      g.fillStyle(C[15]); g.fillTriangle(x1, y1, x2, y2, x3, y3);
     }
   }
 
@@ -280,15 +317,22 @@ export default class HudScene extends Phaser.Scene {
       g.fillRect(0, 0, W, 3); g.fillRect(0, H - 3, W, 3); g.fillRect(0, 0, 3, H); g.fillRect(W - 3, 0, 3, H);
     }
 
+    if (this.debugOn) {
+      const gs = this.gs;
+      this.debugTxt.setText(`FPS ${Math.round(this.game.loop.actualFps)}  ENEMIES ${gs.enemies.getLength()}  PARTS ${gs.fx.parts.length}/${gs.fx.pool.length}  PICKUPS ${gs.pickups.length}  T ${Math.floor(S.time / 60)}:${String(Math.floor(S.time % 60)).padStart(2, '0')}`);
+    }
+
     // quest tracker
-    const ids = activeQuestIds().slice(0, 2);
+    const tid = trackedId();
+    const ids = [tid, ...activeQuestIds().filter((x) => x !== tid)].filter(Boolean).slice(0, 2);
     this.questTxt.forEach((t, i) => {
       const id = ids[i];
       if (!id || ui.modal) { t.setText(''); return; }
-      const line = QUESTS[id].short(S.quests[id]).slice(0, 34);
-      t.setText(line); t.x = W - 4 - t.width; t.y = 26 + i * 9;
+      const line = ((id === tid ? '> ' : '') + QUESTS[id].short(S.quests[id])).slice(0, 34);
+      t.setText(line); t.setFont(id === tid ? 'f13' : 'f4'); t.x = W - 4 - t.width; t.y = 26 + i * 9;
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
     });
+    this.drawQuestMarker(g, tid, dt);
     if (this.hint) {
       this.hintT -= dt;
       g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, 2, this.hint.width + 8, this.hintH);

@@ -1,6 +1,8 @@
 import { C, W } from '../config.js';
 import { S } from '../systems/state.js';
-import { QUESTS } from '../data/quests.js';
+import { QUESTS, trackedId } from '../data/quests.js';
+import { sfx } from '../audio/sfx.js';
+import { bus } from '../systems/bus.js';
 import { keys } from '../systems/keys.js';
 import { wrap, textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
@@ -18,10 +20,15 @@ export function tabs(m) {
   return [
     {
       name: 'QUESTS',
+      help: 'W/S MOVE  E TRACK QUEST  A/D TAB  ESC CLOSE',
       input() {
         const l = list();
         m.cursor = Math.min(m.cursor, Math.max(0, l.length - 1));
         m.nav(l.length);
+        if (keys.pressed('interact') && l.length) {
+          const id = l[m.cursor];
+          if (['active', 'ready', 'relic'].includes(S.quests[id].status)) { S.tracked = id; sfx.play('select'); bus.emit('toast', 'TRACKING: ' + QUESTS[id].title.toUpperCase(), 15); m.dirty = true; }
+        }
       },
       render() {
         const g = m.bg, l = list();
@@ -32,7 +39,7 @@ export function tabs(m) {
           const y = 27 + i * 22, q = S.quests[id];
           if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 108, 21); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 21); }
           m.T(14, y, wrap(QUESTS[id].title, 17).split('\n')[0], q.status === 'done' ? 5 : 6);
-          m.T(14, y + 9, STATUS[q.status], q.status === 'done' ? 4 : q.status === 'ready' ? 13 : 15);
+          m.T(14, y + 9, STATUS[q.status] + (id === trackedId() ? ' >' : ''), q.status === 'done' ? 4 : q.status === 'ready' ? 13 : 15);
         });
         const id = l[m.cursor], def = QUESTS[id], q = S.quests[id];
         m.T(128, 27, def.title, 13);

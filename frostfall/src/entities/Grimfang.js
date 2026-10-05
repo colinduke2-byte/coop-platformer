@@ -22,7 +22,8 @@ export default class Grimfang extends Boss {
     this.howled = false;
   }
 
-  markDefeated() { S.flags.grimfangDone = true; S.flags.alphaSlain = true; }
+  markDefeated() { S.flags.grimfangDone = true; S.flags.alphaSlain = true; S.bossState = null; }
+  phase2Stats() { this.cdMul = 0.6; this.speedMul = 1.5; }
 
   isDash() { return this.atk === 'bite' || this.atk === 'claw'; }
   dashCfg() { return this.B[this.atk]; }
@@ -197,7 +198,7 @@ export default class Grimfang extends Boss {
 
   spare() {
     const sc = this.scene;
-    S.flags.alphaSpared = true; S.flags.grimfangDone = true;
+    S.flags.alphaSpared = true; S.flags.grimfangDone = true; S.bossState = null;
     sc.enemies.remove(this);
     this.dead = true;
     this.body.enable = false;

@@ -8,6 +8,7 @@ import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm } from '../util.js';
 import Projectile from './Projectile.js';
 import { TILE } from '../config.js';
+import { tip } from '../systems/tips.js';
 import { TUNE } from '../data/tuning.js';
 import { damageTaken, meleeDamage, blockResult, blockStaminaCost, elementMult } from '../systems/damage.js';
 import { ITEMS } from '../data/items.js';
@@ -89,6 +90,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.sneaking = keys.isDown('sneak') && this.mode === 'free';
 
     if (this.mode === 'lying') { b.setVelocity(0, 0); this.animate(false); return; }
+
+    // with the mouse option on, attacks and aiming face the pointer
+    if (settings.mouse && this.mode === 'free' && !this.swing && (keys.isDown('sword') || keys.pressed('sword') || keys.isDown('bow') || keys.pressed('bow') || keys.isDown('spell') || keys.pressed('spell') || this.drawing)) {
+      const ptr = this.scene.input.activePointer;
+      const cam = this.scene.cameras.main;           // pointer.worldX is shared with the HUD camera, so convert here
+      this.face = dir8(cam.scrollX + ptr.x - this.x, cam.scrollY + ptr.y - (this.y + 3));
+    }
 
     if (this.mode === 'hurt' && this.stunT <= 0) this.mode = 'free';
     if (this.stunT > 0) {
@@ -261,6 +269,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (S.arrows <= 0) { sfx.play('nostamina'); bus.emit('toast', 'NO ARROWS'); return; }
         if (S.sp < P.bow.startCost) { sfx.play('nostamina'); bus.emit('nostamina'); return; }
         this.drawing = true; this.drawT = 0; this.drawFull = false;
+        tip('bow');
         sfx.play('draw');
       }
       return;
@@ -386,6 +395,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocity(n2.x * knock, n2.y * knock);
     if (!blocked) sfx.play('hurt');
     sc.fx.text(this.x, this.y - 10, String(taken), 11);
+    if (S.hp < S.maxHp * 0.4) tip('potion');
     sc.fx.puff(this.x, this.y, 11, 5, 45, 0.35);
     sc.shake(blocked ? 70 : 130, blocked ? 0.004 : 0.008);
     if (S.hp <= 0) {

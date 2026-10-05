@@ -34,6 +34,7 @@ import { lightingMethods, hourOf, isNightHour } from '../world/lighting.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
+import { tip } from '../systems/tips.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -113,6 +114,7 @@ export default class GameScene extends Phaser.Scene {
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
     if (S.follower) this.spawnFollower();
+    if (this.boss && S.bossState && S.bossState.map === this.mapId) this.pendingBossRestore = true;
     this.on('follower', (on) => {
       if (on) {
         const rn = this.npcs.find((n) => n.id === 'ragna');
@@ -127,7 +129,8 @@ export default class GameScene extends Phaser.Scene {
     if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
     for (const grp of [this.breakBodies, this.propBodies]) if (grp) { this.physics.add.collider(this.player, grp); this.physics.add.collider(this.enemies, grp); }
     if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
-    music.play(def.music || 'village');
+    if (this.pendingBossRestore) { this.boss.restoreState(S.bossState); this.pendingBossRestore = false; }
+    music.play(def.interior ? 'interior' : (this.isNightPre ? 'night' : (def.music || 'village')));
     ambience.play(def.ambience || null);
     this.initFog();
     if (def.flag) S.flags[def.flag] = true;
@@ -148,6 +151,9 @@ export default class GameScene extends Phaser.Scene {
     this.snow = def.snow ? new SnowFx(this, 55) : null;
     this.initLighting();
     this.on('player:dead', () => { this.deadT = 0.001; });
+    this.on('nostamina', () => tip('stamina'));
+    this.on('charlevel', () => tip('perks'));
+    this.on('item:added', (id) => { if (id === 'lockpick') tip('lock'); if (S.quests.wolves.status === 'active') tip('quest'); });
     this.on('ending', (kind) => { this.pendingEnding = kind; });
     this.events.on('ending-done', () => { this.applyEnding(); });
     this.applyEnding();
@@ -285,6 +291,26 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onBossDeath(boss) { boss.victory(this); }
+
+  onFirstAlert() {
+    tip('sneak');
+    if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
+  }
+
+  // Pick the song for the situation: interior / night / zone / boss, plus the combat layer.
+  updateMusic(dt) {
+    this.musicT = (this.musicT || 0) - dt;
+    if (this.musicT > 0) return;
+    this.musicT = 1;
+    const bossOn = this.boss && this.boss.engaged && !this.boss.dead && !this.boss.yieldDone;
+    if (!bossOn) {
+      const want = this.def.interior ? 'interior' : this.isNight() ? 'night' : (this.def.music || 'village');
+      if (music.current() !== want && !(this.boss && this.boss.engaged && this.boss.yieldDone)) music.play(want);
+    }
+    const fight = this.enemies.getChildren().some((e) => !e.isBoss && e.alerted && !e.dead && Math.hypot(e.x - this.player.x, e.y - this.player.y) < 220);
+    if (fight) this.lastCombat = this.t;
+    music.setIntensity(fight && !bossOn);
+  }
 
   summonWolves(boss) {
     for (const [dx, dy] of [[-46, 18], [46, 18], [0, -40]]) {
@@ -474,6 +500,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     this.updateZones(dt);
+    this.updateMusic(dt);
     this.fx.update(dt);
     this.snow?.update(dt);
     this.updateLighting(dt);
