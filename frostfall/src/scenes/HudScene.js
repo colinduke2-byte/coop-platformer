@@ -13,6 +13,8 @@ import { bus } from '../systems/bus.js';
 import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
+import { settings } from '../systems/settings.js';
+import { stats } from '../systems/stats.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
@@ -148,6 +150,25 @@ export default class HudScene extends Phaser.Scene {
     }
   }
 
+  // Small status row under the bars: ward / weapon enchant / lock-on, each with its remaining time.
+  drawStatus(g, pl, y0) {
+    if (!this.statTxt) this.statTxt = [0, 1, 2, 3].map(() => txt(this, 0, 0, '', 15));
+    const list = [];
+    if (pl.ward) list.push(['WARD ' + Math.ceil(pl.ward.t), 15]);
+    const en = stats.enchant();
+    if (en) list.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);
+    if (pl.sneaking) list.push(['SNEAK', 4]);
+    if (pl.blocking) list.push(['GUARD', 7]);
+    let x = 3;
+    this.statTxt.forEach((t, i) => {
+      const e = list[i];
+      if (!e) { t.setText(''); return; }
+      t.setText(e[0]).setFont('f' + e[1]); t.x = x + 2; t.y = y0 + 1;
+      g.fillStyle(C[0], 0.62); g.fillRect(x, y0, t.width + 4, 9);
+      x += t.width + 6;
+    });
+  }
+
   // Diamond over the objective when it is on screen, an edge arrow when it is not, a label when it is in another area.
   drawQuestMarker(g, tid, dt) {
     if (!this.qm) { this.qm = txt(this, 0, 0, '', 15); }
@@ -246,20 +267,23 @@ export default class HudScene extends Phaser.Scene {
     this.dead.setVisible(S.hp <= 0);
 
     // panels
+    const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;
     g.fillStyle(C[0], 0.62);
-    g.fillRect(0, 0, 134, 28);
+    g.fillRect(0, 0, big ? 150 : 134, big ? 36 : 28);
     BARS.forEach((b, i) => {
       this.flash[b.key] -= dt;
-      const x = 17, y = 3 + i * 8;
-      const w = Math.min(110, Math.round(S[b.max] * 0.62));
+      const x = 17, y = 3 + i * rs;
+      const w = Math.min(big ? 126 : 110, Math.round(S[b.max] * wk));
       const frac = Math.max(0, S[b.key] / S[b.max]);
-      g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, 7);
-      g.fillStyle(C[1]); g.fillRect(x, y, w, 5);
+      this.labels[i].y = y - (big ? 0 : 0);
+      g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, bh + 2);
+      g.fillStyle(C[1]); g.fillRect(x, y, w, bh);
       const fw = Math.round(w * frac);
       const low = this.flash[b.key] > 0 && Math.floor(this.flash[b.key] * 20) % 2 === 0;
-      g.fillStyle(low ? C[11] : C[b.col]); g.fillRect(x, y, fw, 5);
+      g.fillStyle(low ? C[11] : C[b.col]); g.fillRect(x, y, fw, bh);
       g.fillStyle(C[b.hi]); g.fillRect(x, y, fw, 1);
     });
+    this.drawStatus(g, pl, big ? 38 : 30);
 
     // gold + arrows
     const gold = String(S.gold), ar = String(S.arrows);
@@ -278,11 +302,15 @@ export default class HudScene extends Phaser.Scene {
     const box = (x, y) => { g.fillStyle(C[0], 0.7); g.fillRect(x - 1, y - 1, 18, 18); g.lineStyle(1, C[3]); g.strokeRect(x - 0.5, y - 0.5, 17, 17); };
     box(4, H - 20); box(25, H - 20);
     for (const k of SPELL_ORDER) this.spellIcons[k].setVisible(S.spell === k);
-    const afford = S.mp >= sp.cost;
+    const afford = S.mp >= pl.spellCost(sp);
+    if (pl.heat > 0.05) { g.fillStyle(C[0]); g.fillRect(4, H - 3, 16, 2); g.fillStyle(pl.heat > 1.8 ? C[11] : C[12]); g.fillRect(4, H - 3, Math.round(16 * pl.heat / P.cast.heatMax), 2); }
     this.spellIcons[S.spell].setAlpha(afford ? 1 : 0.4);
     this.spellName.setText(sp.name);
     const cdFrac = Math.max(0, pl.shoutCd / P.shout.cooldown);
     if (cdFrac > 0) { g.fillStyle(C[0], 0.75); g.fillRect(25, H - 20, 16, Math.ceil(16 * cdFrac)); }
+    if (!this.cdTxt) this.cdTxt = txt(this, 0, H - 16, '', 6);
+    this.cdTxt.setText(cdFrac > 0 ? String(Math.ceil(pl.shoutCd)) : '');
+    this.cdTxt.x = 25 + Math.round((16 - this.cdTxt.width) / 2); this.cdTxt.y = H - 16;
 
     // potions
     this.potIcons.forEach((p) => {
@@ -374,6 +402,20 @@ export default class HudScene extends Phaser.Scene {
       if (this.bossFor !== bs) { this.bossName?.destroy(); this.bossName = txt(this, 0, 5, bs.cfg.title || bs.cfg.name, 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); this.bossFor = bs; }
       this.bossName.setVisible(true);
     } else this.bossName?.setVisible(false);
+
+    // target bar: lock-on target, or whoever the bow is aimed at
+    const tg = !(bs && bs.engaged && !bs.dead) ? (pl.target || (pl.drawing ? pl.pickTarget(190) : null)) : null;
+    if (tg && !tg.dead) {
+      const tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
+      g.fillStyle(C[0], 0.7); g.fillRect(tx - 4, 2, tw + 8, 17);
+      g.fillStyle(C[0]); g.fillRect(tx - 1, 11, tw + 2, 7);
+      g.fillStyle(C[1]); g.fillRect(tx, 12, tw, 5);
+      g.fillStyle(C[11]); g.fillRect(tx, 12, Math.round(tw * frac), 5);
+      g.fillStyle(C[12]); g.fillRect(tx, 12, Math.round(tw * frac), 1);
+      if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
+      this.tgtTxt.setText(tg.cfg.name.toUpperCase() + (pl.target === tg ? '' : '')).setVisible(true);
+      this.tgtTxt.x = Math.round((W - this.tgtTxt.width) / 2); this.tgtTxt.y = 3;
+    } else this.tgtTxt?.setVisible(false);
 
     // sneak indicator
     if (pl.sneaking && !(bs && bs.engaged && !bs.dead)) {

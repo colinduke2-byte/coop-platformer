@@ -6,6 +6,7 @@ import { ITEMS, SLOT_OF } from './items.js';
 import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
+import { listScreen } from '../scenes/ShopScene.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -25,20 +26,45 @@ export async function pick(options, back = 'Back') {
 const price = (id) => ITEMS[id].value || 1;
 export const sellPrice = (id) => Math.max(1, Math.floor(price(id) * 0.5));
 
+// Short stat lines for the detail pane of the list screens.
+export function statLines(id) {
+  const it = ITEMS[id];
+  if (!it) return [];
+  const out = [];
+  if (it.dmg) out.push([`DAMAGE ${it.dmg}`, 6]);
+  if (it.armor) out.push([`ARMOR ${Math.round(it.armor * 100)}%`, 6]);
+  if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
+  if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
+  for (const [k, n] of [['maxHp', 'HEALTH'], ['maxMp', 'MANA'], ['maxSp', 'STAMINA']]) if (it[k]) out.push([`+${it[k]} ${n}`, 8]);
+  return out;
+}
+
 // ---------------------------------------------------------------------- buy
 export async function buyMenu(who, wares) {
-  for (;;) {
-    const labels = wares.map((w) => `${w.name || ITEMS[w.id].name} ${w.price}G`);
-    const i = await pick(labels, 'Done');
-    if (i < 0) return;
-    const w = wares[i];
-    if (w.once && count(w.id)) { await say(who, 'You already carry one.'); continue; }
-    if (S.gold < w.price) { sfx.play('nostamina'); await say(who, 'Come back when you have the coin.'); continue; }
-    S.gold -= w.price;
-    if (w.id === 'arrows') { S.arrows += w.n; bus.emit('toast', `+${w.n} ARROWS`, 5); }
-    else addItem(w.id, w.n || 1);
-    sfx.play('coin');
-  }
+  await listScreen({
+    title: who.toUpperCase() + ': BUY',
+    hint: 'E BUY   ESC DONE   OR CLICK',
+    rows: () => wares.map((w) => {
+      const have = w.once && count(w.id);
+      const ok = !have && S.gold >= w.price;
+      return {
+        id: w.id, name: w.name || ITEMS[w.id].name, tag: have ? 'OWNED' : w.price + 'G', ok, tagCol: have ? 4 : ok ? 13 : 11,
+        sub: have ? 'ALREADY OWNED' : ok ? 'CAN AFFORD' : `NEED ${w.price - S.gold} G`,
+        lines: [...statLines(w.id), w.id === 'arrows' ? [`YOU HAVE ${S.arrows}`, 4] : [`YOU HAVE ${count(w.id)}`, 4]],
+        desc: w.id === 'arrows' ? 'Ten arrows for the bow. Missed shots can be picked up again.' : null,
+      };
+    }),
+    onSelect: (i, ui) => {
+      const w = wares[i];
+      if (w.once && count(w.id)) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); return; }
+      if (S.gold < w.price) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); return; }
+      S.gold -= w.price;
+      if (w.id === 'arrows') { S.arrows += w.n; bus.emit('toast', `+${w.n} ARROWS`, 5); }
+      else addItem(w.id, w.n || 1);
+      ui.say('BOUGHT ' + (w.name || ITEMS[w.id].name).toUpperCase(), 8);
+      sfx.play('coin');
+    },
+  });
 }
 
 // --------------------------------------------------------------------- sell
@@ -48,20 +74,25 @@ export function sellable() {
   return Object.keys(S.inv).filter((id) => ITEMS[id] && ITEMS[id].type !== 'quest' && (S.inv[id] > (eq.has(id) ? 1 : 0)));
 }
 export async function sellMenu(who) {
-  for (;;) {
-    const list = sellable();
-    if (!list.length) { await say(who, 'You have nothing I would buy.'); return; }
-    const i = await pick(list.map((id) => `${ITEMS[id].name} x${S.inv[id] - (equippedIds().has(id) ? 1 : 0)} ${sellPrice(id)}G`), 'Done');
-    if (i < 0) return;
-    const id = list[i];
-    const avail = S.inv[id] - (equippedIds().has(id) ? 1 : 0);
-    let n = 1;
-    if (avail > 1) { const c = await choose(['Sell one', `Sell all (${avail})`, 'Cancel']); if (c === 2) continue; n = c === 1 ? avail : 1; }
+  if (!sellable().length) { await say(who, 'You have nothing I would buy.'); return; }
+  const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
+  const sellN = (id, n, ui) => {
     S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id];
     S.gold += sellPrice(id) * n;
-    bus.emit('toast', `+${sellPrice(id) * n} GOLD`, 13);
+    ui.say(`SOLD ${n} FOR ${sellPrice(id) * n}G`, 13);
     sfx.play('coin');
-  }
+  };
+  await listScreen({
+    title: who.toUpperCase() + ': SELL',
+    hint: 'E SELL ONE   Q SELL ALL   ESC DONE',
+    empty: 'NOTHING LEFT TO SELL',
+    rows: () => sellable().map((id) => ({
+      id, name: ITEMS[id].name, tag: `x${avail(id)}  ${sellPrice(id)}G`, ok: true,
+      sub: `WORTH ${sellPrice(id)}G EACH`, lines: statLines(id),
+    })),
+    onSelect: (i, ui) => { const id = sellable()[i]; if (id) sellN(id, 1, ui); },
+    onAlt: (i, ui) => { const id = sellable()[i]; if (id) sellN(id, avail(id), ui); },
+  });
 }
 
 // -------------------------------------------------------------------- forge
@@ -72,15 +103,31 @@ export async function upgradeMenu(who, slot) {
   if (!id) { await say(who, 'You have nothing equipped there.'); return; }
   const lv = (S.upgrades[id] || 0);
   if (lv >= 3) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
-  const g = UPGRADE_GOLD[lv], ing = UPGRADE_INGOT[lv];
-  const bonus = slot === 'armor' ? '+2% armor' : '+2 damage';
-  const c = await choose([`Upgrade to +${lv + 1}: ${g}G ${ing} ingot${ing > 1 ? 's' : ''}`, 'Not now']);
-  if (c !== 0) return;
-  if (S.gold < g || count('iron_ingot') < ing) { sfx.play('nostamina'); await say(who, `You need ${g} gold and ${ing} iron ingot${ing > 1 ? 's' : ''}. Bandits carry them.`); return; }
-  S.gold -= g; removeItem('iron_ingot', ing);
-  S.upgrades[id] = lv + 1;
-  sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${lv + 1} (${bonus})`, 13);
-  await say(who, 'There. Sharper, sturdier. Mind the edge.');
+  await listScreen({
+    title: 'FORGE: ' + (slot === 'armor' ? 'ARMOUR' : 'WEAPON'),
+    hint: 'E UPGRADE   ESC DONE',
+    rows: () => {
+      const cur = S.upgrades[id] || 0;
+      if (cur >= 3) return [{ id, name: ITEMS[id].name + ' +3', tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
+      const g = UPGRADE_GOLD[cur], ing = UPGRADE_INGOT[cur], have = count('iron_ingot');
+      const ok = S.gold >= g && have >= ing;
+      return [{
+        id, name: `${ITEMS[id].name} +${cur + 1}`, tag: `${g}G ${ing}I`, ok, sub: ok ? 'READY' : 'NEED MATERIALS',
+        lines: [...statLines(id), [slot === 'armor' ? 'GAIN +2% ARMOR' : 'GAIN +2 DAMAGE', 8], [`GOLD ${S.gold}/${g}`, S.gold >= g ? 8 : 11], [`INGOTS ${have}/${ing}`, have >= ing ? 8 : 11]],
+        desc: 'Bandits carry iron ingots.',
+      }];
+    },
+    onSelect: (i, ui) => {
+      const cur = S.upgrades[id] || 0;
+      if (cur >= 3) return;
+      const g = UPGRADE_GOLD[cur], ing = UPGRADE_INGOT[cur];
+      if (S.gold < g || count('iron_ingot') < ing) { sfx.play('nostamina'); ui.say(`NEED ${g} GOLD AND ${ing} INGOT${ing > 1 ? 'S' : ''}`, 11); return; }
+      S.gold -= g; removeItem('iron_ingot', ing);
+      S.upgrades[id] = cur + 1;
+      sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur + 1}`, 13);
+      ui.say('UPGRADED TO +' + (cur + 1), 8);
+    },
+  });
 }
 
 export const ENCHANTS = [
@@ -91,16 +138,27 @@ export const ENCHANTS = [
 export async function enchantMenu(who) {
   const id = S.equip.weapon;
   if (!id) { await say(who, 'Wield a weapon first.'); return; }
-  const labels = ENCHANTS.map((e) => `${e.name}: ${e.n} ${ITEMS[e.mat].name}, ${e.gold}G`);
-  const i = await pick(labels);
-  if (i < 0) return;
-  const e = ENCHANTS[i];
-  if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); await say(who, `I need ${e.n} ${ITEMS[e.mat].name} and ${e.gold} gold for that.`); return; }
-  S.gold -= e.gold; removeItem(e.mat, e.n);
-  S.enchants[id] = { type: e.type, power: e.power };
-  sfx.play('levelup');
-  bus.emit('toast', `${ITEMS[id].name.toUpperCase()} ENCHANTED: ${e.name.toUpperCase()}`, 15);
-  await say(who, `It hums now. The ${e.name.toLowerCase()} will ${e.desc} on every hit.`);
+  const rows = () => ENCHANTS.map((e) => {
+    const have = count(e.mat), ok = S.gold >= e.gold && have >= e.n;
+    return {
+      id: e.mat, name: e.name + ' Enchant', tag: e.gold + 'G', ok,
+      sub: S.enchants[id]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
+      desc: `Your ${ITEMS[id].name} ${e.desc} on every hit. Replaces any other enchant.`,
+      lines: [[`${ITEMS[e.mat].name.toUpperCase()} ${have}/${e.n}`, have >= e.n ? 8 : 11], [`GOLD ${S.gold}/${e.gold}`, S.gold >= e.gold ? 8 : 11]],
+    };
+  });
+  await listScreen({
+    title: 'ENCHANT: ' + ITEMS[id].name.toUpperCase(), hint: 'E ENCHANT   ESC DONE', rows,
+    onSelect: (i, ui) => {
+      const e = ENCHANTS[i];
+      if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
+      S.gold -= e.gold; removeItem(e.mat, e.n);
+      S.enchants[id] = { type: e.type, power: e.power };
+      sfx.play('levelup');
+      bus.emit('toast', `${ITEMS[id].name.toUpperCase()} ENCHANTED: ${e.name.toUpperCase()}`, 15);
+      ui.say(e.name.toUpperCase() + ' ENCHANT APPLIED', 15);
+    },
+  });
 }
 
 // ------------------------------------------------------------------ alchemy
@@ -113,15 +171,23 @@ export const RECIPES = [
 ];
 const canBrew = (r) => Object.entries(r.needs).every(([k, n]) => count(k) >= n);
 export async function brewMenu(who = 'Alchemy') {
-  for (;;) {
-    const labels = RECIPES.map((r) => `${ITEMS[r.id].name} (${Object.entries(r.needs).map(([k, n]) => n + ' ' + ITEMS[k].name.split(' ').pop()).join(' + ')})${canBrew(r) ? '' : ' -'}`);
-    const i = await pick(labels, 'Done');
-    if (i < 0) return;
-    const r = RECIPES[i];
-    if (!canBrew(r)) { sfx.play('nostamina'); await say(who, 'You are missing ingredients. Snowberries and frost lilies grow in the forest.'); continue; }
-    for (const [k, n] of Object.entries(r.needs)) removeItem(k, n);
-    addItem(r.id);
-    sfx.play('potion');
-  }
+  await listScreen({
+    title: 'ALCHEMY', hint: 'E BREW   ESC DONE',
+    rows: () => RECIPES.map((r) => {
+      const ok = canBrew(r);
+      return {
+        id: r.id, name: ITEMS[r.id].name, tag: `x${count(r.id)}`, ok, tagCol: 4, sub: ok ? 'READY TO BREW' : 'NEED ITEMS',
+        lines: Object.entries(r.needs).map(([k, n]) => [`${ITEMS[k].name.toUpperCase()} ${count(k)}/${n}`, count(k) >= n ? 8 : 11]),
+      };
+    }),
+    onSelect: (i, ui) => {
+      const r = RECIPES[i];
+      if (!canBrew(r)) { sfx.play('nostamina'); ui.say('MISSING INGREDIENTS (FOREST HERBS)', 11); return; }
+      for (const [k, n] of Object.entries(r.needs)) removeItem(k, n);
+      addItem(r.id);
+      ui.say('BREWED ' + ITEMS[r.id].name.toUpperCase(), 8);
+      sfx.play('potion');
+    },
+  });
 }
 export { recalc };

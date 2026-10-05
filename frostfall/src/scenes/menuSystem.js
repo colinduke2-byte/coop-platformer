@@ -12,19 +12,20 @@ import { MAPS } from '../data/maps.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
-  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
+  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['lockon', 'LOCK ON'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
   ['potion1', 'HEALTH POTION'], ['potion2', 'MANA POTION'], ['potion3', 'STAMINA POTION'], ['inventory', 'PACK'], ['journal', 'JOURNAL'], ['map', 'MAP'], ['pause', 'PAUSE MENU'],
+  ['spell1', 'QUICK FIREBALL'], ['spell2', 'QUICK FROST'], ['spell3', 'QUICK LIGHTNING'], ['spell4', 'QUICK HEALING'], ['spell5', 'QUICK WARD'],
 ];
 const CONTROLS = [
   ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD 3X COMBO'], ['K HOLD', 'BOW, CHARGE'],
-  ['L / Q', 'SPELL / SWAP'], ['R', 'SHOUT'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK (HOLD)'],
-  ['E', 'TALK/OPEN/REST'], ['1 2 3', 'POTIONS'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
+  ['L / Q', 'SPELL / SWAP'], ['R', 'SHOUT'], ['T', 'LOCK ON TARGET'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK (HOLD)'],
+  ['E', 'TALK/OPEN/REST'], ['1 2 3', 'POTIONS'], ['4-8', 'QUICK-CAST SPELL'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
 ];
 const DIFFS = ['easy', 'normal', 'hard'];
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'CONTROLS', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'CONTROLS', 'QUIT TO TITLE'];
   const VISIBLE = 9;
   let mode = 'main';          // main | controls
   let waiting = null;         // action being rebound
@@ -66,6 +67,9 @@ export function systemTab(m) {
       case 'FLASHES': toggle('flashes'); break;
       case 'PIXEL SCALE': toggle('intScale'); window.__applyScaling?.(); break;
       case 'MOUSE': toggle('mouse'); break;
+      case 'SNEAK MODE': toggle('sneakToggle'); break;
+      case 'HOLD TO CHAIN': toggle('holdChain'); break;
+      case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
       case 'CONTROLS': mode = 'controls'; ctrl.cursor = 0; ctrl.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'QUIT TO TITLE':
         music.stop();
@@ -151,6 +155,9 @@ export function systemTab(m) {
         else if (r === 'FLASHES') { v = settings.flashes ? 'ON' : 'OFF'; vc = settings.flashes ? 8 : 11; }
         else if (r === 'PIXEL SCALE') { v = settings.intScale ? 'INTEGER' : 'FIT'; }
         else if (r === 'MOUSE') { v = settings.mouse ? 'ON' : 'OFF'; vc = settings.mouse ? 8 : 4; }
+        else if (r === 'SNEAK MODE') { v = settings.sneakToggle ? 'TOGGLE' : 'HOLD'; }
+        else if (r === 'HOLD TO CHAIN') { v = settings.holdChain ? 'ON' : 'OFF'; vc = settings.holdChain ? 8 : 4; }
+        else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
         row(g, i, y, r, v, vc);
       });
       if (rows.length > VISIBLE) {

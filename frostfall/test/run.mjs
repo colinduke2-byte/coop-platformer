@@ -1,6 +1,6 @@
 // Runs every stage test in order. Usage: npm test
 import { spawnSync } from 'node:child_process';
-const tests = ['unit/unit', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8', 'stage9_death', 'stage10_polish', 'stage11_combat', 'stage12_progress', 'stage13_world', 'stage14_ux', 'webgl'];
+const tests = ['unit/unit', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8', 'stage9_death', 'stage10_polish', 'stage11_combat', 'stage12_progress', 'stage13_world', 'stage14_ux', 'stage15_controls', 'webgl'];
 let failed = 0;
 for (const t of tests) {
   console.log(`\n=== ${t} ===`);

@@ -55,6 +55,47 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.ward = null;
     this.lastHurt = -99;
     this.heldImg = scene.add.image(x, y, 'blade_default').setVisible(false);
+    this.sneakOn = false;
+    this.target = null;      // lock-on target
+    this.lockG = scene.add.graphics();
+  }
+
+  // ---------------------------------------------------------------- lock-on
+  // Best foe within range: nearest, with a small bonus for the one we are already facing.
+  pickTarget(range = P.lock.range, skip = null) {
+    let best = null, bs = 1e9;
+    for (const e of this.scene.enemies.getChildren()) {
+      if (e.dead || e === skip || !e.active) continue;
+      const d = Math.hypot(e.x - this.x, e.y - this.y);
+      if (d > range) continue;
+      const dot = ((e.x - this.x) * this.face.x + (e.y - this.y) * this.face.y) / (d || 1);
+      const sc = d * (1.25 - 0.25 * dot);
+      if (sc < bs) { bs = sc; best = e; }
+    }
+    return best;
+  }
+
+  updateLock() {
+    const t = this.target;
+    if (keys.pressed('lockon') && this.mode !== 'lying') {
+      if (t) { this.target = null; sfx.play('select'); }
+      else { this.target = this.pickTarget(); if (this.target) sfx.play('select'); }
+    }
+    const tg = this.target;
+    if (tg && (tg.dead || !tg.active || Math.hypot(tg.x - this.x, tg.y - this.y) > P.lock.drop || this.mode === 'dead')) this.target = null;
+    this.drawLock();
+  }
+
+  drawLock() {
+    const g = this.lockG, t = this.target;
+    g.clear();
+    if (!t) return;
+    const r = (t.body ? Math.max(t.body.width, t.body.height) : 10) / 2 + 5 + Math.sin(this.scene.time.now / 120);
+    g.setDepth(9999).lineStyle(1, 0xf4d460, 1);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const cx = t.x + sx * r, cy = t.y + 2 + sy * r;
+      g.lineBetween(cx, cy, cx - sx * 3, cy); g.lineBetween(cx, cy, cx, cy - sy * 3);
+    }
   }
 
   get hurtRect() { const b = this.body; return new Phaser.Geom.Rectangle(b.x - 1, b.y - 3, b.width + 2, b.height + 3); }
@@ -82,12 +123,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'dead') { this.animate(false); return; }
     this.flashT -= dt;
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
+    this.heat = Math.max(0, (this.heat || 0) - P.cast.heatDecay * dt);
     this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
     const iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
     const b = this.body;
-    this.sneaking = keys.isDown('sneak') && this.mode === 'free';
+    if (settings.sneakToggle) { if (keys.pressed('sneak')) this.sneakOn = !this.sneakOn; } else this.sneakOn = keys.isDown('sneak');
+    this.sneaking = this.sneakOn && this.mode === 'free';
+    this.updateLock();
 
     if (this.mode === 'lying') { b.setVelocity(0, 0); this.animate(false); return; }
 
@@ -152,12 +196,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const a = P.accel * dt * (onIce ? 0.12 : 1);
     b.velocity.x += Phaser.Math.Clamp(tx - b.velocity.x, -a, a);
     b.velocity.y += Phaser.Math.Clamp(ty - b.velocity.y, -a, a);
-    // facing: locked during swings, otherwise follows input
-    if ((ix || iy) && !this.swing) this.face = dir8(ix, iy);
+    // facing: locked during swings, otherwise follows input (or the lock-on target)
+    if (this.target && !this.swing && !this.drawing) this.face = dir8(this.target.x - this.x, this.target.y - (this.y + 3));
+    else if ((ix || iy) && !this.swing) this.face = dir8(ix, iy);
+    if (this.target && this.drawing) this.face = dir8(this.target.x - this.x, this.target.y - (this.y + 3));
   }
 
   actions(ix, iy) {
-    if (keys.pressed('roll') && this.rollCd <= 0 && !this.swing && this.spend(P.roll.cost)) {
+    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost)) {
       this.mode = 'roll';
       this.rollT = P.roll.time;
       this.iframes = P.roll.iframes;
@@ -173,8 +219,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.lockT > 0) return;
     this.bowInput();
     if (this.drawing) return;
-    if (keys.pressed('sword')) this.startSwing();
+    if (keys.pressed('sword') || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) this.startSwing();
     else if (keys.pressed('spell')) this.cast();
+    else if (this.quickCast()) { /* cast chosen spell directly */ }
     else if (keys.pressed('shout')) this.shout();
     for (const [act, id] of [['potion1', 'hp_potion'], ['potion2', 'mp_potion'], ['potion3', 'sp_potion']]) {
       if (keys.pressed(act)) this.usePotion(id);

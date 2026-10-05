@@ -55,7 +55,7 @@ export const keys = {
 };
 
 // Gamepad -> virtual key codes (standard mapping). Sticks/d-pad move and navigate menus.
-const PAD_BUTTONS = { 0: 'Space', 1: 'KeyE', 2: 'KeyJ', 3: 'KeyK', 4: 'KeyQ', 5: 'KeyL', 6: 'KeyC', 7: 'KeyR', 8: 'KeyI', 9: 'Escape', 10: 'KeyF', 11: 'KeyM', 12: 'KeyW', 13: 'KeyS', 14: 'KeyA', 15: 'KeyD' };
+const PAD_BUTTONS = { 0: 'Space', 1: 'KeyE', 2: 'KeyJ', 3: 'KeyK', 4: 'KeyQ', 5: 'KeyL', 6: 'KeyC', 7: 'KeyR', 8: 'KeyI', 9: 'Escape', 10: 'KeyF', 11: 'KeyT', 12: 'KeyW', 13: 'KeyS', 14: 'KeyA', 15: 'KeyD' };
 const padHeld = new Set();
 export function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];

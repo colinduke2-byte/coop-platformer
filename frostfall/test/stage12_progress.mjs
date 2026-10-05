@@ -13,8 +13,12 @@ const stub = (answers) => G((a) => {
   window.__answers = [...a];
   dlg.hud = { say: async () => {}, choose: async (o) => (window.__answers.length ? window.__answers.shift() : o.length - 1), hideBox() {}, lockpick: async () => true };
 }, answers);
-const unstub = () => G(() => { window.__dlg.hud = window.__realHud; });
+const unstub = () => G(() => { if (window.__realHud) window.__dlg.hud = window.__realHud; });
 await G(async () => { window.__dlg = (await import('/src/systems/dialogue.js')).dialogue; window.__svc = await import('/src/data/services.js'); window.__dia = await import('/src/data/dialogue.js'); window.__inv = await import('/src/systems/inventory.js'); window.__sk = await import('/src/systems/skills.js'); window.__stats = (await import('/src/systems/stats.js')).stats; });
+// Open a list-screen service for real (not awaited), then drive it with keys.
+const openShop = async (call, args) => { await G(([call, args]) => { window.__shopP = window.__svc[call](...args); }, [call, args]); await h.sleep(400); };
+const shopOpen = () => G(() => window.__ff.game.scene.isActive('Shop'));
+const closeShop = async () => { await tap('Escape', 60); await h.sleep(250); await G(async () => { await window.__shopP; }); };
 const S = (k) => G((k) => k.split('.').reduce((o, p) => o?.[p], window.__ff.S), k);
 
 // ---------------- character level, perks, attribute choice
@@ -47,23 +51,30 @@ await tap('Escape'); await h.sleep(250);
 
 // ---------------- selling, buying
 await G(() => { const S = window.__ff.S; S.gold = 0; S.inv.iron_sword = 1; S.inv.snowberry = 3; });
-await stub([1, 0, 0, 2]);          // pick "iron sword"? first entry order -> see check below
-const sold = await G(async () => { const S = window.__ff.S; const before = S.gold; await window.__svc.sellMenu('T'); return S.gold - before; });
+await openShop('sellMenu', ['T']);
+check('sell screen opens as a list', await shopOpen());
+await tap('KeyE', 60); await h.sleep(150);
+await closeShop();
+const sold = await S('gold');
 check('selling items pays half value', sold > 0, `gold+${sold}`);
 await G(() => { window.__ff.S.gold = 500; });
-await stub([0, 4]);                // buy first item (hp potion) then Done
 const hp0 = await S('inv.hp_potion');
-await G(async () => { await window.__svc.buyMenu('M', [{ id: 'hp_potion', price: 25 }]); });
+await openShop('buyMenu', ['M', [{ id: 'hp_potion', price: 25 }, { id: 'long_bow', price: 9999, once: true }]]);
+await tap('KeyE', 60); await h.sleep(150);
+await tap('KeyS', 60); await tap('KeyE', 60); await h.sleep(150);       // unaffordable: must not buy
+check('unaffordable item is refused', (await S('inv.long_bow')) === undefined);
+await h.shot('s15_shop');
+await closeShop();
 check('buying spends gold and gives the item', (await S('inv.hp_potion')) === hp0 + 1 && (await S('gold')) === 475);
 
 // ---------------- forge: upgrade + enchant
 await G(() => { const S = window.__ff.S; S.gold = 500; S.inv.iron_ingot = 5; S.inv.iron_sword = 1; S.equip.weapon = 'iron_sword'; S.inv.bone_dust = 3; });
 const d0 = await G(() => window.__stats.weaponDmg());
-await stub([0]);
-await G(async () => { await window.__svc.upgradeMenu('H', 'weapon'); });
+await openShop('upgradeMenu', ['H', 'weapon']);
+await tap('KeyE', 60); await h.sleep(150); await closeShop();
 check('smith upgrades the weapon (+2 damage per level)', (await G(() => window.__stats.weaponDmg())) === d0 + 2 && (await S('upgrades.iron_sword')) === 1);
-await stub([0]);
-await G(async () => { await window.__svc.enchantMenu('H'); });
+await openShop('enchantMenu', ['H']);
+await tap('KeyE', 60); await h.sleep(150); await closeShop();
 check('smith enchants the weapon (flame)', (await S('enchants.iron_sword.type')) === 'fire' && (await S('inv.bone_dust')) === undefined);
 // enchant applies in combat
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(300, 250); p.face = { x: 1, y: 0 }; p.mode = 'free'; p.lockT = 0; p.invuln = 99; window.__ff.S.sp = 100; const e = g.addEnemy('draugr', 314, 250); e.cfg = { ...e.cfg, detect: 0, speed: 0 }; });
@@ -74,9 +85,9 @@ unstub();
 
 // ---------------- alchemy
 await G(() => { const S = window.__ff.S; S.inv.snowberry = 4; S.inv.frost_lily = 2; S.inv.wolf_fang = 1; delete S.inv.hp_potion_g; });
-await stub([0, 1, 3, 5]);      // brew hp potion, mp potion, greater hp, Done(5 = Back on 5 recipes list? handled by default last)
 const hp1 = await S('inv.hp_potion');
-await G(async () => { await window.__svc.brewMenu('A'); });
+await openShop('brewMenu', ['A']);
+await tap('KeyE', 60); await h.sleep(120); await tap('KeyS', 60); await tap('KeyE', 60); await h.sleep(150); await closeShop();
 check('alchemy brews potions from ingredients', (await S('inv.hp_potion')) === hp1 + 1 && (await S('inv.mp_potion')) >= 1);
 unstub();
 

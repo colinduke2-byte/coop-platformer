@@ -1,5 +1,6 @@
 // Player spellcasting (mixed into Player). Spells unlock with skill levels.
 import { S } from '../systems/state.js';
+import { keys } from '../systems/keys.js';
 import { bus } from '../systems/bus.js';
 import { bonus } from '../systems/skills.js';
 import { spellDamage, elementMult } from '../systems/damage.js';
@@ -20,6 +21,20 @@ export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward'];
 export const spellUnlocked = (id) => lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
 
 export const magicMethods = {
+  // Mana cost climbs while casts are chained (overcast), and cools off again.
+  spellCost(sp) {
+    return sp.cost * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
+  },
+
+  quickCast() {
+    for (let i = 0; i < SPELL_ORDER.length; i++) {
+      if (!keys.pressed('spell' + (i + 1))) continue;
+      if (!spellUnlocked(SPELL_ORDER[i])) { sfx.play('nostamina'); bus.emit('toast', 'SPELL LOCKED', 11); return true; }
+      S.spell = SPELL_ORDER[i]; this.cast(); return true;
+    }
+    return false;
+  },
+
   nextSpell() {
     let i = SPELL_ORDER.indexOf(S.spell);
     for (let k = 0; k < SPELL_ORDER.length; k++) {
@@ -31,10 +46,11 @@ export const magicMethods = {
   cast() {
     if (!spellUnlocked(S.spell)) S.spell = 'fire';
     const sp = SPELLS[S.spell];
-    const cost = sp.cost * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1);
+    const cost = this.spellCost(sp);
     if (S.mp < cost) { sfx.play('nostamina'); bus.emit('nomana'); return; }
     if (S.spell === 'heal' && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
     S.mp -= cost; this.mpDelay = 1.2;
+    this.heat = Math.min(TUNE.player.cast.heatMax, (this.heat || 0) + 1);
     const sc = this.scene, f = this.face;
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
     switch (S.spell) {

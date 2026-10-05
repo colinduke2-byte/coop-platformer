@@ -3,17 +3,18 @@
 import { keys } from '../systems/keys.js';
 
 const BUTTONS = [
-  // [label, code, css position, size, colour]
-  ['ROLL', 'Space', 'right:92px;bottom:18px', 52, '#4a5c86'],
-  ['HIT', 'KeyJ', 'right:18px;bottom:60px', 56, '#c8383c'],
-  ['BOW', 'KeyK', 'right:96px;bottom:84px', 46, '#3f7050'],
-  ['MAG', 'KeyL', 'right:30px;bottom:132px', 46, '#8a5aa8'],
+  // [label, code, css position, size, colour]: the four things you press all the time
+  ['ROLL', 'Space', 'right:100px;bottom:18px', 54, '#4a5c86'],
+  ['HIT', 'KeyJ', 'right:18px;bottom:62px', 62, '#c8383c'],
   ['E', 'KeyE', 'right:18px;bottom:4px', 44, '#f4d460'],
-  ['SHOUT', 'KeyR', 'right:104px;bottom:140px', 40, '#f08a30'],
-  ['BLOCK', 'KeyF', 'right:160px;bottom:60px', 40, '#7b8fb5'],
-  ['SNEAK', 'KeyC', 'right:160px;bottom:108px', 40, '#2e3a5c', true],
+  ['LOCK', 'KeyT', 'right:104px;bottom:84px', 40, '#b88a30'],
 ];
-const TOP = [['||', 'Escape', 'right:10px;top:10px'], ['PACK', 'KeyI', 'right:62px;top:10px'], ['MAP', 'KeyM', 'right:124px;top:10px'], ['SWAP', 'KeyQ', 'right:178px;top:10px']];
+// Everything else lives in a ring that opens from MORE. [label, code, toggle]
+const RING = [
+  ['BOW', 'KeyK'], ['MAG', 'KeyL'], ['SWAP', 'KeyQ'], ['SHOUT', 'KeyR'],
+  ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
+];
+const TOP = [['||', 'Escape', 'right:10px;top:10px']];
 
 export function installTouch(force = false) {
   const q = new URLSearchParams(location.search);
@@ -40,6 +41,27 @@ export function installTouch(force = false) {
   };
   BUTTONS.forEach(([l, c, p, s, bg, t]) => mk(l, c, p, s, bg, t));
   TOP.forEach(([l, c, p]) => mk(l, c, p, 40, '#1c2338'));
+
+  // MORE button + a two-row ring of the rarer actions
+  const more = document.createElement('div');
+  more.textContent = 'MORE';
+  more.style.cssText = 'position:absolute;right:182px;bottom:18px;width:44px;height:44px;border-radius:50%;background:#2e3a5c;opacity:.6;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a';
+  root.appendChild(more);
+  const ring = document.createElement('div');
+  ring.style.cssText = 'position:absolute;right:182px;bottom:18px;width:44px;height:44px;display:none;pointer-events:none';
+  root.appendChild(ring);
+  RING.forEach(([label, code, tog], i) => {
+    const x = -(i % 4) * 46 - 20, y = -(Math.floor(i / 4) + 1) * 46 - 2;
+    const b = document.createElement('div');
+    b.textContent = label; b.dataset.code = code;
+    b.style.cssText = `position:absolute;left:${2 + x}px;top:${2 + y}px;width:40px;height:40px;border-radius:50%;background:#1c2338;opacity:.7;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a;font-size:10px`;
+    let on = false;
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (tog) { on = !on; b.style.background = on ? '#4a5c86' : '#1c2338'; on ? keys._press(code) : keys._release(code); } else { b.style.opacity = '1'; keys._press(code); } });
+    const up = (e) => { e.preventDefault(); if (!tog) { b.style.opacity = '.7'; keys._release(code); } };
+    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+    ring.appendChild(b);
+  });
+  more.addEventListener('pointerdown', (e) => { e.preventDefault(); const open = ring.style.display === 'none'; ring.style.display = open ? 'block' : 'none'; more.style.opacity = open ? '.95' : '.6'; });
 
   // virtual stick
   const pad = document.createElement('div');

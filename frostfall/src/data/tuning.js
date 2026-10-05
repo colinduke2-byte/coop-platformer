@@ -5,7 +5,8 @@ export const TUNE = {
   regen: 30, regenDelay: 0.75,
   mpRegen: 4.5, mpDelay: 1.2,
   roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },
-  sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4 },
+  sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4, rollCancel: 0.55 },
+  lock: { range: 150, drop: 190 },
   // 3-hit combo: tap J again inside the chain window. The third swing is a heavy finisher.
   combo: [
     { dmg: 1, kb: 120, size: 18, total: 0.3, cost: 1, flip: false, scale: 1, stun: 0.22 },
@@ -15,7 +16,7 @@ export const TUNE = {
   hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
   bow: { minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
   shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },
-  cast: { lock: 0.28, move: 0.4 },
+  cast: { lock: 0.28, move: 0.4, heatCost: 0.35, heatMax: 3, heatDecay: 0.9 },
   block: { move: 0.55, parry: 0.18, arc: 0.2 },
   },
   boss: {

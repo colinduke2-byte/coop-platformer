@@ -39,6 +39,13 @@ await tap('KeyE', 70); await h.sleep(200);
 await tap('KeyS', 50); await tap('KeyE', 50);
 check('mouse option toggles', (await G(() => window.__set.mouse)) === true);
 await tap('KeyE', 50);
+await tap('KeyS', 50); await tap('KeyE', 50);
+check('sneak mode option toggles', (await G(() => window.__set.sneakToggle)) === true);
+await tap('KeyE', 50);
+await tap('KeyS', 50); await tap('KeyE', 50);
+check('hold-to-chain option toggles', (await G(() => window.__set.holdChain)) === false);
+await tap('KeyE', 50);
+await tap('KeyS', 50);
 await h.shot('s14_options');
 // ---------------- rebinding
 await tap('KeyS', 50); await tap('KeyE', 80); await h.sleep(250);
@@ -144,6 +151,11 @@ await h.page.locator('#touch-ui div[data-code="Space"]').dispatchEvent('pointerd
 await h.sleep(120);
 check('touch ROLL button rolls', await G(() => window.__ff.game.scene.getScene('Game').player.mode === 'roll'));
 await h.page.locator('#touch-ui div[data-code="Space"]').dispatchEvent('pointerup');
+check('touch ring is closed at first', await G(() => ![...document.querySelectorAll('#touch-ui div[data-code="KeyK"]')][0].offsetParent));
+await h.page.locator('#touch-ui div', { hasText: /^MORE$/ }).dispatchEvent('pointerdown');
+check('MORE opens the radial ring (bow, swap, pack...)', await G(() => !!document.querySelector('#touch-ui div[data-code="KeyK"]').offsetParent));
+await h.page.locator('#touch-ui div[data-code="KeyT"]').dispatchEvent('pointerdown');
+await h.page.locator('#touch-ui div[data-code="KeyT"]').dispatchEvent('pointerup');
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'UX FAILED' : 'UX PASSED');
