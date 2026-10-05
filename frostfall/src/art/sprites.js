@@ -94,6 +94,8 @@ export const STYLES = {
   warden: { skin: 4, hair: 3, body: 2, trim: 3, legs: 1, boots: 0, glow: 15, helm: 5, chest: 4 },
   chief:  { skin: 10, hair: 11, body: 11, trim: 13, legs: 2, boots: 0, helm: 3, beard: 9, cape: 1, chest: 13 },
   conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 },
+  hilda:  { skin: 10, hair: 12, body: 9, trim: 5, legs: 2, boots: 0, chest: 4, beard: null },
+  ragna:  { skin: 10, hair: 13, hood: 8, body: 8, trim: 9, legs: 7, boots: 9, chest: 10 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
@@ -328,6 +330,18 @@ function buildFx(scene) {
     blob(g, 7.4, 9, 3.8, 4.2, 4);
     rc(g, 6, 8, 1, 3, 1); rc(g, 7, 10, 2, 1, 1);          // crack
   });
+  prop('anvil', (g) => {
+    rc(g, 3, 11, 10, 3, 2); rc(g, 5, 8, 6, 4, 3); rc(g, 2, 5, 12, 4, 4); rc(g, 12, 6, 3, 2, 3); rc(g, 3, 5, 9, 1, 5);
+  });
+  prop('herb_berry', (g) => {
+    blob(g, 8, 9, 6, 4.5, 8); blob(g, 7, 8, 4.5, 3, 7);
+    for (const [x, y] of [[5, 7], [9, 6], [7, 10], [11, 9], [4, 10]]) { rc(g, x, y, 2, 2, 11); rc(g, x, y, 1, 1, 12); }
+  });
+  prop('herb_lily', (g) => {
+    rc(g, 7, 8, 2, 6, 8);
+    for (const [x, y] of [[4, 5], [7, 3], [10, 5], [5, 8], [9, 8]]) { rc(g, x, y, 3, 3, 15); rc(g, x + 1, y + 1, 1, 1, 6); }
+    rc(g, 5, 11, 2, 2, 8); rc(g, 9, 11, 2, 2, 8);
+  });
   prop('sign', (g) => {
     rc(g, 7, 7, 2, 8, 9);                  // post
     rc(g, 2, 2, 12, 7, 10);                // board
@@ -379,6 +393,7 @@ export function buildIcon(scene, key, kind, col = 6) {
       case 'dust': for (const [x, y] of [[4, 8], [7, 5], [9, 9], [6, 11], [11, 7], [5, 6]]) R(g, col, x, y, 2, 2); R(g, 4, 8, 9, 2, 1); break;
       case 'berry': for (const [x, y] of [[5, 8], [9, 7], [7, 11]]) { R(g, col, x, y, 3, 3); R(g, 6, x, y, 1, 1); } R(g, 8, 8, 4, 1, 3); R(g, 8, 6, 5, 3, 1); break;
       case 'lily': R(g, 8, 8, 8, 1, 6); for (const [x, y] of [[6, 5], [9, 5], [7, 3], [5, 7], [10, 7]]) R(g, col, x, y, 2, 3); R(g, 6, 7, 6, 2, 2); break;
+      case 'locket': for (let a = 0; a < 360; a += 20) R(g, 4, Math.round(8 + Math.cos(a * Math.PI / 180) * 4), Math.round(4 + Math.sin(a * Math.PI / 180) * 3)); R(g, col, 5, 8, 6, 6); R(g, 13, 6, 9, 4, 4); R(g, 0, 7, 10, 2, 1); R(g, 6, 5, 8, 2, 1); break;
       case 'shield':
         R(g, 0, 3, 2, 10, 9); R(g, 0, 4, 11, 8, 2); R(g, 0, 6, 13, 4, 1);
         R(g, col, 4, 3, 8, 8); R(g, col, 5, 11, 6, 2); R(g, 6, 4, 3, 8, 1); R(g, 13, 7, 6, 2, 2); R(g, 2, 4, 10, 8, 1); break;

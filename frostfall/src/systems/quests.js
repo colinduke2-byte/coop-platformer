@@ -16,6 +16,11 @@ export function wireQuests() {
     }
   });
   bus.on('item:added', (id) => {
+    if (id === 'snowberry' || id === 'frost_lily') checkHerbs();
+    if (id === 'silver_locket') {
+      const lq = S.quests.locket;
+      if (lq.status === 'inactive' || lq.status === 'active') { lq.status = 'relic'; bus.emit('toast', 'YOU FOUND THE LOCKET', 13); sfx.play('quest'); }
+    }
     const q = S.quests.king;
     if (id === 'frostheart' && q.status === 'active') {
       q.status = 'relic';
@@ -23,6 +28,13 @@ export function wireQuests() {
       sfx.play('quest');
     }
   });
+}
+
+export function checkHerbs() {
+  const q = S.quests.herbs;
+  if (q.status === 'active' && (S.inv.snowberry || 0) >= 5 && (S.inv.frost_lily || 0) >= 3) {
+    q.status = 'ready'; bus.emit('toast', 'QUEST READY: RETURN TO MIRRA', 13); sfx.play('quest');
+  }
 }
 
 export function startQuest(id) {

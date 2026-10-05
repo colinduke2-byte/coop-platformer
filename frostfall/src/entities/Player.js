@@ -316,6 +316,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // --------------------------------------------------------------- potions
   usePotion(id) {
+    if (!S.inv[id] && S.inv[id + '_g']) id = id + '_g';      // fall back to the greater potion
     if (!S.inv[id]) { sfx.play('nostamina'); return false; }
     const it = this.scene.items[id];
     const key = it.restore, maxKey = { hp: 'maxHp', mp: 'maxMp', sp: 'maxSp' }[key];

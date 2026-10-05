@@ -1,11 +1,13 @@
 // NPC scripts: async functions. `say` shows typewriter text, `choose` returns the picked index.
 import { S } from '../systems/state.js';
 import { say, choose } from '../systems/dialogue.js';
-import { startQuest, finishQuest } from '../systems/quests.js';
+import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu } from './services.js';
+import { stats as pstats } from '../systems/stats.js';
 
 const SIGRID = 'Sigrid', BJORN = 'Bjorn', MIRRA = 'Mirra';
 
@@ -100,15 +102,32 @@ export async function bjorn() {
     await say(BJORN, 'If you are going to the crypt, take plenty of potions. The dead do not tire.');
     return;
   }
-  await say(BJORN, S.flags.ending === 'give' ? 'Warm hearth, full pelts. Life is good.' : 'Wolves are quiet. The draugr, less so. Keep your blade sharp.');
+  const aq = S.quests.alpha;
+  if (aq.status === 'inactive') {
+    await say(BJORN, 'There is one more thing. The pack has a leader. Grimfang, the Pale Alpha, big as a bear, lives up in Frostwind Pass. Kill him and the wolves never bother us again.');
+    const c = await choose(['I will deal with him.', 'Later.']);
+    if (c === 0) { startQuest('alpha'); await say(BJORN, 'The pass opens north of the forest, past the wolf den. Take plenty of arrows. And do not corner him; a cornered wolf is the worst kind.'); }
+    return;
+  }
+  if (aq.status === 'active') { await say(BJORN, 'Frostwind Pass, north of the forest. Grimfang will be near the old watchtower.'); return; }
+  if (aq.status === 'ready') {
+    if (S.flags.alphaSpared) {
+      await say(BJORN, 'You LET HIM GO? ...Hm. The wolves have gone quiet, I will give you that. The trails are safer already. I do not understand it, but I will not argue with results.');
+      addGold(40);
+    } else {
+      await say(BJORN, 'Grimfang is dead? Ha! The pack will scatter now. Take this, you have earned it.');
+      addGold(150);
+    }
+    finishQuest('alpha');
+    return;
+  }
+  await say(BJORN, S.flags.ending === 'give' ? 'Warm hearth, full pelts. Life is good.' : S.flags.alphaSpared ? 'Odd. The wolves watch me from the treeline now and do not come closer.' : 'Wolves are quiet. The draugr, less so. Keep your blade sharp.');
 }
 
-const WARES = [
-  { id: 'hp_potion', price: 25 },
-  { id: 'mp_potion', price: 25 },
-  { id: 'sp_potion', price: 20 },
-  { id: 'arrows', price: 15, n: 10, name: 'Arrows x10' },
-  { id: 'long_bow', price: 150 },
+const MIRRA_WARES = [
+  { id: 'hp_potion', price: 25 }, { id: 'mp_potion', price: 25 }, { id: 'sp_potion', price: 20 },
+  { id: 'arrows', price: 15, n: 10, name: 'Arrows x10' }, { id: 'lockpick', price: 8, n: 3, name: 'Lockpicks x3' },
+  { id: 'wooden_shield', price: 40, once: true }, { id: 'hunting_knife', price: 28, once: true }, { id: 'long_bow', price: 150, once: true },
 ];
 export async function mirra() {
   if (S.quests.king.status === 'relic' && !S.flags.ending) {
@@ -125,20 +144,76 @@ export async function mirra() {
     }
     await say(MIRRA, 'Your loss. The offer stands.');
   }
+  if (S.quests.locket.status === 'sell' && S.inv.silver_locket) {
+    await say(MIRRA, 'That locket... silver, wolf-engraved. I will give you 120 gold for it, no questions.');
+    const c = await choose(['Sell the locket (120G)', 'Not now']);
+    if (c === 0) { removeItem('silver_locket', 1); addGold(120); finishQuest('locket'); S.flags.locketKind = false; await say(MIRRA, 'Pleasure doing business.'); }
+  }
+  // Herb quest
+  const hq = S.quests.herbs;
+  if (hq.status === 'inactive') {
+    await say(MIRRA, 'You look like someone who walks into the woods on purpose. Good. I am out of snowberries and frost lilies, and half the village is coughing.');
+    const c = await choose(['I will gather them.', 'Just browsing.']);
+    if (c === 0) {
+      startQuest('herbs');
+      await say(MIRRA, 'Five snowberries and three frost lilies. They grow on the forest trails, small and bright. Pick them with E.');
+      checkHerbs();
+      return;
+    }
+  } else if (hq.status === 'ready') {
+    await say(MIRRA, 'Oh, bless you. Let me see... perfect.');
+    removeItem('snowberry', 5); removeItem('frost_lily', 3);
+    addGold(60); addItem('hp_potion_g', 2);
+    finishQuest('herbs');
+    S.flags.alchemy = true;
+    await say(MIRRA, 'Here, for your trouble. And since you have a good eye for herbs, I will teach you to brew. Use the alchemy option at my stall.');
+  }
   await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : 'Potions, arrows, and the occasional bargain. What do you need?');
   for (;;) {
-    const labels = WARES.map((w) => `${w.name || ITEMS[w.id].name}  ${w.price}G`);
-    const c = await choose([...labels, 'Leave']);
-    if (c === WARES.length) { await say(MIRRA, 'Stay warm.'); return; }
-    const w = WARES[c];
-    if (w.id === 'long_bow' && count('long_bow')) { await say(MIRRA, 'You already carry one.'); continue; }
-    if (S.gold < w.price) { sfx.play('nostamina'); await say(MIRRA, 'Come back when you have the coin.'); continue; }
-    S.gold -= w.price;
-    if (w.id === 'arrows') { S.arrows += w.n; bus.emit('toast', `+${w.n} ARROWS`, 5); }
-    else addItem(w.id);
-    sfx.play('coin');
+    const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Leave'];
+    const c = await choose(opts);
+    if (c === 0) await buyMenu(MIRRA, MIRRA_WARES);
+    else if (c === 1) await sellMenu(MIRRA);
+    else if (c === 2) {
+      if (!S.flags.alchemy) await say(MIRRA, 'Bring me five snowberries and three frost lilies and I will teach you.');
+      else await brewMenu(MIRRA);
+    } else { await say(MIRRA, 'Stay warm.'); return; }
   }
 }
+
+export async function hilda() {
+  const H = 'Hilda';
+  await say(H, S.flags.ending === 'give' ? 'The forge has never run so hot. Everyone wants new blades!' : 'Steel does not care about the cold. What do you need?');
+  for (;;) {
+    const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Buy gear', 'Sell', 'Leave']);
+    if (c === 0) await upgradeMenu(H, 'weapon');
+    else if (c === 1) await upgradeMenu(H, 'armor');
+    else if (c === 2) await enchantMenu(H);
+    else if (c === 3) await buyMenu(H, [
+      { id: 'iron_sword', price: 80, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'iron_greatsword', price: 220, once: true },
+      { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
+    ]);
+    else if (c === 4) await sellMenu(H);
+    else { await say(H, 'Keep your edge sharp.'); return; }
+  }
+}
+
+export async function ragna() {
+  const R = 'Ragna';
+  if (S.follower) {
+    const c = await choose(['Stay in the village', 'Keep following', 'Chat']);
+    if (c === 0) { S.follower = false; bus.emit('follower', false); await say(R, 'I will be at the lodge. Whistle if you want me.'); }
+    else if (c === 2) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.']));
+    return;
+  }
+  await say(R, 'Sellsword. Archer. Cheap, for what I do. 150 gold and I will follow you and shoot anything that bites.');
+  const c = await choose(['Hire Ragna (150G)', 'Not now']);
+  if (c !== 0) return;
+  if (S.gold < 150) { sfx.play('nostamina'); await say(R, 'Come back with coin.'); return; }
+  S.gold -= 150; S.follower = true; bus.emit('follower', true);
+  await say(R, 'Lead on. I will keep to your heels and my arrows will keep to their throats.');
+}
+function cycleLine(key, lines) { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; }
 
 export const SCRIPTS = { sigrid, bjorn, mirra };
 export const NPC_DEFS = {
@@ -167,7 +242,32 @@ export async function guard() {
 }
 export async function child() {
   const C = 'Asta';
+  const lq = S.quests.locket;
+  if (lq.status === 'inactive') {
+    await say(C, 'Please... the bandits took my mama\'s silver locket when they raided the road. It has a little wolf on it. I would give anything to have it back.');
+    const c = await choose(['I will find it.', 'Sorry, kid.']);
+    if (c === 0) { startQuest('locket'); await say(C, 'Thank you! They keep their loot in the camp, in the forest, the one with the fire.'); }
+    return;
+  }
+  if (lq.status === 'active') return say(C, 'Did you find it? The camp in the forest, past the bend...');
+  if (lq.status === 'relic') {
+    await say(C, 'That is... that is MAMA\'S LOCKET!');
+    const c = await choose(['Give it back to Asta.', 'Keep it. It is worth 120 gold.']);
+    if (c === 0) {
+      removeItem('silver_locket', 1); addItem('asta_charm'); addGold(25);
+      finishQuest('locket'); S.flags.locketKind = true;
+      await say(C, 'Thank you thank you! Here, this is my lucky charm. It is not much, but it is everything I have.');
+    } else {
+      S.flags.locketKind = false;
+      await say(C, '...Oh. I understand. Everyone needs gold.');
+      await say(C, '(Her eyes are wet. You can sell the locket to Mirra when you like.)');
+      lq.status = 'sell';
+    }
+    return;
+  }
+  if (lq.status === 'sell') { await say(C, 'Mama says some people only see the price of things.'); return; }
   if (S.flags.ending === 'give') return say(C, 'The snow is melting! Look, it is puddles!');
+  if (S.flags.locketKind) return say(C, 'Mama wears the locket every day now. She says you are a hero!');
   if (S.quests.wolves.status === 'done') return say(C, 'Bjorn says you hunted the wolves! Were they big? Bigger than me?');
   await say(C, cycle('childN', [
     'I am not scared of wolves. I am scared of the dark. And wolves in the dark.',
@@ -176,6 +276,10 @@ export async function child() {
   ]));
 }
 SCRIPTS.guard = guard;
+SCRIPTS.hilda = hilda;
+SCRIPTS.ragna = ragna;
 SCRIPTS.child = child;
+NPC_DEFS.hilda = { name: 'HILDA', tex: 'spr_hilda' };
+NPC_DEFS.ragna = { name: 'RAGNA', tex: 'spr_ragna' };
 NPC_DEFS.guard = { name: 'GUARD HALDOR', tex: 'spr_guard' };
 NPC_DEFS.child = { name: 'ASTA', tex: 'spr_child' };

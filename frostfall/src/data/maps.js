@@ -44,7 +44,7 @@ function buildVillage() {
   for (let y = 2; y < 24; y++) for (let x = 2; x < 38; x++) g.res[y][x] = g.t[y][x] !== TILE.SNOW && g.t[y][x] !== TILE.SNOW2;
   for (let y = 9; y <= 18; y++) for (let x = 14; x <= 26; x++) g.res[y][x] = true;
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
-  for (const [x, y] of [[36, 11], [34, 12], [24, 19], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9]]) g.clear(x, y);
+  for (const [x, y] of [[36, 11], [34, 12], [24, 19], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9], [10, 16], [11, 16], [10, 12], [13, 20], [21, 21]]) g.clear(x, y);
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.ROCK, 8, 4);
   g.add({ t: 'npc', id: 'sigrid', x: 19, y: 9 });
@@ -54,6 +54,11 @@ function buildVillage() {
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
   g.add({ t: 'fire', x: 19, y: 13, rest: true });
   g.add({ t: 'npc', id: 'guard', x: 34, y: 12 });
+  g.add({ t: 'npc', id: 'hilda', x: 10, y: 16 });
+  g.add({ t: 'prop', tex: 'anvil', x: 11, y: 16 });
+  g.add({ t: 'npc', id: 'ragna', x: 10, y: 12 });
+  g.add({ t: 'herb', item: 'snowberry', x: 13, y: 20 });
+  g.add({ t: 'herb', item: 'snowberry', x: 21, y: 21 });
   g.add({ t: 'npc', id: 'child', x: 24, y: 19 });
   g.add({ t: 'sign', x: 36, y: 11, text: ['PINE FOREST, EAST.', 'WOLVES ON THE TRAIL. TRAVEL ARMED. - BJORN'] });
   for (const [x, y, skin] of [[16, 8, 'pot'], [22, 8, 'barrel'], [4, 10, 'pot'], [10, 9, 'barrel'], [31, 11, 'pot'], [34, 10, 'barrel'], [13, 16, 'pot'], [26, 16, 'pot'], [27, 10, 'barrel'], [24, 9, 'pot']]) g.add({ t: 'pot', x, y, skin });
@@ -91,7 +96,7 @@ function buildForest() {
   g.set(43, 4, TILE.GRAVE); g.set(49, 4, TILE.GRAVE); g.set(41, 5, TILE.ROCK); g.set(51, 5, TILE.ROCK);
   g.set(46, 23, TILE.FIRE);
   g.reserve(0, 0, 1, 1);
-  for (const [x, y] of [[5, 13], [22, 11]]) g.clear(x, y);
+  for (const [x, y] of [[5, 13], [22, 11], [8, 17], [16, 17], [26, 17], [33, 17], [37, 12], [20, 10], [9, 6], [29, 9], [23, 16], [36, 9]]) g.clear(x, y);
   g.scatter(TILE.PINE, 250, 21);
   g.scatter(TILE.ROCK, 22, 22);
   g.add({ t: 'spawn', name: 'west', x: 3, y: 15 });
@@ -113,8 +118,9 @@ function buildForest() {
   for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y });
   g.add({ t: 'enemy', kind: 'chief', x: 47, y: 25 });
   // loot
-  g.add({ t: 'chest', id: 'camp', x: 50, y: 26, loot: [{ item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
-  g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { item: 'hunting_knife' }, { arrows: 10 }] });
+  for (const [x, y, item] of [[8, 17, 'snowberry'], [16, 17, 'snowberry'], [26, 17, 'snowberry'], [33, 17, 'snowberry'], [37, 12, 'snowberry'], [20, 10, 'frost_lily'], [9, 6, 'frost_lily'], [29, 9, 'frost_lily'], [23, 16, 'frost_lily'], [36, 9, 'snowberry']]) g.add({ t: 'herb', item, x, y });
+  g.add({ t: 'chest', id: 'camp', x: 50, y: 26, lock: 'med', loot: [{ item: 'silver_locket' }, { item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
+  g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { item: 'hunting_knife' }, { item: 'lockpick', n: 4 }, { arrows: 10 }] });
   g.add({ t: 'pickup', x: 6, y: 16, spec: { type: 'arrows', n: 6 } });
   g.add({ t: 'pickup', x: 20, y: 14, spec: { type: 'item', id: 'hp_potion' } });
   g.add({ t: 'pickup', x: 36, y: 7, spec: { type: 'arrows', n: 5 } });
@@ -164,8 +170,8 @@ function buildCrypt() {
   g.add({ t: 'enemy', kind: 'draugr', x: 18, y: 19 });
   g.add({ t: 'enemy', kind: 'wight', x: 8, y: 14 });
   g.add({ t: 'enemy', kind: 'conjurer', x: 23, y: 14 });
-  g.add({ t: 'chest', id: 'crypt2', x: 2, y: 16, loot: [{ item: 'steel_sword' }, { item: 'iron_greatsword' }, { arrows: 12 }] });
-  g.add({ t: 'chest', id: 'crypt3', x: 29, y: 16, loot: [{ item: 'mana_ring' }, { item: 'mp_potion', n: 2 }] });
+  g.add({ t: 'chest', id: 'crypt2', x: 2, y: 16, lock: 'med', loot: [{ item: 'steel_sword' }, { item: 'iron_greatsword' }, { arrows: 12 }] });
+  g.add({ t: 'chest', id: 'crypt3', x: 29, y: 16, lock: 'hard', loot: [{ item: 'mana_ring' }, { item: 'mp_potion', n: 2 }] });
   g.add({ t: 'pickup', x: 15, y: 40, spec: { type: 'item', id: 'sp_potion' } });
   g.add({ t: 'pickup', x: 15, y: 27, spec: { type: 'arrows', n: 6 } });
   // boss hall

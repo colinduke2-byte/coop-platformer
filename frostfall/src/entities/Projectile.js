@@ -14,6 +14,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.kind = kind;
     this.dmg = opts.dmg ?? 5;
     this.charge = opts.charge ?? 0;
+    this.ally = !!opts.ally;
     this.life = opts.life ?? 1.4;
     this.enemyOwned = kind === 'bolt' || kind === 'eshot';
     this.body.setSize(4, 4).setOffset((this.width - 4) / 2, (this.height - 4) / 2);
@@ -66,10 +67,16 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     const sc = this.scene, pl = sc.player;
     const kx = this.body.velocity.x, ky = this.body.velocity.y;
     if (this.kind === 'arrow') {
+      if (this.ally) {
+        const d = e.takeHit({ dmg: this.dmg, kx, ky, kb: 50, src: 'arrow', stun: 0.15 });
+        if (d > 0) { sc.fx.text(e.x, e.y - 10, String(d), 5); sfx.play('hit'); }
+        this.finish();
+        return;
+      }
       if (this.hitSet?.has(e)) return;
       (this.hitSet ||= new Set()).add(e);
       const sneak = !e.alerted && pl.sneaking;
-      const mult = sneak ? 2 + bonus.sneakAttack() * 0.5 : 1;
+      const mult = (sneak ? 2 + bonus.sneakAttack() * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
       const dealt = e.takeHit({ dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y });
       if (dealt <= 0) { this.finish(); return; }
       sc.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);

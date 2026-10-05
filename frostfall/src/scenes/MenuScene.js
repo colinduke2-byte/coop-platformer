@@ -88,13 +88,13 @@ export default class MenuScene extends Phaser.Scene {
     sfx.play('move');
   }
 
-  nav(len) {
+  nav(len, rows = ROWS) {
     let moved = false;
     if (keys.pressed('down') && len) { this.cursor = (this.cursor + 1) % len; moved = true; }
     if (keys.pressed('up') && len) { this.cursor = (this.cursor + len - 1) % len; moved = true; }
     if (moved) {
       if (this.cursor < this.scroll) this.scroll = this.cursor;
-      if (this.cursor >= this.scroll + ROWS) this.scroll = this.cursor - ROWS + 1;
+      if (this.cursor >= this.scroll + rows) this.scroll = this.cursor - rows + 1;
       sfx.play('move'); this.dirty = true;
     }
     return moved;

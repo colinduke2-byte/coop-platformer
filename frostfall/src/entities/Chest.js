@@ -2,6 +2,10 @@ import Phaser from 'phaser';
 import { S } from '../systems/state.js';
 import { addItem, addGold, addArrows } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
+import { runScript, say } from '../systems/dialogue.js';
+import { dialogue } from '../systems/dialogue.js';
+import { count, removeItem } from '../systems/inventory.js';
+import { bus } from '../systems/bus.js';
 
 export default class Chest extends Phaser.GameObjects.Image {
   constructor(scene, x, y, spec) {
@@ -18,9 +22,22 @@ export default class Chest extends Phaser.GameObjects.Image {
   }
 
   canInteract() { return !S.flags[this.flag]; }
-  label() { return 'E: OPEN'; }
+  get locked() { return !!this.spec.lock && !S.flags[this.flag + '_u']; }
+  label() { return this.locked ? 'E: PICK LOCK' : 'E: OPEN'; }
 
-  interact() {
+  async interact() {
+    if (this.locked) {
+      if (!count('lockpick')) { bus.emit('toast', 'LOCKED - NEED LOCKPICKS', 11); sfx.play('nostamina'); return; }
+      let ok = false;
+      await runScript(async () => { ok = await dialogue.hud.lockpick(this.spec.lock); });
+      if (!ok) return;
+      S.flags[this.flag + '_u'] = true;
+      this.scene.player.gainXp('sneak', { easy: 8, med: 14, hard: 22 }[this.spec.lock] || 10);
+    }
+    this.open();
+  }
+
+  open() {
     S.flags[this.flag] = true;
     this.setTexture('chest1');
     sfx.play('chest');

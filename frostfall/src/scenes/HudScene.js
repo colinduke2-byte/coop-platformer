@@ -6,6 +6,7 @@ import { ui } from '../systems/ui.js';
 import { dialogue } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
 import { QUESTS, activeQuestIds } from '../data/quests.js';
+import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
@@ -55,6 +56,8 @@ export default class HudScene extends Phaser.Scene {
     this.bannerObj = null;
     this.onLevel = (skill, lv) => this.banners.push({ skill, lv });
     bus.on('levelup', this.onLevel);
+    this.onChar = (n) => this.banners.push({ custom: true, title: 'LEVEL ' + n, top: 'CHARACTER LEVEL UP', line: '+1 PERK POINT  -  PRESS I, THEN PERKS' });
+    bus.on('charlevel', this.onChar);
     // dialogue box
     this.dlg = null;
     this.dg = this.add.graphics().setDepth(10);
@@ -74,7 +77,7 @@ export default class HudScene extends Phaser.Scene {
 
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; });
   }
 
   // ------------------------------------------------------- dialogue API
@@ -92,6 +95,53 @@ export default class HudScene extends Phaser.Scene {
     return new Promise((res) => {
       this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, sel: 0, age: 0 };
     });
+  }
+
+  // ------------------------------------------------------- lockpicking
+  // difficulty: easy (1 hit) | med (2 hits) | hard (3 hits). Press E inside the green zone.
+  lockpick(diff) {
+    const need = { easy: 1, med: 2, hard: 3 }[diff] || 2;
+    const sneak = S.skills.sneak.lvl;
+    return new Promise((res) => {
+      this.lock = { need, hits: 0, pos: 0, dir: 1, speed: 0.9 + need * 0.25, w: Math.max(0.06, 0.16 - need * 0.025 + sneak * 0.006), c: Math.random() * 0.7 + 0.15, res, age: 0, flash: 0, msg: '' };
+    });
+  }
+
+  updateLock(dt) {
+    const L = this.lock, g = this.dg;
+    g.clear();
+    if (!L) { if (this.lockTxt) { this.lockTxt.forEach((t) => t.setText('')); } return; }
+    L.age++;
+    L.pos += L.dir * L.speed * dt;
+    if (L.pos > 1) { L.pos = 1; L.dir = -1; } else if (L.pos < 0) { L.pos = 0; L.dir = 1; }
+    L.flash -= dt;
+    const bx = 60, by = 78, bw = 200, bh = 16;
+    g.fillStyle(C[0], 0.85); g.fillRect(bx - 10, by - 28, bw + 20, 72);
+    g.fillStyle(C[3]); g.fillRect(bx - 9, by - 27, bw + 18, 70);
+    g.fillStyle(C[1]); g.fillRect(bx - 8, by - 26, bw + 16, 68);
+    g.fillStyle(C[0]); g.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+    g.fillStyle(C[2]); g.fillRect(bx, by, bw, bh);
+    g.fillStyle(C[8]); g.fillRect(Math.round(bx + (L.c - L.w) * bw), by, Math.round(L.w * 2 * bw), bh);
+    g.fillStyle(C[13]); g.fillRect(Math.round(bx + L.pos * bw) - 1, by - 3, 3, bh + 6);
+    for (let i = 0; i < L.need; i++) { g.fillStyle(i < L.hits ? C[13] : C[3]); g.fillRect(bx + i * 12, by + 22, 9, 5); }
+    if (!this.lockTxt) this.lockTxt = [txt(this, 0, 54, '', 6), txt(this, 0, 110, '', 4)];
+    this.lockTxt[0].setText('PICKING THE LOCK').setPosition(Math.round(160 - 48), by - 20);
+    this.lockTxt[1].setText(`E: PICK   ESC: STOP   LOCKPICKS ${count('lockpick')}`).setPosition(Math.round(160 - 78), by + 31);
+    if (L.age < 4) return;
+    if (keys.pressed('pause')) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); return; }
+    if (keys.pressed('interact')) {
+      if (Math.abs(L.pos - L.c) <= L.w) {
+        L.hits++; sfx.play('select');
+        if (L.hits >= L.need) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); sfx.play('chest'); L.res(true); return; }
+        L.c = Math.random() * 0.7 + 0.15; L.w *= 0.85; L.speed *= 1.12;
+      } else {
+        sfx.play('guardbreak');
+        removeItem('lockpick', 1);
+        bus.emit('toast', 'LOCKPICK BROKE', 11);
+        L.hits = 0;
+        if (!count('lockpick')) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); }
+      }
+    }
   }
 
   hideBox() {
@@ -152,7 +202,7 @@ export default class HudScene extends Phaser.Scene {
 
   update(_, ms) {
     const dt = ms / 1000;
-    this.updateDialogue(dt);
+    if (this.lock) this.updateLock(dt); else this.updateDialogue(dt);
     const g = this.g;
     const pl = this.gs.player;
     g.clear();
@@ -200,7 +250,7 @@ export default class HudScene extends Phaser.Scene {
     // potions
     this.potIcons.forEach((p) => {
       box(p.x + 1, H - 20);
-      const n = S.inv[p.id] || 0;
+      const n = (S.inv[p.id] || 0) + (S.inv[p.id + '_g'] || 0);
       p.img.setAlpha(n ? 1 : 0.3);
       p.cnt.setText(n ? String(n) : '');
     });
@@ -249,10 +299,10 @@ export default class HudScene extends Phaser.Scene {
     // level-up banner (queue)
     if (!this.bannerObj && this.banners.length) {
       const b = this.banners.shift();
-      const d = SKILL_DEFS[b.skill];
+      const d = b.custom ? { name: b.title, perk: b.line } : SKILL_DEFS[b.skill];
       const c = this.add.container(0, 0);
-      const t1 = txt(this, W / 2, 54, d.name + ' ' + b.lv, 13).setScale(2).setOrigin(0.5, 0);
-      const t0 = txt(this, 0, 44, 'SKILL INCREASED', 15); t0.x = Math.round((W - t0.width) / 2);
+      const t1 = txt(this, W / 2, 54, b.custom ? d.name : d.name + ' ' + b.lv, b.custom ? 15 : 13).setScale(2).setOrigin(0.5, 0);
+      const t0 = txt(this, 0, 44, b.custom ? b.top : 'SKILL INCREASED', b.custom ? 13 : 15); t0.x = Math.round((W - t0.width) / 2);
       const t2 = txt(this, 0, 73, d.perk, 5); t2.x = Math.round((W - t2.width) / 2);
       c.add([t0, t1, t2]);
       this.bannerObj = { c, t: 3.2, w: Math.max(t1.displayWidth, t2.width) + 20 };

@@ -6,8 +6,9 @@ import { wrap, textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
 import { systemTab } from './menuSystem.js';
 import { mapTab } from './menuMap.js';
+import { perksTab } from './menuPerks.js';
 
-const STATUS = { active: 'ACTIVE', ready: 'READY', relic: 'ACTIVE', done: 'DONE' };
+const STATUS = { active: 'ACTIVE', ready: 'READY', relic: 'ACTIVE', sell: 'ACTIVE', done: 'DONE' };
 
 // Extra tabs registered into the menu. Each: { name, render, input, help }.
 export function tabs(m) {
@@ -47,6 +48,7 @@ export function tabs(m) {
         if (S.flags.ending && id === 'king') m.T(128, 146, 'ENDING: ' + { give: 'THE HEARTH', keep: 'THE WINTER KING', sell: 'A COLD BARGAIN' }[S.flags.ending], 15);
       },
     },
+    perksTab(m),
     mapTab(m),
     systemTab(m),
   ];

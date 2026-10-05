@@ -4,6 +4,9 @@ export const ITEMS = {
   mp_potion: { name: 'Mana Potion', type: 'potion', icon: ['potion', 15], restore: 'mp', amount: 60, value: 25, desc: 'Restores 60 mana.' },
   sp_potion: { name: 'Stamina Potion', type: 'potion', icon: ['potion', 8], restore: 'sp', amount: 70, value: 20, desc: 'Restores 70 stamina.' },
 
+  hp_potion_g: { name: 'Greater Health Potion', type: 'potion', icon: ['potion', 12], restore: 'hp', amount: 100, value: 70, desc: 'Restores 100 health.' },
+  mp_potion_g: { name: 'Greater Mana Potion', type: 'potion', icon: ['potion', 14], restore: 'mp', amount: 120, value: 70, desc: 'Restores 120 mana.' },
+
   rusty_sword: { name: 'Rusty Sword', type: 'weapon', icon: ['sword', 3], dmg: 9, value: 8, desc: 'Pitted and dull. Still a sword.' },
   iron_sword: { name: 'Iron Sword', type: 'weapon', icon: ['sword', 4], dmg: 13, value: 40, desc: 'A sturdy blade of the north.' },
   steel_sword: { name: 'Steel Sword', type: 'weapon', icon: ['sword', 5], dmg: 17, value: 90, desc: 'Well-forged and keen.' },
@@ -34,6 +37,10 @@ export const ITEMS = {
   bone_dust: { name: 'Bone Dust', type: 'ingredient', icon: ['dust', 5], value: 6, desc: 'Alchemy: used for ward and stamina brews.' },
   snowberry: { name: 'Snowberry', type: 'ingredient', icon: ['berry', 11], value: 4, desc: 'Alchemy: restores health.' },
   frost_lily: { name: 'Frost Lily', type: 'ingredient', icon: ['lily', 15], value: 7, desc: 'Alchemy: restores mana.' },
+  silver_locket: { name: 'Silver Locket', type: 'quest', icon: ['locket', 5], value: 120, desc: 'Engraved with a tiny wolf. Someone is missing this.' },
+  asta_charm: { name: "Asta's Charm", type: 'charm', icon: ['charm', 11], maxHp: 15, maxMp: 15, value: 30, desc: '+15 health and mana. Smells of woodsmoke.' },
+  pale_pelt: { name: 'Pale Pelt Mantle', type: 'armor', icon: ['armor', 6], armor: 0.24, value: 160, desc: 'Absorbs 24% damage. Still warm.' },
+  alpha_fang: { name: "Alpha's Fang", type: 'charm', icon: ['fang', 13], maxSp: 35, value: 80, desc: '+35 max stamina. A gift from one who was spared.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };
 

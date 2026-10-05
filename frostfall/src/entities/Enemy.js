@@ -5,6 +5,7 @@ import { dist, norm, rand, facingKind, dir8 } from '../util.js';
 import { txtS } from '../art/font.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import { S } from '../systems/state.js';
 import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
 import { elementMult } from '../systems/damage.js';
@@ -113,7 +114,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const range = this.cfg.detect * player.detectMult();
       const seen = !dead && d < range && sc.hasLOS(this.cx, this.cy, player.body.center.x, player.body.center.y);
       this.notice = seen ? this.notice + dt : Math.max(0, this.notice - dt * 0.7);
-      if (this.notice > (d < range * 0.5 ? 0.12 : 0.4)) this.alert();
+      if (this.notice > (d < range * 0.5 ? 0.12 : 0.4) * (S.perks.ghost ? 1.6 : 1)) this.alert();
       else if (this.notice > 0.06) {
         if (!this.marker || this.markStr !== '?') this.mark('?', 13, 0.25); else this.markT = 0.25;
       }

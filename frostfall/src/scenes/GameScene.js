@@ -18,9 +18,10 @@ import Chest from '../entities/Chest.js';
 import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot } from '../entities/Props.js';
+import { Sign, RestSpot, Prop, Herb } from '../entities/Props.js';
+import Follower from '../entities/Follower.js';
 import { intro as introScript } from '../data/dialogue.js';
-import { runScript } from '../systems/dialogue.js';
+import { runScript, say, choose } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
 import { txtS } from '../art/font.js';
 import { sfx, music, ambience } from '../audio/sfx.js';
@@ -108,6 +109,19 @@ export default class GameScene extends Phaser.Scene {
     });
 
     for (const e of built.entities) this.spawnEntity(e);
+    this.follower = null;
+    if (S.follower) this.spawnFollower();
+    this.on('follower', (on) => {
+      if (on) {
+        const rn = this.npcs.find((n) => n.id === 'ragna');
+        if (rn) { this.npcs = this.npcs.filter((n) => n !== rn); this.interactables = this.interactables.filter((i) => i !== rn); rn.shadow.destroy(); rn.nameTxt.destroy(); rn.destroy(); }
+        this.spawnFollower();
+      } else if (this.follower) {
+        this.follower.destroy(); this.follower = null;
+        const spec = this.built.entities.find((x) => x.t === 'npc' && x.id === 'ragna');
+        if (spec && this.mapId === 'village') this.spawnEntity(spec);
+      }
+    });
     if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
     for (const grp of [this.breakBodies, this.propBodies]) if (grp) { this.physics.add.collider(this.player, grp); this.physics.add.collider(this.enemies, grp); }
     if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
@@ -156,6 +170,7 @@ export default class GameScene extends Phaser.Scene {
       case 'enemy': this.addEnemy(e.kind, wx, wy); break;
       case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
       case 'npc': {
+        if (e.id === 'ragna' && S.follower) break;
         let ax = wx, ay = wy;
         if (e.id === 'sigrid' && this.opts.intro) { ax = 21.5 * T; ay = 15.5 * T; }
         const n = new Npc(this, ax, ay, e.id);
@@ -171,6 +186,13 @@ export default class GameScene extends Phaser.Scene {
           this.enemies.add(this.boss);
         }
         break;
+      case 'herb': { const h = new Herb(this, wx, wy, e.item); this.interactables.push(h); break; }
+      case 'prop': {
+        const pr = new Prop(this, wx, wy, e.tex, e.body);
+        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+        this.propBodies.add(pr);
+        break;
+      }
       case 'pot': {
         const b = new Breakable(this, wx, wy, e.skin);
         this.breakables.push(b);
@@ -201,6 +223,12 @@ export default class GameScene extends Phaser.Scene {
       }
       default: break;
     }
+  }
+
+  spawnFollower() {
+    if (this.follower) return;
+    this.follower = new Follower(this, this.player.x - 14, this.player.y + 2);
+    this.physics.add.collider(this.follower, this.layer);
   }
 
   addEnemy(kind, wx, wy) {
@@ -322,6 +350,23 @@ export default class GameScene extends Phaser.Scene {
     if (sigrid) sigrid.walkTo(sigrid.home.x, sigrid.home.y);
   }
 
+  // After a character level-up, offer +10 to an attribute (only when no fight is happening).
+  async askStat() {
+    this.askingStat = true;
+    await runScript(async () => {
+      while (S.pendingStat > 0) {
+        await say('LEVEL ' + S.charLevel, 'You feel stronger. Choose an attribute to improve.');
+        const c = await choose(['+10 HEALTH', '+10 MAGIC', '+10 STAMINA']);
+        if (c === 0) S.bonusHp += 10; else if (c === 1) S.bonusMp += 10; else S.bonusSp += 10;
+        S.pendingStat--;
+        recalc();
+        S.hp = Math.min(S.maxHp, S.hp + 10);
+        sfx.play('levelup');
+      }
+    });
+    this.askingStat = false;
+  }
+
   openMenu(tab, name) {
     ui.modal = true;
     sfx.play('select');
@@ -359,12 +404,15 @@ export default class GameScene extends Phaser.Scene {
     for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
     for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha(l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03); }
     for (const n of this.npcs) n.update(dt, this.player);
+    this.follower?.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i];
       p.update(dt, this.player);
       if (p.done) this.pickups.splice(i, 1);
     }
     this.updateInteract();
+    if ((S.pendingStat || 0) > 0 && !this.askingStat && this.player.mode === 'free' && !this.leaving
+      && !this.enemies.getChildren().some((e) => e.alerted && !e.dead)) this.askStat();
     if (this.pendingEnding && !ui.modal) {
       const k = this.pendingEnding; this.pendingEnding = null;
       ui.modal = true;
