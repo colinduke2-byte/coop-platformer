@@ -99,6 +99,11 @@ export default class GameScene extends Phaser.Scene {
 
     this.snow = def.snow ? new SnowFx(this, 55) : null;
     this.on('player:dead', () => { this.deadT = 0.001; });
+    this.on('levelup', (skill, lv) => {
+      sfx.play('levelup');
+      this.fx.ring(this.player.x, this.player.y + 4, 0.8, 0.6, 'ring', 0xf4d460);
+      this.fx.puff(this.player.x, this.player.y, 13, 14, 55, 0.7, -20);
+    });
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
     this.events.once('shutdown', () => {
       this.snow?.destroy();
@@ -251,6 +256,12 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  openMenu(tab, name) {
+    ui.modal = true;
+    sfx.play('select');
+    this.scene.launch('Menu', { tab, name });
+  }
+
   updateInteract() {
     const pl = this.player, c = pl.body.center;
     let best = null, bd = 22;
@@ -285,6 +296,11 @@ export default class GameScene extends Phaser.Scene {
       if (p.done) this.pickups.splice(i, 1);
     }
     this.updateInteract();
+    if (this.player.mode === 'free' && !this.leaving) {
+      if (keys.pressed('inventory')) this.openMenu(0);
+      else if (keys.pressed('journal')) this.openMenu(-1, 'QUESTS');
+      else if (keys.pressed('pause')) this.openMenu(-1, 'SYSTEM');
+    }
     if (this.t > 0.5 && !this.leaving) {
       const c = this.player.body.center;
       for (const ex of this.exits) if (ex.rect.contains(c.x, c.y)) { this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break; }

@@ -5,6 +5,7 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { SPELLS, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
+import { SKILL_DEFS } from '../systems/skills.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
@@ -45,6 +46,10 @@ export default class HudScene extends Phaser.Scene {
     this.onToast = (text, col = 6) => { this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4 }); if (this.toasts.length > 5) this.toasts.shift().t.destroy(); };
     this.onArea = (name) => { this.area?.destroy(); this.area = txt(this, 0, 36, name, 5); this.area.x = Math.round((W - this.area.width) / 2); this.areaT = 3; };
     bus.on('toast', this.onToast); bus.on('area', this.onArea);
+    this.banners = [];
+    this.bannerObj = null;
+    this.onLevel = (skill, lv) => this.banners.push({ skill, lv });
+    bus.on('levelup', this.onLevel);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, 0, 74, 'YOU DIED', 11).setScale(3);
@@ -53,7 +58,7 @@ export default class HudScene extends Phaser.Scene {
 
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); });
   }
 
   update(_, ms) {
@@ -127,6 +132,28 @@ export default class HudScene extends Phaser.Scene {
       this.area.setAlpha(Math.max(0, Math.min(1, this.areaT)));
       g.fillStyle(C[0], 0.5 * Math.max(0, Math.min(1, this.areaT))); g.fillRect(this.area.x - 4, 34, this.area.width + 8, 11);
       if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
+    }
+
+    // level-up banner (queue)
+    if (!this.bannerObj && this.banners.length) {
+      const b = this.banners.shift();
+      const d = SKILL_DEFS[b.skill];
+      const c = this.add.container(0, 0);
+      const t1 = txt(this, 0, 54, d.name + ' ' + b.lv, 13).setScale(2);
+      t1.x = Math.round((W - t1.width * 2) / 2);
+      const t0 = txt(this, 0, 44, 'SKILL INCREASED', 15); t0.x = Math.round((W - t0.width) / 2);
+      const t2 = txt(this, 0, 73, d.perk, 5); t2.x = Math.round((W - t2.width) / 2);
+      c.add([t0, t1, t2]);
+      this.bannerObj = { c, t: 3.2, w: Math.max(t1.width * 2, t2.width) + 20 };
+    }
+    if (this.bannerObj) {
+      const b = this.bannerObj;
+      b.t -= dt;
+      const a = Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
+      b.c.setAlpha(a);
+      g.fillStyle(C[0], 0.7 * a); g.fillRect((W - b.w) / 2, 40, b.w, 44);
+      g.fillStyle(C[13], a); g.fillRect((W - b.w) / 2, 40, b.w, 1); g.fillRect((W - b.w) / 2, 83, b.w, 1);
+      if (b.t <= 0) { b.c.destroy(); this.bannerObj = null; }
     }
 
     // sneak indicator

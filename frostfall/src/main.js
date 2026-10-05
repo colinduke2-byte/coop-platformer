@@ -6,6 +6,7 @@ import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import GameScene from './scenes/GameScene.js';
 import HudScene from './scenes/HudScene.js';
+import MenuScene from './scenes/MenuScene.js';
 
 const q = new URLSearchParams(location.search);
 
@@ -20,7 +21,7 @@ const game = new Phaser.Game({
   roundPixels: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: q.get('physics') === '1' } },
-  scene: [BootScene, TitleScene, GameScene, HudScene],
+  scene: [BootScene, TitleScene, GameScene, HudScene, MenuScene],
 });
 
 installKeys(game);
