@@ -3,7 +3,7 @@ import { launch, check, failCount } from './harness.mjs';
 const KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyJ', 'KeyK', 'KeyL', 'KeyQ', 'KeyR', 'ShiftLeft', 'KeyE', 'Digit1', 'Digit2', 'Digit3', 'KeyI', 'KeyO', 'Escape', 'Tab', 'Enter'];
 const seconds = Number(process.argv[2] || 30);
 const h = await launch();
-for (const [map, spawn] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry']]) {
+for (const [map, spawn] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in']]) {
   await h.open(`scene=game&map=${map}&spawn=${spawn}`);
   await h.sleep(500);
   await h.ev(() => { window.__ff.S.flags.introDone = true; });
@@ -24,7 +24,8 @@ for (const [map, spawn] of [['village', 'start'], ['forest', 'west'], ['crypt', 
     const bad = [S.hp, S.mp, S.sp, S.gold, S.arrows, g.player.x, g.player.y].some((v) => typeof v !== 'number' || Number.isNaN(v));
     return { bad, map: S.map, hp: S.hp, sp: S.sp, mp: S.mp, arrows: S.arrows, gold: S.gold, scenes: window.__ff.game.scene.getScenes(true).map((s) => s.scene.key) };
   });
-  console.log(`  ${map}: ${n} inputs, state ${JSON.stringify(st)}`);
+  const fps = await h.ev(() => Math.round(window.__ff.game.loop.actualFps));
+  console.log(`  ${map}: ${n} inputs, ${fps} fps (software renderer), state ${JSON.stringify(st)}`);
   check(`${map}: no NaN / bad state`, !st.bad);
   check(`${map}: stayed alive & responsive`, st.scenes.includes('Game') || st.scenes.includes('Title'));
   check(`${map}: no exceptions`, h.errors.length === 0, h.errors.slice(0, 3).join('\n'));

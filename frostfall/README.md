@@ -1,83 +1,82 @@
 # FROSTFALL
 
 A top-down, 8-bit, Skyrim-inspired action RPG for the browser.
-**Phaser 3 + Vite**, 320x180 internal resolution, `pixelArt` mode, 16x16 tiles,
-a fixed 16-colour snowy palette. **There are no asset files**: every sprite, tile,
-icon, font glyph and sound is generated in code.
+**Phaser 3 + Vite**, 320x180 internal resolution, `pixelArt` mode, 16x16 tiles, a fixed 16-colour snowy palette.
+**There are no asset files**: every sprite, tile, icon, font glyph and sound is generated in code.
 
 ```
 npm install
 npm run dev        # http://localhost:5173
-npm run build      # static site in dist/ (open with any static server)
-npm test           # headless-browser tests for every stage (needs Playwright + Chromium)
+npm run build      # static site in dist/
+npm test           # unit + browser tests for every system (needs Chromium via Playwright)
+npm run test:unit  # pure-logic tests only (no browser)
+npm run balance    # balance bot: fights each encounter several times
+npm run monkey     # random-input stress test on every map
 ```
 
-Handy URL flags (dev only): `?scene=game` skips the title, `&map=forest|crypt|village`,
-`&spawn=west|crypt|entry|start`, `?renderer=canvas` forces the Canvas renderer.
-In the console, `__ff.S` is the live game state (gold, inventory, quests...).
+Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|hall|lodge|shop`, `&spawn=...`,
+`?renderer=canvas` forces Canvas, `?touch=1` shows the touch controls. In the console `__ff.S` is the live game state. F3 shows FPS / entity counts.
+
+## World
+
+Hollowfrost Village (with three enterable houses) -> Pine Forest (wolves, bandit camp, herbs, hidden glade) ->
+Crypt of the Hollow King (boss Jarl Valdrek) and Frostwind Pass (boss Grimfang). A 12-minute day/night cycle and
+changing weather affect stealth; villagers go indoors at night.
 
 ## Controls
 
 | Key | Action |
 |---|---|
-| WASD / arrows | Move (8 directions) |
+| WASD / arrows | Move (8 directions). Ice is slippery. |
 | Space | Dodge roll (brief invincibility, costs stamina) |
-| J | Sword swing (stamina). Tap 3 times quickly for a combo with a heavy finisher |
-| K (hold, release) | Bow: hold to charge, release to fire (arrows + stamina) |
-| L | Cast the selected spell (mana) |
-| Q / Tab | Swap spell: Fireball / Frost Bolt (slows) |
+| J | Sword. Tap 3 times for a combo with a heavy finisher |
+| K (hold, release) | Bow: hold to charge, release to fire |
+| L | Cast the selected spell. Q / Tab swaps (locked spells are skipped) |
 | R | Shout "FUS": pushes enemies back, shakes the screen (12 s cooldown) |
-| C / Shift (hold) | Sneak: smaller detection radius, x3 sword / x2 bow sneak attacks |
-| E / Enter | Talk, open chests, advance dialogue |
+| F (hold) | Block with a shield. Raise it just before a hit to parry |
+| C / Shift (hold) | Sneak: sneak attacks x3 (melee) / x2 (bow). Also: E on a villager = pickpocket |
+| E / Enter | Talk, open, read, gather, rest, sleep, pick locks |
 | 1 / 2 / 3 | Health / Mana / Stamina potion |
-| I / O / M / Esc | Pack & equipment / Quest journal / Map (fog of war) / Pause (save, load, volume) |
-| Gamepad | Auto-detected: stick/d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, Start pause |
+| I / O / M / Esc | Pack and perks / journal / map / pause menu |
+| Mouse (option) | click = sword, right-click = bow, middle = spell, wheel = swap, aims at the pointer |
+| Touch | on-screen stick and buttons on touch devices |
+| Gamepad | stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, Start pause |
+
+All keyboard keys can be rebound in **Pause > System > Controls**.
+
+## Systems at a glance
+
+* **Combat**: sword combo, shields (block / parry), two-handed and dual-wield, bow with charge and recoverable arrows,
+  5 spells, shout, finishing blows, enchantments, elemental weaknesses, enemy telegraphs, crowd tactics, 11 enemy types, 2 bosses.
+* **Progression**: 5 skills that level by use (Archery, One-Handed, Destruction, Restoration, Sneak), character level,
+  15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower.
+* **Story**: 5 quests with real choices (the Frostheart ending, Asta's locket, sparing or killing Grimfang).
+* **UX**: quest tracking with map/HUD markers, one-time tooltips, filterable inventory, fog-of-war map, lore and bestiary,
+  3 save slots with backups and mid-boss saves, difficulty, screen-shake and flash options, integer scaling.
+
+See [CHANGELOG.md](CHANGELOG.md) for everything added in detail and [IMPROVEMENTS.md](IMPROVEMENTS.md) for what is left.
 
 ## Code layout
 
 ```
 src/
-  main.js              Phaser config (320x180, pixelArt, FIT scaling), scene list
-  config.js            palette (16 colours), tile ids, key bindings
-  art/                 sprites.js (characters, tiles, icons, fx), font.js (5x7 pixel font), fx.js, snow.js
-  audio/sfx.js         Web Audio chiptune SFX + tiny music sequencer
-  data/                maps.js + mapkit.js, items.js, enemies.js, quests.js, dialogue.js (NPC scripts)
-  entities/            Player, Enemy (+Boss), Projectile, Pickup, Chest, Npc
-  systems/             state (the save object), keys, bus (events), skills, stats, inventory, quests, dialogue, save
-  scenes/              Boot, Title, Intro, Game, Hud, Menu (+tabs), Ending
-test/                  Playwright tests: stage1..8, death, webgl; run all with `npm test`
+  main.js, config.js   Phaser config (320x180, pixelArt, FIT scaling), palette, key bindings
+  art/                 sprites.js (characters, tiles, icons, props), font.js (5x7 pixel font), fx.js (pooled particles), snow.js
+  audio/sfx.js         Web Audio SFX, music sequencer (sections, combat layer, stinger), ambience
+  data/                tuning.js (all feel numbers), maps.js + mapkit.js, items, enemies, quests, perks, lore, dialogue + services
+  entities/            Player (+ playerMagic), Enemy, Boss, Grimfang, Projectile, Pickup, Chest, Npc, Follower, Breakable, Props
+  systems/             state, damage (pure maths), skills, stats, inventory, quests, save, settings, keys, tips, bus, dialogue
+  world/               GameScene mixins: pathing, fog, loot, zones, lighting (day/night, weather, darkness layer)
+  scenes/              Boot, Title, Intro, Game, Hud, Menu (+ tabs), Ending
+  ui/touch.js          on-screen touch controls
+test/                  unit/, stage1..14, death, webgl, monkey, balance (see `npm test`)
 ```
 
-## What was built, stage by stage (and how to test it by hand)
+## Notes and known limits
 
-1. **Setup / room / movement** - `npm run dev`, press Enter, skip the intro with E. Walk with WASD; trees, houses and fences block you; the camera follows and snow falls.
-2. **Melee, roll, stamina, enemy** - J swings (watch the SP bar drain and refill), Space rolls (you pass through hits). Draugr telegraph with a red flash and `!` before striking.
-3. **Bow, magic, shout** - hold K and release (full charge flashes gold and hits harder, costs more stamina), L casts, Q swaps Fireball / Frost, R shouts.
-4. **Enemies and loot** - walk east out of the village into the Pine Forest: wolves lunge after a growl, bandits swing, archers show a red aim line. Kills drop gold, arrows, potions and gear. Open chests with E.
-5. **Inventory / skills** - I opens the pack: E equips, unequips or drinks. The Skills tab shows XP bars. Use a skill enough and a level-up banner appears.
-6. **Village, NPCs, quests** - Elder Sigrid, Bjorn the hunter, Mirra the merchant. O opens the journal.
-7. **Crypt and boss** - the stone gate in the north-east of the forest. Jarl Valdrek has 2 phases (below 50% HP he roars, summons draugr and gains frost nova + charge).
-8. **Save/load, pause, sound** - Esc opens the pause menu. Save and Continue use `localStorage` (key `frostfall_save_v1`).
-
-## Story and the choice
-
-Take **Wolves at the Gate** from Bjorn (kill 3 wolves) and **The Hollow King** from Sigrid.
-After the boss drops the **Frostheart**, bring it to the village. Sigrid asks you to seal it in the hearth
-(**warm ending**) or you can keep it (**cold ending**); Mirra also offers 400 gold for it (**bargain ending**).
-The village visuals and NPC dialogue change afterwards.
-
-## Extras added in the polish pass
-
-* **Readability:** 1px outlines on every character, a lighter trodden-path tile, name tags that fade in only when you are near an NPC.
-* **Stealth cues:** enemies show a yellow `?` while they are noticing you, `!` once alerted.
-* **Combat:** 3-hit sword combo (the third is a heavy, wider finisher with extra hit-stop).
-* **World:** smashable pots, barrels and urns with small loot; readable signs; campfires you can rest at (full heal + save); two ambient villagers (a guard who gives gameplay tips, and a child).
-* **Map:** `M` opens a fog-of-war map showing exits, campfires, chests, people and the boss.
-* **Audio:** footsteps in the snow, wind in the snowy zones, a cold drone with dripping water in the crypt.
-* **Tests:** `node test/monkey.mjs 40` mashes random keys on every map and fails on any exception or NaN.
-
-## Notes
-
-* Base art uses only the 16 palette colours. Lighting, fades, damage tints and the dim overlay in the crypt blend those colours, so transient in-between shades appear on screen.
-* Feel numbers live at the top of `src/entities/Player.js` (`P`), `src/entities/Boss.js` (`B`) and `src/data/enemies.js`.
-* Skills cap at level 20; bonuses are in `src/systems/skills.js`.
+* Base art uses only the 16 palette colours. Lighting, fades, hit tints and the darkness layer blend them, so in-between shades appear on screen.
+* Feel and balance numbers live in `src/data/tuning.js` and `src/data/enemies.js`. The balance bot is a crude auto-player
+  (it reacts to telegraphs after 0.28 s): treat its numbers as a sanity check, not as a substitute for playtesting.
+* **Not verified**: Firefox and Safari (only Chromium was available), a physical gamepad (tested with a simulated pad),
+  touch on a real device (tested with synthetic pointer events), and the GitHub Actions workflow (written, not run).
+* The 5x7 pixel font is uppercase only; at very small window sizes use the integer-scaling or fullscreen options.

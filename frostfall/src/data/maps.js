@@ -139,6 +139,7 @@ function buildForest() {
   for (const [x, y, item] of [[8, 17, 'snowberry'], [16, 17, 'snowberry'], [26, 17, 'snowberry'], [33, 17, 'snowberry'], [37, 12, 'snowberry'], [20, 10, 'frost_lily'], [9, 6, 'frost_lily'], [29, 9, 'frost_lily'], [23, 16, 'frost_lily'], [36, 9, 'snowberry']]) g.add({ t: 'herb', item, x, y });
   g.add({ t: 'chest', id: 'camp', x: 50, y: 26, lock: 'med', loot: [{ item: 'silver_locket' }, { item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
   g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { item: 'hunting_knife' }, { item: 'lockpick', n: 4 }, { arrows: 10 }] });
+  g.add({ t: 'lore', id: 'bandit', tex: 'book', x: 44, y: 21 });
   g.add({ t: 'pickup', x: 6, y: 16, spec: { type: 'arrows', n: 6 } });
   g.add({ t: 'pickup', x: 20, y: 14, spec: { type: 'item', id: 'hp_potion' } });
   g.add({ t: 'pickup', x: 36, y: 7, spec: { type: 'arrows', n: 5 } });

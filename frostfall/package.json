@@ -8,8 +8,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node test/run.mjs"
+    "test": "node test/run.mjs",
+    "test:unit": "node test/unit/unit.mjs",
+    "balance": "node test/balance.mjs",
+    "monkey": "node test/monkey.mjs 40"
   },
-  "dependencies": { "phaser": "3.90.0" },
-  "devDependencies": { "vite": "^8.3.2" }
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.2",
+    "playwright": "^1.56.1"
+  }
 }

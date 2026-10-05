@@ -86,8 +86,9 @@ await reset(); await dummy('warden', 14);
 await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: -1, y: 0 }; });
 await tap('KeyJ', 60); await h.sleep(250);
 check('Draugr Warden blocks frontal sword hits', (await enemy()).hp === 60);
-await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; window.__ff.S.sp = 100; const p = window.__ff.game.scene.getScene('Game').player; p.lockT = 0; p.swing = null; });
+await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; e.guardBroken = 0; window.__ff.S.sp = 100; const p = window.__ff.game.scene.getScene('Game').player; p.lockT = 0; p.swing = null; });
 await h.sleep(500);
+await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; });
 await tap('KeyJ', 60); await h.sleep(250);
 check('...but takes damage from behind', (await enemy()).hp < 60);
 
@@ -110,10 +111,11 @@ await tap('KeyJ', 60); await h.sleep(250);
 
 // ---- arrow recovery
 await reset();
-await G(() => { window.__ff.S.arrows = 10; });
+await G(() => { window.__ff.S.arrows = 10; window.__rnd = Math.random; Math.random = () => 0.1; });
 await press('KeyK'); await h.sleep(900); await rel('KeyK'); await h.sleep(2500);
+await G(() => { Math.random = window.__rnd; });
 const rec = await G(() => ({ arrows: window.__ff.S.arrows, pk: window.__ff.game.scene.getScene('Game').pickups.filter((p) => p.spec.type === 'arrows').length }));
-check('arrows can be recovered', rec.arrows === 9 || rec.pk > 0, JSON.stringify(rec));
+check('arrows can be recovered', rec.arrows > 9 || rec.pk > 0, JSON.stringify(rec));
 
 // ---- difficulty scaling
 await reset();

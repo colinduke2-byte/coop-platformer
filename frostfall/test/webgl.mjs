@@ -1,10 +1,12 @@
 // Smoke test with the default (WebGL) renderer.
-import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
+const pw = await import('playwright').catch(() => import('/opt/node-tools/node_modules/playwright/index.mjs'));
+const { chromium } = pw;
 import { createServer } from 'vite';
 const server = await createServer({ root: new URL('..', import.meta.url).pathname, server: { port: 0 }, logLevel: 'error' });
 await server.listen();
 const url = server.resolvedUrls.local[0];
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const glArgs = ['--no-sandbox', '--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: glArgs }).catch(() => chromium.launch({ args: glArgs }));
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

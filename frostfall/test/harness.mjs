@@ -1,5 +1,7 @@
 // Shared Playwright harness: boots vite, opens the game in headless Chromium.
-import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
+// Use the project's Playwright when installed (CI), else the sandbox copy.
+const pw = await import('playwright').catch(() => import('/opt/node-tools/node_modules/playwright/index.mjs'));
+const { chromium } = pw;
 import { createServer } from 'vite';
 import fs from 'node:fs';
 
