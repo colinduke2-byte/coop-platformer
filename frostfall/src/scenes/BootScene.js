@@ -14,6 +14,7 @@ export default class BootScene extends Phaser.Scene {
     }
     const q = new URLSearchParams(location.search);
     if (q.get('scene') === 'game') this.scene.start('Game', { map: q.get('map') || 'village', spawn: q.get('spawn') || 'start' });
+    else if (q.get('scene') === 'intro') this.scene.start('Intro');
     else this.scene.start('Title');
   }
 }

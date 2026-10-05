@@ -34,7 +34,7 @@ export default class TitleScene extends Phaser.Scene {
     this.prompt.setVisible(Math.floor(this.t * 2) % 2 === 0);
     if (keys.pressed('interact') || keys.pressed('roll')) {
       resetState();
-      this.scene.start('Game', { map: 'village', spawn: 'start' });
+      this.scene.start('Intro');
     }
   }
 }

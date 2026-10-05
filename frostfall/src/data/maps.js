@@ -46,6 +46,9 @@ function buildVillage() {
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.ROCK, 8, 4);
+  g.add({ t: 'npc', id: 'sigrid', x: 19, y: 9 });
+  g.add({ t: 'npc', id: 'bjorn', x: 7, y: 11 });
+  g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
   g.add({ t: 'spawn', name: 'start', x: 19, y: 15 });
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
   g.add({ t: 'fire', x: 19, y: 13 });

@@ -1,14 +1,12 @@
 import { launch } from './harness.mjs';
 const h = await launch();
-await h.open('scene=game&map=forest&spawn=west');
-await h.sleep(600);
-const S = (l) => h.ev((l) => { const g = window.__ff.game.scene.getScene('Game'); const p = g.player; return { l, mode: p.mode, lockT: +p.lockT.toFixed(2), sw: !!p.swing, drawing: p.drawing, stun: p.stunT, sp: window.__ff.S.sp, e: g.enemies.getChildren().map((e) => e.hp) }; }, l);
-await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(10.5*16, 10*16+8); p.invuln = 99; p.face={x:1,y:0}; const e = g.addEnemy('archer', p.x + 70, p.y); });
-await h.sleep(3500);
-console.log(JSON.stringify(await S('after archer')));
-await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.invuln = 99; p.lockT = 0; p.swing = null; const e = g.addEnemy('bandit', p.x + 12, p.y); e.hp = 1; e.alerted = true; });
-await h.ev(() => window.__ff.keys._press('KeyJ')); await h.sleep(60); await h.ev(() => window.__ff.keys._release('KeyJ'));
-console.log(JSON.stringify(await S('after tap')));
+await h.open('scene=game');
+await h.sleep(800);
+const info = () => h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const hud = window.__ff.game.scene.getScene('Hud'); return { modal: window.__ff.game.scene.getScene('Game') && (g.target?.id || null), dlg: hud.dlg && { n: hud.dlg.name, p: hud.dlg.p, n2: hud.dlg.n, age: hud.dlg.age, ch: !!hud.dlg.choices }, pm: g.player.mode, lockT: g.player.lockT, pos: [Math.round(g.player.x), Math.round(g.player.y)] }; });
+await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const n = g.npcs.find((n) => n.id === 'bjorn'); console.log('npc', n.x, n.y); g.player.setPosition(n.x, n.y + 18); });
 await h.sleep(300);
-console.log(JSON.stringify(await S('later')));
+console.log(JSON.stringify(await info()));
+await h.ev(() => window.__ff.keys._press('KeyE')); await h.sleep(80); await h.ev(() => window.__ff.keys._release('KeyE'));
+for (let i = 0; i < 8; i++) { await h.sleep(200); console.log(JSON.stringify(await info())); }
+console.log(h.errors.join('\n'));
 await h.close();

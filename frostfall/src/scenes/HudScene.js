@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
-import { txt, textW } from '../art/font.js';
+import { txt, textW, wrap, normText } from '../art/font.js';
+import { keys } from '../systems/keys.js';
+import { ui } from '../systems/ui.js';
+import { dialogue } from '../systems/dialogue.js';
+import { sfx } from '../audio/sfx.js';
+import { QUESTS, activeQuestIds } from '../data/quests.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { SPELLS, P } from '../entities/Player.js';
@@ -50,6 +55,18 @@ export default class HudScene extends Phaser.Scene {
     this.bannerObj = null;
     this.onLevel = (skill, lv) => this.banners.push({ skill, lv });
     bus.on('levelup', this.onLevel);
+    // dialogue box
+    this.dlg = null;
+    this.dg = this.add.graphics().setDepth(10);
+    this.dName = txt(this, 14, H - 61, '', 13).setDepth(11);
+    this.dBody = txt(this, 14, H - 49, '', 6).setDepth(11);
+    this.dChoice = [0, 1, 2, 3, 4, 5].map((i) => txt(this, 22, H - 52 + i * 9, '', 6).setDepth(11));
+    this.dMore = txt(this, W - 22, H - 15, '\u25B6', 13).setDepth(11);
+    dialogue.hud = this;
+    this.questTxt = [txt(this, 0, 26, '', 4), txt(this, 0, 35, '', 4)];
+    this.hint = null;
+    this.onHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 5, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; };
+    bus.on('hint', this.onHint);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, 0, 74, 'YOU DIED', 11).setScale(3);
@@ -58,11 +75,85 @@ export default class HudScene extends Phaser.Scene {
 
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; });
+  }
+
+  // ------------------------------------------------------- dialogue API
+  say(name, text) {
+    return new Promise((res) => {
+      const lines = wrap(normText(text), 47).split('\n');
+      const pages = [];
+      for (let i = 0; i < lines.length; i += 3) pages.push(lines.slice(i, i + 3).join('\n'));
+      this.name = name;
+      this.dlg = { name, pages, p: 0, n: 0, t: 0, res, choices: null, age: 0 };
+    });
+  }
+
+  choose(opts) {
+    return new Promise((res) => {
+      this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, sel: 0, age: 0 };
+    });
+  }
+
+  hideBox() {
+    this.dlg = null;
+    this.dg.clear();
+    this.dName.setText(''); this.dBody.setText(''); this.dMore.setVisible(false);
+    this.dChoice.forEach((c) => c.setText(''));
+  }
+
+  updateDialogue(dt) {
+    const d = this.dlg, g = this.dg;
+    g.clear();
+    if (!d) { this.dMore.setVisible(false); return; }
+    d.age++;
+    const h = d.choices ? 14 + Math.min(6, d.choices.length) * 9 : 52;
+    const top = H - 6 - h;
+    g.fillStyle(C[0]); g.fillRect(6, top, W - 12, h);
+    g.fillStyle(C[3]); g.fillRect(7, top + 1, W - 14, h - 2);
+    g.fillStyle(C[1]); g.fillRect(8, top + 2, W - 16, h - 4);
+    if (d.name) {
+      const w = textW(d.name) + 10;
+      g.fillStyle(C[0]); g.fillRect(10, top - 8, w, 12);
+      g.fillStyle(C[3]); g.fillRect(11, top - 7, w - 2, 10);
+      g.fillStyle(C[2]); g.fillRect(12, top - 6, w - 4, 8);
+    }
+    this.dName.setText(d.name || '').setPosition(15, top - 5);
+    if (d.choices) {
+      this.dBody.setText('');
+      this.dMore.setVisible(false);
+      this.dChoice.forEach((c, i) => {
+        const o = d.choices[i];
+        c.setText(o ? (i === d.sel ? '\u25B6 ' : '  ') + o : '');
+        c.setFont(i === d.sel ? 'f13' : 'f6');
+        c.setPosition(14, top + 7 + i * 9);
+      });
+      if (d.age < 3) return;
+      if (keys.pressed('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
+      if (keys.pressed('up')) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.play('move'); }
+      if (keys.pressed('interact')) { sfx.play('select'); const r = d.res, s = d.sel; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); r(s); }
+      return;
+    }
+    this.dChoice.forEach((c) => c.setText(''));
+    const page = d.pages[d.p];
+    if (d.n < page.length) {
+      d.t += dt;
+      while (d.t > 0.022 && d.n < page.length) { d.t -= 0.022; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play('blip'); }
+      if (d.age > 2 && keys.pressed('interact')) d.n = page.length;
+    } else if (d.age > 2) {
+      this.dMore.setVisible(Math.floor(this.time.now / 300) % 2 === 0).setPosition(W - 22, H - 16);
+      if (keys.pressed('interact')) {
+        if (d.p < d.pages.length - 1) { d.p++; d.n = 0; d.t = 0; sfx.play('select'); }
+        else { const r = d.res; this.dlg = null; this.dMore.setVisible(false); r(); }
+      }
+    }
+    this.dBody.setText(page.slice(0, d.n)).setPosition(15, top + 6);
+    if (d.n < page.length) this.dMore.setVisible(false);
   }
 
   update(_, ms) {
     const dt = ms / 1000;
+    this.updateDialogue(dt);
     const g = this.g;
     const pl = this.gs.player;
     g.clear();
@@ -132,6 +223,22 @@ export default class HudScene extends Phaser.Scene {
       this.area.setAlpha(Math.max(0, Math.min(1, this.areaT)));
       g.fillStyle(C[0], 0.5 * Math.max(0, Math.min(1, this.areaT))); g.fillRect(this.area.x - 4, 34, this.area.width + 8, 11);
       if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
+    }
+
+    // quest tracker
+    const ids = activeQuestIds().slice(0, 2);
+    this.questTxt.forEach((t, i) => {
+      const id = ids[i];
+      if (!id || ui.modal) { t.setText(''); return; }
+      const line = QUESTS[id].short(S.quests[id]).slice(0, 34);
+      t.setText(line); t.x = W - 4 - t.width; t.y = 26 + i * 9;
+      g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
+    });
+    if (this.hint) {
+      this.hintT -= dt;
+      g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, 2, this.hint.width + 8, this.hintH);
+      this.hint.setAlpha(Math.min(1, this.hintT));
+      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; }
     }
 
     // level-up banner (queue)
