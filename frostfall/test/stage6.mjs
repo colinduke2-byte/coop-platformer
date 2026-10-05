@@ -82,7 +82,10 @@ await tap('KeyE');
 await h.sleep(200);
 // choose item 0 (health potion), then Leave
 const hp0 = await S('inv.hp_potion');
-await talk([1, 0, 0, 5, 3]);
+await talk([1, 0]);
+await h.sleep(500);
+await tap('KeyE', 60); await h.sleep(150); await tap('Escape', 60); await h.sleep(400);
+await talk([3]);
 check('Mirra sells a health potion for gold', await S('inv.hp_potion') === hp0 + 1 && await S('gold') === 75, `gold=${await S('gold')}`);
 
 // ------------------------------------------------------------- journal
