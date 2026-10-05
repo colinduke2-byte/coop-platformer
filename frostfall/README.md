@@ -22,7 +22,7 @@ In the console, `__ff.S` is the live game state (gold, inventory, quests...).
 |---|---|
 | WASD / arrows | Move (8 directions) |
 | Space | Dodge roll (brief invincibility, costs stamina) |
-| J | Sword swing (stamina) |
+| J | Sword swing (stamina). Tap 3 times quickly for a combo with a heavy finisher |
 | K (hold, release) | Bow: hold to charge, release to fire (arrows + stamina) |
 | L | Cast the selected spell (mana) |
 | Q / Tab | Swap spell: Fireball / Frost Bolt (slows) |
@@ -30,7 +30,8 @@ In the console, `__ff.S` is the live game state (gold, inventory, quests...).
 | C / Shift (hold) | Sneak: smaller detection radius, x3 sword / x2 bow sneak attacks |
 | E / Enter | Talk, open chests, advance dialogue |
 | 1 / 2 / 3 | Health / Mana / Stamina potion |
-| I / O / Esc | Pack & equipment / Quest journal / Pause (save, load, volume) |
+| I / O / M / Esc | Pack & equipment / Quest journal / Map (fog of war) / Pause (save, load, volume) |
+| Gamepad | Auto-detected: stick/d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, Start pause |
 
 ## Code layout
 
@@ -64,6 +65,16 @@ Take **Wolves at the Gate** from Bjorn (kill 3 wolves) and **The Hollow King** f
 After the boss drops the **Frostheart**, bring it to the village. Sigrid asks you to seal it in the hearth
 (**warm ending**) or you can keep it (**cold ending**); Mirra also offers 400 gold for it (**bargain ending**).
 The village visuals and NPC dialogue change afterwards.
+
+## Extras added in the polish pass
+
+* **Readability:** 1px outlines on every character, a lighter trodden-path tile, name tags that fade in only when you are near an NPC.
+* **Stealth cues:** enemies show a yellow `?` while they are noticing you, `!` once alerted.
+* **Combat:** 3-hit sword combo (the third is a heavy, wider finisher with extra hit-stop).
+* **World:** smashable pots, barrels and urns with small loot; readable signs; campfires you can rest at (full heal + save); two ambient villagers (a guard who gives gameplay tips, and a child).
+* **Map:** `M` opens a fog-of-war map showing exits, campfires, chests, people and the boss.
+* **Audio:** footsteps in the snow, wind in the snowy zones, a cold drone with dripping water in the crypt.
+* **Tests:** `node test/monkey.mjs 40` mashes random keys on every map and fails on any exception or NaN.
 
 ## Notes
 

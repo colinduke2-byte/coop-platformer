@@ -44,6 +44,7 @@ function buildVillage() {
   for (let y = 2; y < 24; y++) for (let x = 2; x < 38; x++) g.res[y][x] = g.t[y][x] !== TILE.SNOW && g.t[y][x] !== TILE.SNOW2;
   for (let y = 9; y <= 18; y++) for (let x = 14; x <= 26; x++) g.res[y][x] = true;
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
+  for (const [x, y] of [[36, 11], [34, 12], [24, 19], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9]]) g.clear(x, y);
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.ROCK, 8, 4);
   g.add({ t: 'npc', id: 'sigrid', x: 19, y: 9 });
@@ -51,7 +52,11 @@ function buildVillage() {
   g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
   g.add({ t: 'spawn', name: 'start', x: 19, y: 15 });
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
-  g.add({ t: 'fire', x: 19, y: 13 });
+  g.add({ t: 'fire', x: 19, y: 13, rest: true });
+  g.add({ t: 'npc', id: 'guard', x: 34, y: 12 });
+  g.add({ t: 'npc', id: 'child', x: 24, y: 19 });
+  g.add({ t: 'sign', x: 36, y: 11, text: ['PINE FOREST, EAST.', 'WOLVES ON THE TRAIL. TRAVEL ARMED. - BJORN'] });
+  for (const [x, y, skin] of [[16, 8, 'pot'], [22, 8, 'barrel'], [4, 10, 'pot'], [10, 9, 'barrel'], [31, 11, 'pot'], [34, 10, 'barrel'], [13, 16, 'pot'], [26, 16, 'pot'], [27, 10, 'barrel'], [24, 9, 'pot']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'exit', x: 38, y: 12, w: 2, h: 3, to: 'forest', spawn: 'west' });
   g.add({ t: 'glow', x: 19, y: 13, r: 52, col: 12 });
   g.add({ t: 'glow', x: 32, y: 8, r: 24, col: 13 });
@@ -60,7 +65,7 @@ function buildVillage() {
 }
 
 export const MAPS = {
-  village: { name: 'Hollowfrost Village', snow: true, build: buildVillage, tint: 0, music: 'village' },
+  village: { name: 'Hollowfrost Village', snow: true, ambience: 'wind', build: buildVillage, tint: 0, music: 'village' },
 };
 
 function buildForest() {
@@ -86,13 +91,17 @@ function buildForest() {
   g.set(43, 4, TILE.GRAVE); g.set(49, 4, TILE.GRAVE); g.set(41, 5, TILE.ROCK); g.set(51, 5, TILE.ROCK);
   g.set(46, 23, TILE.FIRE);
   g.reserve(0, 0, 1, 1);
+  for (const [x, y] of [[5, 13], [22, 11]]) g.clear(x, y);
   g.scatter(TILE.PINE, 250, 21);
   g.scatter(TILE.ROCK, 22, 22);
   g.add({ t: 'spawn', name: 'west', x: 3, y: 15 });
   g.add({ t: 'spawn', name: 'crypt', x: 46, y: 4 });
   g.add({ t: 'exit', x: 0, y: 14, w: 2, h: 3, to: 'village', spawn: 'east' });
   g.add({ t: 'exit', x: 46, y: 2, w: 1, h: 1, to: 'crypt', spawn: 'entry', fx: 'door' });
-  g.add({ t: 'fire', x: 46, y: 23 });
+  g.add({ t: 'fire', x: 46, y: 23, rest: true });
+  g.add({ t: 'sign', x: 5, y: 13, text: ['HOLLOWFROST VILLAGE, WEST.', 'O: JOURNAL.  M: MAP.  REST AT CAMPFIRES TO HEAL AND SAVE.'] });
+  g.add({ t: 'sign', x: 22, y: 11, text: ['NORTH-EAST: THE STONE GATE. CRYPT OF THE HOLLOW KING.', 'EAST: BANDIT CAMP. THEY DO NOT TAKE VISITORS.'] });
+  for (const [x, y, skin] of [[42, 20, 'barrel'], [51, 25, 'barrel'], [44, 27, 'pot'], [47, 20, 'pot'], [8, 5, 'pot'], [5, 8, 'pot'], [31, 8, 'pot']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'glow', x: 46, y: 23, r: 56, col: 12 });
   g.add({ t: 'glow', x: 45, y: 3, r: 26, col: 12 });
   g.add({ t: 'glow', x: 47, y: 3, r: 26, col: 12 });
@@ -110,7 +119,7 @@ function buildForest() {
   return g.out();
 }
 
-MAPS.forest = { name: 'Pine Forest', snow: true, build: buildForest, music: 'forest', dim: 0.12 };
+MAPS.forest = { name: 'Pine Forest', snow: true, ambience: 'wind', build: buildForest, music: 'forest', dim: 0.12 };
 
 function buildCrypt() {
   const g = new Grid(32, 54, TILE.CWALL);
@@ -137,6 +146,8 @@ function buildCrypt() {
     g.add({ t: 'glow', x, y, r: 46, col: 12 });
   }
   g.add({ t: 'glow', x: 15, y: 10, r: 30, col: 15 });
+  g.add({ t: 'sign', x: 13, y: 48, text: ['HERE LIES JARL VALDREK, WHO WOULD NOT LET GO OF WINTER.', 'LET THE DEAD KEEP THEIR COLD.'] });
+  for (const [x, y] of [[6, 33], [25, 33], [9, 36], [22, 36], [5, 19], [26, 19], [13, 13], [18, 13], [12, 50], [19, 50], [7, 4], [24, 4]]) g.add({ t: 'pot', x, y, skin: 'urn' });
   g.add({ t: 'spawn', name: 'entry', x: 15, y: 50 });
   g.add({ t: 'exit', x: 15, y: 52, w: 2, h: 1, to: 'forest', spawn: 'crypt', fx: 'door' });
   // chamber 1
@@ -156,4 +167,4 @@ function buildCrypt() {
   g.add({ t: 'bossgate', x: 15, y: 9, w: 2 });
   return g.out();
 }
-MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };
+MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, ambience: 'crypt', build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };

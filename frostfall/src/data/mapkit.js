@@ -45,6 +45,8 @@ export class Grid {
       if (this.t[y][x] === base && hash(x, y, seed) < p) this.t[y][x] = t;
     }
   }
+  // Force a walkable tile and protect it from scatter (for props / signs / NPC spots).
+  clear(x, y, t = TILE.SNOW2) { if (this.inb(x, y)) { this.t[y][x] = t; this.res[y][x] = true; } }
   add(e) { this.entities.push(e); return this; }
   out() { return { grid: this.t, entities: this.entities, w: this.w, h: this.h }; }
 }

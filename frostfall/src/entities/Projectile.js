@@ -92,6 +92,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     sc.fx.puff(this.x, this.y, 13, 6, 45, 0.35);
     sc.fx.puff(this.x, this.y, 5, 4, 30, 0.5);
     sc.shake(110, 0.005);
+    sc.breakAt(this.x, this.y, R + 4);
     for (const e of sc.enemies.getChildren()) {
       if (e.dead || dist(e.x, e.y, this.x, this.y) > R) continue;
       const dealt = e.takeHit({ dmg: this.dmg, kx: e.x - this.x, ky: e.y - this.y, kb: 95, src: 'fire', stun: 0.28 });

@@ -17,11 +17,14 @@ import Pickup from '../entities/Pickup.js';
 import Chest from '../entities/Chest.js';
 import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
+import Breakable from '../entities/Breakable.js';
+import { Sign, RestSpot } from '../entities/Props.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
 import { txtS } from '../art/font.js';
-import { sfx, music } from '../audio/sfx.js';
+import { sfx, music, ambience } from '../audio/sfx.js';
+import { fogDims } from './menuMap.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 
@@ -65,8 +68,11 @@ export default class GameScene extends Phaser.Scene {
     this.pickups = [];
     this.interactables = [];
     this.chestBodies = null;
+    this.propBodies = null;
     this.npcBodies = null;
     this.npcs = [];
+    this.breakables = [];
+    this.breakBodies = null;
     this.boss = null;
     this.gate = null;
     this.exits = [];
@@ -97,9 +103,12 @@ export default class GameScene extends Phaser.Scene {
 
     for (const e of built.entities) this.spawnEntity(e);
     if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
+    for (const grp of [this.breakBodies, this.propBodies]) if (grp) { this.physics.add.collider(this.player, grp); this.physics.add.collider(this.enemies, grp); }
     if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
     if (def.dim) this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, def.dim).setOrigin(0).setScrollFactor(0).setDepth(99800);
     music.play(def.music || 'village');
+    ambience.play(def.ambience || null);
+    this.initFog();
     if (def.crypt) {
       S.flags.crypt = true;
       if (S.flags.bossDead && S.quests.king.status === 'active' && !S.inv.frostheart) {
@@ -156,12 +165,27 @@ export default class GameScene extends Phaser.Scene {
           this.enemies.add(this.boss);
         }
         break;
+      case 'pot': {
+        const b = new Breakable(this, wx, wy, e.skin);
+        this.breakables.push(b);
+        if (!this.breakBodies) this.breakBodies = this.physics.add.staticGroup();
+        this.breakBodies.add(b);
+        break;
+      }
+      case 'sign': {
+        const sg = new Sign(this, wx, wy, e.text);
+        this.interactables.push(sg);
+        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+        this.propBodies.add(sg);
+        break;
+      }
       case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
       case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
       case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
       case 'fire': {
         const f = this.add.image(wx, wy - 3, 'flame0').setDepth(wy + 12);
         this.flames.push({ f, ph: Math.random() * 3 });
+        if (e.rest) this.interactables.push(new RestSpot(this, wx, wy));
         break;
       }
       case 'glow': {
@@ -245,6 +269,27 @@ export default class GameScene extends Phaser.Scene {
       if (this.clearLine(ax, ay, px, py, 3)) best = path[i];
     }
     return { x: (best % w + 0.5) * T, y: (((best / w) | 0) + 0.5) * T };
+  }
+
+  // Smash any breakable inside a rectangle / circle.
+  breakRect(rect) {
+    for (const b of this.breakables) if (!b.broken && Phaser.Geom.Intersects.RectangleToRectangle(rect, new Phaser.Geom.Rectangle(b.x - 6, b.y - 3, 12, 12))) b.smash();
+  }
+  breakAt(x, y, r) {
+    let hit = false;
+    for (const b of this.breakables) if (!b.broken && dist(b.cx, b.cy, x, y) <= r) { b.smash(); hit = true; }
+    return hit;
+  }
+
+  // gold: [min,max], chance for gold; drops: [[id, chance, range?]]
+  spawnLoot(x, y, g, drops = []) {
+    const at = (spec) => this.pickups.push(new Pickup(this, x + rand(-4, 4), y, spec));
+    if (g && Math.random() < (g.chance ?? 1)) at({ type: 'gold', n: randInt(g.gold[0], g.gold[1]) });
+    for (const [id, chance, range] of drops) {
+      if (Math.random() > chance) continue;
+      if (id === 'arrows') at({ type: 'arrows', n: randInt(range[0], range[1]) });
+      else at({ type: 'item', id, n: 1 });
+    }
   }
 
   setGate(closed) {
@@ -334,6 +379,28 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // Fog of war for the map screen: 2x2-tile chunks revealed as you walk.
+  initFog() {
+    const { cw, ch } = fogDims(this.built.w, this.built.h);
+    S.fog = S.fog || {};
+    this.fogArr = (S.fog[this.mapId] || '').padEnd(cw * ch, '0').split('');
+    this.fogT = 0;
+    this.revealFog(true);
+  }
+  revealFog(force) {
+    const { cw, ch } = fogDims(this.built.w, this.built.h);
+    const tx = this.player.x / T, ty = this.player.y / T, R = this.def.crypt ? 5 : 6;
+    let changed = false;
+    for (let cy = Math.max(0, Math.floor((ty - R) / 2)); cy <= Math.min(ch - 1, Math.floor((ty + R) / 2)); cy++) {
+      for (let cx = Math.max(0, Math.floor((tx - R) / 2)); cx <= Math.min(cw - 1, Math.floor((tx + R) / 2)); cx++) {
+        const i = cy * cw + cx;
+        if (this.fogArr[i] === '1') continue;
+        if (Math.hypot(cx * 2 + 1 - tx, cy * 2 + 1 - ty) <= R) { this.fogArr[i] = '1'; changed = true; }
+      }
+    }
+    if (changed || force) S.fog[this.mapId] = this.fogArr.join('');
+  }
+
   applyEnding() {
     const e = S.flags.ending;
     if (this.endOverlay) { this.endOverlay.destroy(); this.endOverlay = null; }
@@ -394,6 +461,8 @@ export default class GameScene extends Phaser.Scene {
     S.playtime += dt;
     this.t += dt;
     this.player.update(dt);
+    this.fogT -= dt;
+    if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
     for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
     for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha(l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03); }
     for (const n of this.npcs) n.update(dt, this.player);
@@ -411,6 +480,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.player.mode === 'free' && !this.leaving) {
       if (keys.pressed('inventory')) this.openMenu(0);
       else if (keys.pressed('journal')) this.openMenu(-1, 'QUESTS');
+      else if (keys.pressed('map')) this.openMenu(-1, 'MAP');
       else if (keys.pressed('pause')) this.openMenu(-1, 'SYSTEM');
     }
     if (this.t > 0.5 && !this.leaving) {
@@ -418,7 +488,11 @@ export default class GameScene extends Phaser.Scene {
       for (const ex of this.exits) if (ex.rect.contains(c.x, c.y)) { this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break; }
     }
     for (const e of this.enemies.getChildren()) e.update(dt, this.player);
-    for (const sh of this.shots.getChildren()) sh.update(dt);
+    for (const sh of this.shots.getChildren()) {
+      sh.update(dt);
+      if (!sh.done && this.breakables.length && this.breakAt(sh.x, sh.y, 8)) { if (sh.kind === 'fire') sh.explode(); else sh.finish(); }
+    }
+    this.breakables = this.breakables.filter((b) => !b.broken);
     for (const sh of this.eshots.getChildren()) sh.update(dt);
     if (this.boss && !this.boss.engaged && !this.boss.dead) {
       const pc = this.player.body.center;

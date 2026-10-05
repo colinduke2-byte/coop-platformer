@@ -4,10 +4,10 @@ export const ITEMS = {
   mp_potion: { name: 'Mana Potion', type: 'potion', icon: ['potion', 15], restore: 'mp', amount: 60, value: 25, desc: 'Restores 60 mana.' },
   sp_potion: { name: 'Stamina Potion', type: 'potion', icon: ['potion', 8], restore: 'sp', amount: 70, value: 20, desc: 'Restores 70 stamina.' },
 
-  rusty_sword: { name: 'Rusty Sword', type: 'weapon', icon: ['sword', 3], dmg: 7, value: 8, desc: 'Pitted and dull. Still a sword.' },
-  iron_sword: { name: 'Iron Sword', type: 'weapon', icon: ['sword', 4], dmg: 11, value: 40, desc: 'A sturdy blade of the north.' },
-  steel_sword: { name: 'Steel Sword', type: 'weapon', icon: ['sword', 5], dmg: 15, value: 90, desc: 'Well-forged and keen.' },
-  nordic_blade: { name: 'Nordic Blade', type: 'weapon', icon: ['sword', 15], dmg: 20, value: 200, desc: 'Etched with frost runes.' },
+  rusty_sword: { name: 'Rusty Sword', type: 'weapon', icon: ['sword', 3], dmg: 9, value: 8, desc: 'Pitted and dull. Still a sword.' },
+  iron_sword: { name: 'Iron Sword', type: 'weapon', icon: ['sword', 4], dmg: 13, value: 40, desc: 'A sturdy blade of the north.' },
+  steel_sword: { name: 'Steel Sword', type: 'weapon', icon: ['sword', 5], dmg: 17, value: 90, desc: 'Well-forged and keen.' },
+  nordic_blade: { name: 'Nordic Blade', type: 'weapon', icon: ['sword', 15], dmg: 22, value: 200, desc: 'Etched with frost runes.' },
 
   hunting_bow: { name: 'Hunting Bow', type: 'bow', icon: ['bow', 10], dmg: 8, value: 20, desc: 'Light and quiet.' },
   long_bow: { name: 'Elder Longbow', type: 'bow', icon: ['bow', 8], dmg: 13, value: 120, desc: 'Pulls hard, flies far.' },

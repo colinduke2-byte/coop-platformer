@@ -58,6 +58,8 @@ export default class Npc extends Phaser.GameObjects.Sprite {
     this.setFrame(kind + fr).setFlipX(kind === 'side' && this.face.x < 0);
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
+    const d = Math.hypot(player.x - this.x, player.y - this.y);
     this.nameTxt.setPosition(Math.round(this.x - this.nameTxt.width / 2), Math.round(this.y - 21));
+    this.nameTxt.setAlpha(Math.max(0, Math.min(1, (80 - d) / 30)));
   }
 }

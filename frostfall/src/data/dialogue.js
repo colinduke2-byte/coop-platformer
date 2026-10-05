@@ -146,3 +146,36 @@ export const NPC_DEFS = {
   bjorn: { name: 'BJORN', tex: 'spr_bjorn' },
   mirra: { name: 'MIRRA', tex: 'spr_mirra' },
 };
+
+// ---- ambient villagers: short, state-aware lines (and a few gameplay hints)
+function cycle(key, lines) {
+  const n = (S.flags[key] || 0);
+  S.flags[key] = n + 1;
+  return lines[n % lines.length];
+}
+export async function guard() {
+  const G = 'Haldor';
+  if (S.flags.ending === 'give') return say(G, 'No frost on the palisade this morning. I may even take up gardening.');
+  if (S.flags.ending) return say(G, 'Eyes on the pines, friend. Something is watching the village.');
+  await say(G, cycle('guardN', [
+    'The east gate leads to the Pine Forest. Wolves on the trail, bandits in the camp past the bend.',
+    'Hold Shift or C to creep. Enemies spot a sneaking dreamer from half as far, and a blade in the back hits three times as hard.',
+    'Warm yourself at a campfire. Press E beside the flames to rest, heal and save your progress.',
+    'The stone gate in the north-east of the forest is the crypt of the Hollow King. Do not go in underequipped.',
+    'Crates and pots sometimes hold coin. Smash them with your sword.',
+  ]));
+}
+export async function child() {
+  const C = 'Asta';
+  if (S.flags.ending === 'give') return say(C, 'The snow is melting! Look, it is puddles!');
+  if (S.quests.wolves.status === 'done') return say(C, 'Bjorn says you hunted the wolves! Were they big? Bigger than me?');
+  await say(C, cycle('childN', [
+    'I am not scared of wolves. I am scared of the dark. And wolves in the dark.',
+    'The pond is frozen solid. Mirra says you can skate on it if you do not mind the cold.',
+    'Elder Sigrid tells the best stories. Mostly about the Hollow King. Mostly the scary parts.',
+  ]));
+}
+SCRIPTS.guard = guard;
+SCRIPTS.child = child;
+NPC_DEFS.guard = { name: 'GUARD HALDOR', tex: 'spr_guard' };
+NPC_DEFS.child = { name: 'ASTA', tex: 'spr_child' };

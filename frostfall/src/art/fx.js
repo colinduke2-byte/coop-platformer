@@ -27,8 +27,8 @@ export class Fx {
     this.texts.push({ t, y, t0: life, life });
   }
 
-  slash(x, y, angle, flip = false) {
-    const sp = this.s.add.image(x, y, 'slash').setOrigin(0.1, 0.5).setRotation(angle).setDepth(99100);
+  slash(x, y, angle, flip = false, scale = 1) {
+    const sp = this.s.add.image(x, y, 'slash').setOrigin(0.1, 0.5).setRotation(angle).setDepth(99100).setScale(scale);
     if (flip) sp.setFlipY(true);
     this.temp.push({ sp, t: 0.14, grow: 0 });
   }

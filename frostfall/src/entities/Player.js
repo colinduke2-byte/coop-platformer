@@ -14,7 +14,13 @@ export const P = {
   regen: 30, regenDelay: 0.75,
   mpRegen: 4.5, mpDelay: 1.2,
   roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },
-  sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3 },
+  sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4 },
+  // 3-hit combo: tap J again inside the chain window. The third swing is a heavy finisher.
+  combo: [
+    { dmg: 1, kb: 120, size: 18, total: 0.3, cost: 1, flip: false, scale: 1, stun: 0.22 },
+    { dmg: 1.1, kb: 135, size: 18, total: 0.3, cost: 1, flip: true, scale: 1, stun: 0.24 },
+    { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
+  ],
   hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
   bow: { minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
   shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },
@@ -52,6 +58,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.flashT = 0;
     this.spin = 0;
     this.drawing = false;
+    this.comboN = 0;
+    this.comboT = 0;
     this.drawT = 0;
     this.shoutCd = 0;
     this.aim = scene.add.image(x, y, 'arrow').setVisible(false);
@@ -82,7 +90,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'dead') { this.animate(false); return; }
     this.flashT -= dt;
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
-    this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt;
+    this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
     const iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
@@ -114,7 +122,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * dt);
 
     const moving = this.speedNow > 8;
-    if (moving) this.phase += this.speedNow * dt * 0.16;
+    if (moving) {
+      const before = Math.floor(this.phase);
+      this.phase += this.speedNow * dt * 0.16;
+      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking) sfx.play('step');
+    }
     this.animate(moving);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
     this.setDepth(this.y + 8);
@@ -167,16 +179,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ---------------------------------------------------------------- sword
   startSwing() {
-    const cost = P.sword.cost * bonus.swingCost();
-    if (!this.spend(cost)) return;
-    this.swing = { t: 0, hit: new Set(), fx: false };
-    this.lockT = P.sword.total;
+    const n = this.comboT > 0 ? (this.comboN + 1) % P.combo.length : 0;
+    const c = P.combo[n];
+    const cost = P.sword.cost * c.cost * bonus.swingCost();
+    if (!this.spend(cost)) { this.comboT = 0; return; }
+    this.comboN = n;
+    this.comboT = c.total + P.sword.chain;
+    this.swing = { t: 0, hit: new Set(), c };
+    this.lockT = c.total;
     this.lockMove = P.sword.move;
     sfx.play('sword');
     const a = Math.atan2(this.face.y, this.face.x);
-    this.scene.fx.slash(this.x + this.face.x * 4, this.y + 2 + this.face.y * 4, a);
+    this.scene.fx.slash(this.x + this.face.x * 4, this.y + 2 + this.face.y * 4, a, c.flip, c.scale);
+    if (n === 2) this.scene.fx.puff(this.x + this.face.x * 14, this.y + 3 + this.face.y * 14, 6, 5, 40, 0.25);
     // lunge a little
-    this.body.velocity.x += this.face.x * 40; this.body.velocity.y += this.face.y * 40;
+    this.body.velocity.x += this.face.x * (n === 2 ? 70 : 40); this.body.velocity.y += this.face.y * (n === 2 ? 70 : 40);
   }
 
   tickSwing(dt) {
@@ -184,27 +201,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (!s) return;
     s.t += dt;
     if (s.t >= P.sword.hitStart && s.t <= P.sword.hitEnd) this.swordHit(s);
-    if (s.t >= P.sword.total) this.swing = null;
+    if (s.t >= s.c.total) this.swing = null;
   }
 
   swordHit(s) {
     const f = this.face;
     const cx = this.x + f.x * P.sword.reach, cy = this.y + 3 + f.y * P.sword.reach;
-    const r = new Phaser.Geom.Rectangle(cx - P.sword.size / 2, cy - P.sword.size / 2, P.sword.size, P.sword.size);
+    const sz = s.c.size;
+    const r = new Phaser.Geom.Rectangle(cx - sz / 2, cy - sz / 2, sz, sz);
+    this.scene.breakRect(r);
     for (const e of this.scene.enemies.getChildren()) {
       if (e.dead || s.hit.has(e)) continue;
       if (!Phaser.Geom.Intersects.RectangleToRectangle(r, e.rect)) continue;
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
       const mult = sneak ? 3 + bonus.sneakAttack() : 1;
-      const dmg = stats.weaponDmg() * bonus.melee() * mult * (0.9 + Math.random() * 0.2);
-      const dealt = e.takeHit({ dmg, kx: e.x - this.x, ky: e.y - this.y, kb: P.sword.kb, src: 'melee' });
+      const dmg = stats.weaponDmg() * bonus.melee() * mult * s.c.dmg * (0.9 + Math.random() * 0.2);
+      const dealt = e.takeHit({ dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun });
       this.scene.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);
       if (sneak) { this.scene.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); this.gainXp('sneak', 10); sfx.play('crit'); }
       else sfx.play('hit');
       this.gainXp('oneHanded', P.sword.xp + (e.dead ? 3 : 0));
-      this.scene.hitStop(0.05);
-      this.scene.shake(80, 0.004);
+      this.scene.hitStop(s.c.scale > 1 ? 0.09 : 0.05);
+      this.scene.shake(s.c.scale > 1 ? 160 : 80, s.c.scale > 1 ? 0.008 : 0.004);
+      if (s.c.scale > 1) this.scene.fx.text(e.x, e.y - 20, 'HEAVY', 12);
     }
   }
 

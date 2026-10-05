@@ -10,9 +10,9 @@ import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
 
 const CONTROLS = [
-  ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD'], ['K HOLD', 'BOW, CHARGE'],
+  ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD 3X COMBO'], ['K HOLD', 'BOW, CHARGE'],
   ['L', 'CAST SPELL'], ['Q / TAB', 'SWAP SPELL'], ['R', 'SHOUT'], ['C / SHIFT', 'SNEAK (HOLD)'],
-  ['E', 'TALK / OPEN'], ['1 2 3', 'POTIONS'], ['I O ESC', 'PACK JOURNAL MENU'],
+  ['E', 'TALK/OPEN/REST'], ['1 2 3', 'POTIONS'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
 ];
 
 export function systemTab(m) {

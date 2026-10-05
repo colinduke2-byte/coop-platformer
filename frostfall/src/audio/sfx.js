@@ -84,6 +84,8 @@ const SOUNDS = {
   door: () => { tone('square', 150, 90, 0.2, 0.1); noise(0.2, 0.1, 0, 800, 200); },
   save: () => { tone('square', 784, 784, 0.07, 0.08); tone('square', 1047, 1047, 0.1, 0.08, 0.07); },
   ending: () => { [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.5, 0.1, i * 0.18)); },
+  smash: () => { noise(0.18, 0.22, 0, 5000, 600); tone('square', 260, 90, 0.1, 0.08); },
+  step: () => { noise(0.045, 0.05, 0, 2600, 700); },
   nova: () => { tone('sawtooth', 600, 100, 0.5, 0.14); noise(0.4, 0.2, 0, 6000, 400); },
 };
 
@@ -139,5 +141,47 @@ export const music = {
     if (!timer) timer = setInterval(schedule, 150);
     schedule();
   },
-  stop() { songName = null; song = null; },
+  stop() { songName = null; song = null; ambience.stop(); },
+};
+
+// ---------------------------------------------------------------- ambience
+// Wind for the snowy zones, a cold drone with distant drips for the crypt.
+let ambNodes = [], ambTimer = null, ambName = null;
+export const ambience = {
+  play(kind) {
+    if (kind === ambName) return;
+    this.stop();
+    const a = ac(); if (!a || !kind) return;
+    ambName = kind;
+    if (kind === 'wind') {
+      const len = a.sampleRate * 3;
+      const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) { last = last * 0.97 + (Math.random() * 2 - 1) * 0.03; d[i] = last * 6; }
+      const src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+      const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520; f.Q.value = 0.7;
+      const g = a.createGain(); g.gain.value = 0.05;
+      const lfo = a.createOscillator(); lfo.frequency.value = 0.13;
+      const lg = a.createGain(); lg.gain.value = 0.035;
+      lfo.connect(lg); lg.connect(g.gain);
+      const lfo2 = a.createOscillator(); lfo2.frequency.value = 0.05;
+      const lg2 = a.createGain(); lg2.gain.value = 180; lfo2.connect(lg2); lg2.connect(f.frequency);
+      src.connect(f); f.connect(g); g.connect(musicBus);
+      src.start(); lfo.start(); lfo2.start();
+      ambNodes = [src, lfo, lfo2];
+    } else if (kind === 'crypt') {
+      for (const fr of [55, 55.6, 82.4]) {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = 'sine'; o.frequency.value = fr; g.gain.value = fr > 80 ? 0.012 : 0.028;
+        o.connect(g); g.connect(musicBus); o.start(); ambNodes.push(o);
+      }
+      const drip = () => { tone('sine', 1900, 1300, 0.12, 0.035, 0, musicBus); tone('sine', 950, 700, 0.2, 0.02, 0.07, musicBus); };
+      ambTimer = setInterval(() => { if (Math.random() < 0.6) drip(); }, 3200);
+    }
+  },
+  stop() {
+    ambNodes.forEach((n) => { try { n.stop(); } catch { /* ignore */ } });
+    ambNodes = []; ambName = null;
+    if (ambTimer) { clearInterval(ambTimer); ambTimer = null; }
+  },
 };

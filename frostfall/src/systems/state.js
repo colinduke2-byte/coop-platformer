@@ -15,6 +15,7 @@ export function newState() {
       king: { status: 'inactive' },
     },
     flags: {},
+    fog: {},
     playtime: 0,
   };
 }

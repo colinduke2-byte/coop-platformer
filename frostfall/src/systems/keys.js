@@ -24,7 +24,25 @@ export const keys = {
   clearAll() { down.clear(); pressedSet.clear(); releasedSet.clear(); },
 };
 
+// Gamepad -> virtual key codes (standard mapping). Sticks/d-pad move and navigate menus.
+const PAD_BUTTONS = { 0: 'Space', 1: 'KeyE', 2: 'KeyJ', 3: 'KeyK', 4: 'KeyQ', 5: 'KeyL', 6: 'KeyC', 7: 'KeyR', 8: 'KeyI', 9: 'Escape', 10: 'KeyO', 11: 'KeyM', 12: 'KeyW', 13: 'KeyS', 14: 'KeyA', 15: 'KeyD' };
+const padHeld = new Set();
+export function pollPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const pad = [...pads].find((p) => p && p.connected);
+  const want = new Set();
+  if (pad) {
+    pad.buttons.forEach((b, i) => { if (b.pressed && PAD_BUTTONS[i]) want.add(PAD_BUTTONS[i]); });
+    const [ax, ay] = pad.axes;
+    if (ax < -0.4) want.add('KeyA'); if (ax > 0.4) want.add('KeyD');
+    if (ay < -0.4) want.add('KeyW'); if (ay > 0.4) want.add('KeyS');
+  }
+  for (const c of want) if (!padHeld.has(c)) { keys._press(c); padHeld.add(c); }
+  for (const c of [...padHeld]) if (!want.has(c)) { keys._release(c); padHeld.delete(c); }
+}
+
 export function installKeys(game) {
+  game.events.on('prestep', pollPad);
   window.addEventListener('keydown', (e) => {
     if (blockDefault.has(e.code) || e.code in codeToActions) e.preventDefault();
     if (!e.repeat) keys._press(e.code);

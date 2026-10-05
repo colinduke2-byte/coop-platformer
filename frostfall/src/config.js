@@ -57,5 +57,6 @@ export const BINDINGS = {
   potion3: ['Digit3'],
   inventory: ['KeyI'],
   journal: ['KeyO'],
+  map: ['KeyM'],
   pause: ['Escape', 'KeyP'],
 };

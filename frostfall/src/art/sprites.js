@@ -89,6 +89,8 @@ export const STYLES = {
   draugr: { skin: 4, hair: 3, body: 2, trim: 1, legs: 1, boots: 0, eye: 0, glow: 15, helm: 3 },
   bandit: { skin: 10, hair: 1, hood: 1, body: 9, trim: 0, legs: 2, boots: 0, chest: 11, mask: 11 },
   archer: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 9, boots: 0, chest: 10, mask: 9 },
+  guard:  { skin: 10, hair: 3, helm: 4, body: 3, trim: 13, legs: 2, boots: 9, chest: 5, beard: 9 },
+  child:  { skin: 10, hair: 13, body: 11, trim: 9, legs: 3, boots: 9, chest: 5 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
@@ -110,12 +112,28 @@ function wolfFrame(ctx, ox, fr) {
   r(11, 13, 5, 1, 1); // eye
 }
 
+// 1px dark outline inside each 16x16 cell so sprites read on bright snow.
+function outline(ctx, w, h) {
+  const img = ctx.getImageData(0, 0, w, h), d = img.data;
+  const a = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : d[(y * w + x) * 4 + 3]);
+  const add = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (a(x, y)) continue;
+    const cx = x % 16;
+    const nb = (cx > 0 && a(x - 1, y)) || (cx < 15 && a(x + 1, y)) || (y > 0 && a(x, y - 1)) || (y < h - 1 && a(x, y + 1));
+    if (nb) add.push([x, y]);
+  }
+  ctx.fillStyle = PAL[0];
+  for (const [x, y] of add) ctx.fillRect(x, y, 1, 1);
+}
+
 function buildCharacters(scene) {
   const make = (key, fn, frames = ['down', 'up', 'side']) => {
     const cv = canvas(16 * frames.length * 3, 16);
     const ctx = cv.getContext('2d');
     // Draw first, upload second: WebGL snapshots the canvas when it is added.
     frames.forEach((d, di) => { for (let f = 0; f < 3; f++) fn(ctx, (di * 3 + f) * 16, d, f); });
+    outline(ctx, cv.width, cv.height);
     const tex = scene.textures.addCanvas(key, cv);
     frames.forEach((d, di) => { for (let f = 0; f < 3; f++) tex.add(`${d}${f}`, 0, (di * 3 + f) * 16, 0, 16, 16); });
   };
@@ -161,7 +179,7 @@ function drawTile(ctx, id, ox) {
       }
       break;
     }
-    case TILE.PATH: o(9, 0, 0, 16, 16); speckle(ctx, ox, 0, 55, [10, 10, 5, 1], 12); o(5, 0, 0, 16, 1); break;
+    case TILE.PATH: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 55, [9, 9, 5, 5, 4], 16); o(9, 0, 15, 16, 1); break;
     case TILE.WOODFLOOR: o(10, 0, 0, 16, 16); for (let y = 3; y < 16; y += 4) o(9, 0, y, 16, 1); o(9, 5, 0, 1, 3); o(9, 11, 4, 1, 4); break;
     case TILE.WOODWALL: o(9, 0, 0, 16, 16); for (let x = 3; x < 16; x += 4) o(10, x, 0, 1, 15); o(1, 0, 14, 16, 2); break;
     case TILE.ROOF:
@@ -279,6 +297,38 @@ function buildFx(scene) {
       g.fillStyle = `rgba(255,255,255,${0.05 + (32 - r) / 32 * 0.16})`;
       for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) < r && (x + y) % 2 === 1 && r < 20) g.fillRect(x, y, 1, 1);
     }
+  });
+  const blob = (g, cx, cy, rx, ry, col) => {
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1) R(g, col, x, y);
+  };
+  const prop = (key, fn) => tex(scene, key, 16, 16, (g) => { fn(g); outline(g, 16, 16); });
+  const rc = (g, x, y, w, h, col) => R(g, col, x, y, w, h); // x,y,w,h,colour (friendlier order)
+  prop('pot', (g) => {
+    rc(g, 6, 3, 4, 3, 9);                  // neck
+    rc(g, 5, 3, 6, 1, 10);                 // lip
+    blob(g, 8, 9.5, 5.2, 4.8, 9);          // body (shadow)
+    blob(g, 7.4, 9, 4.2, 4, 10);           // body (light)
+    rc(g, 5, 7, 2, 2, 5);                  // glint
+    rc(g, 6, 11, 4, 1, 9);                 // band
+  });
+  prop('barrel', (g) => {
+    blob(g, 8, 8.5, 6, 6, 9);
+    blob(g, 8, 8.5, 4.6, 4.6, 10);
+    for (const x of [6, 8, 10]) rc(g, x, 4, 1, 9, 9);      // staves
+    rc(g, 3, 5, 10, 1, 1); rc(g, 3, 11, 10, 1, 1);        // hoops
+  });
+  prop('urn', (g) => {
+    rc(g, 6, 3, 4, 3, 2);
+    rc(g, 5, 3, 6, 1, 4);
+    blob(g, 8, 9.5, 4.8, 5, 3);
+    blob(g, 7.4, 9, 3.8, 4.2, 4);
+    rc(g, 6, 8, 1, 3, 1); rc(g, 7, 10, 2, 1, 1);          // crack
+  });
+  prop('sign', (g) => {
+    rc(g, 7, 7, 2, 8, 9);                  // post
+    rc(g, 2, 2, 12, 7, 10);                // board
+    rc(g, 2, 8, 12, 1, 9);
+    rc(g, 4, 4, 8, 1, 9); rc(g, 4, 6, 6, 1, 9);   // "text"
   });
   tex(scene, 'warn', 16, 16, (g) => { g.fillStyle = 'rgba(200,56,60,0.35)'; g.fillRect(0, 0, 16, 16); });
 }

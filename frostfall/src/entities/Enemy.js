@@ -49,6 +49,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   mark(str, col, dur) {
     this.marker?.destroy();
+    this.markStr = str;
     this.marker = txtS(this.scene, 0, 0, str, col, 0);
     this.markT = dur;
   }
@@ -96,6 +97,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const seen = !dead && d < range && sc.hasLOS(this.cx, this.cy, player.body.center.x, player.body.center.y);
       this.notice = seen ? this.notice + dt : Math.max(0, this.notice - dt * 0.7);
       if (this.notice > (d < range * 0.5 ? 0.12 : 0.4)) this.alert();
+      else if (this.notice > 0.06) {
+        if (!this.marker || this.markStr !== '?') this.mark('?', 13, 0.25); else this.markT = 0.25;
+      }
     } else if (dead || d > this.cfg.detect * 2.6) {
       this.lostT += dt;
       if (this.lostT > 4) { this.alerted = false; this.notice = 0; this.lostT = 0; this.setState('idle'); }
