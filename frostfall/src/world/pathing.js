@@ -3,6 +3,11 @@ import Phaser from 'phaser';
 import { T } from '../config.js';
 
 export const pathingMethods = {
+  tileIdAt(px, py) {
+    const x = Math.floor(px / T), y = Math.floor(py / T);
+    return this.built.grid[y]?.[x] ?? -1;
+  },
+
   solidAt(px, py) {
     const x = Math.floor(px / T), y = Math.floor(py / T);
     return this.solid[y]?.[x] ?? true;

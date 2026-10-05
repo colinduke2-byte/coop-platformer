@@ -1,6 +1,12 @@
 // Enemy stat blocks. kind: melee | lunge | shoot | boss
 // detect = sight radius in px (halved or less when the player sneaks).
 export const ENEMIES = {
+  grimfang: {
+    name: 'Grimfang', title: 'GRIMFANG, THE PALE ALPHA', tex: 'spr_grimfang', sideOnly: true, bark: 'wolf', weak: { fire: 1.3 },
+    hp: 230, speed: 40, chase: 74, dmg: 17, detect: 9999,
+    kind: 'boss', range: 40, windup: 0.6, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
+    body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
+  },
   draugr: {
     name: 'Draugr', tex: 'spr_draugr', bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 13, detect: 66,
     kind: 'melee', range: 19, windup: 0.55, atkDur: 0.16, recover: 0.65, cooldown: 0.5, kbResist: 0.15,
@@ -27,7 +33,7 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [6, 14], drops: [['mp_potion', 0.25], ['hp_potion', 0.12], ['sp_potion', 0.1]] },
   },
   boss: {
-    name: 'Jarl Valdrek', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
+    name: 'Jarl Valdrek', title: 'JARL VALDREK THE HOLLOW KING', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.1, kbResist: 0.95,
     body: [8, 7, 4, 9], loot: { gold: [90, 130], drops: [['nordic_blade', 1], ['hp_potion', 1], ['hp_potion', 1], ['nordic_plate', 0.0]] },
   },
@@ -38,7 +44,7 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5]] },
   },
   alpha: {
-    name: 'Wolf Alpha', tex: 'spr_alpha', bark: 'wolf', call: 150, weak: { fire: 1.3 },
+    name: 'Wolf Alpha', tex: 'spr_alpha', sideOnly: true, bark: 'wolf', call: 150, weak: { fire: 1.3 },
     hp: 62, speed: 44, chase: 92, dmg: 14, detect: 110,
     kind: 'lunge', range: 52, windup: 0.4, atkDur: 0.32, recover: 0.7, cooldown: 0.8, kbResist: 0.3, lunge: 200,
     body: [12, 6, 2, 8], loot: { gold: [6, 14], drops: [['wolf_fang', 1], ['hp_potion', 0.25]] },

@@ -17,7 +17,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const cfg = ENEMIES[kind];
     super(scene, x, y, cfg.tex, 'down0');
     this.kind = kind;
-    this.cfg = cfg;
+    this.cfg = (kind === 'wolf' && S.flags.alphaSpared) ? { ...cfg, detect: 0 } : cfg;   // the pack is calmer once its alpha was spared
     scene.add.existing(this);
     scene.physics.add.existing(this);
     const [bw, bh, ox, oy] = cfg.body;
@@ -62,6 +62,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   alert(silent = false) {
     if (this.alerted || this.dead) return;
     this.alerted = true;
+    S.seen[this.kind] = true;
     this.state = 'chase';
     if (!silent) { this.mark('!', 13, 0.7); sfx.play('alert'); this.bark('alert'); this.scene.onFirstAlert?.(this); }
     // wake nearby friends (a howl / rally call reaches much further)
@@ -310,7 +311,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const sp = Math.hypot(b.velocity.x, b.velocity.y);
     if (sp > 6) this.phase += sp * dt * 0.16;
     const fr = sp > 6 ? 1 + (Math.floor(this.phase) % 2) : 0;
-    if (this.cfg.tex === 'spr_wolf') {
+    if (this.cfg.sideOnly || this.cfg.tex === 'spr_wolf') {
       this.setFrame('side' + fr);
       this.setFlipX(this.face.x < 0 || (this.face.x === 0 && this.flipX));
     } else {

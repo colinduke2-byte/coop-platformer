@@ -1,6 +1,7 @@
 // Maps are built in code. Entities use tile coordinates (x, y = tile cell).
 import { TILE } from '../config.js';
 import { Grid } from './mapkit.js';
+import { hash } from '../util.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
   // roof rows then 2 wall rows; door + windows on the top wall row
@@ -14,6 +15,7 @@ function house(g, x, y, w, rows, doorX, winXs) {
 function buildVillage() {
   const g = new Grid(40, 26, TILE.SNOW);
   g.noise(TILE.SNOW2, 0.22, 5, TILE.SNOW);
+  g.dress('snow');
   g.border(TILE.PINE, 2);
   // plaza + roads
   g.rect(15, 11, 11, 6, TILE.PATH);
@@ -41,15 +43,23 @@ function buildVillage() {
   g.rect(18, 19, 4, 1, TILE.PATH);
   g.rect(36, 12, 4, 3, TILE.PATH);
   // clear reservation outside the bulk of building zones so trees scatter in the margins
-  for (let y = 2; y < 24; y++) for (let x = 2; x < 38; x++) g.res[y][x] = g.t[y][x] !== TILE.SNOW && g.t[y][x] !== TILE.SNOW2;
+  for (let y = 2; y < 24; y++) for (let x = 2; x < 38; x++) g.res[y][x] = ![TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT].includes(g.t[y][x]);
   for (let y = 9; y <= 18; y++) for (let x = 14; x <= 26; x++) g.res[y][x] = true;
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
   for (const [x, y] of [[36, 11], [34, 12], [24, 19], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9], [10, 16], [11, 16], [10, 12], [13, 20], [21, 21]]) g.clear(x, y);
   g.scatter(TILE.PINE, 34, 3);
+  g.scatter(TILE.STUMP, 4, 8);
   g.scatter(TILE.ROCK, 8, 4);
-  g.add({ t: 'npc', id: 'sigrid', x: 19, y: 9 });
+  g.add({ t: 'npc', id: 'sigrid', x: 20, y: 9 });
   g.add({ t: 'npc', id: 'bjorn', x: 7, y: 11 });
   g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
+  g.dress('late');
+  g.add({ t: 'door', x: 19, y: 7, to: 'hall', spawn: 'in', label: "E: ENTER HALL" });
+  g.add({ t: 'door', x: 7, y: 9, to: 'lodge', spawn: 'in', label: 'E: ENTER LODGE' });
+  g.add({ t: 'door', x: 32, y: 8, to: 'shop', spawn: 'in', label: 'E: ENTER SHOP' });
+  g.add({ t: 'spawn', name: 'hall', x: 19, y: 8 });
+  g.add({ t: 'spawn', name: 'lodge', x: 7, y: 10 });
+  g.add({ t: 'spawn', name: 'shop', x: 32, y: 9 });
   g.add({ t: 'spawn', name: 'start', x: 19, y: 15 });
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
   g.add({ t: 'fire', x: 19, y: 13, rest: true });
@@ -76,6 +86,7 @@ export const MAPS = {
 function buildForest() {
   const g = new Grid(56, 32, TILE.SNOW);
   g.noise(TILE.SNOW2, 0.2, 9, TILE.SNOW);
+  g.dress('snow');
   g.border(TILE.PINE, 2);
   g.rect(0, 14, 3, 3, TILE.PATH);
   // main trail west -> bandit camp, branch north -> crypt
@@ -98,7 +109,14 @@ function buildForest() {
   g.reserve(0, 0, 1, 1);
   for (const [x, y] of [[5, 13], [22, 11], [8, 17], [16, 17], [26, 17], [33, 17], [37, 12], [20, 10], [9, 6], [29, 9], [23, 16], [36, 9]]) g.clear(x, y);
   g.scatter(TILE.PINE, 250, 21);
+  g.scatter(TILE.DEADTREE, 14, 24);
+  g.scatter(TILE.STUMP, 10, 25);
   g.scatter(TILE.ROCK, 22, 22);
+  g.dress('late');
+  g.path([[31, 10], [31, 2]], 2, TILE.PATH);
+  g.rect(30, 0, 3, 2, TILE.PATH);
+  g.add({ t: 'spawn', name: 'north', x: 31, y: 3 });
+  g.add({ t: 'exit', x: 30, y: 0, w: 3, h: 1, to: 'pass', spawn: 'south', fx: 'door' });
   g.add({ t: 'spawn', name: 'west', x: 3, y: 15 });
   g.add({ t: 'spawn', name: 'crypt', x: 46, y: 4 });
   g.add({ t: 'exit', x: 0, y: 14, w: 2, h: 3, to: 'village', spawn: 'east' });
@@ -150,9 +168,10 @@ function buildCrypt() {
   const braziers = [[12, 47], [19, 47], [6, 30], [25, 30], [5, 14], [26, 14], [7, 2], [24, 2], [7, 7], [24, 7], [14, 38], [17, 38]];
   for (const [x, y] of braziers) {
     g.set(x, y, TILE.BRAZIER);
-    g.add({ t: 'fire', x, y });
+    g.add({ t: 'fire', x, y, rest: x === 12 && y === 47 });
     g.add({ t: 'glow', x, y, r: 46, col: 12 });
   }
+  g.dress('crypt');
   g.add({ t: 'glow', x: 15, y: 10, r: 30, col: 15 });
   g.add({ t: 'sign', x: 13, y: 48, text: ['HERE LIES JARL VALDREK, WHO WOULD NOT LET GO OF WINTER.', 'LET THE DEAD KEEP THEIR COLD.'] });
   for (const [x, y] of [[6, 33], [25, 33], [9, 36], [22, 36], [5, 19], [26, 19], [13, 13], [18, 13], [12, 50], [19, 50], [7, 4], [24, 4]]) g.add({ t: 'pot', x, y, skin: 'urn' });
@@ -179,4 +198,115 @@ function buildCrypt() {
   g.add({ t: 'bossgate', x: 15, y: 9, w: 2 });
   return g.out();
 }
-MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, ambience: 'crypt', build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };
+MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 8.4 * T && pc.x > 6 * T && pc.x < 26 * T, build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };
+
+
+// ---------------------------------------------------------------- interiors
+function room(w, h, title) {
+  const g = new Grid(w, h, TILE.WOODWALL);
+  g.rect(1, 2, w - 2, h - 3, TILE.WOODFLOOR);
+  for (let x = 3; x < w - 3; x += 5) g.set(x, 1, TILE.WINDOW);
+  g.rect(1, 2, w - 2, 1, TILE.WOODFLOOR);
+  return g;
+}
+
+function buildHall() {
+  const g = room(22, 14);
+  g.rect(8, 3, 6, 8, TILE.RUG);
+  g.set(11, 2, TILE.FIRE); g.add({ t: 'fire', x: 11, y: 2, rest: true });
+  g.add({ t: 'glow', x: 11, y: 3, r: 70, col: 12 });
+  for (const x of [2, 4]) g.add({ t: 'prop', tex: 'bookshelf', x, y: 2 });
+  g.add({ t: 'lore', id: 'hearth', tex: 'bookshelf', x: 17, y: 2 });
+  g.add({ t: 'lore', id: 'valdrek', tex: 'book', x: 6, y: 6 });
+  g.add({ t: 'lore', id: 'frostheart', tex: 'book', x: 15, y: 7 });
+  g.add({ t: 'prop', tex: 'table', x: 7, y: 6 }); g.add({ t: 'prop', tex: 'table', x: 15, y: 6 });
+  g.add({ t: 'prop', tex: 'table', x: 4, y: 9 }); g.add({ t: 'prop', tex: 'table', x: 17, y: 9 });
+  g.add({ t: 'chest', id: 'hall', x: 19, y: 11, lock: 'med', loot: [{ item: 'steel_sword' }, { item: 'hp_potion_g', n: 2 }, { item: 'lockpick', n: 3 }] });
+  g.add({ t: 'pot', x: 2, y: 11, skin: 'pot' }); g.add({ t: 'pot', x: 3, y: 11, skin: 'barrel' });
+  g.add({ t: 'npc', id: 'sigrid', x: 11, y: 5, night: true });
+  g.add({ t: 'spawn', name: 'in', x: 11, y: 11 });
+  g.add({ t: 'exit', x: 10, y: 12, w: 2, h: 1, to: 'village', spawn: 'hall', fx: 'door' });
+  g.dress('late');
+  return g.out();
+}
+
+function buildLodge() {
+  const g = room(14, 10);
+  g.add({ t: 'bed', x: 2, y: 2 });
+  g.add({ t: 'prop', tex: 'bed', x: 2, y: 2 });
+  g.add({ t: 'cauldron', x: 11, y: 3 }); g.add({ t: 'prop', tex: 'cauldron', x: 11, y: 3 });
+  g.add({ t: 'lore', id: 'hunters', tex: 'bookshelf', x: 6, y: 2 });
+  g.add({ t: 'lore', id: 'herbs', tex: 'book', x: 9, y: 5 }); g.add({ t: 'prop', tex: 'table', x: 9, y: 5 });
+  g.add({ t: 'chest', id: 'lodge', x: 12, y: 7, loot: [{ arrows: 12 }, { item: 'sp_potion', n: 2 }, { gold: 25 }] });
+  g.add({ t: 'npc', id: 'bjorn', x: 7, y: 5, night: true });
+  g.add({ t: 'spawn', name: 'in', x: 7, y: 7 });
+  g.add({ t: 'exit', x: 6, y: 8, w: 2, h: 1, to: 'village', spawn: 'lodge', fx: 'door' });
+  g.add({ t: 'glow', x: 11, y: 4, r: 50, col: 13 });
+  return g.out();
+}
+
+function buildShop() {
+  const g = room(14, 10);
+  for (const x of [2, 3, 4, 9, 10, 11]) g.add({ t: 'prop', tex: 'shelf', x, y: 2 });
+  g.add({ t: 'lore', id: 'ward', tex: 'bookshelf', x: 6, y: 2 });
+  g.add({ t: 'prop', tex: 'table', x: 6, y: 5 }); g.add({ t: 'prop', tex: 'table', x: 7, y: 5 });
+  g.add({ t: 'npc', id: 'mirra', x: 6, y: 4, night: true });
+  g.add({ t: 'pot', x: 2, y: 7, skin: 'pot' }); g.add({ t: 'pot', x: 11, y: 7, skin: 'barrel' });
+  g.add({ t: 'spawn', name: 'in', x: 7, y: 7 });
+  g.add({ t: 'exit', x: 6, y: 8, w: 2, h: 1, to: 'village', spawn: 'shop', fx: 'door' });
+  g.add({ t: 'glow', x: 7, y: 4, r: 50, col: 13 });
+  return g.out();
+}
+
+MAPS.hall = { name: "Elder's Hall", snow: false, build: buildHall, music: 'village', dim: 0.1, interior: true };
+MAPS.lodge = { name: "Hunter's Lodge", snow: false, build: buildLodge, music: 'village', dim: 0.1, interior: true };
+MAPS.shop = { name: "Mirra's Remedies", snow: false, build: buildShop, music: 'village', dim: 0.1, interior: true };
+
+
+function buildPass() {
+  const g = new Grid(48, 40, TILE.SNOW);
+  g.noise(TILE.SNOW2, 0.2, 15, TILE.SNOW);
+  g.dress('snow');
+  g.border(TILE.PINE, 2);
+  // sheer cliffs on both sides
+  for (let y = 2; y < 38; y++) {
+    const lw = 2 + Math.floor(hash(y, 1, 5) * 3), rw = 2 + Math.floor(hash(y, 2, 5) * 3);
+    for (let i = 0; i < lw; i++) g.set(2 + i, y, TILE.STONE);
+    for (let i = 0; i < rw; i++) g.set(45 - i, y, TILE.STONE);
+  }
+  const open = (x, y, w, h) => g.rect(x, y, w, h, TILE.SNOW2);
+  open(19, 31, 10, 8); open(7, 30, 34, 5); open(6, 6, 8, 26); open(36, 6, 6, 26);
+  open(9, 2, 30, 9); open(12, 11, 24, 3); open(12, 26, 24, 4);
+  g.rect(15, 14, 18, 12, TILE.ICE);
+  g.noise(TILE.ICE2, 0.3, 16, TILE.ICE);
+  // ruined watchtower on the west side
+  g.rect(6, 15, 5, 6, TILE.STONE);
+  g.rect(7, 16, 3, 4, TILE.CFLOOR);
+  g.set(8, 20, TILE.CFLOOR); g.res[20][8] = true;
+  g.set(9, 18, TILE.FIRE);
+  for (const [x, y] of [[24, 34], [22, 33], [14, 13], [33, 13], [14, 27], [34, 27], [40, 30], [8, 32]]) g.clear(x, y);
+  g.scatter(TILE.PINE, 90, 31, TILE.SNOW);
+  g.scatter(TILE.ROCK, 18, 32, TILE.SNOW);
+  g.scatter(TILE.DEADTREE, 8, 33, TILE.SNOW);
+  g.dress('late');
+  g.add({ t: 'spawn', name: 'south', x: 24, y: 36 });
+  g.add({ t: 'exit', x: 20, y: 38, w: 8, h: 1, to: 'forest', spawn: 'north', fx: 'door' });
+  g.add({ t: 'sign', x: 24, y: 34, text: ['FROSTWIND PASS.', 'THE WOLVES HERE ANSWER TO ONE MASTER. DO NOT MEET HIM UNPREPARED.'] });
+  g.add({ t: 'lore', id: 'grimfang', tex: 'book', x: 22, y: 33 });
+  g.add({ t: 'fire', x: 9, y: 18, rest: true });
+  g.add({ t: 'glow', x: 9, y: 18, r: 54, col: 12 });
+  g.add({ t: 'chest', id: 'tower', x: 7, y: 16, lock: 'hard', loot: [{ item: 'nordic_shield' }, { item: 'hp_potion_g', n: 2 }, { item: 'lockpick', n: 2 }, { gold: 120 }] });
+  g.add({ t: 'lore', id: 'tower', tex: 'book', x: 9, y: 16 });
+  for (const [x, y] of [[38, 12], [39, 20], [37, 27], [10, 28]]) g.add({ t: 'enemy', kind: 'wolf', x, y });
+  for (const [x, y] of [[20, 19], [28, 21]]) g.add({ t: 'enemy', kind: 'wight', x, y });
+  for (const [x, y] of [[9, 26], [40, 24]]) g.add({ t: 'enemy', kind: 'archer', x, y });
+  g.add({ t: 'enemy', kind: 'warden', x: 24, y: 28 });
+  g.add({ t: 'boss', kind: 'grimfang', x: 24, y: 5 });
+  for (const [x, y, item] of [[14, 13, 'frost_lily'], [33, 13, 'frost_lily'], [14, 27, 'frost_lily'], [34, 27, 'frost_lily'], [40, 30, 'snowberry'], [8, 32, 'snowberry']]) g.add({ t: 'herb', item, x, y });
+  g.add({ t: 'pickup', x: 22, y: 31, spec: { type: 'arrows', n: 8 } });
+  g.add({ t: 'pickup', x: 13, y: 22, spec: { type: 'item', id: 'hp_potion_g' } });
+  for (const [x, y, skin] of [[11, 30, 'barrel'], [38, 31, 'pot'], [12, 8, 'pot']]) g.add({ t: 'pot', x, y, skin });
+  return g.out();
+}
+MAPS.pass = { name: 'Frostwind Pass', snow: true, ambience: 'wind', build: buildPass, music: 'pass', flag: 'pass', dim: 0.1,
+  bossTrigger: (pc, T) => pc.y < 11 * T && pc.x > 9 * T && pc.x < 39 * T };

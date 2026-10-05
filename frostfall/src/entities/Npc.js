@@ -27,7 +27,14 @@ export default class Npc extends Phaser.GameObjects.Sprite {
     this.angryT = 0;
   }
 
-  canInteract() { return !this.walking; }
+  canInteract() { return !this.walking && !this.away; }
+
+  // Night schedule: villagers go indoors (hidden outside, present in their house).
+  setAway(a) {
+    this.away = a;
+    this.setVisible(!a); this.shadow.setVisible(!a); this.nameTxt.setVisible(!a);
+    this.body.enable = !a;
+  }
   label() { return this.angryT > 0 ? 'E: ...' : this.scene.player.sneaking ? 'E: PICKPOCKET' : 'E: TALK'; }
 
   async interact() {
@@ -86,6 +93,6 @@ export default class Npc extends Phaser.GameObjects.Sprite {
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
     const d = Math.hypot(player.x - this.x, player.y - this.y);
     this.nameTxt.setPosition(Math.round(this.x - this.nameTxt.width / 2), Math.round(this.y - 21));
-    this.nameTxt.setAlpha(Math.max(0, Math.min(1, (80 - d) / 30)));
+    this.nameTxt.setAlpha(this.away ? 0 : Math.max(0, Math.min(1, (80 - d) / 30)));
   }
 }

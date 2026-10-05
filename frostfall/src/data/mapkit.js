@@ -47,6 +47,18 @@ export class Grid {
   }
   // Force a walkable tile and protect it from scatter (for props / signs / NPC spots).
   clear(x, y, t = TILE.SNOW2) { if (this.inb(x, y)) { this.t[y][x] = t; this.res[y][x] = true; } }
+  // Sprinkle visual variety: snow pebbles / frozen tufts, worn paths, cracked ice or floors.
+  dress(kind) {
+    const T_ = TILE;
+    if (kind === 'snow') {
+      this.noise(T_.SNOW3, 0.045, 61, T_.SNOW); this.noise(T_.SNOW4, 0.05, 62, T_.SNOW); this.noise(T_.TUFT, 0.04, 63, T_.SNOW);
+      this.noise(T_.SNOW3, 0.03, 64, T_.SNOW2);
+    } else if (kind === 'late') {
+      this.noise(T_.PATH2, 0.18, 65, T_.PATH); this.noise(T_.ICE2, 0.3, 66, T_.ICE);
+    } else if (kind === 'crypt') {
+      this.noise(T_.CFLOOR2, 0.2, 67, T_.CFLOOR); this.noise(T_.CWALL2, 0.25, 68, T_.CWALL);
+    }
+  }
   add(e) { this.entities.push(e); return this; }
   out() { return { grid: this.t, entities: this.entities, w: this.w, h: this.h }; }
 }

@@ -8,6 +8,7 @@ export function wireQuests() {
   if (wired) return;
   wired = true;
   bus.on('enemy:killed', (kind) => {
+    S.kills[kind] = (S.kills[kind] || 0) + 1;
     const q = S.quests.wolves;
     if (q.status === 'active' && kind === 'wolf') {
       q.kills++;

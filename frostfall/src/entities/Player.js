@@ -7,6 +7,7 @@ import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm } from '../util.js';
 import Projectile from './Projectile.js';
+import { TILE } from '../config.js';
 import { TUNE } from '../data/tuning.js';
 import { damageTaken, meleeDamage, blockResult, blockStaminaCost, elementMult } from '../systems/damage.js';
 import { ITEMS } from '../data/items.js';
@@ -64,7 +65,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'roll') m = 1.2;
     else if (this.sneaking) m = this.speedNow < 6 ? 0.3 : 0.5;
     else if (this.speedNow < 6) m = 0.85;
-    return m * (this.sneaking ? bonus.detect() : 1);
+    return m * (this.sneaking ? bonus.detect() : 1) * this.scene.stealthEnv();
   }
 
   spend(cost) {
@@ -139,7 +140,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.blocking) sp *= P.block.move;
     const l = Math.hypot(ix, iy) || 1;
     const tx = (ix / l) * sp, ty = (iy / l) * sp;
-    const a = P.accel * dt;
+    const onIce = this.mode === 'free' && [TILE.ICE, TILE.ICE2].includes(this.scene.tileIdAt(this.x, this.y + 7));
+    const a = P.accel * dt * (onIce ? 0.12 : 1);
     b.velocity.x += Phaser.Math.Clamp(tx - b.velocity.x, -a, a);
     b.velocity.y += Phaser.Math.Clamp(ty - b.velocity.y, -a, a);
     // facing: locked during swings, otherwise follows input

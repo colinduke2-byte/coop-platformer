@@ -327,7 +327,7 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(bs.bphase === 2 ? C[11] : C[14]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 7);
       g.fillStyle(bs.bphase === 2 ? C[12] : C[5]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 1);
       g.fillStyle(C[13]); g.fillRect(bx + bw / 2, 14, 1, 9);
-      if (!this.bossName) { this.bossName = txt(this, 0, 5, 'JARL VALDREK THE HOLLOW KING', 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); }
+      if (this.bossFor !== bs) { this.bossName?.destroy(); this.bossName = txt(this, 0, 5, bs.cfg.title || bs.cfg.name, 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); this.bossFor = bs; }
       this.bossName.setVisible(true);
     } else this.bossName?.setVisible(false);
 

@@ -7,6 +7,9 @@ import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { dist, norm, dir8, rand } from '../util.js';
 import { TUNE } from '../data/tuning.js';
+import { music } from '../audio/sfx.js';
+import { saveGame } from '../systems/save.js';
+import Pickup from './Pickup.js';
 
 // Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
@@ -14,8 +17,9 @@ import { TUNE } from '../data/tuning.js';
 const B = TUNE.boss;
 
 export default class Boss extends Enemy {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'boss');
+  constructor(scene, x, y, kind = 'boss') {
+    super(scene, x, y, kind);
+    this.B = TUNE.boss;
     this.setScale(2);
     this.isBoss = true;
     this.superArmor = true;
@@ -110,8 +114,8 @@ export default class Boss extends Enemy {
         if (this.stateT <= 0) this.fireAttack(player);
         break;
       case 'attack':
-        if (this.atk === 'charge') this.chargeTick(dt, player);
-        else if (this.stateT <= 0) this.setState('recover', B[this.atk].recover * (this.bphase === 2 ? 0.75 : 1));
+        if (this.isDash()) this.chargeTick(dt, player);
+        else if (this.stateT <= 0) this.setState('recover', this.B[this.atk].recover * (this.bphase === 2 ? 0.75 : 1));
         break;
       case 'recover':
         b.setVelocity(0, 0);
@@ -122,6 +126,9 @@ export default class Boss extends Enemy {
     }
     this.finishBoss(dt);
   }
+
+  isDash() { return this.atk === 'charge'; }
+  dashCfg() { return this.B.charge; }
 
   pickAttack(d, to) {
     const opts = [];
@@ -137,7 +144,7 @@ export default class Boss extends Enemy {
     this.atk = a;
     this.dir = { x: to.x, y: to.y };
     this.face = dir8(to.x, to.y);
-    this.setState('windup', B[a].windup * (this.bphase === 2 ? 0.8 : 1));
+    this.setState('windup', this.B[a].windup * (this.bphase === 2 ? 0.8 : 1));
     this.windTotal = this.stateT;
     this.makeTele(a);
     sfx.play('telegraph');
@@ -150,15 +157,15 @@ export default class Boss extends Enemy {
     const f = this.face;
     if (a === 'slam') {
       const c = this.slamCenter();
-      const img = sc.add.image(c.x, c.y, 'disc').setTint(C[11]).setAlpha(0.25).setScale(B.slam.r / 32).setDepth(5);
-      const rg = sc.add.image(c.x, c.y, 'ring').setTint(C[11]).setAlpha(0.8).setScale(B.slam.r / 32).setDepth(6);
+      const img = sc.add.image(c.x, c.y, 'disc').setTint(C[11]).setAlpha(0.25).setScale(this.B.slam.r / 32).setDepth(5);
+      const rg = sc.add.image(c.x, c.y, 'ring').setTint(C[11]).setAlpha(0.8).setScale(this.B.slam.r / 32).setDepth(6);
       this.tele.push(img, rg);
     } else if (a === 'sweep') {
       const r = this.sweepRect();
       const img = sc.add.rectangle(r.x + r.width / 2, r.y + r.height / 2, r.width, r.height, C[11], 0.3).setDepth(5);
       this.tele.push(img);
     } else if (a === 'charge') {
-      const len = B.charge.speed * B.charge.time;
+      const len = this.B.charge.speed * this.B.charge.time;
       const img = sc.add.rectangle(this.cx + this.dir.x * len / 2, this.cy + this.dir.y * len / 2, len, 14, C[11], 0.25).setRotation(Math.atan2(this.dir.y, this.dir.x)).setDepth(5);
       this.tele.push(img);
     } else if (a === 'nova') {
@@ -184,12 +191,12 @@ export default class Boss extends Enemy {
     }
   }
 
-  slamCenter() { return { x: this.cx + this.face.x * B.slam.reach, y: this.cy + this.face.y * B.slam.reach }; }
+  slamCenter() { return { x: this.cx + this.face.x * this.B.slam.reach, y: this.cy + this.face.y * this.B.slam.reach }; }
   sweepRect() {
     const f = this.face;
-    const cx = this.cx + f.x * B.sweep.reach, cy = this.cy + f.y * B.sweep.reach;
-    const w = Math.abs(f.x) >= Math.abs(f.y) ? B.sweep.h : B.sweep.w;
-    const h = Math.abs(f.x) >= Math.abs(f.y) ? B.sweep.w : B.sweep.h;
+    const cx = this.cx + f.x * this.B.sweep.reach, cy = this.cy + f.y * this.B.sweep.reach;
+    const w = Math.abs(f.x) >= Math.abs(f.y) ? this.B.sweep.h : this.B.sweep.w;
+    const h = Math.abs(f.x) >= Math.abs(f.y) ? this.B.sweep.w : this.B.sweep.h;
     return new Phaser.Geom.Rectangle(cx - w / 2, cy - h / 2, w, h);
   }
 
@@ -203,34 +210,34 @@ export default class Boss extends Enemy {
       const c = this.slamCenter();
       sfx.play('boom');
       sc.shake(220, 0.012);
-      sc.fx.ring(c.x, c.y, B.slam.r / 32 * 1.1, 0.35, 'ring', 0xeaf2f8);
+      sc.fx.ring(c.x, c.y, this.B.slam.r / 32 * 1.1, 0.35, 'ring', 0xeaf2f8);
       sc.fx.puff(c.x, c.y, 5, 14, 70, 0.5);
       sc.fx.puff(c.x, c.y, 15, 8, 50, 0.5);
-      if (dist(c.x, c.y, pc.x, pc.y) < B.slam.r + 3) player.hurt(B.slam.dmg, c.x, c.y, { kb: 170 });
+      if (dist(c.x, c.y, pc.x, pc.y) < this.B.slam.r + 3) player.hurt(this.B.slam.dmg, c.x, c.y, { kb: 170, attacker: this });
     } else if (a === 'sweep') {
       const r = this.sweepRect();
       sfx.play('sword');
       sc.shake(150, 0.008);
       sc.fx.slash(this.cx + this.face.x * 8, this.cy + this.face.y * 8, Math.atan2(this.face.y, this.face.x));
       sc.fx.puff(r.centerX, r.centerY, 15, 8, 60, 0.3);
-      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) player.hurt(B.sweep.dmg, this.cx, this.cy, { kb: 150 });
+      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) player.hurt(this.B.sweep.dmg, this.cx, this.cy, { kb: 150 });
     } else if (a === 'volley') {
       sfx.play('frost');
       const base = Math.atan2(this.dir.y, this.dir.x);
-      for (const off of [-B.volley.spread, 0, B.volley.spread]) this.orb(base + off, B.volley.speed, B.volley.dmg);
+      for (const off of [-this.B.volley.spread, 0, this.B.volley.spread]) this.orb(base + off, this.B.volley.speed, this.B.volley.dmg);
     } else if (a === 'nova') {
       sfx.play('nova');
       sc.shake(250, 0.01);
       sc.fx.ring(this.cx, this.cy, 2.4, 0.5, 'ring', 0x5cc8d8);
-      const n = B.nova.count, ph = Math.random() * 6.28;
-      for (let i = 0; i < n; i++) this.orb(ph + (i / n) * Math.PI * 2, B.nova.speed, B.nova.dmg);
+      const n = this.B.nova.count, ph = Math.random() * 6.28;
+      for (let i = 0; i < n; i++) this.orb(ph + (i / n) * Math.PI * 2, this.B.nova.speed, this.B.nova.dmg);
       this.setState('attack', 0.55);
       this.novaTwo = 0.45;
     } else if (a === 'charge') {
       sfx.play('roar');
-      this.chargeT = B.charge.time;
+      this.chargeT = this.B.charge.time;
       this.chargeHit = false;
-      this.setState('attack', B.charge.time);
+      this.setState('attack', this.B.charge.time);
     }
   }
 
@@ -243,11 +250,12 @@ export default class Boss extends Enemy {
   chargeTick(dt, player) {
     const b = this.body;
     this.chargeT -= dt;
-    b.setVelocity(this.dir.x * B.charge.speed, this.dir.y * B.charge.speed);
+    const dc = this.dashCfg();
+    b.setVelocity(this.dir.x * dc.speed, this.dir.y * dc.speed);
     this.scene.fx.puff(this.cx, this.cy + 10, 5, 1, 20, 0.3);
     if (!this.chargeHit) {
       const r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6);
-      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) { this.chargeHit = true; player.hurt(B.charge.dmg, this.cx, this.cy, { kb: 200 }); }
+      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) { this.chargeHit = true; player.hurt(dc.dmg, this.cx, this.cy, { kb: 200, attacker: this }); }
     }
     const crashed = b.blocked.left || b.blocked.right || b.blocked.up || b.blocked.down;
     if (crashed || this.chargeT <= 0) {
@@ -257,20 +265,37 @@ export default class Boss extends Enemy {
         this.scene.fx.puff(this.cx, this.cy, 5, 12, 60, 0.5);
         this.scene.fx.text(this.cx, this.cy - 26, 'DAZED', 13, 1);
         this.setState('recover', 1.6);
-      } else this.setState('recover', B.charge.recover);
+      } else this.setState('recover', dc.recover);
     }
   }
 
   finishBoss(dt) {
     if (this.novaTwo > 0) {
       this.novaTwo -= dt;
-      if (this.novaTwo <= 0) { const n = 10, ph = Math.random() * 6.28; for (let i = 0; i < n; i++) this.orb(ph + (i / n) * Math.PI * 2, B.nova.speed * 0.8, B.nova.dmg - 2); }
+      if (this.novaTwo <= 0) { const n = 10, ph = Math.random() * 6.28; for (let i = 0; i < n; i++) this.orb(ph + (i / n) * Math.PI * 2, this.B.nova.speed * 0.8, this.B.nova.dmg - 2); }
     }
     this.markT -= dt;
     this.finish(dt, 1);
     this.shadow.setScale(2.2).setPosition(this.x, this.y + 14).setDepth(this.y + 6);
     if (this.invulnerable && this.engaged && this.state === 'roar') this.setTint(Math.floor(this.scene.t * 14) % 2 ? 0xffb0b0 : 0xffffff);
     if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 36));
+  }
+
+  markDefeated() { S.flags.bossDead = true; }
+
+  // Called by the scene once the death animation starts: loot, doors, story beats.
+  victory(sc) {
+    sc.onEnemyKilled(this);
+    sc.setGate(false);
+    music.play('crypt');
+    bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
+    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game')) saveGame(sc, { auto: false }); });
+    sc.time.delayedCall(1500, () => {
+      if (!sc.scene.isActive('Game')) return;
+      sfx.play('levelup');
+      sc.fx.ring(this.x, this.y + 4, 2.5, 0.8, 'ring', 0x5cc8d8);
+      sc.pickups.push(new Pickup(sc, this.x, this.y + 6, { type: 'item', id: 'frostheart', big: true }));
+    });
   }
 
   die(info) {
@@ -288,9 +313,9 @@ export default class Boss extends Enemy {
     sc.hitStop(0.25);
     for (let i = 0; i < 8; i++) sc.time.delayedCall(i * 140, () => { if (sc.fx) sc.fx.puff(this.x + rand(-14, 14), this.y + rand(-16, 12), i % 2 ? 15 : 5, 8, 70, 0.6); });
     sc.tweens.add({ targets: this, alpha: 0, y: this.y + 6, duration: 1400, ease: 'Quad.easeIn', onComplete: () => this.destroy() });
-    S.flags.bossDead = true;
+    this.markDefeated();
     sc.onBossDeath(this);
-    bus.emit('enemy:killed', 'boss', this);
+    bus.emit('enemy:killed', this.kind, this);
     bus.emit('boss:killed', this);
   }
 }

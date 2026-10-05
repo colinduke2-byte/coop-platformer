@@ -78,6 +78,19 @@ export async function sigrid() {
 
 export async function bjorn() {
   const q = S.quests.wolves;
+  const aq = S.quests.alpha;
+  if (aq.status === 'ready') {
+    if (S.flags.alphaSpared) {
+      await say(BJORN, 'You LET HIM GO? ...Hm. The wolves have gone quiet, I will give you that. The trails are safer already. I do not understand it, but I will not argue with results.');
+      addGold(40);
+    } else {
+      await say(BJORN, 'Grimfang is dead? Ha! The pack will scatter now. Take this, you have earned it.');
+      addGold(150);
+    }
+    finishQuest('alpha');
+    return;
+  }
+
   if (q.status === 'inactive') {
     await say(BJORN, 'Hah. You are the one we dragged out of the snow. You look better than you smell.');
     await say(BJORN, 'Wolves. Three of them, big as ponies, hunting the north trail. They took my best dog. Kill them for me and I will make it worth your while.');
@@ -102,25 +115,13 @@ export async function bjorn() {
     await say(BJORN, 'If you are going to the crypt, take plenty of potions. The dead do not tire.');
     return;
   }
-  const aq = S.quests.alpha;
-  if (aq.status === 'inactive') {
+  if (aq.status === 'inactive' && q.status === 'done') {
     await say(BJORN, 'There is one more thing. The pack has a leader. Grimfang, the Pale Alpha, big as a bear, lives up in Frostwind Pass. Kill him and the wolves never bother us again.');
     const c = await choose(['I will deal with him.', 'Later.']);
     if (c === 0) { startQuest('alpha'); await say(BJORN, 'The pass opens north of the forest, past the wolf den. Take plenty of arrows. And do not corner him; a cornered wolf is the worst kind.'); }
     return;
   }
   if (aq.status === 'active') { await say(BJORN, 'Frostwind Pass, north of the forest. Grimfang will be near the old watchtower.'); return; }
-  if (aq.status === 'ready') {
-    if (S.flags.alphaSpared) {
-      await say(BJORN, 'You LET HIM GO? ...Hm. The wolves have gone quiet, I will give you that. The trails are safer already. I do not understand it, but I will not argue with results.');
-      addGold(40);
-    } else {
-      await say(BJORN, 'Grimfang is dead? Ha! The pack will scatter now. Take this, you have earned it.');
-      addGold(150);
-    }
-    finishQuest('alpha');
-    return;
-  }
   await say(BJORN, S.flags.ending === 'give' ? 'Warm hearth, full pelts. Life is good.' : S.flags.alphaSpared ? 'Odd. The wolves watch me from the treeline now and do not come closer.' : 'Wolves are quiet. The draugr, less so. Keep your blade sharp.');
 }
 

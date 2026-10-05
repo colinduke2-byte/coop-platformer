@@ -25,6 +25,12 @@ export const TUNE = {
   nova: { windup: 1.05, recover: 1.0, dmg: 12, speed: 78, count: 14 },
   charge: { windup: 0.75, recover: 1.4, dmg: 26, speed: 190, time: 0.6 },
   },
+  boss2: {
+    bite: { windup: 0.55, recover: 0.7, dmg: 17, speed: 215, time: 0.36 },
+    claw: { windup: 0.3, recover: 0.5, dmg: 12, speed: 230, time: 0.28 },
+    leap: { windup: 0.85, recover: 1.0, dmg: 21, r: 28, air: 0.5 },
+    howl: { windup: 0.95, recover: 0.8 },
+  },
   // Difficulty multipliers (Settings > Difficulty).
   difficulty: {
     easy: { dmgTaken: 0.7, enemyHp: 0.8, regen: 1.6 },

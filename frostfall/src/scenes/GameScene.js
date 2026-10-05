@@ -17,8 +17,9 @@ import Pickup from '../entities/Pickup.js';
 import Chest from '../entities/Chest.js';
 import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
+import Grimfang from '../entities/Grimfang.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot, Prop, Herb } from '../entities/Props.js';
+import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
@@ -29,6 +30,7 @@ import { pathingMethods } from '../world/pathing.js';
 import { fogMethods } from '../world/fog.js';
 import { lootMethods } from '../world/loot.js';
 import { zoneMethods } from '../world/zones.js';
+import { lightingMethods, hourOf, isNightHour } from '../world/lighting.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -125,10 +127,10 @@ export default class GameScene extends Phaser.Scene {
     if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
     for (const grp of [this.breakBodies, this.propBodies]) if (grp) { this.physics.add.collider(this.player, grp); this.physics.add.collider(this.enemies, grp); }
     if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
-    if (def.dim) this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, def.dim).setOrigin(0).setScrollFactor(0).setDepth(99800);
     music.play(def.music || 'village');
     ambience.play(def.ambience || null);
     this.initFog();
+    if (def.flag) S.flags[def.flag] = true;
     if (def.crypt) {
       S.flags.crypt = true;
       if (S.flags.bossDead && S.quests.king.status === 'active' && !S.inv.frostheart) {
@@ -144,6 +146,7 @@ export default class GameScene extends Phaser.Scene {
     cam.fadeIn(350, 11, 14, 26);
 
     this.snow = def.snow ? new SnowFx(this, 55) : null;
+    this.initLighting();
     this.on('player:dead', () => { this.deadT = 0.001; });
     this.on('ending', (kind) => { this.pendingEnding = kind; });
     this.events.on('ending-done', () => { this.applyEnding(); });
@@ -171,21 +174,34 @@ export default class GameScene extends Phaser.Scene {
       case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
       case 'npc': {
         if (e.id === 'ragna' && S.follower) break;
+        if (e.night && !isNightHour(hourOf())) break;               // indoor spot: only occupied at night
         let ax = wx, ay = wy;
         if (e.id === 'sigrid' && this.opts.intro) { ax = 21.5 * T; ay = 15.5 * T; }
         const n = new Npc(this, ax, ay, e.id);
         n.home = { x: wx, y: wy };
+        n.sched = !e.night && ['sigrid', 'bjorn', 'mirra', 'child'].includes(e.id);
+        if (n.sched && isNightHour(hourOf())) n.setAway(true);
         this.npcs.push(n); this.interactables.push(n);
         if (!this.npcBodies) this.npcBodies = this.physics.add.staticGroup();
         this.npcBodies.add(n);
         break;
       }
       case 'boss':
-        if (!S.flags.bossDead) {
-          this.boss = new Boss(this, wx, wy);
+        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : S.flags.bossDead)) {
+          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : new Boss(this, wx, wy);
           this.enemies.add(this.boss);
         }
         break;
+      case 'door': this.interactables.push(new Door(this, wx, wy, e)); break;
+      case 'bed': this.interactables.push(new Bed(this, wx, wy)); break;
+      case 'cauldron': this.interactables.push(new Cauldron(this, wx, wy)); break;
+      case 'lore': {
+        const lb = new Lore(this, wx, wy, e);
+        this.interactables.push(lb);
+        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+        this.propBodies.add(lb);
+        break;
+      }
       case 'herb': { const h = new Herb(this, wx, wy, e.item); this.interactables.push(h); break; }
       case 'prop': {
         const pr = new Prop(this, wx, wy, e.tex, e.body);
@@ -218,7 +234,7 @@ export default class GameScene extends Phaser.Scene {
       }
       case 'glow': {
         const l = this.add.image(wx, wy, 'glow').setTint(C[e.col ?? 12]).setBlendMode(Phaser.BlendModes.ADD).setScale(e.r / 32).setAlpha(0.5).setDepth(99900);
-        this.lights.push({ l, base: 0.5, ph: Math.random() * 6 });
+        this.lights.push({ l, base: 0.5, ph: Math.random() * 6, x: wx, y: wy, r: e.r });
         break;
       }
       default: break;
@@ -268,18 +284,24 @@ export default class GameScene extends Phaser.Scene {
     sfx.play('nova');
   }
 
-  onBossDeath(boss) {
-    this.onEnemyKilled(boss);
-    this.setGate(false);
-    music.play('crypt');
-    bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
-    this.time.delayedCall(3000, () => { if (this.scene.isActive('Game')) saveGame(this, { auto: false }); });
-    this.time.delayedCall(1500, () => {
-      if (!this.scene.isActive('Game')) return;
-      sfx.play('levelup');
-      this.fx.ring(boss.x, boss.y + 4, 2.5, 0.8, 'ring', 0x5cc8d8);
-      this.pickups.push(new Pickup(this, boss.x, boss.y + 6, { type: 'item', id: 'frostheart', big: true }));
-    });
+  onBossDeath(boss) { boss.victory(this); }
+
+  summonWolves(boss) {
+    for (const [dx, dy] of [[-46, 18], [46, 18], [0, -40]]) {
+      const x = Phaser.Math.Clamp(boss.x + dx, 40, this.worldW - 40), y = Phaser.Math.Clamp(boss.y + dy, 40, this.worldH - 40);
+      if (this.solidAt(x, y)) continue;
+      const en = this.addEnemy('wolf', x, y);
+      en.alert(true);
+      this.fx.puff(x, y, 5, 8, 50, 0.4);
+    }
+  }
+
+  // Arena reacts when the boss enrages: red light, harsher darkness.
+  arenaPhase(n) {
+    if (n === 2) {
+      this.ambientOverride = { color: 0x2a0710, alpha: Math.max(0.45, this.def.dim || 0) };
+      for (const l of this.lights) l.l.setTint(C[11]);
+    }
   }
 
 
@@ -402,7 +424,15 @@ export default class GameScene extends Phaser.Scene {
     this.fogT -= dt;
     if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
     for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
-    for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha(l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03); }
+    this.updateClock(dt);
+    this.schedT = (this.schedT || 0) - dt;
+    if (this.schedT <= 0 && this.npcs.length) {
+      this.schedT = 1;
+      const night = isNightHour(hourOf());
+      for (const n of this.npcs) if (n.sched && n.away !== night) { n.setAway(night); if (night) this.fx.puff(n.x, n.y, 5, 4, 20, 0.4); }
+    }
+    const night = this.nightness();
+    for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
     for (const n of this.npcs) n.update(dt, this.player);
     this.follower?.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
@@ -435,10 +465,10 @@ export default class GameScene extends Phaser.Scene {
     }
     this.breakables = this.breakables.filter((b) => !b.broken);
     for (const sh of this.eshots.getChildren()) sh.update(dt);
-    if (this.boss && !this.boss.engaged && !this.boss.dead) {
+    if (this.boss && !this.boss.engaged && !this.boss.dead && !this.boss.yieldDone) {
       const pc = this.player.body.center;
-      if (pc.y < 8.4 * T && pc.x > 6 * T && pc.x < 26 * T) {
-        this.setGate(true);
+      if (this.def.bossTrigger?.(pc, T)) {
+        if (this.gate) this.setGate(true);
         this.boss.engage();
         music.play('boss');
       }
@@ -446,6 +476,7 @@ export default class GameScene extends Phaser.Scene {
     this.updateZones(dt);
     this.fx.update(dt);
     this.snow?.update(dt);
+    this.updateLighting(dt);
     this.drawBars();
     if (this.deadT > 0) {
       this.deadT += dt;
@@ -459,9 +490,11 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => {
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       S.gold = Math.floor(S.gold * 0.9);
-      this.scene.restart({ map: 'village', spawn: 'start' });
+      const r = S.respawn || { map: 'village', spawn: 'start' };
+      S.map = r.map;
+      this.scene.restart(r.x != null ? { map: r.map, pos: { x: r.x, y: r.y } } : { map: r.map, spawn: r.spawn || 'start' });
     });
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods);

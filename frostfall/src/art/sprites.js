@@ -146,6 +146,7 @@ function buildCharacters(scene) {
     make('spr_' + name, (ctx, x, d, f) => humanoid(ctx, x, d, f, st));
   }
   make('spr_wolf', (ctx, x, d, f) => wolfFrame(ctx, x, f), ['side']);
+  make('spr_grimfang', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }), ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
 
@@ -219,6 +220,19 @@ function drawTile(ctx, id, ox) {
       snow(); o(0, 4, 13, 8, 2); o(3, 4, 4, 8, 10); o(4, 5, 3, 6, 1); o(4, 5, 5, 1, 8); o(2, 10, 5, 1, 8); o(2, 7, 7, 2, 4); o(6, 4, 4, 8, 1); break;
     case TILE.SARCO:
       cfloor(); o(0, 1, 13, 14, 2); o(4, 1, 3, 14, 10); o(3, 1, 11, 14, 2); o(5, 2, 4, 12, 1); o(2, 6, 6, 4, 1); o(2, 7, 5, 2, 6); break;
+    case TILE.SNOW3: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 31, [6, 4], 8); o(4, 3, 10, 3, 2); o(3, 3, 12, 3, 1); o(6, 3, 10, 2, 1); o(4, 11, 4, 2, 2); o(6, 11, 4, 1, 1); o(3, 10, 6, 3, 1); break;
+    case TILE.SNOW4: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 41, [6, 6, 4], 9); for (const [x, y] of [[3, 4], [9, 9], [12, 3]]) { o(8, x, y + 1, 1, 2); o(8, x + 2, y, 1, 3); o(7, x + 1, y + 1, 1, 2); } break;
+    case TILE.PATH2: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 61, [9, 9, 4, 5, 3], 20); o(9, 0, 7, 16, 1); o(9, 6, 0, 1, 16); o(5, 8, 3, 2, 1); break;
+    case TILE.CFLOOR2: cfloor(); o(1, 4, 3, 1, 5); o(1, 5, 7, 3, 1); o(1, 8, 8, 1, 4); o(1, 9, 11, 3, 1); o(3, 10, 4, 2, 1); break;
+    case TILE.CWALL2:
+      o(1, 0, 0, 16, 16); o(2, 0, 0, 16, 1); o(0, 0, 7, 16, 1); o(0, 0, 15, 16, 1); o(0, 7, 0, 1, 7); o(0, 3, 8, 1, 7); o(0, 11, 8, 1, 7);
+      o(7, 1, 1, 5, 2); o(8, 2, 3, 3, 1); o(7, 9, 9, 4, 2); o(8, 10, 11, 2, 1); o(8, 12, 2, 2, 1); break;
+    case TILE.DEADTREE:
+      snow(); o(0, 4, 14, 8, 1); o(9, 7, 6, 2, 8); o(9, 4, 5, 3, 1); o(9, 3, 3, 1, 3); o(9, 9, 7, 4, 1); o(9, 12, 4, 1, 4); o(10, 7, 6, 1, 8); o(9, 7, 2, 1, 4); o(6, 3, 3, 1, 1); o(6, 12, 4, 1, 1); o(6, 7, 2, 2, 1); break;
+    case TILE.STUMP:
+      snow(); o(0, 3, 13, 10, 2); o(9, 3, 6, 10, 7); o(10, 4, 5, 8, 2); o(9, 5, 7, 6, 1); o(10, 6, 7, 4, 1); o(6, 3, 5, 10, 1); o(6, 4, 4, 8, 1); o(9, 7, 6, 2, 1); break;
+    case TILE.ICE2: o(4, 0, 0, 16, 16); o(5, 2, 3, 6, 1); o(3, 0, 8, 16, 1); o(2, 3, 2, 1, 4); o(2, 4, 5, 3, 1); o(2, 7, 6, 1, 5); o(2, 8, 10, 4, 1); o(6, 11, 3, 2, 1); break;
+    case TILE.TUFT: snow(); for (const [x, y] of [[4, 8], [8, 6], [11, 9]]) { o(8, x, y, 1, 3); o(7, x + 1, y + 1, 1, 2); o(8, x - 1, y + 1, 1, 2); } o(6, 4, 7, 1, 1); break;
     default: o(0, 0, 0, 16, 16);
   }
 }
@@ -330,6 +344,29 @@ function buildFx(scene) {
     blob(g, 7.4, 9, 3.8, 4.2, 4);
     rc(g, 6, 8, 1, 3, 1); rc(g, 7, 10, 2, 1, 1);          // crack
   });
+  prop('bed', (g) => {
+    rc(g, 1, 2, 14, 12, 9); rc(g, 2, 3, 12, 10, 11); rc(g, 2, 3, 12, 4, 6); rc(g, 2, 3, 5, 3, 6);
+    rc(g, 8, 4, 5, 3, 5); rc(g, 3, 8, 11, 5, 3); rc(g, 3, 10, 11, 1, 4);
+  });
+  prop('table', (g) => {
+    rc(g, 1, 3, 14, 10, 9); rc(g, 1, 4, 14, 7, 10); rc(g, 2, 5, 12, 1, 9); rc(g, 2, 9, 12, 1, 9); rc(g, 6, 6, 3, 3, 13); rc(g, 6, 6, 3, 1, 12);
+  });
+  prop('shelf', (g) => {
+    rc(g, 1, 1, 14, 14, 9); rc(g, 2, 2, 12, 5, 1); rc(g, 2, 9, 12, 5, 1);
+    for (const [x, y, c] of [[2, 3, 11], [4, 3, 15], [6, 3, 13], [8, 3, 12], [10, 3, 8], [3, 10, 14], [5, 10, 15], [8, 10, 11], [11, 10, 13]]) rc(g, x, y, 2, 3, c);
+    rc(g, 2, 7, 12, 1, 10);
+  });
+  prop('bookshelf', (g) => {
+    rc(g, 1, 1, 14, 14, 9); rc(g, 2, 2, 12, 5, 1); rc(g, 2, 9, 12, 5, 1);
+    for (let i = 0; i < 6; i++) { rc(g, 2 + i * 2, 2, 2, 5, [11, 3, 13, 14, 8, 12][i]); rc(g, 2 + i * 2, 9, 2, 5, [8, 14, 12, 3, 11, 13][i]); }
+    rc(g, 2, 7, 12, 1, 10);
+  });
+  prop('cauldron', (g) => {
+    blob(g, 8, 9, 6, 5, 2); blob(g, 8, 8, 5, 4, 3); blob(g, 8, 8, 4, 3, 15); rc(g, 5, 7, 2, 1, 6); rc(g, 9, 9, 2, 1, 6); rc(g, 3, 12, 2, 3, 2); rc(g, 11, 12, 2, 3, 2);
+  });
+  prop('book', (g) => {
+    rc(g, 3, 5, 10, 8, 11); rc(g, 4, 6, 8, 6, 5); rc(g, 4, 6, 1, 6, 11); rc(g, 6, 8, 5, 1, 4); rc(g, 6, 10, 4, 1, 4);
+  });
   prop('anvil', (g) => {
     rc(g, 3, 11, 10, 3, 2); rc(g, 5, 8, 6, 4, 3); rc(g, 2, 5, 12, 4, 4); rc(g, 12, 6, 3, 2, 3); rc(g, 3, 5, 9, 1, 5);
   });
@@ -347,6 +384,15 @@ function buildFx(scene) {
     rc(g, 2, 2, 12, 7, 10);                // board
     rc(g, 2, 8, 12, 1, 9);
     rc(g, 4, 4, 8, 1, 9); rc(g, 4, 6, 6, 1, 9);   // "text"
+  });
+  // stepped radial mask used to cut light out of the darkness layer
+  tex(scene, 'lightmask', 64, 64, (g) => {
+    const steps = 6;
+    for (let i = 0; i < steps; i++) {
+      const r = 32 * (1 - i / steps);
+      g.fillStyle = 'rgba(255,255,255,' + (0.2 + i * 0.03) + ')';
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) < r) g.fillRect(x, y, 1, 1);
+    }
   });
   tex(scene, 'warn', 16, 16, (g) => { g.fillStyle = 'rgba(200,56,60,0.35)'; g.fillRect(0, 0, 16, 16); });
 }
