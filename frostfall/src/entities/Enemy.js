@@ -93,11 +93,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.flashT -= dt;
     this.slowT -= dt;
     this.guardBroken = Math.max(0, (this.guardBroken || 0) - dt);
+    this.openT = Math.max(0, (this.openT || 0) - dt);
+    this.dodgeCd = (this.dodgeCd || 0) - dt;
     if (this.markT > 0) {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
     }
     const slow = this.slowT > 0 ? 0.5 : 1;
+    if (this.dot) this.tickDot(dt);
+    if (this.dead) return;
 
     // ---- stun / knockback: velocity decays, no AI
     if (this.stun > 0) {
@@ -109,6 +113,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     const d = dist(this.x, this.y, player.x, player.y);
     const dead = player.mode === 'dead';
+
+    // dodgers sidestep a swing in progress (they cannot dodge twice in a row)
+    if (this.evade > 0) { this.evade -= dt; this.finish(dt, slow); return; }
+    if (this.cfg.dodge && this.alerted && this.dodgeCd <= 0 && player.swing && d < 34 && (this.state === 'chase' || this.state === 'idle')) {
+      const to = norm(player.x - this.x, player.y - this.y), side = Math.random() < 0.5 ? 1 : -1;
+      this.evade = 0.24; this.dodgeCd = 1.7;
+      b.setVelocity(-to.y * side * 230 - to.x * 40, to.x * side * 230 - to.y * 40);
+      sc.fx.puff(this.x, this.y + 4, 5, 4, 30, 0.25); sfx.play('roll');
+      this.finish(dt, slow);
+      return;
+    }
 
     // ---- awareness
     if (!this.alerted) {
@@ -127,6 +142,21 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!this.alerted) this.doIdle(dt, slow);
     else this.doCombat(dt, player, d, slow);
     this.finish(dt, slow);
+  }
+
+  // Burning / bleeding: small ticks of damage every half second.
+  tickDot(dt) {
+    const d = this.dot;
+    d.t -= dt; d.tick -= dt;
+    if (d.tick <= 0) {
+      d.tick = 0.5;
+      const n = Math.max(1, Math.round(d.dps * 0.5));
+      this.hp -= n; this.flashT = 0.05;
+      this.scene.fx.text(this.x, this.y - 12, String(n), d.col, 0.5);
+      if (!this.alerted) this.alert(true);
+      if (this.hp <= 0) { this.dot = null; this.die({ dot: true }); return; }
+    }
+    if (d.t <= 0) this.dot = null;
   }
 
   doIdle(dt, slow) {
@@ -188,7 +218,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         b.setVelocity(0, 0);
         this.blink -= dt;
         if (this.blink <= 0) { this.blink = 0.07; this.blinkOn = !this.blinkOn; }
-        if (this.stateT <= 0) this.startAttack(player, to);
+        // roll-punishers hold the swing while you are mid-roll and strike as you land
+        if (cfg.punishRoll && this.stateT <= 0.08 && player.mode === 'roll' && (this.holdT = (this.holdT || 0) + dt) < 0.8) { this.stateT = 0.08; break; }
+        if (this.stateT <= 0) { this.holdT = 0; this.startAttack(player, to); }
         break;
       }
       case 'attack': {
@@ -322,6 +354,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.flashT > 0) this.setTintFill(0xffffff);
     else if (this.state === 'windup' && this.blinkOn) this.setTint(0xff8080);
     else if (this.slowT > 0) this.setTint(0x8fe0f0);
+    else if (this.cfg.tint) this.setTint(this.cfg.tint);
     else this.clearTint();
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
@@ -363,14 +396,25 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
       }
     }
+    // dodging: nothing touches a fencer mid-sidestep
+    if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
     let dmg = Math.max(1, Math.round(info.dmg * em));
+    // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
+    if (this.cfg.armored && info.src !== 'shout') {
+      if (this.openT > 0) { dmg = Math.round(dmg * 1.6); }
+      else {
+        dmg = Math.max(1, Math.round(dmg * (info.element ? 0.45 : 0.18)));
+        sc.fx.text(this.x, this.y - 22, 'ARMORED', 4, 0.7); sfx.play('block');
+      }
+    }
     if (em >= 1.2) sc.fx.text(this.x, this.y - 21, 'WEAK', 12, 0.8); else if (em <= 0.7) sc.fx.text(this.x, this.y - 21, 'RESIST', 4, 0.8);
     if (info.src === 'arrow') this.stuck = (this.stuck || 0) + 1;
     this.hp -= dmg;
     this.flashT = 0.1;
     if (!this.alerted) this.alert(true);
     if (info.slow) this.slowT = Math.max(this.slowT, info.slow);
+    if (info.dot) this.dot = { dps: info.dot.dps, t: info.dot.t, col: info.dot.col, acc: 0, tick: 0 };
     const resist = this.cfg.kbResist ?? 0;
     if (info.kb && !this.noKnock) {
       const n = norm(info.kx, info.ky);

@@ -6,7 +6,7 @@ import { addItem, addGold, addArrows, removeItem, count } from '../systems/inven
 import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
-import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu } from './services.js';
+import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
 
@@ -188,15 +188,16 @@ export async function hilda() {
   const H = 'Hilda';
   await say(H, S.flags.ending === 'give' ? 'The forge has never run so hot. Everyone wants new blades!' : 'Steel does not care about the cold. What do you need?');
   for (;;) {
-    const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Buy gear', 'Sell', 'Leave']);
+    const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Fletch arrows', 'Buy gear', 'Sell', 'Leave']);
     if (c === 0) await upgradeMenu(H, 'weapon');
     else if (c === 1) await upgradeMenu(H, 'armor');
     else if (c === 2) await enchantMenu(H);
-    else if (c === 3) await buyMenu(H, [
+    else if (c === 3) await fletchMenu();
+    else if (c === 4) await buyMenu(H, [
       { id: 'iron_sword', price: 80, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'iron_greatsword', price: 220, once: true },
       { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
     ]);
-    else if (c === 4) await sellMenu(H);
+    else if (c === 5) await sellMenu(H);
     else { await say(H, 'Keep your edge sharp.'); return; }
   }
 }

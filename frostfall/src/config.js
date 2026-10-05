@@ -52,6 +52,7 @@ export const BINDINGS = {
   swap: ['KeyQ', 'Tab', 'WheelUp', 'WheelDown'],
   shout: ['KeyR'],
   lockon: ['KeyT'],
+  ammo: ['KeyV'],
   block: ['KeyF'],
   sneak: ['KeyC', 'ShiftLeft'],
   interact: ['KeyE', 'Enter'],

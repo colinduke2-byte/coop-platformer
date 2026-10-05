@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, C } from '../config.js';
+import { W, H, C, BINDINGS } from '../config.js';
 import { txt, wrap, textW } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { S } from '../systems/state.js';
@@ -12,9 +12,9 @@ import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 
-const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'ingredient', 'misc', 'quest'];
+const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
-const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion']], ['MISC', ['ingredient', 'misc', 'quest']]];
+const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
 const SORTS = ['TYPE', 'NAME', 'VALUE'];
 
 export function panel(g, x, y, w, h, fill = 1) {
@@ -41,7 +41,7 @@ export default class MenuScene extends Phaser.Scene {
   create() {
     ui.modal = true;
     this.tabs = [
-      { name: 'ITEMS', render: () => this.renderItems(), input: () => this.inputItems() },
+      { name: 'ITEMS', render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },
       { name: 'SKILLS', render: () => this.renderSkills(), input: () => {} },
       ...extraTabs(this),
     ];
@@ -49,7 +49,33 @@ export default class MenuScene extends Phaser.Scene {
     this.bg = this.add.graphics();
     this.dyn = this.add.container(0, 0);
     this.dirty = true;
+    this.tabRects = [];
+    this.mouse = { x: -1, y: -1 };
+    this.input.on('pointermove', (p) => this.onMove(p));
+    this.input.on('pointerdown', (p) => this.onClick(p));
     this.events.once('shutdown', () => { ui.modal = false; });
+  }
+
+  // ------------------------------------------------------------- mouse
+  tapKey(code) { keys._press(code); setTimeout(() => keys._release(code), 60); }
+  tabAt(p) { return this.tabRects.findIndex((r) => p.x >= r.x && p.x < r.x + r.w && p.y >= 5 && p.y < 18); }
+  onMove(p) {
+    if (this.warm > 0 || this.tabs[this.tab].busy?.()) return;
+    if (Math.abs(p.x - this.mouse.x) + Math.abs(p.y - this.mouse.y) < 1) return;
+    this.mouse = { x: p.x, y: p.y };
+    const t = this.tabs[this.tab], i = t.rowAt ? t.rowAt(p.x, p.y) : -1;
+    if (i >= 0 && i !== t.cursorOf?.() ) { t.hover ? t.hover(i) : (this.cursor = i); this.dirty = true; sfx.play('move'); }
+  }
+  onClick(p) {
+    if (this.warm > 0 || this.tabs[this.tab].busy?.()) return;
+    if (p.rightButtonDown()) { this.tapKey(BINDINGS.pause[0]); return; }
+    const ti = this.tabAt(p);
+    if (ti >= 0) { if (ti !== this.tab) this.go(ti); return; }
+    const t = this.tabs[this.tab], i = t.rowAt ? t.rowAt(p.x, p.y) : -1;
+    if (i < 0) return;
+    t.hover ? t.hover(i) : (this.cursor = i);
+    this.dirty = true;
+    this.tapKey(t.clickKey ? t.clickKey(i) : BINDINGS.interact[0]);
   }
 
   close() {
@@ -132,8 +158,10 @@ export default class MenuScene extends Phaser.Scene {
     panel(g, 2, 2, W - 4, H - 4, 1);
     // tabs
     let x = 8;
+    this.tabRects = [];
     this.tabs.forEach((t, i) => {
       const w = textW(t.name) + 10;
+      this.tabRects.push({ x, w });
       if (i === this.tab) { g.fillStyle(C[3]); g.fillRect(x, 5, w, 13); g.fillStyle(C[13]); g.fillRect(x, 17, w, 1); }
       this.T(x + 5, 8, t.name, i === this.tab ? 6 : 4);
       x += w + 3;

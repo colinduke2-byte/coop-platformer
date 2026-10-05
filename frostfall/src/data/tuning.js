@@ -14,7 +14,7 @@ export const TUNE = {
     { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
   ],
   hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
-  bow: { minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
+  bow: { maxArrows: 30, minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
   shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },
   cast: { lock: 0.28, move: 0.4, heatCost: 0.35, heatMax: 3, heatDecay: 0.9 },
   block: { move: 0.55, parry: 0.18, arc: 0.2 },

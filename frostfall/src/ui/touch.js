@@ -12,7 +12,7 @@ const BUTTONS = [
 // Everything else lives in a ring that opens from MORE. [label, code, toggle]
 const RING = [
   ['BOW', 'KeyK'], ['MAG', 'KeyL'], ['SWAP', 'KeyQ'], ['SHOUT', 'KeyR'],
-  ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
+  ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['AMMO', 'KeyV'], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
 ];
 const TOP = [['||', 'Escape', 'right:10px;top:10px']];
 
@@ -51,7 +51,7 @@ export function installTouch(force = false) {
   ring.style.cssText = 'position:absolute;right:182px;bottom:18px;width:44px;height:44px;display:none;pointer-events:none';
   root.appendChild(ring);
   RING.forEach(([label, code, tog], i) => {
-    const x = -(i % 4) * 46 - 20, y = -(Math.floor(i / 4) + 1) * 46 - 2;
+    const x = -(i % 5) * 44 - 20, y = -(Math.floor(i / 5) + 1) * 46 - 2;
     const b = document.createElement('div');
     b.textContent = label; b.dataset.code = code;
     b.style.cssText = `position:absolute;left:${2 + x}px;top:${2 + y}px;width:40px;height:40px;border-radius:50%;background:#1c2338;opacity:.7;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a;font-size:10px`;

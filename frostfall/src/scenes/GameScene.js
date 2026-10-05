@@ -293,8 +293,9 @@ export default class GameScene extends Phaser.Scene {
 
   onBossDeath(boss) { boss.victory(this); }
 
-  onFirstAlert() {
+  onFirstAlert(en) {
     tip('sneak');
+    if (en && ['reaver', 'knight', 'fencer'].includes(en.kind)) tip(en.kind);
     if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
   }
 

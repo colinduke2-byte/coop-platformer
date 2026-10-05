@@ -3,7 +3,8 @@ import { S } from '../systems/state.js';
 import { say, choose } from '../systems/dialogue.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF } from './items.js';
-import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
+import { addItem, removeItem, count, addGold, addArrows } from '../systems/inventory.js';
+import { TUNE } from './tuning.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { listScreen } from '../scenes/ShopScene.js';
@@ -58,8 +59,9 @@ export async function buyMenu(who, wares) {
       const w = wares[i];
       if (w.once && count(w.id)) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); return; }
       if (S.gold < w.price) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); return; }
+      if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { ui.say('QUIVER IS FULL', 4); sfx.play('nostamina'); return; }
       S.gold -= w.price;
-      if (w.id === 'arrows') { S.arrows += w.n; bus.emit('toast', `+${w.n} ARROWS`, 5); }
+      if (w.id === 'arrows') addArrows(w.n);
       else addItem(w.id, w.n || 1);
       ui.say('BOUGHT ' + (w.name || ITEMS[w.id].name).toUpperCase(), 8);
       sfx.play('coin');
@@ -187,6 +189,28 @@ export async function brewMenu(who = 'Alchemy') {
       addItem(r.id);
       ui.say('BREWED ' + ITEMS[r.id].name.toUpperCase(), 8);
       sfx.play('potion');
+    },
+  });
+}
+
+// ----------------------------------------------------------------- fletching
+export const FLETCH = [
+  { id: 'fire_arrow', n: 5, arrows: 5, mat: 'bone_dust', matN: 1, gold: 12 },
+  { id: 'bleed_arrow', n: 5, arrows: 5, mat: 'wolf_fang', matN: 1, gold: 12 },
+];
+export async function fletchMenu() {
+  const can = (f) => S.arrows >= f.arrows && count(f.mat) >= f.matN && S.gold >= f.gold;
+  await listScreen({
+    title: 'FLETCHING', hint: 'E CRAFT   ESC DONE',
+    rows: () => FLETCH.map((f) => ({
+      id: f.id, name: `${ITEMS[f.id].name} x${f.n}`, tag: `${f.gold}G`, ok: can(f), sub: can(f) ? 'READY' : 'NEED ITEMS',
+      lines: [[`ARROWS ${S.arrows}/${f.arrows}`, S.arrows >= f.arrows ? 8 : 11], [`${ITEMS[f.mat].name.toUpperCase()} ${count(f.mat)}/${f.matN}`, count(f.mat) >= f.matN ? 8 : 11], [`YOU HAVE ${count(f.id)}`, 4]],
+    })),
+    onSelect: (i, ui) => {
+      const f = FLETCH[i];
+      if (!can(f)) { sfx.play('nostamina'); ui.say('NEED ARROWS, A MATERIAL AND GOLD', 11); return; }
+      S.arrows -= f.arrows; removeItem(f.mat, f.matN); S.gold -= f.gold; addItem(f.id, f.n);
+      ui.say('CRAFTED ' + f.n + ' ' + ITEMS[f.id].name.toUpperCase(), 8); sfx.play('potion');
     },
   });
 }

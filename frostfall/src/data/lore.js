@@ -19,8 +19,11 @@ export const BEASTS = {
   wight: { name: 'Frost Wight', desc: 'Hurls frost orbs from a distance. Keeps its distance.', weak: 'Fire and lightning. Immune-ish to frost.' },
   conjurer: { name: 'Hexcaster', desc: 'Marks the ground; the blast lands a second later. Move!', weak: 'Lightning. Squishy.' },
   bandit: { name: 'Bandit', desc: 'Swings quickly; retreats when wounded.', weak: 'None.' },
-  archer: { name: 'Bandit Archer', desc: 'Shows a red aim line before every shot.', weak: 'None.' },
+  archer: { name: 'Bandit Archer', desc: 'Shows a red aim line before every shot. Spotting you, it sounds the alarm for the whole camp.', weak: 'None.' },
   chief: { name: 'Bandit Chief', desc: 'Tough. Calls every bandit nearby to arms.', weak: 'None.' },
+  reaver: { name: 'Rime Reaver', desc: 'Waits out your dodge roll and strikes the moment you land. Do not roll early.', weak: 'Fire. Resists frost.' },
+  knight: { name: 'Rime Knight', desc: 'Armour turns aside almost every blow. Raise a shield and parry its swing, then strike while it reels.', weak: 'Parry opening, lightning.' },
+  fencer: { name: 'Snow Fencer', desc: 'Sidesteps when you swing. Bait the first swing, hit the recovery, or use the bow and spells.', weak: 'Ranged attacks.' },
   boss: { name: 'Jarl Valdrek', desc: 'The Hollow King. Two phases; the second adds a frost nova and a charge.', weak: 'Fire. Resists frost.' },
   grimfang: { name: 'Grimfang', desc: 'The Pale Alpha. Leaps, howls, and may yield when beaten.', weak: 'Fire.' },
 };

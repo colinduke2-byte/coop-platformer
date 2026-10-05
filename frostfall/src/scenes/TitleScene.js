@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H } from '../config.js';
+import { W, H, BINDINGS } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
@@ -37,6 +37,15 @@ export default class TitleScene extends Phaser.Scene {
     this.cursor = txt(this, 0, 98, '\u25B6', 13);
     const hint = txt(this, 0, 168, 'W/S SELECT   E CONFIRM', 4);
     hint.x = Math.floor((W - hint.width) / 2);
+    // mouse: hover to pick, click to confirm
+    const rowAt = (p) => this.texts.findIndex((t) => p.x >= t.x - 14 && p.x <= t.x + t.width + 6 && p.y >= t.y - 2 && p.y <= t.y + 11);
+    this.input.on('pointermove', (p) => { if (this.slotMode || this.warm > 0) return; const i = rowAt(p); if (i >= 0 && !this.items[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
+    this.input.on('pointerdown', (p) => {
+      if (this.warm > 0) return;
+      if (this.slotMode) { const i = this.slotTxt.findIndex((t) => p.y >= t.y - 2 && p.y <= t.y + 10); if (i >= 0) { this.slotSel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); } return; }
+      const i = rowAt(p);
+      if (i >= 0 && !this.items[i].off) { this.sel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); }
+    });
     this.snow = new SnowFx(this, 80);
     this.t = 0;
     this.warm = 6;

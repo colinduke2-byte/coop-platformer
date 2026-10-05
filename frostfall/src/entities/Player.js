@@ -311,10 +311,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   // ------------------------------------------------------------------ bow
+  // Ammo kinds in the quiver: plain arrows (S.arrows) plus crafted fire / barbed arrows (inventory).
+  ammoKinds() { return ['arrow', ...['fire_arrow', 'bleed_arrow'].filter((k) => (S.inv[k] || 0) > 0)]; }
+  curAmmo() { const a = S.ammo || 'arrow'; return a === 'arrow' || (S.inv[a] || 0) > 0 ? a : 'arrow'; }
+  ammoLeft() { const a = this.curAmmo(); return a === 'arrow' ? S.arrows : S.inv[a]; }
+  cycleAmmo() {
+    const ks = this.ammoKinds(); if (ks.length < 2) { sfx.play('nostamina'); return; }
+    S.ammo = ks[(ks.indexOf(this.curAmmo()) + 1) % ks.length]; sfx.play('select');
+    bus.emit('toast', S.ammo === 'arrow' ? 'PLAIN ARROWS' : ITEMS[S.ammo].name.toUpperCase() + 'S', S.ammo === 'fire_arrow' ? 12 : S.ammo === 'bleed_arrow' ? 11 : 5);
+  }
+
   bowInput() {
+    if (keys.pressed('ammo') && !this.drawing) this.cycleAmmo();
     if (!this.drawing) {
       if (keys.pressed('bow')) {
-        if (S.arrows <= 0) { sfx.play('nostamina'); bus.emit('toast', 'NO ARROWS'); return; }
+        if (this.ammoLeft() <= 0) { sfx.play('nostamina'); bus.emit('toast', 'NO ARROWS'); return; }
         if (S.sp < P.bow.startCost) { sfx.play('nostamina'); bus.emit('nostamina'); return; }
         this.drawing = true; this.drawT = 0; this.drawFull = false;
         tip('bow');
@@ -336,11 +347,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const cost = P.bow.shotCost + P.bow.chargeCost * charge01;
     S.sp = Math.max(0, S.sp - cost);
     this.spDelay = P.regenDelay + 0.2;
-    S.arrows--;
+    const ammo = this.curAmmo();
+    if (ammo === 'arrow') S.arrows--; else { S.inv[ammo]--; if (S.inv[ammo] <= 0) delete S.inv[ammo]; }
     const sp = P.bow.speedMin + (P.bow.speedMax - P.bow.speedMin) * charge01;
     const dmg = stats.bowDmg() * (P.bow.dmgMin + (P.bow.dmgMax - P.bow.dmgMin) * charge01) * bonus.arrow();
     const f = this.face;
-    const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'arrow', f.x * sp, f.y * sp, { dmg, charge: charge01, life: 0.4 + 0.5 * charge01 + 0.5 });
+    const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'arrow', f.x * sp, f.y * sp, { dmg, charge: charge01, life: 0.4 + 0.5 * charge01 + 0.5, ammo });
     this.scene.shots.add(pr);
     pr.body.setVelocity(f.x * sp, f.y * sp);
     sfx.play('shoot');
@@ -363,6 +375,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     sc.fx.text(this.x, this.y - 18, 'FUS!', 13, 1);
     sc.shake(320, 0.014);
     sc.flashScreen(90);
+    sc.noise(this.x, this.y, 150);
     for (const e of sc.enemies.getChildren()) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (e.dead || d > P.shout.radius) continue;
@@ -465,7 +478,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     sc.hitStop(0.1); sc.shake(120, 0.006);
     this.gainXp('oneHanded', 5);
     if (attacker && !attacker.dead) {
-      attacker.staggered = true;
+      attacker.staggered = true; attacker.openT = 1.8;
       attacker.stun = Math.max(attacker.stun || 0, attacker.isBoss ? 0.5 : 1.1);
       if (attacker.state === 'windup' || attacker.state === 'attack') { attacker.setState('recover', 0.6); attacker.marker?.destroy(); attacker.marker = null; }
       attacker.body.setVelocity(0, 0);

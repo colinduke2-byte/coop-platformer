@@ -44,6 +44,13 @@ check('a waypoint can be placed from the map', !!wp && wp.map === 'village', JSO
 await tap('Escape', 60); await h.sleep(300);
 await h.sleep(200);
 await h.shot('s17_waypoint');
+// ---- mouse in the pause menu: click a tab, hover a row
+await tap('Escape', 60); await h.sleep(300);
+await G(() => window.__ff.game.scene.getScene('Menu').scene.stop());
+await G(() => window.__ff.game.scene.getScene('Game').openMenu(0)); await h.sleep(400);
+const pt = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); const r = m.tabRects[1]; const c = m.game.canvas.getBoundingClientRect(); const k = c.width / 320; return { x: c.left + (r.x + 6) * k, y: c.top + 11 * k }; });
+await h.page.mouse.move(pt.x, pt.y); await h.page.mouse.click(pt.x, pt.y); await h.sleep(250);
+check('clicking a tab header switches tabs', await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return m.tabs[m.tab].name; }) === 'SKILLS');
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'UI FAILED' : 'UI PASSED');

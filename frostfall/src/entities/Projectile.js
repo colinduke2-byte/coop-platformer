@@ -15,6 +15,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.dmg = opts.dmg ?? 5;
     this.charge = opts.charge ?? 0;
     this.ally = !!opts.ally;
+    this.ammo = opts.ammo || 'arrow';
+    if (this.ammo === 'fire_arrow') this.setTint(0xf08a30); else if (this.ammo === 'bleed_arrow') this.setTint(0xc8383c);
     this.life = opts.life ?? 1.4;
     this.enemyOwned = kind === 'bolt' || kind === 'eshot';
     this.body.setSize(4, 4).setOffset((this.width - 4) / 2, (this.height - 4) / 2);
@@ -77,7 +79,12 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       (this.hitSet ||= new Set()).add(e);
       const sneak = !e.alerted && pl.sneaking;
       const mult = (sneak ? 2 + bonus.sneakAttack() * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
-      const dealt = e.takeHit({ dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y });
+      const special = this.ammo;
+      const dealt = e.takeHit({
+        dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
+        element: special === 'fire_arrow' ? 'fire' : null,
+        dot: special === 'fire_arrow' ? { dps: 4, t: 3, col: 12 } : special === 'bleed_arrow' ? { dps: 3, t: 5, col: 11 } : null,
+      });
       if (dealt <= 0) { this.finish(); return; }
       sc.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);
       if (sneak) { sc.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); pl.gainXp('sneak', 8); sfx.play('crit'); } else sfx.play('hit');
@@ -109,6 +116,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     sc.fx.puff(this.x, this.y, 5, 4, 30, 0.5);
     sc.shake(110, 0.005);
     sc.breakAt(this.x, this.y, R + 4);
+    sc.noise(this.x, this.y, 80);
     for (const e of sc.enemies.getChildren()) {
       if (e.dead || dist(e.x, e.y, this.x, this.y) > R) continue;
       const dealt = e.takeHit({ dmg: this.dmg, kx: e.x - this.x, ky: e.y - this.y, kb: 95, src: 'fire', element: 'fire', stun: 0.28 });

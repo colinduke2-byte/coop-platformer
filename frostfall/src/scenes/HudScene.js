@@ -294,6 +294,13 @@ export default class HudScene extends Phaser.Scene {
     const gold = String(S.gold), ar = String(S.arrows);
     const gw = textW(gold), aw = textW(ar);
     g.fillStyle(C[0], 0.62); g.fillRect(W - 14 - Math.max(gw, aw) - 6, 0, Math.max(gw, aw) + 20, 23);
+    if (!this.ammoTxt) this.ammoTxt = txt(this, 0, 23, '', 12);
+    const ak = pl.curAmmo();
+    if (ak !== 'arrow') {
+      const lab = (ak === 'fire_arrow' ? 'FIRE ' : 'BARB ') + S.inv[ak];
+      this.ammoTxt.setText(lab).setFont(ak === 'fire_arrow' ? 'f12' : 'f11').setVisible(true);
+      this.ammoTxt.x = W - 22 - Math.max(gw, aw) - 6 - this.ammoTxt.width; this.ammoTxt.y = 13; g.fillStyle(C[0], 0.62); g.fillRect(this.ammoTxt.x - 3, 12, this.ammoTxt.width + 6, 10);
+    } else this.ammoTxt.setVisible(false);
     this.goldTxt.setText(gold).x = W - 4 - gw;
     this.arrowTxt.setText(ar).x = W - 4 - aw;
     this.coinImg.x = W - 13 - Math.max(gw, aw);

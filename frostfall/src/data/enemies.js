@@ -23,7 +23,7 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [6, 16], drops: [['hp_potion', 0.22], ['sp_potion', 0.15], ['arrows', 0.25, [2, 5]], ['iron_cuirass', 0.04], ['iron_sword', 0.06]] },
   },
   archer: {
-    name: 'Bandit Archer', tex: 'spr_archer', bark: 'human', flee: true, hp: 22, speed: 34, chase: 44, dmg: 10, detect: 96,
+    name: 'Bandit Archer', tex: 'spr_archer', bark: 'human', flee: true, call: 100, hp: 22, speed: 34, chase: 44, dmg: 10, detect: 96,
     kind: 'shoot', range: 118, keep: 58, windup: 0.62, atkDur: 0.1, recover: 0.5, cooldown: 1.5, kbResist: 0,
     body: [8, 7, 4, 9], loot: { gold: [5, 14], drops: [['arrows', 0.6, [3, 7]], ['hp_potion', 0.15], ['mp_potion', 0.1], ['long_bow', 0.03]] },
   },
@@ -60,6 +60,25 @@ export const ENEMIES = {
     hp: 30, speed: 28, chase: 36, dmg: 17, detect: 96,
     kind: 'cast', range: 120, keep: 64, zoneR: 24, zoneDelay: 1.0, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1,
     body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.4]] },
+  },
+  // --- combat-variety enemies: each one asks the player to change habits ---
+  reaver: {
+    name: 'Rime Reaver', tex: 'spr_draugr', tint: 0x9fc0ff, blade: 3, bark: 'undead', weak: { fire: 1.4, frost: 0.5 }, punishRoll: true,
+    hp: 55, speed: 34, chase: 58, dmg: 16, detect: 72,
+    kind: 'melee', range: 20, windup: 0.5, atkDur: 0.16, recover: 0.5, cooldown: 0.4, kbResist: 0.2,
+    body: [8, 7, 4, 9], loot: { gold: [10, 20], drops: [['bone_dust', 0.5], ['hp_potion', 0.2], ['iron_ingot', 0.25]] },
+  },
+  knight: {
+    name: 'Rime Knight', tex: 'spr_warden', tint: 0xcfe8ff, blade: 4, bark: 'undead', weak: { fire: 1.2, shock: 1.3, frost: 0.4 }, armored: true,
+    hp: 70, speed: 28, chase: 42, dmg: 19, detect: 66,
+    kind: 'melee', range: 20, windup: 0.75, atkDur: 0.16, recover: 0.8, cooldown: 0.8, kbResist: 0.6,
+    body: [8, 7, 4, 9], loot: { gold: [14, 28], drops: [['iron_ingot', 0.6], ['hp_potion', 0.25], ['iron_shield', 0.1], ['bone_dust', 0.5]] },
+  },
+  fencer: {
+    name: 'Snow Fencer', tex: 'spr_bandit', tint: 0xbfe4ff, blade: 5, bark: 'human', dodge: true,
+    hp: 40, speed: 40, chase: 72, dmg: 12, detect: 82,
+    kind: 'melee', range: 21, windup: 0.3, atkDur: 0.14, recover: 0.45, cooldown: 0.25, kbResist: 0.1,
+    body: [8, 7, 4, 9], loot: { gold: [10, 24], drops: [['sp_potion', 0.3], ['hunting_knife', 0.1], ['lockpick', 0.3]] },
   },
 };
 

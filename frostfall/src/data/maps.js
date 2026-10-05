@@ -135,6 +135,7 @@ function buildForest() {
   for (const [x, y] of [[43, 21], [49, 22], [45, 26]]) g.add({ t: 'enemy', kind: 'bandit', x, y });
   for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y });
   g.add({ t: 'enemy', kind: 'chief', x: 47, y: 25 });
+  g.add({ t: 'enemy', kind: 'fencer', x: 46, y: 22 });
   // loot
   for (const [x, y, item] of [[8, 17, 'snowberry'], [16, 17, 'snowberry'], [26, 17, 'snowberry'], [33, 17, 'snowberry'], [37, 12, 'snowberry'], [20, 10, 'frost_lily'], [9, 6, 'frost_lily'], [29, 9, 'frost_lily'], [23, 16, 'frost_lily'], [36, 9, 'snowberry']]) g.add({ t: 'herb', item, x, y });
   g.add({ t: 'chest', id: 'camp', x: 50, y: 26, lock: 'med', loot: [{ item: 'silver_locket' }, { item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
@@ -180,13 +181,14 @@ function buildCrypt() {
   g.add({ t: 'exit', x: 15, y: 52, w: 2, h: 1, to: 'forest', spawn: 'crypt', fx: 'door' });
   // chamber 1
   for (const [x, y] of [[10, 32], [21, 32]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
-  for (const [x, y] of [[13, 35], [18, 35]]) g.add({ t: 'enemy', kind: 'warden', x, y });
+  g.add({ t: 'enemy', kind: 'warden', x: 13, y: 35 });
+  g.add({ t: 'enemy', kind: 'reaver', x: 18, y: 35 });
   g.add({ t: 'enemy', kind: 'wight', x: 15, y: 30 });
   g.add({ t: 'enemy', kind: 'draugr', x: 15, y: 24 });
   g.add({ t: 'chest', id: 'crypt1', x: 7, y: 33, loot: [{ item: 'hp_potion', n: 2 }, { item: 'sp_potion' }, { gold: 35 }] });
   // chamber 2
   for (const [x, y] of [[7, 17], [25, 17]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
-  g.add({ t: 'enemy', kind: 'warden', x: 14, y: 19 });
+  g.add({ t: 'enemy', kind: 'knight', x: 14, y: 19 });
   g.add({ t: 'enemy', kind: 'draugr', x: 18, y: 19 });
   g.add({ t: 'enemy', kind: 'wight', x: 8, y: 14 });
   g.add({ t: 'enemy', kind: 'conjurer', x: 23, y: 14 });
@@ -302,6 +304,7 @@ function buildPass() {
   for (const [x, y] of [[20, 19], [28, 21]]) g.add({ t: 'enemy', kind: 'wight', x, y });
   for (const [x, y] of [[9, 26], [40, 24]]) g.add({ t: 'enemy', kind: 'archer', x, y });
   g.add({ t: 'enemy', kind: 'warden', x: 24, y: 28 });
+  g.add({ t: 'enemy', kind: 'fencer', x: 33, y: 17 });
   g.add({ t: 'boss', kind: 'grimfang', x: 24, y: 5 });
   for (const [x, y, item] of [[14, 13, 'frost_lily'], [33, 13, 'frost_lily'], [14, 27, 'frost_lily'], [34, 27, 'frost_lily'], [40, 30, 'snowberry'], [8, 32, 'snowberry']]) g.add({ t: 'herb', item, x, y });
   g.add({ t: 'pickup', x: 22, y: 31, spec: { type: 'arrows', n: 8 } });

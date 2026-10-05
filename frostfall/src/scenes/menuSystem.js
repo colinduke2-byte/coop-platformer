@@ -12,7 +12,7 @@ import { MAPS } from '../data/maps.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
-  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['lockon', 'LOCK ON'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
+  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['lockon', 'LOCK ON'], ['ammo', 'SWITCH ARROWS'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
   ['potion1', 'HEALTH POTION'], ['potion2', 'MANA POTION'], ['potion3', 'STAMINA POTION'], ['inventory', 'PACK'], ['journal', 'JOURNAL'], ['map', 'MAP'], ['pause', 'PAUSE MENU'],
   ['spell1', 'QUICK FIREBALL'], ['spell2', 'QUICK FROST'], ['spell3', 'QUICK LIGHTNING'], ['spell4', 'QUICK HEALING'], ['spell5', 'QUICK WARD'],
 ];
@@ -117,6 +117,16 @@ export function systemTab(m) {
     help: 'W/S MOVE  E SELECT  A/D ADJUST  ESC RESUME',
     busy: () => mode === 'controls' || !!waiting || capturing(),
     captureLR: () => mode === 'controls' || SLIDERS.includes(rows[m.cursor]),
+    cursorOf: () => (mode === 'controls' ? ctrl.cursor : m.cursor),
+    rowAt: (x, y) => {
+      if (waiting || x < 8 || x > (mode === 'controls' ? W - 8 : 132) || y < 26) return -1;
+      const k = Math.floor((y - 26) / 13);
+      if (k >= VISIBLE) return -1;
+      const i = (mode === 'controls' ? ctrl.scroll : m.scroll) + k;
+      return i < (mode === 'controls' ? ctrlRows : rows.length) ? i : -1;
+    },
+    hover: (i) => { if (mode === 'controls') ctrl.cursor = i; else m.cursor = i; },
+    clickKey: (i) => (mode === 'main' && SLIDERS.includes(rows[i]) ? BINDINGS.right[0] : BINDINGS.interact[0]),
     input() {
       if (mode === 'controls') ctrlInput(); else mainInput();
     },

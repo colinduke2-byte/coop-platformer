@@ -1,3 +1,4 @@
+import { TUNE } from '../data/tuning.js';
 import { S } from './state.js';
 import { bus } from './bus.js';
 import { ITEMS, SLOT_OF } from '../data/items.js';
@@ -31,8 +32,11 @@ export function addGold(n) {
 }
 
 export function addArrows(n) {
-  S.arrows += n;
-  bus.emit('toast', `+${n} ARROWS`, 5);
+  const room = Math.max(0, TUNE.player.bow.maxArrows - S.arrows);
+  const got = Math.min(n, room);
+  S.arrows += got;
+  bus.emit('toast', got ? `+${got} ARROWS${got < n ? ' (FULL)' : ''}` : 'QUIVER FULL', got ? 5 : 4);
+  return got;
 }
 
 export function equip(id, forceSlot = null) {

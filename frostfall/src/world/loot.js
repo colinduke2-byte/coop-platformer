@@ -6,12 +6,20 @@ import { randInt, rand, dist } from '../util.js';
 export const lootMethods = {
   // Smash any breakable inside a rectangle / circle.
   breakRect(rect) {
-    for (const b of this.breakables) if (!b.broken && Phaser.Geom.Intersects.RectangleToRectangle(rect, new Phaser.Geom.Rectangle(b.x - 6, b.y - 3, 12, 12))) b.smash();
+    for (const b of this.breakables) if (!b.broken && Phaser.Geom.Intersects.RectangleToRectangle(rect, new Phaser.Geom.Rectangle(b.x - 6, b.y - 3, 12, 12))) { b.smash(); this.noise(b.x, b.y, 55); }
+  },
+
+  // Loud things (shouts, explosions, smashed pots) wake sleeping foes nearby. Sneak kills stay quiet.
+  noise(x, y, r) {
+    for (const e of this.enemies.getChildren()) {
+      if (e.dead || e.alerted || e.isBoss) continue;
+      if (dist(e.x, e.y, x, y) < r) { e.alert(true); e.mark('?', 13, 0.6); }
+    }
   },
 
   breakAt(x, y, r) {
     let hit = false;
-    for (const b of this.breakables) if (!b.broken && dist(b.cx, b.cy, x, y) <= r) { b.smash(); hit = true; }
+    for (const b of this.breakables) if (!b.broken && dist(b.cx, b.cy, x, y) <= r) { b.smash(); hit = true; this.noise(b.cx, b.cy, 55); }
     return hit;
   },
 
