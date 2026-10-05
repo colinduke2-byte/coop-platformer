@@ -46,6 +46,7 @@ function buildVillage() {
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.ROCK, 8, 4);
+  g.add({ t: 'enemy', kind: 'draugr', x: 25, y: 17 }); // stage-2 test dummy
   g.add({ t: 'spawn', name: 'start', x: 19, y: 15 });
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
   g.add({ t: 'fire', x: 19, y: 13 });

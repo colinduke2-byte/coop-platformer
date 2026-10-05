@@ -1,0 +1,3 @@
+import Phaser from 'phaser';
+// Global event bus: 'levelup', 'toast', 'enemy:killed', 'quest:update', ...
+export const bus = new Phaser.Events.EventEmitter();
