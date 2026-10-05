@@ -6,10 +6,12 @@ import { S, resetState } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import { recalc } from '../systems/stats.js';
+import { bonus } from '../systems/skills.js';
 import { SnowFx } from '../art/snow.js';
 import { Fx } from '../art/fx.js';
 import Player from '../entities/Player.js';
 import Enemy from '../entities/Enemy.js';
+import { P } from '../entities/Player.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -45,6 +47,8 @@ export default class GameScene extends Phaser.Scene {
 
     this.fx = new Fx(this);
     this.enemies = this.physics.add.group();
+    this.shots = this.physics.add.group({ allowGravity: false });
+    this.eshots = this.physics.add.group({ allowGravity: false });
     this.barGfx = this.add.graphics().setDepth(99200);
 
     // --- spawn points
@@ -57,6 +61,13 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.layer);
     this.physics.add.collider(this.enemies, this.layer);
     this.physics.add.collider(this.enemies, this.enemies);
+    this.physics.add.collider(this.shots, this.layer, (sh) => sh.wall());
+    this.physics.add.collider(this.eshots, this.layer, (sh) => sh.wall());
+    this.physics.add.overlap(this.shots, this.enemies, (sh, en) => sh.hitEnemy(en));
+    this.physics.add.overlap(this.eshots, this.player, (a, b) => {
+      const sh = a.enemyOwned ? a : b;
+      sh.hitPlayer(this.player);
+    });
 
     for (const e of built.entities) this.spawnEntity(e);
 
@@ -159,6 +170,14 @@ export default class GameScene extends Phaser.Scene {
   drawBars() {
     const g = this.barGfx;
     g.clear();
+    const pl = this.player;
+    if (pl.drawing) {
+      const k = Math.min(1, pl.drawT / (P.bow.fullDraw * bonus.drawTime()));
+      const x = Math.round(pl.x - 8), y = Math.round(pl.y + 13);
+      g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, 18, 5);
+      g.fillStyle(C[2]); g.fillRect(x, y, 16, 3);
+      g.fillStyle(k >= 1 ? C[13] : C[12]); g.fillRect(x, y, Math.round(16 * k), 3);
+    }
     for (const e of this.enemies.getChildren()) {
       if (e.dead || e.hp >= e.maxHp || e.isBoss) continue;
       const w = 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
@@ -176,6 +195,8 @@ export default class GameScene extends Phaser.Scene {
     S.playtime += dt;
     this.player.update(dt);
     for (const e of this.enemies.getChildren()) e.update(dt, this.player);
+    for (const sh of this.shots.getChildren()) sh.update(dt);
+    for (const sh of this.eshots.getChildren()) sh.update(dt);
     this.fx.update(dt);
     this.snow?.update(dt);
     this.drawBars();
