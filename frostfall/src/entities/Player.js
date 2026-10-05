@@ -14,6 +14,7 @@ import { damageTaken, meleeDamage, blockResult, blockStaminaCost, elementMult } 
 import { ITEMS } from '../data/items.js';
 import { magicMethods } from './playerMagic.js';
 import { settings } from '../systems/settings.js';
+import { bl } from '../systems/bless.js';
 
 // Feel numbers live in data/tuning.js
 export const P = TUNE.player;
@@ -58,6 +59,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.sneakOn = false;
     this.target = null;      // lock-on target
     this.lockG = scene.add.graphics();
+  }
+
+  // Gear / blessing lifesteal.
+  leechHeal(dealt) {
+    const ls = stats.sum('lifesteal');
+    if (ls > 0 && dealt > 0) S.hp = Math.min(S.maxHp, S.hp + Math.max(0.5, dealt * ls));
   }
 
   // ---------------------------------------------------------------- lock-on
@@ -290,13 +297,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       });
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
-      if (exec) dmg = e.hp + 999;
       if (en) dmg += en.power;
+      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0));
+      const crit = Math.random() < stats.sum('crit');
+      if (crit) dmg *= 1.8;
+      if (exec) dmg = e.hp + 999;
       const dealt = e.takeHit({
         dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun, heavy,
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
+      if (crit) this.scene.fx.text(e.x, e.y - 21, 'CRIT', 13, 0.8);
+      this.leechHeal(dealt);
       this.scene.fx.text(e.x, e.y - 10, String(Math.min(dealt, 999)), sneak ? 13 : en ? ({ fire: 12, frost: 15, shock: 13 })[en.type] : 6);
       if (exec) {
         this.scene.fx.text(e.x, e.y - 22, 'FINISHER', 11, 1);
@@ -432,7 +444,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken);
+    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)));
 
     // ---- ward absorbs first
     if (this.ward && this.ward.hp > 0) {

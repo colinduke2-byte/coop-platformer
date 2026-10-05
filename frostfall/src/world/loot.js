@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import Pickup from '../entities/Pickup.js';
 import { randInt, rand, dist } from '../util.js';
+import { makeGenItem } from '../systems/genloot.js';
 
 export const lootMethods = {
   // Smash any breakable inside a rectangle / circle.
@@ -35,6 +36,13 @@ export const lootMethods = {
   },
 
   onEnemyKilled(enemy) {
+    // elites and champions always drop gear; ordinary foes now and then
+    const tier = enemy.tier || 0;
+    const gearChance = enemy.champion ? 1 : enemy.elite ? 0.7 : enemy.isBoss ? 1 : 0.025 + 0.015 * tier;
+    if (!enemy.cfg.passive && Math.random() < gearChance) {
+      const id = makeGenItem(tier + (enemy.champion ? 1 : 0) + (enemy.isBoss ? 2 : 0), Math.random, enemy.champion ? 2 : null);
+      this.pickups.push(new Pickup(this, enemy.x + rand(-6, 6), enemy.y + 4, { type: 'item', id, n: 1 }));
+    }
     const loot = enemy.cfg.loot;
     if (!loot) return;
     const at = (spec) => this.pickups.push(new Pickup(this, enemy.x + rand(-4, 4) * (enemy.isBoss ? 3 : 1), enemy.y + 2, enemy.isBoss ? { ...spec, big: true } : spec));

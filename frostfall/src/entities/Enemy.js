@@ -11,9 +11,11 @@ import { TUNE } from '../data/tuning.js';
 import { elementMult } from '../systems/damage.js';
 import { BARKS } from '../data/enemies.js';
 import { settings } from '../systems/settings.js';
+import { applyElite } from './elite.js';
+import { stats } from '../systems/stats.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, kind) {
+  constructor(scene, x, y, kind, spec = {}) {
     const cfg = ENEMIES[kind];
     super(scene, x, y, cfg.tex, 'down0');
     this.kind = kind;
@@ -24,7 +26,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
+    this.tier = spec.tier || 0;
+    this.camp = spec.camp || null;
+    this.takenMul = 1;
+    // regions further from the start hit harder and last longer
+    if (this.tier > 0 && !cfg.title) {
+      this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.13 * this.tier)) };
+      if (this.cfg.loot) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * (1 + 0.5 * this.tier)), Math.round(this.cfg.loot.gold[1] * (1 + 0.5 * this.tier))] };
+      this.maxHp = Math.round(this.maxHp * (1 + 0.28 * this.tier));
+    }
     this.hp = this.maxHp;
+    this.displayName = this.cfg.name;
     this.home = { x, y };
     this.alerted = false;
     this.notice = 0;
@@ -102,6 +114,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const slow = this.slowT > 0 ? 0.5 : 1;
     if (this.dot) this.tickDot(dt);
     if (this.dead) return;
+    if (this.regen && this.hp < this.maxHp && this.flashT < -2.5) this.hp = Math.min(this.maxHp, this.hp + this.maxHp * this.regen * dt);
 
     // ---- stun / knockback: velocity decays, no AI
     if (this.stun > 0) {
@@ -113,6 +126,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     const d = dist(this.x, this.y, player.x, player.y);
     const dead = player.mode === 'dead';
+    if (this.cfg.passive) {                          // deer: never fights, bolts when you come close or it is hurt
+      this.scaredT = (this.scaredT || 0) - dt;
+      if (d < 60 || this.scaredT > 0) {
+        const away = norm(this.x - player.x, this.y - player.y);
+        b.setVelocity(away.x * this.cfg.chase * slow, away.y * this.cfg.chase * slow); this.face = dir8(away.x, away.y);
+        if (b.blocked.left || b.blocked.right) b.setVelocity(0, (away.y || 1) * this.cfg.chase);
+        else if (b.blocked.up || b.blocked.down) b.setVelocity((away.x || 1) * this.cfg.chase, 0);
+      } else this.doIdle(dt, slow);
+      this.finish(dt, slow);
+      return;
+    }
 
     // dodgers sidestep a swing in progress (they cannot dodge twice in a row)
     if (this.evade > 0) { this.evade -= dt; this.finish(dt, slow); return; }
@@ -327,7 +351,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.cfg.kind === 'lunge') { const b = this.body; r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6); }
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
-      player.hurt(this.cfg.dmg, this.x, this.y, { attacker: this });
+      const landed = player.hurt(this.cfg.dmg, this.x, this.y, { attacker: this });
+      if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
     }
   }
 
@@ -399,7 +424,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
-    let dmg = Math.max(1, Math.round(info.dmg * em));
+    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul));
     // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
     if (this.cfg.armored && info.src !== 'shout') {
       if (this.openT > 0) { dmg = Math.round(dmg * 1.6); }
@@ -412,7 +437,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (info.src === 'arrow') this.stuck = (this.stuck || 0) + 1;
     this.hp -= dmg;
     this.flashT = 0.1;
-    if (!this.alerted) this.alert(true);
+    if (this.cfg.passive) this.scaredT = 5;
+    if (!this.alerted && !this.cfg.passive) this.alert(true);
     if (info.slow) this.slowT = Math.max(this.slowT, info.slow);
     if (info.dot) this.dot = { dps: info.dot.dps, t: info.dot.t, col: info.dot.col, acc: 0, tick: 0 };
     const resist = this.cfg.kbResist ?? 0;
@@ -425,12 +451,34 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (this.state === 'windup') { this.setState('chase'); this.marker?.destroy(); this.marker = null; this.cd = 0.3; }
     }
     this.scene.fx.puff(this.x, this.y, 11, 4, 40, 0.3);
+    if (this.summons && !this.summoned && this.hp > 0 && this.hp < this.maxHp * 0.55) this.callHelp();
     if (this.hp <= 0) this.die(info);
     return dmg;
   }
 
+  // Streamed out of the world while the player is far away (not a kill).
+  despawn() {
+    this.marker?.destroy(); this.marker = null;
+    this.weaponImg?.destroy(); this.weaponImg = null;
+    this.shadow?.destroy();
+    this.scene.enemies.remove(this);
+    this.destroy();
+  }
+
+  callHelp() {
+    this.summoned = true;
+    this.scene.fx.ring(this.x, this.y + 4, 1.4, 0.6, 'ring', 0xb0a0ff); sfx.play('alert');
+    this.scene.fx.text(this.x, this.y - 24, 'REINFORCEMENTS', 14, 1);
+    for (let i = 0; i < this.summons; i++) {
+      const m = this.scene.addEnemy(this.kind === 'wolf' || this.kind === 'alpha' ? 'wolf' : 'draugr', this.x + (i ? 14 : -14), this.y + 6, { tier: Math.max(0, this.tier - 1) });
+      m.alert(true);
+    }
+  }
+
   die(info) {
     this.dead = true;
+    if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
+    if (this.spawnKey) this.scene.markKilled?.(this);
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;
     this.scene.enemies.remove(this);

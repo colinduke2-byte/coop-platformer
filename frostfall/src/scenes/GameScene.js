@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
 import { TUNE } from '../data/tuning.js';
 import { updateTutorial } from '../systems/tutorial.js';
+import { isGone, markGone } from '../systems/bless.js';
+import { rng, tierAt } from '../world/worldgen.js';
+import { applyElite } from '../entities/elite.js';
+import { makeGenItem } from '../systems/genloot.js';
+import { hash } from '../util.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
 const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
 import { MAPS } from '../data/maps.js';
@@ -21,7 +26,7 @@ import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil } from '../entities/Props.js';
+import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
@@ -114,6 +119,8 @@ export default class GameScene extends Phaser.Scene {
       sh.hitPlayer(this.player);
     });
 
+    built.entities.forEach((e, i) => { e._i = i; });
+    this.pend = []; this.campIds = new Set(); this.PickupClass = Pickup;
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
     if (S.follower) this.spawnFollower();
@@ -179,7 +186,34 @@ export default class GameScene extends Phaser.Scene {
   spawnEntity(e) {
     const wx = (e.x + 0.5) * T, wy = (e.y + 0.5) * T;
     switch (e.t) {
-      case 'enemy': this.addEnemy(e.kind, wx, wy); break;
+      case 'enemy': {
+        const key = `${this.mapId}:${e._i}`;
+        if (this.def.stream && isGone(key)) break;
+        const spec = { ...e };
+        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < 0.07 + 0.05 * e.tier) spec.elite = true;
+        if (this.def.stream) this.pend.push({ spec, key, wx, wy, live: null });
+        else this.addEnemy(e.kind, wx, wy, spec);
+        break;
+      }
+      case 'deer': { const key = `${this.mapId}:${e._i}`; if (!isGone(key)) this.pend.push({ spec: { kind: 'deer', tier: 0, roam: true }, key, wx, wy, live: null, kind: 'deer' }); break; }
+      case 'node': {
+        const key = `${this.mapId}:n${e._i}`;
+        if (isGone(key)) break;
+        const nd = new OreNode(this, wx, wy, e.ore, key);
+        this.interactables.push(nd);
+        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+        this.propBodies.add(nd);
+        break;
+      }
+      case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
+      case 'shrine': {
+        const sh = new Shrine(this, wx, wy, e.id);
+        this.interactables.push(sh);
+        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+        this.propBodies.add(sh);
+        break;
+      }
+      case 'bounty': this.campIds.add(e.id); break;
       case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
       case 'npc': {
         if (e.id === 'ragna' && S.follower) break;
@@ -262,10 +296,57 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.follower, this.layer);
   }
 
-  addEnemy(kind, wx, wy) {
-    const en = new Enemy(this, wx, wy, kind);
+  // spec: { tier, elite, champion, camp }; key marks a streamed world spawn (so kills persist)
+  addEnemy(kind, wx, wy, spec = {}, key = null) {
+    if (typeof spec === 'number') spec = {};
+    const en = new Enemy(this, wx, wy, kind, spec);
+    en.spawnKey = key; en.spec = spec;
+    if (spec.elite || spec.champion) {
+      const R = rng(((S.seed || 1) ^ ((spec._i || 7) * 2654435761)) >>> 0);
+      applyElite(en, R, spec.champion ? 2 : 1);
+      if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
+    }
     this.enemies.add(en);
     return en;
+  }
+
+  // ---- streaming: world enemies only exist while the player is near
+  streamTick() {
+    const px = this.player.x, py = this.player.y;
+    for (let i = this.pend.length - 1; i >= 0; i--) {
+      const p = this.pend[i];
+      if (p.live) {
+        if (p.live.dead || !p.live.active) { if (p.live.dead) this.pend.splice(i, 1); else p.live = null; continue; }
+        if (Math.hypot(p.live.x - px, p.live.y - py) > 520 && !p.live.alerted) { p.live.despawn(); p.live = null; }
+      } else if (Math.hypot(p.wx - px, p.wy - py) < 300) {
+        p.live = this.addEnemy(p.spec.kind || p.kind, p.wx, p.wy, p.spec, p.key);
+        if (p.spec.kind === 'deer' || p.kind === 'deer') p.live.cfg = { ...p.live.cfg };
+      }
+    }
+  }
+
+  // Persist a world kill; clearing every enemy of a camp pays a bounty.
+  markKilled(en) {
+    const sp = en.spec || {};
+    markGone(en.spawnKey, !!(sp.camp || sp.champion || sp.elite));
+    S.run.kills++;
+    if (en.champion) S.run.champions++;
+    if (sp.camp && !S.bounty[sp.camp]) {
+      const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
+      if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
+    }
+  }
+
+  payBounty(id, tier) {
+    if (S.bounty[id]) return;
+    S.bounty[id] = true;
+    const kind = (this.built.entities.find((x) => x.t === 'bounty' && x.id === id) || {}).kind || 'camp';
+    const gold = Math.round((40 + 30 * tier) * (kind === 'champion' ? 1.6 : 1));
+    S.gold += gold; S.run.camps++;
+    this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(tier + (kind === 'champion' ? 1 : 0), Math.random, kind === 'champion' ? 2 : null) }));
+    bus.emit('toast', `${kind.toUpperCase()} CLEARED  +${gold} GOLD`, 13);
+    sfx.play('levelup'); this.fx.ring(this.player.x, this.player.y + 4, 1.4, 0.7, 'ring', 0xf4d460);
+    if (kind === 'camp' || kind === 'den') this.player.gainXp('oneHanded', 12);
   }
 
   // ------------------------------------------------------------ helpers
@@ -495,6 +576,7 @@ export default class GameScene extends Phaser.Scene {
     this.t += dt;
     this.player.update(dt);
     updateTutorial(this, dt);
+    if (this.def.stream) { this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
     if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
     for (const p of this.plates) p.update(this.player);
     for (const c of this.autoCheckpoints) {

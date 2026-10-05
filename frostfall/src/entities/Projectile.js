@@ -3,6 +3,8 @@ import { bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { dist } from '../util.js';
 import { S } from '../systems/state.js';
+import { stats } from '../systems/stats.js';
+import { bl } from '../systems/bless.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -80,13 +82,16 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       const sneak = !e.alerted && pl.sneaking;
       const mult = (sneak ? 2 + bonus.sneakAttack() * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
       const special = this.ammo;
+      const crit = Math.random() < stats.sum('crit');
       const dealt = e.takeHit({
-        dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
+        dmg: this.dmg * mult * bl('dmgMul', 1) * (crit ? 1.8 : 1), kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
         element: special === 'fire_arrow' ? 'fire' : null,
         dot: special === 'fire_arrow' ? { dps: 4, t: 3, col: 12 } : special === 'bleed_arrow' ? { dps: 3, t: 5, col: 11 } : null,
       });
       if (dealt <= 0) { this.finish(); return; }
       sc.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);
+      if (crit) sc.fx.text(e.x, e.y - 21, 'CRIT', 13, 0.8);
+      pl.leechHeal(dealt);
       if (sneak) { sc.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); pl.gainXp('sneak', 8); sfx.play('crit'); } else sfx.play('hit');
       pl.gainXp('archery', 3 + Math.round(this.charge * 3) + (e.dead ? 3 : 0));
       sc.hitStop(0.035);

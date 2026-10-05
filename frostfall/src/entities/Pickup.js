@@ -3,6 +3,9 @@ import { S } from '../systems/state.js';
 import { addItem, addGold, addArrows } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
 import { rand } from '../util.js';
+import { ITEMS } from '../data/items.js';
+import { RARITY } from '../systems/genloot.js';
+import { C } from '../config.js';
 
 // spec: { type: 'gold'|'arrows'|'item', n, id }
 export default class Pickup extends Phaser.GameObjects.Image {
@@ -17,6 +20,11 @@ export default class Pickup extends Phaser.GameObjects.Image {
     this.z = 0; this.vz = rand(60, 90);
     this.done = false;
     if (spec.type !== 'gold') this.setScale(0.75);
+    const rar = spec.type === 'item' && ITEMS[spec.id]?.rarity;
+    if (rar && rar !== 'common') {
+      const col = RARITY.find((r) => r.id === rar).col;
+      this.halo = scene.add.image(x, y, 'glow').setTint(C[col]).setBlendMode(Phaser.BlendModes.ADD).setScale(0.55).setAlpha(0.8);
+    }
     this.shadow = scene.add.image(x, y + 3, 'shadow').setAlpha(0.7).setScale(0.6);
   }
 
@@ -33,6 +41,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     this.setPosition(this.gx, Math.round(this.gy - this.z - 4 + bob));
     this.shadow.setPosition(this.gx, this.gy + 1).setDepth(this.gy - 1);
     this.setDepth(this.gy + 5);
+    this.halo?.setPosition(this.x, this.y).setDepth(this.gy + 4).setAlpha(0.55 + 0.25 * Math.sin(this.t * 5));
     if (this.t < (this.spec.big ? 1.2 : 0.45)) return;
     const dx = player.x - this.gx, dy = player.y + 3 - this.gy;
     const d = Math.hypot(dx, dy);
@@ -51,6 +60,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     else { addItem(s.id, s.n || 1); sfx.play('pickup'); }
     this.scene.fx.puff(this.gx, this.gy - 4, 13, 4, 25, 0.25);
     this.shadow.destroy();
+    this.halo?.destroy();
     this.destroy();
   }
 }

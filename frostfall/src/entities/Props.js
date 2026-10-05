@@ -10,6 +10,9 @@ import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
 import { brewMenu, upgradeMenu, furnishMenu } from '../data/services.js';
 import { C } from '../config.js';
+import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
+import { makeGenItem } from '../systems/genloot.js';
+import { recalc as recalcStats } from '../systems/stats.js';
 
 // A readable wooden sign.
 export class Sign extends Phaser.GameObjects.Image {
@@ -214,5 +217,86 @@ export class Plate extends Phaser.GameObjects.Image {
     const c = player.body.center, near = Math.abs(c.x - this.x) < 7 && Math.abs(c.y + 3 - this.y) < 8 && player.mode !== 'roll';
     if (near && !this.down) { this.down = true; this.scene.plateStep(this); }
     else if (!near) this.down = false;
+  }
+}
+
+// A rune shrine: pray for a blessing or take a pact. Offers change daily; each shrine answers once a day.
+export class Shrine extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, id) {
+    super(scene, x, y, 'shrine');
+    scene.add.existing(this); scene.physics.add.existing(this, true);
+    this.body.setSize(12, 8).setOffset(2, 16);
+    this.id = id; this.ix = x; this.iy = y; this.setDepth(y + 10);
+    scene.add.image(x, y + 11, 'shadow').setDepth(y + 5);
+  }
+  canInteract() { return true; }
+  label() { return S.shrines?.[this.id] === today() ? 'SHRINE: SILENT TODAY' : 'E: PRAY AT SHRINE'; }
+  async interact() {
+    if (S.shrines?.[this.id] === today()) { bus.emit('toast', 'THE SHRINE IS QUIET. COME BACK TOMORROW', 4); return; }
+    await runScript(async () => {
+      const offers = offersFor(this.id, today());
+      const cur = S.blessing ? BLESSINGS[S.blessing].name : 'nothing';
+      await say('Shrine', `The stone hums. You carry: ${cur}. Three voices offer a gift.`);
+      const labels = offers.map((o) => `${BLESSINGS[o].kind === 'pact' ? 'PACT' : 'BLESSING'}: ${BLESSINGS[o].name} - ${BLESSINGS[o].desc}`);
+      const c = await choose([...labels, 'Walk away']);
+      if (c >= offers.length) return;
+      S.blessing = offers[c];
+      S.shrines = S.shrines || {}; S.shrines[this.id] = today();
+      recalcStats();
+      sfx.play('levelup'); this.scene.fx.ring(this.x, this.y + 8, 1.4, 0.7, 'ring', 0x5cc8d8);
+      bus.emit('toast', `${BLESSINGS[S.blessing].name.toUpperCase()} GRANTED`, 15);
+    });
+  }
+}
+
+// Ore node: mine for iron or bone dust. Regrows the next day.
+export class OreNode extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, ore, key) {
+    super(scene, x, y, 'node');
+    scene.add.existing(this); scene.physics.add.existing(this, true);
+    this.body.setSize(12, 8).setOffset(2, 7);
+    this.ore = ore; this.key = key; this.ix = x; this.iy = y; this.setDepth(y + 6);
+  }
+  canInteract() { return true; }
+  label() { return 'E: MINE'; }
+  interact() {
+    const sc = this.scene;
+    addItem(this.ore, 1 + (Math.random() < 0.35 ? 1 : 0));
+    if (Math.random() < 0.12) addItem('mp_potion');
+    sfx.play('smash'); sc.fx.puff(this.x, this.y, 5, 8, 40, 0.4);
+    markGone(this.key, false);
+    sc.interactables = sc.interactables.filter((i) => i !== this);
+    this.body.enable = false; this.destroy();
+  }
+}
+
+// Buried treasure. Dig it up; sometimes something digs back.
+export class DigSpot extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, key, tier) {
+    super(scene, x, y, 'mound');
+    scene.add.existing(this);
+    this.key = key; this.tier = tier; this.ix = x; this.iy = y; this.setDepth(y + 3);
+  }
+  canInteract() { return true; }
+  label() { return 'E: DIG'; }
+  interact() {
+    const sc = this.scene, r = Math.random();
+    markGone(this.key, true);
+    sc.fx.puff(this.x, this.y, 10, 10, 45, 0.5); sfx.play('smash');
+    sc.interactables = sc.interactables.filter((i) => i !== this);
+    const gold = 20 + Math.round(Math.random() * 30) + this.tier * 25;
+    if (r < 0.25) {
+      bus.emit('toast', 'SOMETHING STIRS BELOW!', 11);
+      for (let i = 0; i < 2 + (this.tier > 1 ? 1 : 0); i++) { const e = sc.addEnemy('draugr', this.x + (i - 1) * 14, this.y + 10, { tier: this.tier }); e.alert(true); }
+      sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: gold }));
+    } else if (r < 0.5) {
+      addItem(makeGenItem(this.tier)); bus.emit('toast', 'A BURIED CACHE!', 13);
+      sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: gold }));
+    } else {
+      bus.emit('toast', 'DUG UP SOME COIN', 13);
+      sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: gold * 2 }));
+      if (Math.random() < 0.5) addItem('lockpick', 2);
+    }
+    this.destroy();
   }
 }

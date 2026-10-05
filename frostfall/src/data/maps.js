@@ -2,6 +2,9 @@
 import { TILE } from '../config.js';
 import { Grid } from './mapkit.js';
 import { hash } from '../util.js';
+import { S } from '../systems/state.js';
+import { buildReach } from '../world/worldgen.js';
+import { buildBarrow } from '../world/barrowgen.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
   // roof rows then 2 wall rows; door + windows on the top wall row
@@ -87,7 +90,7 @@ export const MAPS = {
   village: { name: 'Hollowfrost Village', snow: true, ambience: 'wind', build: buildVillage, tint: 0, music: 'village' },
 };
 
-function buildForest() {
+function buildForestRegion() {
   const g = new Grid(56, 32, TILE.SNOW);
   g.noise(TILE.SNOW2, 0.2, 9, TILE.SNOW);
   g.dress('snow');
@@ -133,13 +136,15 @@ function buildForest() {
   g.add({ t: 'glow', x: 45, y: 3, r: 26, col: 12 });
   g.add({ t: 'glow', x: 47, y: 3, r: 26, col: 12 });
   // wolves
-  for (const [x, y] of [[11, 10], [13, 11], [15, 9], [32, 13], [20, 22]]) g.add({ t: 'enemy', kind: 'wolf', x, y });
-  g.add({ t: 'enemy', kind: 'alpha', x: 30, y: 12 });
+  for (const [x, y] of [[11, 10], [13, 11], [15, 9], [32, 13], [20, 22]]) g.add({ t: 'enemy', kind: 'wolf', x, y, camp: 'oldden' });
+  g.add({ t: 'enemy', kind: 'alpha', x: 30, y: 12, camp: 'oldden' });
+  g.add({ t: 'bounty', id: 'oldden', kind: 'den', x: 12, y: 10 });
   // bandits
-  for (const [x, y] of [[43, 21], [49, 22], [45, 26]]) g.add({ t: 'enemy', kind: 'bandit', x, y });
-  for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y });
-  g.add({ t: 'enemy', kind: 'chief', x: 47, y: 25 });
-  g.add({ t: 'enemy', kind: 'fencer', x: 46, y: 22 });
+  for (const [x, y] of [[43, 21], [49, 22], [45, 26]]) g.add({ t: 'enemy', kind: 'bandit', x, y, camp: 'oldcamp' });
+  for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y, camp: 'oldcamp' });
+  g.add({ t: 'enemy', kind: 'chief', x: 47, y: 25, camp: 'oldcamp' });
+  g.add({ t: 'enemy', kind: 'fencer', x: 46, y: 22, camp: 'oldcamp' });
+  g.add({ t: 'bounty', id: 'oldcamp', kind: 'camp', x: 47, y: 24 });
   // loot
   for (const [x, y, item] of [[8, 17, 'snowberry'], [16, 17, 'snowberry'], [26, 17, 'snowberry'], [33, 17, 'snowberry'], [37, 12, 'snowberry'], [20, 10, 'frost_lily'], [9, 6, 'frost_lily'], [29, 9, 'frost_lily'], [23, 16, 'frost_lily'], [36, 9, 'snowberry']]) g.add({ t: 'herb', item, x, y });
   g.add({ t: 'chest', id: 'camp', x: 50, y: 26, lock: 'med', loot: [{ item: 'silver_locket' }, { item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
@@ -151,7 +156,25 @@ function buildForest() {
   return g.out();
 }
 
-MAPS.forest = { name: 'Pine Forest', snow: true, ambience: 'wind', build: buildForest, music: 'forest', dim: 0.12 };
+// The forest is now the north-west corner of the open world (same coordinates as before).
+let reachCache = null;
+export function getReach() {
+  const seed = S.seed ?? 1337;
+  if (!reachCache || reachCache.seed !== seed) reachCache = { seed, built: buildReach(buildForestRegion(), seed) };
+  return reachCache.built;
+}
+MAPS.forest = { name: 'The Hollow Reach', snow: true, ambience: 'wind', build: () => getReach(), music: 'forest', dim: 0.12, stream: true };
+for (let i = 0; i < 3; i++) {
+  MAPS['barrow' + i] = {
+    name: 'Barrow', snow: false, ambience: 'crypt', music: 'crypt', dim: 0.4, crypt: true, interior: false,
+    build: () => {
+      const poi = getReach().pois.find((p) => p.id === 'barrow' + i);
+      const b = buildBarrow(S.seed ?? 1337, i, poi ? poi.tier : 0);
+      MAPS['barrow' + i].name = b.title;
+      return b;
+    },
+  };
+}
 
 function buildCrypt() {
   const g = new Grid(32, 54, TILE.CWALL);

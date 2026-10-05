@@ -40,6 +40,8 @@ export const ITEMS = {
   bone_dust: { name: 'Bone Dust', type: 'ingredient', icon: ['dust', 5], value: 6, desc: 'Alchemy: used for ward and stamina brews.' },
   snowberry: { name: 'Snowberry', type: 'ingredient', icon: ['berry', 11], value: 4, desc: 'Alchemy: restores health.' },
   frost_lily: { name: 'Frost Lily', type: 'ingredient', icon: ['lily', 15], value: 7, desc: 'Alchemy: restores mana.' },
+  venison: { name: 'Venison', type: 'potion', icon: ['fang', 11], restore: 'hp', amount: 35, value: 7, desc: 'Fresh meat. Restores 35 health.' },
+  hide: { name: 'Deer Hide', type: 'misc', icon: ['dust', 9], value: 16, desc: 'Good leather. Sells well.' },
   fire_arrow: { name: 'Fire Arrow', type: 'ammo', icon: ['arrows', 12], value: 6, desc: 'Fletched by Hilda. Burns the target for a few seconds. Press V to switch ammo.' },
   bleed_arrow: { name: 'Barbed Arrow', type: 'ammo', icon: ['arrows', 11], value: 6, desc: 'Fletched by Hilda. Leaves a bleeding wound. Press V to switch ammo.' },
   silver_locket: { name: 'Silver Locket', type: 'quest', icon: ['locket', 5], value: 120, desc: 'Engraved with a tiny wolf. Someone is missing this.' },

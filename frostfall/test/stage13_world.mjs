@@ -163,7 +163,7 @@ unstub();
 
 // ---------------- respawn at the last campfire
 await restart('forest', 'west');
-await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const f = g.interactables.find((i) => i.label && i.label() === 'E: REST'); g.player.setPosition(f.ix, f.iy + 16); g.player.mode = 'free'; });
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); g.pend.length = 0; const f = g.interactables.find((i) => i.label && i.label() === 'E: REST'); g.player.setPosition(f.ix, f.iy + 16); g.player.mode = 'free'; });
 await h.sleep(250);
 await tap('KeyE'); await h.sleep(2800);
 check('resting sets the respawn point', (await S('respawn.map')) === 'forest');

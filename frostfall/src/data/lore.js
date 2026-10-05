@@ -24,6 +24,7 @@ export const BEASTS = {
   reaver: { name: 'Rime Reaver', desc: 'Waits out your dodge roll and strikes the moment you land. Do not roll early.', weak: 'Fire. Resists frost.' },
   knight: { name: 'Rime Knight', desc: 'Armour turns aside almost every blow. Raise a shield and parry its swing, then strike while it reels.', weak: 'Parry opening, lightning.' },
   fencer: { name: 'Snow Fencer', desc: 'Sidesteps when you swing. Bait the first swing, hit the recovery, or use the bow and spells.', weak: 'Ranged attacks.' },
+  deer: { name: 'Deer', desc: 'Skittish. Shoot it from range for venison and hides.', weak: 'Anything sharp.' },
   boss: { name: 'Jarl Valdrek', desc: 'The Hollow King. Two phases; the second adds a frost nova and a charge.', weak: 'Fire. Resists frost.' },
   grimfang: { name: 'Grimfang', desc: 'The Pale Alpha. Leaps, howls, and may yield when beaten.', weak: 'Fire.' },
 };

@@ -6,6 +6,7 @@ import { runScript, say } from '../systems/dialogue.js';
 import { dialogue } from '../systems/dialogue.js';
 import { count, removeItem } from '../systems/inventory.js';
 import { bus } from '../systems/bus.js';
+import { makeGenItem } from '../systems/genloot.js';
 
 export default class Chest extends Phaser.GameObjects.Image {
   constructor(scene, x, y, spec) {
@@ -46,6 +47,7 @@ export default class Chest extends Phaser.GameObjects.Image {
       if (l.item) addItem(l.item, l.n || 1);
       else if (l.gold) addGold(l.gold);
       else if (l.arrows) addArrows(l.arrows);
+      else if (l.gen != null) addItem(makeGenItem(l.gen, Math.random, l.rarity ?? null), 1);
     }
   }
 }

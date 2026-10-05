@@ -3,7 +3,8 @@
 // everything else is generated from the run seed, so each new game has a different map of camps,
 // ruins, dens and dungeon entrances.
 import { Grid } from '../data/mapkit.js';
-import { TILE } from '../config.js';
+import { TILE, SOLID_TILES } from '../config.js';
+const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 
 export const REACH_W = 176;
@@ -35,7 +36,7 @@ function vnoise(x, y, scale, seed) {
 // Danger tier 0..3 grows with distance from the entrance.
 export function tierAt(x, y) {
   const d = Math.hypot(x - START.x, (y - START.y) * 0.9);
-  return d < 60 ? 0 : d < 100 ? 1 : d < 140 ? 2 : 3;
+  return d < 72 ? 0 : d < 108 ? 1 : d < 142 ? 2 : 3;
 }
 const TIER_MOBS = [
   { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf'] },
@@ -132,7 +133,7 @@ export function buildReach(region, seed) {
 
   for (const p of pois) {
     const m = mobs(p.tier);
-    g.reserve(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    { const q = Math.round(p.r * 0.62); g.reserve(p.x - q, p.y - q, q * 2, q * 2); }
     if (p.kind === 'camp') {
       clearing(p, 12, 9);
       g.set(p.x, p.y, TILE.FIRE); add({ t: 'fire', x: p.x, y: p.y }); add({ t: 'glow', x: p.x, y: p.y, r: 46, col: 12 });
@@ -214,19 +215,44 @@ export function buildReach(region, seed) {
     else enemy(pickOf(mobs(tier).wild), x, y, tier, { roam: true });
   }
 
+  // keep every placed thing on open ground
+  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'pot', 'sign', 'spawn']);
+  for (const e of entities) {
+    if (!PLACED.has(e.t) || e.x < rw && e.y < rh) continue;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) > 1 && e.t !== 'enemy') continue;
+      const x = e.x + dx, y = e.y + dy;
+      if (x > 2 && y > 2 && x < W - 3 && y < H - 3 && SOLID_SET.has(g.t[y][x]) && g.t[y][x] !== TILE.PILLAR && g.t[y][x] !== TILE.GRAVE && g.t[y][x] !== TILE.BRAZIER && g.t[y][x] !== TILE.FIRE) g.t[y][x] = TILE.SNOW2;
+    }
+    g.res[e.y][e.x] = true;
+  }
+
   // ---- scenery ---------------------------------------------------------------------------------
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (g.res[y][x] || g.t[y][x] === TILE.PATH) continue;
     const b = bio[y][x], r = hash(x, y, 81);
     if (g.t[y][x] !== TILE.SNOW && g.t[y][x] !== TILE.SNOW2) continue;
-    if (b === 'forest' && r < 0.2) g.t[y][x] = TILE.PINE;
-    else if (b === 'tundra' && r < 0.035) g.t[y][x] = r < 0.012 ? TILE.ROCK : TILE.PINE;
+    if (b === 'forest' && r < 0.27) g.t[y][x] = TILE.PINE;
+    else if (b === 'tundra' && r < 0.06) g.t[y][x] = r < 0.02 ? TILE.ROCK : (r < 0.03 ? TILE.STUMP : TILE.PINE);
     else if (b === 'blight' && r < 0.17) g.t[y][x] = r < 0.07 ? TILE.DEADTREE : TILE.STUMP;
   }
   g.dress('snow');
   g.dress('late');
 
+  // drop anything that ended up sealed off from the entrance (mountain pockets, tree knots)
+  const seen = new Uint8Array(W * H), q = [[START.x, START.y]];
+  seen[START.y * W + START.x] = 1;
+  const solidAt = (x, y) => SOLID_SET.has(g.t[y][x]);
+  for (let i = 0; i < q.length; i++) {
+    const [x, y] = q[i];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx] || solidAt(nx, ny)) continue;
+      seen[ny * W + nx] = 1; q.push([nx, ny]);
+    }
+  }
+  const keep = entities.filter((e) => e.x == null || !PLACED.has(e.t) && e.t !== 'exit' || e.x < rw && e.y < rh || seen[e.y * W + e.x]);
   // ---- entrance: the old forest's west exit stays where it was ---------------------------------
   // (exits to the village, the pass and the crypt already live in the stamped entities)
-  return { grid: g.t, entities, w: W, h: H, pois, bio };
+  return { grid: g.t, entities: keep, w: W, h: H, pois, bio };
 }

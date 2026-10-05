@@ -61,6 +61,11 @@ export const ENEMIES = {
     kind: 'cast', range: 120, keep: 64, zoneR: 24, zoneDelay: 1.0, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1,
     body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.4]] },
   },
+  deer: {
+    name: 'Deer', tex: 'spr_wolf', sideOnly: true, tint: 0xd8a870, passive: true, hp: 14, speed: 24, chase: 92, dmg: 0, detect: 70,
+    kind: 'melee', range: 0, windup: 1, atkDur: 0.1, recover: 0.5, cooldown: 9, kbResist: 0,
+    body: [12, 6, 2, 8], loot: { gold: [0, 0], drops: [['venison', 1], ['hide', 0.7]] },
+  },
   // --- combat-variety enemies: each one asks the player to change habits ---
   reaver: {
     name: 'Rime Reaver', tex: 'spr_draugr', tint: 0x9fc0ff, blade: 3, bark: 'undead', weak: { fire: 1.4, frost: 0.5 }, punishRoll: true,

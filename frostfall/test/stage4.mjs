@@ -15,6 +15,7 @@ const sane = await G(() => {
   const wp = g.nextWaypoint(3 * 16, 15 * 16, 46 * 16 + 8, 4 * 16);
   const wp2 = g.nextWaypoint(3 * 16, 15 * 16, 50 * 16 + 8, 26 * 16);
   const counts = {}; g.enemies.getChildren().forEach((e) => { counts[e.kind] = (counts[e.kind] || 0) + 1; });
+  g.pend.forEach((p) => { if (!p.live) counts[p.spec.kind] = (counts[p.spec.kind] || 0) + 1; });
   return { bad, wp: !!wp, wp2: !!wp2, counts };
 });
 check('all entities stand on free tiles', sane.bad.length === 0, sane.bad.join(' '));

@@ -2,7 +2,7 @@ import { TUNE } from '../data/tuning.js';
 import { S } from './state.js';
 import { bus } from './bus.js';
 import { ITEMS, SLOT_OF } from '../data/items.js';
-import { recalc } from './stats.js';
+import { recalc, stats } from './stats.js';
 import { sfx } from '../audio/sfx.js';
 import { tip } from './tips.js';
 
@@ -27,6 +27,7 @@ export function removeItem(id, n = 1) {
 }
 
 export function addGold(n) {
+  n = Math.round(n * stats.mul('goldMul'));
   S.gold += n;
   bus.emit('toast', `+${n} GOLD`, 13);
 }

@@ -265,6 +265,18 @@ function buildFx(scene) {
     g.fillStyle = 'rgba(11,14,26,0.45)';
     g.fillRect(3, 0, 6, 1); g.fillRect(1, 1, 10, 3); g.fillRect(3, 4, 6, 1);
   });
+  // ore node, treasure mound, shrine stone
+  tex(scene, 'node', 16, 16, (g) => {
+    R(g, 0, 2, 5, 12, 10); R(g, 3, 3, 4, 10, 10); R(g, 4, 4, 5, 8, 7); R(g, 2, 3, 12, 10, 2);
+    R(g, 15, 5, 3, 2, 4); R(g, 6, 5, 2, 1, 2); R(g, 15, 9, 6, 2, 3); R(g, 6, 9, 7, 1, 1);
+  });
+  tex(scene, 'mound', 16, 16, (g) => {
+    R(g, 0, 3, 11, 10, 3); R(g, 5, 2, 9, 12, 3); R(g, 6, 4, 8, 8, 2); R(g, 6, 5, 9, 6, 1); R(g, 13, 7, 8, 1, 1); R(g, 9, 10, 8, 1, 1);
+  });
+  tex(scene, 'shrine', 16, 24, (g) => {
+    R(g, 0, 3, 21, 10, 3); R(g, 3, 4, 20, 8, 2); R(g, 0, 4, 4, 8, 17); R(g, 3, 5, 3, 6, 17); R(g, 4, 6, 5, 4, 15);
+    R(g, 15, 7, 8, 2, 1); R(g, 15, 7, 10, 2, 1); R(g, 6, 7, 5, 2, 4); R(g, 15, 5, 4, 6, 1); R(g, 3, 4, 3, 8, 1);
+  });
   // rune pressure plates (tinted per rune) for the crypt puzzle
   tex(scene, 'plate', 16, 16, (g) => {
     R(g, 0, 2, 2, 12, 12); R(g, 6, 3, 3, 10, 10); R(g, 5, 4, 4, 8, 8); R(g, 6, 5, 5, 6, 6); R(g, 5, 7, 6, 2, 4); R(g, 5, 6, 7, 4, 2);

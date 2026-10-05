@@ -5,6 +5,7 @@ import { bus } from './bus.js';
 import { sfx } from '../audio/sfx.js';
 import { settings, saveSettings } from './settings.js';
 import { MAPS } from '../data/maps.js';
+import { rehydrateGen } from './genloot.js';
 
 export const SLOTS = 3;
 const keyFor = (slot) => (slot === 1 ? 'frostfall_save_v1' : `frostfall_save_s${slot}`);
@@ -64,6 +65,7 @@ export function loadGame(slot = settings.slot) {
   const r = readSlot(slot);
   if (!r) return false;
   loadInto(r.data.s);
+  rehydrateGen();
   recalc();
   settings.slot = slot; saveSettings();
   if (r.recovered) bus.emit('toast', 'SAVE RECOVERED FROM BACKUP', 13);

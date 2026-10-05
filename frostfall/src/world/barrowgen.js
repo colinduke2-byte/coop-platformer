@@ -57,7 +57,7 @@ export function buildBarrow(seed, idx, tier) {
     if (r.kind === 'fight') {
       const count = 3 + Math.floor(R() * 3) + (tier > 1 ? 1 : 0);
       for (let k = 0; k < count; k++) foe(pick(mobs), r.x + 2 + Math.floor(R() * (r.w - 4)), r.y + 2 + Math.floor(R() * (r.h - 4)), { camp: `${theme.id}${idx}r${i}` });
-      for (let k = 0; k < 3; k++) add({ t: 'pot', x: r.x + 1 + Math.floor(R() * (r.w - 2)), y: r.y + r.h - 2, skin: 'urn' });
+      for (let k = 0; k < 3; k++) { const px = r.x + 1 + Math.floor(R() * (r.w - 2)), py = r.y + r.h - 2; if (g.t[py][px] === TILE.CFLOOR || g.t[py][px] === TILE.CFLOOR2) add({ t: 'pot', x: px, y: py, skin: 'urn' }); }
     } else if (r.kind === 'trap') {
       // three rune plates and a sealed chest alcove: a quick order puzzle
       const order = ['moon', 'crown', 'wolf'].sort(() => R() - 0.5);

@@ -51,6 +51,10 @@ const AFFIXES = [
 const pickW = (list, r) => { let t = list.reduce((a, [, w]) => a + w, 0) * r; for (const [v, w] of list) { t -= w; if (t <= 0) return v; } return list[0][0]; };
 
 let counter = 0;
+let iconBuilder = null;
+// BootScene registers a function that draws the icon (and held sprite) for a generated item.
+export function setIconBuilder(fn) { iconBuilder = fn; }
+
 export function genItem(tier = 0, rnd = Math.random, forceRarity = null) {
   const slot = pickW(SLOT_WEIGHT, rnd());
   const base = BASES[slot][Math.floor(rnd() * BASES[slot].length)];
@@ -109,9 +113,10 @@ export function registerGen(id, def) {
   ITEMS[id] = def;
   S.gen = S.gen || {};
   S.gen[id] = def;
+  iconBuilder?.(id, def);
 }
 // Re-register every generated item from a loaded save.
 export function rehydrateGen() {
-  for (const [id, def] of Object.entries(S.gen || {})) ITEMS[id] = def;
+  for (const [id, def] of Object.entries(S.gen || {})) { ITEMS[id] = def; iconBuilder?.(id, def); }
 }
 export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) || null;
