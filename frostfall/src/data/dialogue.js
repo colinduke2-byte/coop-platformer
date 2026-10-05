@@ -131,6 +131,7 @@ const MIRRA_WARES = [
   { id: 'hp_potion', price: 25 }, { id: 'mp_potion', price: 25 }, { id: 'sp_potion', price: 20 },
   { id: 'arrows', price: 15, n: 10, name: 'Arrows x10' }, { id: 'lockpick', price: 8, n: 3, name: 'Lockpicks x3' },
   { id: 'wooden_shield', price: 40, once: true }, { id: 'hunting_knife', price: 28, once: true }, { id: 'long_bow', price: 150, once: true },
+  { id: 'mage_robe', price: 160, once: true }, { id: 'hunter_garb', price: 110, once: true },
 ];
 export async function mirra() {
   if (S.quests.king.status === 'relic' && !S.flags.ending) {
@@ -195,7 +196,7 @@ export async function hilda() {
     else if (c === 3) await fletchMenu();
     else if (c === 4) await buyMenu(H, [
       { id: 'iron_sword', price: 80, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'iron_greatsword', price: 220, once: true },
-      { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
+      { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'bulwark_plate', price: 340, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
     ]);
     else if (c === 5) await sellMenu(H);
     else { await say(H, 'Keep your edge sharp.'); return; }

@@ -265,6 +265,13 @@ function buildFx(scene) {
     g.fillStyle = 'rgba(11,14,26,0.45)';
     g.fillRect(3, 0, 6, 1); g.fillRect(1, 1, 10, 3); g.fillRect(3, 4, 6, 1);
   });
+  // rune pressure plates (tinted per rune) for the crypt puzzle
+  tex(scene, 'plate', 16, 16, (g) => {
+    R(g, 0, 2, 2, 12, 12); R(g, 6, 3, 3, 10, 10); R(g, 5, 4, 4, 8, 8); R(g, 6, 5, 5, 6, 6); R(g, 5, 7, 6, 2, 4); R(g, 5, 6, 7, 4, 2);
+  });
+  tex(scene, 'plate_on', 16, 16, (g) => {
+    R(g, 0, 2, 2, 12, 12); R(g, 13, 3, 3, 10, 10); R(g, 6, 4, 4, 8, 8); R(g, 13, 5, 5, 6, 6); R(g, 6, 7, 6, 2, 4); R(g, 6, 6, 7, 4, 2);
+  });
   tex(scene, 'slash', 16, 24, (g) => {
     for (let a = -60; a <= 60; a += 2) {
       const rad = (a * Math.PI) / 180;

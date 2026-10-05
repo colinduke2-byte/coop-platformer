@@ -5,6 +5,7 @@ import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF } from './items.js';
 import { addItem, removeItem, count, addGold, addArrows } from '../systems/inventory.js';
 import { TUNE } from './tuning.js';
+import { FURNITURE } from './maps.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { listScreen } from '../scenes/ShopScene.js';
@@ -36,6 +37,10 @@ export function statLines(id) {
   if (it.armor) out.push([`ARMOR ${Math.round(it.armor * 100)}%`, 6]);
   if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
+  if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
+  if (it.detectMul) out.push(['HARDER TO SPOT', 8]);
+  if (it.manaCostMul) out.push(['SPELLS COST -15%', 8]);
+  if (it.spRegenMul) out.push(['STAMINA REGEN -20%', 11]);
   for (const [k, n] of [['maxHp', 'HEALTH'], ['maxMp', 'MANA'], ['maxSp', 'STAMINA']]) if (it[k]) out.push([`+${it[k]} ${n}`, 8]);
   return out;
 }
@@ -211,6 +216,26 @@ export async function fletchMenu() {
       if (!can(f)) { sfx.play('nostamina'); ui.say('NEED ARROWS, A MATERIAL AND GOLD', 11); return; }
       S.arrows -= f.arrows; removeItem(f.mat, f.matN); S.gold -= f.gold; addItem(f.id, f.n);
       ui.say('CRAFTED ' + f.n + ' ' + ITEMS[f.id].name.toUpperCase(), 8); sfx.play('potion');
+    },
+  });
+}
+
+// ---------------------------------------------------------------- furnishing
+export async function furnishMenu(scene) {
+  S.flags.furn = S.flags.furn || {};
+  await listScreen({
+    title: 'FURNISH THE COTTAGE', hint: 'E BUY   ESC DONE',
+    rows: () => FURNITURE.map((f) => {
+      const own = !!S.flags.furn[f.id], ok = !own && S.gold >= f.price;
+      return { id: f.tex === 'cauldron' ? 'snowberry' : null, name: f.name, tag: own ? 'OWNED' : f.price + 'G', tagCol: own ? 4 : ok ? 13 : 11, ok, sub: own ? 'IN THE ROOM' : ok ? 'CAN AFFORD' : `NEED ${f.price - S.gold} G`, desc: f.desc };
+    }),
+    onSelect: (i, ui) => {
+      const f = FURNITURE[i];
+      if (S.flags.furn[f.id]) { ui.say('YOU ALREADY HAVE THAT', 4); return; }
+      if (S.gold < f.price) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      S.gold -= f.price; S.flags.furn[f.id] = true;
+      scene.addFurniture(f);
+      sfx.play('coin'); ui.say('PLACED: ' + f.name.toUpperCase(), 8);
     },
   });
 }

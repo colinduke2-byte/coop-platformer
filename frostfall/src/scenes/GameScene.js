@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TUNE } from '../data/tuning.js';
 import { updateTutorial } from '../systems/tutorial.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
 const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
@@ -20,7 +21,7 @@ import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron } from '../entities/Props.js';
+import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
@@ -86,6 +87,7 @@ export default class GameScene extends Phaser.Scene {
     this.breakBodies = null;
     this.boss = null;
     this.gate = null;
+    this.plates = []; this.plateSeq = []; this.plateOrder = null; this.vault = null; this.vaultIsOpen = false; this.autoCheckpoints = [];
     this.exits = [];
     this.flames = [];
     this.lights = [];
@@ -200,6 +202,8 @@ export default class GameScene extends Phaser.Scene {
         }
         break;
       case 'door': this.interactables.push(new Door(this, wx, wy, e)); break;
+      case 'furnisher': { const f = new Furnisher(this, wx, wy); this.interactables.push(f); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(f); break; }
+      case 'furn': if (S.flags.furn?.[e.id]) this.addFurniture(e); break;
       case 'bed': this.interactables.push(new Bed(this, wx, wy)); break;
       case 'cauldron': this.interactables.push(new Cauldron(this, wx, wy)); break;
       case 'lore': {
@@ -230,6 +234,9 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(sg);
         break;
       }
+      case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags.vaultOpen) pl.light(true); break; }
+      case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags.vaultOpen) this.openVault(true); break;
+      case 'vaultorder': this.plateOrder = e.order; break;
       case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
       case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
       case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
@@ -237,6 +244,7 @@ export default class GameScene extends Phaser.Scene {
         const f = this.add.image(wx, wy - 3, 'flame0').setDepth(wy + 12);
         this.flames.push({ f, ph: Math.random() * 3 });
         if (e.rest) this.interactables.push(new RestSpot(this, wx, wy));
+        if (e.auto) this.autoCheckpoints.push({ x: wx, y: wy, lit: false });
         break;
       }
       case 'glow': {
@@ -270,6 +278,43 @@ export default class GameScene extends Phaser.Scene {
 
 
 
+
+  // Furniture bought for the cottage (a prop, plus a working station for the cauldron and anvil).
+  addFurniture(f) {
+    const wx = (f.x + 0.5) * T, wy = (f.y + 0.5) * T;
+    const prop = new Prop(this, wx, wy, f.tex);
+    if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
+    this.propBodies.add(prop);
+    if (f.id === 'cauldron') this.interactables.push(new Cauldron(this, wx, wy));
+    if (f.id === 'anvil') this.interactables.push(new HomeAnvil(this, wx, wy));
+  }
+
+  // ---- rune-plate puzzle: step on the plates in the right order
+  plateStep(plate) {
+    if (S.flags.vaultOpen || !this.plateOrder) return;
+    const want = this.plateOrder[this.plateSeq.length];
+    if (plate.rune === want) {
+      this.plateSeq.push(plate.rune); plate.light(true); sfx.play('select');
+      this.fx.ring(plate.x, plate.y, 0.5, 0.4, 'ring', PLATE_COL[plate.rune]);
+      if (this.plateSeq.length === this.plateOrder.length) this.openVault();
+    } else if (!plate.lit) {
+      this.plateSeq = []; this.plates.forEach((p) => p.light(false));
+      sfx.play('guardbreak'); this.shake(180, 0.006);
+      this.fx.text(plate.x, plate.y - 14, 'WRONG ORDER', 11, 1);
+      this.addZone(plate.x, plate.y, 22, 0.7, 9, null);
+    }
+  }
+
+  openVault(quiet = false) {
+    if (!this.vault || this.vaultIsOpen) return;
+    this.vaultIsOpen = true; S.flags.vaultOpen = true;
+    const { x, y } = this.vault;
+    this.layer.putTileAt(TILE_FLOOR, x, y); this.solid[y][x] = false;
+    if (quiet) return;
+    sfx.play('door'); this.shake(300, 0.01);
+    this.fx.puff((x + 0.5) * T, (y + 0.5) * T, 5, 12, 50, 0.6);
+    bus.emit('toast', 'A WALL SLIDES AWAY', 13);
+  }
 
   setGate(closed) {
     if (!this.gate) return;
@@ -450,6 +495,17 @@ export default class GameScene extends Phaser.Scene {
     this.t += dt;
     this.player.update(dt);
     updateTutorial(this, dt);
+    if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
+    for (const p of this.plates) p.update(this.player);
+    for (const c of this.autoCheckpoints) {
+      if (!c.lit && Math.hypot(this.player.x - c.x, this.player.y - c.y) < 30) {
+        c.lit = true;
+        if (!S.respawn || S.respawn.map !== this.mapId || Math.hypot((S.respawn.x ?? 0) - c.x, (S.respawn.y ?? 0) - c.y) > 40) {
+          S.respawn = { map: this.mapId, x: Math.round(c.x), y: Math.round(c.y + 12) };
+          bus.emit('toast', 'CHECKPOINT: BRAZIER LIT', 12); sfx.play('quest');
+        }
+      }
+    }
     this.fogT -= dt;
     if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
     for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
@@ -510,8 +566,22 @@ export default class GameScene extends Phaser.Scene {
     this.drawBars();
     if (this.deadT > 0) {
       this.deadT += dt;
-      if (this.deadT > 2.4 && !this.respawning) this.respawn();
+      // a hired companion drags you out of the fight once in a while instead of letting you fall
+      if (this.follower && !this.respawning && this.deadT > 1.1 && (S.flags.reviveAt ?? -999) + TUNE.follower.reviveCooldown < S.playtime) this.reviveByFollower();
+      else if (this.deadT > 2.4 && !this.respawning) this.respawn();
     }
+  }
+
+  reviveByFollower() {
+    const p = this.player, f = this.follower;
+    S.flags.reviveAt = S.playtime;
+    this.deadT = 0;
+    S.hp = Math.round(S.maxHp * TUNE.follower.reviveHp);
+    p.mode = 'free'; p.stunT = 0; p.invuln = 2.2; p.iframes = 0.5; p.setPosition(f.x, f.y + 4); p.body.setVelocity(0, 0);
+    for (const e of this.enemies.getChildren()) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 40) e.takeHit({ dmg: 1, kx: e.x - p.x, ky: e.y - p.y, kb: 220, src: 'shout', stun: 0.8, forceStun: !e.isBoss });
+    this.fx.puff(p.x, p.y, 8, 10, 50, 0.5); this.fx.ring(p.x, p.y + 4, 1.2, 0.5, 'ring', 0xf4d460);
+    sfx.play('potion'); this.shake(200, 0.006);
+    bus.emit('toast', 'RAGNA PULLS YOU UP!', 13);
   }
 
   respawn() {

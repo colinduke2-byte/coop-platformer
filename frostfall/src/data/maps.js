@@ -30,6 +30,8 @@ function buildVillage() {
   house(g, 14, 3, 11, 3, 19, [16, 22]);
   // hunter's lodge
   house(g, 4, 5, 6, 3, 7, [5, 9]);
+  // cottage for sale
+  house(g, 22, 17, 5, 2, 24, [23, 25]);
   // alchemist's shop and stall
   house(g, 29, 4, 7, 3, 32, [30, 34]);
   g.rect(30, 10, 2, 1, TILE.FENCE); g.rect(33, 10, 2, 1, TILE.FENCE);
@@ -57,6 +59,8 @@ function buildVillage() {
   g.add({ t: 'door', x: 19, y: 7, to: 'hall', spawn: 'in', label: "E: ENTER HALL" });
   g.add({ t: 'door', x: 7, y: 9, to: 'lodge', spawn: 'in', label: 'E: ENTER LODGE' });
   g.add({ t: 'door', x: 32, y: 8, to: 'shop', spawn: 'in', label: 'E: ENTER SHOP' });
+  g.add({ t: 'door', x: 24, y: 20, to: 'cottage', spawn: 'in', label: 'E: ENTER COTTAGE', price: 300, flag: 'houseBought' });
+  g.add({ t: 'spawn', name: 'cottage', x: 24, y: 21 });
   g.add({ t: 'spawn', name: 'hall', x: 19, y: 8 });
   g.add({ t: 'spawn', name: 'lodge', x: 7, y: 10 });
   g.add({ t: 'spawn', name: 'shop', x: 32, y: 9 });
@@ -160,6 +164,7 @@ function buildCrypt() {
   F(1, 15, 3, 3); F(28, 15, 3, 3); // alcoves
   F(15, 9, 2, 4);            // corridor C (boss gate at y=9)
   F(6, 1, 20, 8);            // boss hall
+  F(1, 31, 3, 3);            // hidden vault west of chamber 1 (opens with the rune plates)
   g.rect(14, 1, 4, 8, TILE.RUG);
   g.rect(15, 52, 2, 1, TILE.STAIRS);
   g.set(15, 51, TILE.CFLOOR); g.set(16, 51, TILE.CFLOOR);
@@ -179,6 +184,13 @@ function buildCrypt() {
   for (const [x, y] of [[6, 33], [25, 33], [9, 36], [22, 36], [5, 19], [26, 19], [13, 13], [18, 13], [12, 50], [19, 50], [7, 4], [24, 4]]) g.add({ t: 'pot', x, y, skin: 'urn' });
   g.add({ t: 'spawn', name: 'entry', x: 15, y: 50 });
   g.add({ t: 'exit', x: 15, y: 52, w: 2, h: 1, to: 'forest', spawn: 'crypt', fx: 'door' });
+  // rune puzzle: Moon, then Crown, then Wolf opens the vault in the west wall of chamber 1
+  g.add({ t: 'vaultorder', order: ['moon', 'crown', 'wolf'] });
+  g.add({ t: 'plate', rune: 'moon', x: 11, y: 32 }); g.add({ t: 'plate', rune: 'crown', x: 20, y: 32 }); g.add({ t: 'plate', rune: 'wolf', x: 15, y: 35 });
+  g.add({ t: 'vaultwall', x: 4, y: 32 });
+  g.add({ t: 'sign', x: 17, y: 36, text: ['THREE RUNES SLEEP IN THE FLOOR. THE MOON RISES FIRST, THEN THE CROWN FALLS, AND LAST THE WOLF HOWLS.', 'MOON IS BLUE. CROWN IS GOLD. WOLF IS RED.'] });
+  g.add({ t: 'chest', id: 'vault', x: 2, y: 32, loot: [{ item: 'nordic_shield' }, { item: 'fire_arrow', n: 5 }, { item: 'bleed_arrow', n: 5 }, { gold: 90 }] });
+  g.add({ t: 'glow', x: 2, y: 32, r: 30, col: 13 });
   // chamber 1
   for (const [x, y] of [[10, 32], [21, 32]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
   g.add({ t: 'enemy', kind: 'warden', x: 13, y: 35 });
@@ -196,6 +208,10 @@ function buildCrypt() {
   g.add({ t: 'chest', id: 'crypt3', x: 29, y: 16, lock: 'hard', loot: [{ item: 'mana_ring' }, { item: 'mp_potion', n: 2 }] });
   g.add({ t: 'pickup', x: 15, y: 40, spec: { type: 'item', id: 'sp_potion' } });
   g.add({ t: 'pickup', x: 15, y: 27, spec: { type: 'arrows', n: 6 } });
+  // a lit brazier just before the boss gate: dying to Valdrek sends you back here, not to the entrance
+  g.set(16, 11, TILE.BRAZIER);
+  g.add({ t: 'fire', x: 16, y: 11, auto: true });
+  g.add({ t: 'glow', x: 16, y: 11, r: 40, col: 12 });
   // boss hall
   g.add({ t: 'boss', x: 15, y: 4 });
   g.add({ t: 'bossgate', x: 15, y: 9, w: 2 });
@@ -260,6 +276,27 @@ function buildShop() {
   g.add({ t: 'glow', x: 7, y: 4, r: 50, col: 13 });
   return g.out();
 }
+
+export const FURNITURE = [
+  { id: 'table', name: 'Oak Table', price: 30, tex: 'table', x: 7, y: 5, desc: 'A sturdy table. It makes the room feel lived in.' },
+  { id: 'shelf', name: 'Shelves', price: 40, tex: 'shelf', x: 3, y: 2, desc: 'Open shelves along the wall.' },
+  { id: 'bookshelf', name: 'Bookshelf', price: 60, tex: 'bookshelf', x: 6, y: 2, desc: 'Fills the cottage with the smell of old paper.' },
+  { id: 'cauldron', name: 'Alchemy Cauldron', price: 120, tex: 'cauldron', x: 11, y: 3, desc: 'Brew potions at home. Needs the alchemy lesson from Mirra.' },
+  { id: 'anvil', name: 'Forge Anvil', price: 200, tex: 'anvil', x: 11, y: 6, desc: 'Upgrade your weapon and armour without leaving home.' },
+];
+
+function buildCottage() {
+  const g = room(14, 10);
+  g.add({ t: 'bed', x: 2, y: 2 }); g.add({ t: 'prop', tex: 'bed', x: 2, y: 2 });
+  g.add({ t: 'furnisher', x: 12, y: 2 });
+  for (const f of FURNITURE) g.add({ t: 'furn', id: f.id, tex: f.tex, x: f.x, y: f.y });
+  g.add({ t: 'fire', x: 7, y: 2, rest: true }); g.set(7, 2, TILE.FIRE);
+  g.add({ t: 'glow', x: 7, y: 3, r: 60, col: 12 });
+  g.add({ t: 'spawn', name: 'in', x: 7, y: 7 });
+  g.add({ t: 'exit', x: 6, y: 8, w: 2, h: 1, to: 'village', spawn: 'cottage', fx: 'door' });
+  return g.out();
+}
+MAPS.cottage = { name: 'Snowdrift Cottage', snow: false, build: buildCottage, music: 'village', dim: 0.1, interior: true };
 
 MAPS.hall = { name: "Elder's Hall", snow: false, build: buildHall, music: 'village', dim: 0.1, interior: true };
 MAPS.lodge = { name: "Hunter's Lodge", snow: false, build: buildLodge, music: 'village', dim: 0.1, interior: true };

@@ -5,9 +5,10 @@ import { saveGame } from '../systems/save.js';
 import { sfx } from '../audio/sfx.js';
 import Phaser from 'phaser';
 import { addItem } from '../systems/inventory.js';
+import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
-import { brewMenu } from '../data/services.js';
+import { brewMenu, upgradeMenu, furnishMenu } from '../data/services.js';
 import { C } from '../config.js';
 
 // A readable wooden sign.
@@ -94,9 +95,52 @@ export class Herb extends Phaser.GameObjects.Image {
 // Enter a building / go through a door by pressing E.
 export class Door {
   constructor(scene, x, y, e) { this.scene = scene; this.ix = x; this.iy = y; this.e = e; }
+  get forSale() { return !!this.e.price && !S.flags[this.e.flag]; }
   canInteract() { return true; }
-  label() { return this.e.label || 'E: ENTER'; }
-  interact() { this.scene.changeMap(this.e.to, this.e.spawn, 'door'); }
+  label() { return this.forSale ? `E: COTTAGE FOR SALE ${this.e.price}G` : (this.e.label || 'E: ENTER'); }
+  async interact() {
+    if (!this.forSale) { this.scene.changeMap(this.e.to, this.e.spawn, 'door'); return; }
+    await runScript(async () => {
+      await say('Notice', 'FOR SALE: SNOWDRIFT COTTAGE. A bed, a hearth, room to furnish. Yours for ' + this.e.price + ' gold.');
+      const c = await choose([`Buy it (${this.e.price}G)`, 'Not now']);
+      if (c !== 0) return;
+      if (S.gold < this.e.price) { sfx.play('nostamina'); await say('Notice', 'You cannot afford it yet.'); return; }
+      S.gold -= this.e.price; S.flags[this.e.flag] = true;
+      sfx.play('levelup'); bus.emit('toast', 'YOU OWN SNOWDRIFT COTTAGE', 13);
+    });
+  }
+}
+
+// Cottage ledger: buy furnishings. Each purchase appears in the room (and some give you a station at home).
+export class Furnisher extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'book');
+    scene.add.existing(this); scene.physics.add.existing(this, true);
+    this.body.setSize(12, 8).setOffset(2, 7);
+    this.ix = x; this.iy = y; this.setDepth(y + 6);
+  }
+  canInteract() { return true; }
+  label() { return 'E: FURNISH'; }
+  async interact() {
+    await runScript(async () => {
+      await furnishMenu(this.scene);
+    });
+  }
+}
+
+// Furniture that does something: the anvil at home.
+export class HomeAnvil {
+  constructor(scene, x, y) { this.scene = scene; this.ix = x; this.iy = y; }
+  canInteract() { return true; }
+  label() { return 'E: FORGE'; }
+  async interact() {
+    await runScript(async () => {
+      for (;;) {
+        const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Done']);
+        if (c === 0) await upgradeMenu('Anvil', 'weapon'); else if (c === 1) await upgradeMenu('Anvil', 'armor'); else return;
+      }
+    });
+  }
 }
 
 // A readable book / bookshelf. Learning it adds an entry to the Lore tab.
@@ -137,6 +181,7 @@ export class Bed {
       saveGame(sc);
       await sc.delay(700);
       bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
+      if (sc.mapId === 'cottage') { S.flags.restedUntil = S.playtime + 600; recalc(); bus.emit('toast', 'WELL RESTED: +25 MAX HEALTH FOR 10 MIN', 8); }
       await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); });
     });
   }
@@ -152,5 +197,22 @@ export class Cauldron {
       if (!S.flags.alchemy) { await say('Cauldron', 'You do not know how to brew yet. Mirra teaches alchemy to anyone who brings her herbs.'); return; }
       await brewMenu('Cauldron');
     });
+  }
+}
+
+// Rune pressure plate: step on the plates in the right order to open the vault.
+export const PLATE_COL = { moon: 0x5cc8d8, crown: 0xf4d460, wolf: 0xc8383c };
+export class Plate extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, rune) {
+    super(scene, x, y, 'plate');
+    scene.add.existing(this);
+    this.rune = rune; this.lit = false; this.down = false;
+    this.setTint(PLATE_COL[rune]).setDepth(2);
+  }
+  light(on) { this.lit = on; this.setTexture(on ? 'plate_on' : 'plate').setTint(PLATE_COL[this.rune]); }
+  update(player) {
+    const c = player.body.center, near = Math.abs(c.x - this.x) < 7 && Math.abs(c.y + 3 - this.y) < 8 && player.mode !== 'roll';
+    if (near && !this.down) { this.down = true; this.scene.plateStep(this); }
+    else if (!near) this.down = false;
   }
 }

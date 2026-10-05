@@ -107,7 +107,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'roll') m = 1.2;
     else if (this.sneaking) m = this.speedNow < 6 ? 0.3 : 0.5;
     else if (this.speedNow < 6) m = 0.85;
-    return m * (this.sneaking ? bonus.detect() : 1) * this.scene.stealthEnv();
+    return m * (this.sneaking ? bonus.detect() : 1) * stats.trait('detectMul') * this.scene.stealthEnv();
   }
 
   spend(cost) {
@@ -164,7 +164,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.tickRegen(dt);
 
     // regen
-    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * dt);
+    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * dt);
     if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * dt);
 
     const moving = this.speedNow > 8;
@@ -186,7 +186,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   move(ix, iy, dt) {
     const b = this.body;
-    let sp = this.sneaking ? P.sneakSpeed : P.speed;
+    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul');
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
     if (this.blocking) sp *= P.block.move;

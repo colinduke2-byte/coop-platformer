@@ -1,5 +1,6 @@
 // Every feel / balance number in one place. Tweak here, not in the entity files.
 export const TUNE = {
+  follower: { reviveCooldown: 120, reviveHp: 0.4 },
   player: {
   speed: 72, sneakSpeed: 38, accel: 900,
   regen: 30, regenDelay: 0.75,
