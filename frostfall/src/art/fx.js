@@ -33,8 +33,18 @@ export class Fx {
   }
 
   text(x, y, str, col = 6, life = 0.8) {
+    // damage numbers pile up in crowd fights: merge close ones into a running total and fade sooner
+    if (/^\d+$/.test(str) && life === 0.8) {
+      const near = this.texts.find((o) => o.num != null && o.col === col && o.life > o.t0 * 0.35 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
+      if (near) {
+        near.num += Number(str); near.life = near.t0; near.t.setText(String(near.num)).setPosition(Math.round(near.x - String(near.num).length * 3), Math.round(near.y));
+        return;
+      }
+      if (this.texts.length > 9) { const old = this.texts.shift(); old.t.destroy?.(); }
+      if (this.texts.length > 4) life = 0.55;
+    }
     const t = txtS(this.s, Math.round(x - str.length * 3), Math.round(y), str, col, 0).setDepth(99500);
-    this.texts.push({ t, y, t0: life, life });
+    this.texts.push({ t, y, x, y0: y, t0: life, life, col, num: /^\d+$/.test(str) ? Number(str) : null });
   }
 
   slash(x, y, angle, flip = false, scale = 1) {

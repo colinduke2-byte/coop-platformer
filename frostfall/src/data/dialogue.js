@@ -7,6 +7,7 @@ import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu } from './services.js';
+import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
 
 const SIGRID = 'Sigrid', BJORN = 'Bjorn', MIRRA = 'Mirra';
@@ -22,6 +23,7 @@ export async function intro() {
   await say(SIGRID, 'Talk to Bjorn at the lodge. Wolves have been thinning our flocks. Mirra sells potions at her stall. Then come and see me.');
   await say(SIGRID, 'Hold C or Shift to creep. Press I for your pack, O for your journal. And mind the cold.');
   S.flags.introDone = true;
+  startTutorial();
 }
 
 export async function sigrid() {

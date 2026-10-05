@@ -205,6 +205,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   actions(ix, iy) {
     if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost)) {
       this.mode = 'roll';
+      this.rollCount = (this.rollCount || 0) + 1;
       this.rollT = P.roll.time;
       this.iframes = P.roll.iframes;
       this.rollDir = ix || iy ? norm(ix, iy) : { ...this.face };

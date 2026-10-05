@@ -176,6 +176,11 @@ export default class HudScene extends Phaser.Scene {
     if (!tid || ui.modal || this.dlg) return;
     const gs = this.gs, T = TARGETS[tid]?.(S.quests[tid]);
     if (!T || !gs.player) return;
+    this.markerAt(g, T, 15, dt);
+  }
+
+  markerAt(g, T, col, dt) {
+    const gs = this.gs;
     if (T.map !== gs.mapId) {
       const label = 'GO TO ' + (MAPS[T.map]?.name || T.map).toUpperCase();
       this.qm.setText(label).setFont('f15'); this.qm.x = Math.round((W - this.qm.width) / 2); this.qm.y = H - 38;
@@ -189,7 +194,7 @@ export default class HudScene extends Phaser.Scene {
     if (sx > 6 && sx < W - 6 && sy > 14 && sy < H - 6) {
       const x = Math.round(sx), y = Math.round(sy - 16 + bob);
       g.fillStyle(C[0]); g.fillRect(x - 4, y - 1, 9, 9); g.fillRect(x - 1, y - 4, 3, 15);
-      g.fillStyle(C[15]); g.fillRect(x - 3, y, 7, 7); g.fillRect(x - 1, y - 3, 3, 13);
+      g.fillStyle(C[col]); g.fillRect(x - 3, y, 7, 7); g.fillRect(x - 1, y - 3, 3, 13);
       g.fillStyle(C[6]); g.fillRect(x - 1, y + 1, 2, 2);
     } else {
       const cx = W / 2, cy = H / 2, dx = sx - cx, dy = sy - cy;
@@ -198,7 +203,7 @@ export default class HudScene extends Phaser.Scene {
       const p = (r, off) => [ax + Math.cos(a + off) * r, ay + Math.sin(a + off) * r];
       const [x1, y1] = p(7, 0), [x2, y2] = p(6, 2.5), [x3, y3] = p(6, -2.5);
       g.fillStyle(C[0]); g.fillTriangle(x1 + Math.cos(a) * 1.5, y1 + Math.sin(a) * 1.5, x2 - Math.cos(a), y2 - Math.sin(a), x3 - Math.cos(a), y3 - Math.sin(a));
-      g.fillStyle(C[15]); g.fillTriangle(x1, y1, x2, y2, x3, y3);
+      g.fillStyle(C[col]); g.fillTriangle(x1, y1, x2, y2, x3, y3);
     }
   }
 
@@ -361,6 +366,11 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
     });
     this.drawQuestMarker(g, tid, dt);
+    const wp = S.flags.waypoint;
+    if (wp && wp.map === this.gs.mapId && !ui.modal && !this.dlg) {
+      if (Math.hypot(this.gs.player.x - (wp.x + 0.5) * 16, this.gs.player.y - (wp.y + 0.5) * 16) < 20) { delete S.flags.waypoint; bus.emit('toast', 'WAYPOINT REACHED', 8); }
+      else this.markerAt(g, { map: wp.map, x: wp.x, y: wp.y }, 8, dt);
+    }
     if (this.hint) {
       this.hintT -= dt;
       g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, 2, this.hint.width + 8, this.hintH);
@@ -406,15 +416,15 @@ export default class HudScene extends Phaser.Scene {
     // target bar: lock-on target, or whoever the bow is aimed at
     const tg = !(bs && bs.engaged && !bs.dead) ? (pl.target || (pl.drawing ? pl.pickTarget(190) : null)) : null;
     if (tg && !tg.dead) {
-      const tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
-      g.fillStyle(C[0], 0.7); g.fillRect(tx - 4, 2, tw + 8, 17);
-      g.fillStyle(C[0]); g.fillRect(tx - 1, 11, tw + 2, 7);
-      g.fillStyle(C[1]); g.fillRect(tx, 12, tw, 5);
-      g.fillStyle(C[11]); g.fillRect(tx, 12, Math.round(tw * frac), 5);
-      g.fillStyle(C[12]); g.fillRect(tx, 12, Math.round(tw * frac), 1);
+      const oy = this.hint ? this.hintH + 2 : 0, tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
+      g.fillStyle(C[0], 0.7); g.fillRect(tx - 4, 2 + oy, tw + 8, 17);
+      g.fillStyle(C[0]); g.fillRect(tx - 1, 11 + oy, tw + 2, 7);
+      g.fillStyle(C[1]); g.fillRect(tx, 12 + oy, tw, 5);
+      g.fillStyle(C[11]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 5);
+      g.fillStyle(C[12]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 1);
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       this.tgtTxt.setText(tg.cfg.name.toUpperCase() + (pl.target === tg ? '' : '')).setVisible(true);
-      this.tgtTxt.x = Math.round((W - this.tgtTxt.width) / 2); this.tgtTxt.y = 3;
+      this.tgtTxt.x = Math.round((W - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);
 
     // sneak indicator

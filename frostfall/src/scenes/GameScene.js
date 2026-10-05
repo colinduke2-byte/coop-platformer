@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { updateTutorial } from '../systems/tutorial.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
 const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
 import { MAPS } from '../data/maps.js';
@@ -447,6 +448,7 @@ export default class GameScene extends Phaser.Scene {
     S.playtime += dt;
     this.t += dt;
     this.player.update(dt);
+    updateTutorial(this, dt);
     this.fogT -= dt;
     if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
     for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
