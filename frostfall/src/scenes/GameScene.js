@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { T, SOLID_TILES, C } from '../config.js';
+import { T, SOLID_TILES, C, TILE } from '../config.js';
+const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
 import { MAPS } from '../data/maps.js';
 import { ITEMS } from '../data/items.js';
 import { S, resetState } from '../systems/state.js';
@@ -15,6 +16,7 @@ import { P } from '../entities/Player.js';
 import Pickup from '../entities/Pickup.js';
 import Chest from '../entities/Chest.js';
 import Npc from '../entities/Npc.js';
+import Boss from '../entities/Boss.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
@@ -64,6 +66,8 @@ export default class GameScene extends Phaser.Scene {
     this.chestBodies = null;
     this.npcBodies = null;
     this.npcs = [];
+    this.boss = null;
+    this.gate = null;
     this.exits = [];
     this.flames = [];
     this.lights = [];
@@ -95,6 +99,12 @@ export default class GameScene extends Phaser.Scene {
     if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
     if (def.dim) this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, def.dim).setOrigin(0).setScrollFactor(0).setDepth(99800);
     music.play(def.music || 'village');
+    if (def.crypt) {
+      S.flags.crypt = true;
+      if (S.flags.bossDead && S.quests.king.status === 'active' && !S.inv.frostheart) {
+        this.pickups.push(new Pickup(this, 15.5 * T, 5.5 * T, { type: 'item', id: 'frostheart', big: true }));
+      }
+    }
     bus.emit('area', def.name);
 
     const cam = this.cameras.main;
@@ -139,6 +149,13 @@ export default class GameScene extends Phaser.Scene {
         this.npcBodies.add(n);
         break;
       }
+      case 'boss':
+        if (!S.flags.bossDead) {
+          this.boss = new Boss(this, wx, wy);
+          this.enemies.add(this.boss);
+        }
+        break;
+      case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
       case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
       case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
       case 'fire': {
@@ -229,10 +246,43 @@ export default class GameScene extends Phaser.Scene {
     return { x: (best % w + 0.5) * T, y: (((best / w) | 0) + 0.5) * T };
   }
 
+  setGate(closed) {
+    if (!this.gate) return;
+    this.gate.closed = closed;
+    for (let i = 0; i < this.gate.w; i++) {
+      const x = this.gate.x + i, y = this.gate.y;
+      this.layer.putTileAt(closed ? TILE_DOOR : TILE_FLOOR, x, y);
+      this.solid[y][x] = closed;
+    }
+    if (closed) { sfx.play('door'); this.shake(300, 0.01); }
+  }
+
+  summonAdds(boss) {
+    for (const [x, y] of [[9, 5], [22, 5]]) {
+      const en = this.addEnemy('draugr', (x + 0.5) * T, (y + 0.5) * T);
+      en.alert(true);
+      this.fx.puff(en.x, en.y, 15, 10, 50, 0.5);
+    }
+    sfx.play('nova');
+  }
+
+  onBossDeath(boss) {
+    this.onEnemyKilled(boss);
+    this.setGate(false);
+    music.play('crypt');
+    bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
+    this.time.delayedCall(1500, () => {
+      if (!this.scene.isActive('Game')) return;
+      sfx.play('levelup');
+      this.fx.ring(boss.x, boss.y + 4, 2.5, 0.8, 'ring', 0x5cc8d8);
+      this.pickups.push(new Pickup(this, boss.x, boss.y + 6, { type: 'item', id: 'frostheart', big: true }));
+    });
+  }
+
   onEnemyKilled(enemy) {
     const loot = enemy.cfg.loot;
     if (!loot) return;
-    const at = (spec) => this.pickups.push(new Pickup(this, enemy.x + rand(-4, 4), enemy.y + 2, spec));
+    const at = (spec) => this.pickups.push(new Pickup(this, enemy.x + rand(-4, 4) * (enemy.isBoss ? 3 : 1), enemy.y + 2, enemy.isBoss ? { ...spec, big: true } : spec));
     const g = randInt(loot.gold[0], loot.gold[1]);
     // split gold into a few coins
     const coins = Math.min(3, g);
@@ -362,6 +412,14 @@ export default class GameScene extends Phaser.Scene {
     for (const e of this.enemies.getChildren()) e.update(dt, this.player);
     for (const sh of this.shots.getChildren()) sh.update(dt);
     for (const sh of this.eshots.getChildren()) sh.update(dt);
+    if (this.boss && !this.boss.engaged && !this.boss.dead) {
+      const pc = this.player.body.center;
+      if (pc.y < 8.4 * T && pc.x > 6 * T && pc.x < 26 * T) {
+        this.setGate(true);
+        this.boss.engage();
+        music.play('boss');
+      }
+    }
     this.fx.update(dt);
     this.snow?.update(dt);
     this.drawBars();

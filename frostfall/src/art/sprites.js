@@ -89,6 +89,7 @@ export const STYLES = {
   draugr: { skin: 4, hair: 3, body: 2, trim: 1, legs: 1, boots: 0, eye: 0, glow: 15, helm: 3 },
   bandit: { skin: 10, hair: 1, hood: 1, body: 9, trim: 0, legs: 2, boots: 0, chest: 11, mask: 11 },
   archer: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 9, boots: 0, chest: 10, mask: 9 },
+  wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
 
@@ -250,6 +251,9 @@ function buildFx(scene) {
   });
   tex(scene, 'bolt', 6, 6, (g) => { R(g, 4, 1, 0, 4, 6); R(g, 5, 0, 1, 6, 4); R(g, 15, 2, 2, 2, 2); });
   tex(scene, 'ring', 64, 64, (g) => ring(g, 64, 3));
+  tex(scene, 'disc', 64, 64, (g) => {
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) <= 31.5) R(g, 6, x, y);
+  });
   tex(scene, 'ring_small', 32, 32, (g) => ring(g, 32, 2));
   for (let i = 0; i < 3; i++) {
     tex(scene, 'flame' + i, 12, 14, (g) => {

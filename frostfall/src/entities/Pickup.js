@@ -33,11 +33,11 @@ export default class Pickup extends Phaser.GameObjects.Image {
     this.setPosition(this.gx, Math.round(this.gy - this.z - 4 + bob));
     this.shadow.setPosition(this.gx, this.gy + 1).setDepth(this.gy - 1);
     this.setDepth(this.gy + 5);
-    if (this.t < 0.45) return;
+    if (this.t < (this.spec.big ? 1.2 : 0.45)) return;
     const dx = player.x - this.gx, dy = player.y + 3 - this.gy;
     const d = Math.hypot(dx, dy);
-    if (d < 34 && player.mode !== 'dead') { // magnet
-      const sp = 90 * dt;
+    if (d < (this.spec.big ? 400 : 34) && player.mode !== 'dead') { // magnet
+      const sp = (this.spec.big ? 70 : 90) * dt;
       this.gx += (dx / (d || 1)) * Math.min(sp, d); this.gy += (dy / (d || 1)) * Math.min(sp, d);
     }
     if (d < 9) this.collect();

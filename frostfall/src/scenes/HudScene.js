@@ -263,8 +263,22 @@ export default class HudScene extends Phaser.Scene {
       if (b.t <= 0) { b.c.destroy(); this.bannerObj = null; }
     }
 
+    // boss bar
+    const bs = this.gs.boss;
+    if (bs && bs.engaged && !bs.dead) {
+      const bw = 170, bx = Math.round((W - bw) / 2);
+      g.fillStyle(C[0], 0.75); g.fillRect(bx - 6, 3, bw + 12, 22);
+      g.fillStyle(C[0]); g.fillRect(bx - 1, 14, bw + 2, 9);
+      g.fillStyle(C[1]); g.fillRect(bx, 15, bw, 7);
+      g.fillStyle(bs.bphase === 2 ? C[11] : C[14]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 7);
+      g.fillStyle(bs.bphase === 2 ? C[12] : C[5]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 1);
+      g.fillStyle(C[13]); g.fillRect(bx + bw / 2, 14, 1, 9);
+      if (!this.bossName) { this.bossName = txt(this, 0, 5, 'JARL VALDREK THE HOLLOW KING', 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); }
+      this.bossName.setVisible(true);
+    } else this.bossName?.setVisible(false);
+
     // sneak indicator
-    if (pl.sneaking) {
+    if (pl.sneaking && !(bs && bs.engaged && !bs.dead)) {
       const seen = this.gs.enemies.getChildren().some((e) => e.alerted && !e.dead);
       g.fillStyle(C[0], 0.65); g.fillRect(W / 2 - 25, 3, 50, 10);
       if (!this.sneakTxt) this.sneakTxt = txt(this, 0, 5, '', 4);

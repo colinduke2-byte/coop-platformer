@@ -111,3 +111,49 @@ function buildForest() {
 }
 
 MAPS.forest = { name: 'Pine Forest', snow: true, build: buildForest, music: 'forest', dim: 0.12 };
+
+function buildCrypt() {
+  const g = new Grid(32, 54, TILE.CWALL);
+  const F = (x, y, w, h) => g.rect(x, y, w, h, TILE.CFLOOR);
+  F(11, 46, 10, 6);          // entry hall
+  F(15, 37, 2, 9);           // corridor A
+  F(5, 29, 22, 8);           // chamber 1: hall of the dead
+  F(15, 21, 2, 8);           // corridor B
+  F(4, 13, 24, 8);           // chamber 2: side crypts
+  F(1, 15, 3, 3); F(28, 15, 3, 3); // alcoves
+  F(15, 9, 2, 4);            // corridor C (boss gate at y=9)
+  F(6, 1, 20, 8);            // boss hall
+  g.rect(14, 1, 4, 8, TILE.RUG);
+  g.rect(15, 52, 2, 1, TILE.STAIRS);
+  g.set(15, 51, TILE.CFLOOR); g.set(16, 51, TILE.CFLOOR);
+  // pillars + sarcophagi
+  for (const [x, y] of [[8, 31], [8, 34], [23, 31], [23, 34], [11, 15], [11, 18], [20, 15], [20, 18], [10, 3], [21, 3], [10, 6], [21, 6]]) g.set(x, y, TILE.PILLAR);
+  for (const [x, y] of [[6, 29], [25, 29], [6, 36], [25, 36], [12, 1], [19, 1], [5, 13], [26, 13]]) g.set(x, y, TILE.SARCO);
+  // braziers (with flame + glow entities)
+  const braziers = [[12, 47], [19, 47], [6, 30], [25, 30], [5, 14], [26, 14], [7, 2], [24, 2], [7, 7], [24, 7], [14, 38], [17, 38]];
+  for (const [x, y] of braziers) {
+    g.set(x, y, TILE.BRAZIER);
+    g.add({ t: 'fire', x, y });
+    g.add({ t: 'glow', x, y, r: 46, col: 12 });
+  }
+  g.add({ t: 'glow', x: 15, y: 10, r: 30, col: 15 });
+  g.add({ t: 'spawn', name: 'entry', x: 15, y: 50 });
+  g.add({ t: 'exit', x: 15, y: 52, w: 2, h: 1, to: 'forest', spawn: 'crypt', fx: 'door' });
+  // chamber 1
+  for (const [x, y] of [[10, 32], [21, 32], [13, 35], [18, 35]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
+  g.add({ t: 'enemy', kind: 'wight', x: 15, y: 30 });
+  g.add({ t: 'enemy', kind: 'draugr', x: 15, y: 24 });
+  g.add({ t: 'chest', id: 'crypt1', x: 7, y: 33, loot: [{ item: 'hp_potion', n: 2 }, { item: 'sp_potion' }, { gold: 35 }] });
+  // chamber 2
+  for (const [x, y] of [[7, 17], [25, 17], [14, 19], [18, 19]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
+  for (const [x, y] of [[8, 14], [23, 14]]) g.add({ t: 'enemy', kind: 'wight', x, y });
+  g.add({ t: 'chest', id: 'crypt2', x: 2, y: 16, loot: [{ item: 'steel_sword' }, { arrows: 12 }] });
+  g.add({ t: 'chest', id: 'crypt3', x: 29, y: 16, loot: [{ item: 'mana_ring' }, { item: 'mp_potion', n: 2 }] });
+  g.add({ t: 'pickup', x: 15, y: 40, spec: { type: 'item', id: 'sp_potion' } });
+  g.add({ t: 'pickup', x: 15, y: 27, spec: { type: 'arrows', n: 6 } });
+  // boss hall
+  g.add({ t: 'boss', x: 15, y: 4 });
+  g.add({ t: 'bossgate', x: 15, y: 9, w: 2 });
+  return g.out();
+}
+MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };

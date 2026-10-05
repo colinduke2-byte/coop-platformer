@@ -208,9 +208,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const cfg = this.cfg;
     if (cfg.kind === 'shoot') {
       const f = this.dashDir;
-      const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'bolt', f.x * 125, f.y * 125, { dmg: cfg.dmg, life: 1.8 });
+      const spd = cfg.projSpeed || 125;
+      const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2 });
       this.scene.eshots.add(pr);
-      pr.body.setVelocity(f.x * 125, f.y * 125);
+      pr.body.setVelocity(f.x * spd, f.y * spd);
       this.body.setVelocity(0, 0);
       sfx.play('shoot');
       return;
