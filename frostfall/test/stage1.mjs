@@ -1,0 +1,34 @@
+import { launch, check, failCount } from './harness.mjs';
+
+const h = await launch();
+await h.open('scene=game');
+await h.sleep(800);
+const info = () => h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); return { x: g.player.x, y: g.player.y, w: g.worldW, h: g.worldH, scenes: window.__ff.game.scene.getScenes(true).map((s) => s.scene.key), canvas: [window.__ff.game.canvas.width, window.__ff.game.canvas.height], pixelArt: window.__ff.game.config.pixelArt }; });
+const a = await info();
+check('canvas is 320x180', a.canvas[0] === 320 && a.canvas[1] === 180, JSON.stringify(a.canvas));
+check('pixelArt on', a.pixelArt === true);
+check('Game + Hud running', a.scenes.includes('Game') && a.scenes.includes('Hud'), a.scenes.join());
+await h.shot('s1_start');
+await h.ev(() => window.__ff.keys._press('KeyD'));
+await h.sleep(700);
+await h.ev(() => window.__ff.keys._release('KeyD'));
+const b = await info();
+check('moves right', b.x > a.x + 20, `${a.x}->${b.x}`);
+await h.ev(() => window.__ff.keys._press('KeyW'));
+await h.ev(() => window.__ff.keys._press('KeyA'));
+await h.sleep(500);
+const c = await info();
+check('moves diagonally', c.x < b.x && c.y < b.y);
+await h.ev(() => { window.__ff.keys._release('KeyW'); window.__ff.keys._release('KeyA'); });
+// walk into the fire tile / walls: teleport next to the north wall and push
+await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); g.player.setPosition(300, 140); });
+await h.ev(() => window.__ff.keys._press('KeyW'));
+await h.sleep(1500);
+const d = await info();
+await h.ev(() => window.__ff.keys._release('KeyW'));
+check('blocked by the roof/hall (collision)', d.y > 100, `y=${d.y}`);
+await h.shot('s1_walk');
+check('no page errors', h.errors.length === 0, h.errors.join('\n'));
+await h.close();
+console.log(failCount() ? 'STAGE 1 FAILED' : 'STAGE 1 PASSED');
+process.exit(failCount() ? 1 : 0);
