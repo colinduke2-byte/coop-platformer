@@ -6,6 +6,7 @@ export const SKILL_DEFS = {
   oneHanded: { name: 'One-Handed', short: '1H', perk: 'Sword damage +10%, swings cost 3% less stamina' },
   archery: { name: 'Archery', short: 'ARC', perk: 'Arrow damage +10%, bow draws 5% faster' },
   destruction: { name: 'Destruction', short: 'DES', perk: 'Spell damage +10%, spells cost 3% less mana' },
+  restoration: { name: 'Restoration', short: 'RES', perk: 'Healing +10%, wards absorb 12% more' },
   sneak: { name: 'Sneak', short: 'SNK', perk: 'Detection range -3%, sneak attacks hit 0.2x harder' },
 };
 export const xpNeeded = (lvl) => 10 + lvl * 10;
@@ -33,5 +34,7 @@ export const bonus = {
   manaCost: () => Math.max(0.5, 1 - 0.03 * L('destruction')),
   detect: () => Math.max(0.35, 1 - 0.03 * L('sneak')),
   sneakAttack: () => 0.2 * L('sneak'),
+  heal: () => 1 + 0.1 * L('restoration'),
+  ward: () => 1 + 0.12 * L('restoration'),
 };
 export { SKILLS };

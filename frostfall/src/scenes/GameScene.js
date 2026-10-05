@@ -27,6 +27,7 @@ import { sfx, music, ambience } from '../audio/sfx.js';
 import { pathingMethods } from '../world/pathing.js';
 import { fogMethods } from '../world/fog.js';
 import { lootMethods } from '../world/loot.js';
+import { zoneMethods } from '../world/zones.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -75,6 +76,8 @@ export default class GameScene extends Phaser.Scene {
     this.npcBodies = null;
     this.npcs = [];
     this.breakables = [];
+    this.zones = [];
+    this.lastBark = -9;
     this.breakBodies = null;
     this.boss = null;
     this.gate = null;
@@ -392,6 +395,7 @@ export default class GameScene extends Phaser.Scene {
         music.play('boss');
       }
     }
+    this.updateZones(dt);
     this.fx.update(dt);
     this.snow?.update(dt);
     this.drawBars();
@@ -412,4 +416,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods);

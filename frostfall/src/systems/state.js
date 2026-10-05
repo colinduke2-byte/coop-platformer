@@ -1,5 +1,5 @@
 // The one mutable game-state object: this is exactly what gets saved.
-export const SKILLS = ['oneHanded', 'archery', 'destruction', 'sneak'];
+export const SKILLS = ['oneHanded', 'archery', 'destruction', 'restoration', 'sneak'];
 
 export function newState() {
   return {
@@ -9,13 +9,19 @@ export function newState() {
     arrows: 15, gold: 0, spell: 'fire',
     skills: Object.fromEntries(SKILLS.map((k) => [k, { lvl: 1, xp: 0 }])),
     inv: { hp_potion: 2, mp_potion: 1, sp_potion: 1, rusty_sword: 1, hunting_bow: 1, fur_tunic: 1 },
-    equip: { weapon: 'rusty_sword', bow: 'hunting_bow', armor: 'fur_tunic', charm: null },
+    equip: { weapon: 'rusty_sword', offhand: null, bow: 'hunting_bow', armor: 'fur_tunic', charm: null },
     quests: {
       wolves: { status: 'inactive', kills: 0 },
       king: { status: 'inactive' },
     },
     flags: {},
     fog: {},
+    perks: {}, perkPoints: 0, charLevel: 1, pendingStat: 0,
+    bonusHp: 0, bonusMp: 0, bonusSp: 0,
+    upgrades: {}, enchants: {},
+    lore: {}, kills: {}, seen: {}, tips: {},
+    time: 9 * 60, weather: 'snow', respawn: { map: 'village', spawn: 'start' },
+    follower: false, bossState: null,
     playtime: 0,
   };
 }

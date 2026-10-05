@@ -50,6 +50,7 @@ export const BINDINGS = {
   spell: ['KeyL'],
   swap: ['KeyQ', 'Tab'],
   shout: ['KeyR'],
+  block: ['KeyF'],
   sneak: ['KeyC', 'ShiftLeft'],
   interact: ['KeyE', 'Enter'],
   potion1: ['Digit1'],

@@ -106,13 +106,15 @@ function buildForest() {
   g.add({ t: 'glow', x: 45, y: 3, r: 26, col: 12 });
   g.add({ t: 'glow', x: 47, y: 3, r: 26, col: 12 });
   // wolves
-  for (const [x, y] of [[11, 10], [13, 11], [15, 9], [30, 12], [32, 13], [20, 22]]) g.add({ t: 'enemy', kind: 'wolf', x, y });
+  for (const [x, y] of [[11, 10], [13, 11], [15, 9], [32, 13], [20, 22]]) g.add({ t: 'enemy', kind: 'wolf', x, y });
+  g.add({ t: 'enemy', kind: 'alpha', x: 30, y: 12 });
   // bandits
   for (const [x, y] of [[43, 21], [49, 22], [45, 26]]) g.add({ t: 'enemy', kind: 'bandit', x, y });
   for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y });
+  g.add({ t: 'enemy', kind: 'chief', x: 47, y: 25 });
   // loot
-  g.add({ t: 'chest', id: 'camp', x: 50, y: 26, loot: [{ item: 'iron_cuirass' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
-  g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { arrows: 10 }] });
+  g.add({ t: 'chest', id: 'camp', x: 50, y: 26, loot: [{ item: 'iron_cuirass' }, { item: 'iron_shield' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
+  g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { item: 'hunting_knife' }, { arrows: 10 }] });
   g.add({ t: 'pickup', x: 6, y: 16, spec: { type: 'arrows', n: 6 } });
   g.add({ t: 'pickup', x: 20, y: 14, spec: { type: 'item', id: 'hp_potion' } });
   g.add({ t: 'pickup', x: 36, y: 7, spec: { type: 'arrows', n: 5 } });
@@ -151,14 +153,18 @@ function buildCrypt() {
   g.add({ t: 'spawn', name: 'entry', x: 15, y: 50 });
   g.add({ t: 'exit', x: 15, y: 52, w: 2, h: 1, to: 'forest', spawn: 'crypt', fx: 'door' });
   // chamber 1
-  for (const [x, y] of [[10, 32], [21, 32], [13, 35], [18, 35]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
+  for (const [x, y] of [[10, 32], [21, 32]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
+  for (const [x, y] of [[13, 35], [18, 35]]) g.add({ t: 'enemy', kind: 'warden', x, y });
   g.add({ t: 'enemy', kind: 'wight', x: 15, y: 30 });
   g.add({ t: 'enemy', kind: 'draugr', x: 15, y: 24 });
   g.add({ t: 'chest', id: 'crypt1', x: 7, y: 33, loot: [{ item: 'hp_potion', n: 2 }, { item: 'sp_potion' }, { gold: 35 }] });
   // chamber 2
-  for (const [x, y] of [[7, 17], [25, 17], [14, 19], [18, 19]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
-  for (const [x, y] of [[8, 14], [23, 14]]) g.add({ t: 'enemy', kind: 'wight', x, y });
-  g.add({ t: 'chest', id: 'crypt2', x: 2, y: 16, loot: [{ item: 'steel_sword' }, { arrows: 12 }] });
+  for (const [x, y] of [[7, 17], [25, 17]]) g.add({ t: 'enemy', kind: 'draugr', x, y });
+  g.add({ t: 'enemy', kind: 'warden', x: 14, y: 19 });
+  g.add({ t: 'enemy', kind: 'draugr', x: 18, y: 19 });
+  g.add({ t: 'enemy', kind: 'wight', x: 8, y: 14 });
+  g.add({ t: 'enemy', kind: 'conjurer', x: 23, y: 14 });
+  g.add({ t: 'chest', id: 'crypt2', x: 2, y: 16, loot: [{ item: 'steel_sword' }, { item: 'iron_greatsword' }, { arrows: 12 }] });
   g.add({ t: 'chest', id: 'crypt3', x: 29, y: 16, loot: [{ item: 'mana_ring' }, { item: 'mp_potion', n: 2 }] });
   g.add({ t: 'pickup', x: 15, y: 40, spec: { type: 'item', id: 'sp_potion' } });
   g.add({ t: 'pickup', x: 15, y: 27, spec: { type: 'arrows', n: 6 } });

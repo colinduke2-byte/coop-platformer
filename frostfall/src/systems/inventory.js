@@ -34,9 +34,15 @@ export function addArrows(n) {
   bus.emit('toast', `+${n} ARROWS`, 5);
 }
 
-export function equip(id) {
-  const slot = SLOT_OF[ITEMS[id]?.type];
+export function equip(id, forceSlot = null) {
+  const it = ITEMS[id];
+  let slot = SLOT_OF[it?.type];
   if (!slot || !count(id)) return false;
+  if (forceSlot === 'offhand' && it.type === 'weapon') slot = 'offhand';
+  const main = ITEMS[S.equip.weapon];
+  if (slot === 'offhand' && main?.type === 'weapon2h') { bus.emit('toast', 'TWO-HANDED WEAPON EQUIPPED', 11); sfx.play('nostamina'); return false; }
+  if (it.type === 'weapon2h') S.equip.offhand = null;       // greatswords need both hands
+  if (slot === 'weapon' && S.equip.offhand === id && count(id) < 2) S.equip.offhand = null;
   S.equip[slot] = id;
   recalc();
   sfx.play('equip');

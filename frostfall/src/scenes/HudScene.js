@@ -8,7 +8,7 @@ import { sfx } from '../audio/sfx.js';
 import { QUESTS, activeQuestIds } from '../data/quests.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
-import { SPELLS, P } from '../entities/Player.js';
+import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
 
@@ -34,7 +34,7 @@ export default class HudScene extends Phaser.Scene {
     this.arrImg = this.add.image(0, 15, 'mini_arrow').setOrigin(0);
 
     // bottom-left: spell + shout slots
-    this.spellIcons = { fire: this.add.image(4, H - 20, 'icon_fire').setOrigin(0), frost: this.add.image(4, H - 20, 'icon_frost').setOrigin(0) };
+    this.spellIcons = Object.fromEntries(SPELL_ORDER.map((k) => [k, this.add.image(4, H - 20, 'icon_' + k).setOrigin(0)]));
     this.add.image(25, H - 20, 'icon_shout').setOrigin(0);
     this.spellLbl = txt(this, 4, H - 28, 'Q', 4);
     this.shoutLbl = txt(this, 25, H - 28, 'R', 4);
@@ -190,8 +190,7 @@ export default class HudScene extends Phaser.Scene {
     const sp = SPELLS[S.spell];
     const box = (x, y) => { g.fillStyle(C[0], 0.7); g.fillRect(x - 1, y - 1, 18, 18); g.lineStyle(1, C[3]); g.strokeRect(x - 0.5, y - 0.5, 17, 17); };
     box(4, H - 20); box(25, H - 20);
-    this.spellIcons.fire.setVisible(S.spell === 'fire');
-    this.spellIcons.frost.setVisible(S.spell === 'frost');
+    for (const k of SPELL_ORDER) this.spellIcons[k].setVisible(S.spell === k);
     const afford = S.mp >= sp.cost;
     this.spellIcons[S.spell].setAlpha(afford ? 1 : 0.4);
     this.spellName.setText(sp.name);

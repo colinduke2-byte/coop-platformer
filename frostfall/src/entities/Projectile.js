@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { dist } from '../util.js';
+import { S } from '../systems/state.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -38,6 +39,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   fizzle() {
     if (this.done) return;
     if (this.kind === 'fire') return this.explode();
+    if (this.kind === 'arrow' && Math.random() < 0.5) this.scene.spawnLoot(this.x, this.y, null, [['arrows', 1, [1, 1]]]);
     this.finish();
   }
 
@@ -50,7 +52,10 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   wall() {
     if (this.done) return;
     if (this.kind === 'fire') return this.explode();
-    if (this.kind === 'arrow' || this.kind === 'bolt') { sfx.play('arrowhit'); this.scene.fx.puff(this.x, this.y, 5, 3, 25, 0.25); }
+    if (this.kind === 'arrow' || this.kind === 'bolt') {
+      sfx.play('arrowhit'); this.scene.fx.puff(this.x, this.y, 5, 3, 25, 0.25);
+      if (this.kind === 'arrow' && Math.random() < 0.55) this.scene.spawnLoot(this.x - this.body.velocity.x * 0.02, this.y - this.body.velocity.y * 0.02, null, [['arrows', 1, [1, 1]]]);
+    }
     if (this.kind === 'frost' || this.kind === 'eshot') this.scene.fx.puff(this.x, this.y, 15, 6, 35, 0.3);
     this.finish();
   }
@@ -61,16 +66,20 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     const sc = this.scene, pl = sc.player;
     const kx = this.body.velocity.x, ky = this.body.velocity.y;
     if (this.kind === 'arrow') {
+      if (this.hitSet?.has(e)) return;
+      (this.hitSet ||= new Set()).add(e);
       const sneak = !e.alerted && pl.sneaking;
       const mult = sneak ? 2 + bonus.sneakAttack() * 0.5 : 1;
-      const dealt = e.takeHit({ dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge });
+      const dealt = e.takeHit({ dmg: this.dmg * mult, kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y });
+      if (dealt <= 0) { this.finish(); return; }
       sc.fx.text(e.x, e.y - 10, String(dealt), sneak ? 13 : 6);
       if (sneak) { sc.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); pl.gainXp('sneak', 8); sfx.play('crit'); } else sfx.play('hit');
       pl.gainXp('archery', 3 + Math.round(this.charge * 3) + (e.dead ? 3 : 0));
       sc.hitStop(0.035);
+      if (S.perks.piercing && !this.pierced) { this.pierced = true; this.dmg *= 0.7; return; }
       this.finish();
     } else if (this.kind === 'frost') {
-      const dealt = e.takeHit({ dmg: this.dmg, kx, ky, kb: 40, src: 'frost', slow: 3.5, stun: 0.12 });
+      const dealt = e.takeHit({ dmg: this.dmg, kx, ky, kb: 40, src: 'frost', element: 'frost', slow: 3.5 + (S.perks.frostbite ? 2 : 0), stun: 0.12 });
       sc.fx.text(e.x, e.y - 10, String(dealt), 15);
       sc.fx.puff(e.x, e.y, 15, 8, 40, 0.4);
       sfx.play('hit');
@@ -95,7 +104,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     sc.breakAt(this.x, this.y, R + 4);
     for (const e of sc.enemies.getChildren()) {
       if (e.dead || dist(e.x, e.y, this.x, this.y) > R) continue;
-      const dealt = e.takeHit({ dmg: this.dmg, kx: e.x - this.x, ky: e.y - this.y, kb: 95, src: 'fire', stun: 0.28 });
+      const dealt = e.takeHit({ dmg: this.dmg, kx: e.x - this.x, ky: e.y - this.y, kb: 95, src: 'fire', element: 'fire', stun: 0.28 });
       sc.fx.text(e.x, e.y - 10, String(dealt), 12);
       pl.gainXp('destruction', 3 + (e.dead ? 3 : 0));
     }

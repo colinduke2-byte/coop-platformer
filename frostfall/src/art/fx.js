@@ -1,4 +1,5 @@
 import { txtS } from './font.js';
+import { C } from '../config.js';
 
 // Particles, floating text, slashes, rings: small timed effects for a scene.
 export class Fx {
@@ -31,6 +32,24 @@ export class Fx {
     const sp = this.s.add.image(x, y, 'slash').setOrigin(0.1, 0.5).setRotation(angle).setDepth(99100).setScale(scale);
     if (flip) sp.setFlipY(true);
     this.temp.push({ sp, t: 0.14, grow: 0 });
+  }
+
+  // Jagged lightning through a list of points.
+  bolt(pts, col = 13) {
+    const g = this.s.add.graphics().setDepth(99200);
+    const draw = (c, w) => {
+      g.lineStyle(w, C[c], 1); g.beginPath(); g.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i], n = Math.max(2, Math.floor(Math.hypot(b.x - a.x, b.y - a.y) / 8));
+        for (let k = 1; k <= n; k++) {
+          const t = k / n, jx = k === n ? 0 : (Math.random() - 0.5) * 7, jy = k === n ? 0 : (Math.random() - 0.5) * 7;
+          g.lineTo(Math.round(a.x + (b.x - a.x) * t + jx), Math.round(a.y + (b.y - a.y) * t + jy));
+        }
+      }
+      g.strokePath();
+    };
+    draw(col, 3); draw(6, 1);
+    this.s.time.delayedCall(130, () => g.destroy());
   }
 
   ring(x, y, to = 1.2, life = 0.4, key = 'ring', tint = null) {

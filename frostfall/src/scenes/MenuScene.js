@@ -12,8 +12,10 @@ import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 
-const TYPE_ORDER = ['weapon', 'bow', 'armor', 'charm', 'potion', 'quest'];
-const ROWS = 7;
+const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'ingredient', 'misc', 'quest'];
+const ROWS = 6;
+const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion']], ['MISC', ['ingredient', 'misc', 'quest']]];
+const SORTS = ['TYPE', 'NAME', 'VALUE'];
 
 export function panel(g, x, y, w, h, fill = 1) {
   g.fillStyle(C[0]); g.fillRect(x, y, w, h);
@@ -29,7 +31,9 @@ export default class MenuScene extends Phaser.Scene {
     this.openName = data.name || null;
     this.cursor = 0;
     this.scroll = 0;
-    this.warm = 2; // ignore input for the first frames (the opening key is still "pressed")
+    this.warm = 2;
+    this.filter = 0;
+    this.sort = 0; // ignore input for the first frames (the opening key is still "pressed")
   }
 
   get gs() { return this.scene.get('Game'); }
@@ -55,9 +59,13 @@ export default class MenuScene extends Phaser.Scene {
 
   // ----------------------------------------------------------------- data
   inventory() {
-    return Object.keys(S.inv)
-      .filter((id) => ITEMS[id])
-      .sort((a, b) => TYPE_ORDER.indexOf(ITEMS[a].type) - TYPE_ORDER.indexOf(ITEMS[b].type) || ITEMS[a].name.localeCompare(ITEMS[b].name));
+    const f = FILTERS[this.filter][1];
+    const by = {
+      0: (a, b) => TYPE_ORDER.indexOf(ITEMS[a].type) - TYPE_ORDER.indexOf(ITEMS[b].type) || ITEMS[a].name.localeCompare(ITEMS[b].name),
+      1: (a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name),
+      2: (a, b) => (ITEMS[b].value || 0) - (ITEMS[a].value || 0) || ITEMS[a].name.localeCompare(ITEMS[b].name),
+    }[this.sort];
+    return Object.keys(S.inv).filter((id) => ITEMS[id] && (!f || f.includes(ITEMS[id].type))).sort(by);
   }
   isEquipped(id) { return Object.values(S.equip).includes(id); }
 
@@ -93,15 +101,18 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   inputItems() {
+    if (keys.pressed('swap')) { this.filter = (this.filter + 1) % FILTERS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
+    if (keys.pressed('shout')) { this.sort = (this.sort + 1) % SORTS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
     const list = this.inventory();
     this.cursor = Math.min(this.cursor, Math.max(0, list.length - 1));
     this.nav(list.length);
-    if (keys.pressed('interact') && list.length) {
+    const wantEquip = keys.pressed('interact'), wantOff = keys.pressed('block');
+    if ((wantEquip || wantOff) && list.length) {
       const id = list[this.cursor], it = ITEMS[id];
       if (SLOT_OF[it.type]) {
-        const slot = SLOT_OF[it.type];
-        if (S.equip[slot] === id) unequip(slot); else equip(id);
-      } else if (it.type === 'potion') {
+        const slot = wantOff && it.type === 'weapon' ? 'offhand' : SLOT_OF[it.type];
+        if (S.equip[slot] === id) unequip(slot); else equip(id, wantOff ? 'offhand' : null);
+      } else if (it.type === 'potion' && wantEquip) {
         this.gs.player.usePotion(id);
       } else sfx.play('nostamina');
       this.dirty = true;
@@ -127,52 +138,68 @@ export default class MenuScene extends Phaser.Scene {
       x += w + 3;
     });
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
+    this.help = null;
     this.tabs[this.tab].render();
-    this.T(8, H - 12, this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 4);
+    this.T(8, H - 12, this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 4);
   }
 
   renderItems() {
     const g = this.bg;
     const list = this.inventory();
-    panel(g, 6, 22, 150, ROWS * 18 + 6, 2);
-    if (!list.length) this.T(14, 30, 'NOTHING HERE', 4);
+    this.help = 'E USE  F OFF-HAND  Q FILTER  R SORT';
+    panel(g, 6, 22, 150, 130, 2);
+    // filter chips + sort
+    let fx = 11;
+    FILTERS.forEach(([n], i) => {
+      const w = textW(n) + 4;
+      if (i === this.filter) { g.fillStyle(C[13]); g.fillRect(fx - 2, 25, w, 9); this.T(fx, 26, n, 0); } else this.T(fx, 26, n, 4);
+      fx += w + 3;
+    });
+    this.T(156 - 4 - textW(SORTS[this.sort]), 26, SORTS[this.sort], 15);
+    g.fillStyle(C[3]); g.fillRect(8, 35, 146, 1);
+    if (!list.length) this.T(14, 44, 'NOTHING HERE', 4);
     list.slice(this.scroll, this.scroll + ROWS).forEach((id, k) => {
       const i = this.scroll + k, it = ITEMS[id];
-      const y = 25 + k * 18;
+      const y = 37 + k * 18;
       if (i === this.cursor) { g.fillStyle(C[3]); g.fillRect(8, y, 146, 17); g.fillStyle(C[13]); g.fillRect(8, y, 2, 17); }
       this.I(12, y, iconKey(id), 1);
-      this.T(30, y + 5, it.name, i === this.cursor ? 6 : 5);
+      const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
+      this.T(30, y + 5, (it.name + up).slice(0, 17), i === this.cursor ? 6 : 5);
       const c = S.inv[id];
-      if (this.isEquipped(id)) this.T(30 + 0, y + 5 + 0, '', 6), this.T(146 - 6, y + 5, 'E', 13);
+      const tag = S.equip.offhand === id ? 'O' : Object.values(S.equip).includes(id) ? 'E' : '';
+      if (tag) this.T(146 - 6, y + 5, tag, 13);
       else if (c > 1) this.T(150 - textW('x' + c), y + 5, 'x' + c, 4);
     });
     if (list.length > ROWS) {
       const frac = this.scroll / (list.length - ROWS);
-      g.fillStyle(C[3]); g.fillRect(153, 24, 2, ROWS * 18); g.fillStyle(C[13]); g.fillRect(153, 24 + frac * (ROWS * 18 - 12), 2, 12);
+      g.fillStyle(C[3]); g.fillRect(153, 38, 2, ROWS * 18); g.fillStyle(C[13]); g.fillRect(153, 38 + frac * (ROWS * 18 - 12), 2, 12);
     }
 
     // equipment
     const rx = 162;
-    panel(g, rx, 22, 152, 68, 2);
-    this.T(rx + 6, 26, 'EQUIPPED', 13);
+    panel(g, rx, 22, 152, 62, 2);
     Object.entries(SLOT_NAMES).forEach(([slot, name], i) => {
-      const y = 36 + i * 13, id = S.equip[slot];
-      this.T(rx + 6, y + 2, name, 4);
-      if (id) { this.I(rx + 40, y - 2, iconKey(id), 0.75); this.T(rx + 55, y + 2, ITEMS[id].name, 6); }
-      else this.T(rx + 55, y + 2, '-', 3);
+      const y = 26 + i * 11, id = S.equip[slot];
+      this.T(rx + 6, y + 1, name, 4);
+      if (id) {
+        this.I(rx + 46, y - 2, iconKey(id), 0.75);
+        const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
+        this.T(rx + 60, y + 1, (ITEMS[id].name + up).slice(0, 15), 6);
+      } else this.T(rx + 60, y + 1, '-', 3);
     });
     // stats
-    const dmg = stats.weaponDmg() * bonus.melee(), bdmg = stats.bowDmg() * bonus.arrow();
-    this.T(rx + 6, 94, `SWORD ${dmg.toFixed(1)}   BOW ${bdmg.toFixed(1)}`, 5);
-    this.T(rx + 6, 103, `ARMOR ${Math.round(stats.armor() * 100)}%  GOLD ${S.gold}`, 5);
-    this.T(rx + 6, 112, `HP ${S.maxHp}  MP ${S.maxMp}  SP ${S.maxSp}`, 5);
+    panel(g, rx, 86, 152, 32, 2);
+    const dmg = (stats.weaponDmg() + stats.offhandDmg() * 0.6) * bonus.melee(), bdmg = stats.bowDmg() * bonus.arrow();
+    this.T(rx + 6, 90, `MELEE ${dmg.toFixed(1)}  BOW ${bdmg.toFixed(1)}  ARM ${Math.round(stats.armor() * 100)}%`, 5);
+    this.T(rx + 6, 99, `HP ${S.maxHp}  MP ${S.maxMp}  SP ${S.maxSp}`, 5);
+    this.T(rx + 6, 108, `LV ${S.charLevel || 1}  GOLD ${S.gold}`, 13);
 
     // description
-    panel(g, rx, 122, 152, 46, 2);
+    panel(g, rx, 120, 152, 36, 2);
     const id = list[this.cursor];
     if (id) {
       const it = ITEMS[id];
-      this.T(rx + 6, 126, it.name, 13);
+      this.T(rx + 6, 123, it.name, 13);
       let line = it.desc;
       const slot = SLOT_OF[it.type];
       if (slot) {
@@ -181,24 +208,23 @@ export default class MenuScene extends Phaser.Scene {
         if (it.dmg) line = `DMG ${it.dmg}${diff(it.dmg, cur.dmg)}. ` + it.desc;
         if (it.armor) line = `ARMOR ${Math.round(it.armor * 100)}%${diff(it.armor, cur.armor, true)}. ` + it.desc;
       }
-      this.T(rx + 6, 136, wrap(line, 24), 5);
-      const act = SLOT_OF[it.type] ? (S.equip[SLOT_OF[it.type]] === id ? 'E: UNEQUIP' : 'E: EQUIP') : it.type === 'potion' ? 'E: DRINK' : '';
-      if (act) this.T(rx + 6, 157, act, 15);
+      if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
+      this.T(rx + 6, 132, wrap(line, 24).split('\n').slice(0, 3).join('\n'), 5);
     }
   }
 
   renderSkills() {
     const g = this.bg;
-    panel(g, 6, 22, W - 12, 4 * 31 + 8, 2);
+    panel(g, 6, 22, W - 12, 5 * 25 + 8, 2);
     SKILLS.forEach((k, i) => {
-      const s = S.skills[k], d = SKILL_DEFS[k], y = 27 + i * 31;
+      const s = S.skills[k], d = SKILL_DEFS[k], y = 26 + i * 25;
       this.T(14, y, d.name, 6);
       this.T(W - 14 - textW('LEVEL ' + s.lvl), y, 'LEVEL ' + s.lvl, 13);
       const need = s.lvl >= MAX_LVL ? 1 : xpNeeded(s.lvl), frac = s.lvl >= MAX_LVL ? 1 : s.xp / need;
-      g.fillStyle(C[0]); g.fillRect(13, y + 10, W - 28, 6);
-      g.fillStyle(C[1]); g.fillRect(14, y + 11, W - 30, 4);
-      g.fillStyle(C[15]); g.fillRect(14, y + 11, Math.round((W - 30) * frac), 4);
-      this.T(14, y + 19, d.perk, 4);
+      g.fillStyle(C[0]); g.fillRect(13, y + 9, W - 28, 5);
+      g.fillStyle(C[1]); g.fillRect(14, y + 10, W - 30, 3);
+      g.fillStyle(C[15]); g.fillRect(14, y + 10, Math.round((W - 30) * frac), 3);
+      this.T(14, y + 15, d.perk, 4);
     });
     this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
   }

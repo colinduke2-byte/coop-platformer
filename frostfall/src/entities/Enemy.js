@@ -7,6 +7,8 @@ import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
+import { elementMult } from '../systems/damage.js';
+import { BARKS } from '../data/enemies.js';
 import { settings } from '../systems/settings.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -60,11 +62,23 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.alerted || this.dead) return;
     this.alerted = true;
     this.state = 'chase';
-    if (!silent) { this.mark('!', 13, 0.7); sfx.play('alert'); }
-    // wake nearby friends
+    if (!silent) { this.mark('!', 13, 0.7); sfx.play('alert'); this.bark('alert'); this.scene.onFirstAlert?.(this); }
+    // wake nearby friends (a howl / rally call reaches much further)
+    const reach = this.cfg.call ? this.cfg.call : 60;
+    if (this.cfg.call) { sfx.play(this.cfg.bark === 'wolf' ? 'howl' : 'alert'); this.scene.fx.ring(this.x, this.y + 4, reach / 32, 0.6, 'ring', 0xf4d460); }
     for (const o of this.scene.enemies.getChildren()) {
-      if (o !== this && !o.alerted && !o.dead && dist(o.x, o.y, this.x, this.y) < 60) o.alert(true);
+      if (o !== this && !o.alerted && !o.dead && dist(o.x, o.y, this.x, this.y) < reach) o.alert(true);
     }
+  }
+
+  // Short spoken line / growl above the head (throttled so crowds are not noisy).
+  bark(kind) {
+    const sc = this.scene, set = BARKS[this.cfg.bark];
+    if (!set || !set[kind] || sc.t - (sc.lastBark || -9) < 1.6) return;
+    sc.lastBark = sc.t;
+    const lines = set[kind];
+    sc.fx.text(this.x, this.y - 24, lines[Math.floor(Math.random() * lines.length)], this.cfg.bark === 'undead' ? 15 : 13, 1.0);
+    sfx.play('bark_' + this.cfg.bark);
   }
 
   setState(s, t = 0) { this.state = s; this.stateT = t; }
@@ -76,6 +90,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.cd -= dt;
     this.flashT -= dt;
     this.slowT -= dt;
+    this.guardBroken = Math.max(0, (this.guardBroken || 0) - dt);
     if (this.markT > 0) {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
@@ -135,8 +150,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       case 'idle':
       case 'chase': {
         this.face = dir8(to.x, to.y);
-        if (cfg.kind === 'shoot') { this.archerMove(dt, player, d, to, slow); break; }
-        if (this.cd <= 0 && d <= cfg.range && this.canAttack(player, d)) { this.startWindup(to); break; }
+        if (cfg.kind === 'shoot' || cfg.kind === 'cast') { this.archerMove(dt, player, d, to, slow); break; }
+        if (cfg.flee && !this.fled && this.hp < this.maxHp * 0.25) {
+          this.fled = true; this.setState('flee', 2.6); this.bark('flee'); this.mark('?', 11, 1);
+          break;
+        }
+        if (this.cd <= 0 && d <= cfg.range && this.canAttack(player, d)) {
+          if (sc.takeToken(this)) { this.startWindup(to); break; }
+          // others wait their turn: circle the player instead of crowding in
+          this.strafe(to, d, slow);
+          break;
+        }
         // approach: straight if the way is clear, else follow the tile path
         let tx = player.x, ty = player.y;
         if (!sc.clearLine(this.cx, this.cy, player.body.center.x, player.body.center.y)) {
@@ -147,6 +171,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const n = norm(tx - this.cx, ty - this.cy);
         const sp = cfg.chase * slow;
         b.setVelocity(n.x * sp, n.y * sp);
+        break;
+      }
+      case 'flee': {
+        const away = norm(this.x - player.x, this.y - player.y);
+        let ax = away.x, ay = away.y;
+        if (b.blocked.left || b.blocked.right) { ax = 0; ay = away.y || 1; } else if (b.blocked.up || b.blocked.down) { ay = 0; ax = away.x || 1; }
+        b.setVelocity(ax * cfg.chase * 1.1 * slow, ay * cfg.chase * 1.1 * slow);
+        this.face = dir8(-ax, -ay);
+        if (this.stateT <= 0) { this.setState('chase'); this.cd = 0.4; }
         break;
       }
       case 'windup': {
@@ -170,6 +203,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   canAttack() { return true; }
+
+  strafe(to, d, slow) {
+    if (!this.strafeDir) this.strafeDir = Math.random() < 0.5 ? 1 : -1;
+    const want = 36;                       // keep a ring around the player
+    const radial = d > want + 6 ? 0.8 : d < want - 6 ? -0.8 : 0;
+    const vx = (-to.y * this.strafeDir + to.x * radial), vy = (to.x * this.strafeDir + to.y * radial);
+    const n = norm(vx, vy);
+    const sp = this.cfg.chase * 0.65 * slow;
+    this.body.setVelocity(n.x * sp, n.y * sp);
+    if (this.body.blocked.none === false) this.strafeDir *= -1;
+  }
 
   archerMove(dt, player, d, to, slow) {
     const cfg = this.cfg, b = this.body, sc = this.scene;
@@ -197,6 +241,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setState('windup', this.cfg.windup);
     this.face = dir8(to.x, to.y);
     this.dashDir = to;
+    this.castTarget = { x: this.scene.player.x, y: this.scene.player.y + 3 };
     this.hitDone = false;
     this.blinkOn = true; this.blink = 0.07;
     this.mark('!', 11, this.cfg.windup + 0.1);
@@ -212,6 +257,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   attackStart(player, to) {
     const cfg = this.cfg;
+    if (cfg.kind === 'cast') {
+      this.scene.addZone(this.castTarget.x, this.castTarget.y, cfg.zoneR, cfg.zoneDelay, cfg.dmg, this);
+      this.body.setVelocity(0, 0);
+      sfx.play('frost');
+      this.scene.fx.puff(this.x, this.y, 14, 8, 40, 0.3);
+      return;
+    }
     if (cfg.kind === 'shoot') {
       const f = this.dashDir;
       const spd = cfg.projSpeed || 125;
@@ -236,12 +288,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   attackTick(dt, player) {
-    if (this.hitDone || this.cfg.kind === 'shoot') return;
+    if (this.hitDone || this.cfg.kind === 'shoot' || this.cfg.kind === 'cast') return;
     let r = this.hitRect();
     if (this.cfg.kind === 'lunge') { const b = this.body; r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6); }
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
-      player.hurt(this.cfg.dmg, this.x, this.y);
+      player.hurt(this.cfg.dmg, this.x, this.y, { attacker: this });
     }
   }
 
@@ -277,7 +329,27 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   // info: { dmg, kx, ky, kb, src, stun, slow, sneak }  -> returns damage dealt
   takeHit(info) {
     if (this.dead) return 0;
-    let dmg = Math.max(1, Math.round(info.dmg));
+    const sc = this.scene;
+    // shield guard: frontal melee / arrows are blocked unless the guard is broken by a heavy blow
+    if (this.cfg.shield && (info.src === 'melee' || info.src === 'arrow')) {
+      if (this.guardBroken > 0) { /* open */ } else {
+        const k = norm(-info.kx, -info.ky);
+        const front = this.face.x * k.x + this.face.y * k.y > 0.3;
+        if (front && info.heavy) {
+          this.guardBroken = 1.6; this.stun = Math.max(this.stun, 1.0);
+          sc.fx.text(this.x, this.y - 20, 'GUARD BREAK', 12, 0.9); sfx.play('guardbreak'); sc.fx.puff(this.x, this.y, 5, 8, 60, 0.3);
+        } else if (front) {
+          sfx.play('block'); sc.fx.text(this.x, this.y - 14, 'BLOCKED', 5, 0.6); sc.fx.puff(this.x + this.face.x * 8, this.y + 2, 5, 4, 40, 0.2);
+          this.body.setVelocity(-k.x * 20, -k.y * 20);
+          if (!this.alerted) this.alert(true);
+          return 0;
+        }
+      }
+    }
+    const em = elementMult(this.cfg, info.element);
+    let dmg = Math.max(1, Math.round(info.dmg * em));
+    if (em >= 1.2) sc.fx.text(this.x, this.y - 21, 'WEAK', 12, 0.8); else if (em <= 0.7) sc.fx.text(this.x, this.y - 21, 'RESIST', 4, 0.8);
+    if (info.src === 'arrow') this.stuck = (this.stuck || 0) + 1;
     this.hp -= dmg;
     this.flashT = 0.1;
     if (!this.alerted) this.alert(true);
@@ -312,6 +384,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       onComplete: () => this.destroy(),
     });
     this.scene.onEnemyKilled(this, info);
+    if (this.stuck) {
+      let n = 0; for (let i = 0; i < this.stuck; i++) if (Math.random() < 0.6) n++;
+      if (n) this.scene.spawnLoot(this.x, this.y + 2, null, [['arrows', 1, [n, n]]]);
+    }
     bus.emit('enemy:killed', this.kind, this);
   }
 }

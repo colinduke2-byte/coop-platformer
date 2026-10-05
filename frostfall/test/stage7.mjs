@@ -17,7 +17,7 @@ const sane = await G(() => {
 });
 check('crypt entities stand on free tiles', sane.bad.length === 0, sane.bad.join(' '));
 check('entry connects to the boss hall', sane.path);
-check('crypt has draugr, wights and a boss', sane.counts.draugr >= 8 && sane.counts.wight >= 3 && sane.boss, JSON.stringify(sane.counts));
+check('crypt has draugr, wights and a boss', (sane.counts.draugr + (sane.counts.warden||0)) >= 8 && (sane.counts.wight + (sane.counts.conjurer||0)) >= 3 && sane.boss, JSON.stringify(sane.counts));
 check('entering sets the crypt quest flag', sane.flag === true);
 await h.shot('s7_entry');
 

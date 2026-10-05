@@ -91,22 +91,25 @@ export const STYLES = {
   archer: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 9, boots: 0, chest: 10, mask: 9 },
   guard:  { skin: 10, hair: 3, helm: 4, body: 3, trim: 13, legs: 2, boots: 9, chest: 5, beard: 9 },
   child:  { skin: 10, hair: 13, body: 11, trim: 9, legs: 3, boots: 9, chest: 5 },
+  warden: { skin: 4, hair: 3, body: 2, trim: 3, legs: 1, boots: 0, glow: 15, helm: 5, chest: 4 },
+  chief:  { skin: 10, hair: 11, body: 11, trim: 13, legs: 2, boots: 0, helm: 3, beard: 9, cape: 1, chest: 13 },
+  conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
 
-function wolfFrame(ctx, ox, fr) {
+function wolfFrame(ctx, ox, fr, pal = { fur: 4, dark: 3, light: 5, leg: 3 }) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const a = fr === 1, b = fr === 2;
   // legs
-  r(3, 3, 11, 1, a ? 2 : 3); r(3, 5, 11, 1, b ? 2 : 3);
-  r(3, 9, 11, 1, b ? 2 : 3); r(3, 11, 11, 1, a ? 2 : 3);
+  r(pal.leg, 3, 11, 1, a ? 2 : 3); r(pal.leg, 5, 11, 1, b ? 2 : 3);
+  r(pal.leg, 9, 11, 1, b ? 2 : 3); r(pal.leg, 11, 11, 1, a ? 2 : 3);
   // body
-  r(4, 2, 6, 10, 5); r(5, 3, 6, 8, 1); r(3, 2, 10, 10, 1);
+  r(pal.fur, 2, 6, 10, 5); r(pal.light, 3, 6, 8, 1); r(pal.dark, 2, 10, 10, 1);
   // tail
-  r(4, 0, 6, 2, 2); r(3, 0, 8, 1, 1);
+  r(pal.fur, 0, 6, 2, 2); r(pal.dark, 0, 8, 1, 1);
   // head
-  r(4, 11, 4, 4, 5); r(5, 11, 4, 3, 1);
+  r(pal.fur, 11, 4, 4, 5); r(pal.light, 11, 4, 3, 1);
   r(2, 11, 3, 1, 1); r(2, 13, 3, 1, 1); // ears
   r(0, 15, 7, 1, 2); r(6, 13, 8, 2, 1); // nose / teeth
   r(11, 13, 5, 1, 1); // eye
@@ -141,6 +144,7 @@ function buildCharacters(scene) {
     make('spr_' + name, (ctx, x, d, f) => humanoid(ctx, x, d, f, st));
   }
   make('spr_wolf', (ctx, x, d, f) => wolfFrame(ctx, x, f), ['side']);
+  make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
 
 // --------------------------------------------------------------------- tiles
@@ -369,8 +373,43 @@ export function buildIcon(scene, key, kind, col = 6) {
         R(g, 15, 7, 1, 2, 14); R(g, 15, 1, 7, 14, 2); for (let i = 0; i < 5; i++) { R(g, 5, 3 + i, 3 + i, 1, 1); R(g, 5, 12 - i, 3 + i, 1, 1); } R(g, 6, 7, 7, 2, 2); break;
       case 'shout':
         for (let i = 0; i < 3; i++) { R(g, i === 0 ? 6 : 4, 3 + i * 3, 8 - i * 3, 1, 1 + i * 6); } R(g, col, 2, 6, 3, 4); R(g, col, 4, 5, 1, 6); break;
+      case 'pick': l(6, 3, 13, 11, 5); l(col, 3, 12, 11, 4); R(g, 9, 11, 3, 3, 3); R(g, 13, 2, 12, 2, 2); l(4, 4, 11, 6, 8); break;
+      case 'ingot': R(g, col, 3, 7, 10, 5); R(g, 6, 4, 6, 8, 1); R(g, 0, 3, 12, 10, 1); R(g, 0, 3, 7, 10, 1); R(g, 3, 4, 8, 6, 1); break;
+      case 'fang': R(g, col, 6, 3, 4, 3); R(g, col, 7, 6, 2, 4); R(g, col, 8, 10, 1, 2); R(g, 5, 7, 4, 1, 2); R(g, 0, 5, 3, 1, 3); break;
+      case 'dust': for (const [x, y] of [[4, 8], [7, 5], [9, 9], [6, 11], [11, 7], [5, 6]]) R(g, col, x, y, 2, 2); R(g, 4, 8, 9, 2, 1); break;
+      case 'berry': for (const [x, y] of [[5, 8], [9, 7], [7, 11]]) { R(g, col, x, y, 3, 3); R(g, 6, x, y, 1, 1); } R(g, 8, 8, 4, 1, 3); R(g, 8, 6, 5, 3, 1); break;
+      case 'lily': R(g, 8, 8, 8, 1, 6); for (const [x, y] of [[6, 5], [9, 5], [7, 3], [5, 7], [10, 7]]) R(g, col, x, y, 2, 3); R(g, 6, 7, 6, 2, 2); break;
+      case 'shield':
+        R(g, 0, 3, 2, 10, 9); R(g, 0, 4, 11, 8, 2); R(g, 0, 6, 13, 4, 1);
+        R(g, col, 4, 3, 8, 8); R(g, col, 5, 11, 6, 2); R(g, 6, 4, 3, 8, 1); R(g, 13, 7, 6, 2, 2); R(g, 2, 4, 10, 8, 1); break;
+      case 'shock':
+        l(13, 9, 1, 5, 8); l(13, 5, 8, 9, 8); l(13, 9, 8, 6, 15); l(13, 10, 1, 6, 8); l(6, 9, 2, 6, 8); R(g, 6, 8, 4, 1, 3); break;
+      case 'heal':
+        R(g, 5, 6, 2, 4, 12); R(g, 5, 2, 6, 12, 4); R(g, 8, 7, 3, 2, 10); R(g, 8, 3, 7, 10, 2); R(g, 6, 7, 3, 1, 2); break;
+      case 'ward':
+        for (let a = 0; a < 360; a += 12) { const rx = Math.round(8 + Math.cos(a * Math.PI / 180) * 6), ry = Math.round(8 + Math.sin(a * Math.PI / 180) * 6); R(g, 15, rx, ry); R(g, 6, rx, ry - 1 < 0 ? 0 : ry, 1, 1); }
+        R(g, 5, 5, 5, 6, 6); R(g, 15, 6, 6, 4, 4); break;
       default: R(g, col, 4, 4, 8, 8);
     }
+  });
+}
+
+// Held weapon / shield sprites (drawn while swinging / blocking). `kind`: blade | greatblade | shield.
+export function buildHeld(scene, key, kind, col = 5) {
+  if (kind === 'shield') {
+    tex(scene, key, 10, 12, (g) => {
+      R(g, 0, 1, 0, 8, 9); R(g, 0, 2, 9, 6, 2); R(g, 0, 3, 11, 4, 1);
+      R(g, col, 2, 1, 6, 7); R(g, col, 3, 8, 4, 2); R(g, 6, 2, 1, 6, 1); R(g, 2, 2, 7, 6, 1); R(g, 13, 4, 4, 2, 2); R(g, 3, 3, 8, 1, 1);
+    });
+    return;
+  }
+  const L = kind === 'greatblade' ? 17 : 12;
+  tex(scene, key, L + 4, 7, (g) => {
+    R(g, 0, 0, 1, L + 4, 5);                 // outline
+    R(g, 9, 1, 2, 3, 3);                     // grip
+    R(g, 13, 4, 0, 2, 7);                    // crossguard
+    R(g, col, 6, 2, L - 3, 3); R(g, 0, L + 3, 3, 1, 1);
+    R(g, 6, 6, 2, L - 4, 1);                 // edge highlight
   });
 }
 

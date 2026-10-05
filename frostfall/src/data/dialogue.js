@@ -95,7 +95,7 @@ export async function bjorn() {
   }
   if (q.status === 'ready') {
     await say(BJORN, 'Three pelts! Ha! You have earned this, friend.');
-    addGold(60); addItem('iron_sword'); addItem('hp_potion', 2);
+    addGold(60); addItem('iron_sword'); addItem('wooden_shield'); addItem('hp_potion', 2);
     finishQuest('wolves');
     await say(BJORN, 'If you are going to the crypt, take plenty of potions. The dead do not tire.');
     return;
