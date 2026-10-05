@@ -12,6 +12,12 @@ import { Fx } from '../art/fx.js';
 import Player from '../entities/Player.js';
 import Enemy from '../entities/Enemy.js';
 import { P } from '../entities/Player.js';
+import Pickup from '../entities/Pickup.js';
+import Chest from '../entities/Chest.js';
+import { keys } from '../systems/keys.js';
+import { txtS } from '../art/font.js';
+import { sfx, music } from '../audio/sfx.js';
+import { randInt, rand, dist } from '../util.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -50,6 +56,16 @@ export default class GameScene extends Phaser.Scene {
     this.shots = this.physics.add.group({ allowGravity: false });
     this.eshots = this.physics.add.group({ allowGravity: false });
     this.barGfx = this.add.graphics().setDepth(99200);
+    this.pickups = [];
+    this.interactables = [];
+    this.chestBodies = null;
+    this.exits = [];
+    this.flames = [];
+    this.lights = [];
+    this.target = null;
+    this.t = 0;
+    this.leaving = false;
+    this.promptTxt = txtS(this, 0, 0, '', 6, 0).setDepth(99400).setVisible(false);
 
     // --- spawn points
     const sp = built.entities.find((e) => e.t === 'spawn' && e.name === this.spawnName)
@@ -70,6 +86,10 @@ export default class GameScene extends Phaser.Scene {
     });
 
     for (const e of built.entities) this.spawnEntity(e);
+    if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
+    if (def.dim) this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, def.dim).setOrigin(0).setScrollFactor(0).setDepth(99800);
+    music.play(def.music || 'village');
+    bus.emit('area', def.name);
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldW, this.worldH);
@@ -92,9 +112,28 @@ export default class GameScene extends Phaser.Scene {
   spawnEntity(e) {
     const wx = (e.x + 0.5) * T, wy = (e.y + 0.5) * T;
     switch (e.t) {
-      case 'enemy': this.enemies.add(new Enemy(this, wx, wy, e.kind)); break;
+      case 'enemy': this.addEnemy(e.kind, wx, wy); break;
+      case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
+      case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
+      case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
+      case 'fire': {
+        const f = this.add.image(wx, wy - 3, 'flame0').setDepth(wy + 12);
+        this.flames.push({ f, ph: Math.random() * 3 });
+        break;
+      }
+      case 'glow': {
+        const l = this.add.image(wx, wy, 'glow').setTint(C[e.col ?? 12]).setBlendMode(Phaser.BlendModes.ADD).setScale(e.r / 32).setAlpha(0.5).setDepth(99900);
+        this.lights.push({ l, base: 0.5, ph: Math.random() * 6 });
+        break;
+      }
       default: break;
     }
+  }
+
+  addEnemy(kind, wx, wy) {
+    const en = new Enemy(this, wx, wy, kind);
+    this.enemies.add(en);
+    return en;
   }
 
   // ------------------------------------------------------------ helpers
@@ -165,7 +204,32 @@ export default class GameScene extends Phaser.Scene {
     return { x: (best % w + 0.5) * T, y: (((best / w) | 0) + 0.5) * T };
   }
 
-  onEnemyKilled(enemy, info) { /* loot + quests: stage 4+ */ }
+  onEnemyKilled(enemy) {
+    const loot = enemy.cfg.loot;
+    if (!loot) return;
+    const at = (spec) => this.pickups.push(new Pickup(this, enemy.x + rand(-4, 4), enemy.y + 2, spec));
+    const g = randInt(loot.gold[0], loot.gold[1]);
+    // split gold into a few coins
+    const coins = Math.min(3, g);
+    for (let i = 0; i < coins; i++) at({ type: 'gold', n: Math.floor(g / coins) + (i === 0 ? g % coins : 0) });
+    for (const [id, chance, range] of loot.drops) {
+      if (Math.random() > chance) continue;
+      if (id === 'arrows') at({ type: 'arrows', n: randInt(range[0], range[1]) });
+      else at({ type: 'item', id, n: 1 });
+    }
+  }
+
+  changeMap(to, spawn, sound = 'door') {
+    if (this.leaving) return;
+    this.leaving = true;
+    sfx.play(sound);
+    ui.modal = true;
+    this.cameras.main.fadeOut(280, 11, 14, 26);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      S.map = to; S.spawn = spawn; S.x = S.y = null;
+      this.scene.restart({ map: to, spawn });
+    });
+  }
 
   drawBars() {
     const g = this.barGfx;
@@ -187,13 +251,44 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  updateInteract() {
+    const pl = this.player, c = pl.body.center;
+    let best = null, bd = 22;
+    if (pl.mode === 'free') {
+      for (const it of this.interactables) {
+        if (!it.canInteract()) continue;
+        const d = dist(c.x, c.y, it.ix, it.iy);
+        if (d < bd) { best = it; bd = d; }
+      }
+    }
+    this.target = best;
+    if (best) {
+      this.promptTxt.setText(best.label()).setVisible(true);
+      this.promptTxt.setPosition(Math.round(best.ix - best.label().length * 3), Math.round(best.iy - 22));
+      if (keys.pressed('interact') && pl.lockT <= 0) { sfx.play('select'); best.interact(); }
+    } else this.promptTxt.setVisible(false);
+  }
+
   update(time, ms) {
     const dt = Math.min(ms, 50) / 1000;
     if (ui.modal) { this.physics.world.pause(); return; }
     if (this.hitStopT > 0) { this.hitStopT -= dt; this.physics.world.pause(); return; }
     this.physics.world.resume();
     S.playtime += dt;
+    this.t += dt;
     this.player.update(dt);
+    for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
+    for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha(l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03); }
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const p = this.pickups[i];
+      p.update(dt, this.player);
+      if (p.done) this.pickups.splice(i, 1);
+    }
+    this.updateInteract();
+    if (this.t > 0.5 && !this.leaving) {
+      const c = this.player.body.center;
+      for (const ex of this.exits) if (ex.rect.contains(c.x, c.y)) { this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break; }
+    }
     for (const e of this.enemies.getChildren()) e.update(dt, this.player);
     for (const sh of this.shots.getChildren()) sh.update(dt);
     for (const sh of this.eshots.getChildren()) sh.update(dt);

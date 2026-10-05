@@ -40,6 +40,11 @@ export default class HudScene extends Phaser.Scene {
       return { id, img, key: txt(this, x + 1, H - 28, k, 4), cnt: txt(this, x + 10, H - 9, '', 6), x };
     });
 
+    this.toasts = [];
+    this.area = null;
+    this.onToast = (text, col = 6) => { this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4 }); if (this.toasts.length > 5) this.toasts.shift().t.destroy(); };
+    this.onArea = (name) => { this.area?.destroy(); this.area = txt(this, 0, 36, name, 5); this.area.x = Math.round((W - this.area.width) / 2); this.areaT = 3; };
+    bus.on('toast', this.onToast); bus.on('area', this.onArea);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, 0, 74, 'YOU DIED', 11).setScale(3);
@@ -48,7 +53,7 @@ export default class HudScene extends Phaser.Scene {
 
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); });
   }
 
   update(_, ms) {
@@ -80,10 +85,13 @@ export default class HudScene extends Phaser.Scene {
     g.fillStyle(C[0], 0.62); g.fillRect(W - 14 - Math.max(gw, aw) - 6, 0, Math.max(gw, aw) + 20, 23);
     this.goldTxt.setText(gold).x = W - 4 - gw;
     this.arrowTxt.setText(ar).x = W - 4 - aw;
-    this.coinImg.x = W - 12 - Math.max(gw, aw);
-    this.arrImg.x = W - 14 - Math.max(gw, aw);
+    this.coinImg.x = W - 13 - Math.max(gw, aw);
+    this.arrImg.x = W - 16 - Math.max(gw, aw);
 
     // spell + shout slots
+    g.fillStyle(C[0], 0.62);
+    g.fillRect(0, H - 31, 104, 31);
+    g.fillRect(W - 66, H - 31, 66, 31);
     const sp = SPELLS[S.spell];
     const box = (x, y) => { g.fillStyle(C[0], 0.7); g.fillRect(x - 1, y - 1, 18, 18); g.lineStyle(1, C[3]); g.strokeRect(x - 0.5, y - 0.5, 17, 17); };
     box(4, H - 20); box(25, H - 20);
@@ -102,6 +110,24 @@ export default class HudScene extends Phaser.Scene {
       p.img.setAlpha(n ? 1 : 0.3);
       p.cnt.setText(n ? String(n) : '');
     });
+
+    // toasts stack above the bottom-left slots
+    for (let i = this.toasts.length - 1; i >= 0; i--) {
+      const ts = this.toasts[i];
+      ts.life -= dt;
+      if (ts.life <= 0) { ts.t.destroy(); this.toasts.splice(i, 1); }
+    }
+    this.toasts.forEach((ts, i) => {
+      ts.t.y = H - 36 - (this.toasts.length - 1 - i) * 9;
+      ts.t.setAlpha(Math.min(1, ts.life * 2.5));
+      g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, 9);
+    });
+    if (this.area) {
+      this.areaT -= dt;
+      this.area.setAlpha(Math.max(0, Math.min(1, this.areaT)));
+      g.fillStyle(C[0], 0.5 * Math.max(0, Math.min(1, this.areaT))); g.fillRect(this.area.x - 4, 34, this.area.width + 8, 11);
+      if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
+    }
 
     // sneak indicator
     if (pl.sneaking) {

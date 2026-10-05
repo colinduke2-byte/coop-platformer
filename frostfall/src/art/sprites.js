@@ -261,6 +261,25 @@ function buildFx(scene) {
   }
   tex(scene, 'mini_coin', 7, 7, (g) => { R(g, 13, 1, 0, 5, 7); R(g, 13, 0, 1, 7, 5); R(g, 12, 3, 2, 1, 3); R(g, 6, 1, 1, 1, 1); });
   tex(scene, 'mini_arrow', 11, 5, (g) => { R(g, 10, 1, 2, 8, 1); R(g, 5, 9, 1, 1, 3); R(g, 6, 8, 2, 1, 1); R(g, 6, 0, 1, 2, 1); R(g, 6, 0, 3, 2, 1); });
+  for (const open of [0, 1]) {
+    tex(scene, 'chest' + open, 16, 16, (g) => {
+      R(g, 0, 2, 13, 12, 2);
+      R(g, 9, 2, open ? 7 : 5, 12, open ? 6 : 8); R(g, 10, 3, open ? 8 : 6, 10, 1);
+      R(g, 1, 2, 9, 12, 1); R(g, 13, 7, 9, 2, 3);
+      if (open) { R(g, 1, 3, 3, 10, 4); R(g, 13, 6, 4, 4, 1); R(g, 9, 2, 10, 12, 1); R(g, 10, 3, 5, 10, 1); }
+      else { R(g, 13, 7, 7, 2, 2); R(g, 9, 2, 5, 12, 1); }
+    });
+  }
+  tex(scene, 'glow', 64, 64, (g) => {
+    for (let r = 32; r > 0; r -= 4) {
+      g.fillStyle = `rgba(255,255,255,${0.05 + (32 - r) / 32 * 0.16})`;
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) < r && (x + y) % 2 === 0) g.fillRect(x, y, 1, 1);
+    }
+    for (let r = 32; r > 0; r -= 4) {
+      g.fillStyle = `rgba(255,255,255,${0.05 + (32 - r) / 32 * 0.16})`;
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) < r && (x + y) % 2 === 1 && r < 20) g.fillRect(x, y, 1, 1);
+    }
+  });
   tex(scene, 'warn', 16, 16, (g) => { g.fillStyle = 'rgba(200,56,60,0.35)'; g.fillRect(0, 0, 16, 16); });
 }
 

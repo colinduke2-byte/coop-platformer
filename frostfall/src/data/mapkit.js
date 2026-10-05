@@ -16,6 +16,14 @@ export class Grid {
   rect(x, y, w, h, t, reserve = true) {
     for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) { this.set(i, j, t); if (reserve && this.inb(i, j)) this.res[j][i] = true; }
   }
+  // L-shaped trail through waypoints (x first, then y), `th` tiles thick.
+  path(pts, th, t) {
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      this.rect(Math.min(x0, x1), y0, Math.abs(x1 - x0) + th, th, t);
+      this.rect(x1, Math.min(y0, y1), th, Math.abs(y1 - y0) + th, t);
+    }
+  }
   reserve(x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (this.inb(i, j)) this.res[j][i] = true; }
   border(t, th) {
     for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {

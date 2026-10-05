@@ -46,7 +46,6 @@ function buildVillage() {
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.ROCK, 8, 4);
-  g.add({ t: 'enemy', kind: 'draugr', x: 25, y: 17 }); // stage-2 test dummy
   g.add({ t: 'spawn', name: 'start', x: 19, y: 15 });
   g.add({ t: 'spawn', name: 'east', x: 37, y: 13 });
   g.add({ t: 'fire', x: 19, y: 13 });
@@ -60,3 +59,52 @@ function buildVillage() {
 export const MAPS = {
   village: { name: 'Hollowfrost Village', snow: true, build: buildVillage, tint: 0, music: 'village' },
 };
+
+function buildForest() {
+  const g = new Grid(56, 32, TILE.SNOW);
+  g.noise(TILE.SNOW2, 0.2, 9, TILE.SNOW);
+  g.border(TILE.PINE, 2);
+  g.rect(0, 14, 3, 3, TILE.PATH);
+  // main trail west -> bandit camp, branch north -> crypt
+  g.path([[2, 15], [9, 15], [14, 13], [24, 13], [30, 16], [40, 18], [44, 22]], 2, TILE.PATH);
+  g.path([[24, 13], [27, 8], [34, 6], [44, 6], [46, 4]], 2, TILE.PATH);
+  // clearings
+  g.rect(9, 8, 9, 5, TILE.SNOW2);        // wolf den A
+  g.rect(28, 10, 7, 5, TILE.SNOW2);      // wolf den B
+  g.rect(41, 19, 12, 9, TILE.SNOW2);     // bandit camp
+  g.rect(4, 4, 6, 5, TILE.SNOW2);        // hidden glade
+  g.rect(18, 20, 6, 6, TILE.SNOW2);      // lone wolf
+  g.path([[10, 14], [6, 9]], 1, TILE.PATH);
+  // crypt gate
+  g.rect(43, 1, 7, 2, TILE.STONE);
+  g.set(46, 2, TILE.STAIRS);
+  g.rect(44, 3, 5, 2, TILE.SNOW2);
+  g.set(44, 2, TILE.GRAVE); g.set(48, 2, TILE.GRAVE);
+  g.set(43, 4, TILE.GRAVE); g.set(49, 4, TILE.GRAVE); g.set(41, 5, TILE.ROCK); g.set(51, 5, TILE.ROCK);
+  g.set(46, 23, TILE.FIRE);
+  g.reserve(0, 0, 1, 1);
+  g.scatter(TILE.PINE, 250, 21);
+  g.scatter(TILE.ROCK, 22, 22);
+  g.add({ t: 'spawn', name: 'west', x: 3, y: 15 });
+  g.add({ t: 'spawn', name: 'crypt', x: 46, y: 4 });
+  g.add({ t: 'exit', x: 0, y: 14, w: 2, h: 3, to: 'village', spawn: 'east' });
+  g.add({ t: 'exit', x: 46, y: 2, w: 1, h: 1, to: 'crypt', spawn: 'entry', fx: 'door' });
+  g.add({ t: 'fire', x: 46, y: 23 });
+  g.add({ t: 'glow', x: 46, y: 23, r: 56, col: 12 });
+  g.add({ t: 'glow', x: 45, y: 3, r: 26, col: 12 });
+  g.add({ t: 'glow', x: 47, y: 3, r: 26, col: 12 });
+  // wolves
+  for (const [x, y] of [[11, 10], [13, 11], [15, 9], [30, 12], [32, 13], [20, 22]]) g.add({ t: 'enemy', kind: 'wolf', x, y });
+  // bandits
+  for (const [x, y] of [[43, 21], [49, 22], [45, 26]]) g.add({ t: 'enemy', kind: 'bandit', x, y });
+  for (const [x, y] of [[51, 20], [42, 26]]) g.add({ t: 'enemy', kind: 'archer', x, y });
+  // loot
+  g.add({ t: 'chest', id: 'camp', x: 50, y: 26, loot: [{ item: 'iron_cuirass' }, { item: 'hp_potion', n: 2 }, { gold: 45 }] });
+  g.add({ t: 'chest', id: 'glade', x: 6, y: 6, loot: [{ item: 'bear_charm' }, { arrows: 10 }] });
+  g.add({ t: 'pickup', x: 6, y: 16, spec: { type: 'arrows', n: 6 } });
+  g.add({ t: 'pickup', x: 20, y: 14, spec: { type: 'item', id: 'hp_potion' } });
+  g.add({ t: 'pickup', x: 36, y: 7, spec: { type: 'arrows', n: 5 } });
+  return g.out();
+}
+
+MAPS.forest = { name: 'Pine Forest', snow: true, build: buildForest, music: 'forest', dim: 0.12 };

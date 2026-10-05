@@ -1,13 +1,14 @@
 import { launch } from './harness.mjs';
 const h = await launch();
-await h.open('scene=game');
-await h.sleep(500);
-await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; g.player.setPosition(300, 250); g.player.invuln = 99; g.player.face = { x: 1, y: 0 }; e.setPosition(370, 250); e.home = { x: 370, y: 250 }; e.notice = -99;
-  window.__ff.keys._press('KeyK'); });
-await h.sleep(1800);
-await h.ev(() => window.__ff.keys._release('KeyK'));
-for (let i = 0; i < 14; i++) {
-  console.log(JSON.stringify(await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const sh = g.shots.getChildren()[0]; const e = g.enemies.getChildren()[0]; return { fps: Math.round(window.__ff.game.loop.actualFps), sh: sh && { x: Math.round(sh.x), y: Math.round(sh.y), life: sh.life.toFixed(2) }, e: [Math.round(e.x), Math.round(e.y), e.hp, e.state] }; })));
-  await h.sleep(100);
-}
+await h.open('scene=game&map=forest&spawn=west');
+await h.sleep(600);
+const S = (l) => h.ev((l) => { const g = window.__ff.game.scene.getScene('Game'); const p = g.player; return { l, mode: p.mode, lockT: +p.lockT.toFixed(2), sw: !!p.swing, drawing: p.drawing, stun: p.stunT, sp: window.__ff.S.sp, e: g.enemies.getChildren().map((e) => e.hp) }; }, l);
+await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(10.5*16, 10*16+8); p.invuln = 99; p.face={x:1,y:0}; const e = g.addEnemy('archer', p.x + 70, p.y); });
+await h.sleep(3500);
+console.log(JSON.stringify(await S('after archer')));
+await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.invuln = 99; p.lockT = 0; p.swing = null; const e = g.addEnemy('bandit', p.x + 12, p.y); e.hp = 1; e.alerted = true; });
+await h.ev(() => window.__ff.keys._press('KeyJ')); await h.sleep(60); await h.ev(() => window.__ff.keys._release('KeyJ'));
+console.log(JSON.stringify(await S('after tap')));
+await h.sleep(300);
+console.log(JSON.stringify(await S('later')));
 await h.close();

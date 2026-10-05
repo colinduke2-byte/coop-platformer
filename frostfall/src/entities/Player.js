@@ -91,10 +91,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (this.mode === 'lying') { b.setVelocity(0, 0); this.animate(false); return; }
 
+    if (this.mode === 'hurt' && this.stunT <= 0) this.mode = 'free';
     if (this.stunT > 0) {
       this.stunT -= dt;
       b.velocity.scale(Math.pow(0.03, dt));
-      if (this.stunT <= 0 && this.mode === 'hurt') this.mode = 'free';
     } else if (this.mode === 'roll') {
       this.rollT -= dt;
       const k = this.rollT / P.roll.time;

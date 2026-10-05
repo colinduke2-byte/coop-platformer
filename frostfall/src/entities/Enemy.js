@@ -5,6 +5,7 @@ import { dist, norm, rand, facingKind, dir8 } from '../util.js';
 import { txtS } from '../art/font.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import Projectile from './Projectile.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind) {
@@ -128,6 +129,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       case 'idle':
       case 'chase': {
         this.face = dir8(to.x, to.y);
+        if (cfg.kind === 'shoot') { this.archerMove(dt, player, d, to, slow); break; }
         if (this.cd <= 0 && d <= cfg.range && this.canAttack(player, d)) { this.startWindup(to); break; }
         // approach: straight if the way is clear, else follow the tile path
         let tx = player.x, ty = player.y;
@@ -163,6 +165,28 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   canAttack() { return true; }
 
+  archerMove(dt, player, d, to, slow) {
+    const cfg = this.cfg, b = this.body, sc = this.scene;
+    const clear = sc.clearLine(this.cx, this.cy, player.body.center.x, player.body.center.y, 3);
+    if (d < cfg.keep && clear) { // back away
+      b.setVelocity(-to.x * cfg.chase * 0.9 * slow, -to.y * cfg.chase * 0.9 * slow);
+      if (b.blocked.none === false) b.setVelocity(-to.y * cfg.chase * 0.6, to.x * cfg.chase * 0.6);
+      if (this.cd <= 0 && d > 30) this.startWindup(to);
+    } else if (d <= cfg.range && clear) {
+      b.setVelocity(0, 0);
+      if (this.cd <= 0) this.startWindup(to);
+    } else {
+      let tx = player.x, ty = player.y;
+      this.pathT -= dt;
+      if (!clear) {
+        if (this.pathT <= 0 || !this.wp) { this.wp = sc.nextWaypoint(this.cx, this.cy, player.body.center.x, player.body.center.y); this.pathT = 0.25; }
+        if (this.wp) { tx = this.wp.x; ty = this.wp.y; }
+      }
+      const n = norm(tx - this.cx, ty - this.cy);
+      b.setVelocity(n.x * cfg.chase * slow, n.y * cfg.chase * slow);
+    }
+  }
+
   startWindup(to) {
     this.setState('windup', this.cfg.windup);
     this.face = dir8(to.x, to.y);
@@ -181,6 +205,22 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   attackStart(player, to) {
+    const cfg = this.cfg;
+    if (cfg.kind === 'shoot') {
+      const f = this.dashDir;
+      const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'bolt', f.x * 125, f.y * 125, { dmg: cfg.dmg, life: 1.8 });
+      this.scene.eshots.add(pr);
+      pr.body.setVelocity(f.x * 125, f.y * 125);
+      this.body.setVelocity(0, 0);
+      sfx.play('shoot');
+      return;
+    }
+    if (cfg.kind === 'lunge') {
+      this.body.setVelocity(this.dashDir.x * cfg.lunge, this.dashDir.y * cfg.lunge);
+      this.face = dir8(this.dashDir.x, this.dashDir.y);
+      sfx.play('roll');
+      return;
+    }
     // melee lunge forward a hair
     this.body.setVelocity(to.x * 90, to.y * 90);
     this.face = dir8(to.x, to.y);
@@ -189,8 +229,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   attackTick(dt, player) {
-    if (this.hitDone) return;
-    const r = this.hitRect();
+    if (this.hitDone || this.cfg.kind === 'shoot') return;
+    let r = this.hitRect();
+    if (this.cfg.kind === 'lunge') { const b = this.body; r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6); }
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
       player.hurt(this.cfg.dmg, this.x, this.y);

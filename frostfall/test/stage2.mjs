@@ -3,6 +3,7 @@ import { launch, check, failCount } from './harness.mjs';
 const h = await launch();
 await h.open('scene=game');
 await h.sleep(600);
+await h.ev(() => window.__ff.game.scene.getScene('Game').addEnemy('draugr', 380, 250));
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
 const tap = async (c, ms = 60) => { await press(c); await h.sleep(ms); await rel(c); };
