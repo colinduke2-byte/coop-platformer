@@ -11,7 +11,8 @@
     "test": "node test/run.mjs",
     "test:unit": "node test/unit/unit.mjs",
     "balance": "node test/balance.mjs",
-    "monkey": "node test/monkey.mjs 40"
+    "monkey": "node test/monkey.mjs 40",
+    "build:single": "vite build && node tools/single-file.mjs frostfall.html"
   },
   "dependencies": {
     "phaser": "3.90.0"
