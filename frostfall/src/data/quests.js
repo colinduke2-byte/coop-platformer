@@ -1,7 +1,21 @@
 import { S } from '../systems/state.js';
 import { count } from '../systems/inventory.js';
 
+import { heartsHeld, HEART_COUNT } from './hearts.js';
+import { getReach } from './maps.js';
+
 export const QUESTS = {
+  hearts: {
+    title: 'The Four Hearts',
+    giver: 'Elder Sigrid',
+    desc: 'The Frostheart was only the first of five. The Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Whatever you chose for the first, the cold will not break until the rest are found.',
+    short: () => (heartsHeld() >= 1 ? `Hearts ${heartsHeld()}/${HEART_COUNT}  -  find the next` : 'Find the Glacial Maw'),
+    objectives: () => [
+      { t: 'Seek the Glacial Maw in the frozen east', done: !!S.flags.maw },
+      { t: 'Slay the Rime Wyrm and take its Heart', done: !!S.hearts?.rime },
+      { t: 'More Hearts lie sealed. Sigrid will read the old maps again', done: false },
+    ],
+  },
   herbs: {
     title: "Mirra's Remedy",
     giver: 'Mirra the Alchemist',
@@ -59,6 +73,11 @@ export const QUESTS = {
 
 // Quest targets for the map markers / HUD arrow: { map, x, y } in tiles.
 export const TARGETS = {
+  hearts: (q) => {
+    if (S.hearts?.rime) return { map: 'village', x: 19, y: 9 };
+    const p = getReach().pois.find((x) => x.id === 'maw0');
+    return S.flags.maw ? { map: 'maw', x: 18, y: 4 } : (p ? { map: 'forest', x: p.x, y: p.y - 1 } : { map: 'village', x: 19, y: 9 });
+  },
   wolves: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'forest', x: 12, y: 10 }),
   king: (q) => (q.status === 'relic' ? { map: 'village', x: 19, y: 9 } : S.flags.crypt ? { map: 'crypt', x: 15, y: 4 } : { map: 'forest', x: 46, y: 3 }),
   herbs: (q) => (q.status === 'ready' ? { map: 'village', x: 32, y: 10 } : { map: 'forest', x: 20, y: 17 }),

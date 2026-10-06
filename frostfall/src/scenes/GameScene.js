@@ -26,6 +26,7 @@ import Chest from '../entities/Chest.js';
 import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
+import RimeWyrm from '../entities/RimeWyrm.js';
 import Breakable from '../entities/Breakable.js';
 import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
@@ -151,6 +152,7 @@ export default class GameScene extends Phaser.Scene {
         this.pickups.push(new Pickup(this, 15.5 * T, 5.5 * T, { type: 'item', id: 'frostheart', big: true }));
       }
     }
+    if (this.mapId === 'maw') { S.flags.maw = true; if (S.flags.wyrmDead && !S.hearts?.rime) this.pickups.push(new Pickup(this, 18.5 * T, 5.5 * T, { type: 'heart', id: 'rime', big: true })); }
     bus.emit('area', def.name);
 
     const cam = this.cameras.main;
@@ -232,8 +234,8 @@ export default class GameScene extends Phaser.Scene {
         break;
       }
       case 'boss':
-        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : S.flags.bossDead)) {
-          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : new Boss(this, wx, wy);
+        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : e.kind === 'wyrm' ? S.flags.wyrmDead : S.flags.bossDead)) {
+          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : e.kind === 'wyrm' ? new RimeWyrm(this, wx, wy) : new Boss(this, wx, wy);
           this.enemies.add(this.boss);
         }
         break;

@@ -73,6 +73,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     attacker.stun = Math.max(attacker.stun || 0, attacker.isBoss ? 0.25 : 0.7);
     if (attacker.state === 'attack' || attacker.state === 'windup') attacker.setState('recover', 0.7);
     this.gainXp('sneak', 3);
+    if (S.hearts?.rime) {                                          // the Rime Heart: a burst of cold on every perfect dodge
+      sc.fx.ring(this.x, this.y + 4, 2, 0.6, 'ring', 0x9fe8ff);
+      for (const e of sc.enemies.getChildren()) {
+        if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > 70) continue;
+        e.slowT = Math.max(e.slowT || 0, 3.5);
+        if (!e.isBoss) e.stun = Math.max(e.stun || 0, 0.9);
+      }
+    }
   }
 
   // Gear / blessing lifesteal.

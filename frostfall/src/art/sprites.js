@@ -118,6 +118,21 @@ function wolfFrame(ctx, ox, fr, pal = { fur: 4, dark: 3, light: 5, leg: 3 }) {
   r(11, 13, 5, 1, 1); // eye
 }
 
+// Glacial wyrm: an undulating ice serpent seen from the side, head to the right.
+function wyrmFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = [0, 1, 0][fr], b = [1, 0, 1][fr];
+  r(3, 0, 11 + b, 2, 1); r(15, 1, 10 + b, 3, 1);                 // tail tip
+  r(15, 3, 9 + a, 4, 3); r(6, 3, 9 + a, 4, 1); r(3, 3, 11 + a, 4, 1);   // rear body
+  r(15, 6, 7 + b, 4, 4); r(6, 6, 7 + b, 4, 1); r(3, 6, 10 + b, 4, 1);   // coil
+  r(15, 9, 6 + a, 4, 4); r(6, 9, 6 + a, 4, 1);                          // mid body
+  r(15, 11, 5, 3, 5); r(6, 11, 5, 2, 1);                                  // neck
+  r(5, 10, 3, 1, 3); r(5, 7, 2, 1, 2); r(5, 4, 3, 1, 2);                 // dorsal spikes
+  r(15, 12, 3, 4, 4); r(6, 12, 3, 3, 1); r(5, 13, 1, 1, 3);               // head, horn
+  r(15, 14, 5, 2, 2); r(6, 14, 6, 2, 1); r(11, 14, 4, 1, 1);              // jaw, eye
+  r(6, 3, 12 + a, 1, 1);
+}
+
 // 1px dark outline inside each 16x16 cell so sprites read on bright snow.
 function outline(ctx, w, h) {
   const img = ctx.getImageData(0, 0, w, h), d = img.data;
@@ -148,6 +163,7 @@ function buildCharacters(scene) {
   }
   make('spr_wolf', (ctx, x, d, f) => wolfFrame(ctx, x, f), ['side']);
   make('spr_grimfang', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }), ['side']);
+  make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
 

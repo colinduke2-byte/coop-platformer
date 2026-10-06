@@ -16,6 +16,7 @@ export function newState() {
       herbs: { status: 'inactive' },
       locket: { status: 'inactive' },
       alpha: { status: 'inactive' },
+      hearts: { status: 'inactive' },
     },
     flags: {},
     fog: {},
@@ -27,7 +28,7 @@ export function newState() {
     follower: false, bossState: null, tracked: null,
     playtime: 0,
     seed: Math.floor(Math.random() * 1e9),     // the run seed: lays out the open world and its dungeons
-    gen: {}, killed: {}, bounty: {}, shrines: {}, run: { kills: 0, camps: 0, barrows: 0, champions: 0, chests: 0 }, ngPlus: 0,
+    hearts: {}, gen: {}, killed: {}, bounty: {}, shrines: {}, run: { kills: 0, camps: 0, barrows: 0, champions: 0, chests: 0 }, ngPlus: 0,
   };
 }
 
@@ -54,7 +55,7 @@ export function startNgPlus() {
   const keep = {
     skills: S.skills, perks: S.perks, perkPoints: S.perkPoints, charLevel: S.charLevel, skillUps: S.skillUps,
     bonusHp: S.bonusHp, bonusMp: S.bonusMp, bonusSp: S.bonusSp, inv: S.inv, equip: S.equip, upgrades: S.upgrades, enchants: S.enchants,
-    gold: S.gold, arrows: S.arrows, gen: S.gen, lore: S.lore, tips: S.tips, kills: S.kills, seen: S.seen, spell: S.spell, ngPlus: (S.ngPlus || 0) + 1,
+    gold: S.gold, arrows: S.arrows, gen: S.gen, hearts: S.hearts, lore: S.lore, tips: S.tips, kills: S.kills, seen: S.seen, spell: S.spell, ngPlus: (S.ngPlus || 0) + 1,
     flags: { introDone: true, tutDone: true, alchemy: S.flags.alchemy, houseBought: S.flags.houseBought, furn: S.flags.furn },
   };
   const fresh = newState();

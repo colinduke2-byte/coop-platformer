@@ -26,7 +26,34 @@ export async function intro() {
   startTutorial();
 }
 
+// Chapter two: the five Hearts. Returns true when it handled the conversation.
+async function heartsTalk() {
+  const q = S.quests.hearts;
+  if (S.quests.king.status !== 'done') return false;
+  if (q.status === 'inactive') {
+    await say(SIGRID, 'Dreamer. Sit. What I have to tell you is older than the village.');
+    await say(SIGRID, 'The Frostheart was never alone. The Hollow Kings bound the Long Winter, a thing older than snow, with five Hearts, and set a guardian to keep each one.');
+    await say(SIGRID, S.flags.ending === 'give' ? 'Our hearth is warm tonight, but only because one Heart is spent. The other four still hold the cold in place, and the Winter is waking.' : 'You carry the first, and the cold follows you for it. The other four still hold the Winter in place, and it is waking.');
+    await say(SIGRID, 'The old maps are faded. I can read only the nearest: the Glacial Maw, where the east freezes under the mountain. A serpent of rime sleeps there with the second Heart.');
+    const c = await choose(['I will find it.', 'What is the Winter?', 'Not yet.']);
+    if (c === 1) { await say(SIGRID, 'Some say a god the kings betrayed. Some say a hunger the kings fed. The Hearts keep it asleep, or keep it chained. I have never known which.'); }
+    if (c === 2) { await say(SIGRID, 'Then rest. But the snow is already deeper than yesterday.'); return true; }
+    startQuest('hearts');
+    await say(SIGRID, 'Go east, past the lakes, to where the mountains close in. Take the best gear you have. The thing in the Maw is no draugr.');
+    return true;
+  }
+  if (q.status === 'active') {
+    if (S.hearts?.rime) {
+      await say(SIGRID, 'You carry the second Heart. I can feel it from here. The cold bends around you now.');
+      await say(SIGRID, 'The other maps are still too faded for me to read. Rest, and gather your strength. When the winds change, I will have more to tell you.');
+    } else await say(SIGRID, 'The Glacial Maw lies far to the east, where the ice meets the mountains. Follow the roads and the fires. The marker on your map will help.');
+    return true;
+  }
+  return false;
+}
+
 export async function sigrid() {
+  if (await heartsTalk()) return;
   const k = S.quests.king;
   const end = S.flags.ending;
   if (end === 'give') {

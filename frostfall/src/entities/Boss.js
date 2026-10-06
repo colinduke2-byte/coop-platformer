@@ -91,7 +91,7 @@ export default class Boss extends Enemy {
         b.setVelocity(0, 0);
         if (this.bphase === 2 && !this.summoned && this.stateT < 1.0) {
           this.summoned = true;
-          sc.summonAdds(this);
+          if (this.doSummon) this.doSummon(); else sc.summonAdds(this);
         }
         if (this.stateT <= 0) { this.invulnerable = false; this.setState('chase'); this.cd = 0.5; }
         break;
@@ -131,7 +131,8 @@ export default class Boss extends Enemy {
   isDash() { return this.atk === 'charge'; }
   dashCfg() { return this.B.charge; }
 
-  pickAttack(d, to) {
+  // the moves a boss may pick right now (overridden by other bosses)
+  attackPool(d) {
     const opts = [];
     if (d < 46) opts.push('slam', 'sweep', 'sweep');
     else opts.push('volley', 'volley', 'slam');
@@ -139,6 +140,11 @@ export default class Boss extends Enemy {
       opts.push('nova');
       if (d > 50) opts.push('charge', 'charge');
     }
+    return opts;
+  }
+
+  pickAttack(d, to) {
+    const opts = this.attackPool(d);
     let a = opts[Math.floor(Math.random() * opts.length)];
     if (a === this.lastAtk && Math.random() < 0.6) a = opts[Math.floor(Math.random() * opts.length)];
     this.lastAtk = a;

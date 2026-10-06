@@ -3,7 +3,7 @@ import { launch, check, failCount } from './harness.mjs';
 const KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyJ', 'KeyK', 'KeyL', 'KeyQ', 'KeyR', 'KeyT', 'KeyU', 'KeyV', 'Digit4', 'Digit5', 'Digit6', 'KeyF', 'KeyC', 'ShiftLeft', 'KeyE', 'Digit1', 'Digit2', 'Digit3', 'KeyI', 'KeyO', 'Escape', 'Tab', 'Enter'];
 const seconds = Number(process.argv[2] || 30);
 const h = await launch();
-for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep']]) {
+for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep'], ['maw', 'entry']]) {
   await h.open(`scene=game&map=${map}&spawn=${spawn}&seed=7771`);
   await h.sleep(500);
   await h.ev(() => { window.__ff.S.flags.introDone = true; });

@@ -31,7 +31,7 @@ export function recalc() {
   const rested = S.flags && S.flags.restedUntil > (S.playtime || 0) ? 25 : 0;
   S.maxHp = 100 + (bl.maxHp || 0) + rested + (ch.maxHp || 0) + (ar.maxHp || 0) + (S.bonusHp || 0);
   S.maxMp = 100 + (bl.maxMp || 0) + (ch.maxMp || 0) + (ar.maxMp || 0) + (S.bonusMp || 0);
-  S.maxSp = 100 + (ch.maxSp || 0) + (ar.maxSp || 0) + (S.bonusSp || 0);
+  S.maxSp = 100 + (S.hearts?.rime ? 20 : 0) + (ch.maxSp || 0) + (ar.maxSp || 0) + (S.bonusSp || 0);
   S.hp = Math.min(S.hp, S.maxHp);
   S.mp = Math.min(S.mp, S.maxMp);
   S.sp = Math.min(S.sp, S.maxSp);

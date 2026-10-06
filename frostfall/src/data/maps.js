@@ -158,6 +158,47 @@ function buildForestRegion() {
   return g.out();
 }
 
+// ---- The Glacial Maw: an ice cave with a boss arena at the far end
+function buildMaw() {
+  const g = new Grid(36, 58, TILE.ROCK);
+  const F = (x, y, w, h, t = TILE.ICE) => g.rect(x, y, w, h, t);
+  F(13, 50, 10, 6, TILE.SNOW2);          // entry cave (dry floor)
+  F(17, 42, 2, 8);                       // corridor A
+  F(6, 32, 24, 10);                      // chamber 1
+  F(2, 34, 4, 4, TILE.SNOW2); F(30, 34, 4, 4, TILE.SNOW2);   // side alcoves
+  F(17, 26, 2, 6);                       // corridor B
+  F(4, 16, 28, 10);                      // chamber 2: the frozen lake
+  F(17, 12, 2, 4);                       // corridor C (boss gate at y=12)
+  F(6, 1, 24, 11);                       // boss arena
+  g.rect(17, 56, 2, 1, TILE.STAIRS);
+  g.noise(TILE.ICE2, 0.25, 31, TILE.ICE);
+  g.noise(TILE.SNOW2, 0.06, 32, TILE.ICE);
+  for (const [x, y] of [[9, 35], [9, 39], [26, 35], [26, 39], [8, 19], [8, 23], [27, 19], [27, 23], [12, 21], [23, 21], [10, 4], [25, 4], [10, 9], [25, 9]]) g.set(x, y, TILE.PILLAR);
+  for (const [x, y] of [[7, 16], [28, 16], [6, 33], [29, 33]]) g.set(x, y, TILE.ROCK);
+  g.add({ t: 'spawn', name: 'entry', x: 17, y: 53 });
+  g.add({ t: 'exit', x: 17, y: 56, w: 2, h: 1, to: 'forest', spawn: 'maw', fx: 'door' });
+  g.add({ t: 'fire', x: 14, y: 51, rest: true, id: 'mawin' }); g.set(14, 51, TILE.BRAZIER);
+  g.add({ t: 'glow', x: 14, y: 51, r: 44, col: 15 });
+  for (const [x, y, r] of [[17, 46, 36], [10, 36, 40], [25, 36, 40], [10, 21, 44], [25, 21, 44], [18, 6, 70], [17, 13, 40]]) g.add({ t: 'glow', x, y, r, col: 15 });
+  g.add({ t: 'sign', x: 15, y: 52, text: ['THE GLACIAL MAW.', 'ICE IS SLIPPERY. ROLL TO KEEP YOUR FOOTING.'] });
+  // chamber 1
+  g.add({ t: 'enemy', kind: 'reaver', x: 12, y: 35, tier: 2 }); g.add({ t: 'enemy', kind: 'wight', x: 24, y: 35, tier: 2 });
+  g.add({ t: 'enemy', kind: 'wight', x: 12, y: 40, tier: 2 }); g.add({ t: 'enemy', kind: 'wolf', x: 22, y: 39, tier: 2 }); g.add({ t: 'enemy', kind: 'wolf', x: 19, y: 34, tier: 2 });
+  g.add({ t: 'chest', id: 'maw1', x: 3, y: 35, lock: 'med', loot: [{ gen: 2 }, { item: 'hp_potion', n: 2 }, { gold: 60 }] });
+  g.add({ t: 'chest', id: 'maw2', x: 32, y: 35, loot: [{ item: 'frost_lily', n: 3 }, { arrows: 10 }, { item: 'mp_potion', n: 2 }] });
+  // chamber 2
+  g.add({ t: 'enemy', kind: 'fencer', x: 9, y: 20, tier: 2 }); g.add({ t: 'enemy', kind: 'fencer', x: 26, y: 20, tier: 2 });
+  g.add({ t: 'enemy', kind: 'knight', x: 17, y: 22, tier: 2 }); g.add({ t: 'enemy', kind: 'conjurer', x: 17, y: 18, tier: 2 }); g.add({ t: 'enemy', kind: 'wight', x: 14, y: 24, tier: 2 });
+  g.add({ t: 'pickup', x: 17, y: 28, spec: { type: 'item', id: 'hp_potion' } });
+  // checkpoint brazier before the gate, then the arena
+  g.set(18, 14, TILE.BRAZIER); g.add({ t: 'fire', x: 18, y: 14, auto: true });
+  g.add({ t: 'boss', kind: 'wyrm', x: 18, y: 5 });
+  g.add({ t: 'bossgate', x: 17, y: 12, w: 2 });
+  for (const [x, y] of [[8, 3], [27, 3], [8, 10], [27, 10], [13, 8], [22, 8]]) g.add({ t: 'pot', x, y, skin: 'urn' });
+  return g.out();
+}
+MAPS.maw = { name: 'The Glacial Maw', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 10.6 * T && pc.x > 6 * T && pc.x < 30 * T, build: buildMaw, music: 'crypt', dim: 0.3, cave: true };
+
 // The forest is now the north-west corner of the open world (same coordinates as before).
 let reachCache = null;
 export function getReach() {

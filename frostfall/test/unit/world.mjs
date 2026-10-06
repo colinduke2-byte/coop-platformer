@@ -83,4 +83,12 @@ t('startNgPlus: character carries over, quests and kills reset', () => {
   assert.notEqual(S.seed, oldSeed);
   startNgPlus(); assert.equal(S.ngPlus, 2);
 });
+t('every seed places the Glacial Maw, and the Maw is fully reachable', () => {
+  for (let k = 1; k <= 25; k++) { S.seed = k * 7919; assert.ok(getReach().pois.some((p) => p.id === 'maw0' && p.tier >= 1), 'maw poi for seed ' + S.seed); }
+  const b = MAPS.maw.build();
+  const sp = b.entities.find((e) => e.t === 'spawn');
+  const seen = flood(b.grid, b.w, b.h, sp.x, sp.y);
+  for (const e of b.entities) if (['enemy', 'chest', 'boss', 'pot'].includes(e.t)) assert.ok(seen[e.y * b.w + e.x], `${e.t}@${e.x},${e.y} unreachable`);
+  assert.ok(b.entities.some((e) => e.t === 'boss' && e.kind === 'wyrm'));
+});
 console.log(`${n} world tests passed`);

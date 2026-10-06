@@ -3,6 +3,9 @@ import { S } from '../systems/state.js';
 import { addItem, addGold, addArrows } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
 import { rand } from '../util.js';
+import { HEARTS } from '../data/hearts.js';
+import { recalc } from '../systems/stats.js';
+import { bus } from '../systems/bus.js';
 import { ITEMS } from '../data/items.js';
 import { RARITY } from '../systems/genloot.js';
 import { C } from '../config.js';
@@ -10,7 +13,7 @@ import { C } from '../config.js';
 // spec: { type: 'gold'|'arrows'|'item', n, id }
 export default class Pickup extends Phaser.GameObjects.Image {
   constructor(scene, x, y, spec) {
-    const tex = spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : 'icon_' + spec.id;
+    const tex = spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : spec.type === 'heart' ? 'icon_frostheart' : 'icon_' + spec.id;
     super(scene, x, y, tex);
     scene.add.existing(this);
     this.spec = spec;
@@ -57,6 +60,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     const s = this.spec;
     if (s.type === 'gold') { addGold(s.n); sfx.play('coin'); }
     else if (s.type === 'arrows') { addArrows(s.n); sfx.play('pickup'); }
+    else if (s.type === 'heart') { S.hearts = S.hearts || {}; S.hearts[s.id] = true; recalc(); sfx.play('levelup'); bus.emit('toast', HEARTS[s.id].name.toUpperCase() + ' CLAIMED', 15); bus.emit('heart', s.id); }
     else { addItem(s.id, s.n || 1); sfx.play('pickup'); }
     this.scene.fx.puff(this.gx, this.gy - 4, 13, 4, 25, 0.25);
     this.shadow.destroy();

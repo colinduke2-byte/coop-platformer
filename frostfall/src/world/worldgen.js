@@ -91,15 +91,16 @@ export function buildReach(region, seed) {
     const b = bio[y][x];
     return b !== 'lake' && b !== 'mountain';
   };
-  const place = (kind, count, r, near = null) => {
+  const place = (kind, count, r, near = null, minTier = 0) => {
     let made = 0;
     for (let tries = 0; tries < 900 && made < count; tries++) {
       const x = 12 + Math.floor(R() * (W - 24)), y = 8 + Math.floor(R() * (H - 16));
       if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
-      if (!okSpot(x, y, r)) continue;
+      if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
       taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${kind}${made}` }); made++;
     }
   };
+  place('maw', 1, 10, null, 1);                 // the Glacial Maw: dungeon of the second Heart
   place('camp', 5, 11);
   place('den', 5, 9);
   place('ruin', 4, 10);
@@ -172,6 +173,17 @@ export function buildReach(region, seed) {
       add({ t: 'glow', x: p.x, y: p.y, r: 34, col: 15 });
       add({ t: 'sign', x: p.x + 2, y: p.y + 1, text: ['A BARROW MOUND. COLD AIR BREATHES FROM THE STAIRS.', 'WHAT SLEEPS BELOW CHANGES EVERY WINTER.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'barrow' });
+    } else if (p.kind === 'maw') {
+      clearing(p, 13, 8);
+      g.rect(p.x - 5, p.y - 4, 11, 3, TILE.STONE);
+      g.set(p.x, p.y - 3, TILE.STAIRS); g.set(p.x + 1, p.y - 3, TILE.STAIRS);
+      for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
+      for (const dx of [-3, 4]) g.set(p.x + dx, p.y + 2, TILE.ROCK);
+      add({ t: 'exit', x: p.x, y: p.y - 3, w: 2, h: 1, to: 'maw', spawn: 'entry', fx: 'door' });
+      add({ t: 'spawn', name: 'maw', x: p.x, y: p.y });
+      add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
+      add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
+      add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
     } else if (p.kind === 'tower') {
       clearing(p, 7, 7, TILE.STONE);
       g.rect(p.x - 2, p.y - 2, 5, 5, TILE.CFLOOR);

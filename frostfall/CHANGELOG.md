@@ -3,6 +3,13 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 5: chapter two, "The Four Hearts"
+- **New main quest** (from Sigrid once you have dealt with the Frostheart): the Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Epic, mythic tone; the Frostheart was only the first.
+- **The Glacial Maw:** a new dungeon type, an ice cave in the frozen east of the open world (it appears in every seed). Slippery ice floors, a frozen-lake chamber with fencers, a Rime Knight and a Hexcaster, side vaults, a checkpoint brazier, then the boss arena.
+- **The Rime Wyrm:** a new boss (420 HP). Tail sweep up close; frost breath cone, erupting ground spikes and a lunge at range; phase two adds frost novas, more spikes and calls frost wights. Fire hurts it, frost does nothing.
+- **The Rime Heart:** a lasting reward. +20 max stamina, and every perfect dodge freezes everything near you.
+- Quest marker, journal entries, bestiary entry, and a map exit label lead you there.
+
 ## Round 4: the open world (replayability and fun fighting)
 
 ### The Hollow Reach (open world)

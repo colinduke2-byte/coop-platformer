@@ -7,6 +7,12 @@ export const ENEMIES = {
     kind: 'boss', range: 40, windup: 0.6, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
     body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
   },
+  wyrm: {
+    name: 'Glacial Wyrm', title: 'THE RIME WYRM, SERPENT OF THE MAW', tex: 'spr_wyrm', sideOnly: true, bark: 'undead', weak: { fire: 1.5, shock: 1.2, frost: 0.1 },
+    hp: 420, speed: 34, chase: 46, dmg: 22, detect: 9999,
+    kind: 'boss', range: 44, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
+    body: [14, 8, 1, 7], loot: { gold: [140, 190], drops: [['hp_potion_g', 1], ['mp_potion_g', 0.6]] },
+  },
   draugr: {
     name: 'Draugr', tex: 'spr_draugr', blade: 3, bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 15, detect: 66,
     kind: 'melee', range: 19, windup: 0.55, atkDur: 0.16, recover: 0.65, cooldown: 0.5, kbResist: 0.15,

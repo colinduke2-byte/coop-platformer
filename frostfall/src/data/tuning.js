@@ -29,6 +29,13 @@ export const TUNE = {
   nova: { windup: 1.05, recover: 1.0, dmg: 12, speed: 78, count: 14 },
   charge: { windup: 0.75, recover: 1.4, dmg: 26, speed: 190, time: 0.6 },
   },
+  wyrm: {
+    charge: { windup: 0.8, recover: 1.2, dmg: 24, speed: 200, time: 0.6 },
+    nova: { windup: 1.05, recover: 1.0, dmg: 12, speed: 78, count: 16 },
+    breath: { windup: 0.95, recover: 0.8, dmg: 12, speed: 96, count: 7, spread: 0.17 },
+    spikes: { windup: 0.7, recover: 0.9, dmg: 20, n: 4, r: 26, delay: 1.0 },
+    tail: { windup: 0.6, recover: 0.8, dmg: 18, r: 44 },
+  },
   boss2: {
     bite: { windup: 0.55, recover: 0.7, dmg: 17, speed: 215, time: 0.36 },
     claw: { windup: 0.3, recover: 0.5, dmg: 12, speed: 230, time: 0.28 },
