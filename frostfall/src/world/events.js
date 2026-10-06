@@ -7,6 +7,7 @@ import { makeGenItem } from '../systems/genloot.js';
 import { T } from '../config.js';
 import { ITEMS } from '../data/items.js';
 import { S } from '../systems/state.js';
+import { saveGame } from '../systems/save.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
@@ -148,6 +149,14 @@ export const eventMethods = {
     this.leaving = true;
     const cam = this.cameras.main;
     cam.fadeOut(350, 11, 14, 26);
+    if (f.map && f.map !== this.mapId) {          // another region: load its map and drop in at the fire
+      cam.once('camerafadeoutcomplete', () => {
+        S.map = f.map; S.spawn = 'entry'; S.x = f.x; S.y = f.y + 16;
+        saveGame(this, { auto: true });
+        this.scene.restart({ map: f.map, spawn: 'entry', pos: { x: f.x, y: f.y + 16 } });
+      });
+      return true;
+    }
     cam.once('camerafadeoutcomplete', () => {
       this.player.setPosition(f.x, f.y + 16); this.player.body.setVelocity(0, 0); this.player.mode = 'free'; this.player.target = null;
       this.pend.forEach((p) => { if (p.live && !p.live.alerted) { p.live.despawn(); p.live = null; } });

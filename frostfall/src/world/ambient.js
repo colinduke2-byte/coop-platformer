@@ -18,10 +18,10 @@ export const ambientMethods = {
   },
 
   // Sideways push on arrows and bolts: none in clear weather, strong in a whiteout.
-  windX() { return this.def.snow ? (WIND[S.weather] || 0) : 0; },
+  windX() { return (this.def.snow || this.def.outdoors) ? (WIND[S.weather] || 0) : 0; },
 
   ambientLife(dt) {
-    if (!this.def.snow || !this.ravens) { this.auroraG?.clear(); this.moteG?.clear(); return; }
+    if (!(this.def.snow || this.def.outdoors) || !this.ravens) { this.auroraG?.clear(); this.moteG?.clear(); return; }
     const p = this.player;
     // ---- ravens: perch near you by day, scatter when you come close
     this.raventT -= dt;

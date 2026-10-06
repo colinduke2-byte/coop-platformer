@@ -3,7 +3,7 @@ import { TILE } from '../config.js';
 import { Grid } from './mapkit.js';
 import { hash } from '../util.js';
 import { S } from '../systems/state.js';
-import { buildReach } from '../world/worldgen.js';
+import { buildReach, buildRegion, REGION_DEFS } from '../world/worldgen.js';
 import { buildBarrow } from '../world/barrowgen.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
@@ -405,12 +405,18 @@ function buildArena() {
 MAPS.arena = { name: 'The Hollow Arena', snow: false, ambience: 'crypt', build: buildArena, music: 'throne', dim: 0.2, cave: true, arena: true };
 
 // The forest is now the north-west corner of the open world (same coordinates as before).
-let reachCache = null;
-export function getReach() {
-  const seed = S.seed ?? 1337;
-  if (!reachCache || reachCache.seed !== seed) reachCache = { seed, built: buildReach(buildForestRegion(), seed) };
-  return reachCache.built;
+// Overworld regions are built once per run seed and cached (each region gets its own derived seed).
+const regionCache = {};
+export function getRegion(id) {
+  const seed = S.seed ?? 1337, c = regionCache[id];
+  if (!c || c.seed !== seed) {
+    const def = REGION_DEFS[id];
+    regionCache[id] = { seed, built: id === 'reach' ? buildReach(buildForestRegion(), seed) : buildRegion(def, null, (seed ^ (def.salt || 0)) >>> 0) };
+  }
+  return regionCache[id].built;
 }
+export const getReach = () => getRegion('reach');
+MAPS.ashen = { name: 'The Ashen Peaks', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('ashen'), music: 'pass', dim: 0.16, stream: true };
 MAPS.forest = { name: 'The Hollow Reach', snow: true, ambience: 'wind', build: () => getReach(), music: 'forest', dim: 0.12, stream: true };
 for (let i = 0; i < 3; i++) {
   MAPS['barrow' + i] = {

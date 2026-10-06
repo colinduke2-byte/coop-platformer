@@ -377,3 +377,60 @@ export const REACH = {
 };
 
 export const buildReach = (region, seed) => buildRegion(REACH, region, seed);
+
+// The Ashen Peaks: the first region beyond the Reach (volcanic uplands around the forge-city). This is the framework's
+// proof region: it uses the shared points of interest and a bare ash palette. Phase 12 gives it its own places and art.
+const ASH_START = { x: 6, y: 60 };
+export const ASHEN = {
+  id: 'ashen', w: 160, h: 120, start: ASH_START, salt: 0x51ed,
+  ground: TILE.CFLOOR, ground2: TILE.CFLOOR2, flora: ['snowberry', 'frost_lily'], ores: ['iron_ingot', 'bone_dust'],
+  mobs: [
+    { melee: ['bandit', 'imp'], ranged: ['archer'], wild: ['boar', 'imp', 'wolf'] },
+    { melee: ['imp', 'golem', 'bandit', 'warden'], ranged: ['archer', 'conjurer'], wild: ['boar', 'bear', 'imp', 'wyvern'] },
+    { melee: ['golem', 'warden', 'knight', 'imp'], ranged: ['conjurer', 'necro', 'wisp'], wild: ['bear', 'wyvern', 'boar'] },
+    { melee: ['golem', 'knight', 'reaver', 'warden'], ranged: ['conjurer', 'necro', 'wisp'], wild: ['wyvern', 'bear', 'alpha'] },
+  ],
+  tierAt(x, y) { const d = Math.hypot(x - ASH_START.x, (y - ASH_START.y) * 0.9); return d < 50 ? 0 : d < 80 ? 1 : d < 110 ? 2 : 3; },
+  biome(seed) {
+    const crag = (seed >> 2) % 989, scorch = (seed >> 6) % 971;
+    return (x, y) => (vnoise(x, y, 16, crag) > 0.67 && x > 22 ? 'crag' : vnoise(x, y, 13, scorch) > 0.56 ? 'scorch' : 'flats');
+  },
+  paint(g, bio, W, H) {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (bio[y][x] === 'crag') g.t[y][x] = hash(x, y, 91) < 0.55 ? TILE.ROCK : (hash(x, y, 92) < 0.4 ? TILE.STONE : TILE.CFLOOR2);
+  },
+  nodes: [{ x: ASH_START.x + 8, y: ASH_START.y }],
+  taken: [{ x: ASH_START.x, y: ASH_START.y, r: 14 }],
+  plan(place) {
+    place('champion', 3, 8); place('ruin', 3, 10); place('camp', 5, 11); place('den', 3, 9);
+    place('tower', 3, 7); place('spring', 2, 6); place('rest', 7, 4);
+    place('rest', 1, 4, { x: ASH_START.x + 22, y: ASH_START.y, r: 14 });
+  },
+  extras({ g, R, W, H, START, add, pois, bio }) {
+    g.rect(START.x - 3, START.y - 5, 8, 11, TILE.CFLOOR2);
+    for (let y = START.y - 5; y <= START.y + 5; y++) for (let x = START.x - 3; x <= START.x + 4; x++) g.res[y][x] = true;
+    add({ t: 'spawn', name: 'entry', x: START.x + 2, y: START.y });
+    add({ t: 'exit', x: 3, y: START.y - 3, w: 1, h: 7, to: 'forest', spawn: 'west', fx: 'door' });
+    add({ t: 'fire', x: START.x + 4, y: START.y + 2, rest: true, id: 'ashenfire' }); add({ t: 'glow', x: START.x + 4, y: START.y + 2, r: 52, col: 12 });
+    add({ t: 'sign', x: START.x + 1, y: START.y - 3, text: ['THE ASHEN PEAKS.', 'THE ROAD WEST RETURNS TO THE HOLLOW REACH.'] });
+    for (let i = 0, n = 0; i < 400 && n < 40; i++) {
+      const x = 8 + Math.floor(R() * (W - 16)), y = 8 + Math.floor(R() * (H - 16)), b = bio[y][x];
+      if (b === 'crag' || g.res[y][x] || g.t[y][x] === TILE.PATH) continue;
+      const tier = ASHEN.tierAt(x, y), roll = R();
+      if (roll < 0.5) add({ t: 'node', x, y, ore: R() < 0.8 ? 'iron_ingot' : 'bone_dust' });
+      else add({ t: 'enemy', kind: ASHEN.mobs[Math.min(3, tier)].wild[Math.floor(R() * ASHEN.mobs[Math.min(3, tier)].wild.length)], x, y, tier, roam: true });
+      n++;
+    }
+  },
+  scenery(g, bio, W, H) {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (g.res[y][x] || g.t[y][x] === TILE.PATH) continue;
+      if (g.t[y][x] !== TILE.CFLOOR && g.t[y][x] !== TILE.CFLOOR2) continue;
+      const b = bio[y][x], r = hash(x, y, 93);
+      if (b === 'scorch' && r < 0.14) g.t[y][x] = r < 0.06 ? TILE.DEADTREE : TILE.STUMP;
+      else if (b === 'flats' && r < 0.04) g.t[y][x] = r < 0.02 ? TILE.ROCK : TILE.STUMP;
+    }
+  },
+  dress: [],
+};
+
+export const REGION_DEFS = { reach: REACH, ashen: ASHEN };

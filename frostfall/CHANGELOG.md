@@ -257,3 +257,10 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - GameScene split 1081 -> 702 lines: arena runs (`world/arenaRun.js`), pets/allies (`world/companions.js`), kill and boss handlers (`world/kills.js`), world events/quests/finale (`world/events.js`), shared tables (`world/sceneConsts.js`).
 - Player split 687 -> 314 lines: combat/blocking/damage (`entities/playerCombat.js`) and bow/ammo/shout/potions (`entities/playerBow.js`).
 - New `test/perf.mjs`: 34 enemies on screen, update loop must average under 4 ms (measured ~1 ms) and the scene must stay under 4000 objects.
+
+## Round 16 - Region framework (Phase 9, start of the expansion)
+- World generation is now `buildRegion(def, region, seed)`; the Hollow Reach is the `REACH` definition (output verified identical for four seeds by `test/reach_hash.mjs`).
+- New `data/regions.js` registry (Reach, Ashen Peaks) with unlock flags; `getRegion(id)` caches per run seed. Maps may set `outdoors: true` to get day/night, weather and time without snowfall.
+- The Ashen Peaks (160x120) is the first extra region: entry road, camps, ruins, towers, springs, campfires, champions, wildlife. It is a framework proof for now; its own places and art come in Phase 12. Reach it with `?map=ashen` until the story unlocks it.
+- Map tab: **R** switches region, waypoints and fog are per region, fast travel works across regions (loads the other map).
+- Tests: `reach_hash`, `stage42_regions` (builds, reachability, registry, map switching, cross-region travel, save/load, time of day, perf budget).

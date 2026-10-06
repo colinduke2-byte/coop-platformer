@@ -6,6 +6,8 @@ import { panel } from './MenuScene.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import { getRegion } from '../data/maps.js';
+import { REGIONS, unlockedRegions, regionOfMap } from '../data/regions.js';
 
 const COL = {
   [TILE.SNOW]: 5, [TILE.SNOW2]: 5, [TILE.ICE]: 4, [TILE.STONE]: 3, [TILE.PINE]: 7, [TILE.PATH]: 10, [TILE.WOODFLOOR]: 10,
@@ -20,29 +22,48 @@ export function fogDims(w, h) { return { cw: Math.ceil(w / FOG), ch: Math.ceil(h
 const ZOOMS = [1, 2, 3];
 const VX = 10, VY = 26, VW = 300, VH = 112;
 
+// The map being looked at: the current map, or another unlocked region's overworld (R switches).
+const viewOf = (gs, view) => {
+  if (!view || view === gs.mapId) return { id: gs.mapId, b: gs.built, here: true, fires: gs.fires || [] };
+  const b = getRegion(REGIONS[regionOfMap(view)].id);
+  const fires = b.entities.filter((e) => e.t === 'fire' && e.rest).map((e) => ({ x: (e.x + 0.5) * T, y: (e.y + 0.5) * T, tx: e.x, ty: e.y, key: `${view}:${e.x},${e.y}`, map: view }));
+  return { id: view, b, here: false, fires };
+};
+
 export function mapTab(m) {
-  let zoom = 0, cur = null, curMode = false, rep = 0;
+  let zoom = 0, cur = null, curMode = false, rep = 0, view = null;
   const base = (b) => Math.max(1, Math.min(Math.floor(296 / b.w), Math.floor(112 / b.h)));
   return {
     name: 'MAP',
-    help: 'Q ZOOM  E CURSOR/WAYPOINT  A/D TAB',
+    viewId: () => view || m.gs.mapId,
+    help: 'Q ZOOM  R REGION  E CURSOR  A/D TAB',
     captureLR: () => curMode,
     input() {
-      const gs = m.gs, b = gs.built;
+      const gs = m.gs, vw = viewOf(gs, view), b = vw.b;
       m.dirty = true;
       if (!cur) cur = { x: Math.floor(gs.player.x / T), y: Math.floor((gs.player.y + 3) / T) };
+      if (!curMode && keys.pressed('shout')) {
+        const l = unlockedRegions().map((id) => REGIONS[id].map), seq = l.includes(gs.mapId) ? l : [gs.mapId, ...l];
+        if (seq.length > 1) {
+          const next = seq[(seq.indexOf(vw.id) + 1) % seq.length];
+          view = next === gs.mapId ? null : next;
+          const nb = viewOf(gs, view).b;
+          cur = view ? { x: Math.floor(nb.w / 2), y: Math.floor(nb.h / 2) } : { x: Math.floor(gs.player.x / T), y: Math.floor((gs.player.y + 3) / T) };
+          zoom = 0; sfx.play('select');
+        }
+      }
       if (keys.pressed('swap')) { zoom = (zoom + 1) % ZOOMS.length; sfx.play('select'); }
       if (keys.pressed('interact')) {
         if (!curMode) { curMode = true; sfx.play('select'); }
         else {
           const wp = S.flags.waypoint;
-          if (wp && wp.map === gs.mapId && Math.abs(wp.x - cur.x) < 2 && Math.abs(wp.y - cur.y) < 2) { delete S.flags.waypoint; bus.emit('toast', 'WAYPOINT REMOVED', 4); }
-          else { S.flags.waypoint = { map: gs.mapId, x: cur.x, y: cur.y }; bus.emit('toast', 'WAYPOINT SET', 13); }
+          if (wp && wp.map === vw.id && Math.abs(wp.x - cur.x) < 2 && Math.abs(wp.y - cur.y) < 2) { delete S.flags.waypoint; bus.emit('toast', 'WAYPOINT REMOVED', 4); }
+          else { S.flags.waypoint = { map: vw.id, x: cur.x, y: cur.y }; bus.emit('toast', 'WAYPOINT SET', 13); }
           curMode = false; sfx.play('equip');
         }
       }
       if (curMode && keys.pressed('block')) {
-        const f = (gs.fires || []).find((q) => S.flags.fires?.[q.key] && Math.abs(q.tx - cur.x) <= 1 && Math.abs(q.ty - cur.y) <= 1);
+        const f = vw.fires.find((q) => S.flags.fires?.[q.key] && Math.abs(q.tx - cur.x) <= 1 && Math.abs(q.ty - cur.y) <= 1);
         if (f) { m.close(); gs.fastTravel(f); return; }
       }
       if (curMode) {
@@ -56,19 +77,19 @@ export function mapTab(m) {
       }
     },
     render() {
-      const gs = m.gs, g = m.bg;
+      const gs = m.gs, g = m.bg, vw = viewOf(gs, view), vid = vw.id;
       panel(g, 6, 22, 308, 134, 2);
-      const b = gs.built, w = b.w, h = b.h;
+      const b = vw.b, w = b.w, h = b.h;
       const sc = base(b) * ZOOMS[zoom];
       const p = gs.player;
       // view centre in tiles: the map centre when it fits, otherwise the cursor (or the player)
-      const focus = curMode && cur ? cur : { x: p.x / T, y: (p.y + 3) / T };
+      const focus = curMode && cur ? cur : vw.here ? { x: p.x / T, y: (p.y + 3) / T } : { x: w / 2, y: h / 2 };
       const fitX = w * sc <= VW, fitY = h * sc <= VH;
       const cx = fitX ? w / 2 : Math.max(VW / 2 / sc, Math.min(w - VW / 2 / sc, focus.x));
       const cy = fitY ? h / 2 : Math.max(VH / 2 / sc, Math.min(h - VH / 2 / sc, focus.y));
       const ox = Math.round(VX + VW / 2 - cx * sc), oy = Math.round(VY + VH / 2 - cy * sc);
       const inView = (px, py, pw = sc, ph = sc) => px >= VX && py >= VY && px + pw <= VX + VW && py + ph <= VY + VH;
-      const fog = (S.fog && S.fog[gs.mapId]) || '';
+      const fog = (S.fog && S.fog[vid]) || '';
       const { cw } = fogDims(w, h);
       const seen = (tx, ty) => fog[Math.floor(ty / FOG) * cw + Math.floor(tx / FOG)] === '1';
       if (fitX && fitY) { g.fillStyle(C[0]); g.fillRect(ox - 1, oy - 1, w * sc + 2, h * sc + 2); } else { g.fillStyle(C[0]); g.fillRect(VX, VY, VW, VH); }
@@ -93,7 +114,7 @@ export function mapTab(m) {
           if (seen(Math.floor(tx), Math.floor(ty)) && MAPS[e.to]) labels.push([tx, ty, 'TO ' + MAPS[e.to].name.toUpperCase()]);
         } else if (e.t === 'npc') dot(e.x, e.y, 6);
         else if (e.t === 'chest' && !S.flags['chest_' + e.id]) dot(e.x, e.y, 13);
-        else if (e.t === 'fire' && e.rest) { const found = S.flags.fires?.[`${gs.mapId}:${e.x},${e.y}`]; if (found || !gs.def.stream) dot(e.x, e.y, 12, sc + 2); }
+        else if (e.t === 'fire' && e.rest) { const found = S.flags.fires?.[`${vid}:${e.x},${e.y}`]; if (found || !MAPS[vid].stream) dot(e.x, e.y, 12, sc + 2); }
         else if (e.t === 'shrine') dot(e.x, e.y, 14, sc + 1);
         else if (e.t === 'bounty') { if (seen(Math.floor(e.x), Math.floor(e.y))) dot(e.x, e.y, S.bounty[e.id] ? 3 : 11, sc + 1); }
         else if (e.t === 'boss' && !S.flags.bossDead) dot(e.x, e.y, 11, sc + 2);
@@ -106,13 +127,13 @@ export function mapTab(m) {
       };
       const tid = trackedId();
       const tg = tid && TARGETS[tid]?.(S.quests[tid]);
-      if (tg && tg.map === gs.mapId) marker(tg, 15);
+      if (tg && tg.map === vid) marker(tg, 15);
       const wp = S.flags.waypoint;
-      if (wp && wp.map === gs.mapId) marker(wp, 8);
+      if (wp && wp.map === vid) marker(wp, 8);
       const pxp = ox + Math.floor(p.x / T * sc), pyp = oy + Math.floor((p.y + 3) / T * sc);
-      if (inView(pxp - 1, pyp - 1, 4, 4) && Math.floor(m.time.now / 350) % 2 === 0) { g.fillStyle(C[0]); g.fillRect(pxp - 1, pyp - 1, 4, 4); g.fillStyle(C[13]); g.fillRect(pxp, pyp, 2, 2); }
+      if (vw.here && inView(pxp - 1, pyp - 1, 4, 4) && Math.floor(m.time.now / 350) % 2 === 0) { g.fillStyle(C[0]); g.fillRect(pxp - 1, pyp - 1, 4, 4); g.fillStyle(C[13]); g.fillRect(pxp, pyp, 2, 2); }
       // fast travel hint: cursor on a found campfire
-      const fireAt = curMode && cur ? (gs.fires || []).find((f) => S.flags.fires?.[f.key] && Math.abs(f.tx - cur.x) <= 1 && Math.abs(f.ty - cur.y) <= 1) : null;
+      const fireAt = curMode && cur ? vw.fires.find((f) => S.flags.fires?.[f.key] && Math.abs(f.tx - cur.x) <= 1 && Math.abs(f.ty - cur.y) <= 1) : null;
       if (fireAt) m.T(10, 135, 'F: FAST TRAVEL TO THIS CAMPFIRE', 12);
       if (curMode && cur) {
         const [qx, qy] = [ox + cur.x * sc, oy + cur.y * sc];
@@ -127,7 +148,7 @@ export function mapTab(m) {
         g.fillStyle(C[0], 0.7); g.fillRect(lx - 1, ly - 1, lw + 2, 9);
         m.T(lx, ly, text, 15);
       }
-      m.T(10, 26, MAPS[gs.mapId].name + (zoom ? '  ' + ZOOMS[zoom] + 'X' : ''), 13);
+      m.T(10, 26, MAPS[vid].name + (zoom ? '  ' + ZOOMS[zoom] + 'X' : '') + (unlockedRegions().length > 1 ? '   R: NEXT REGION' : ''), 13);
       const ly = 143;
       let lx = 12;
       [[13, 'YOU'], [15, 'EXIT'], [12, 'FIRE'], [14, 'SHRINE'], [11, 'FOE SITE'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {

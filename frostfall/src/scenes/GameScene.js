@@ -354,7 +354,7 @@ export default class GameScene extends Phaser.Scene {
     this.howlT = (this.howlT ?? 20 + Math.random() * 30) - 0.45;
     if (this.howlT <= 0) {
       this.howlT = 40 + Math.random() * 60;
-      if (this.def.snow && this.nightness() > 0.4) sfx.play('howl_far');
+      if ((this.def.snow || this.def.outdoors) && this.nightness() > 0.4) sfx.play('howl_far');
       else if (this.def.interior && Math.random() < 0.5) sfx.play('creak');
     }
   }

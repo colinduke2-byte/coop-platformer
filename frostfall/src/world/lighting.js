@@ -26,15 +26,15 @@ export const lightingMethods = {
     this.applyWeather(true);
   },
 
-  isNight() { return this.def.snow && isNightHour(hourOf()); },
-  outdoors() { return !!this.def.snow; },
+  isNight() { return (this.def.snow || this.def.outdoors) && isNightHour(hourOf()); },
+  outdoors() { return !!(this.def.snow || this.def.outdoors); },
 
   // { color, alpha } of the darkness layer right now.
   ambient() {
     if (this.ambientOverride) return this.ambientOverride;
     const base = this.def.dim || 0;
     let color = 0x0b0e1a, alpha = base;
-    if (this.def.snow) {
+    if ((this.def.snow || this.def.outdoors)) {
       const h = hourOf();
       let night = 0, dusk = 0;
       if (h >= 20.5 || h < 5) night = 1;
@@ -50,7 +50,7 @@ export const lightingMethods = {
     return { color, alpha };
   },
 
-  nightness() { return this.def.snow ? Math.min(1, this.ambient().alpha / 0.5) : 0; },
+  nightness() { return (this.def.snow || this.def.outdoors) ? Math.min(1, this.ambient().alpha / 0.5) : 0; },
 
   updateLighting(dt) {
     const rt = this.darkRT, cam = this.cameras.main;
@@ -78,7 +78,7 @@ export const lightingMethods = {
 
   // ---- time and weather
   updateClock(dt) {
-    if (!this.def.snow) return;                           // time stands still indoors / underground
+    if (!(this.def.snow || this.def.outdoors)) return;                           // time stands still indoors / underground
     const before = hourOf();
     S.time = (S.time + dt * 2) % DAY_MIN;
     const h = hourOf();
@@ -111,7 +111,7 @@ export const lightingMethods = {
 
   // Multiplier on enemies' sight: darkness and blizzards help the sneaky.
   stealthEnv() {
-    if (!this.def.snow) return 1;
+    if (!(this.def.snow || this.def.outdoors)) return 1;
     return (this.isNight() ? 0.85 : 1) * (S.weather === 'blizzard' ? 0.75 : S.weather === 'whiteout' ? 0.5 : 1);
   },
 };
