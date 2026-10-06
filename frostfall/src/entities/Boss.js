@@ -62,7 +62,7 @@ export default class Boss extends Enemy {
 
   enterPhase2() {
     this.bphase = 2;
-    music.setPhase(2);
+    music.setPhase(2); bus.emit('boss:phase', 2);
     this.clearTele();
     this.setState('roar', 2.2);
     this.invulnerable = true;

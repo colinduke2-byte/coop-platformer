@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Projectile from './Projectile.js';
+import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
 import { norm, dist, facingKind, dir8 } from '../util.js';
 
@@ -40,6 +41,7 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
         sc.shots.add(pr);
         pr.body.setVelocity(to.x * 220, to.y * 220);
         sfx.play('shoot');
+        if (S.flags.ragnaVeteran) sc.time.delayedCall(140, () => { if (!this.active) return; const p2 = new Projectile(sc, this.x + to.x * 8, this.y + 3 + to.y * 8, 'arrow', to.x * 220, to.y * 220, { dmg: 8, life: 0.9, ally: true }); sc.shots.add(p2); p2.body.setVelocity(to.x * 220, to.y * 220); });
       }
     } else if (d > 30) {
       let tx = player.x, ty = player.y;

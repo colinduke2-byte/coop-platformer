@@ -52,3 +52,16 @@ export function checkTrophies() {
     }
   }
 }
+
+// Cloak colours, unlocked by trophies (Pause > System > CLOAK).
+export const CLOAKS = [
+  { col: 11, name: 'Ember Red', trophy: null },
+  { col: 15, name: 'Frost Blue', trophy: 'first_blood' },
+  { col: 8, name: 'Pine Green', trophy: 'wolfbane' },
+  { col: 13, name: 'Dragon Gold', trophy: 'dragon' },
+  { col: 14, name: 'Heart Violet', trophy: 'hearts4' },
+  { col: 6, name: 'Winterwhite', trophy: 'winter' },
+];
+export const cloakUnlocked = (c) => !c.trophy || !!S.trophies?.[c.trophy];
+export const unlockedCloaks = () => CLOAKS.filter(cloakUnlocked);
+export const currentCloak = () => { const c = CLOAKS.find((x) => x.col === S.cloak); return c && cloakUnlocked(c) ? c : CLOAKS[0]; };

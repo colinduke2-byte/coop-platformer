@@ -2,6 +2,8 @@ import { C, W, H, BINDINGS } from '../config.js';
 import { S } from '../systems/state.js';
 import { keys, capture, capturing, setBinding, resetBindings, codeName } from '../systems/keys.js';
 import { saveGame, loadGame, saveInfo, fmtTime, SLOTS } from '../systems/save.js';
+import { unlockedCloaks, currentCloak } from '../systems/achievements.js';
+import { runScore } from '../systems/daily.js';
 import { sfx, setVolume, setMusic, setChannel, music } from '../audio/sfx.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { ui } from '../systems/ui.js';
@@ -26,20 +28,21 @@ const DIFFS = ['easy', 'normal', 'hard'];
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
   let waitingPad = null;      // game key code being learned from the controller
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const SLIDERS = ['CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
   const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
     const r = rows[m.cursor];
     if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
     else if (CHANNEL[r]) setChannel(CHANNEL[r][0], Math.round(((settings[CHANNEL[r][1]] ?? 1) + dir * 0.1) * 10) / 10);
+    else if (r === 'CLOAK') { const l = unlockedCloaks(), i = Math.max(0, l.indexOf(currentCloak())); S.cloak = l[(i + dir + l.length) % l.length].col; m.gs.player?.applyCloak?.(); }
     else if (r === 'SLOT') settings.slot = ((settings.slot - 1 + dir + SLOTS) % SLOTS) + 1;
     else if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
@@ -218,6 +221,7 @@ export function systemTab(m) {
         else if (r === 'SLOT') { v = `${settings.slot}/${SLOTS}${saveInfo() ? '' : ' EMPTY'}`; vc = 13; }
         else if (r === 'DIFFICULTY') { v = settings.difficulty.toUpperCase(); vc = { easy: 8, normal: 5, hard: 11 }[settings.difficulty]; }
         else if (r === 'SCREEN SHAKE') v = settings.shake === 0 ? 'OFF' : settings.shake === 0.5 ? 'LOW' : 'FULL';
+        else if (r === 'CLOAK') { v = currentCloak().name.toUpperCase(); vc = currentCloak().col; }
         else if (r === 'DURABILITY') { v = settings.durability ? 'ON' : 'OFF'; vc = settings.durability ? 13 : 4; }
         else if (r === 'HIT STOP') { v = settings.hitStop === false ? 'OFF' : 'ON'; vc = settings.hitStop === false ? 11 : 8; }
         else if (r === 'DAMAGE NUMBERS') { v = settings.dmgNumbers === false ? 'OFF' : 'ON'; vc = settings.dmgNumbers === false ? 11 : 8; }
@@ -237,7 +241,7 @@ export function systemTab(m) {
       panel(g, 138, 22, W - 144, 134, 2);
       const info = saveInfo();
       m.T(144, 27, MAPS[S.map]?.name || '', 13);
-      m.T(144, 36, 'PLAYTIME ' + fmtTime(S.playtime), 5);
+      m.T(144, 36, 'PLAYTIME ' + fmtTime(S.playtime) + (S.daily ? '  DAILY ' + runScore() : ''), 5);
       m.T(144, 45, info ? (info.recovered ? 'SLOT RECOVERED FROM BACKUP' : 'LAST SAVE ' + new Date(info.t).toLocaleTimeString().slice(0, 5)) : 'SLOT ' + settings.slot + ' IS EMPTY', 4);
       g.fillStyle(C[3]); g.fillRect(144, 52, W - 156, 1);
       CONTROLS.forEach(([k, v], i) => {

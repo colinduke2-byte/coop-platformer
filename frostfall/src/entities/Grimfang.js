@@ -36,7 +36,7 @@ export default class Grimfang extends Boss {
 
   enterPhase2() {
     this.bphase = 2;
-    music.setPhase(2);
+    music.setPhase(2); bus.emit('boss:phase', 2);
     this.clearTele();
     this.setState('roar', 1.6);
     this.invulnerable = true;

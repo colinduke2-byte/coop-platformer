@@ -14,6 +14,7 @@ import { settings } from '../systems/settings.js';
 import { applyElite } from './elite.js';
 import { stats } from '../systems/stats.js';
 import { walkFrame } from '../util.js';
+import { modMul } from '../data/mods.js';
 import { routePos } from '../world/roamers.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
@@ -608,7 +609,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
-    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul * (this.wallMul || 1)));
+    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul * (this.wallMul || 1) * (info.src === 'dot' ? 1 : modMul('dealMul'))));
     // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
     if (this.cfg.armored && info.src !== 'shout') {
       if (this.openT > 0) { dmg = Math.round(dmg * 1.6); }
@@ -624,7 +625,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.flashT = 0.1;
     // poise: chip away enough and the enemy staggers, opening it (and armour) up for a burst
     if (!this.isBoss && !this.cfg.passive && (info.src === 'melee' || info.src === 'arrow' || info.src === 'fire' || info.src === 'shock')) {
-      this.poise = (this.poise || 0) + dmg * (info.poise || 1) * (info.src === 'melee' ? 1 : 0.6);
+      this.poise = (this.poise || 0) + dmg * (info.poise || 1) * modMul('poiseMul') * (info.src === 'melee' ? 1 : 0.6);
       this.poiseT = 1.6;
       if (this.poise >= this.maxHp * 0.42 && this.staggerT <= 0 && this.hp > 0) {
         this.poise = 0; this.staggerT = 1.5; this.stun = Math.max(this.stun, 1.5); this.openT = Math.max(this.openT || 0, 1.5);

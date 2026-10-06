@@ -5,6 +5,8 @@ import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
 import { elixirVal } from '../systems/elixir.js';
+import { modMul } from '../data/mods.js';
+import { currentCloak } from '../systems/achievements.js';
 import { wear } from '../systems/durability.js';
 import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
@@ -36,6 +38,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.face = { x: 0, y: 1 };
     this.phase = 0;
     this.isPlayer = true;
+    this.applyCloak();
     this.mode = 'free'; // free | roll | hurt | dead | lying
     this.sneaking = false;
     this.lockT = 0;      // action lock (swing/cast/shout): no new actions
@@ -230,6 +233,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         .setRotation(Math.atan2(this.face.y, this.face.x)).setDepth(this.y + 20);
       if (this.drawFull) this.aim.setTint(0xf4d460); else this.aim.clearTint();
     }
+  }
+
+  // Cloak colour (unlocked by trophies; see systems/achievements.js).
+  applyCloak() {
+    const c = currentCloak(), key = c.col === 11 ? 'spr_player' : 'spr_cloak_' + c.col;
+    if (this.scene.textures.exists(key) && this.texture.key !== key) this.setTexture(key, 'down0');
   }
 
   // Footstep sound for the tile underfoot.
@@ -498,7 +507,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (S[key] >= S[maxKey]) return false;
     S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id];
     if (key === 'hp') clearStatus(this, 'potion');
-    const amt = Math.round(it.amount * (S.hearts?.root ? 1.25 : 1));
+    const amt = Math.round(it.amount * (S.hearts?.root ? 1.25 : 1) * modMul('potionMul'));
     S[key] = Math.min(S[maxKey], S[key] + amt);
     sfx.play('potion');
     this.scene.fx.puff(this.x, this.y, key === 'hp' ? 11 : key === 'mp' ? 15 : 8, 8, 30, 0.5);
@@ -545,7 +554,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1) * elixirVal('takenMul', 1));
+    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1) * elixirVal('takenMul', 1) * modMul('takenMul'));
 
     // ---- ward absorbs first
     if (this.ward && this.ward.hp > 0) {

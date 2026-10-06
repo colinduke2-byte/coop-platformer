@@ -239,3 +239,9 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Tests**: 15 unit tests, 14 browser stage tests (every system above), a WebGL smoke test, a random-input **monkey test**
   across all 7 maps, and a **balance bot** (`npm run balance`) that fights each encounter several times and reports win rate / HP left.
 - **GitHub Actions workflow** (`.github/workflows/frostfall.yml`): build, unit tests, browser tests, screenshot artifacts.
+
+## Round 13 - Story and replay (Phase 6)
+- Story: boss taunts and phase lines shown as subtitles, NPC barks, epilogue lines after the ending.
+- New quests: Ragna's Company (a veteran companion with a second arrow), The Hunter's Trail (antler bow), The Bridge Troll's Toll (trollbone mace). Asta's hound can be returned or kept.
+- Replay: Daily Challenge (seeded world + daily modifiers + local leaderboard), Endless Winter and other mods, arena modes (incl. Gauntlet) with boon trials, trophy cloak colours.
+- Tests: stage39_story, stage40_replay.

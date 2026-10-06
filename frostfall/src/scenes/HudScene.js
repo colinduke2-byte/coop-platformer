@@ -1,4 +1,5 @@
 import { ITEMS } from '../data/items.js';
+import { BOSS_TAUNTS } from '../data/story.js';
 import { statusList } from '../systems/status.js';
 import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
@@ -95,11 +96,18 @@ export default class HudScene extends Phaser.Scene {
     this.introG = this.add.graphics().setDepth(900);
     this.introTxt = txt(this, 0, 0, '', 13).setVisible(false).setDepth(901);
     this.introSub = txt(this, 0, 0, '', 4).setVisible(false).setDepth(901);
-    this.onBossIntro = (b) => { if (b?.cfg) this.intro = { t: 0, title: b.cfg.title || b.cfg.name.toUpperCase(), sub: (MAPS[this.gs?.mapId]?.name || '').toUpperCase() }; };
+    this.sub = null; this.subTxt = txt(this, 0, 0, '', 6).setVisible(false).setDepth(902); this.subWho = txt(this, 0, 0, '', 13).setVisible(false).setDepth(902);
+    this.onSay = (who, text, col = 6) => { this.sub = { who, text, t: 0, col }; };
+    bus.on('say', this.onSay);
+    this.onBossPhase = (p) => { const b = this.gs?.boss; const tz = b && BOSS_TAUNTS[b.kind]; if (tz && tz[p]) this.onSay(tz.name, tz[p]); };
+    bus.on('boss:phase', this.onBossPhase);
+    this.onKilled = (kind, en) => { const tz = en?.isBoss && BOSS_TAUNTS[kind]; if (tz?.death) this.onSay(tz.name, tz.death); };
+    bus.on('enemy:killed', this.onKilled);
+    this.onBossIntro = (b) => { const tz = b && BOSS_TAUNTS[b.kind]; if (tz) this.onSay(tz.name, tz.engage); if (b?.cfg) this.intro = { t: 0, title: b.cfg.title || b.cfg.name.toUpperCase(), sub: (MAPS[this.gs?.mapId]?.name || '').toUpperCase() }; };
     bus.on('boss:engaged', this.onBossIntro);
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); bus.off('say', this.onSay); bus.off('boss:phase', this.onBossPhase); bus.off('enemy:killed', this.onKilled); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
 
   // ------------------------------------------------------- dialogue API
@@ -287,6 +295,21 @@ export default class HudScene extends Phaser.Scene {
   }
 
   // The boss intro card: bars slide in over 0.4 s, hold, then slide out (2.6 s total).
+  // Spoken lines: a name and a sentence over the bottom of the screen for a few seconds.
+  updateSub(dt) {
+    const s = this.sub;
+    if (!s) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
+    s.t += dt;
+    const lines = wrap(s.text, 52);
+    this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont('f' + s.col);
+    const h = lines.split('\n').length * 9;
+    this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = H - 40 - h;
+    this.subTxt.x = Math.round((W - this.subTxt.width) / 2); this.subTxt.y = H - 30 - h + 9;
+    const a = s.t < 0.3 ? s.t / 0.3 : s.t > 3.4 ? Math.max(0, (3.8 - s.t) / 0.4) : 1;
+    this.subTxt.setAlpha(a); this.subWho.setAlpha(a);
+    if (s.t > 3.8) this.sub = null;
+  }
+
   updateIntro(dt) {
     const g = this.introG; g.clear();
     const it = this.intro;
@@ -304,7 +327,7 @@ export default class HudScene extends Phaser.Scene {
 
   update(_, ms) {
     const dt = ms / 1000;
-    this.updateIntro(dt);
+    this.updateIntro(dt); this.updateSub(dt);
     if (this.lock) this.updateLock(dt); else this.updateDialogue(dt);
     const g = this.g;
     const pl = this.gs.player;

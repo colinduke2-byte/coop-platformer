@@ -156,6 +156,22 @@ export async function bjorn() {
     await say(BJORN, 'If you are going to the crypt, take plenty of potions. The dead do not tire.');
     return;
   }
+  const tq = S.quests.trail;
+  if (tq.status === 'ready') {
+    await say(BJORN, 'You did it. You actually did it. Frostbrow himself.');
+    await say(BJORN, 'The antlers are a hundred winters old. I can make you a bow from that, or I can sell the antlers to Mirra\'s stranger friends for four hundred gold. Your kill, your pick.');
+    const c = await choose(['Make me a bow.', 'Sell them. Gold is gold.']);
+    if (c === 0) { addItem('antler_bow'); await say(BJORN, 'Come back in an hour and it will be strung. ...No, I lied. It is already strung. I started the moment you left.'); S.flags.trailBow = true; }
+    else { addGold(400); await say(BJORN, 'Four hundred. Hm. Practical. The old hunters will be sad; I will tell them it was a clean kill.'); }
+    finishQuest('trail');
+    return;
+  }
+  if (tq.status === 'active') { await say(BJORN, 'Tracks the size of a shield, in a loop between the camps. Follow them and keep your shield low. Frostbrow charges in a straight line.'); return; }
+  if (tq.status === 'inactive' && aq.status === 'done') {
+    await say(BJORN, 'One more, if you have the stomach. Something has been walking the Reach in a long loop between the camps. Tracks the size of a shield. My grandfather called it Frostbrow, the Winter Elk.');
+    const c = await choose(['I will find it.', 'Not today.']);
+    if (c === 0) { startQuest('trail'); await say(BJORN, 'Watch the snow near the camps and the old roads. When you see the prints, you are close. And it does not sleep.'); return; }
+  }
   if (aq.status === 'inactive' && q.status === 'done') {
     await say(BJORN, 'There is one more thing. The pack has a leader. Grimfang, the Pale Alpha, big as a bear, lives up in Frostwind Pass. Kill him and the wolves never bother us again.');
     const c = await choose(['I will deal with him.', 'Later.']);
@@ -227,6 +243,18 @@ export async function mirra() {
 
 export async function hilda() {
   const H = 'Hilda';
+  const tl = S.quests.toll;
+  if (tl.status === 'ready') {
+    await say(H, 'That is it. That is troll bone. Look at the grain. It is like iron that has learned to be angry.');
+    await say(H, 'Give me three ingots and a night at the anvil, and I will give you a mace that remembers this.');
+    if (count('iron_ingot') < 3) { await say(H, '...You do not have three ingots. Come back with them. The bone will keep.'); }
+    else { removeItem('iron_ingot', 3); addItem('trollbone_mace'); finishQuest('toll'); await say(H, 'There. Hold it. It hums. Do not let it hum at me.'); return; }
+  } else if (tl.status === 'inactive' && heartsHeld() >= 1) {
+    await say(H, 'You have the look of someone who has stood in front of something large. Tell me, have you seen the tracks? Big, round, a stride like a barn door?');
+    await say(H, 'A bridge troll. Walks the old roads. There is a metal in its bones no forge in the north can make. Bring me the troll and I will bring you the weapon.');
+    const c = await choose(['I will hunt Grungnir.', 'That sounds insane.']);
+    if (c === 0) { startQuest('toll'); await say(H, 'Good. Fire hurts it most. Do not let it rest; it knits itself up while you stand there thinking.'); }
+  }
   await say(H, S.flags.ending === 'give' ? 'The forge has never run so hot. Everyone wants new blades!' : 'Steel does not care about the cold. What do you need?');
   for (;;) {
     const c = await choose(['Forge (upgrade, enchant)', 'Repair, reforge, buy back', 'Fletch arrows', 'Buy gear', 'Sell', 'Leave']);
@@ -255,6 +283,19 @@ export async function ragna() {
     if (c === 0) { S.follower = false; bus.emit('follower', false); await say(R, 'I will be at the lodge. Whistle if you want me.'); }
     else if (c === 2) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.']));
     return;
+  }
+  if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
+    await say(R, 'You carry a Heart. I can smell the winter on it, and under that, Ironwatch.');
+    await say(R, 'I rode with the Company. Forty of us. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
+    const q = await choose(['I will take you to him. Free of charge.', 'I will think about it.']);
+    if (q === 0) {
+      startQuest('company');
+      S.gold += 0;
+      if (!S.follower) { S.follower = true; bus.emit('follower', true); }
+      await say(R, 'Then my bow is yours, for nothing. Bring me to the Keep, Dreamer. Let me lay them down.');
+      return;
+    }
+    await say(R, 'The Keep is not going anywhere. Neither, I fear, are they.');
   }
   await say(R, 'Sellsword. Archer. Cheap, for what I do. 150 gold and I will follow you and shoot anything that bites.');
   const c = await choose(['Hire Ragna (150G)', 'Not now']);
@@ -293,6 +334,24 @@ export async function guard() {
 export async function child() {
   const C = 'Asta';
   const lq = S.quests.locket;
+  if (S.flags.houndOwned && !S.flags.houndResolved && lq.status !== 'inactive' && lq.status !== 'active') {
+    await say(C, 'That dog! That is PUP! He went missing the night the bandits came!');
+    await say(C, 'He is thin. But he is looking at you like he looks at me.');
+    const hc = await choose(['He is yours. Take him home.', 'He chose me. He is staying.']);
+    S.flags.houndResolved = true;
+    if (hc === 0) {
+      S.flags.houndGiven = true; S.flags.houndOwned = false; if (S.pet === 'hound') S.pet = S.flags.cubOwned ? 'cub' : null;
+      S.gold += 200; addItem('hound_collar');
+      bus.emit('toast', 'THE HOUND GOES HOME', 13);
+      await say(C, 'Thank you thank you thank you! Here, this is his collar. He will wear a new one. He will always be yours too, a little.');
+      const gs = dialogue.hud?.scene?.get?.('Game'); gs?.hound?.destroy?.(); if (gs) gs.hound = null;
+    } else {
+      S.flags.houndKept = true;
+      await say(C, '...Oh. Okay. He does look happy. Look after him? Please?');
+      await say(C, '(She wipes her nose on her sleeve and walks away very straight.)');
+    }
+    return;
+  }
   if (lq.status === 'inactive') {
     await say(C, 'Please... the bandits took my mama\'s silver locket when they raided the road. It has a little wolf on it. I would give anything to have it back.');
     const c = await choose(['I will find it.', 'Sorry, kid.']);

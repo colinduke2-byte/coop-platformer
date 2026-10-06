@@ -1,3 +1,4 @@
+import { NPC_BARKS } from '../data/story.js';
 import Phaser from 'phaser';
 import { SCRIPTS, NPC_DEFS } from '../data/dialogue.js';
 import { runScript, say } from '../systems/dialogue.js';
@@ -84,6 +85,14 @@ export default class Npc extends Phaser.GameObjects.Sprite {
   update(dt, player) {
     this.t += dt;
     if (this.angryT > 0) this.angryT -= dt;
+    this.barkT = (this.barkT ?? 12 + Math.random() * 20) - dt;
+    if (this.barkT <= 0) {
+      this.barkT = 30 + Math.random() * 40;
+      const f = NPC_BARKS[this.id];
+      if (f && !this.away && Math.hypot(player.x - this.x, player.y - this.y) < 80 && !this.scene.player.sneaking) {
+        const ls = f(); this.scene.fx.text(this.x, this.y - 26, ls[Math.floor(Math.random() * ls.length)], 5, 3.2);
+      }
+    }
     const near = Math.hypot(player.x - this.x, player.y - this.y) < 44;
     if (near && !this.walking) this.lookAt(player.x, player.y);
     const kind = facingKind(this.face.x, this.face.y);

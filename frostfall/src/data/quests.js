@@ -63,6 +63,39 @@ export const QUESTS = {
       { t: 'Return to Bjorn the Hunter', done: q.status === 'done' },
     ],
   },
+  company: {
+    title: "Ragna's Company",
+    giver: 'Ragna the Archer',
+    desc: 'Ragna rode with the Ironwatch Company until the Keep fell. She wants its warlord, Hrolf Ironmarch, put to rest, and her old banner back.',
+    short: (q) => (q.status === 'ready' ? 'Ragna wants a word' : 'Defeat the Warlord of Ironwatch Keep'),
+    objectives: (q) => [
+      { t: 'Travel with Ragna to Ironwatch Keep', done: !!S.flags.seen_keep || q.status === 'done' },
+      { t: 'Defeat Hrolf Ironmarch', done: !!S.flags.warlordDead || q.status === 'done' },
+      { t: 'Let Ragna lay her company to rest', done: q.status === 'done' },
+    ],
+  },
+  trail: {
+    title: "The Hunter's Trail",
+    giver: 'Bjorn the Hunter',
+    desc: 'Giant tracks cross the Reach on a long loop between the camps. Bjorn thinks they belong to Frostbrow, a winter elk older than the village. Find the tracks. Follow them.',
+    short: (q) => (q.status === 'ready' ? 'Bring word to Bjorn' : 'Find and fell Frostbrow, the Winter Elk'),
+    objectives: (q) => [
+      { t: 'Find the huge hoofprints in the snow', done: !!S.flags.sawTracks || q.status === 'done' },
+      { t: 'Fell Frostbrow, the Winter Elk', done: !!S.flags.rb_elk || q.status === 'done' },
+      { t: 'Tell Bjorn what you did', done: q.status === 'done' },
+    ],
+  },
+  toll: {
+    title: "The Bridge Troll's Toll",
+    giver: 'Hilda the Smith',
+    desc: 'Hilda swears there is a metal in troll bone that no forge in the north can make. She will trade a weapon for the beast that walks the old roads.',
+    short: (q) => (q.status === 'ready' ? 'Show Hilda the troll bone' : 'Fell Grungnir, the Bridge Troll'),
+    objectives: (q) => [
+      { t: 'Follow the troll tracks', done: !!S.flags.sawTracks || q.status === 'done' },
+      { t: 'Fell Grungnir, the Bridge Troll', done: !!S.flags.rb_troll || q.status === 'done' },
+      { t: 'Bring the bone to Hilda', done: q.status === 'done' },
+    ],
+  },
   king: {
     title: 'The Hollow King',
     giver: 'Elder Sigrid',
@@ -93,6 +126,9 @@ export const TARGETS = {
   king: (q) => (q.status === 'relic' ? { map: 'village', x: 19, y: 9 } : S.flags.crypt ? { map: 'crypt', x: 15, y: 4 } : { map: 'forest', x: 46, y: 3 }),
   herbs: (q) => (q.status === 'ready' ? { map: 'village', x: 32, y: 10 } : { map: 'forest', x: 20, y: 17 }),
   locket: (q) => (q.status === 'relic' ? { map: 'village', x: 24, y: 19 } : { map: 'forest', x: 50, y: 26 }),
+  company: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 12 } : { map: 'keep', x: 20, y: 4 }),
+  trail: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'forest', x: 60, y: 40 }),
+  toll: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 16 } : { map: 'forest', x: 60, y: 40 }),
   alpha: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'pass', x: 36, y: 8 }),
 };
 

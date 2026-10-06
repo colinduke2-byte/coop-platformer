@@ -417,6 +417,7 @@ function buildCharacters(scene) {
   for (const [name, st] of Object.entries(STYLES)) {
     make('spr_' + name, (ctx, x, d, f) => humanoid(ctx, x, d, f, st));
   }
+  for (const col of [15, 8, 13, 14, 6]) make('spr_cloak_' + col, (ctx, x, d, f) => humanoid(ctx, x, d, f, { ...STYLES.player, cape: col }));
   animalSheet(scene, 'spr_wolf', (c, x, f) => wolfFrame(c, x, f));
   animalSheet(scene, 'spr_deer', deerFrame);
   animalSheet(scene, 'spr_elk', (c, x, f) => deerFrame(c, x, f, { body: 4, back: 3, belly: 6, leg: 3, ant: 6 }));

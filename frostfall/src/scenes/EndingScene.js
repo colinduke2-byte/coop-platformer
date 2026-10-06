@@ -4,6 +4,7 @@ import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ui } from '../systems/ui.js';
+import { epilogueLines } from '../data/story.js';
 
 const ENDINGS = {
   give: {
@@ -44,7 +45,8 @@ export default class EndingScene extends Phaser.Scene {
     sfx.play('ending');
     txt(this, W / 2, 18, e.title, e.col).setScale(2).setOrigin(0.5, 0);
     this.body = txt(this, 14, 48, '', 5);
-    this.full = wrap(e.text, 49);
+    const epi = epilogueLines();
+    this.full = wrap(e.text + (epi.length ? '\n\n' + epi.join('\n\n') : ''), 49);
     this.n = 0; this.t = 0; this.warm = 20;
     this.end = txt(this, 0, H - 14, '', 4);
   }

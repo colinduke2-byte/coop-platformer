@@ -7,7 +7,15 @@ const POOLS = [
 ];
 const CHAMPS = ['bear', 'knight', 'golem', 'wyvern'];
 
-export function arenaWave(n, rnd = Math.random) {
+// mode: 'classic' | 'boon' (same waves, pick a boon between them) | 'gauntlet' (a champion every wave, escorted by a few foes)
+export function arenaWave(n, rnd = Math.random, mode = 'classic') {
+  if (mode === 'gauntlet') {
+    const tier = Math.min(3, Math.floor((n - 1) / 2));
+    const out = [{ kind: CHAMPS[Math.min(3, Math.floor((n - 1) / 3))], tier: Math.min(3, tier + 1), elite: true }];
+    const pool = [...POOLS[0], ...(n >= 2 ? POOLS[1] : []), ...(n >= 5 ? POOLS[2] : [])];
+    for (let i = 0; i < Math.min(5, 1 + Math.floor(n / 2)); i++) out.push({ kind: pool[Math.floor(rnd() * pool.length)][0], tier, elite: false });
+    return out;
+  }
   const tier = Math.min(3, Math.floor((n - 1) / 3));
   let budget = 3 + Math.round(n * 1.7);
   const out = [];

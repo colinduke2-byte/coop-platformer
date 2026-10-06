@@ -85,6 +85,10 @@ export const ITEMS = {
   tome_nova: { name: 'Tome of Frost Nova', type: 'tome', teach: 'nova', icon: ['scroll', 15], value: 220, desc: 'Read (E): learn Frost Nova at any skill level.' },
   tome_wolf: { name: 'Tome of Spirit Wolf', type: 'tome', teach: 'wolf', icon: ['scroll', 6], value: 200, desc: 'Read (E): learn Spirit Wolf at any skill level.' },
   tome_meteor: { name: 'Tome of the Falling Star', type: 'tome', teach: 'meteor', icon: ['scroll', 12], value: 420, desc: 'Read (E): learn Meteor, a slow, devastating fire spell no skill level can teach.' },
+  antler_bow: { name: 'Frostbrow Bow', type: 'bow', icon: ['bow', 6], dmg: 26, crit: 0.06, value: 380, desc: 'Strung with the winter elk\'s sinew, tipped with its antler. Bjorn made it for you.' },
+  trollbone_mace: { name: 'Trollbone Mace', type: 'weapon', style: 'mace', icon: ['mace', 8], dmg: 27, costMul: 1.25, lifesteal: 0.05, value: 420, desc: 'Hilda\'s masterwork. Breaks guards, and drinks a little of what it spills.' },
+  hound_collar: { name: "Pup's Collar", type: 'charm', icon: ['charm', 15], maxSp: 20, crit: 0.04, value: 90, desc: 'Asta\'s hound wore it. +20 stamina, +4% crit.' },
+  ironwatch_banner: { name: 'Ironwatch Banner', type: 'charm', icon: ['charm', 12], maxHp: 25, maxSp: 15, value: 120, desc: 'Ragna\'s company banner, cut to a sash. +25 health, +15 stamina.' },
   hollow_crown: { name: 'The Hollow Crown', type: 'charm', icon: ['charm', 13], maxHp: 30, maxMp: 30, maxSp: 20, crit: 0.05, value: 0, desc: 'All eight relics, joined. +30 health and mana, +20 stamina, +5% crit.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };

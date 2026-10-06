@@ -11,6 +11,7 @@ const lerpColor = (a, b, t) => {
   return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
 };
 
+import { hasMod } from '../data/mods.js';
 import { elixirVal } from '../systems/elixir.js';
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
@@ -21,6 +22,7 @@ export const lightingMethods = {
     this.stamp = this.add.image(0, 0, 'lightmask').setVisible(false);
     this.ambientOverride = null;
     this.weatherT = 120 + Math.random() * 120;
+    if (hasMod('winter')) S.weather = 'blizzard';
     this.applyWeather(true);
   },
 
@@ -88,8 +90,10 @@ export const lightingMethods = {
     if (this.weatherT <= 0) {
       this.weatherT = 150 + Math.random() * 120;
       const r = Math.random();
-      let next = S.weather === 'blizzard' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 ? 'clear' : r < 0.42 ? 'blizzard' : 'snow';
-      if (this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
+      const eb = S.flags.finale === 'thaw' ? 0.25 : S.flags.finale === 'crown' ? -0.2 : 0;     // after the finale the weather remembers
+      let next0 = S.weather === 'blizzard' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 + eb ? 'clear' : r < 0.42 + eb * 0.2 ? 'blizzard' : 'snow';
+      let next = hasMod('winter') ? 'blizzard' : next0;
+      if (!hasMod('winter') && this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
       if (next !== S.weather) {
         S.weather = next;
         this.applyWeather();

@@ -58,6 +58,10 @@ import { ambientMethods } from '../world/ambient.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
+import { addItem } from '../systems/inventory.js';
+import { modMul, BOONS, BOON_IDS } from '../data/mods.js';
+import { submitScore } from '../systems/daily.js';
+import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -79,6 +83,7 @@ export default class GameScene extends Phaser.Scene {
     const def = this.def = MAPS[this.mapId];
     const built = this.built = def.build();
     S.map = this.mapId;
+    if (S.boons && this.mapId !== 'arena') S.boons = {};            // arena boons end with the trial
     recalc();
     this.cameras.main.setBackgroundColor(C[0]);
 
@@ -190,7 +195,7 @@ export default class GameScene extends Phaser.Scene {
     this.snow = def.snow ? new SnowFx(this, 55) : null;
     this.initLighting();
     this.initAmbient();
-    this.on('player:dead', () => { this.deadT = 0.001; });
+    this.on('player:dead', () => { this.deadT = 0.001; S.run.deaths = (S.run.deaths || 0) + 1; submitScore(); });
     this.on('nostamina', () => tip('stamina'));
     this.on('charlevel', () => tip('perks'));
     this.on('item:added', (id) => { if (id === 'lockpick') tip('lock'); if (S.quests.wolves.status === 'active') tip('quest'); });
@@ -220,7 +225,7 @@ export default class GameScene extends Phaser.Scene {
         const key = `${this.mapId}:${e._i}`;
         if (this.def.stream && isGone(key)) break;
         const spec = { ...e };
-        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < 0.07 + 0.05 * e.tier) spec.elite = true;
+        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * modMul('eliteMul')) spec.elite = true;
         if (this.def.stream) this.pend.push({ spec, key, wx, wy, live: null });
         else this.addEnemy(e.kind, wx, wy, spec);
         break;
@@ -239,7 +244,7 @@ export default class GameScene extends Phaser.Scene {
       case 'hound': if (!S.flags.houndOwned) this.interactables.push(new WoundedHound(this, wx, wy)); break;
       case 'arenamaster': { const am = new ArenaMaster(this, wx, wy); this.interactables.push(am); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(am); break; }
       case 'spring': { const sp = new SoakSpot(this, wx, wy); this.interactables.push(sp); this.springs = (this.springs || []).concat(sp); break; }
-      case 'track': this.add.image(wx, wy, 'paw').setDepth(wy - 8).setAlpha(0.45).setAngle(((e.x * 37 + e.y * 11) % 360)); break;
+      case 'track': (this.trackPts = this.trackPts || []).push({ x: wx, y: wy }); this.add.image(wx, wy, 'paw').setDepth(wy - 8).setAlpha(0.45).setAngle(((e.x * 37 + e.y * 11) % 360)); break;
       case 'roamboss': {
         const key = `${this.mapId}:rb${e.id}`;
         if (isGone(key)) break;
@@ -353,30 +358,48 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ---- the Hollow Arena
-  startArena() {
-    this.arena = { active: true, wave: 1, t: 3, foes: [] };
+  startArena(mode = 'classic') {
+    S.boons = {}; recalc();
+    this.arena = { active: true, wave: 1, t: 3, foes: [], mode, offering: false };
     bus.emit('toast', 'THE TRIAL BEGINS!', 13); sfx.play('roar');
   }
   endArena(yield_ = false) {
     if (!this.arena) return;
     const done = this.arena.cleared || 0;
-    this.arena.active = false;
+    this.arena.active = false; S.boons = {}; recalc();
     for (const e of this.arena.foes) if (e.active && !e.dead) e.despawn?.();
     this.arena.foes = [];
     bus.emit('toast', yield_ ? `YOU YIELD AT WAVE ${done}` : `WAVES CLEARED: ${done}`, 13);
   }
+  // Between waves of the Boon Trial and the Gauntlet: pick one of three boons, which last until the trial ends.
+  offerBoons(a) {
+    a.offering = true;
+    const pool = BOON_IDS.slice(), opts = [];
+    while (opts.length < 3) opts.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    runScript(async () => {
+      const c = await choose(opts.map((id) => `${BOONS[id].name}: ${BOONS[id].desc}`));
+      const id = opts[c] || opts[0];
+      S.boons = { ...(S.boons || {}), [id]: ((S.boons || {})[id] || 0) + 1 };
+      recalc();
+      if (BOONS[id].waveHeal || S.boons.lifeblood) S.hp = Math.min(S.maxHp, S.hp + S.maxHp * (BOONS.lifeblood.waveHeal * (S.boons.lifeblood || 0)));
+      bus.emit('toast', `BOON: ${BOONS[id].name.toUpperCase()}`, 14); sfx.play('quest');
+      a.offering = false; a.t = 3;
+    });
+  }
+
   arenaTick(dt) {
     const a = this.arena;
     if (!a || !a.active || this.player.mode === 'dead') return;
     a.foes = a.foes.filter((e) => e.active && !e.dead);
-    if (a.foes.length) return;
+    if (a.foes.length || a.offering) return;
     if (a.cleared !== a.wave - 1) {
       // the previous wave just fell
       if (a.wave > 1) {
         const w = a.wave - 1;
         S.arena ||= { best: 0 };
         S.arena.best = Math.max(S.arena.best || 0, w);
-        const gold = 20 + w * 12;
+        S.arena.modes = S.arena.modes || {}; S.arena.modes[a.mode] = Math.max(S.arena.modes[a.mode] || 0, w);
+        const gold = Math.round((20 + w * 12) * modMul('goldMul') * (a.mode === 'gauntlet' ? 1.4 : 1));
         S.gold += gold;
         bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
         if (w % 3 === 0 || w % 5 === 0) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
@@ -384,10 +407,11 @@ export default class GameScene extends Phaser.Scene {
       }
       a.cleared = a.wave - 1;
       a.t = 4;
+      if (a.mode !== 'classic' && a.wave > 1) { this.offerBoons(a); return; }
     }
     a.t -= dt;
     if (a.t > 0) return;
-    const foes = arenaWave(a.wave);
+    const foes = arenaWave(a.wave, Math.random, a.mode);
     const pts = [[4, 11], [27, 11], [16, 4], [8, 5], [24, 5], [5, 17], [26, 17], [16, 8]];
     foes.forEach((f, i) => {
       const [tx, ty] = pts[i % pts.length];
@@ -421,6 +445,36 @@ export default class GameScene extends Phaser.Scene {
     if (this.follower) return;
     this.follower = new Follower(this, this.player.x - 14, this.player.y + 2);
     this.physics.add.collider(this.follower, this.layer);
+  }
+
+  // Companion and side-quest bookkeeping, twice a second at most.
+  questTick(dt) {
+    this.qT = (this.qT || 0) - dt;
+    if (this.qT > 0) return;
+    this.qT = 1;
+    const p = this.player;
+    // the first time you stand near giant hoofprints
+    if (!S.flags.sawTracks && this.trackPts?.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 36)) { S.flags.sawTracks = true; bus.emit('toast', 'HUGE TRACKS... SOMETHING ENORMOUS WALKS THESE ROADS', 13); tip('tracks'); }
+    this.scoreT = (this.scoreT || 0) + 1; if (S.daily && this.scoreT % 15 === 0) submitScore();
+    const Q = S.quests;
+    if (Q.trail.status === 'active' && S.flags.rb_elk) { Q.trail.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); sfx.play('quest'); }
+    if (Q.toll.status === 'active' && S.flags.rb_troll) { Q.toll.status = 'ready'; bus.emit('toast', 'QUEST READY: SHOW HILDA', 13); sfx.play('quest'); }
+    // Ragna lays her company to rest once the Warlord is down and she is with you
+    if (Q.company.status === 'active' && S.flags.warlordDead && S.follower && this.follower && !ui.modal && this.player.mode === 'free') this.companionScene();
+  }
+
+  companionScene() {
+    S.quests.company.status = 'ready';
+    runScript(async () => {
+      const R = 'Ragna';
+      await say(R, 'Hrolf. You old fool. You held the gate for a hundred nights and did not once ask us to stay.');
+      await say(R, 'Forty names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
+      await say(R, 'You gave me that, Dreamer. Take the banner. I do not want to see it again. And my bow... my bow is yours, for as long as you will have it.');
+      addItem('ironwatch_banner');
+      S.flags.ragnaVeteran = true;
+      finishQuest('company');
+      bus.emit('toast', 'RAGNA FIGHTS BETTER NOW: SHE SHOOTS TWICE', 13);
+    });
   }
 
   // The creature that killed you last waits where you fell (stronger each time it wins).
@@ -905,6 +959,7 @@ export default class GameScene extends Phaser.Scene {
     updateTutorial(this, dt);
     this.worldEvents(dt);
     foodTick(); elixirTick();
+    this.questTick(dt);
     this.ambientLife(dt);
     this.ambientTick(dt);
     for (const i of this.interactables) if (i.tick) i.tick(dt, this);

@@ -519,8 +519,9 @@ export class ArenaMaster extends Phaser.GameObjects.Image {
         return;
       }
       await say('Arena Master', best ? `Your best is ${best} waves. Think you can beat it?` : 'Waves of the Hollow\'s worst, one after another. Every wave pays. Every fifth wave brings a champion.');
-      const c = await choose(['Begin the trial', 'Not today']);
-      if (c === 0) sc.startArena();
+      const m = S.arena?.modes || {};
+      const c = await choose([`Classic trial (best ${m.classic || best})`, `Boon trial: pick a boon each wave (best ${m.boon || 0})`, `Champion gauntlet: a champion every wave (best ${m.gauntlet || 0})`, 'Not today']);
+      if (c <= 2) sc.startArena(['classic', 'boon', 'gauntlet'][c]);
     });
   }
 }
