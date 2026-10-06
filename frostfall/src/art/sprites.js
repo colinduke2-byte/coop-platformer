@@ -15,9 +15,13 @@ const R = (ctx, col, x, y, w = 1, h = 1) => {
 
 // ---------------------------------------------------------------- characters
 // style: skin hair body trim legs boots eye cape hood helm beard glow
-function humanoid(ctx, ox, dir, fr, s) {
+function humanoid(ctx, ox, dir, frIn, s) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const eye = s.eye ?? 0;
+  // poses: atkdown / atkup / atkside (frame 0 windup, 1 strike, 2 recover) and hurt
+  let pose = null;
+  if (dir.startsWith('atk')) { pose = 'atk'; dir = dir.slice(3); } else if (dir === 'hurt') { pose = 'hurt'; dir = 'down'; }
+  const fr = pose ? 0 : frIn;
   if (dir === 'down' || dir === 'up') {
     const back = dir === 'up';
     const lUp = fr === 1, rUp = fr === 2;
@@ -33,8 +37,18 @@ function humanoid(ctx, ox, dir, fr, s) {
     if (s.chest) r(s.chest, 6, 7, 4, 1);
     // arms
     const la = fr === 1 ? -1 : fr === 2 ? 1 : 0;
-    r(s.body, 3, 8 + la, 1, 3); r(s.skin, 3, 11 + la, 1, 1);
-    r(s.body, 12, 8 - la, 1, 3); r(s.skin, 12, 11 - la, 1, 1);
+    if (!pose) {
+      r(s.body, 3, 8 + la, 1, 3); r(s.skin, 3, 11 + la, 1, 1);
+      r(s.body, 12, 8 - la, 1, 3); r(s.skin, 12, 11 - la, 1, 1);
+    } else if (pose === 'hurt') {
+      r(s.body, 2, 5, 1, 3); r(s.skin, 2, 4, 1, 1); r(s.body, 13, 5, 1, 3); r(s.skin, 13, 4, 1, 1);
+    } else if (frIn === 0) {            // windup: weapon arm raised
+      r(s.body, 3, 8, 1, 3); r(s.skin, 3, 11, 1, 1); r(s.body, 12, 4, 1, 4); r(s.skin, 12, 3, 1, 1);
+    } else if (frIn === 1) {            // strike: both arms thrown forward
+      r(s.body, 3, 9, 1, 4); r(s.skin, 3, 13, 1, 1); r(s.body, 12, 9, 1, 4); r(s.skin, 12, 13, 1, 1);
+    } else {                            // recover: arms low
+      r(s.body, 3, 10, 1, 2); r(s.skin, 3, 12, 1, 1); r(s.body, 12, 10, 1, 2); r(s.skin, 12, 12, 1, 1);
+    }
     if (s.cape && !back) { r(s.cape, 3, 7, 1, 1); r(s.cape, 12, 7, 1, 1); }
     // head
     if (back) {
@@ -52,6 +66,7 @@ function humanoid(ctx, ox, dir, fr, s) {
       if (s.glow != null) { r(s.glow, 6, 4, 1, 1); r(s.glow, 9, 4, 1, 1); }
       if (s.beard != null) r(s.beard, 6, 6, 4, 1);
       if (s.mask != null) r(s.mask, 5, 5, 6, 2);
+      if (pose === 'hurt') { r(s.skin, 6, 4, 1, 1); r(s.skin, 9, 4, 1, 1); r(0, 6, 4, 2, 1); r(0, 9, 4, 2, 1); r(0, 7, 6, 2, 1); }
     }
     if (s.horns != null) { r(s.horns, 4, 1, 1, 2); r(s.horns, 11, 1, 1, 2); r(s.horns, 3, 0, 1, 2); r(s.horns, 12, 0, 1, 2); }
     if (s.crown != null) { r(s.crown, 5, 1, 6, 1); r(s.crown, 5, 0, 1, 1); r(s.crown, 8, 0, 1, 1); r(s.crown, 10, 0, 1, 1); }
@@ -67,7 +82,10 @@ function humanoid(ctx, ox, dir, fr, s) {
     r(s.trim, 5, 10, 6, 1);
     if (s.chest) r(s.chest, 9, 7, 2, 1);
     const ax = fr === 1 ? 8 : fr === 2 ? 6 : 7;
-    r(s.body, ax, 8, 2, 3); r(s.skin, ax, 11, 2, 1);
+    if (!pose) { r(s.body, ax, 8, 2, 3); r(s.skin, ax, 11, 2, 1); }
+    else if (frIn === 0) { r(s.body, 5, 5, 2, 3); r(s.skin, 5, 4, 2, 1); }                       // windup: arm raised behind
+    else if (frIn === 1) { r(s.body, 9, 8, 4, 2); r(s.skin, 13, 8, 2, 2); }                      // strike: arm thrust forward
+    else { r(s.body, 8, 10, 3, 2); r(s.skin, 11, 10, 1, 2); }                                     // recover
     r(s.skin, 6, 2, 6, 5);
     if (s.hood != null) { r(s.hood, 5, 2, 6, 5); r(s.skin, 9, 3, 3, 3); r(s.hood, 6, 1, 5, 1); }
     else { r(s.hair, 6, 2, 6, 2); r(s.hair, 6, 4, 2, 2); }
@@ -175,7 +193,7 @@ function outline(ctx, w, h) {
 }
 
 function buildCharacters(scene) {
-  const make = (key, fn, frames = ['down', 'up', 'side']) => {
+  const make = (key, fn, frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt']) => {
     const cv = canvas(16 * frames.length * 3, 16);
     const ctx = cv.getContext('2d');
     // Draw first, upload second: WebGL snapshots the canvas when it is added.

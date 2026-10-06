@@ -1,0 +1,31 @@
+import { launch, check, failCount } from './harness.mjs';
+const h = await launch();
+await h.open('scene=game&map=village&spawn=start');
+await h.sleep(800);
+const G = (fn, a) => h.ev(fn, a);
+const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
+const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
+const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel(c); await h.sleep(70); };
+await h.ev(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.__ff.S.flags.introDone = true; const g = window.gs(); g.player.setPosition(300, 250); g.player.mode = 'free'; g.player.invuln = 0; });
+const frame = () => G(() => window.gs().player.frame.name);
+const seen = new Set();
+await tap('KeyJ', 40);
+for (let i = 0; i < 8; i++) { seen.add(await frame()); await h.sleep(30); }
+check('the player shows attack poses during a swing', [...seen].some((f) => f.startsWith('atk')), [...seen].join());
+await h.sleep(600);
+await G(() => { const p = window.gs().player; p.invuln = 0; p.hurt(5, p.x + 8, p.y); });
+await h.sleep(60);
+check('the player shows a hurt pose when struck', (await frame()).startsWith('hurt'), await frame());
+await h.sleep(900);
+// enemy windup / attack / recover frames
+await G(() => { const g = window.gs(); g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.pend.length = 0; const e = g.addEnemy('bandit', g.player.x + 40, g.player.y); e.cfg = { ...e.cfg, detect: 0, speed: 0, chase: 0, windup: 0.8 }; e.alerted = true; e.startWindup({ x: -1, y: 0 }); g.player.invuln = 99; });
+await h.sleep(300);
+check('an enemy winding up raises its arm (atk pose)', await G(() => window.gs().enemies.getChildren()[0].frame.name.startsWith('atk')));
+await G(() => { const e = window.gs().enemies.getChildren()[0]; e.takeHit({ dmg: 1, kx: 1, ky: 0, kb: 0, src: 'melee', stun: 0.5 }); });
+await h.sleep(60);
+check('a struck enemy flinches (hurt pose)', await G(() => window.gs().enemies.getChildren()[0].frame.name.startsWith('hurt')));
+check('wolves still animate normally', await G(() => { const g = window.gs(); const w = g.addEnemy('wolf', g.player.x + 100, g.player.y); w.cfg = { ...w.cfg, detect: 0 }; w.update(0.016, g.player); return w.frame.name.startsWith('side'); }));
+check('no page errors', h.errors.length === 0, h.errors.join('\n'));
+await h.close();
+console.log(failCount() ? 'POSES FAILED' : 'POSES PASSED');
+process.exit(failCount() ? 1 : 0);

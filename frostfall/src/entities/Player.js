@@ -586,7 +586,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   animate(moving) {
     const kind = facingKind(this.face.x, this.face.y);
     const fr = moving && this.mode !== 'roll' ? 1 + (Math.floor(this.phase) % 2) : 0;
-    this.setFrame(kind + fr);
+    // attack / cast / hurt poses
+    let pf = null, lean = 0;
+    if (this.mode === 'hurt' || (this.stunT > 0 && this.mode !== 'roll')) pf = 'hurt0';
+    else if (this.swing) {
+      const s = this.swing, hs = s.c.hs ?? P.sword.hitStart, he = s.c.he ?? P.sword.hitEnd;
+      const k = s.t < hs ? 0 : s.t <= he ? 1 : 2;
+      pf = 'atk' + kind + k; lean = k === 1 ? 2.2 : k === 0 ? -1 : 0.6;
+    } else if (this.lockT > 0 && this.mode === 'free' && !this.blocking) { pf = 'atk' + kind + '1'; lean = 1; }
+    else if (this.drawing) { pf = 'atk' + kind + '0'; lean = -0.5; }
+    this.setFrame(pf || kind + fr);
+    this.setOrigin(0.5 - (kind === 'side' ? this.face.x : 0) * lean / 16, 0.5 - (kind !== 'side' ? this.face.y : 0) * lean / 16);
     this.setFlipX(kind === 'side' && this.face.x < 0);
     this.setRotation(this.mode === 'roll' ? (this.face.x < 0 ? -this.spin : this.spin) : 0);
     if (this.mode === 'lying') { this.setFrame('side0'); this.setRotation(-Math.PI / 2); this.setFlipX(false); }

@@ -4,11 +4,24 @@ The first version (stages 1-8) was the core game: village, forest and crypt, mel
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
 ## Round 5: chapter two, "The Four Hearts"
-- **New main quest** (from Sigrid once you have dealt with the Frostheart): the Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Epic, mythic tone; the Frostheart was only the first.
-- **The Glacial Maw:** a new dungeon type, an ice cave in the frozen east of the open world (it appears in every seed). Slippery ice floors, a frozen-lake chamber with fencers, a Rime Knight and a Hexcaster, side vaults, a checkpoint brazier, then the boss arena.
-- **The Rime Wyrm:** a new boss (420 HP). Tail sweep up close; frost breath cone, erupting ground spikes and a lunge at range; phase two adds frost novas, more spikes and calls frost wights. Fire hurts it, frost does nothing.
-- **The Rime Heart:** a lasting reward. +20 max stamina, and every perfect dodge freezes everything near you.
-- Quest marker, journal entries, bestiary entry, and a map exit label lead you there.
+- **New main quest** (from Sigrid once you have dealt with the Frostheart): the Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Epic, mythic tone; the Frostheart was only the first. Sigrid reads one more faded map after each Heart.
+- **Four new dungeons, each a different kind of place, each in every seed's open world:**
+  - **The Glacial Maw** (ice cave, slippery floors, frozen-lake chamber) - boss **the Rime Wyrm** (tail, frost breath cone, erupting spikes, lunge; calls frost wights). Reward: **Rime Heart** (+20 stamina; a perfect dodge freezes everything near you).
+  - **Ironwatch Keep** (fortress with a courtyard garrison, barricades, archers on the walls, barracks, a locked armoury) - boss **Hrolf Ironmarch** (sweeps, slams, leaps, volleys, rallies the dead garrison). Reward: **Iron Heart** (+8% armour, +10% melee damage).
+  - **The Drowned Chapel** (flooded temple, sunken pews, a rune puzzle that opens a sealed chapel) - boss **the Tidemother** (water jet, tentacle eruptions, tail ring). Reward: **Tide Heart** (rolls cost 35% less, stamina returns 25% faster).
+  - **The Rootvault** (twisting blight passages, the Wound) - boss **the Ashen Root** (slow and huge; the arena fills with eruptions and spore volleys). Reward: **Root Heart** (slow health regeneration, potions heal 25% more).
+- **The Winter Throne:** opens only to someone holding all four Hearts. A hall of the Kings, a gallery of the Hearts, then the final boss **the Long Winter** in three faces (the Crowned, the Storm, the Hunger).
+- **Three endings for chapter two:** let the Winter go (*The Long Thaw*), bind it again as its warden (*The New Warden*) or take its crown (*The Crown of Rime*). New Game+ still carries your Hearts.
+- All guardians share a new boss kit (tail ring, breath cone, spikes, leap, charge, nova, phase minions; two or three phases).
+- Quest marker, journal entries (one per Heart, then the Throne and the choice), bestiary entries, map exit labels.
+
+### New powers
+- **Shouts from Hearts.** Force is always known. **Frost Breath** (Rime), **Battle Cry** (Iron: +35% damage for 8s and scares foes), **Tidal Surge** (Tide: a line of water that hurls foes), **Verdant Grasp** (Root: roots and drains everything near you). **G** swaps shout (Back on a pad); each has its own cooldown.
+- **Three new spells:** **Blink** (teleport a short way, untouchable, Sneak 4), **Frost Nova** (a ring of ice, Destruction 7), **Spirit Wolf** (a spectral ally that hunts for 14s, Restoration 5). Quick-cast with 9, 0 and -.
+- **Weapon styles:** daggers chain a fast four-hit flurry; axes have a heavy two-hit combo; greatswords sweep in a three-hit arc; swords keep the three-hit combo.
+
+### Animation
+- Every humanoid (the player, bandits, draugr, bosses, NPCs) now has **attack poses** (windup, strike, recover), a **hurt pose**, and a small lean into the blow. Casting and drawing the bow have their own stance.
 
 ## Round 4: the open world (replayability and fun fighting)
 

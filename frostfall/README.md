@@ -34,9 +34,9 @@ changing weather affect stealth; villagers go indoors at night.
 | L | Cast the selected spell. Q / Tab swaps (locked spells are skipped) |
 | U | Heavy attack (slow, staggers, breaks guards) |
 | T | Lock on / drop target (faces the foe, aims the bow) |
-| 4 5 6 7 8 | Quick-cast Fireball / Frost / Lightning / Healing / Ward |
+| 4 5 6 7 8 9 0 - | Quick-cast the 8 spells in order (Fireball, Frost, Lightning, Healing, Ward, Blink, Frost Nova, Spirit Wolf) |
 | V | Switch arrows (plain / fire / barbed) |
-| R | Shout "FUS": pushes enemies back, shakes the screen (12 s cooldown) |
+| R | Shout (Force by default; G swaps to a shout you earned from a Heart) "FUS": pushes enemies back, shakes the screen (12 s cooldown) |
 | F (hold) | Block with a shield. Raise it just before a hit to parry |
 | C / Shift (hold) | Sneak: sneak attacks x3 (melee) / x2 (bow). Also: E on a villager = pickpocket |
 | E / Enter | Talk, open, read, gather, rest, sleep, pick locks |
@@ -44,7 +44,7 @@ changing weather affect stealth; villagers go indoors at night.
 | I / O / M / Esc | Pack and perks / journal / map / pause menu |
 | Mouse (option) | click = sword, right-click = bow, middle = spell, wheel = swap, aims at the pointer |
 | Touch | on-screen stick and buttons on touch devices |
-| Gamepad | left stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, R3 lock-on, Back map, Start pause; right stick up = heavy attack, down = switch arrows, left / right = health / mana potion. Any layout (8BitDo in X-input, Switch or D-input mode) can be re-learned in **Pause > System > Controller** |
+| Gamepad | left stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, R3 lock-on, Back swaps shout, Start pause (the map is a tab in the pause menu); right stick up = heavy attack, down = switch arrows, left / right = health / mana potion. Any layout (8BitDo in X-input, Switch or D-input mode) can be re-learned in **Pause > System > Controller** |
 
 All keyboard keys can be rebound in **Pause > System > Controls**.
 

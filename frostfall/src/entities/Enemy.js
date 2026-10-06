@@ -378,7 +378,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(this.face.x < 0 || (this.face.x === 0 && this.flipX));
     } else {
       const k = facingKind(this.face.x, this.face.y);
-      this.setFrame(k + fr);
+      let pf = null;
+      if (this.hasPoses === undefined) this.hasPoses = this.scene.textures.get(this.cfg.tex).has('atkdown0');
+      if (this.hasPoses && !this.dead) {
+        if (this.flashT > 0 || (this.stun > 0.05 && this.state !== 'recover')) pf = 'hurt0';
+        else if (this.state === 'windup') pf = 'atk' + k + '0';
+        else if (this.state === 'attack') pf = 'atk' + k + '1';
+        else if (this.state === 'recover' && this.stun <= 0) pf = 'atk' + k + '2';
+      }
+      this.setFrame(pf || k + fr);
       this.setFlipX(k === 'side' && this.face.x < 0);
     }
     if (this.flashT > 0) this.setTintFill(0xffffff);
