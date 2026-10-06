@@ -47,7 +47,8 @@ then spend the remaining effort where it pays off most. Each phase ends green (t
 - Biggest risks: save size and load time with several large maps (mitigated by streaming and Phase 9 perf budget), content volume (mitigated by generators and shared tiles), and difficulty curve (balance bot per region).
 - Effort ranking (largest first): Phase 12, 10, 11, 14, 13, 9, 15.
 
-## Questions still open
-1. Name and flavour of the forge-city and its three factions (I can propose names).
-2. Chapter 3 tone: same epic/mythic, or darker and more political?
-3. Should Chapter 3 be required to see a "true" ending, or optional content after the credits?
+## Decisions (locked)
+- City: **Emberhold**, the forge-city under the Ashen Peaks. Factions: **the Anvil Court** (rulers), **the Delvers' Guild** (miners), **the Ember Wardens** (soldiers).
+- Regions: **Ashen Peaks**, **the Frozen Coast**, **the Old Kingdom**.
+- Chapter 3 title: **The Ember Crown**. Tone stays epic and mythic.
+- Chapter 3 is **required for the full ending**: deciding the Winter at the Throne no longer rolls the credits. It closes Chapter 2, shows the consequence of the choice (Hearth / Winter King / Cold Bargain), and opens the road to Emberhold. The credits and the final ending variants come at the end of Chapter 3. Existing saves that already finished the game get the Chapter 3 opening on their next load.
