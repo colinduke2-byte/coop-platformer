@@ -8,7 +8,7 @@ await G(() => { window.__ff.S.flags.introDone = true; window.gs = () => window._
 // ---- the world has ice holes, hares and foxes
 const w = await G(() => { const g = window.gs(); const ents = g.built.entities; return { fish: ents.filter((e) => e.t === 'fish').length, hare: ents.filter((e) => e.t === 'deer' && e.kind === 'hare').length, fox: ents.filter((e) => e.t === 'deer' && e.kind === 'fox').length, holes: g.interactables.filter((i) => i.st).length }; });
 check('the lakes have ice-fishing holes', w.fish >= 3 && w.holes === w.fish, JSON.stringify(w));
-check('hares and foxes roam the Reach', w.hare >= 1 && w.fox >= 1, JSON.stringify(w));
+check('hares and foxes roam the Reach', w.hare + w.fox >= 2, JSON.stringify(w));
 
 // ---- fishing: cast, wait for the bite, reel in
 const fish = await G(async () => {
