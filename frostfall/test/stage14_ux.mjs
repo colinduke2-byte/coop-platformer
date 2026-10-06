@@ -17,7 +17,7 @@ const rowsInfo = await G(() => { const m = window.__ff.game.scene.getScene('Menu
 check('pause opens SYSTEM', rowsInfo === 'SYSTEM');
 const goRow = async (name, from) => { /* rows list order is fixed */ };
 // rows: 0 RESUME 1 SAVE 2 LOAD 3 VOLUME 4 MUSIC 5 FULLSCREEN 6 SLOT 7 DIFFICULTY 8 SHAKE 9 FLASHES 10 PIXEL SCALE 11 MOUSE 12 CONTROLS 13 QUIT
-for (let i = 0; i < 6; i++) await tap('KeyS', 50);     // cursor on SLOT
+for (let i = 0; i < 9; i++) await tap('KeyS', 50);     // cursor on SLOT
 await tap('KeyD', 50);
 check('SLOT row cycles slots', (await G(() => window.__set.slot)) === 2);
 await tap('KeyA', 50);

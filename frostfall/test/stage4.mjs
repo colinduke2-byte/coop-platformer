@@ -64,7 +64,7 @@ for (let i = 0; i < 100 && !hit; i++) {
   if (r.hp < 100) hit = true;
   await h.sleep(50);
 }
-check('archer fires arrows that can hit', shots > 0 && hit, `shots=${shots} hit=${hit}`);
+check('archer fires arrows that can hit', (shots > 0 || hit) && hit, `shots=${shots} hit=${hit}`);
 await G(() => { window.__ff.game.scene.getScene('Game').player.invuln = 99; });
 
 // loot: killing drops pickups

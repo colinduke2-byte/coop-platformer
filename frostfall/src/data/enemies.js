@@ -202,7 +202,7 @@ const INFLICTS = {
   shroom: [{ type: 'poison', chance: 0.8, t: 8, dps: 2 }], bandit: [{ type: 'bleed', chance: 0.1, t: 4, dps: 2 }],
   winter: [{ type: 'chill', chance: 0.7, stacks: 1 }], tide: [{ type: 'slow', chance: 0.5, t: 3 }],
 };
-const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['bleed', 'poison'], wight: ['bleed', 'poison'], necro: ['poison'] };
+const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
 for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
 for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;
 
