@@ -14,6 +14,7 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Feats tab:** 26 trophies (kills, bosses, Hearts, fishing, cooking, treasure, arena, hound...) that unlock on their own, with a toast. The menu tab bar was tightened so all eight tabs fit.
 - **Music:** three new tracks: *cavern* (sparse, for the Glacial Maw and the lair approaches), *throne* (grand and slow for the Winter Throne boss and the arena) and *dragon* (fast and fierce for Skaldrath).
 - **Blizzards:** predators (wolves, bears, lynx, boar) now hunt by scent in a blizzard: their detection is boosted to cancel the stealth bonus the snow gives you against everything else.
+- **Fewer wolves:** the wild spawn tables were wolf-heavy (two thirds wolves in the first region). Wolves are now one of several: boars and cinder imps in the first region, lynx and snow bears from the second, more bears deeper in. Wolf dens and packs are unchanged.
 - Tests: `stage31_life.mjs` (fishing, cooking, food, maps, feats, music) and `stage32_arena.mjs` (arena waves, hound). The flaky Spore Mother check and the monkey scene-change check were made timing-tolerant.
 
 ## Round 6: a wilder world (predators, strange foes, dragons)

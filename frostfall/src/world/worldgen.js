@@ -39,10 +39,10 @@ export function tierAt(x, y) {
   return d < 72 ? 0 : d < 108 ? 1 : d < 142 ? 2 : 3;
 }
 const TIER_MOBS = [
-  { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'wolf', 'boar'] },
-  { melee: ['bandit', 'draugr', 'fencer', 'warden', 'imp'], ranged: ['archer', 'wight', 'necro'], wild: ['wolf', 'alpha', 'boar', 'lynx'] },
-  { melee: ['reaver', 'warden', 'fencer', 'draugr', 'golem'], ranged: ['wight', 'conjurer', 'archer', 'necro', 'wisp'], wild: ['alpha', 'bear', 'lynx', 'wyvern', 'boar'] },
-  { melee: ['reaver', 'knight', 'warden', 'golem', 'imp'], ranged: ['conjurer', 'wight', 'necro', 'wisp'], wild: ['alpha', 'bear', 'wyvern', 'frostworm', 'lynx'] },
+  { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'boar', 'boar', 'imp'] },
+  { melee: ['bandit', 'draugr', 'fencer', 'warden', 'imp'], ranged: ['archer', 'wight', 'necro'], wild: ['wolf', 'boar', 'lynx', 'bear', 'imp'] },
+  { melee: ['reaver', 'warden', 'fencer', 'draugr', 'golem'], ranged: ['wight', 'conjurer', 'archer', 'necro', 'wisp'], wild: ['wolf', 'alpha', 'bear', 'lynx', 'wyvern', 'boar'] },
+  { melee: ['reaver', 'knight', 'warden', 'golem', 'imp'], ranged: ['conjurer', 'wight', 'necro', 'wisp'], wild: ['alpha', 'bear', 'bear', 'wyvern', 'frostworm', 'lynx'] },
 ];
 
 export function buildReach(region, seed) {
