@@ -27,9 +27,9 @@ await h.shot('s4_forest');
 const duel = (kind, dx) => G(([kind, dx]) => {
   const g = window.__ff.game.scene.getScene('Game');
   g.enemies.getChildren().slice().forEach((e) => { e.destroy(); });
-  g.enemies.clear();
+  g.enemies.clear(); if (g.pend) g.pend.length = 0;      // no streamed spawns joining the duel
   const p = g.player; p.setPosition(10.5 * 16, 10 * 16 + 8); p.mode = 'free'; p.stunT = 0; p.body.setVelocity(0, 0); p.invuln = 0; p.iframes = 0; p.face = { x: 1, y: 0 };
-  const S = window.__ff.S; S.hp = 100; S.sp = 100;
+  const S = window.__ff.S; S.hp = 100; S.sp = 100; S.weather = 'snow'; S.time = 12 * 60;      // daylight, no blizzard: sight range is the same every run
   const e = g.addEnemy(kind, p.x + dx, p.y); e.alerted = false; return true;
 }, [kind, dx]);
 
@@ -46,14 +46,14 @@ check('wolf telegraphs then lunges to bite', sawWind && hit);
 
 // bandit swings
 await duel('bandit', 50);
-hit = false; sawWind = false;
+hit = false; sawWind = false; const trace = [];
 for (let i = 0; i < 160 && !hit; i++) {
-  const r = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; return { hp: window.__ff.S.hp, st: e?.state }; });
+  const r = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; return { hp: window.__ff.S.hp, st: e?.state, n: g.enemies.getLength(), d: e && Math.round(Math.hypot(e.x - g.player.x, e.y - g.player.y)), pm: g.player.mode, inv: g.player.invuln }; }); trace.push(r.st + '/' + r.n + '/' + r.d + '/' + r.pm + '/' + Math.round(r.inv));
   if (r.st === 'windup') sawWind = true;
   if (r.hp < 100) hit = true;
   await h.sleep(50);
 }
-check('bandit telegraphs and hits', sawWind && hit);
+check('bandit telegraphs and hits', sawWind && hit, trace.slice(-6).join(' '));
 
 // archer shoots a projectile
 await duel('archer', 70);
