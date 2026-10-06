@@ -236,13 +236,13 @@ export function buildReach(region, seed) {
   }
 
   // ---- wild creatures, nodes and herbs along the roads and in the wilds --------------------------
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 120; i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
     if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < t.r - 2) || bio[y][x] === 'lake' || bio[y][x] === 'mountain' || g.t[y][x] === TILE.PATH) continue;
     const tier = tierAt(x, y), roll = R();
     if (roll < 0.34) add({ t: 'herb', item: R() < 0.6 ? 'snowberry' : 'frost_lily', x, y });
-    else if (roll < 0.5) { const q = R(); add({ t: 'deer', x, y, kind: q < 0.5 ? 'deer' : q < 0.8 ? 'hare' : 'fox' }); }
-    else if (roll < 0.62 && bio[y][x] !== 'tundra') add({ t: 'node', x, y, ore: R() < 0.8 ? 'iron_ingot' : 'bone_dust' });
+    else if (roll < 0.56) { const q = R(); add({ t: 'deer', x, y, kind: q < 0.4 ? 'deer' : q < 0.72 ? 'hare' : 'fox' }); }
+    else if (roll < 0.66 && bio[y][x] !== 'tundra') add({ t: 'node', x, y, ore: R() < 0.8 ? 'iron_ingot' : 'bone_dust' });
     else if (roll < 0.78) add({ t: 'dig', x, y, id: `dig${i}` });
     else {
       let kind = pickOf(mobs(tier).wild);
@@ -253,6 +253,13 @@ export function buildReach(region, seed) {
   }
 
   add({ t: 'hound', x: START.x + 12, y: START.y + 4 });
+
+  // small wildlife scattered everywhere, even between the points of interest: hares and foxes bolt when you come near
+  for (let i = 0, n = 0; i < 400 && n < 18; i++) {
+    const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12)), b = bio[y][x];
+    if (b === 'lake' || b === 'mountain' || g.t[y][x] === TILE.PATH || g.res[y][x]) continue;
+    add({ t: 'deer', x, y, kind: R() < 0.55 ? 'hare' : 'fox' }); n++;
+  }
 
   // ice-fishing holes out on the frozen lakes
   for (let i = 0, n = 0; i < 600 && n < 14; i++) {
