@@ -16,8 +16,33 @@ export const TUNE = {
     { dmg: 1.1, kb: 135, size: 18, total: 0.3, cost: 1, flip: true, scale: 1, stun: 0.24 },
     { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
   ],
+  // weapon styles: each type of weapon has its own combo (sword uses `combo` above)
+  styles: {
+    dagger: [
+      { dmg: 0.7, kb: 70, size: 16, total: 0.2, cost: 0.6, flip: false, scale: 1, stun: 0.12 },
+      { dmg: 0.7, kb: 70, size: 16, total: 0.2, cost: 0.6, flip: true, scale: 1, stun: 0.12 },
+      { dmg: 0.8, kb: 80, size: 16, total: 0.2, cost: 0.6, flip: false, scale: 1, stun: 0.14 },
+      { dmg: 1.5, kb: 190, size: 20, total: 0.34, cost: 1.0, flip: true, scale: 1.25, stun: 0.4 },
+    ],
+    axe: [
+      { dmg: 1.35, kb: 150, size: 20, total: 0.4, cost: 1.15, flip: false, scale: 1.2, stun: 0.3 },
+      { dmg: 2.0, kb: 260, size: 26, total: 0.52, cost: 1.5, flip: true, scale: 1.5, stun: 0.55 },
+    ],
+    great: [
+      { dmg: 1.3, kb: 170, size: 30, total: 0.46, cost: 1.2, flip: false, scale: 1.5, stun: 0.35 },
+      { dmg: 1.4, kb: 190, size: 30, total: 0.46, cost: 1.2, flip: true, scale: 1.5, stun: 0.4 },
+      { dmg: 2.2, kb: 300, size: 36, total: 0.62, cost: 1.8, flip: false, scale: 1.8, stun: 0.7 },
+    ],
+  },
   hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
   bow: { maxArrows: 30, minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
+  shouts: {
+    force: { cd: 12, name: 'FORCE', col: 6 },
+    frost: { cd: 14, name: 'FROST BREATH', col: 15, r: 84, dmg: 14, slow: 4 },
+    cry: { cd: 20, name: 'BATTLE CRY', col: 12, time: 8, dmgMul: 1.35, r: 64 },
+    surge: { cd: 12, name: 'TIDAL SURGE', col: 8, len: 120, w: 42, dmg: 10, kb: 340 },
+    grasp: { cd: 18, name: 'VERDANT GRASP', col: 8, r: 76, root: 3.2, dps: 5 },
+  },
   shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },
   cast: { lock: 0.28, move: 0.4, heatCost: 0.35, heatMax: 3, heatDecay: 0.9 },
   block: { move: 0.55, parry: 0.18, arc: 0.2 },

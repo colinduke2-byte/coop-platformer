@@ -12,9 +12,9 @@ export const ITEMS = {
   steel_sword: { name: 'Steel Sword', type: 'weapon', icon: ['sword', 5], dmg: 17, value: 90, desc: 'Well-forged and keen.' },
   nordic_blade: { name: 'Nordic Blade', type: 'weapon', icon: ['sword', 15], dmg: 22, value: 200, desc: 'Etched with frost runes.' },
 
-  hunting_knife: { name: 'Hunting Knife', type: 'weapon', icon: ['sword', 10], dmg: 6, swing: 0.8, costMul: 0.8, value: 18, desc: 'Quick and light. Fine in the off-hand.' },
-  iron_greatsword: { name: 'Iron Greatsword', type: 'weapon2h', icon: ['sword', 4], dmg: 21, swing: 1.35, costMul: 1.5, sizeAdd: 5, value: 120, desc: 'Two-handed. Slow, wide, brutal.' },
-  nordic_greatsword: { name: 'Nordic Greatsword', type: 'weapon2h', icon: ['sword', 15], dmg: 31, swing: 1.35, costMul: 1.5, sizeAdd: 6, value: 320, desc: 'Two-handed. Frost-etched steel.' },
+  hunting_knife: { name: 'Hunting Knife', type: 'weapon', style: 'dagger', icon: ['sword', 10], dmg: 6, swing: 0.8, costMul: 0.8, value: 18, desc: 'Quick and light. Fine in the off-hand.' },
+  iron_greatsword: { name: 'Iron Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 4], dmg: 21, swing: 1.35, costMul: 1.5, sizeAdd: 5, value: 120, desc: 'Two-handed. Slow, wide, brutal.' },
+  nordic_greatsword: { name: 'Nordic Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 15], dmg: 31, swing: 1.35, costMul: 1.5, sizeAdd: 6, value: 320, desc: 'Two-handed. Frost-etched steel.' },
 
   wooden_shield: { name: 'Wooden Shield', type: 'shield', icon: ['shield', 9], block: 0.6, cost: 0.9, value: 30, desc: 'Hold F to block. Absorbs 60%.' },
   iron_shield: { name: 'Iron Shield', type: 'shield', icon: ['shield', 4], block: 0.72, cost: 0.8, value: 85, desc: 'Hold F to block. Absorbs 72%.' },

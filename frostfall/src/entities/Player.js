@@ -15,6 +15,7 @@ import { ITEMS } from '../data/items.js';
 import { magicMethods } from './playerMagic.js';
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
+import { currentShout } from '../systems/shouts.js';
 
 // Feel numbers live in data/tuning.js
 export const P = TUNE.player;
@@ -154,6 +155,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
     this.heat = Math.max(0, (this.heat || 0) - P.cast.heatDecay * dt);
     this.counterT = Math.max(0, (this.counterT || 0) - dt);
+    this.cryT = Math.max(0, (this.cryT || 0) - dt);
     this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
@@ -256,6 +258,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     else if (keys.pressed('spell')) this.cast();
     else if (this.quickCast()) { /* cast chosen spell directly */ }
     else if (keys.pressed('shout')) this.shout();
+    else if (keys.pressed('shoutswap')) this.swapShout();
     for (const [act, id] of [['potion1', 'hp_potion'], ['potion2', 'mp_potion'], ['potion3', 'sp_potion']]) {
       if (keys.pressed(act)) this.usePotion(id);
     }
@@ -263,10 +266,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ---------------------------------------------------------------- sword
   startSwing() {
-    const n = this.comboT > 0 ? (this.comboN + 1) % P.combo.length : 0;
     const w = stats.weapon() || {};
+    const set = P.styles[w.style || (w.type === 'weapon2h' ? 'great' : 'sword')] || P.combo;
+    const n = this.comboT > 0 ? (this.comboN + 1) % set.length : 0;
     const off = stats.offhandDmg() > 0;
-    const c0 = P.combo[n];
+    const c0 = set[n];
     const c = { ...c0, total: c0.total * (w.swing || 1), size: c0.size + (w.sizeAdd || 0) };
     const cost = P.sword.cost * c.cost * (w.costMul || 1) * (off ? 1.3 : 1) * bonus.swingCost();
     if (!this.spend(cost)) { this.comboT = 0; return; }
@@ -278,9 +282,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     sfx.play('sword');
     const a = Math.atan2(this.face.y, this.face.x);
     this.scene.fx.slash(this.x + this.face.x * 4, this.y + 2 + this.face.y * 4, a, c.flip, c.scale);
-    if (n === 2) this.scene.fx.puff(this.x + this.face.x * 14, this.y + 3 + this.face.y * 14, 6, 5, 40, 0.25);
+    const fin = n === set.length - 1;
+    if (fin) this.scene.fx.puff(this.x + this.face.x * 14, this.y + 3 + this.face.y * 14, 6, 5, 40, 0.25);
     // lunge a little
-    this.body.velocity.x += this.face.x * (n === 2 ? 70 : 40); this.body.velocity.y += this.face.y * (n === 2 ? 70 : 40);
+    this.body.velocity.x += this.face.x * (fin ? 70 : 40); this.body.velocity.y += this.face.y * (fin ? 70 : 40);
   }
 
   // Heavy attack: a slow, telegraphed overhead blow that staggers and breaks guards.
@@ -342,7 +347,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
-      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1);
+      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1);
       const crit = Math.random() < stats.sum('crit');
       if (crit) dmg *= 1.8;
       if (exec) dmg = e.hp + 999;
@@ -421,7 +426,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // ----------------------------------------------------------------- shout
   shout() {
     if (this.shoutCd > 0) { sfx.play('nostamina'); return; }
-    this.shoutCd = P.shout.cooldown;
+    const which = currentShout();
+    if (which !== 'force') { this.shoutSpecial(which); return; }
+    this.shoutCd = this.shoutCdMax = P.shout.cooldown;
     this.lockT = P.shout.lock; this.lockMove = 0;
     this.body.setVelocity(0, 0);
     sfx.play('shout');

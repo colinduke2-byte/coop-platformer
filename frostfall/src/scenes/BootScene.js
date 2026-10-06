@@ -28,7 +28,7 @@ export default class BootScene extends Phaser.Scene {
       else if (it.type === 'weapon2h') buildHeld(this, 'held_' + id, 'greatblade', it.icon[1]);
       else if (it.type === 'shield') buildHeld(this, 'held_' + id, 'shield', it.icon[1]);
     }
-    for (const [k, kind, col] of [['shock', 'shock', 13], ['heal', 'heal', 8], ['ward', 'ward', 15], ['coin', 'coin', 13], ['fire', 'fire', 12], ['frost', 'frost', 15], ['shout', 'shout', 6], ['arrows', 'arrows', 5]]) {
+    for (const [k, kind, col] of [['shock', 'shock', 13], ['heal', 'heal', 8], ['ward', 'ward', 15], ['blink', 'blink', 14], ['nova', 'nova', 15], ['wolf', 'wolf', 15], ['coin', 'coin', 13], ['fire', 'fire', 12], ['frost', 'frost', 15], ['shout', 'shout', 6], ['arrows', 'arrows', 5]]) {
       buildIcon(this, 'icon_' + k, kind, col);
     }
     const q = new URLSearchParams(location.search);

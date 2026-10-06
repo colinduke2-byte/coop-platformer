@@ -59,13 +59,13 @@ export const keys = {
 // Every physical input gets an id: b<N> = button N, a<N>+ / a<N>- = axis N pushed one way, h<udlr> = hat / d-pad.
 // A map from input id -> virtual key code drives the game; players can re-learn it in Pause > System > Controller.
 export const PAD_DEFAULT = {
-  b0: 'Space', b1: 'KeyE', b2: 'KeyJ', b3: 'KeyK', b4: 'KeyQ', b5: 'KeyL', b6: 'KeyC', b7: 'KeyR', b8: 'KeyM', b9: 'Escape', b10: 'KeyF', b11: 'KeyT',
+  b0: 'Space', b1: 'KeyE', b2: 'KeyJ', b3: 'KeyK', b4: 'KeyQ', b5: 'KeyL', b6: 'KeyC', b7: 'KeyR', b8: 'KeyG', b9: 'Escape', b10: 'KeyF', b11: 'KeyT',
   b12: 'KeyW', b13: 'KeyS', b14: 'KeyA', b15: 'KeyD',
   hu: 'KeyW', hd: 'KeyS', hl: 'KeyA', hr: 'KeyD',
   'a3-': 'KeyU', 'a3+': 'KeyV', 'a2-': 'Digit1', 'a2+': 'Digit2',          // right stick: heavy / ammo / health potion / mana potion
 };
 export const PAD_ACTIONS = [
-  ['Space', 'DODGE ROLL'], ['KeyJ', 'SWORD'], ['KeyK', 'BOW'], ['KeyL', 'CAST SPELL'], ['KeyQ', 'SWAP SPELL'], ['KeyR', 'SHOUT'],
+  ['Space', 'DODGE ROLL'], ['KeyJ', 'SWORD'], ['KeyK', 'BOW'], ['KeyL', 'CAST SPELL'], ['KeyQ', 'SWAP SPELL'], ['KeyR', 'SHOUT'], ['KeyG', 'SWAP SHOUT'],
   ['KeyU', 'HEAVY ATTACK'], ['KeyT', 'LOCK ON'], ['KeyF', 'BLOCK'], ['KeyC', 'SNEAK'], ['KeyE', 'INTERACT'], ['KeyV', 'SWITCH ARROWS'],
   ['Digit1', 'HEALTH POTION'], ['Digit2', 'MANA POTION'], ['Digit3', 'STAMINA POTION'], ['KeyI', 'PACK'], ['KeyM', 'MAP'], ['KeyO', 'JOURNAL'], ['Escape', 'PAUSE'],
 ];

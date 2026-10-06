@@ -15,9 +15,9 @@ export const RARITY = [
 const BASES = {
   weapon: [
     { name: 'Sword', type: 'weapon', icon: ['sword', 4], dmg: 12 },
-    { name: 'Axe', type: 'weapon', icon: ['sword', 10], dmg: 14, swing: 1.1, costMul: 1.1 },
-    { name: 'Dagger', type: 'weapon', icon: ['sword', 5], dmg: 8, swing: 0.75, costMul: 0.75 },
-    { name: 'Greatsword', type: 'weapon2h', icon: ['sword', 15], dmg: 20, swing: 1.35, costMul: 1.5, sizeAdd: 5 },
+    { name: 'Axe', type: 'weapon', style: 'axe', icon: ['sword', 10], dmg: 14 },
+    { name: 'Dagger', type: 'weapon', style: 'dagger', icon: ['sword', 5], dmg: 8 },
+    { name: 'Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 15], dmg: 20 },
   ],
   bow: [{ name: 'Bow', type: 'bow', icon: ['bow', 10], dmg: 9 }, { name: 'Longbow', type: 'bow', icon: ['bow', 8], dmg: 12 }],
   shield: [{ name: 'Buckler', type: 'shield', icon: ['shield', 9], block: 0.55, cost: 0.8 }, { name: 'Kite Shield', type: 'shield', icon: ['shield', 4], block: 0.68, cost: 0.9 }],

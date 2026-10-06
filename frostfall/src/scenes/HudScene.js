@@ -14,6 +14,8 @@ import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
 import { settings } from '../systems/settings.js';
+import { currentShout, unlockedShouts } from '../systems/shouts.js';
+import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
 
@@ -40,7 +42,7 @@ export default class HudScene extends Phaser.Scene {
 
     // bottom-left: spell + shout slots
     this.spellIcons = Object.fromEntries(SPELL_ORDER.map((k) => [k, this.add.image(4, H - 20, 'icon_' + k).setOrigin(0)]));
-    this.add.image(25, H - 20, 'icon_shout').setOrigin(0);
+    this.shoutIcon = this.add.image(25, H - 20, 'icon_shout').setOrigin(0);
     this.spellLbl = txt(this, 4, H - 28, 'Q', 4);
     this.shoutLbl = txt(this, 25, H - 28, 'R', 4);
     this.spellName = txt(this, 44, H - 12, '', 5);
@@ -322,7 +324,10 @@ export default class HudScene extends Phaser.Scene {
     if (pl.heat > 0.05) { g.fillStyle(C[0]); g.fillRect(4, H - 3, 16, 2); g.fillStyle(pl.heat > 1.8 ? C[11] : C[12]); g.fillRect(4, H - 3, Math.round(16 * pl.heat / P.cast.heatMax), 2); }
     this.spellIcons[S.spell].setAlpha(afford ? 1 : 0.4);
     this.spellName.setText(sp.name);
-    const cdFrac = Math.max(0, pl.shoutCd / P.shout.cooldown);
+    const sid = currentShout(), SH = TUNE.player.shouts[sid];
+    this.shoutIcon.setTint(sid === 'force' ? 0xffffff : C[SH.col]);
+    this.shoutLbl.setText(unlockedShouts().length > 1 ? 'R G' : 'R');
+    const cdFrac = Math.max(0, pl.shoutCd / (pl.shoutCdMax || P.shout.cooldown));
     if (cdFrac > 0) { g.fillStyle(C[0], 0.75); g.fillRect(25, H - 20, 16, Math.ceil(16 * cdFrac)); }
     if (!this.cdTxt) this.cdTxt = txt(this, 0, H - 16, '', 6);
     this.cdTxt.setText(cdFrac > 0 ? String(Math.ceil(pl.shoutCd)) : '');

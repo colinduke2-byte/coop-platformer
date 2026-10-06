@@ -34,6 +34,7 @@ const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlor
 import Breakable from '../entities/Breakable.js';
 import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
+import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
@@ -362,6 +363,14 @@ export default class GameScene extends Phaser.Scene {
       bus.emit('toast', 'FAST TRAVEL', 15);
     });
     return true;
+  }
+
+  summonSpiritWolf(pl) {
+    this.spirit?.fade();
+    const w = new SpiritWolf(this, pl.x + 14, pl.y + 2, Math.round(TUNE.player.shouts ? 9 * bonus.spell() : 9));
+    this.physics.add.collider(w, this.layer);
+    this.fx.puff(w.x, w.y, 15, 10, 40, 0.5);
+    this.spirit = w;
   }
 
   // The Long Winter has fallen: decide what becomes of it.
@@ -744,6 +753,7 @@ export default class GameScene extends Phaser.Scene {
     for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
     for (const n of this.npcs) n.update(dt, this.player);
     this.follower?.update(dt, this.player);
+    if (this.spirit && !this.spirit.dead) this.spirit.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i];
       p.update(dt, this.player);

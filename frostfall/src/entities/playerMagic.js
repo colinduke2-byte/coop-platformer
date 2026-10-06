@@ -1,5 +1,6 @@
 // Player spellcasting (mixed into Player). Spells unlock with skill levels.
 import { S } from '../systems/state.js';
+import { unlockedShouts, currentShout } from '../systems/shouts.js';
 import { stats } from '../systems/stats.js';
 import { keys } from '../systems/keys.js';
 import { bus } from '../systems/bus.js';
@@ -16,9 +17,12 @@ export const SPELLS = {
   frost: { name: 'Frost Bolt', cost: 13, dmg: 7, speed: 155, icon: 'icon_frost', col: 15, skill: 'destruction', lvl: 1, desc: 'Slows enemies' },
   shock: { name: 'Lightning', cost: 22, dmg: 13, range: 118, icon: 'icon_shock', col: 13, skill: 'destruction', lvl: 4, desc: 'Chains between foes' },
   heal: { name: 'Healing', cost: 26, amount: 36, icon: 'icon_heal', col: 8, skill: 'restoration', lvl: 1, desc: 'Restores health' },
+  blink: { name: 'Blink', cost: 20, icon: 'icon_blink', col: 14, skill: 'sneak', lvl: 4, desc: 'Teleport a short way, untouchable' },
+  nova: { name: 'Frost Nova', cost: 30, dmg: 14, icon: 'icon_nova', col: 15, skill: 'destruction', lvl: 7, desc: 'Ring of ice around you' },
+  wolf: { name: 'Spirit Wolf', cost: 34, dmg: 9, icon: 'icon_wolf', col: 15, skill: 'restoration', lvl: 5, desc: 'A spectral wolf fights for you' },
   ward: { name: 'Ward', cost: 30, absorb: 30, time: 8, icon: 'icon_ward', col: 15, skill: 'restoration', lvl: 3, desc: 'Absorbs damage' },
 };
-export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward'];
+export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'wolf'];
 export const spellUnlocked = (id) => lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
 
 export const magicMethods = {
@@ -83,7 +87,93 @@ export const magicMethods = {
         this.gainXp('restoration', 5);
         break;
       }
+      case 'blink': {
+        let d = 0;
+        const dx = f.x, dy = f.y, steps = 8, stepLen = 8;
+        for (let k = 1; k <= steps; k++) { if (sc.solidAt(this.x + dx * k * stepLen, this.y + 6 + dy * k * stepLen)) break; d = k * stepLen; }
+        sc.fx.puff(this.x, this.y, 14, 10, 40, 0.4);
+        this.setPosition(this.x + dx * d, this.y + dy * d);
+        this.body.updateFromGameObject();
+        this.iframes = Math.max(this.iframes, 0.3);
+        sc.fx.puff(this.x, this.y, 14, 10, 40, 0.4); sc.fx.ring(this.x, this.y + 4, 0.5, 0.3, 'ring', 0x8a5aa8);
+        sfx.play('roll'); this.gainXp('sneak', 5);
+        break;
+      }
+      case 'nova': {
+        const R = 58;
+        sfx.play('frost'); sc.shake(180, 0.007);
+        sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0x5cc8d8); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xeaf2f8);
+        for (const e of sc.enemies.getChildren()) {
+          if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4, stun: 0.6 });
+          sc.fx.text(e.x, e.y - 10, String(dealt), 15); sc.fx.puff(e.x, e.y, 15, 6, 40, 0.3);
+        }
+        for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
+        this.gainXp('destruction', 6);
+        break;
+      }
+      case 'wolf': {
+        sc.summonSpiritWolf(this);
+        sfx.play('howl'); this.gainXp('restoration', 6);
+        break;
+      }
       default: break;
+    }
+  },
+
+  // ---- shouts (Force is the base shout; the others come with the Hearts)
+  swapShout() {
+    const list = unlockedShouts();
+    if (list.length < 2) { sfx.play('nostamina'); return; }
+    S.shout = list[(list.indexOf(currentShout()) + 1) % list.length];
+    sfx.play('select'); bus.emit('toast', TUNE.player.shouts[S.shout].name, TUNE.player.shouts[S.shout].col);
+  },
+
+  shoutSpecial(id) {
+    const sc = this.scene, T = TUNE.player.shouts[id], f = this.face;
+    this.shoutCd = this.shoutCdMax = T.cd;
+    this.lockT = 0.5; this.lockMove = 0;
+    this.body.setVelocity(0, 0);
+    sfx.play('shout'); sc.shake(260, 0.01); sc.flashScreen(70); sc.noise(this.x, this.y, 150);
+    const col = { frost: 0x9fe8ff, cry: 0xf08a30, surge: 0x3f7050, grasp: 0x3f7050 }[id];
+    if (id === 'frost') {
+      sc.fx.text(this.x, this.y - 18, 'FROST BREATH', 15, 1);
+      for (let i = -3; i <= 3; i++) { const a = Math.atan2(f.y, f.x) + i * 0.18; sc.fx.puff(this.x + Math.cos(a) * 30, this.y + 3 + Math.sin(a) * 30, 15, 6, 90, 0.6); sc.fx.puff(this.x + Math.cos(a) * 60, this.y + 3 + Math.sin(a) * 60, 6, 5, 70, 0.5); }
+      for (const e of sc.enemies.getChildren()) {
+        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy);
+        if (e.dead || d > T.r || d < 1 || (dx * f.x + dy * f.y) / d < 0.5) continue;
+        const dealt = e.takeHit({ dmg: T.dmg * bonus.spell(), kx: dx, ky: dy, kb: 60, src: 'frost', element: 'frost', slow: T.slow, stun: 0.5, forceStun: !e.isBoss });
+        sc.fx.text(e.x, e.y - 10, String(dealt), 15);
+      }
+      for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if (Math.hypot(dx, dy) < T.r && (dx * f.x + dy * f.y) > 0) sh.finish(); }
+    } else if (id === 'cry') {
+      this.cryT = T.time;
+      sc.fx.text(this.x, this.y - 18, 'BATTLE CRY!', 12, 1);
+      sc.fx.ring(this.x, this.y + 4, 1.4, 0.5, 'ring', 0xf08a30); sc.fx.ring(this.x, this.y + 4, 2.2, 0.7, 'ring', 0xf4d460);
+      for (const e of sc.enemies.getChildren()) {
+        if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > T.r) continue;
+        e.takeHit({ dmg: 1, kx: e.x - this.x, ky: e.y - this.y, kb: 160, src: 'shout', stun: 0.7, forceStun: !e.isBoss });
+      }
+      S.sp = Math.min(S.maxSp, S.sp + 30);
+    } else if (id === 'surge') {
+      sc.fx.text(this.x, this.y - 18, 'TIDAL SURGE', 8, 1);
+      for (let k = 1; k <= 7; k++) sc.fx.puff(this.x + f.x * k * 17, this.y + 3 + f.y * k * 17, 15, 6, 60, 0.5);
+      for (const e of sc.enemies.getChildren()) {
+        const dx = e.x - this.x, dy = e.y - this.y, along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
+        if (e.dead || along < 0 || along > T.len || across > T.w / 2) continue;
+        const dealt = e.takeHit({ dmg: T.dmg, kx: f.x, ky: f.y, kb: T.kb, src: 'shout', element: 'shock', stun: 1.1, forceStun: !e.isBoss });
+        sc.fx.text(e.x, e.y - 10, String(dealt), 8);
+      }
+      for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < T.len) sh.finish(); }
+    } else if (id === 'grasp') {
+      sc.fx.text(this.x, this.y - 18, 'VERDANT GRASP', 8, 1);
+      sc.fx.ring(this.x, this.y + 4, T.r / 32, 0.6, 'ring', 0x3f7050);
+      for (const e of sc.enemies.getChildren()) {
+        if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > T.r) continue;
+        e.stun = Math.max(e.stun || 0, e.isBoss ? 0.7 : T.root); e.body.setVelocity(0, 0);
+        e.dot = { dps: T.dps, t: T.root, col: 8, acc: 0, tick: 0 };
+        sc.fx.puff(e.x, e.y + 4, 8, 8, 30, 0.5);
+      }
     }
   },
 
