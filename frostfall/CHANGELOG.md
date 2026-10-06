@@ -276,3 +276,11 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - Points of interest in non-Reach regions now have region-prefixed ids (`ashen_camp0`) so bounties never collide.
 - Try it now: open the game with `?scene=game&map=emberhold&spawn=gate` (the story connects the road in Phase 11).
 - Tests: `stage43_emberhold`.
+
+## Round 18 - A much larger Hollow Reach (Phase 10.5)
+- The Reach grows from 200x144 to **320x224 tiles** (about 2.5x the area). The forest, village and old quest spots stay in the north-west; danger tiers, lakes, mountains and blight scale with the new size.
+- More to find: 9 champions, 9 ruins, 12 camps, 12+ wolf dens, 8 barrows (was 3), 7 towers, 7 groves, 5 bear dens, 5 hot springs, ~16 campfires (more fast-travel points), ~300 wild creatures, 45 small animals, 34 fishing holes, longer roaming-boss routes.
+- **New places**: Hamlets (a fire, a trader, a chest, a story; Trapper / Fisher / Prospector) and Standing Stones (a stone circle with a blessing and a lore book).
+- **Fixed**: roads could run into the stone front of a dungeon or tower and seal it (and silently delete its contents). Roads to dungeons and towers now arrive from the side and below the entrance.
+- **Map screen**: terrain is baked into one texture and cropped to the view, so the big map costs the same to draw as a small one; a new OVERVIEW zoom shows the whole Reach on one screen (Q cycles zoom).
+- Tests: `stage44_bigworld` (12 seeds: size, counts, reachability of every place and dungeon door, generation time, hamlet shops, all barrows, map bake and frame cost).

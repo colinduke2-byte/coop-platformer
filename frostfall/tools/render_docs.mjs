@@ -12,12 +12,12 @@ const out = await h.ev(async (seed) => {
   const r = M.getReach(), { T, C, TILE } = CF, hex = (i) => '#' + (C[i] ?? 0).toString(16).padStart(6, '0');
   const COL = { [TILE.SNOW]: 5, [TILE.SNOW2]: 5, [TILE.SNOW3]: 5, [TILE.SNOW4]: 5, [TILE.TUFT]: 5, [TILE.ICE]: 4, [TILE.ICE2]: 4, [TILE.STONE]: 3, [TILE.PINE]: 7, [TILE.PATH]: 10, [TILE.PATH2]: 10, [TILE.WOODFLOOR]: 10, [TILE.WOODWALL]: 9, [TILE.ROOF]: 6, [TILE.CFLOOR]: 3, [TILE.CFLOOR2]: 3, [TILE.CWALL]: 1, [TILE.CWALL2]: 1, [TILE.ROCK]: 4, [TILE.PILLAR]: 5, [TILE.FENCE]: 9, [TILE.DEADTREE]: 9, [TILE.STUMP]: 9, [TILE.GRAVE]: 4, [TILE.SARCO]: 4, [TILE.FIRE]: 12 };
   // ---------------- world map
-  const Z = 6, W = r.w * Z, H = r.h * Z, TOP = 40, LEG = 150;
+  const Z = r.w > 250 ? 4 : 6, W = r.w * Z, H = r.h * Z, TOP = 40, LEG = 150;
   const c = document.createElement('canvas'); c.width = W + LEG; c.height = H + TOP; const x = c.getContext('2d');
   x.fillStyle = '#0d1020'; x.fillRect(0, 0, c.width, c.height);
   for (let ty = 0; ty < r.h; ty++) for (let tx = 0; tx < r.w; tx++) { x.fillStyle = hex(COL[r.grid[ty][tx]] ?? 3); x.fillRect(tx * Z, TOP + ty * Z, Z, Z); }
-  const POI = { fort: ['#e33', 'F', 'Ironwatch Keep'], temple: ['#4cf', 'T', 'Drowned Chapel'], rootvault: ['#4d4', 'R', 'Rootvault'], throne: ['#fff', 'W', 'Winter Throne'], maw: ['#9ef', 'M', 'Glacial Maw'], nest: ['#f80', 'N', 'Dragon nest'], champion: ['#fd0', 'C', 'Champion'], ruin: ['#bbb', 'r', 'Ruin'], beardn: ['#a74', 'B', 'Bear den'], spring: ['#6df', 'h', 'Hot spring'], camp: ['#f55', 'b', 'Bandit camp'], den: ['#c66', 'w', 'Wolf den'], barrow: ['#c8f', 'o', 'Barrow'], tower: ['#ddd', 't', 'Tower'], grove: ['#7e7', 'g', 'Grove'], rest: ['#fa4', '*', 'Campfire'] };
-  const big = new Set(['fort', 'temple', 'rootvault', 'throne', 'maw', 'nest']);
+  const POI = { fort: ['#e33', 'F', 'Ironwatch Keep'], temple: ['#4cf', 'T', 'Drowned Chapel'], rootvault: ['#4d4', 'R', 'Rootvault'], throne: ['#fff', 'W', 'Winter Throne'], maw: ['#9ef', 'M', 'Glacial Maw'], nest: ['#f80', 'N', 'Dragon nest'], champion: ['#fd0', 'C', 'Champion'], ruin: ['#bbb', 'r', 'Ruin'], beardn: ['#a74', 'B', 'Bear den'], spring: ['#6df', 'h', 'Hot spring'], camp: ['#f55', 'b', 'Bandit camp'], den: ['#c66', 'w', 'Wolf den'], barrow: ['#c8f', 'o', 'Barrow'], tower: ['#ddd', 't', 'Tower'], grove: ['#7e7', 'g', 'Grove'], rest: ['#fa4', '*', 'Campfire'], hamlet: ['#fff', 'H', 'Hamlet'], standing: ['#d8f', 's', 'Standing stones'], city: ['#f90', 'E', 'Emberhold'] };
+  const big = new Set(['fort', 'temple', 'rootvault', 'throne', 'maw', 'nest', 'city']);
   x.font = 'bold 11px monospace'; x.textAlign = 'center'; x.textBaseline = 'middle';
   for (const p of r.pois) {
     const d = POI[p.kind]; if (!d) continue;

@@ -65,6 +65,7 @@ import { modMul, BOONS, BOON_IDS } from '../data/mods.js';
 import { submitScore } from '../systems/daily.js';
 import { finishQuest } from '../systems/quests.js';
 import '../data/emberhold.js';
+import '../data/hamlets.js';
 import { tip } from '../systems/tips.js';
 
 export default class GameScene extends Phaser.Scene {

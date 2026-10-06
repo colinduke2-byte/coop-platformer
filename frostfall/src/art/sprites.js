@@ -131,6 +131,9 @@ export const STYLES = {
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
+  trapper: { skin: 10, hair: 9, hood: 9, body: 9, trim: 7, legs: 2, boots: 1, chest: 7, cape: 7 },
+  fisher: { skin: 10, hair: 6, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4 },
+  prospector: { skin: 10, hair: 11, helm: 3, body: 3, trim: 9, legs: 2, boots: 1, chest: 9, beard: 11 },
   // Emberhold
   ysolde: { skin: 10, hair: 6, hood: 13, body: 13, trim: 12, legs: 3, boots: 9, chest: 12, crown: 12, cape: 11 },
   brannoch: { skin: 10, hair: 11, helm: null, body: 9, trim: 12, legs: 2, boots: 1, chest: 4, beard: 11 },

@@ -8,8 +8,8 @@ const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 import { buildLoop, trackSpots } from './roamers.js';
 
-export const REACH_W = 200;
-export const REACH_H = 144;
+export const REACH_W = 320;
+export const REACH_H = 224;
 export const START = { x: 4, y: 15 };                 // where you enter from the village (west edge of the old forest)
 
 // Small seeded RNG (mulberry32).
@@ -37,7 +37,7 @@ function vnoise(x, y, scale, seed) {
 // Danger tier 0..3 grows with distance from the entrance.
 export function tierAt(x, y) {
   const d = Math.hypot(x - START.x, (y - START.y) * 0.9);
-  return d < 72 ? 0 : d < 108 ? 1 : d < 142 ? 2 : 3;
+  return d < 108 ? 0 : d < 162 ? 1 : d < 213 ? 2 : 3;
 }
 export const TIER_MOBS = [
   { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'boar', 'boar', 'imp'] },
@@ -101,11 +101,16 @@ export function buildRegion(def, region, seed) {
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const remaining = [...pois].sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
+  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower']);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
+    const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
     let best = nodes[0], bd = 1e9;
-    for (const n of nodes) { const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < bd) { bd = d; best = n; } }
-    connect(best, p);
-    nodes.push({ x: p.x, y: p.y });
+    for (const n of nodes) { const d = Math.hypot(n.x - tgt.x, n.y - tgt.y); if (d < bd) { bd = d; best = n; } }
+    if (FACADE.has(p.kind)) {              // come in from beside and below, never through the stone front
+      const sx = p.x + (best.x >= p.x ? 8 : -8);
+      g.path([[best.x, best.y], [sx, best.y], [sx, tgt.y], [tgt.x, tgt.y]], 2, TILE.PATH);
+    } else connect(best, tgt);
+    nodes.push({ x: tgt.x, y: tgt.y });
   }
   // keep forest/lake/mountain from covering roads
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g.t[y][x] === TILE.PATH) g.res[y][x] = true;
@@ -217,6 +222,23 @@ export function buildRegion(def, region, seed) {
       add({ t: 'node', x: p.x + 5, y: p.y - 3, ore: ORE[0] });
       for (let i = 0; i < 2; i++) add({ t: 'deer', x: p.x + Math.round((R() - 0.5) * 8), y: p.y + Math.round((R() - 0.5) * 6) });
       add({ t: 'sign', x: p.x - 6, y: p.y, text: ['A QUIET GROVE. GOOD FORAGING AND GOOD HUNTING.'] });
+    } else if (p.kind === 'hamlet') {
+      const who = ['trapper', 'fisher', 'prospector'][Number((p.id.match(/\d+$/) || ['0'])[0]) % 3];
+      clearing(p, 18, 12);
+      for (const dx of [-7, 3]) { g.rect(p.x + dx, p.y - 5, 5, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 3, 5, 2, TILE.WOODWALL); g.set(p.x + dx + 2, p.y - 3, TILE.WINDOW); g.set(p.x + dx + 2, p.y - 2, TILE.DOOR); }
+      g.set(p.x, p.y + 1, TILE.FIRE);
+      add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 56, col: 12 });
+      add({ t: 'npc', id: who, x: p.x + 2, y: p.y + 3 });
+      add({ t: 'sign', x: p.x - 3, y: p.y + 3, text: [{ trapper: "A TRAPPER'S HAMLET. FURS ON EVERY FENCE.", fisher: "A FISHERS' HAMLET. NETS DRY IN THE WIND.", prospector: "A PROSPECTORS' CAMP. THE ORE COMES UP COLD." }[who], 'TRAVELLERS WELCOME. KEEP YOUR SWORD SHEATHED.'] });
+      chest(p, 5, 4, p.tier, 'med');
+      potsAround(p, 4, 6, 'barrel');
+    } else if (p.kind === 'standing') {
+      clearing(p, 11, 9);
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; g.set(p.x + Math.round(Math.cos(a) * 4.4), p.y + Math.round(Math.sin(a) * 3.4), TILE.PILLAR); }
+      add({ t: 'shrine', id: p.id, x: p.x, y: p.y });
+      add({ t: 'glow', x: p.x, y: p.y, r: 46, col: 14 });
+      add({ t: 'lore', id: 'ruin' + (p.id.slice(-1) % 3), tex: 'book', x: p.x + 2, y: p.y + 1 });
+      add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A CIRCLE OF STANDING STONES.', 'THE AIR HUMS. SOMETHING OLD BLESSES THOSE WHO PAUSE HERE.'] });
     } else if (p.kind === 'rest') {
       clearing(p, 5, 5);
       g.set(p.x, p.y, TILE.FIRE);
@@ -232,7 +254,7 @@ export function buildRegion(def, region, seed) {
   }
 
   // ---- wild creatures, nodes and herbs along the roads and in the wilds --------------------------
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < (def.wild || 120); i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
     if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < t.r - 2) || bio[y][x] === 'lake' || bio[y][x] === 'mountain' || g.t[y][x] === TILE.PATH) continue;
     const tier = tierAt(x, y), roll = R();
@@ -289,18 +311,18 @@ export function buildRegion(def, region, seed) {
 //   biome(seed, w, h) -> (x, y) => name, paint(g, bio, w, h), nodes (road ends), taken (reserved discs),
 //   plan(place, mustHave) (which points of interest to scatter), extras(ctx), scenery(g, bio, w, h), dress (tile dressing passes).
 export const REACH = {
-  id: 'reach', w: REACH_W, h: REACH_H, start: START,
+  id: 'reach', w: REACH_W, h: REACH_H, start: START, wild: 300,
   ground: TILE.SNOW, ground2: TILE.SNOW2, flora: ['snowberry', 'frost_lily'], ores: ['iron_ingot', 'bone_dust'],
   mobs: TIER_MOBS, tierAt,
   biome(seed, W, H) {
     const lakeSeed = seed % 997, mtnSeed = (seed >> 3) % 991, blightSeed = (seed >> 5) % 983, woodSeed = (seed >> 7) % 977;
     return (x, y) => {
-      const lake = vnoise(x, y, 22, lakeSeed), mtn = vnoise(x, y, 17, mtnSeed), blight = vnoise(x, y, 26, blightSeed);
+      const lake = vnoise(x, y, 32, lakeSeed), mtn = vnoise(x, y, 24, mtnSeed), blight = vnoise(x, y, 38, blightSeed);
       const east = x / W, south = y / H;
       if (lake > 0.66 && east > 0.3 && south > 0.18) return 'lake';
       if (mtn > 0.68 && (east > 0.25 || south > 0.35)) return 'mountain';
       if (blight > 0.62 && east > 0.45 && south > 0.4) return 'blight';
-      return vnoise(x, y, 14, woodSeed) > 0.5 ? 'forest' : 'tundra';
+      return vnoise(x, y, 18, woodSeed) > 0.5 ? 'forest' : 'tundra';
     };
   },
   paint(g, bio, W, H) {
@@ -313,20 +335,23 @@ export const REACH = {
   nodes: [{ x: 52, y: 22 }, { x: 40, y: 30 }],            // road ends already in the forest
   taken: [{ x: 28, y: 16, r: 34 }],                          // the old forest region
   plan(place, mustHave) {
-  mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);                 // the Glacial Maw: dungeon of the second Heart
-  place('champion', 4, 8);                // placed early: later it finds no room on a map crowded with dungeons
-  place('ruin', 4, 10);
-  place('beardn', 2, 9, null, 1);          // a mother bear and her cubs
-  place('spring', 2, 6);                   // hot springs: heal, cure, warm
-  place('camp', 5, 11);
-  place('den', 5, 9);
-  place('barrow', 3, 6);
-  place('tower', 3, 7);
-  place('grove', 3, 8);
-  place('rest', 6, 4);
-  // make sure there is something gentle near the entrance
-  place('den', 1, 9, { x: 70, y: 20, r: 22 });
-  place('rest', 1, 4, { x: 70, y: 36, r: 18 });
+    mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);
+    place('champion', 9, 8);                 // placed early: later it finds no room on a map crowded with dungeons
+    place('ruin', 9, 10);
+    place('beardn', 5, 9, null, 1);          // a mother bear and her cubs
+    place('spring', 5, 6);                   // hot springs: heal, cure, warm
+    place('camp', 12, 11);
+    place('den', 12, 9);
+    place('barrow', 8, 6);
+    place('tower', 7, 7);
+    place('grove', 7, 8);
+    place('hamlet', 3, 9);                   // small settlements: a fire, a trader, a story
+    place('standing', 6, 8);                 // stone circles with a blessing
+    place('rest', 15, 4);
+    // make sure there is something gentle near the entrance
+    place('den', 1, 9, { x: 105, y: 30, r: 32 });
+    place('rest', 1, 4, { x: 105, y: 54, r: 27 });
+    place('hamlet', 1, 9, { x: 80, y: 50, r: 34 });
   },
   extras({ g, R, W, H, START, add, pois, bio, entities }) {
   add({ t: 'hound', x: START.x + 12, y: START.y + 4 });
@@ -343,21 +368,21 @@ export const REACH = {
       return buildLoop(way);
     };
     for (const [id, kind, tier, minTier] of [['elk', 'elk', 1, 1], ['troll', 'troll', 2, 2]]) {
-      const loop = pickLoop(4, minTier);
+      const loop = pickLoop(6, minTier);
       add({ t: 'roamboss', id, kind, tier, route: loop, phase: Math.floor(R() * 900) });
       for (const s of trackSpots(loop, 120)) add({ t: 'track', x: s.x, y: s.y, who: id });
     }
   }
 
   // small wildlife scattered everywhere, even between the points of interest: hares and foxes bolt when you come near
-  for (let i = 0, n = 0; i < 400 && n < 18; i++) {
+  for (let i = 0, n = 0; i < 1000 && n < 45; i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12)), b = bio[y][x];
     if (b === 'lake' || b === 'mountain' || g.t[y][x] === TILE.PATH || g.res[y][x]) continue;
     add({ t: 'deer', x, y, kind: R() < 0.55 ? 'hare' : 'fox' }); n++;
   }
 
   // ice-fishing holes out on the frozen lakes
-  for (let i = 0, n = 0; i < 600 && n < 14; i++) {
+  for (let i = 0, n = 0; i < 1500 && n < 34; i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
     if (bio[y][x] !== 'lake' || [[2, 0], [-2, 0], [0, 2], [0, -2]].some(([dx, dy]) => bio[y + dy]?.[x + dx] !== 'lake')) continue;
     if (entities.some((e) => e.t === 'fish' && Math.hypot(e.x - x, e.y - y) < 14)) continue;

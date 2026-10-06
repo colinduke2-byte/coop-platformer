@@ -420,7 +420,7 @@ export function getRegion(id) {
 export const getReach = () => getRegion('reach');
 MAPS.ashen = { name: 'The Ashen Peaks', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('ashen'), music: 'pass', dim: 0.16, stream: true };
 MAPS.forest = { name: 'The Hollow Reach', snow: true, ambience: 'wind', build: () => getReach(), music: 'forest', dim: 0.12, stream: true };
-for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 8; i++) {
   MAPS['barrow' + i] = {
     name: 'Barrow', snow: false, ambience: 'crypt', music: 'crypt', dim: 0.4, crypt: true, interior: false,
     build: () => {
