@@ -6,6 +6,7 @@ import { sfx, setVolume, setMusic, music } from '../audio/sfx.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
+import { PAD_ACTIONS, padMap, setPadBinding, resetPadMap, getPadInfo, capturePad } from '../systems/keys.js';
 import { textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
@@ -25,9 +26,11 @@ const DIFFS = ['easy', 'normal', 'hard'];
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'CONTROLS', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
   const VISIBLE = 9;
-  let mode = 'main';          // main | controls
+  let mode = 'main';          // main | controls | pad
+  let waitingPad = null;      // game key code being learned from the controller
+  const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
   const SLIDERS = ['VOLUME', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
@@ -70,6 +73,7 @@ export function systemTab(m) {
       case 'SNEAK MODE': toggle('sneakToggle'); break;
       case 'HOLD TO CHAIN': toggle('holdChain'); break;
       case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
+      case 'CONTROLLER': mode = 'pad'; pc.cursor = 0; pc.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'CONTROLS': mode = 'controls'; ctrl.cursor = 0; ctrl.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'QUIT TO TITLE':
         music.stop();
@@ -106,6 +110,38 @@ export function systemTab(m) {
     }
   }
 
+  const padRows = PAD_ACTIONS.length + 1;
+  const STD = ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'BACK', 'START', 'L3', 'R3'];
+  const niceId = (id) => {
+    if (/^b\d+$/.test(id)) { const n = Number(id.slice(1)); return getPadInfo().mapping === 'standard' && STD[n] ? STD[n] : 'BTN ' + n; }
+    if (/^h[udlr]$/.test(id)) return 'DPAD ' + { u: 'UP', d: 'DOWN', l: 'LEFT', r: 'RIGHT' }[id[1]];
+    const m2 = id.match(/^a(\d+)([+-])$/); if (m2) return (m2[1] === '2' || m2[1] === '3' ? 'R-STICK ' : 'AXIS ' + m2[1] + ' ') + (m2[1] === '3' ? (m2[2] === '-' ? 'UP' : 'DOWN') : m2[1] === '2' ? (m2[2] === '-' ? 'LEFT' : 'RIGHT') : m2[2]);
+    return id;
+  };
+  const boundTo = (code) => Object.entries(padMap()).filter(([id, c]) => c === code && !/^b1[2-5]$/.test(id)).map(([id]) => niceId(id)).slice(0, 2).join(' / ') || '-';
+  function padInput() {
+    m.dirty = true;                                      // live input readout
+    if (waitingPad) {
+      if (keys.pressed('pause')) { capturePad(null); waitingPad = null; sfx.play('back'); }
+      return;
+    }
+    let moved = false;
+    if (keys.pressed('down')) { pc.cursor = (pc.cursor + 1) % padRows; moved = true; }
+    if (keys.pressed('up')) { pc.cursor = (pc.cursor + padRows - 1) % padRows; moved = true; }
+    if (moved) {
+      if (pc.cursor < pc.scroll) pc.scroll = pc.cursor;
+      if (pc.cursor >= pc.scroll + 7) pc.scroll = pc.cursor - 6;
+      sfx.play('move');
+    }
+    if (keys.pressed('pause')) { mode = 'main'; sfx.play('back'); m.warm = 2; return; }
+    if (keys.pressed('interact')) {
+      if (pc.cursor === PAD_ACTIONS.length) { resetPadMap(); sfx.play('back'); bus.emit('toast', 'CONTROLLER RESET', 13); return; }
+      const code = PAD_ACTIONS[pc.cursor][0];
+      waitingPad = code; sfx.play('select'); m.warm = 2;
+      capturePad((id) => { waitingPad = null; setPadBinding(code, id); sfx.play('equip'); m.dirty = true; });
+    }
+  }
+
   const row = (g, i, y, label, value, vcol = 5) => {
     if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 124, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
     m.T(14, y, label, i === m.cursor ? 6 : 5);
@@ -115,11 +151,11 @@ export function systemTab(m) {
   return {
     name: 'SYSTEM',
     help: 'W/S MOVE  E SELECT  A/D ADJUST  ESC RESUME',
-    busy: () => mode === 'controls' || !!waiting || capturing(),
-    captureLR: () => mode === 'controls' || SLIDERS.includes(rows[m.cursor]),
+    busy: () => mode === 'controls' || mode === 'pad' || !!waiting || capturing(),
+    captureLR: () => mode === 'controls' || mode === 'pad' || SLIDERS.includes(rows[m.cursor]),
     cursorOf: () => (mode === 'controls' ? ctrl.cursor : m.cursor),
     rowAt: (x, y) => {
-      if (waiting || x < 8 || x > (mode === 'controls' ? W - 8 : 132) || y < 26) return -1;
+      if (mode === 'pad' || waiting || x < 8 || x > (mode === 'controls' ? W - 8 : 132) || y < 26) return -1;
       const k = Math.floor((y - 26) / 13);
       if (k >= VISIBLE) return -1;
       const i = (mode === 'controls' ? ctrl.scroll : m.scroll) + k;
@@ -128,10 +164,25 @@ export function systemTab(m) {
     hover: (i) => { if (mode === 'controls') ctrl.cursor = i; else m.cursor = i; },
     clickKey: (i) => (mode === 'main' && SLIDERS.includes(rows[i]) ? BINDINGS.right[0] : BINDINGS.interact[0]),
     input() {
-      if (mode === 'controls') ctrlInput(); else mainInput();
+      if (mode === 'controls') ctrlInput(); else if (mode === 'pad') padInput(); else mainInput();
     },
     render() {
       const g = m.bg;
+      if (mode === 'pad') {
+        const info = getPadInfo();
+        m.help = waitingPad ? 'PRESS A BUTTON ON THE CONTROLLER  (ESC CANCELS)' : 'E LEARN BUTTON  ESC BACK';
+        panel(g, 6, 22, W - 12, 134, 2);
+        m.T(12, 26, info.id ? info.id.slice(0, 44) : 'NO CONTROLLER SEEN - PRESS A BUTTON ON IT', info.id ? 13 : 11);
+        m.T(12, 35, info.id ? 'MODE: ' + info.mapping.toUpperCase() + '   LIVE: ' + (info.live.map(niceId).join(' ').slice(0, 30) || '-') : 'PAIR IT IN YOUR SYSTEM SETTINGS FIRST', 4);
+        g.fillStyle(C[3]); g.fillRect(8, 44, W - 16, 1);
+        PAD_ACTIONS.concat([['reset', 'RESET TO DEFAULTS']]).slice(pc.scroll, pc.scroll + 7).forEach(([code, name], k) => {
+          const i = pc.scroll + k, y = 48 + k * 14;
+          if (i === pc.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, W - 16, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
+          m.T(14, y, name, i === pc.cursor ? 6 : 5);
+          if (code !== 'reset') { const t = waitingPad === code ? '...' : boundTo(code); m.T(W - 14 - textW(t), y, t, waitingPad === code ? 13 : 15); }
+        });
+        return;
+      }
       if (mode === 'controls') {
         m.help = waiting ? 'PRESS THE NEW KEY  (ESC CANCELS)' : 'E REBIND  ESC BACK';
         panel(g, 6, 22, W - 12, 134, 2);

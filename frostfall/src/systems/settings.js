@@ -11,6 +11,7 @@ export const settings = {
   holdChain: true,        // holding the sword key keeps chaining the combo
   largeUi: false,         // bigger HUD bars and text
   slot: 1,                // active save slot (1-3)
+  padMap: null,           // learned controller map { inputId: keyCode } (null = defaults)
   keys: {},               // custom key bindings { action: [codes] }
 };
 try { Object.assign(settings, JSON.parse((typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || '{}')); } catch { /* ignore */ }

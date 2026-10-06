@@ -44,7 +44,7 @@ changing weather affect stealth; villagers go indoors at night.
 | I / O / M / Esc | Pack and perks / journal / map / pause menu |
 | Mouse (option) | click = sword, right-click = bow, middle = spell, wheel = swap, aims at the pointer |
 | Touch | on-screen stick and buttons on touch devices |
-| Gamepad | stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, Start pause |
+| Gamepad | left stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, R3 lock-on, Back map, Start pause; right stick up = heavy attack, down = switch arrows, left / right = health / mana potion. Any layout (8BitDo in X-input, Switch or D-input mode) can be re-learned in **Pause > System > Controller** |
 
 All keyboard keys can be rebound in **Pause > System > Controls**.
 

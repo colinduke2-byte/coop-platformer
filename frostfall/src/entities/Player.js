@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { keys } from '../systems/keys.js';
+import { keys, rumble } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
@@ -63,6 +63,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   perfectDodge(attacker) {
     const sc = this.scene;
+    rumble(120, 0.4, 0.6);
     this.lastPerfect = sc.t; this.counterT = P.perfect.counter;
     S.sp = Math.min(S.maxSp, S.sp + P.perfect.refund);
     sc.slowmo(P.perfect.slow, P.perfect.slowMs);
@@ -505,7 +506,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
     const n2 = norm(this.x - sx, this.y - sy);
     this.body.setVelocity(n2.x * knock, n2.y * knock);
-    if (!blocked) sfx.play('hurt');
+    if (!blocked) { sfx.play('hurt'); rumble(170, 0.8, 0.4); } else rumble(70, 0.3, 0.2);
     sc.fx.text(this.x, this.y - 10, String(taken), 11);
     if (S.hp < S.maxHp * 0.4) tip('potion');
     sc.fx.puff(this.x, this.y, 11, 5, 45, 0.35);
@@ -522,7 +523,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   onParry(attacker, sx, sy) {
     const sc = this.scene;
-    sfx.play('parry');
+    sfx.play('parry'); rumble(90, 0.5, 0.5);
     this.invuln = 0.35;
     sc.fx.ring(this.x + this.face.x * 9, this.y + 3 + this.face.y * 9, 0.5, 0.3, 'ring', 0xeaf2f8);
     sc.fx.text(this.x, this.y - 14, 'PARRY!', 13, 0.8);
