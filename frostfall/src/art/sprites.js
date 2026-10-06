@@ -96,6 +96,7 @@ export const STYLES = {
   conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 },
   hilda:  { skin: 10, hair: 12, body: 9, trim: 5, legs: 2, boots: 0, chest: 4, beard: null },
   ragna:  { skin: 10, hair: 13, hood: 8, body: 8, trim: 9, legs: 7, boots: 9, chest: 10 },
+  trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };

@@ -48,3 +48,18 @@ export function loadInto(data) {
   S.equip = { ...fresh.equip, ...S.equip };
   S.quests = { ...fresh.quests, ...S.quests };
 }
+
+// New Game+: keep your character (level, skills, perks, gear, gold) and start a fresh, harder world.
+export function startNgPlus() {
+  const keep = {
+    skills: S.skills, perks: S.perks, perkPoints: S.perkPoints, charLevel: S.charLevel, skillUps: S.skillUps,
+    bonusHp: S.bonusHp, bonusMp: S.bonusMp, bonusSp: S.bonusSp, inv: S.inv, equip: S.equip, upgrades: S.upgrades, enchants: S.enchants,
+    gold: S.gold, arrows: S.arrows, gen: S.gen, lore: S.lore, tips: S.tips, kills: S.kills, seen: S.seen, spell: S.spell, ngPlus: (S.ngPlus || 0) + 1,
+    flags: { introDone: true, tutDone: true, alchemy: S.flags.alchemy, houseBought: S.flags.houseBought, furn: S.flags.furn },
+  };
+  const fresh = newState();
+  for (const k of Object.keys(S)) delete S[k];
+  Object.assign(S, fresh, JSON.parse(JSON.stringify(keep)));
+  S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt;
+  S.hp = 1e9; S.mp = 1e9; S.sp = 1e9;
+}

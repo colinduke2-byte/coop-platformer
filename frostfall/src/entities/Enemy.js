@@ -28,6 +28,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
     this.tier = spec.tier || 0;
     this.poise = 0;
+    const ng = S.ngPlus || 0;
+    if (ng > 0 && !cfg.title) { this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.15 * ng)) }; this.maxHp = Math.round(this.maxHp * (1 + 0.4 * ng)); }
     this.camp = spec.camp || null;
     this.takenMul = 1;
     // regions further from the start hit harder and last longer

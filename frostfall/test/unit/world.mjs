@@ -70,4 +70,17 @@ t('generated gear: rarity decides affix count, higher tiers are stronger', () =>
   const avg = (tier) => { let s = 0, c = 0; const R2 = rng(7); for (let i = 0; i < 300; i++) { const it = genItem(tier, R2); if (it.dmg) { s += it.dmg; c++; } } return s / c; };
   assert.ok(avg(3) > avg(0) * 1.4, 'tier scaling');
 });
+import { startNgPlus, resetState } from '../../src/systems/state.js';
+t('startNgPlus: character carries over, quests and kills reset', () => {
+  resetState();
+  S.charLevel = 7; S.gold = 321; S.skills.archery.lvl = 9; S.perks.keenedge = true; S.inv.iron_sword = 2; S.flags.ending = 'give'; S.flags.bossDead = true;
+  S.killed = { 'forest:3': -1 }; S.bounty = { camp0: true }; S.quests.wolves.status = 'done'; const oldSeed = S.seed;
+  startNgPlus();
+  assert.equal(S.ngPlus, 1);
+  assert.equal(S.charLevel, 7); assert.equal(S.gold, 321); assert.equal(S.skills.archery.lvl, 9); assert.ok(S.perks.keenedge); assert.equal(S.inv.iron_sword, 2);
+  assert.equal(S.flags.ending, undefined); assert.equal(S.flags.bossDead, undefined);
+  assert.deepEqual(S.killed, {}); assert.deepEqual(S.bounty, {}); assert.equal(S.quests.wolves.status, 'inactive');
+  assert.notEqual(S.seed, oldSeed);
+  startNgPlus(); assert.equal(S.ngPlus, 2);
+});
 console.log(`${n} world tests passed`);

@@ -3,8 +3,9 @@ import { W, H, BINDINGS } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
-import { S, resetState } from '../systems/state.js';
-import { anySave, loadGame, listSaves, fmtTime } from '../systems/save.js';
+import { S, resetState, startNgPlus } from '../systems/state.js';
+import { recalc } from '../systems/stats.js';
+import { anySave, loadGame, listSaves, fmtTime, readSlot } from '../systems/save.js';
 import { MAPS } from '../data/maps.js';
 import { music, sfx } from '../audio/sfx.js';
 
@@ -26,8 +27,10 @@ export default class TitleScene extends Phaser.Scene {
     const t1 = txt(this, W / 2, 24, 'FROSTFALL', 6).setScale(4).setOrigin(0.5, 0);
     const t2 = txt(this, 0, 60, 'A TALE OF THE FROZEN NORTH', 4);
     t2.x = Math.floor((W - t2.width) / 2);
-    this.add.rectangle(W / 2, 112, 112, 40, 0x0b0e1a, 0.55);
-    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }];
+    this.add.rectangle(W / 2, 112 + (this.items?.length > 2 ? 7 : 0), 112, 40, 0x0b0e1a, 0.55);
+    const done = listSaves().find((x) => readSlot(x.slot)?.data.s.flags?.ending);
+    this.ngSlot = done ? done.slot : null;
+    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : [])];
     this.sel = this.items[1].off ? 0 : 1;
     this.texts = this.items.map((it, i) => {
       const t = txt(this, 0, 98 + i * 14, it.label, 6);
@@ -98,7 +101,9 @@ export default class TitleScene extends Phaser.Scene {
     if (keys.pressed('interact') || keys.pressed('roll')) {
       sfx.play('select');
       this.go = true;
-      if (this.items[this.sel].id === 'new') {
+      if (this.items[this.sel].id === 'ng') {
+        if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else this.go = false;
+      } else if (this.items[this.sel].id === 'new') {
         resetState();
         this.scene.start('Intro');
       } else {

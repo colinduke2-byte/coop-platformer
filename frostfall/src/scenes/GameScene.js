@@ -352,6 +352,76 @@ export default class GameScene extends Phaser.Scene {
     return true;
   }
 
+  // ---- random events while exploring the open world
+  worldEvents(dt) {
+    if (!this.def.stream || this.player.mode !== 'free' || ui.modal) return;
+    this.eventT = (this.eventT ?? 70 + Math.random() * 60) - dt;
+    // the trader packs up after a while
+    if (this.trader) {
+      this.trader.life -= dt;
+      if (this.trader.life <= 0 || Math.hypot(this.trader.npc.x - this.player.x, this.trader.npc.y - this.player.y) > 520) this.removeTrader();
+    }
+    if (this.eventT > 0) return;
+    this.eventT = 150 + Math.random() * 150;
+    if (this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) return;
+    const r = Math.random();
+    if (r < 0.5 || this.trader) this.spawnAmbush();
+    else this.spawnTrader();
+  }
+
+  freeSpotNear(minD, maxD) {
+    for (let i = 0; i < 40; i++) {
+      const a = Math.random() * Math.PI * 2, d = minD + Math.random() * (maxD - minD);
+      const x = this.player.x + Math.cos(a) * d, y = this.player.y + Math.sin(a) * d;
+      if (!this.solidAt(x, y) && !this.solidAt(x + 8, y) && !this.solidAt(x - 8, y) && !this.solidAt(x, y + 8)) return { x, y };
+    }
+    return null;
+  }
+
+  spawnAmbush() {
+    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const night = this.nightness() > 0.5;
+    const kinds = night ? ['draugr', 'wight', 'draugr', 'reaver'] : ['wolf', 'bandit', 'wolf', 'fencer'];
+    const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
+    let made = 0;
+    for (let i = 0; i < n; i++) {
+      const p = this.freeSpotNear(95, 140); if (!p) continue;
+      const k = kinds[Math.min(kinds.length - 1, Math.floor(Math.random() * (1 + tier)))];
+      const e = this.addEnemy(k, p.x, p.y, { tier, roam: true });
+      e.alert(true); made++;
+    }
+    if (made) { bus.emit('toast', night ? 'THE DEAD ARE RESTLESS!' : 'AMBUSH!', 11); sfx.play('alert'); music.stinger(); }
+  }
+
+  spawnTrader() {
+    const p = this.freeSpotNear(80, 130); if (!p) return;
+    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const npc = new Npc(this, p.x, p.y, 'trader');
+    npc.home = { x: p.x, y: p.y };
+    this.npcs.push(npc); this.interactables.push(npc);
+    if (!this.npcBodies) { this.npcBodies = this.physics.add.staticGroup(); this.physics.add.collider(this.player, this.npcBodies); }
+    this.npcBodies.add(npc);
+    this.traderWares = [0, 1, 2].map((i) => {
+      const id = makeGenItem(tier + (i === 2 ? 1 : 0), Math.random, i === 2 ? 1 : null);
+      return { id, price: Math.round(ITEMS[id].value * 1.8), once: true };
+    });
+    this.traderWares.push({ id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 12, n: 8, name: 'Arrows x8' });
+    this.trader = { npc, life: 200 };
+    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T) };
+    bus.emit('toast', 'A TRAVELLING TRADER IS NEARBY', 13); sfx.play('quest');
+    this.fx.puff(p.x, p.y, 13, 8, 30, 0.5);
+  }
+
+  removeTrader() {
+    const t = this.trader; if (!t) return;
+    this.trader = null;
+    const npc = t.npc;
+    this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
+    this.fx.puff(npc.x, npc.y, 13, 8, 30, 0.5);
+    npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
+    if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
+  }
+
   // Brief bullet time (perfect dodges).
   slowmo(scale, ms) { this.slowScale = scale; this.slowT = ms / 1000; this.physics.world.timeScale = 1 / scale; this.tweens.timeScale = scale; }
 
@@ -619,6 +689,7 @@ export default class GameScene extends Phaser.Scene {
     this.t += dt;
     this.player.update(dt);
     updateTutorial(this, dt);
+    this.worldEvents(dt);
     if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
     if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
     for (const p of this.plates) p.update(this.player);

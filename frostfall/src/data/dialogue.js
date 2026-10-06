@@ -1,6 +1,6 @@
 // NPC scripts: async functions. `say` shows typewriter text, `choose` returns the picked index.
 import { S } from '../systems/state.js';
-import { say, choose } from '../systems/dialogue.js';
+import { say, choose, dialogue } from '../systems/dialogue.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { ITEMS } from './items.js';
@@ -288,3 +288,17 @@ NPC_DEFS.hilda = { name: 'HILDA', tex: 'spr_hilda' };
 NPC_DEFS.ragna = { name: 'RAGNA', tex: 'spr_ragna' };
 NPC_DEFS.guard = { name: 'GUARD HALDOR', tex: 'spr_guard' };
 NPC_DEFS.child = { name: 'ASTA', tex: 'spr_child' };
+
+// ---- the travelling trader (a random world event): rare gear at a price
+NPC_DEFS.trader = { name: 'TRADER', tex: 'spr_trader' };
+SCRIPTS.trader = async function trader() {
+  const T = 'Trader';
+  const sc = dialogue.hud.scene.get('Game');
+  await say(T, S.run.kills > 40 ? 'You have the look of someone who has been busy. Care to spend what you took?' : 'Roads are dangerous, friend. My prices are not. Much.');
+  for (;;) {
+    const c = await choose(['Browse wares', 'Sell', 'Leave']);
+    if (c === 0) await buyMenu(T, sc.traderWares || []);
+    else if (c === 1) await sellMenu(T);
+    else { await say(T, 'Safe roads.'); return; }
+  }
+};
