@@ -9,7 +9,6 @@ import { makeGenItem } from '../systems/genloot.js';
 import { hash } from '../util.js';
 import { completeContract } from '../data/contracts.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
-const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
 import { MAPS } from '../data/maps.js';
 import { ITEMS } from '../data/items.js';
 import { S, resetState } from '../systems/state.js';
@@ -30,8 +29,6 @@ import Grimfang from '../entities/Grimfang.js';
 import RimeWyrm from '../entities/RimeWyrm.js';
 import { Warlord, Tidemother, AshenRoot, LongWinter, EmberDragon } from '../entities/Guardians.js';
 import { HEART_SITE, heartsHeld, HEART_ORDER } from '../data/hearts.js';
-const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter, dragon: EmberDragon };
-const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead', dragon: 'dragonDead' };
 import { foodTick } from '../systems/food.js';
 import { elixirTick } from '../systems/elixir.js';
 import { maybeRelic, grantRelic } from '../systems/relics.js';
@@ -54,7 +51,12 @@ import { fogMethods } from '../world/fog.js';
 import { lootMethods } from '../world/loot.js';
 import { zoneMethods } from '../world/zones.js';
 import { lightingMethods, hourOf, isNightHour } from '../world/lighting.js';
+import { TILE_DOOR, TILE_FLOOR, BOSS_CLASS, BOSS_FLAG } from '../world/sceneConsts.js';
 import { ambientMethods } from '../world/ambient.js';
+import { arenaMethods } from '../world/arenaRun.js';
+import { companionMethods } from '../world/companions.js';
+import { killMethods } from '../world/kills.js';
+import { eventMethods } from '../world/events.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -357,138 +359,6 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // ---- the Hollow Arena
-  startArena(mode = 'classic') {
-    S.boons = {}; recalc();
-    this.arena = { active: true, wave: 1, t: 3, foes: [], mode, offering: false };
-    bus.emit('toast', 'THE TRIAL BEGINS!', 13); sfx.play('roar');
-  }
-  endArena(yield_ = false) {
-    if (!this.arena) return;
-    const done = this.arena.cleared || 0;
-    this.arena.active = false; S.boons = {}; recalc();
-    for (const e of this.arena.foes) if (e.active && !e.dead) e.despawn?.();
-    this.arena.foes = [];
-    bus.emit('toast', yield_ ? `YOU YIELD AT WAVE ${done}` : `WAVES CLEARED: ${done}`, 13);
-  }
-  // Between waves of the Boon Trial and the Gauntlet: pick one of three boons, which last until the trial ends.
-  offerBoons(a) {
-    a.offering = true;
-    const pool = BOON_IDS.slice(), opts = [];
-    while (opts.length < 3) opts.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-    runScript(async () => {
-      const c = await choose(opts.map((id) => `${BOONS[id].name}: ${BOONS[id].desc}`));
-      const id = opts[c] || opts[0];
-      S.boons = { ...(S.boons || {}), [id]: ((S.boons || {})[id] || 0) + 1 };
-      recalc();
-      if (BOONS[id].waveHeal || S.boons.lifeblood) S.hp = Math.min(S.maxHp, S.hp + S.maxHp * (BOONS.lifeblood.waveHeal * (S.boons.lifeblood || 0)));
-      bus.emit('toast', `BOON: ${BOONS[id].name.toUpperCase()}`, 14); sfx.play('quest');
-      a.offering = false; a.t = 3;
-    });
-  }
-
-  arenaTick(dt) {
-    const a = this.arena;
-    if (!a || !a.active || this.player.mode === 'dead') return;
-    a.foes = a.foes.filter((e) => e.active && !e.dead);
-    if (a.foes.length || a.offering) return;
-    if (a.cleared !== a.wave - 1) {
-      // the previous wave just fell
-      if (a.wave > 1) {
-        const w = a.wave - 1;
-        S.arena ||= { best: 0 };
-        S.arena.best = Math.max(S.arena.best || 0, w);
-        S.arena.modes = S.arena.modes || {}; S.arena.modes[a.mode] = Math.max(S.arena.modes[a.mode] || 0, w);
-        const gold = Math.round((20 + w * 12) * modMul('goldMul') * (a.mode === 'gauntlet' ? 1.4 : 1));
-        S.gold += gold;
-        bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
-        if (w % 3 === 0 || w % 5 === 0) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
-        if (w % 5 === 0) maybeRelic(this, 0.35);
-      }
-      a.cleared = a.wave - 1;
-      a.t = 4;
-      if (a.mode !== 'classic' && a.wave > 1) { this.offerBoons(a); return; }
-    }
-    a.t -= dt;
-    if (a.t > 0) return;
-    const foes = arenaWave(a.wave, Math.random, a.mode);
-    const pts = [[4, 11], [27, 11], [16, 4], [8, 5], [24, 5], [5, 17], [26, 17], [16, 8]];
-    foes.forEach((f, i) => {
-      const [tx, ty] = pts[i % pts.length];
-      const e = this.addEnemy(f.kind, tx * 16 + 8, ty * 16 + 8, { tier: f.tier, elite: f.elite });
-      e.alert(true);
-      a.foes.push(e);
-    });
-    bus.emit('toast', foes.some((f) => f.elite) ? `WAVE ${a.wave}: A CHAMPION APPEARS!` : `WAVE ${a.wave}`, foes.some((f) => f.elite) ? 11 : 15);
-    sfx.play('roar');
-    a.wave++;
-  }
-
-  // Your companion: the hound or the bear cub (S.pet picks which; the whistle swaps them).
-  spawnHound(force = false) {
-    const want = S.pet === 'cub' && S.flags.cubOwned ? 'cub' : S.flags.houndOwned ? 'hound' : S.flags.cubOwned ? 'cub' : null;
-    if (!want) return;
-    if (this.hound && (force || this.hound.kind !== want)) { this.hound.destroy(); this.hound = null; }
-    if (this.hound) return;
-    this.hound = new Hound(this, this.player.x + 12, this.player.y + 4, want);
-    this.physics.add.collider(this.hound, this.layer);
-  }
-  swapPet() {
-    if (!(S.flags.houndOwned && S.flags.cubOwned)) return false;
-    S.pet = S.pet === 'cub' ? 'hound' : 'cub';
-    this.spawnHound(true);
-    bus.emit('toast', S.pet === 'cub' ? 'THE CUB FOLLOWS YOU' : 'THE HOUND FOLLOWS YOU', 15); sfx.play('select');
-    return true;
-  }
-
-  spawnFollower() {
-    if (this.follower) return;
-    this.follower = new Follower(this, this.player.x - 14, this.player.y + 2);
-    this.physics.add.collider(this.follower, this.layer);
-  }
-
-  // Companion and side-quest bookkeeping, twice a second at most.
-  questTick(dt) {
-    this.qT = (this.qT || 0) - dt;
-    if (this.qT > 0) return;
-    this.qT = 1;
-    const p = this.player;
-    // the first time you stand near giant hoofprints
-    if (!S.flags.sawTracks && this.trackPts?.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 36)) { S.flags.sawTracks = true; bus.emit('toast', 'HUGE TRACKS... SOMETHING ENORMOUS WALKS THESE ROADS', 13); tip('tracks'); }
-    this.scoreT = (this.scoreT || 0) + 1; if (S.daily && this.scoreT % 15 === 0) submitScore();
-    const Q = S.quests;
-    if (Q.trail.status === 'active' && S.flags.rb_elk) { Q.trail.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); sfx.play('quest'); }
-    if (Q.toll.status === 'active' && S.flags.rb_troll) { Q.toll.status = 'ready'; bus.emit('toast', 'QUEST READY: SHOW HILDA', 13); sfx.play('quest'); }
-    // Ragna lays her company to rest once the Warlord is down and she is with you
-    if (Q.company.status === 'active' && S.flags.warlordDead && S.follower && this.follower && !ui.modal && this.player.mode === 'free') this.companionScene();
-  }
-
-  companionScene() {
-    S.quests.company.status = 'ready';
-    runScript(async () => {
-      const R = 'Ragna';
-      await say(R, 'Hrolf. You old fool. You held the gate for a hundred nights and did not once ask us to stay.');
-      await say(R, 'Forty names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
-      await say(R, 'You gave me that, Dreamer. Take the banner. I do not want to see it again. And my bow... my bow is yours, for as long as you will have it.');
-      addItem('ironwatch_banner');
-      S.flags.ragnaVeteran = true;
-      finishQuest('company');
-      bus.emit('toast', 'RAGNA FIGHTS BETTER NOW: SHE SHOOTS TWICE', 13);
-    });
-  }
-
-  // The creature that killed you last waits where you fell (stronger each time it wins).
-  summonNemesis() {
-    const n = S.nemesis;
-    if (!ENEMIES[n.kind]) { delete S.nemesis; return; }
-    let x = n.x, y = n.y;
-    for (let k = 0; k < 24 && (this.solidAt(x, y) || this.solidAt(x + 8, y) || this.solidAt(x, y + 8)); k++) { x = n.x + (Math.random() - 0.5) * 12 * (1 + k); y = n.y + (Math.random() - 0.5) * 12 * (1 + k); }
-    const spec = { kind: n.kind, tier: Math.min(3, (n.tier || 0) + 1), elite: true, nemesis: true, kills: n.kills, roam: true };
-    this.pend.push({ spec, key: null, wx: x, wy: y, live: null, kind: n.kind });
-    S.flags.waypoint = { map: 'forest', x: Math.floor(x / T), y: Math.floor(y / T) };
-    this.time.delayedCall(1800, () => bus.emit('toast', `YOUR NEMESIS WAITS: ${ENEMIES[n.kind].name.toUpperCase()}`, 11));
-  }
-
   // spec: { tier, elite, champion, camp }; key marks a streamed world spawn (so kills persist)
   addEnemy(kind, wx, wy, spec = {}, key = null) {
     if (typeof spec === 'number') spec = {};
@@ -530,205 +400,13 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // Campfires you have found can be travelled to from the map.
-  discoverFires() {
-    S.flags.fires = S.flags.fires || {};
-    for (const f of this.fires) {
-      if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
-      S.flags.fires[f.key] = true;
-      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('quest');
-    }
-  }
-
-  fastTravel(f) {
-    if (this.leaving || this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) { bus.emit('toast', 'NOT WITH ENEMIES NEAR', 11); return false; }
-    this.leaving = true;
-    const cam = this.cameras.main;
-    cam.fadeOut(350, 11, 14, 26);
-    cam.once('camerafadeoutcomplete', () => {
-      this.player.setPosition(f.x, f.y + 16); this.player.body.setVelocity(0, 0); this.player.mode = 'free'; this.player.target = null;
-      this.pend.forEach((p) => { if (p.live && !p.live.alerted) { p.live.despawn(); p.live = null; } });
-      this.streamTick();
-      cam.fadeIn(450, 11, 14, 26); this.leaving = false;
-      bus.emit('toast', 'FAST TRAVEL', 15);
-    });
-    return true;
-  }
-
-  summonSpiritWolf(pl) {
-    this.spirit?.fade();
-    const w = new SpiritWolf(this, pl.x + 14, pl.y + 2, Math.round(TUNE.player.shouts ? 9 * bonus.spell() : 9));
-    this.physics.add.collider(w, this.layer);
-    this.fx.puff(w.x, w.y, 15, 10, 40, 0.5);
-    this.spirit = w;
-  }
-
-  // The Long Winter has fallen: decide what becomes of it.
-  startFinale() {
-    runScript(async () => {
-      await say('The Winter', 'You have broken the chains the kings forged. I was cold before the first star, and I will be cold after the last.');
-      await say('The Winter', 'But hear me, little Dreamer. Four Hearts beat in your hands. You may release me, bind me again, or take my crown. Choose.');
-      const c = await choose(['Let it go. Let the Winter end.', 'Bind it again, with you as warden.', 'Take the crown. Rule the cold.']);
-      const kind = ['thaw', 'warden', 'crown'][c];
-      S.flags.finale = kind; S.flags.ending = S.flags.ending || 'give';
-      S.quests.hearts.status = 'done';
-      bus.emit('ending', kind);
-    });
-  }
-
-  // ---- random events while exploring the open world
-  worldEvents(dt) {
-    if (!this.def.stream || this.player.mode !== 'free' || ui.modal) return;
-    this.eventT = (this.eventT ?? 70 + Math.random() * 60) - dt;
-    // the trader packs up after a while
-    if (this.trader) {
-      this.trader.life -= dt;
-      if (this.trader.life <= 0 || Math.hypot(this.trader.npc.x - this.player.x, this.trader.npc.y - this.player.y) > 520) this.removeTrader();
-    }
-    if (this.eventT > 0) return;
-    this.eventT = 150 + Math.random() * 150;
-    if (this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) return;
-    const r = Math.random();
-    if (r < 0.5 || this.trader) this.spawnAmbush();
-    else this.spawnTrader();
-  }
-
-  freeSpotNear(minD, maxD) {
-    for (let i = 0; i < 160; i++) {
-      const wide = i > 80 ? 0.5 : 1;             // dense woodland: after 80 misses, look closer in
-      const a = Math.random() * Math.PI * 2, d = minD * wide + Math.random() * (maxD * wide - minD * wide);
-      const x = this.player.x + Math.cos(a) * d, y = this.player.y + Math.sin(a) * d;
-      if (!this.solidAt(x, y) && !this.solidAt(x + 8, y) && !this.solidAt(x - 8, y) && !this.solidAt(x, y + 8)) return { x, y };
-    }
-    return null;
-  }
-
-  spawnAmbush() {
-    const tier = tierAt(this.player.x / T, this.player.y / T);
-    const night = this.nightness() > 0.5;
-    const kinds = night ? ['draugr', 'wight', 'draugr', 'reaver'] : ['wolf', 'bandit', 'wolf', 'fencer'];
-    const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
-    let made = 0;
-    for (let i = 0; i < n; i++) {
-      const p = this.freeSpotNear(95, 140); if (!p) continue;
-      const k = kinds[Math.min(kinds.length - 1, Math.floor(Math.random() * (1 + tier)))];
-      const e = this.addEnemy(k, p.x, p.y, { tier, roam: true });
-      e.alert(true); made++;
-    }
-    if (made) { bus.emit('toast', night ? 'THE DEAD ARE RESTLESS!' : 'AMBUSH!', 11); sfx.play('alert'); music.stinger(); }
-  }
-
-  spawnTrader() {
-    const p = this.freeSpotNear(80, 130); if (!p) return;
-    const tier = tierAt(this.player.x / T, this.player.y / T);
-    const npc = new Npc(this, p.x, p.y, 'trader');
-    npc.home = { x: p.x, y: p.y };
-    this.npcs.push(npc); this.interactables.push(npc);
-    if (!this.npcBodies) { this.npcBodies = this.physics.add.staticGroup(); this.physics.add.collider(this.player, this.npcBodies); }
-    this.npcBodies.add(npc);
-    this.traderWares = [0, 1, 2].map((i) => {
-      const id = makeGenItem(tier + (i === 2 ? 1 : 0), Math.random, i === 2 ? 1 : null);
-      return { id, price: Math.round(ITEMS[id].value * 1.8), once: true };
-    });
-    this.traderWares.push({ id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 12, n: 8, name: 'Arrows x8' });
-    this.trader = { npc, life: 200 };
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T) };
-    bus.emit('toast', 'A TRAVELLING TRADER IS NEARBY', 13); sfx.play('quest');
-    this.fx.puff(p.x, p.y, 13, 8, 30, 0.5);
-  }
-
-  removeTrader() {
-    const t = this.trader; if (!t) return;
-    this.trader = null;
-    const npc = t.npc;
-    this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
-    this.fx.puff(npc.x, npc.y, 13, 8, 30, 0.5);
-    npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
-    if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
-  }
-
   // Brief bullet time (perfect dodges).
   slowmo(scale, ms) { this.slowScale = scale; this.slowT = ms / 1000; this.physics.world.timeScale = 1 / scale; this.tweens.timeScale = scale; }
-
-  // Persist a world kill; clearing every enemy of a camp pays a bounty.
-  markKilled(en) {
-    const sp = en.spec || {};
-    if (en.spawnKey) markGone(en.spawnKey, !!(sp.camp || sp.champion || sp.elite));
-    S.run.kills++;
-    if (en.champion) S.run.champions++;
-    if (sp.nemesis) this.onNemesisDown(en);
-    if (sp.roamRoute) this.onWorldBossDown(en);
-    if (sp.mother) this.onMotherDown(en);
-    if (sp.camp && !S.bounty[sp.camp]) {
-      const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
-      if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
-    }
-  }
-
-  // A world boss falls: a legendary item, gold and a trophy flag.
-  onWorldBossDown(en) {
-    const id = en.spec.rid;
-    S.flags['rb_' + id] = true;
-    S.gold += 150 + 100 * (en.tier || 0);
-    this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((en.tier || 0) + 1, Math.random, 3) }));
-    bus.emit('toast', `${en.displayName.split(',')[0].toUpperCase()} FALLS`, 13); sfx.play('quest');
-    this.time.delayedCall(900, () => grantRelic(this));
-    this.shake(500, 0.01);
-  }
-
-  // The mother bear dies: any cubs still alive are orphaned and can be adopted.
-  onMotherDown(en) {
-    const cubs = this.enemies.getChildren().filter((c) => c.spec?.cub && c.spec.camp === en.spec.camp && !c.dead);
-    if (!cubs.length) return;
-    const c = cubs[0];
-    for (const x of cubs) { if (x.spawnKey) markGone(x.spawnKey, true); x.despawn?.(); }
-    if (S.flags.cubOwned) return;
-    this.interactables.push(new OrphanCub(this, c.x, c.y));
-    bus.emit('toast', 'A CUB WHIMPERS... (E TO ADOPT)', 13);
-  }
-
-  onNemesisDown(en) {
-    const k = S.nemesis?.kills || 1, tier = en.tier || 0;
-    delete S.nemesis;
-    if (S.flags.waypoint && S.flags.waypoint.map === 'forest') delete S.flags.waypoint;
-    S.nemesisSlain = (S.nemesisSlain || 0) + 1;
-    S.gold += 80 + 60 * k + 40 * tier;
-    this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem(tier + 1, Math.random, k >= 3 ? 3 : 2) }));
-    bus.emit('toast', 'NEMESIS VANQUISHED', 13); sfx.play('quest');
-    maybeRelic(this, 0.4);
-  }
-
-  // A barrow champion falling counts as clearing that barrow.
-  onChampionDown(en) {
-    if (!/^barrow\d/.test(this.mapId) || !en.champion) return;
-    S.run.barrows++;
-    completeContract(this.mapId, this);
-    bus.emit('toast', 'THE BARROW GUARDIAN FALLS', 13);
-  }
-
-  payBounty(id, tier) {
-    if (S.bounty[id]) return;
-    S.bounty[id] = true;
-    const kind = (this.built.entities.find((x) => x.t === 'bounty' && x.id === id) || {}).kind || 'camp';
-    const gold = Math.round((40 + 30 * tier) * (kind === 'champion' ? 1.6 : 1));
-    S.gold += gold; S.run.camps++;
-    completeContract(id, this);
-    this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(tier + (kind === 'champion' ? 1 : 0), Math.random, kind === 'champion' ? 2 : null) }));
-    bus.emit('toast', `${kind.toUpperCase()} CLEARED  +${gold} GOLD`, 13);
-    sfx.play('levelup'); this.fx.ring(this.player.x, this.player.y + 4, 1.4, 0.7, 'ring', 0xf4d460);
-    if (kind === 'camp' || kind === 'den') this.player.gainXp('oneHanded', 12);
-  }
 
   // ------------------------------------------------------------ helpers
   hitStop(s) { this.hitStopT = Math.max(this.hitStopT, s); }
   shake(ms, amt) { if (settings.shake > 0) this.cameras.main.shake(ms, amt * settings.shake); }
   flashScreen(ms = 90, r = 234, g = 242, b = 248) { if (settings.flashes) this.cameras.main.flash(ms, r, g, b, true); }
-
-
-
-
-
-
 
   // Furniture bought for the cottage (a prop, plus a working station for the cauldron and anvil).
   addFurniture(f) {
@@ -785,22 +463,7 @@ export default class GameScene extends Phaser.Scene {
     if (closed) { sfx.play('door'); this.shake(300, 0.01); }
   }
 
-  summonAdds(boss) {
-    for (const [x, y] of [[9, 5], [22, 5]]) {
-      const en = this.addEnemy('draugr', (x + 0.5) * T, (y + 0.5) * T);
-      en.alert(true);
-      this.fx.puff(en.x, en.y, 15, 10, 50, 0.5);
-    }
-    sfx.play('nova');
-  }
-
   onBossDeath(boss) { boss.victory(this); }
-
-  onFirstAlert(en) {
-    tip('sneak');
-    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear', 'elk', 'troll', 'bearcub'].includes(en.kind)) tip(en.kind);
-    if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
-  }
 
   // Pick the song for the situation: interior / night / zone / boss, plus the combat layer.
   updateMusic(dt) {
@@ -816,25 +479,6 @@ export default class GameScene extends Phaser.Scene {
     if (fight) this.lastCombat = this.t;
     music.setIntensity(fight && !bossOn);
   }
-
-  summonWolves(boss) {
-    for (const [dx, dy] of [[-46, 18], [46, 18], [0, -40]]) {
-      const x = Phaser.Math.Clamp(boss.x + dx, 40, this.worldW - 40), y = Phaser.Math.Clamp(boss.y + dy, 40, this.worldH - 40);
-      if (this.solidAt(x, y)) continue;
-      const en = this.addEnemy('wolf', x, y);
-      en.alert(true);
-      this.fx.puff(x, y, 5, 8, 50, 0.4);
-    }
-  }
-
-  // Arena reacts when the boss enrages: red light, harsher darkness.
-  arenaPhase(n) {
-    if (n === 2) {
-      this.ambientOverride = { color: 0x2a0710, alpha: Math.max(0.45, this.def.dim || 0) };
-      for (const l of this.lights) l.l.setTint(C[11]);
-    }
-  }
-
 
   changeMap(to, spawn, sound = 'door') {
     if (this.leaving) return;
@@ -874,17 +518,6 @@ export default class GameScene extends Phaser.Scene {
       g.fillStyle(e.champion ? C[13] : e.elite ? C[14] : C[11]); g.fillRect(x, y, Math.max(1, Math.round((w * e.hp) / e.maxHp)), 2);
       if (pz) { g.fillStyle(C[1]); g.fillRect(x, y + 3, w, 1); g.fillStyle(e.staggerT > 0 ? C[6] : C[13]); g.fillRect(x, y + 3, e.staggerT > 0 ? w : Math.min(w, Math.round(w * e.poise / (e.maxHp * 0.42))), 1); }
     }
-  }
-
-
-  applyEnding() {
-    const e = S.flags.ending;
-    if (this.endOverlay) { this.endOverlay.destroy(); this.endOverlay = null; }
-    if (!e || this.mapId !== 'village') return;
-    if (e === 'give') {
-      this.endOverlay = this.add.rectangle(0, 0, 320, 180, 0xf4a040, 0.14).setOrigin(0).setScrollFactor(0).setDepth(99700).setBlendMode(Phaser.BlendModes.ADD);
-      this.snow?.destroy(); this.snow = null;
-    } else this.endOverlay = this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, 0.34).setOrigin(0).setScrollFactor(0).setDepth(99700);
   }
 
   delay(ms) { return new Promise((r) => this.time.delayedCall(ms, r)); }
@@ -1053,18 +686,6 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  reviveByFollower() {
-    const p = this.player, f = this.follower;
-    S.flags.reviveAt = S.playtime;
-    this.deadT = 0;
-    S.hp = Math.round(S.maxHp * TUNE.follower.reviveHp);
-    p.mode = 'free'; p.stunT = 0; p.invuln = 2.2; p.iframes = 0.5; p.setPosition(f.x, f.y + 4); p.body.setVelocity(0, 0);
-    for (const e of this.enemies.getChildren()) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 40) e.takeHit({ dmg: 1, kx: e.x - p.x, ky: e.y - p.y, kb: 220, src: 'shout', stun: 0.8, forceStun: !e.isBoss });
-    this.fx.puff(p.x, p.y, 8, 10, 50, 0.5); this.fx.ring(p.x, p.y + 4, 1.2, 0.5, 'ring', 0xf4d460);
-    sfx.play('potion'); this.shake(200, 0.006);
-    bus.emit('toast', 'RAGNA PULLS YOU UP!', 13);
-  }
-
   respawn() {
     this.respawning = true;
     this.cameras.main.fadeOut(500, 11, 14, 26);
@@ -1078,4 +699,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, companionMethods, killMethods, eventMethods);
