@@ -101,7 +101,7 @@ await G(async () => { await window.__dia.mirra(); });
 check('Mirra starts the herb quest', (await S('quests.herbs.status')) === 'active');
 await G(() => { window.__inv.addItem('snowberry', 4, true); window.__inv.addItem('frost_lily', 3, true); window.__inv.addItem('snowberry', 0); });
 check('collecting the herbs completes the objective', (await S('quests.herbs.status')) === 'ready');
-await stub([3]);                 // after reward, Leave
+await stub([4]);                 // after reward, Leave
 await G(async () => { await window.__dia.mirra(); });
 check('Mirra rewards and teaches alchemy', (await S('quests.herbs.status')) === 'done' && (await S('flags.alchemy')) === true && (await S('inv.hp_potion_g')) >= 2);
 unstub();
@@ -121,7 +121,7 @@ await G(() => { const S = window.__ff.S; S.quests.locket = { status: 'relic' }; 
 await stub([1]);
 await G(async () => { await window.__dia.child(); });
 check('keeping the locket sets the quest to "sell"', (await S('quests.locket.status')) === 'sell');
-await stub([0, 3]);
+await stub([0, 4]);
 await G(async () => { await window.__dia.mirra(); });
 check('selling the locket to Mirra pays 120 and ends the quest differently', (await S('gold')) >= 120 && (await S('flags.locketKind')) === false && (await S('quests.locket.status')) === 'done');
 unstub();
