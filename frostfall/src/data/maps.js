@@ -5,7 +5,7 @@ import { hash } from '../util.js';
 import { S } from '../systems/state.js';
 import { buildReach, buildRegion, REGION_DEFS } from '../world/worldgen.js';
 import { buildBarrow } from '../world/barrowgen.js';
-import { buildMines, buildForge, MINE_FLOORS } from '../world/minesgen.js';
+import { buildMines, buildForge, buildTidebreak, buildSepulchre, MINE_FLOORS } from '../world/minesgen.js';
 import { buildEmberhold, buildEmberInterior, EMBER_INTERIORS } from './emberhold_map.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
@@ -449,6 +449,33 @@ for (let f = 0; f < MINE_FLOORS; f++) {
     ...(f === 2 ? { bossTrigger: (pc, T) => { const r = getMines(2).bossRoom; return !!r && pc.y < (r.y + r.h - 1.6) * T && pc.y > r.y * T && pc.x > r.x * T && pc.x < (r.x + r.w) * T; } } : {}),
   };
 }
+
+// The regions beyond the Reach: their overworld maps, small cave delves and boss dungeons.
+MAPS.coast = { flag: 'arrivedCoast', name: 'The Frozen Coast', snow: true, ambience: 'wind', build: () => getRegion('coast'), music: 'pass', dim: 0.14, stream: true, region: 'coast' };
+MAPS.kingdom = { flag: 'arrivedKingdom', name: 'The Old Kingdom', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('kingdom'), music: 'forest', dim: 0.2, stream: true, region: 'kingdom' };
+MAPS.ashen.region = 'ashen'; MAPS.forest.region = 'reach';
+const delveCache = {};
+const CAVE_THEME = { ashen: 'cinder', coast: 'sea', kingdom: 'royal' }, REGION_NO = { ashen: 1, coast: 2, kingdom: 3 }, HOME_MAP = { ashen: 'ashen', coast: 'coast', kingdom: 'kingdom' };
+for (const rid of Object.keys(CAVE_THEME)) for (let n = 0; n < 4; n++) {
+  const id = `${rid}_cave${n}`;
+  MAPS[id] = {
+    name: 'Cave', snow: false, ambience: 'crypt', music: 'crypt', dim: 0.4, crypt: true, region: rid,
+    build: () => {
+      const seed = S.seed ?? 1337, poi = getRegion(rid).pois.find((p) => p.id === id);
+      const c = delveCache[id];
+      if (c && c.seed === seed) return c.built;
+      const b = buildBarrow(seed, 100 * REGION_NO[rid] + n, poi ? poi.tier : 1, { theme: CAVE_THEME[rid], home: HOME_MAP[rid], spawn: id });
+      MAPS[id].name = b.title; delveCache[id] = { seed, built: b };
+      return b;
+    },
+  };
+}
+let tideCache = null, sepCache = null;
+export function getTidebreak() { const seed = S.seed ?? 1337; if (!tideCache || tideCache.seed !== seed) tideCache = { seed, built: buildTidebreak(seed) }; return tideCache.built; }
+export function getSepulchre() { const seed = S.seed ?? 1337; if (!sepCache || sepCache.seed !== seed) sepCache = { seed, built: buildSepulchre(seed) }; return sepCache.built; }
+const bossRoomTrigger = (get) => (pc, T) => { const r = get().bossRoom; return !!r && pc.y < (r.y + r.h - 1.6) * T && pc.y > r.y * T && pc.x > r.x * T && pc.x < (r.x + r.w) * T; };
+MAPS.tidebreak = { name: 'Tidebreak Cavern', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, region: 'coast', build: () => getTidebreak(), bossTrigger: bossRoomTrigger(getTidebreak), flag: 'tidebreakEntered' };
+MAPS.sepulchre = { name: 'The Hollow Sepulchre', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, region: 'kingdom', build: () => getSepulchre(), bossTrigger: bossRoomTrigger(getSepulchre), flag: 'sepulchreEntered' };
 
 // The Forge of the First Fire (Chapter 3 dungeon), cached per run seed.
 let forgeCache = null;

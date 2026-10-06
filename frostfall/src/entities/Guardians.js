@@ -150,3 +150,36 @@ export class AshenSovereign extends PatternBoss {
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
 }
+
+// The Frozen Coast: Admiral Veyl, still waiting for his crew in Tidebreak Cavern.
+export class DrownedAdmiral extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'admiral', TUNE.admiral, { scale: 2.5, flag: 'admiralDead', heart: null, toast: 'ADMIRAL VEYL GOES DOWN WITH HIS SHIP', summon: ['draugr', 'wight', 'warden'], col: 15, tier: 3, phaseAt: [0.5] });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 48) o.push('sweep', 'slam', 'tail', 'sweep');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'breath');
+    return o;
+  }
+}
+
+// The Old Kingdom: the Hollow King, last of the Kings, three phases (the Throne, the Court, the Memory).
+export class HollowKing extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'hollowking', TUNE.hollowking, {
+      scale: 2.8, flag: 'hollowKingDead', heart: null, toast: 'THE HOLLOW KING IS REMEMBERED', summon: ['knight', 'reaver', 'necro', 'conjurer'], col: 14, tier: 3,
+      phaseAt: [0.66, 0.33], phaseText: { 2: 'THE COURT', 3: 'THE MEMORY' },
+    });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 52) o.push('sweep', 'slam', 'tail', 'sweep', 'slam');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'breath', 'spikes');
+    if (this.bphase >= 3) o.push('leap', 'nova', 'charge', 'nova', 'spikes');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}

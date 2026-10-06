@@ -5,6 +5,10 @@ import { say, choose } from '../systems/dialogue.js';
 import { NPC_DEFS, SCRIPTS } from './dialogue.js';
 import { buyMenu, sellMenu } from './services.js';
 import { dailyWares } from './stock.js';
+import { QUESTS, TARGETS } from './quests.js';
+import { startQuest, finishQuest } from '../systems/quests.js';
+import { addItem, addGold } from '../systems/inventory.js';
+import { getRegion } from './maps.js';
 
 NPC_DEFS.trapper = { name: 'TRAPPER', tex: 'spr_trapper' };
 NPC_DEFS.fisher = { name: 'FISHER', tex: 'spr_fisher' };
@@ -25,3 +29,61 @@ SCRIPTS.fisher = () => trade('Fisher', [{ id: 'grilled_trout', price: 16 }, { id
   cyc('fisherN', ['The ice holds till spring, if spring comes. Cut a hole, wait, say nothing. That is the whole craft.', 'Pike near the east lakes. Eels in the south, if you can bear the taste. I cannot.', 'My grandmother said the lakes remember every name that fell in. I do not fish after dark.']));
 SCRIPTS.prospector = () => trade('Prospector', [{ id: 'iron_ingot', price: 18 }, { id: 'bone_dust', price: 22 }, { id: 'gem_amber', price: 100 }, { id: 'gem_emerald', price: 110 }],
   cyc('prospectorN', ['Iron under the grey rock, bone dust where the old battles were. I sell what the mountain gives me.', 'There is a city of smiths up in the Peaks, they say. Past the great road. I have never been. I am saving for the boots.', 'Rock sings before it falls. If you hear it, run.']));
+
+// ---- the Frozen Coast and the Old Kingdom: two keepers of old stories, one quest each
+NPC_DEFS.keeper = { name: 'KEEPER MAREN', tex: 'spr_keeper' };
+NPC_DEFS.scribe = { name: 'THE SCRIBE', tex: 'spr_scribe' };
+QUESTS.admiral = {
+  title: 'The Drowned Admiral', giver: 'Maren, Keeper of the Last Light',
+  desc: 'A ship\'s bell rings under the ice every night, and the Keeper has stopped sleeping. She asks you to find the Admiral who never gave the order to abandon ship, and let his crew go home.',
+  short: () => (S.flags.admiralDead ? 'Tell Maren it is done' : S.flags.tidebreakEntered ? 'Defeat Admiral Veyl' : 'Find Tidebreak Cavern on the coast'),
+  objectives: (q) => [
+    { t: 'Find Tidebreak Cavern in the Frozen Coast', done: !!S.flags.tidebreakEntered || q.status === 'done' },
+    { t: 'Defeat Admiral Veyl', done: !!S.flags.admiralDead || q.status === 'done' },
+    { t: 'Tell Maren, Keeper of the Last Light', done: q.status === 'done' },
+  ],
+};
+QUESTS.hollowking = {
+  title: "The Hollow King's Rest", giver: 'The Scribe of the Old Kingdom',
+  desc: 'The last of the Hollow Kings sits under his ruined realm, waiting for someone to say his name. The Scribe, who wrote it, cannot say it any more.',
+  short: () => (S.flags.hollowKingDead ? 'Tell the Scribe' : S.flags.sepulchreEntered ? 'Defeat the Hollow King' : 'Find the Hollow Sepulchre'),
+  objectives: (q) => [
+    { t: 'Find the Hollow Sepulchre in the Old Kingdom', done: !!S.flags.sepulchreEntered || q.status === 'done' },
+    { t: 'Defeat the Hollow King', done: !!S.flags.hollowKingDead || q.status === 'done' },
+    { t: 'Tell the Scribe', done: q.status === 'done' },
+  ],
+};
+const poiOf = (rid, kind) => getRegion(rid).pois.find((p) => p.kind === kind);
+TARGETS.admiral = () => { const p = poiOf('coast', S.flags.admiralDead ? 'lighthouse' : 'tidebreak'); return p ? { map: 'coast', x: p.x, y: p.y + 2 } : null; };
+TARGETS.hollowking = () => { const p = poiOf('kingdom', 'sepulchre'); return p ? { map: 'kingdom', x: p.x, y: p.y + 2 } : null; };
+
+SCRIPTS.keeper = async function keeper() {
+  const N = 'Maren', q = S.quests.admiral;
+  if (q.status === 'active' && S.flags.admiralDead) {
+    await say(N, 'The bell has stopped. Listen. Do you hear it? No. Nothing. Oh, nothing at all. Thank you, stranger.');
+    addGold(450); addItem('sealskin_mail'); addItem('gem_sapphire', 1, true); finishQuest('admiral'); return;
+  }
+  if (q.status === 'inactive') {
+    await say(N, 'You came by the ice. Few do. I keep this light for ships that will never come, and for one that never left.');
+    await say(N, 'Admiral Veyl went down in Tidebreak Cavern with his crew still at their stations. He keeps ringing the bell. Go down. Tell him the ship is lost, and the crew forgives him.');
+    const c = await choose(['I will go.', 'Not today.']);
+    if (c === 0) { startQuest('admiral'); await say(N, 'The cave is far to the east, where the pack ice meets the sea. Bring a warm cloak. And do not listen to the bell.'); }
+    return;
+  }
+  await say(N, cyc('keeperN', ['The light has burned since before the Kings forgot their own names. I trim the wick. That is the whole of it.', 'On clear nights you can see the Ashen Peaks glow. Fire on one horizon, ice on the other. We live between.', 'Do not trust the ice when it is silent. It is only quiet when it is listening.']));
+};
+SCRIPTS.scribe = async function scribe() {
+  const N = 'The Scribe', q = S.quests.hollowking;
+  if (q.status === 'active' && S.flags.hollowKingDead) {
+    await say(N, 'He is remembered. I can feel it. The ink in my hand is wet again, for the first time in a thousand years.');
+    addGold(600); addItem('gem_ruby', 2, true); S.flags.kingRemembered = true; finishQuest('hollowking'); return;
+  }
+  if (q.status === 'inactive') {
+    await say(N, 'You can see me. Good. Most visitors walk through me and mutter about the cold.');
+    await say(N, 'I wrote the Kings\' names into the Book of Chains. The last one, I could not finish. He waits in the Hollow Sepulchre, at the end of the road. Say his name for me. Say it to his face, with a sword in your hand.');
+    const c = await choose(['I will remember him.', 'The dead should stay dead.']);
+    if (c === 0) { startQuest('hollowking'); await say(N, 'He will test you. He tests everyone. It is the last thing he remembers how to do.'); }
+    return;
+  }
+  await say(N, cyc('scribeN', ['A kingdom is a promise that outlasts the people who made it. Ours outlasted us by a long time.', 'The marble was white once. The moss is only the world, remembering how to grow.', 'There are three crowns in the stories: Frost, Ember and Memory. I only ever wrote about the third.']));
+};

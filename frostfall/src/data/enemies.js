@@ -19,6 +19,18 @@ export const ENEMIES = {
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
     body: [8, 7, 4, 9], loot: { gold: [150, 210], drops: [['hp_potion_g', 1], ['iron_ingot', 1], ['iron_ingot', 1]] },
   },
+  admiral: {
+    name: 'Admiral Veyl', title: 'ADMIRAL VEYL, THE DROWNED', tex: 'spr_admiral', bark: 'undead', weak: { shock: 1.5, fire: 1.1, frost: 0.3 },
+    hp: 780, speed: 34, chase: 42, dmg: 24, detect: 9999,
+    kind: 'boss', range: 42, windup: 0.75, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.96,
+    body: [8, 7, 4, 9], loot: { gold: [220, 300], drops: [['admiral_cutlass', 1], ['hp_potion_g', 1], ['gem_sapphire', 0.6]] },
+  },
+  hollowking: {
+    name: 'The Hollow King', title: 'THE HOLLOW KING, LAST OF THE KINGS', tex: 'spr_hollowking', bark: 'undead', weak: { fire: 1.3, shock: 1.2, frost: 0.4 },
+    hp: 1500, speed: 38, chase: 48, dmg: 30, detect: 9999,
+    kind: 'boss', range: 44, windup: 0.65, atkDur: 0.2, recover: 0.6, cooldown: 0.75, kbResist: 0.98,
+    body: [8, 7, 4, 9], loot: { gold: [500, 650], drops: [['kings_blade', 1], ['kings_signet', 1], ['hp_potion_g', 2], ['gem_bloodstone', 1]] },
+  },
   sovereign: {
     name: 'The Ashen Sovereign', title: 'THE ASHEN SOVEREIGN, CROWN OF THE FIRST FIRE', tex: 'spr_sovereign', bark: 'undead', weak: { frost: 1.6, shock: 1.0, fire: 0.2 },
     hp: 980, speed: 38, chase: 46, dmg: 28, detect: 9999,

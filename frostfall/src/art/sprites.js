@@ -155,6 +155,10 @@ export const STYLES = {
   varro: { skin: 10, hair: 1, body: 11, trim: 0, legs: 2, boots: 0, chest: 10, beard: 1, cape: 11 },
   ketil: { skin: 10, hair: 11, body: 8, trim: 13, legs: 3, boots: 9, chest: 8, hood: 8 },
   brisa: { skin: 10, hair: 5, body: 14, trim: 13, legs: 3, boots: 9, chest: 13, hood: 14 },
+  admiral: { skin: 4, hair: 15, body: 3, trim: 13, legs: 2, boots: 0, glow: 15, helm: 2, chest: 15, beard: 15, cape: 3, crown: 13 },
+  hollowking: { skin: 6, hair: 5, body: 14, trim: 13, legs: 1, boots: 0, glow: 14, helm: 5, horns: 14, crown: 13, cape: 14, chest: 15, beard: 5 },
+  keeper: { skin: 10, hair: 6, hood: 3, body: 3, trim: 15, legs: 2, boots: 1, chest: 15, beard: 6 },
+  scribe: { skin: 6, hair: 5, hood: 4, body: 4, trim: 14, legs: 4, boots: 4, glow: 14, chest: 6 },
   sovereign: { skin: 12, hair: 13, body: 11, trim: 13, legs: 11, boots: 0, glow: 13, helm: 12, horns: 13, crown: 13, cape: 12, chest: 13, beard: 12 },
   kragnar: { skin: 4, hair: 3, helm: 3, body: 9, trim: 12, legs: 2, boots: 0, glow: 12, chest: 10, beard: 3, horns: 3, crown: 12 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
@@ -559,6 +563,16 @@ function drawTile(ctx, id, ox) {
       snow(); o(0, 4, 14, 8, 1); o(9, 7, 6, 2, 8); o(9, 4, 5, 3, 1); o(9, 3, 3, 1, 3); o(9, 9, 7, 4, 1); o(9, 12, 4, 1, 4); o(10, 7, 6, 1, 8); o(9, 7, 2, 1, 4); o(6, 3, 3, 1, 1); o(6, 12, 4, 1, 1); o(6, 7, 2, 2, 1); break;
     case TILE.STUMP:
       snow(); o(0, 3, 13, 10, 2); o(9, 3, 6, 10, 7); o(10, 4, 5, 8, 2); o(9, 5, 7, 6, 1); o(10, 6, 7, 4, 1); o(6, 3, 5, 10, 1); o(6, 4, 4, 8, 1); o(9, 7, 6, 2, 1); break;
+    case TILE.ASH: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 131, [2, 2, 0, 3], 14); speckle(ctx, ox, 0, 132, [11, 12], 2); o(2, 0, 15, 16, 1); break;
+    case TILE.BASALT: o(0, 0, 0, 16, 16); o(1, 1, 1, 14, 14); o(2, 2, 2, 5, 4); o(2, 8, 7, 6, 5); o(0, 7, 2, 1, 6); o(11, 4, 9, 1, 3); o(12, 5, 11, 2, 1); o(3, 3, 3, 2, 1); break;
+    case TILE.LAVA: o(11, 0, 0, 16, 16); o(12, 1, 3, 6, 2); o(12, 8, 9, 7, 2); o(13, 3, 4, 2, 1); o(13, 10, 10, 2, 1); o(0, 0, 7, 5, 1); o(0, 11, 2, 4, 1); o(12, 5, 13, 5, 1); break;
+    case TILE.ICESHELF: o(5, 0, 0, 16, 16); o(6, 1, 2, 7, 1); o(4, 0, 8, 16, 1); o(6, 9, 11, 5, 1); o(4, 4, 5, 1, 3); o(15, 11, 4, 2, 1); speckle(ctx, ox, 0, 141, [6, 4], 6); break;
+    case TILE.PACKICE: o(3, 0, 0, 16, 16); o(4, 1, 1, 6, 6); o(5, 2, 2, 3, 2); o(6, 2, 2, 1, 1); o(4, 8, 6, 7, 8); o(5, 9, 7, 3, 2); o(2, 0, 7, 8, 1); o(2, 7, 0, 1, 7); o(0, 0, 15, 16, 1); o(15, 11, 9, 1, 1); break;
+    case TILE.SHINGLE: o(3, 0, 0, 16, 16); speckle(ctx, ox, 0, 151, [4, 2, 5, 9], 26); o(2, 0, 15, 16, 1); o(4, 3, 4, 2, 1); o(4, 10, 11, 3, 1); break;
+    case TILE.WRECK: o(9, 0, 0, 16, 16); for (let y = 2; y < 16; y += 4) o(10, 0, y, 16, 1); for (let y = 0; y < 16; y += 4) o(0, 0, y + 3, 16, 1); o(0, 4, 0, 1, 16); o(0, 11, 0, 1, 16); o(1, 0, 14, 16, 2); o(5, 2, 1, 2, 1); break;
+    case TILE.MARBLE: o(5, 0, 0, 16, 16); o(6, 0, 0, 15, 1); o(6, 0, 0, 1, 15); o(4, 15, 0, 1, 16); o(4, 0, 15, 16, 1); o(4, 3, 5, 5, 1); o(4, 7, 6, 1, 4); o(6, 10, 10, 4, 1); break;
+    case TILE.RUINWALL: o(3, 0, 0, 16, 16); o(4, 0, 0, 16, 1); o(2, 0, 5, 16, 1); o(2, 0, 10, 16, 1); o(2, 6, 0, 1, 5); o(2, 11, 5, 1, 5); o(2, 3, 10, 1, 6); o(8, 1, 1, 4, 3); o(7, 9, 11, 5, 3); o(8, 10, 12, 2, 1); o(0, 0, 15, 16, 1); break;
+    case TILE.MOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 161, [8, 8, 2, 13], 14); o(8, 2, 3, 3, 2); o(8, 9, 10, 4, 2); o(7, 0, 15, 16, 1); break;
     case TILE.ICE2: o(4, 0, 0, 16, 16); o(5, 2, 3, 6, 1); o(3, 0, 8, 16, 1); o(2, 3, 2, 1, 4); o(2, 4, 5, 3, 1); o(2, 7, 6, 1, 5); o(2, 8, 10, 4, 1); o(6, 11, 3, 2, 1); break;
     case TILE.TUFT: snow(); for (const [x, y] of [[4, 8], [8, 6], [11, 9]]) { o(8, x, y, 1, 3); o(7, x + 1, y + 1, 1, 2); o(8, x - 1, y + 1, 1, 2); } o(6, 4, 7, 1, 1); break;
     default: o(0, 0, 0, 16, 16);

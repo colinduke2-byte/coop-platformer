@@ -293,3 +293,12 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Three final endings** (Quench the Flame / Wear the Ember Crown / Bind it to the Anvil, which needs a house you trust), each varying with your earlier Winter choice and the strongest house: 36 distinct endings. New items: **The Ember Crown** (charm), **Sovereign's Heart**. Five new trophies.
 - Ending screens now page through long text. The quest journal tracks every stage; map markers follow it.
 - Tests: `stage45_chapter3`.
+
+## Round 20 - Three new regions (Phase 12)
+- **Ten new terrain tiles**: ash, basalt, lava (solid), ice shelf, pack ice (solid), shingle, wreck timber (solid), marble, ruin wall (solid), moss.
+- **The Ashen Peaks** now has its own look (ash flats, basalt crags, lava pools you must path around) and its own places: derelict **foundries**, cinder-warren caves, hamlets, and the Forge. Roaming boss: **Cinderjaw, the Magma Golem** (drops the Cinderjaw Maul).
+- **The Frozen Coast** (180x130, opens with Chapter 3 via the Coast Road in the Reach's south-east): ice shelf, shingle strand, pack-ice. **Wrecks** locked in the ice, **the Last Light** lighthouse and its keeper Maren, smugglers' camps, fishing hamlets, sea caves, 24 ice-fishing holes. Dungeon: **Tidebreak Cavern**, ending in **Admiral Veyl** (two phases). Roaming boss: **Hrimgar, the Floe Troll** (drops the Floe Harpoon). Quest: *The Drowned Admiral* (reward: Sealskin Mail).
+- **The Old Kingdom** (180x130, opens once the First Fire is answered via the Old Road in the Ashen Peaks): moss and marble, ruin walls, haunted **courtyards**, crypt caves. The Scribe's ghost gives *The Hollow King's Rest*. Dungeon: **the Hollow Sepulchre**, ending in the **Hollow King** (three phases: the Court, the Memory), a late superboss. Roaming boss: **Sir Aldric, the Last Knight** (drops the King's Signet).
+- New gear: Cinderjaw Maul, Floe Harpoon, Sealskin Mail, Admiral's Cutlass, the Hollow King's Blade, the King's Signet.
+- Caves (3-4 per region) are generated per seed with region themes (cinder, sea, royal). The map screen cycles all four regions with R. Three new trophies, epilogue lines.
+- Tests: `stage46_regions3` (tiles, 15 builds, reachability, gates, caves, boss dungeons, both bosses, quests, loot, map cycling, per-region perf budget).

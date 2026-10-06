@@ -11,6 +11,8 @@ export const BOSS_TAUNTS = {
   tide: { name: 'THE TIDEMOTHER', engage: 'Every drowned prayer rises here. Hush, little light.', 2: 'The deep takes everything. Even you.', 3: 'Sink with us, child. It is quiet below.', death: 'The tide goes out... the song goes with it...' },
   root: { name: 'THE ASHEN ROOT', engage: 'We were seeds in the first fire. We are patient.', 2: 'The Wound spreads. The Wound is hungry.', 3: 'GROW. GROW. GROW.', death: 'Rot... returns to the soil... as it should...' },
   winter: { name: 'THE LONG WINTER', engage: 'Little Dreamer. You carry my chains and think them yours.', 2: 'I am the storm that made your fathers kneel.', 3: 'I am the silence after the last fire dies.', death: 'You broke the chains. Now break the choice.' },
+  admiral: { name: 'ADMIRAL VEYL', engage: 'Lower the boats! ...No. There is no one to give the order. There never was. Then I will give you the order: leave.', 2: 'Hard to starboard! The ice is coming up through the keel!', death: 'Ship... sinks... Now. At last. Tell them... the crew... was... loyal.' },
+  hollowking: { name: 'THE HOLLOW KING', engage: 'You have come a long way to meet a king who has no kingdom. I am glad of the company.', 2: 'Rise, my court. Rise and kneel. We were so very many once.', 3: 'Do you know what it is, to be the last name in a book no one opens?', death: 'Remembered. That is... all I... wanted. Thank you, small light.' },
   sovereign: { name: 'THE ASHEN SOVEREIGN', engage: 'Little Dreamer. You broke my brother and bound my chains. Now you stand where the Kings stood, and I am ready to ask my question.', 2: 'I was the first spark in the first dark. Every fire since is my child, and every child wants to come home.', 3: 'BURN. BURN. BURN. THE WORLD WAS ALWAYS KINDLING.', death: 'The question... is whether... you will let me... rest.' },
   kragnar: { name: 'KRAGNAR', engage: 'Who walks in my lode? The lanterns are mine. The dark is mine. You are mine.', 2: 'Dig! DIG! The mountain remembers every hand that wronged it!', 3: 'Break me and the lode breaks with me...', death: 'Sleep... at last... under... stone.' },
   dragon: { name: 'SKALDRATH', engage: 'Another small flame comes to my hoard. How it flickers.', 2: 'The sky burns because I wish it. Watch.', 3: 'EMBERS FALL WHERE I LOOK.', death: 'The last dragon... falls to a mortal spark...' },
@@ -87,6 +89,8 @@ export function epilogueLines() {
   else if (relics >= 4) out.push(`Half the Kings' relics rest in Hollowfrost now (${relics} of 8). The rest are still out there, under the snow.`);
   if (S.flags.dragonDead) out.push('Skaldrath\'s bones lie in the Ember Nest. The snow will not settle on them.');
   if (trophies >= 20) out.push('Bards across the Reach sing of you. They disagree about almost everything except the ending.');
+  if (S.flags.admiralDead) out.push('The Last Light keeps burning on the Frozen Coast. The bell under the ice has not rung since.');
+  if (S.flags.kingRemembered) out.push('The Scribe of the Old Kingdom finished the last name in the Book of Chains. It is the shortest entry, and the only one with a smile in the margin.');
   if ((S.ngPlus || 0) >= 1) out.push('This is not the first winter you have broken. It may not be the last.');
   return out;
 }

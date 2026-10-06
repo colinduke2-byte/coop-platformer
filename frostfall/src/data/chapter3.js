@@ -21,6 +21,7 @@ export const sealCount = () => Object.values(SEAL_QUESTS).filter((q) => S.quests
 export const GATES = {
   hearts4: { ok: () => heartsHeld() >= 4, msg: () => `THE DOOR IS SEALED. HEARTS ${heartsHeld()}/4` },
   chapter3: { ok: () => !!S.flags.chapter3, msg: () => 'THE PEAK ROAD IS DRIFTED SHUT' },
+  sovereignDead: { ok: () => !!S.flags.sovereignDead, msg: () => 'THE OLD ROAD IS BARRED BY FIRE' },
   forgeOpen: { ok: () => !!S.flags.forgeOpen, msg: () => `THE FORGE STAYS SHUT. SEALS ${sealCount()}/3` },
 };
 
@@ -58,7 +59,7 @@ TARGETS.crown = () => {
 export function startChapter3() {
   if (S.flags.chapter3) return false;
   S.flags.chapter3 = true;
-  unlockRegion('ashen');
+  unlockRegion('ashen'); unlockRegion('coast');
   if (S.quests.crown.status === 'inactive') startQuest('crown');
   bus.emit('toast', 'SMOKE ON THE MOUNTAIN. THE PEAK ROAD IS OPEN.', 12);
   sfx.play('quest');
@@ -69,6 +70,7 @@ export function startChapter3() {
 export const FINAL_CHOICES = ['quench', 'crown', 'bind'];
 export function finalChoice() {
   return runScript(async () => {
+    unlockRegion('kingdom');
     await say('The Sovereign', 'You have broken my crown. I am only the first fire now, and the first fire is only a question.');
     await say('The Sovereign', 'Winter was my brother, and you freed him, or bound him, or wore him. What will you do with me?');
     let pick = null;

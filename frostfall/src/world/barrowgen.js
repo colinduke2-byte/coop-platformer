@@ -14,11 +14,18 @@ const THEMES = [
 ];
 
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }
+// Themes for the delves of the other regions (chosen by the region, not the seed).
+export const EXTRA_THEMES = {
+  cinder: { id: 'cinder', name: 'The Cinder Warren', mobs: ['imp', 'golem', 'conjurer', 'knight'] },
+  sea: { id: 'sea', name: 'The Tidecaves', mobs: ['draugr', 'wight', 'frostworm', 'warden', 'reaver'] },
+  royal: { id: 'royal', name: 'The Undercrypts', mobs: ['knight', 'warden', 'reaver', 'necro', 'conjurer', 'wight'] },
+};
 
 // tier 0..3 picks the mob strength; idx is 0..2
-export function buildBarrow(seed, idx, tier) {
+// o: { theme: key of EXTRA_THEMES, home: map to leave to, spawn: spawn name there }
+export function buildBarrow(seed, idx, tier, o = {}) {
   const R = rng(seed * 31 + idx * 977 + 5);
-  const theme = barrowTheme(seed, idx);
+  const theme = o.theme ? EXTRA_THEMES[o.theme] : barrowTheme(seed, idx);
   const rooms = [];
   const W = 44, H = 20 + 12 * 3;
   const g = new Grid(W, H, TILE.CWALL);
@@ -47,7 +54,7 @@ export function buildBarrow(seed, idx, tier) {
   const add = (e) => ents.push(e);
   const e0 = rooms[0];
   add({ t: 'spawn', name: 'entry', x: e0.cx, y: e0.y + e0.h - 2 });
-  add({ t: 'exit', x: e0.cx, y: e0.y + e0.h - 1, w: 2, h: 1, to: 'forest', spawn: 'barrow' + idx, fx: 'door' });
+  add({ t: 'exit', x: e0.cx, y: e0.y + e0.h - 1, w: 2, h: 1, to: o.home || 'forest', spawn: o.spawn || 'barrow' + idx, fx: 'door' });
   g.set(e0.cx, e0.y + e0.h - 1, TILE.STAIRS); g.set(e0.cx + 1, e0.y + e0.h - 1, TILE.STAIRS);
   add({ t: 'fire', x: e0.x + 1, y: e0.y + 1, rest: true, id: 'barrow' + idx }); g.set(e0.x + 1, e0.y + 1, TILE.BRAZIER);
   add({ t: 'glow', x: e0.x + 1, y: e0.y + 1, r: 40, col: 12 });

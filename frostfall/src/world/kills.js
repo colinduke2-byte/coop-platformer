@@ -34,6 +34,8 @@ export const killMethods = {
     S.flags['rb_' + id] = true;
     S.gold += 150 + 100 * (en.tier || 0);
     this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((en.tier || 0) + 1, Math.random, 3) }));
+    const unique = { cinder: 'cinder_maul', floe: 'harpoon', lastknight: 'kings_signet' }[id];
+    if (unique) this.pickups.push(new Pickup(this, en.x + 10, en.y - 6, { type: 'item', id: unique }));
     bus.emit('toast', `${en.displayName.split(',')[0].toUpperCase()} FALLS`, 13); sfx.play('quest');
     this.time.delayedCall(900, () => grantRelic(this));
     this.shake(500, 0.01);

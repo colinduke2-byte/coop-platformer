@@ -373,7 +373,7 @@ export default class GameScene extends Phaser.Scene {
       if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
     }
     if (spec.roamRoute) {
-      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll' }[spec.rid] || en.displayName;
+      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll', cinder: 'Cinderjaw, the Magma Golem', floe: 'Hrimgar, the Floe Troll', lastknight: 'Sir Aldric, the Last Knight' }[spec.rid] || en.displayName;
       en.worldBoss = true; en.cfg = { ...en.cfg, call: 0 };
     }
     if (spec.nemesis) {

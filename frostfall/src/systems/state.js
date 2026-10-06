@@ -24,6 +24,8 @@ export function newState() {
       anvilcore: { status: 'inactive' },
       roadwatch: { status: 'inactive' },
       crown: { status: 'inactive' },
+      admiral: { status: 'inactive' },
+      hollowking: { status: 'inactive' },
     },
     flags: {},
     fog: {},

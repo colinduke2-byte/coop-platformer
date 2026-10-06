@@ -100,3 +100,22 @@ export function buildForge(seed) {
     bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sovereign_heart' }, { item: 'gem_ruby' }, { item: 'gem_bloodstone' }, { gold: 400 }],
   });
 }
+
+// The Frozen Coast's boss delve: Tidebreak Cavern, ending in the Drowned Admiral.
+export function buildTidebreak(seed) {
+  return buildMines(seed, 8, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'admiral', id: 'tb', mobs: ['draugr', 'wight', 'frostworm', 'warden', 'reaver'], exitTo: 'coast', exitSpawn: 'tidebreak',
+    title: 'Tidebreak Cavern', signLine: 'WATER DRIPS UP. A SHIP\'S BELL RINGS, SOMEWHERE BELOW THE ICE.',
+    bossSign: ['THE ADMIRAL\'S HOLD.', 'HE NEVER GAVE THE ORDER TO ABANDON SHIP. HE IS STILL WAITING FOR THE CREW.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'admiral_cutlass' }, { item: 'gem_sapphire' }, { gold: 360 }],
+  });
+}
+// The Old Kingdom's boss delve: the Hollow Sepulchre, ending in the last of the Hollow Kings.
+export function buildSepulchre(seed) {
+  return buildMines(seed, 9, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'hollowking', id: 'sp', mobs: ['knight', 'warden', 'reaver', 'necro', 'conjurer', 'wight'], exitTo: 'kingdom', exitSpawn: 'sepulchre',
+    title: 'The Hollow Sepulchre', signLine: 'EVERY NICHE IS EMPTY. THE KINGS ARE NOT IN THEIR TOMBS.',
+    bossSign: ['THE HOLLOW THRONE.', 'THE LAST KING SITS A THRONE OF HIS OWN ROOTS. HE WOULD LIKE YOU TO REMEMBER HIS NAME.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'kings_blade' }, { item: 'gem_bloodstone' }, { gold: 600 }],
+  });
+}
