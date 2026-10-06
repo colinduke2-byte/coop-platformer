@@ -3,6 +3,17 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 12: items, economy and home (Phase 5)
+- **Hollow Relics:** eight relics (Frozen Signet, Cracked War Horn, Black Mirror Shard, Ember Seed, Wardens' Lantern, Antler Circlet, Troll Tooth Charm, Star Chart) found by digging (10%), in chests (7%), from world bosses (guaranteed), nemeses and arena milestones. Each is a lore entry. 3 relics: +10 max health; 6: +15 max mana; all 8: **The Hollow Crown** charm (+30 health and mana, +20 stamina, +5% crit).
+- **Elixirs** (brewed at a cauldron, drunk from the Items tab, one at a time, stack with meals): **Berserker Draught** (+30% damage, take +20%), **Quicksilver Tonic** (+18% speed, take +10%), **Nightsight Elixir** (night turns pale, harder to spot), **Ironhide Brew** (take -25%, move -7%), **Frostward Tonic** (immune to chill, freeze and slow). Shown in the status row with a timer.
+- **Spell tomes:** read once to learn a spell at any skill level (Blink, Lightning, Frost Nova, Spirit Wolf) plus a spell nothing else teaches: **Meteor** (48 mana, a ring marks the spot, a star lands 0.9 s later: big area damage and burn). Sold by Mirra in rotation.
+- **Daily shop rotation:** Hilda and Mirra each carry three rotating extra wares that change every in-game day (and per run seed): new weapons, tomes, elixirs. **Buy back** at both shops: the last 8 things you sold, at 120% of what you got.
+- **Hilda's menu** is now Forge (upgrade, enchant), **Repair, reforge, buy back**, Fletch, Buy, Sell. **Reforge** re-rolls the affixes of a found item in place (same slot, base and rarity; 50+60/rarity gold and ingots).
+- **Optional durability** (Pause > System > DURABILITY, off by default): weapons wear per hit, armour per hit taken, shields per block; broken gear works at 60% (weapons) or 50% (armour, shields) until repaired at Hilda.
+- **Home furnishings** (Furnish at the cottage ledger): **Stash Chest** (store and take items), **Herb Garden** (2-4 snowberries and frost lilies once per in-game day), **Trophy Wall** (+5 max health per 3 trophies), **Cooking Pot** (the campfire cook menu at home).
+- **Five more recipes:** Fish Stew, Frostberry Tart (+30 max mana), Spiced Venison (+10% damage), Ember Chowder (+10% speed, +20 stamina), Glass Pike Feast.
+- Tests: `stage38_items` (relics, elixirs, tomes and Meteor, stock rotation, buy-back, durability, reforge, recipes, home furnishings, repair/reforge/buy-back screens).
+
 ## Round 11: world and creatures (Phase 4)
 - **Bear dens:** a new point of interest with a **mother bear** and two **cubs**, a cache chest and a bounty. Hurt a cub and the mother is alerted and **enraged** (+30% speed and damage); she crushes shields. When she falls the surviving cubs are orphaned and you can **adopt a cub**.
 - **Two companions:** the **bear cub** follows you, bites for a little and soothes your wounds; the **frost hound** still hunts. Own both and an item, the **Pet Whistle** (E in the Items tab), swaps between them.

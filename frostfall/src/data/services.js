@@ -8,6 +8,9 @@ import { TUNE } from './tuning.js';
 import { FURNITURE } from './maps.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
+import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
+import { noteSold } from './stock.js';
+import { rarityIndex, reforgeGen } from '../systems/genloot.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen } from '../scenes/ShopScene.js';
 
@@ -39,6 +42,7 @@ export function statLines(id) {
   if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
+  if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()} ARMOUR`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);
@@ -88,7 +92,7 @@ export async function sellMenu(who) {
   const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
   const sellN = (id, n, ui) => {
     S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id];
-    S.gold += sellPrice(id) * n;
+    S.gold += sellPrice(id) * n; noteSold(id, n, sellPrice(id) * n);
     ui.say(`SOLD ${n} FOR ${sellPrice(id) * n}G`, 13);
     sfx.play('coin');
   };
@@ -178,6 +182,11 @@ export const RECIPES = [
   { id: 'sp_potion', needs: { wolf_fang: 1, snowberry: 1 } },
   { id: 'hp_potion_g', needs: { snowberry: 3, wolf_fang: 1 } },
   { id: 'mp_potion_g', needs: { frost_lily: 3, bone_dust: 1 } },
+  { id: 'berserker_draught', needs: { wolf_fang: 2, bone_dust: 1 } },
+  { id: 'quicksilver_tonic', needs: { frost_lily: 1, snowberry: 1, wolf_fang: 1 } },
+  { id: 'nightsight_elixir', needs: { frost_lily: 2, bone_dust: 1 } },
+  { id: 'ironhide_brew', needs: { iron_ingot: 1, snowberry: 2, hide: 1 } },
+  { id: 'frostward_tonic', needs: { frost_lily: 2, bone_dust: 2 } },
 ];
 const canBrew = (r) => Object.entries(r.needs).every(([k, n]) => count(k) >= n);
 export async function brewMenu(who = 'Alchemy') {
@@ -260,4 +269,84 @@ export async function cookMenu() {
       ui.say('COOKED ' + ITEMS[l[i].to].name.toUpperCase(), 8);
     },
   });
+}
+
+// ------------------------------------------------- repair, reforge, buy back
+export async function repairMenu(who) {
+  if (!durOn()) { await say(who, 'Your gear is not wearing out. (Turn on DURABILITY in Pause > System if you want it to.)'); return; }
+  await listScreen({
+    title: 'REPAIR', hint: 'E REPAIR   Q REPAIR ALL   ESC DONE', empty: 'EVERYTHING YOU CARRY IS IN GOOD SHAPE',
+    rows: () => damaged().map((id) => {
+      const c = repairCost(id), ok = S.gold >= c;
+      return { id, name: ITEMS[id].name, tag: c + 'G', ok, tagCol: ok ? 13 : 11, sub: `${durOf(id)}/${durMax(id)}${durOf(id) <= 0 ? '  BROKEN' : ''}`, lines: statLines(id) };
+    }),
+    onSelect: (i, ui) => {
+      const id = damaged()[i]; if (!id) return;
+      const c = repairCost(id);
+      if (S.gold < c) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      S.gold -= c; repairItem(id); sfx.play('upgrade'); ui.say('REPAIRED ' + ITEMS[id].name.toUpperCase(), 8);
+    },
+    onAlt: (i, ui) => {
+      const all = damaged(), total = all.reduce((a, id) => a + repairCost(id), 0);
+      if (!all.length) return;
+      if (S.gold < total) { sfx.play('nostamina'); ui.say(`NEED ${total} GOLD FOR EVERYTHING`, 11); return; }
+      S.gold -= total; all.forEach(repairItem); sfx.play('upgrade'); ui.say('ALL GEAR REPAIRED', 8);
+    },
+  });
+}
+
+const reforgeCost = (id) => ({ gold: 50 + 60 * rarityIndex(ITEMS[id]), ingots: 1 + rarityIndex(ITEMS[id]) });
+const reforgeable = () => Object.keys(S.inv).filter((id) => ITEMS[id]?.gen && S.inv[id] > 0);
+export async function reforgeMenu(who) {
+  if (!reforgeable().length) { await say(who, 'I can only reforge the strange gear you find out in the Reach. Bring me some.'); return; }
+  await listScreen({
+    title: 'REFORGE', hint: 'E REFORGE   ESC DONE',
+    rows: () => reforgeable().map((id) => {
+      const c = reforgeCost(id), ok = S.gold >= c.gold && count('iron_ingot') >= c.ingots;
+      return { id, name: ITEMS[id].name, tag: `${c.gold}G ${c.ingots}I`, ok, tagCol: ok ? 13 : 11, sub: ok ? 'NEW AFFIXES' : 'NEED GOLD AND INGOTS', lines: statLines(id), desc: ITEMS[id].desc };
+    }),
+    onSelect: (i, ui) => {
+      const id = reforgeable()[i]; if (!id) return;
+      const c = reforgeCost(id);
+      if (S.gold < c.gold || count('iron_ingot') < c.ingots) { sfx.play('nostamina'); ui.say(`NEED ${c.gold} GOLD AND ${c.ingots} INGOT${c.ingots > 1 ? 'S' : ''}`, 11); return; }
+      S.gold -= c.gold; removeItem('iron_ingot', c.ingots);
+      reforgeGen(id); recalc(); sfx.play('upgrade'); ui.say('REFORGED: ' + ITEMS[id].name.toUpperCase(), 8);
+    },
+  });
+}
+
+export async function buybackMenu(who) {
+  const list = () => (S.buyback || []).filter((r) => r.n > 0 && ITEMS[r.id]);
+  if (!list().length) { await say(who, 'You have not sold me anything lately.'); return; }
+  await listScreen({
+    title: who.toUpperCase() + ': BUY BACK', hint: 'E BUY ONE   ESC DONE', empty: 'NOTHING TO BUY BACK',
+    rows: () => list().map((r) => { const p = Math.max(1, Math.round(r.paid / r.n * 1.2)); return { id: r.id, name: ITEMS[r.id].name, tag: `x${r.n}  ${p}G`, ok: S.gold >= p, tagCol: S.gold >= p ? 13 : 11, sub: `SOLD FOR ${Math.round(r.paid / r.n)}G EACH`, lines: statLines(r.id) }; }),
+    onSelect: (i, ui) => {
+      const r = list()[i]; if (!r) return;
+      const p = Math.max(1, Math.round(r.paid / r.n * 1.2));
+      if (S.gold < p) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      S.gold -= p; r.paid -= Math.round(r.paid / r.n); r.n--; addItem(r.id); sfx.play('coin'); ui.say('BOUGHT BACK ' + ITEMS[r.id].name.toUpperCase(), 8);
+    },
+  });
+}
+
+// ----------------------------------------------------------------- home stash
+export async function stashMenu() {
+  S.stash = S.stash || {};
+  const carried = () => Object.keys(S.inv).filter((id) => ITEMS[id] && S.inv[id] > (equippedIds().has(id) ? 1 : 0) && ITEMS[id].type !== 'quest');
+  const stored = () => Object.keys(S.stash).filter((id) => S.stash[id] > 0 && ITEMS[id]);
+  for (;;) {
+    const c = await choose(['Put things in the stash', 'Take things out', 'Close']);
+    if (c === 0) {
+      await listScreen({ title: 'STASH: DEPOSIT', hint: 'E PUT ONE   Q PUT ALL   ESC DONE', empty: 'NOTHING TO STORE',
+        rows: () => carried().map((id) => ({ id, name: ITEMS[id].name, tag: 'x' + (S.inv[id] - (equippedIds().has(id) ? 1 : 0)), ok: true, sub: 'IN YOUR PACK', lines: statLines(id) })),
+        onSelect: (i, ui) => { const id = carried()[i]; if (!id) return; S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id]; S.stash[id] = (S.stash[id] || 0) + 1; sfx.play('select'); ui.say('STORED ' + ITEMS[id].name.toUpperCase(), 8); },
+        onAlt: (i, ui) => { const id = carried()[i]; if (!id) return; const n = S.inv[id] - (equippedIds().has(id) ? 1 : 0); S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id]; S.stash[id] = (S.stash[id] || 0) + n; sfx.play('select'); ui.say(`STORED ${n}`, 8); } });
+    } else if (c === 1) {
+      await listScreen({ title: 'STASH: TAKE', hint: 'E TAKE ONE   Q TAKE ALL   ESC DONE', empty: 'THE STASH IS EMPTY',
+        rows: () => stored().map((id) => ({ id, name: ITEMS[id].name, tag: 'x' + S.stash[id], ok: true, sub: 'IN THE STASH', lines: statLines(id) })),
+        onSelect: (i, ui) => { const id = stored()[i]; if (!id) return; S.stash[id]--; if (S.stash[id] <= 0) delete S.stash[id]; addItem(id); sfx.play('select'); ui.say('TOOK ' + ITEMS[id].name.toUpperCase(), 8); },
+        onAlt: (i, ui) => { const id = stored()[i]; if (!id) return; const n = S.stash[id]; delete S.stash[id]; addItem(id, n); sfx.play('select'); ui.say(`TOOK ${n}`, 8); } });
+    } else return;
+  }
 }

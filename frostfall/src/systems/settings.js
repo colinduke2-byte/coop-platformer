@@ -5,6 +5,7 @@ export const settings = {
   musicVol: 1, sfxVol: 1, ambVol: 1,   // per-channel mixes (0..1) on top of the master volume
   difficulty: 'normal',   // easy | normal | hard
   shake: 1,               // 0 | 0.5 | 1  (screen shake strength)
+  durability: false,      // gear wears out and needs repairs (optional)
   dmgNumbers: true,       // floating damage numbers
   hitStop: true,          // brief freeze on landed hits
   flashes: true,          // screen flashes

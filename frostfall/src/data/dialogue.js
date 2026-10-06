@@ -1,13 +1,14 @@
 // NPC scripts: async functions. `say` shows typewriter text, `choose` returns the picked index.
 import { S } from '../systems/state.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
+import { dailyWares, noteSold } from './stock.js';
 import { heartsHeld } from './hearts.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
-import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu } from './services.js';
+import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
 
@@ -212,14 +213,15 @@ export async function mirra() {
   }
   await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : 'Potions, arrows, and the occasional bargain. What do you need?');
   for (;;) {
-    const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Leave'];
+    const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Buy back', 'Leave'];
     const c = await choose(opts);
-    if (c === 0) await buyMenu(MIRRA, MIRRA_WARES);
+    if (c === 0) await buyMenu(MIRRA, [...MIRRA_WARES, ...dailyWares('Mirra', 3)]);
     else if (c === 1) await sellMenu(MIRRA);
     else if (c === 2) {
       if (!S.flags.alchemy) await say(MIRRA, 'Bring me five snowberries and three frost lilies and I will teach you.');
       else await brewMenu(MIRRA);
-    } else { await say(MIRRA, 'Stay warm.'); return; }
+    } else if (c === 3) await buybackMenu(MIRRA);
+    else { await say(MIRRA, 'Stay warm.'); return; }
   }
 }
 
@@ -227,17 +229,21 @@ export async function hilda() {
   const H = 'Hilda';
   await say(H, S.flags.ending === 'give' ? 'The forge has never run so hot. Everyone wants new blades!' : 'Steel does not care about the cold. What do you need?');
   for (;;) {
-    const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Fletch arrows', 'Buy gear', 'Sell', 'Leave']);
-    if (c === 0) await upgradeMenu(H, 'weapon');
-    else if (c === 1) await upgradeMenu(H, 'armor');
-    else if (c === 2) await enchantMenu(H);
-    else if (c === 3) await fletchMenu();
-    else if (c === 4) await buyMenu(H, [
+    const c = await choose(['Forge (upgrade, enchant)', 'Repair, reforge, buy back', 'Fletch arrows', 'Buy gear', 'Sell', 'Leave']);
+    if (c === 0) {
+      const f = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Back']);
+      if (f === 0) await upgradeMenu(H, 'weapon'); else if (f === 1) await upgradeMenu(H, 'armor'); else if (f === 2) await enchantMenu(H);
+    } else if (c === 1) {
+      const f = await choose(['Repair gear', 'Reforge a found item', 'Buy back what you sold', 'Back']);
+      if (f === 0) await repairMenu(H); else if (f === 1) await reforgeMenu(H); else if (f === 2) await buybackMenu(H);
+    }
+    else if (c === 2) await fletchMenu();
+    else if (c === 3) await buyMenu(H, [...dailyWares('Hilda', 3),
       { id: 'iron_sword', price: 80, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'iron_greatsword', price: 220, once: true },
       { id: 'hand_axe', price: 100, once: true }, { id: 'hunting_spear', price: 90, once: true }, { id: 'iron_mace', price: 140, once: true },
       { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'bulwark_plate', price: 340, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
     ]);
-    else if (c === 5) await sellMenu(H);
+    else if (c === 4) await sellMenu(H);
     else { await say(H, 'Keep your edge sharp.'); return; }
   }
 }

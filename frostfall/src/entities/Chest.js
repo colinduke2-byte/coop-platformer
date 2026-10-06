@@ -1,3 +1,4 @@
+import { maybeRelic } from '../systems/relics.js';
 import Phaser from 'phaser';
 import { S } from '../systems/state.js';
 import { addItem, addGold, addArrows } from '../systems/inventory.js';
@@ -62,5 +63,6 @@ export default class Chest extends Phaser.GameObjects.Image {
       else if (l.arrows) addArrows(l.arrows);
       else if (l.gen != null) addItem(makeGenItem(l.gen, Math.random, l.rarity ?? null), 1);
     }
+    maybeRelic(this.scene, 0.07);
   }
 }

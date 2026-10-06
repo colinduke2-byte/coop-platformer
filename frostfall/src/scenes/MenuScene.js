@@ -13,11 +13,13 @@ import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 import { RARITY } from '../systems/genloot.js';
 import { eatFood } from '../systems/food.js';
+import { readTome } from '../systems/tomes.js';
+import { drinkElixir } from '../systems/elixir.js';
 import { readMap } from '../systems/treasure.js';
 
-const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'food', 'ammo', 'ingredient', 'misc', 'quest'];
+const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'elixir', 'food', 'tome', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
-const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion', 'food']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
+const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion', 'elixir', 'food', 'tome']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
 const SORTS = ['TYPE', 'NAME', 'VALUE'];
 const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
@@ -147,6 +149,10 @@ export default class MenuScene extends Phaser.Scene {
         this.gs.player.usePotion(id);
       } else if (it.type === 'food' && wantEquip) {
         eatFood(id, this.gs);
+      } else if (it.type === 'tome' && wantEquip) {
+        readTome(id);
+      } else if (it.type === 'elixir' && wantEquip) {
+        drinkElixir(id, this.gs);
       } else if (it.type === 'whistle' && wantEquip) {
         this.gs.swapPet();
       } else if (it.type === 'map' && wantEquip) {

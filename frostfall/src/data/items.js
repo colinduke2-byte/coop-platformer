@@ -1,3 +1,4 @@
+import { RELICS } from './relics.js';
 // Item database. icon = [drawing kind, colour index] (see art/sprites.js buildIcon).
 export const ITEMS = {
   hp_potion: { name: 'Health Potion', type: 'potion', icon: ['potion', 11], restore: 'hp', amount: 50, value: 25, desc: 'Restores 50 health.' },
@@ -62,13 +63,33 @@ export const ITEMS = {
   grilled_trout: { name: 'Grilled Trout', type: 'food', icon: ['dish', 10], value: 14, food: { maxHp: 20, heal: 40 }, desc: 'Eat (E): heal 40, +20 max health for 5 minutes.' },
   smoked_pike: { name: 'Smoked Pike', type: 'food', icon: ['dish', 13], value: 40, food: { maxSp: 30, healSp: 60 }, desc: 'Eat (E): +30 max stamina for 5 minutes.' },
   eel_roast: { name: 'Eel Roast', type: 'food', icon: ['dish', 12], value: 80, food: { moveMul: 1.08, heal: 30 }, desc: 'Eat (E): heal 30, move 8% faster for 5 minutes.' },
+  fish_stew: { name: 'Fish Stew', type: 'food', icon: ['dish', 15], value: 36, food: { maxHp: 25, regen: 0.8 }, desc: 'Eat (E): +25 max health and slow regeneration for 5 minutes.' },
+  berry_tart: { name: 'Frostberry Tart', type: 'food', icon: ['dish', 14], value: 32, food: { maxMp: 30 }, desc: 'Eat (E): +30 max mana for 5 minutes.' },
+  spiced_venison: { name: 'Spiced Venison', type: 'food', icon: ['dish', 9], value: 38, food: { dmgMul: 1.1, heal: 20 }, desc: 'Eat (E): heal 20 and hit 10% harder for 5 minutes.' },
+  ember_chowder: { name: 'Ember Chowder', type: 'food', icon: ['dish', 12], value: 90, food: { moveMul: 1.1, maxSp: 20 }, desc: 'Eat (E): +10% speed and +20 stamina for 5 minutes.' },
+  pike_feast: { name: 'Glass Pike Feast', type: 'food', icon: ['dish', 6], value: 85, food: { maxSp: 40, healSp: 40, regen: 0.6 }, desc: 'Eat (E): +40 max stamina and slow regeneration for 5 minutes.' },
   hunters_stew: { name: "Hunter's Stew", type: 'food', icon: ['dish', 11], value: 30, food: { regen: 1.6 }, desc: 'Eat (E): regenerate health for 5 minutes.' },
   treasure_map: { name: 'Treasure Map', type: 'map', icon: ['scroll', 13], value: 30, desc: 'Read (E): marks a buried chest somewhere in the Reach.' },
   warmth: { name: 'Spring Warmth', type: 'misc', icon: ['dish', 15], value: 0, food: { regen: 1.0, maxSp: 15 }, desc: 'Warmed through by a hot spring.' },
   pet_whistle: { name: 'Pet Whistle', type: 'whistle', icon: ['fang', 13], value: 0, desc: 'Use (E in Items) to swap between your hound and your bear cub.' },
   frost_hound_bone: { name: 'Hound Whistle', type: 'misc', icon: ['fang', 6], value: 0, desc: 'Carved from bone. Calls your frost hound.' },
+  // elixirs: strong, short buffs with a side effect (see systems/elixir.js)
+  berserker_draught: { name: 'Berserker Draught', type: 'elixir', icon: ['potion', 11], value: 70, elixir: { dmgMul: 1.3, takenMul: 1.2, dur: 90 }, desc: 'Drink (E): +30% damage, but you take 20% more. 90 seconds.' },
+  quicksilver_tonic: { name: 'Quicksilver Tonic', type: 'elixir', icon: ['potion', 15], value: 60, elixir: { moveMul: 1.18, takenMul: 1.1, dur: 90 }, desc: 'Drink (E): move 18% faster, but you take 10% more. 90 seconds.' },
+  nightsight_elixir: { name: 'Nightsight Elixir', type: 'elixir', icon: ['potion', 13], value: 55, elixir: { nightsight: 0.55, detectMul: 0.9, dur: 180 }, desc: 'Drink (E): the night turns pale and you are harder to spot. 3 minutes.' },
+  ironhide_brew: { name: 'Ironhide Brew', type: 'elixir', icon: ['potion', 4], value: 65, elixir: { takenMul: 0.75, moveMul: 0.93, dur: 90 }, desc: 'Drink (E): take 25% less damage, but move 7% slower. 90 seconds.' },
+  frostward_tonic: { name: 'Frostward Tonic', type: 'elixir', icon: ['potion', 8], value: 60, elixir: { immune: ['chill', 'freeze', 'slow'], dur: 120 }, desc: 'Drink (E): ice cannot chill or slow you. 2 minutes.' },
+  // spell tomes: read once (E in Items) to learn the spell at any skill level
+  tome_blink: { name: 'Tome of Blink', type: 'tome', teach: 'blink', icon: ['scroll', 14], value: 160, desc: 'Read (E): learn Blink at any skill level.' },
+  tome_shock: { name: 'Tome of Lightning', type: 'tome', teach: 'shock', icon: ['scroll', 13], value: 140, desc: 'Read (E): learn Lightning at any skill level.' },
+  tome_nova: { name: 'Tome of Frost Nova', type: 'tome', teach: 'nova', icon: ['scroll', 15], value: 220, desc: 'Read (E): learn Frost Nova at any skill level.' },
+  tome_wolf: { name: 'Tome of Spirit Wolf', type: 'tome', teach: 'wolf', icon: ['scroll', 6], value: 200, desc: 'Read (E): learn Spirit Wolf at any skill level.' },
+  tome_meteor: { name: 'Tome of the Falling Star', type: 'tome', teach: 'meteor', icon: ['scroll', 12], value: 420, desc: 'Read (E): learn Meteor, a slow, devastating fire spell no skill level can teach.' },
+  hollow_crown: { name: 'The Hollow Crown', type: 'charm', icon: ['charm', 13], maxHp: 30, maxMp: 30, maxSp: 20, crit: 0.05, value: 0, desc: 'All eight relics, joined. +30 health and mana, +20 stamina, +5% crit.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };
+
+for (const r of RELICS) ITEMS[r.id] = { name: r.name, type: 'quest', icon: ['relic', r.col], value: 0, desc: r.text[0] };
 
 export const SLOT_OF = { weapon: 'weapon', weapon2h: 'weapon', shield: 'offhand', bow: 'bow', armor: 'armor', charm: 'charm' };
 export const SLOT_NAMES = { weapon: 'WEAPON', offhand: 'OFFHAND', bow: 'BOW', armor: 'ARMOR', charm: 'CHARM' };

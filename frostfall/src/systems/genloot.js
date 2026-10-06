@@ -58,9 +58,9 @@ let iconBuilder = null;
 // BootScene registers a function that draws the icon (and held sprite) for a generated item.
 export function setIconBuilder(fn) { iconBuilder = fn; }
 
-export function genItem(tier = 0, rnd = Math.random, forceRarity = null) {
-  const slot = pickW(SLOT_WEIGHT, rnd());
-  const base = BASES[slot][Math.floor(rnd() * BASES[slot].length)];
+export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = {}) {
+  const slot = opts.slot || pickW(SLOT_WEIGHT, rnd());
+  const base = (opts.baseName && BASES[slot].find((b) => b.name === opts.baseName)) || BASES[slot][Math.floor(rnd() * BASES[slot].length)];
   // rarity: higher tiers shift odds upward
   let rar = forceRarity != null ? RARITY[forceRarity] : null;
   if (!rar) {
@@ -68,7 +68,7 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null) {
     rar = pickW(ws, rnd());
   }
   const scale = 1 + 0.22 * tier;
-  const it = { ...base, rarity: rar.id, gen: true, tier };
+  const it = { ...base, rarity: rar.id, gen: true, tier, slot, baseName: base.name };
   if (it.dmg) it.dmg = Math.round(it.dmg * scale * rar.mult);
   if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * (0.9 + 0.1 * rar.mult)).toFixed(2);
   if (it.block != null) it.block = +Math.min(0.88, it.block + 0.03 * tier).toFixed(2);
@@ -123,3 +123,16 @@ export function rehydrateGen() {
   for (const [id, def] of Object.entries(S.gen || {})) { ITEMS[id] = def; iconBuilder?.(id, def); }
 }
 export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) || null;
+
+const SLOT_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', shield: 'shield', armor: 'armor', charm: 'charm' };
+export const rarityIndex = (it) => Math.max(0, RARITY.findIndex((r) => r.id === it.rarity));
+// Re-roll a generated item's stats and affixes in place (same id, slot, base, tier and rarity, so equipment stays equipped).
+export function reforgeGen(id) {
+  const old = ITEMS[id];
+  if (!old || !old.gen) return false;
+  const slot = old.slot || SLOT_OF_TYPE[old.type];
+  const fresh = genItem(old.tier || 0, Math.random, rarityIndex(old), { slot, baseName: old.baseName || old.name });
+  fresh.name = fresh.name; fresh.reforged = (old.reforged || 0) + 1;
+  registerGen(id, fresh);
+  return true;
+}

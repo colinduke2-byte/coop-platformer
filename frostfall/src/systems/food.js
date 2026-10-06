@@ -37,10 +37,19 @@ export function foodTick() {
 }
 
 // ---- cooking at campfires
+// Recipes that combine ingredients (single raw fish cook on their own, see ITEMS[...].cook)
+export const COMBOS = [
+  { from: ['venison', 'snowberry'], to: 'hunters_stew' },
+  { from: ['raw_trout', 'snowberry'], to: 'fish_stew' },
+  { from: ['snowberry', 'snowberry', 'frost_lily'], to: 'berry_tart' },
+  { from: ['venison', 'wolf_fang'], to: 'spiced_venison' },
+  { from: ['raw_eel', 'raw_trout'], to: 'ember_chowder' },
+  { from: ['raw_pike', 'raw_pike'], to: 'pike_feast' },
+];
 export const COOKABLE = () => {
   const out = [];
   for (const [id, n] of Object.entries(S.inv)) if (n > 0 && ITEMS[id]?.cook) out.push({ from: [id], to: ITEMS[id].cook, label: ITEMS[id].name });
-  if (S.inv.venison > 0 && S.inv.snowberry > 0) out.push({ from: ['venison', 'snowberry'], to: 'hunters_stew', label: 'Venison + Snowberry' });
+  for (const c of COMBOS) if (c.from.every((id) => (S.inv[id] || 0) >= c.from.filter((x) => x === id).length)) out.push({ ...c, label: c.from.map((id) => ITEMS[id].name).filter((v, i, a) => a.indexOf(v) === i).join(' + ') });
   return out;
 };
 export function cook(r) {

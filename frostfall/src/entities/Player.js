@@ -4,6 +4,8 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
+import { elixirVal } from '../systems/elixir.js';
+import { wear } from '../systems/durability.js';
 import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
@@ -33,6 +35,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.shadow = scene.add.image(x, y, 'shadow');
     this.face = { x: 0, y: 1 };
     this.phase = 0;
+    this.isPlayer = true;
     this.mode = 'free'; // free | roll | hurt | dead | lying
     this.sneaking = false;
     this.lockT = 0;      // action lock (swing/cast/shout): no new actions
@@ -139,7 +142,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'roll') m = 1.2;
     else if (this.sneaking) m = this.speedNow < 6 ? 0.3 : 0.5;
     else if (this.speedNow < 6) m = 0.85;
-    return m * (this.sneaking ? bonus.detect() : 1) * stats.trait('detectMul') * this.scene.stealthEnv();
+    return m * (this.sneaking ? bonus.detect() : 1) * stats.trait('detectMul') * elixirVal('detectMul', 1) * this.scene.stealthEnv();
   }
 
   spend(cost) {
@@ -372,7 +375,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
-      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1);
+      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1) * elixirVal('dmgMul', 1) * foodVal('dmgMul', 1);
       const riposte = this.riposteT > 0;
       if (riposte) dmg *= P.riposte.mult;
       const crit = Math.random() < stats.sum('crit');
@@ -383,6 +386,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
+      wear(S.equip.weapon, 1);
       if (riposte) { this.riposteT = 0; this.scene.fx.text(e.x, e.y - 30, 'RIPOSTE', 13, 1); this.scene.fx.ring(e.x, e.y + 3, 0.5, 0.3, 'ring', 0xf4d460); }
       if (crit) this.scene.fx.text(e.x, e.y - 21, 'CRIT', 13, 0.8);
       this.leechHeal(dealt);
@@ -541,7 +545,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1));
+    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1) * elixirVal('takenMul', 1));
 
     // ---- ward absorbs first
     if (this.ward && this.ward.hp > 0) {
@@ -553,6 +557,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     S.hp -= taken;
+    if (!blocked) wear(S.equip.armor, 1); else wear(S.equip.offhand, 1);
     if (!blocked && opts.attacker?.cfg?.inflicts) inflictOn(this, opts.attacker.cfg.inflicts);
     if (!blocked && opts.inflict) inflictOn(this, opts.inflict);
     this.lastHurt = sc.t;

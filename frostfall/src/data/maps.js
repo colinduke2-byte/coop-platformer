@@ -553,6 +553,10 @@ export const FURNITURE = [
   { id: 'shelf', name: 'Shelves', price: 40, tex: 'shelf', x: 3, y: 2, desc: 'Open shelves along the wall.' },
   { id: 'bookshelf', name: 'Bookshelf', price: 60, tex: 'bookshelf', x: 6, y: 2, desc: 'Fills the cottage with the smell of old paper.' },
   { id: 'cauldron', name: 'Alchemy Cauldron', price: 120, tex: 'cauldron', x: 11, y: 3, desc: 'Brew potions at home. Needs the alchemy lesson from Mirra.' },
+  { id: 'stash', name: 'Stash Chest', price: 80, tex: 'stash', x: 2, y: 6, desc: 'A big iron-bound chest. Keep what you do not carry.' },
+  { id: 'garden', name: 'Herb Garden', price: 140, tex: 'garden', x: 11, y: 8, desc: 'A planter that grows snowberries and frost lilies. Harvest once a day.' },
+  { id: 'trophywall', name: 'Trophy Wall', price: 120, tex: 'trophywall', x: 9, y: 2, desc: 'Mounts your feats. +5 health for every 3 trophies.' },
+  { id: 'cookpot', name: 'Cooking Pot', price: 100, tex: 'cookpot', x: 4, y: 5, desc: 'Cook meals at home. No campfire needed.' },
   { id: 'anvil', name: 'Forge Anvil', price: 200, tex: 'anvil', x: 11, y: 6, desc: 'Upgrade your weapon and armour without leaving home.' },
 ];
 

@@ -1,3 +1,4 @@
+import { elixirVal } from './elixir.js';
 // One status-effect system for enemies and the player.
 // A target is anything with `statuses` (created on demand), `x`, `y`, and optionally `statusHit(n, col)` for damage-over-time.
 //   burn    fire damage over time                      (cleansed by frost, potions, water)
@@ -35,6 +36,7 @@ export function applyStatus(t, type, opts = {}) {
   if (!def || t.dead) return false;
   const imm = t.cfg?.immune;
   if (imm && imm.includes(type)) return false;
+  if (t.isPlayer && (elixirVal('immune', null) || []).includes(type)) return false;
   const st = store(t);
   // chill stacks into a freeze
   if (type === 'chill') {

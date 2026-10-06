@@ -33,13 +33,15 @@ import { HEART_SITE, heartsHeld, HEART_ORDER } from '../data/hearts.js';
 const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter, dragon: EmberDragon };
 const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead', dragon: 'dragonDead' };
 import { foodTick } from '../systems/food.js';
+import { elixirTick } from '../systems/elixir.js';
+import { maybeRelic, grantRelic } from '../systems/relics.js';
 import { checkTrophies } from '../systems/achievements.js';
 import Breakable from '../entities/Breakable.js';
 import { ArenaMaster } from '../entities/Props.js';
 import { arenaWave } from '../world/arena.js';
 import Hound from '../entities/Hound.js';
 import { routePos } from '../world/roamers.js';
-import { OrphanCub, SoakSpot, WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
+import { StashChest, GardenPlot, TrophyWall, CookPot, OrphanCub, SoakSpot, WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
@@ -378,7 +380,7 @@ export default class GameScene extends Phaser.Scene {
         S.gold += gold;
         bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
         if (w % 3 === 0 || w % 5 === 0) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
-        S.run.kills += 0;
+        if (w % 5 === 0) maybeRelic(this, 0.35);
       }
       a.cleared = a.wave - 1;
       a.t = 4;
@@ -616,6 +618,7 @@ export default class GameScene extends Phaser.Scene {
     S.gold += 150 + 100 * (en.tier || 0);
     this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((en.tier || 0) + 1, Math.random, 3) }));
     bus.emit('toast', `${en.displayName.split(',')[0].toUpperCase()} FALLS`, 13); sfx.play('quest');
+    this.time.delayedCall(900, () => grantRelic(this));
     this.shake(500, 0.01);
   }
 
@@ -638,6 +641,7 @@ export default class GameScene extends Phaser.Scene {
     S.gold += 80 + 60 * k + 40 * tier;
     this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem(tier + 1, Math.random, k >= 3 ? 3 : 2) }));
     bus.emit('toast', 'NEMESIS VANQUISHED', 13); sfx.play('quest');
+    maybeRelic(this, 0.4);
   }
 
   // A barrow champion falling counts as clearing that barrow.
@@ -680,6 +684,10 @@ export default class GameScene extends Phaser.Scene {
     this.propBodies.add(prop);
     if (f.id === 'cauldron') this.interactables.push(new Cauldron(this, wx, wy));
     if (f.id === 'anvil') this.interactables.push(new HomeAnvil(this, wx, wy));
+    if (f.id === 'stash') this.interactables.push(new StashChest(this, wx, wy));
+    if (f.id === 'garden') this.interactables.push(new GardenPlot(this, wx, wy));
+    if (f.id === 'trophywall') this.interactables.push(new TrophyWall(this, wx, wy));
+    if (f.id === 'cookpot') this.interactables.push(new CookPot(this, wx, wy));
   }
 
   // each dungeon keeps its own 'vault opened' flag (the crypt keeps the old one)
@@ -896,7 +904,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.update(dt);
     updateTutorial(this, dt);
     this.worldEvents(dt);
-    foodTick();
+    foodTick(); elixirTick();
     this.ambientLife(dt);
     this.ambientTick(dt);
     for (const i of this.interactables) if (i.tick) i.tick(dt, this);

@@ -11,6 +11,7 @@ const lerpColor = (a, b, t) => {
   return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
 };
 
+import { elixirVal } from '../systems/elixir.js';
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
 
@@ -40,7 +41,7 @@ export const lightingMethods = {
       const nAlpha = 0.52 * night;
       color = lerpColor(0x0b0e1a, 0x0b1536, night);
       if (dusk > 0.05) { color = lerpColor(color, 0x3a1a2a, dusk * 0.5); }
-      alpha = Math.max(base, nAlpha);
+      alpha = Math.max(base, nAlpha * (1 - elixirVal('nightsight', 0)));
       if (S.weather === 'blizzard') { color = lerpColor(color, 0x7b8fb5, 0.7 * (1 - night)); alpha = Math.max(alpha, 0.2 + 0.2 * night); }
       if (S.weather === 'whiteout') { color = lerpColor(0xe4ecf6, 0x3a4a6a, night * 0.8); alpha = Math.max(alpha, 0.56); }
     }

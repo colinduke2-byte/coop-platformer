@@ -1,3 +1,4 @@
+import { RELICS } from './relics.js';
 // Readable books (found in houses, ruins, the crypt) and the bestiary.
 export const LORE = {
   hearth: { title: 'The Hearth Songs', text: ['Hollowfrost was founded by seven families who followed a single fire north.', 'They sealed that fire in the great hall. As long as it burned, the winter stayed outside the palisade.'] },
@@ -10,6 +11,8 @@ export const LORE = {
   bandit: { title: 'Bandit Camp Ledger', text: ['Take: one silver locket, one wolf-hide coat, two sacks of grain.', 'The chief keeps the locket in the iron-banded chest. He says he will give it to his daughter. He has no daughter.'] },
   tower: { title: 'Watchtower Log', text: ['Day 41. The pass is quiet except for the howling. The howling is getting closer.', 'Day 44. I have seen it. It is bigger than a horse.'] },
 };
+
+for (const r of RELICS) LORE[r.id] = { title: r.name, text: r.text };
 
 export const BEASTS = {
   wolf: { name: 'Wolf', desc: 'Pack hunter. Growls, then lunges. Roll through the lunge.', weak: 'Burns easily.' },

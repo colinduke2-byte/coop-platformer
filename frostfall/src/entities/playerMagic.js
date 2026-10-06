@@ -20,10 +20,11 @@ export const SPELLS = {
   blink: { name: 'Blink', cost: 20, icon: 'icon_blink', col: 14, skill: 'sneak', lvl: 4, desc: 'Teleport a short way, untouchable' },
   nova: { name: 'Frost Nova', cost: 30, dmg: 14, icon: 'icon_nova', col: 15, skill: 'destruction', lvl: 7, desc: 'Ring of ice around you' },
   wolf: { name: 'Spirit Wolf', cost: 34, dmg: 9, icon: 'icon_wolf', col: 15, skill: 'restoration', lvl: 5, desc: 'A spectral wolf fights for you' },
+  meteor: { name: 'Meteor', cost: 48, dmg: 38, icon: 'icon_meteor', col: 12, skill: 'destruction', lvl: 99, tome: true, desc: 'A star falls where you aim' },
   ward: { name: 'Ward', cost: 30, absorb: 30, time: 8, icon: 'icon_ward', col: 15, skill: 'restoration', lvl: 3, desc: 'Absorbs damage' },
 };
-export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'wolf'];
-export const spellUnlocked = (id) => lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
+export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'wolf', 'meteor'];
+export const spellUnlocked = (id) => !!S.tomes?.[id] || lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
 
 export const magicMethods = {
   // Mana cost climbs while casts are chained (overcast), and cools off again.
@@ -110,6 +111,23 @@ export const magicMethods = {
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
         this.gainXp('destruction', 6);
+        break;
+      }
+      case 'meteor': {
+        const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 70, y: this.y + 3 + f.y * 70 };
+        const R = 38, dmg = spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer ? 1.15 : 1 });
+        sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, R / 32, 0.9, 'ring', 0xf08a30);
+        sc.time.delayedCall(900, () => {
+          if (!sc.scene.isActive('Game')) return;
+          sc.shake(320, 0.012); sfx.play('fire'); sc.fx.puff(tg.x, tg.y, 12, 16, 80, 0.7); sc.fx.puff(tg.x, tg.y, 13, 10, 50, 0.6); sc.fx.ring(tg.x, tg.y + 4, R / 24, 0.45, 'ring', 0xf4d460);
+          for (const e of sc.enemies.getChildren()) {
+            if (e.dead || Math.hypot(e.x - tg.x, e.y - tg.y) > R) continue;
+            const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 190, src: 'fire', element: 'fire', stun: 0.8, forceStun: !e.isBoss, status: { type: 'burn', t: 4, dps: 6 } });
+            sc.fx.text(e.x, e.y - 10, String(dealt), 12);
+          }
+          this.gainXp('destruction', 10);
+        });
+        this.gainXp('destruction', 4);
         break;
       }
       case 'wolf': {

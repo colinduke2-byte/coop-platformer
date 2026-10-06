@@ -9,12 +9,13 @@ import { addItem } from '../systems/inventory.js';
 import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
-import { brewMenu, upgradeMenu, furnishMenu, cookMenu } from '../data/services.js';
+import { brewMenu, upgradeMenu, furnishMenu, cookMenu, stashMenu } from '../data/services.js';
 import { C } from '../config.js';
 import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
+import { maybeRelic } from '../systems/relics.js';
 import { COOKABLE } from '../systems/food.js';
 import { clearStatus } from '../systems/status.js';
 
@@ -306,6 +307,7 @@ export class DigSpot extends Phaser.GameObjects.Image {
       bus.emit('toast', 'DUG UP SOME COIN', 13);
       sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: gold * 2 }));
       if (Math.random() < 0.5) addItem('lockpick', 2);
+      if (Math.random() < 0.1) maybeRelic(sc, 1);
       if (Math.random() < 0.12) { addItem('treasure_map'); bus.emit('toast', 'YOU FOUND A TREASURE MAP!', 13); }
     }
     this.destroy();
@@ -369,6 +371,43 @@ export class FishHole extends Phaser.GameObjects.Image {
     }
     if (this.st !== 'idle' && Math.hypot(sc.player.x - this.x, sc.player.y - this.y) > 40) this.st = 'idle';
   }
+}
+
+// ---- cottage furnishings: stash chest, herb garden, trophy wall, cooking pot
+export class StashChest extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) { super(scene, x, y, 'stash'); scene.add.existing(this); this.ix = x; this.iy = y; this.setDepth(y + 6); }
+  canInteract() { return true; }
+  label() { return 'E: STASH'; }
+  async interact() { await runScript(async () => { await stashMenu(); }); }
+}
+export class GardenPlot extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) { super(scene, x, y, 'garden'); scene.add.existing(this); this.ix = x; this.iy = y; this.setDepth(y + 6); }
+  canInteract() { return true; }
+  label() { return S.flags.gardenDay === today() ? 'E: GARDEN (RESTING)' : 'E: HARVEST'; }
+  async interact() {
+    const sc = this.scene;
+    if (S.flags.gardenDay === today()) { bus.emit('toast', 'NOTHING IS RIPE YET: COME BACK TOMORROW', 4); sfx.play('nostamina'); return; }
+    S.flags.gardenDay = today();
+    const n = 2 + Math.floor(Math.random() * 3);
+    addItem('snowberry', n); addItem('frost_lily', Math.max(1, n - 1));
+    sc.fx.puff(this.x, this.y - 4, 8, 8, 30, 0.5); sfx.play('potion');
+    bus.emit('toast', `HARVESTED ${n} SNOWBERRIES, ${Math.max(1, n - 1)} FROST LILIES`, 8);
+  }
+}
+export class TrophyWall extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) { super(scene, x, y, 'trophywall'); scene.add.existing(this); this.ix = x; this.iy = y; this.setDepth(y + 6); }
+  canInteract() { return true; }
+  label() { return 'E: TROPHY WALL'; }
+  async interact() {
+    const n = Object.keys(S.trophies || {}).length;
+    await runScript(async () => { await say('Trophy Wall', `${n} trophies mounted. That is +${Math.floor(n / 3) * 5} health, and every 3 more adds 5.`); });
+  }
+}
+export class CookPot extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) { super(scene, x, y, 'cookpot'); scene.add.existing(this); this.ix = x; this.iy = y; this.setDepth(y + 6); }
+  canInteract() { return true; }
+  label() { return 'E: COOK'; }
+  async interact() { await runScript(async () => { await cookMenu(); }); }
 }
 
 // A hot spring: soak to heal over a few seconds, clear every ailment and get a warm-blooded buff.
