@@ -19,7 +19,7 @@ Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|ha
 
 ## World
 
-Hollowfrost Village (with three enterable houses) -> Pine Forest (wolves, bandit camp, herbs, hidden glade) ->
+Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (camps, dens, ruins with shrines, watchtowers, champions, procedural barrow dungeons, a travelling trader) ->
 Crypt of the Hollow King (boss Jarl Valdrek) and Frostwind Pass (boss Grimfang). A 12-minute day/night cycle and
 changing weather affect stealth; villagers go indoors at night.
 
@@ -32,6 +32,7 @@ changing weather affect stealth; villagers go indoors at night.
 | J | Sword. Tap 3 times for a combo with a heavy finisher |
 | K (hold, release) | Bow: hold to charge, release to fire |
 | L | Cast the selected spell. Q / Tab swaps (locked spells are skipped) |
+| U | Heavy attack (slow, staggers, breaks guards) |
 | T | Lock on / drop target (faces the foe, aims the bow) |
 | 4 5 6 7 8 | Quick-cast Fireball / Frost / Lightning / Healing / Ward |
 | V | Switch arrows (plain / fire / barbed) |

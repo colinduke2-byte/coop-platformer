@@ -3,6 +3,38 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 4: the open world (replayability and fun fighting)
+
+### The Hollow Reach (open world)
+- **The Pine Forest is now a 176x128-tile open world**, the old forest sitting in its north-west corner with the same coordinates (quests, exits and signs still work). Lakes of walkable ice, mountain walls, tundra, pine forest and the dead-tree Blightwood; roads join everything.
+- **Every New Game rolls a seed** that lays out the whole world: about 30 points of interest (bandit camps, wolf dens, haunted ruins, watchtowers, groves, champion sites, travellers' fires, barrow entrances) in different places each time. `?seed=123` in the URL pins a seed.
+- **Danger grows with distance** from the village in four tiers. Enemies there have more health and hit harder, and the further regions bring the Rime Reaver, Knight and Fencer.
+- **Streaming.** Enemies only exist while you are near (spawn at 300px, leave at 520px), so the big map stays cheap. Camps, champions and elites stay dead once beaten; wanderers come back the next day.
+- **Procedural barrow dungeons** (three per world, four themes): a chain of fight rooms, a rune-plate trap room (random order, shown on a sign), a treasure room and a champion boss with a rare chest.
+
+### Things to do
+- **Camp and den bounties:** clear every enemy of a camp, den, ruin, tower or champion site and a bounty pays gold and a piece of gear.
+- **Bounty board** in the village plaza: four fresh contracts per day aimed at real places in your world (reward gold + gear, sets a map waypoint, max three active).
+- **Shrines** in the ruins: pray for one of three daily offers, a blessing (Wolf, Bear, Raven, Fox) or a risky pact (Blood, Glass, Hunger). One is active at a time and it changes how you play.
+- **Ore nodes** to mine, **buried treasure** to dig up (a cache, coin, or something digs back), **deer** to hunt for venison and hides.
+- **Random events:** ambushes (undead at night) and a **travelling trader** selling generated gear, with a waypoint to find them.
+- **Fast travel** between campfires you have found: open the map, E for the cursor, F on a found fire. The map now shows shrines, fires and unfinished sites.
+
+### Loot
+- **Generated gear:** every weapon, bow, shield, armour and charm can roll a rarity (common / magic / rare / legendary, drawn in cyan, gold and purple with a glow on the ground) and 0 to 3 affixes: Keen, Vampiric (lifesteal), crit chance, fire / frost / storm damage, Swift, Light, Hardy, Arcane, Vigorous, of the Bear, of Shadows, of Plenty. Higher tiers roll stronger bases.
+- Chests, champions, elites, bounties, buried caches and the trader all drop it.
+
+### Fighting
+- **Poise and stagger:** every hit chips poise (shown as a thin bar); break it and the enemy staggers for 1.5s, takes 35% more damage and its armour opens up.
+- **Heavy attack (U):** a slow, telegraphed overhead blow with big poise damage that breaks shields.
+- **Perfect dodge:** roll in the last moment before a hit lands: slow motion, stamina back, the attacker reels, and your next hit does +60% (COUNTER on the status row).
+- **Elite enemies:** random affixes (Swift, Brutal, Juggernaut, Vampiric, Regenerating, Explosive, Summoner) with their own tint and name; **champions** carry two affixes and guaranteed rare loot.
+- **Crit** chance and **lifesteal** from gear and blessings.
+
+### Replayability
+- **New Game+:** after an ending the title screen offers NEW GAME+: keep level, skills, perks, gear and gold; new seed, harder enemies (+40% health, +15% damage per cycle).
+- A run record (kills, camps, barrows, champions) is kept in the save.
+
 ## Round 3: controls, UI and gameplay (the "do all of it" pass)
 
 ### Controls
