@@ -489,8 +489,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   freeSpotNear(minD, maxD) {
-    for (let i = 0; i < 40; i++) {
-      const a = Math.random() * Math.PI * 2, d = minD + Math.random() * (maxD - minD);
+    for (let i = 0; i < 160; i++) {
+      const wide = i > 80 ? 0.5 : 1;             // dense woodland: after 80 misses, look closer in
+      const a = Math.random() * Math.PI * 2, d = minD * wide + Math.random() * (maxD * wide - minD * wide);
       const x = this.player.x + Math.cos(a) * d, y = this.player.y + Math.sin(a) * d;
       if (!this.solidAt(x, y) && !this.solidAt(x + 8, y) && !this.solidAt(x - 8, y) && !this.solidAt(x, y + 8)) return { x, y };
     }

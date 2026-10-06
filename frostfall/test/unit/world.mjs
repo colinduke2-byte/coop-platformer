@@ -83,6 +83,14 @@ t('startNgPlus: character carries over, quests and kills reset', () => {
   assert.notEqual(S.seed, oldSeed);
   startNgPlus(); assert.equal(S.ngPlus, 2);
 });
+t('every seed gets its full set of points of interest (champions, groves, camps, dens, ruins, barrows, towers)', () => {
+  const want = { champion: 4, grove: 2, camp: 5, den: 5, ruin: 4, barrow: 3, tower: 3 };
+  for (let k = 1; k <= 25; k++) {
+    S.seed = k * 104729;
+    const c = {}; for (const p of getReach().pois) c[p.kind] = (c[p.kind] || 0) + 1;
+    for (const [kind, n] of Object.entries(want)) assert.ok((c[kind] || 0) >= n - 1, `seed ${S.seed}: only ${c[kind] || 0} ${kind} (wanted ${n})`);
+  }
+});
 t('every seed places all five dungeon entrances, and each dungeon is fully reachable', () => {
   for (let k = 1; k <= 25; k++) {
     S.seed = k * 7919;

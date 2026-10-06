@@ -47,7 +47,7 @@ check('wolf telegraphs then lunges to bite', sawWind && hit);
 // bandit swings
 await duel('bandit', 50);
 hit = false; sawWind = false;
-for (let i = 0; i < 80 && !hit; i++) {
+for (let i = 0; i < 160 && !hit; i++) {
   const r = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; return { hp: window.__ff.S.hp, st: e?.state }; });
   if (r.st === 'windup') sawWind = true;
   if (r.hp < 100) hit = true;

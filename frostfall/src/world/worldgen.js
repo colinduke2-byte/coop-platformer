@@ -87,7 +87,7 @@ export function buildReach(region, seed) {
   const taken = [{ x: 28, y: 16, r: 34 }];                   // the old forest region
   const okSpot = (x, y, r) => {
     if (x < 8 + r || y < 8 + r || x > W - 8 - r || y > H - 8 - r) return false;
-    if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r)) return false;
+    if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < (t.r + r) * 0.8)) return false;
     const b = bio[y][x];
     return b !== 'lake' && b !== 'mountain';
   };
@@ -103,6 +103,7 @@ export function buildReach(region, seed) {
   };
   const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
   mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);                 // the Glacial Maw: dungeon of the second Heart
+  place('champion', 4, 8);                // placed early: later it finds no room on a map crowded with dungeons
   place('camp', 5, 11);
   place('den', 5, 9);
   place('ruin', 4, 10);
@@ -110,7 +111,6 @@ export function buildReach(region, seed) {
   place('tower', 3, 7);
   place('grove', 3, 8);
   place('rest', 6, 4);
-  place('champion', 4, 8);
   // make sure there is something gentle near the entrance
   place('den', 1, 9, { x: 70, y: 20, r: 22 });
   place('rest', 1, 4, { x: 70, y: 36, r: 18 });

@@ -11,6 +11,7 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **New options (Pause > System):** HIT STOP on/off and DAMAGE NUMBERS on/off.
 - **Boss intro card:** engaging any boss slides in letterbox bars with the boss's full title on top and the area name below (2.6 s; the fight starts during its roar as before).
 - **Dragon:** fire puffs at the jaw on each breath volley; the sprite now uses the full six-frame clip set.
+- **World fix:** since chapter two crowded the map with dungeons, most seeds had **no champions and no groves** at all (champion bounties and the champion fights never appeared). Champions now place before the common camps, points of interest may sit a little closer together, and a unit test checks 25 seeds. The travelling trader also finds a spot in dense woodland now.
 - Tests: `stage35_polish`, art baseline refreshed, `test/sheet.mjs` dumps any sprite sheet at 6x for eyeballing.
 
 ## Round 8: foundations (hardening + shared systems)
