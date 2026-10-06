@@ -122,7 +122,7 @@ check('E returns to the village after the ending', !sc.includes('Ending') && sc.
 await goNear('sigrid');
 await tap('KeyE'); await h.sleep(200);
 const post = await dlg();
-check('NPC dialogue changes after the ending', post && /Frostheart burns warm/i.test(post.text), JSON.stringify(post));
+check('NPC dialogue changes after the ending', post && /older\s+than/i.test(post.text), JSON.stringify(post));
 await talk([]);
 
 // other branch: keep it
