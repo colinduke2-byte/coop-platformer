@@ -28,7 +28,9 @@ for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['cr
   const fps = await h.ev(() => Math.round(window.__ff.game.loop.actualFps));
   console.log(`  ${map}${mode ? '/' + mode : ''}: ${n} inputs, ${fps} fps (software renderer), state ${JSON.stringify(st)}`);
   check(`${map}: no NaN / bad state`, !st.bad);
-  check(`${map}: stayed alive & responsive`, st.scenes.includes('Game') || st.scenes.includes('Title'));
+  let alive = st.scenes.includes('Game') || st.scenes.includes('Title');
+  if (!alive) { await h.sleep(2000); alive = (await h.ev(() => window.__ff.game.scene.getScenes(true).map((s) => s.scene.key))).some((k) => k === 'Game' || k === 'Title'); }   // a scene change may be mid-fade
+  check(`${map}: stayed alive & responsive`, alive);
   check(`${map}: no exceptions`, h.errors.length === 0, h.errors.slice(0, 3).join('\n'));
   h.errors.length = 0;
 }

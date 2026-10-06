@@ -3,6 +3,19 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 7: the long list (a real dragon, life in the wild, and things to do between fights)
+- **Skaldrath redrawn.** The Ember Wyrm now has its own 48x32 sprite: a horned, fanged head on an S-curved neck, a barrel chest with golden belly plates and a spiked back, two bat wings that beat in three frames (the far wing is darker for depth), clawed legs and a spiked tail, with fire licking from the jaw. Body and hitbox were resized to match (`enemies.js` body, `Guardians.js` scale 1.9).
+- **Wildlife:** **Snow Hares** (tiny, very fast, drop venison) and **Ember Foxes** (russet, fast, drop hide and fangs) bound away as you approach, like deer. Bestiary entries included.
+- **Fishing:** frozen lakes have **ice holes**. E to cast, wait, and press E again the moment `! BITE !` shows (0.9 s window; too early spooks it). Catches: Frost Trout, rare Glass Pike, Ember Eel (past the first region). 5% of casts hook a soggy treasure map.
+- **Cooking and food buffs:** at any campfire, E now offers *Rest* or *Cook a meal*. Grilled Trout (+20 max health, heals), Smoked Pike (+30 max stamina), Eel Roast (+8% move speed), Hunter's Stew (venison + snowberry: health regeneration). One meal at a time, 5 minutes of play time, shown in the status row. Eat from the Items tab with E.
+- **Treasure maps:** found while digging (12%) or fishing (5%). Reading one (E in Items) marks a far-away dig site in the Reach with a waypoint; dig there for two generated items (one guaranteed uncommon+) and gold.
+- **Frost hound companion:** a starving hound waits beside the first road in every seed. Share venison (or a cooked meal) and it joins you for good: follows through every map, hunts what hunts you (bite damage grows with your level) and cannot be killed.
+- **The Hollow Arena:** a stone gate in the village's east plaza. Endless waves with rising budgets and tiers; every fifth wave brings an elite champion. Each wave pays gold, every third/fifth drops generated gear. Your best wave is saved; yield any time to leave with your winnings.
+- **Feats tab:** 26 trophies (kills, bosses, Hearts, fishing, cooking, treasure, arena, hound...) that unlock on their own, with a toast. The menu tab bar was tightened so all eight tabs fit.
+- **Music:** three new tracks: *cavern* (sparse, for the Glacial Maw and the lair approaches), *throne* (grand and slow for the Winter Throne boss and the arena) and *dragon* (fast and fierce for Skaldrath).
+- **Blizzards:** predators (wolves, bears, lynx, boar) now hunt by scent in a blizzard: their detection is boosted to cancel the stealth bonus the snow gives you against everything else.
+- Tests: `stage31_life.mjs` (fishing, cooking, food, maps, feats, music) and `stage32_arena.mjs` (arena waves, hound). The flaky Spore Mother check and the monkey scene-change check were made timing-tolerant.
+
 ## Round 6: a wilder world (predators, strange foes, dragons)
 - **Predators:** the **Snow Bear** (huge, slow swipes), the **Shadow Lynx** (fades into the snow, pounces from range), the **Tusk Boar** (straight-line charge). They join the wild spawn tables by region; bears and lynxes appear further out.
 - **Strange foes:** **Cinder Imp** (sprints at you and bursts), **Grave Caller** (raises draugr every few seconds), **Spore Mother** (rooted, seeds the ground with a pattern of bursts), **Rime Golem** (armoured ice giant), **Pale Wisp** (flies over walls, blinks away), **Frost Worm** (tunnels unseen and untouchable, marks the spot, then surfaces and bites), and the **Mimic** (some chests in the open world are not chests).

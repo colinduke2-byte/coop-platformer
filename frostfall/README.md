@@ -55,6 +55,7 @@ All keyboard keys can be rebound in **Pause > System > Controls**.
 * **Progression**: 5 skills that level by use (Archery, One-Handed, Destruction, Restoration, Sneak), character level,
   15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower.
 * **Story**: 5 quests with real choices (the Frostheart ending, Asta's locket, sparing or killing Grimfang).
+* **Life in the wild**: ice fishing, campfire cooking with meal buffs, treasure maps, a frost hound companion, the Hollow Arena wave challenge, 26 trophies, hares/foxes/bears/lynx/boar and a real dragon.
 * **UX**: quest tracking with map/HUD markers, one-time tooltips, filterable inventory, fog-of-war map, lore and bestiary,
   3 save slots with backups and mid-boss saves, difficulty, screen-shake and flash options, integer scaling.
 

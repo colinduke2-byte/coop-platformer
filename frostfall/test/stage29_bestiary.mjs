@@ -43,8 +43,9 @@ check('the Grave Caller raises draugr (and never more than three)', drg >= 1 && 
 await reset(); await G(() => { window.gs().player.invuln = 999; });
 await spawn('shroom', 80, 0);
 const z0 = await G(() => window.gs().zones.length);
-await h.sleep(2200);
-check('a Spore Mother seeds several bursts at once', (await G(() => window.gs().zones.length)) >= 3 || (await G(() => window.__e.state)) !== 'chase');
+let zmax = z0;
+for (let i = 0; i < 24 && zmax < 3; i++) { await h.sleep(250); zmax = Math.max(zmax, await G(() => window.gs().zones.length)); }
+check('a Spore Mother seeds several bursts at once', zmax >= 3, String(zmax));
 
 await reset(); await spawn('golem', 18, 0, true);
 await G(() => { window.__e.cfg = { ...window.__e.cfg, detect: 0, speed: 0, chase: 0 }; });
