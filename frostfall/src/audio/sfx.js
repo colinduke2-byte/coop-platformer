@@ -133,6 +133,15 @@ const SONGS = {
     A: { chords: [[0, 3, 7], [0, 3, 7], [-2, 1, 5], [-1, 2, 6]], melody: [12, 12, null, 15, 12, null, 10, 12, 13, 13, null, 16, 13, null, 11, 13] },
     B: { chords: [[-2, 1, 5], [-1, 2, 6], [0, 3, 7], [0, 3, 7]], melody: [13, 13, null, 16, 13, null, 11, 13, 12, 12, null, 15, 12, null, 10, 12] } },
 };
+SONGS.cavern = { bpm: 60, lead: 'triangle', bass: 'triangle', root: 40,
+  A: { chords: [[0, 7, 12], [-2, 5, 10], [-4, 3, 8], [-5, 2, 7]], melody: [null, null, 19, null, null, 17, null, null, null, 15, null, null, 14, null, null, null] },
+  B: { chords: [[-4, 3, 8], [-5, 2, 7], [0, 7, 12], [-2, 5, 10]], melody: [null, 14, null, null, 15, null, null, null, 17, null, null, 15, null, null, 12, null] } };
+SONGS.throne = { bpm: 104, lead: 'sawtooth', bass: 'sawtooth', root: 41,
+  A: { chords: [[0, 3, 7], [-4, 0, 3], [-2, 1, 5], [-5, -2, 2]], melody: [12, null, 12, 15, null, 17, 15, null, 14, null, 14, 12, null, 10, 12, null] },
+  B: { chords: [[-2, 1, 5], [-5, -2, 2], [0, 3, 7], [-1, 2, 6]], melody: [17, null, 15, null, 17, 19, null, 17, 15, null, 14, null, 12, 14, 15, null] } };
+SONGS.dragon = { bpm: 140, lead: 'square', bass: 'sawtooth', root: 38,
+  A: { chords: [[0, 3, 7], [0, 3, 7], [1, 5, 8], [-2, 2, 5]], melody: [12, 12, 15, null, 12, 10, 12, null, 13, 13, 17, null, 13, 12, 10, null] },
+  B: { chords: [[1, 5, 8], [-2, 2, 5], [0, 3, 7], [-1, 2, 6]], melody: [17, null, 15, 13, 17, null, 20, null, 19, 17, null, 15, 13, null, 12, null] } };
 let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0;
 function schedule() {
   const a = ac(); if (!a || !song) return;

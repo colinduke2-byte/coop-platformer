@@ -41,6 +41,8 @@ export const BEASTS = {
   mimic: { name: 'Mimic', desc: 'It was a chest. Now it is a mouth.', weak: 'Fire and lightning.' },
   wyvern: { name: 'Ash Wyvern', desc: 'Circles overhead and dives. Hit it as it passes or shoot it down.', weak: 'Frost. Fire-proof.' },
   dragon: { name: 'Skaldrath', desc: 'The Ember Wyrm. Sweeping fire, falling stars, and dives that shake the cave. Frost wounds it; fire does not.', weak: 'Frost.' },
+  hare: { name: 'Snow Hare', desc: 'Quick and jumpy. Bolts at the first footstep.', weak: 'Anything sharp.' },
+  fox: { name: 'Ember Fox', desc: 'Russet fur and bright eyes. Slips away from danger.', weak: 'Arrows.' },
   deer: { name: 'Deer', desc: 'Skittish. Shoot it from range for venison and hides.', weak: 'Anything sharp.' },
   boss: { name: 'Jarl Valdrek', desc: 'The Hollow King. Two phases; the second adds a frost nova and a charge.', weak: 'Fire. Resists frost.' },
   grimfang: { name: 'Grimfang', desc: 'The Pale Alpha. Leaps, howls, and may yield when beaten.', weak: 'Fire.' },

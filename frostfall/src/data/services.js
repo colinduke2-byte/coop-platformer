@@ -8,6 +8,7 @@ import { TUNE } from './tuning.js';
 import { FURNITURE } from './maps.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
+import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen } from '../scenes/ShopScene.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
@@ -240,3 +241,21 @@ export async function furnishMenu(scene) {
   });
 }
 export { recalc };
+
+// Campfire cooking: turn fish and game into a five-minute meal buff.
+export async function cookMenu() {
+  await listScreen({
+    title: 'CAMPFIRE', hint: 'E COOK   ESC DONE',
+    rows: () => {
+      const l = COOKABLE();
+      if (!l.length) return [{ id: 'none', name: 'NOTHING TO COOK', tag: '', ok: false, tagCol: 4, sub: 'FISH AT ICE HOLES, HUNT DEER', lines: [] }];
+      return l.map((r) => ({ id: r.to, name: ITEMS[r.to].name, tag: 'x' + count(r.to), ok: true, tagCol: 4, sub: r.label.toUpperCase(), lines: [[ITEMS[r.to].desc.toUpperCase().slice(0, 40), 5]] }));
+    },
+    onSelect: (i, ui) => {
+      const l = COOKABLE();
+      if (!l[i]) { sfx.play('nostamina'); return; }
+      cook(l[i]);
+      ui.say('COOKED ' + ITEMS[l[i].to].name.toUpperCase(), 8);
+    },
+  });
+}

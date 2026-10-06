@@ -10,6 +10,7 @@ import { systemTab } from './menuSystem.js';
 import { mapTab } from './menuMap.js';
 import { perksTab } from './menuPerks.js';
 import { loreTab } from './menuLore.js';
+import { trophyTab } from './menuTrophies.js';
 
 const STATUS = { active: 'ACTIVE', ready: 'READY', relic: 'ACTIVE', sell: 'ACTIVE', done: 'DONE' };
 
@@ -58,6 +59,7 @@ export function tabs(m) {
     },
     perksTab(m),
     loreTab(m),
+    trophyTab(m),
     mapTab(m),
     systemTab(m),
   ];

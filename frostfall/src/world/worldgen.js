@@ -241,7 +241,7 @@ export function buildReach(region, seed) {
     if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < t.r - 2) || bio[y][x] === 'lake' || bio[y][x] === 'mountain' || g.t[y][x] === TILE.PATH) continue;
     const tier = tierAt(x, y), roll = R();
     if (roll < 0.34) add({ t: 'herb', item: R() < 0.6 ? 'snowberry' : 'frost_lily', x, y });
-    else if (roll < 0.5) add({ t: 'deer', x, y });
+    else if (roll < 0.5) { const q = R(); add({ t: 'deer', x, y, kind: q < 0.5 ? 'deer' : q < 0.8 ? 'hare' : 'fox' }); }
     else if (roll < 0.62 && bio[y][x] !== 'tundra') add({ t: 'node', x, y, ore: R() < 0.8 ? 'iron_ingot' : 'bone_dust' });
     else if (roll < 0.78) add({ t: 'dig', x, y, id: `dig${i}` });
     else {
@@ -252,8 +252,16 @@ export function buildReach(region, seed) {
     }
   }
 
+  // ice-fishing holes out on the frozen lakes
+  for (let i = 0, n = 0; i < 600 && n < 14; i++) {
+    const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
+    if (bio[y][x] !== 'lake' || [[2, 0], [-2, 0], [0, 2], [0, -2]].some(([dx, dy]) => bio[y + dy]?.[x + dx] !== 'lake')) continue;
+    if (entities.some((e) => e.t === 'fish' && Math.hypot(e.x - x, e.y - y) < 14)) continue;
+    add({ t: 'fish', x, y }); n++;
+  }
+
   // keep every placed thing on open ground
-  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'pot', 'sign', 'spawn']);
+  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'pot', 'sign', 'spawn']);
   for (const e of entities) {
     if (!PLACED.has(e.t) || e.x < rw && e.y < rh) continue;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {

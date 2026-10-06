@@ -1,4 +1,5 @@
 import { S } from '../systems/state.js';
+import { ITEMS } from '../data/items.js';
 import { bus } from '../systems/bus.js';
 import { say, choose, runScript } from '../systems/dialogue.js';
 import { saveGame } from '../systems/save.js';
@@ -8,12 +9,13 @@ import { addItem } from '../systems/inventory.js';
 import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
-import { brewMenu, upgradeMenu, furnishMenu } from '../data/services.js';
+import { brewMenu, upgradeMenu, furnishMenu, cookMenu } from '../data/services.js';
 import { C } from '../config.js';
 import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
+import { COOKABLE } from '../systems/food.js';
 
 // A readable wooden sign.
 export class Sign extends Phaser.GameObjects.Image {
@@ -47,6 +49,11 @@ export class RestSpot {
   async interact() {
     const sc = this.scene, cam = sc.cameras.main;
     await runScript(async () => {
+      if (COOKABLE().length) {
+        const c = await choose(['Rest by the fire', 'Cook a meal', 'Cancel']);
+        if (c === 1) { await cookMenu(); return; }
+        if (c !== 0) return;
+      }
       sfx.play('select');
       await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
@@ -297,8 +304,68 @@ export class DigSpot extends Phaser.GameObjects.Image {
       bus.emit('toast', 'DUG UP SOME COIN', 13);
       sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: gold * 2 }));
       if (Math.random() < 0.5) addItem('lockpick', 2);
+      if (Math.random() < 0.12) { addItem('treasure_map'); bus.emit('toast', 'YOU FOUND A TREASURE MAP!', 13); }
     }
     this.destroy();
+  }
+}
+
+// The buried chest a treasure map points to.
+export class TreasureSpot extends DigSpot {
+  constructor(scene, x, y, key, tier) { super(scene, x, y, key, tier); this.setTint(0xf4d460); }
+  label() { return 'E: DIG (TREASURE!)'; }
+  interact() {
+    const sc = this.scene;
+    markGone(this.key, true);
+    sc.fx.puff(this.x, this.y, 14, 10, 55, 0.6); sfx.play('smash');
+    sc.interactables = sc.interactables.filter((i) => i !== this);
+    S.run.chests++; S.fish ||= {}; S.fish.maps = (S.fish.maps || 0) + 1;
+    if (S.flags.treasure) S.flags.treasure.done = true;
+    if (S.flags.waypoint && S.flags.waypoint.x === S.flags.treasure?.x) delete S.flags.waypoint;
+    addItem(makeGenItem(this.tier + 1, Math.random, 1)); addItem(makeGenItem(this.tier + 1));
+    sc.pickups.push(new (sc.PickupClass)(sc, this.x, this.y, { type: 'gold', n: 160 + this.tier * 90 }));
+    bus.emit('toast', 'THE TREASURE IS YOURS!', 13);
+    sfx.play('quest');
+    this.destroy();
+  }
+}
+
+// A hole in the ice: press E to cast, press E again the moment it bites.
+export class FishHole extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, tier) {
+    super(scene, x, y, 'icehole');
+    scene.add.existing(this);
+    this.ix = x; this.iy = y; this.tier = tier; this.setDepth(y - 2);
+    this.st = 'idle'; this.t = 0;
+  }
+  canInteract() { return true; }
+  label() { return this.st === 'bite' ? 'E: REEL IN!' : this.st === 'wait' ? 'E: WAITING...' : 'E: FISH'; }
+  interact() {
+    const sc = this.scene;
+    if (this.st === 'idle') { this.st = 'wait'; this.t = 1.6 + Math.random() * 3.4; bus.emit('toast', 'YOU CAST YOUR LINE...', 15); sfx.play('select'); }
+    else if (this.st === 'wait') { this.st = 'idle'; bus.emit('toast', 'TOO EARLY! THE FISH SPOOKED', 4); sfx.play('nostamina'); }
+    else this.reel(sc);
+  }
+  reel(sc) {
+    this.st = 'idle';
+    const r = Math.random(), S_ = (S.fish ||= {});
+    let id = 'raw_trout';
+    if (r > 0.9 && this.tier >= 1) id = 'raw_eel'; else if (r > 0.72) id = 'raw_pike';
+    S_.caught = (S_.caught || 0) + 1; if (id !== 'raw_trout') S_.rare = (S_.rare || 0) + 1;
+    if (Math.random() < 0.05) { addItem('treasure_map'); bus.emit('toast', 'A SOGGY TREASURE MAP!', 13); }
+    addItem(id);
+    sc.fx.puff(this.x, this.y, 15, 8, 40, 0.5); sfx.play('potion');
+    bus.emit('toast', 'CAUGHT: ' + ITEMS[id].name.toUpperCase(), id === 'raw_trout' ? 15 : 13);
+  }
+  tick(dt, sc) {
+    if (this.st === 'wait') {
+      this.t -= dt;
+      if (this.t <= 0) { this.st = 'bite'; this.t = 0.9; bus.emit('toast', '! BITE !', 13); sfx.play('hit'); sc.fx.puff(this.x, this.y, 15, 6, 24, 0.4); }
+    } else if (this.st === 'bite') {
+      this.t -= dt;
+      if (this.t <= 0) { this.st = 'idle'; bus.emit('toast', 'IT GOT AWAY...', 4); }
+    }
+    if (this.st !== 'idle' && Math.hypot(sc.player.x - this.x, sc.player.y - this.y) > 40) this.st = 'idle';
   }
 }
 

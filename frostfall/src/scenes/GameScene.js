@@ -31,8 +31,10 @@ import { Warlord, Tidemother, AshenRoot, LongWinter, EmberDragon } from '../enti
 import { HEART_SITE, heartsHeld, HEART_ORDER } from '../data/hearts.js';
 const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter, dragon: EmberDragon };
 const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead', dragon: 'dragonDead' };
+import { foodTick } from '../systems/food.js';
+import { checkTrophies } from '../systems/achievements.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
+import { TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
@@ -211,7 +213,7 @@ export default class GameScene extends Phaser.Scene {
         else this.addEnemy(e.kind, wx, wy, spec);
         break;
       }
-      case 'deer': { const key = `${this.mapId}:${e._i}`; if (!isGone(key)) this.pend.push({ spec: { kind: 'deer', tier: 0, roam: true }, key, wx, wy, live: null, kind: 'deer' }); break; }
+      case 'deer': { const key = `${this.mapId}:${e._i}`; const dk = e.kind || 'deer'; if (!isGone(key)) this.pend.push({ spec: { kind: dk, tier: 0, roam: true }, key, wx, wy, live: null, kind: dk }); break; }
       case 'node': {
         const key = `${this.mapId}:n${e._i}`;
         if (isGone(key)) break;
@@ -221,7 +223,8 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(nd);
         break;
       }
-      case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
+      case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(this, wx, wy, key, tierAt(e.x, e.y)) : new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
+      case 'fish': this.interactables.push(new FishHole(this, wx, wy, tierAt(e.x, e.y))); break;
       case 'shrine': {
         const sh = new Shrine(this, wx, wy, e.id);
         this.interactables.push(sh);
@@ -729,6 +732,9 @@ export default class GameScene extends Phaser.Scene {
     this.player.update(dt);
     updateTutorial(this, dt);
     this.worldEvents(dt);
+    foodTick();
+    for (const i of this.interactables) if (i.tick) i.tick(dt, this);
+    this.trophyT = (this.trophyT || 0) - dt; if (this.trophyT <= 0) { this.trophyT = 2; checkTrophies(); }
     if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
     if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
     for (const p of this.plates) p.update(this.player);
@@ -799,7 +805,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.def.bossTrigger?.(pc, T)) {
         if (this.gate) this.setGate(true);
         this.boss.engage();
-        music.play('boss');
+        music.play(this.def.bossMusic || 'boss');
       }
     }
     this.updateZones(dt);

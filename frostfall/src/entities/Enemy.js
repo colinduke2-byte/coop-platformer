@@ -14,6 +14,7 @@ import { settings } from '../systems/settings.js';
 import { applyElite } from './elite.js';
 import { stats } from '../systems/stats.js';
 
+const BEASTS_NOSE = new Set(['wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind, spec = {}) {
     const cfg = ENEMIES[kind];
@@ -157,7 +158,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     // ---- awareness
     if (!this.alerted) {
-      const range = this.cfg.detect * player.detectMult();
+      const range = this.cfg.detect * player.detectMult() * (S.weather === 'blizzard' && sc.def.snow && BEASTS_NOSE.has(this.kind) ? 1.33 : 1);   // predators hunt by scent in a blizzard
       const seen = !dead && d < range && sc.hasLOS(this.cx, this.cy, player.body.center.x, player.body.center.y);
       this.notice = seen ? this.notice + dt : Math.max(0, this.notice - dt * 0.7);
       if (this.notice > (d < range * 0.5 ? 0.12 : 0.4) * (S.perks.ghost ? 1.6 : 1)) this.alert();

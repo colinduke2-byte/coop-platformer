@@ -1,3 +1,4 @@
+import { ITEMS } from '../data/items.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
 import { txt, textW, wrap, normText } from '../art/font.js';
@@ -163,6 +164,7 @@ export default class HudScene extends Phaser.Scene {
     const en = stats.enchant();
     if (en) list.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);
     if (S.flags.restedUntil > S.playtime) list.push(['RESTED ' + Math.ceil((S.flags.restedUntil - S.playtime) / 60) + 'M', 8]);
+    if (S.flags.food && S.flags.foodUntil > S.playtime) list.push([ITEMS[S.flags.food].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
     if (pl.sneaking) list.push(['SNEAK', 4]);
     if (pl.blocking) list.push(['GUARD', 7]);
     let x = 3;

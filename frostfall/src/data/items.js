@@ -50,6 +50,15 @@ export const ITEMS = {
   asta_charm: { name: "Asta's Charm", type: 'charm', icon: ['charm', 11], maxHp: 15, maxMp: 15, value: 30, desc: '+15 health and mana. Smells of woodsmoke.' },
   pale_pelt: { name: 'Pale Pelt Mantle', type: 'armor', icon: ['armor', 6], armor: 0.24, value: 160, desc: 'Absorbs 24% damage. Still warm.' },
   alpha_fang: { name: "Alpha's Fang", type: 'charm', icon: ['fang', 13], maxSp: 35, value: 80, desc: '+35 max stamina. A gift from one who was spared.' },
+  raw_trout: { name: 'Frost Trout', type: 'ingredient', icon: ['fish', 15], value: 6, cook: 'grilled_trout', desc: 'Fresh from the ice. Cook it at a campfire.' },
+  raw_pike: { name: 'Glass Pike', type: 'ingredient', icon: ['fish', 13], value: 22, cook: 'smoked_pike', desc: 'A rare, see-through fish. Smoke it at a campfire.' },
+  raw_eel: { name: 'Ember Eel', type: 'ingredient', icon: ['fish', 12], value: 45, cook: 'eel_roast', desc: 'Warm to the touch. Roast it at a campfire.' },
+  grilled_trout: { name: 'Grilled Trout', type: 'food', icon: ['dish', 10], value: 14, food: { maxHp: 20, heal: 40 }, desc: 'Eat (E): heal 40, +20 max health for 5 minutes.' },
+  smoked_pike: { name: 'Smoked Pike', type: 'food', icon: ['dish', 13], value: 40, food: { maxSp: 30, healSp: 60 }, desc: 'Eat (E): +30 max stamina for 5 minutes.' },
+  eel_roast: { name: 'Eel Roast', type: 'food', icon: ['dish', 12], value: 80, food: { moveMul: 1.08, heal: 30 }, desc: 'Eat (E): heal 30, move 8% faster for 5 minutes.' },
+  hunters_stew: { name: "Hunter's Stew", type: 'food', icon: ['dish', 11], value: 30, food: { regen: 1.6 }, desc: 'Eat (E): regenerate health for 5 minutes.' },
+  treasure_map: { name: 'Treasure Map', type: 'map', icon: ['scroll', 13], value: 30, desc: 'Read (E): marks a buried chest somewhere in the Reach.' },
+  frost_hound_bone: { name: 'Hound Whistle', type: 'misc', icon: ['fang', 6], value: 0, desc: 'Carved from bone. Calls your frost hound.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };
 

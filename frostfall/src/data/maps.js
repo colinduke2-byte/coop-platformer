@@ -197,7 +197,7 @@ function buildMaw() {
   for (const [x, y] of [[8, 3], [27, 3], [8, 10], [27, 10], [13, 8], [22, 8]]) g.add({ t: 'pot', x, y, skin: 'urn' });
   return g.out();
 }
-MAPS.maw = { name: 'The Glacial Maw', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 10.6 * T && pc.x > 6 * T && pc.x < 30 * T, build: buildMaw, music: 'crypt', dim: 0.3, cave: true };
+MAPS.maw = { name: 'The Glacial Maw', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 10.6 * T && pc.x > 6 * T && pc.x < 30 * T, build: buildMaw, music: 'cavern', dim: 0.3, cave: true };
 
 
 // ---- Ironwatch Keep: a ruined fortress; stone, barricades and a garrison that never left
@@ -346,7 +346,7 @@ function buildThrone() {
   g.add({ t: 'bossgate', x: 19, y: 19, w: 2 });
   return g.out();
 }
-MAPS.throne = { name: 'The Winter Throne', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 17.6 * T && pc.x > 6 * T && pc.x < 34 * T, build: buildThrone, music: 'boss', dim: 0.36, cave: true };
+MAPS.throne = { name: 'The Winter Throne', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 17.6 * T && pc.x > 6 * T && pc.x < 34 * T, build: buildThrone, music: 'cavern', bossMusic: 'throne', dim: 0.36, cave: true };
 
 
 // ---- The Ember Nest: a volcanic cave; Skaldrath's lair (optional super-boss)
@@ -381,7 +381,7 @@ function buildNest() {
   g.add({ t: 'bossgate', x: 19, y: 11, w: 2 });
   return g.out();
 }
-MAPS.nest = { name: 'The Ember Nest', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 5 * T && pc.x < 35 * T, build: buildNest, music: 'boss', dim: 0.3, cave: true };
+MAPS.nest = { name: 'The Ember Nest', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 5 * T && pc.x < 35 * T, build: buildNest, music: 'cavern', bossMusic: 'dragon', dim: 0.3, cave: true };
 
 // The forest is now the north-west corner of the open world (same coordinates as before).
 let reachCache = null;

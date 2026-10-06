@@ -3,6 +3,7 @@ import { keys, rumble } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
+import { foodVal } from '../systems/food.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm } from '../util.js';
@@ -574,6 +575,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   tickRegen(dt) {
     if (S.hp <= 0 || S.hp >= S.maxHp) return;
     if (S.hearts?.root) S.hp = Math.min(S.maxHp, S.hp + 1.2 * dt);
+    if (foodVal('regen')) S.hp = Math.min(S.maxHp, S.hp + foodVal('regen') * dt);
     const sc = this.scene;
     if (sc.t - this.lastHurt < 6) return;
     if (sc.enemies.getChildren().some((e) => e.alerted && !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < 170)) return;

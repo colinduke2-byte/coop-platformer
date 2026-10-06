@@ -12,10 +12,12 @@ import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 import { RARITY } from '../systems/genloot.js';
+import { eatFood } from '../systems/food.js';
+import { readMap } from '../systems/treasure.js';
 
-const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'ammo', 'ingredient', 'misc', 'quest'];
+const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'food', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
-const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
+const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion', 'food']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
 const SORTS = ['TYPE', 'NAME', 'VALUE'];
 const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
@@ -143,6 +145,10 @@ export default class MenuScene extends Phaser.Scene {
         if (S.equip[slot] === id) unequip(slot); else equip(id, wantOff ? 'offhand' : null);
       } else if (it.type === 'potion' && wantEquip) {
         this.gs.player.usePotion(id);
+      } else if (it.type === 'food' && wantEquip) {
+        eatFood(id, this.gs);
+      } else if (it.type === 'map' && wantEquip) {
+        readMap(id, this.gs);
       } else sfx.play('nostamina');
       this.dirty = true;
     }
@@ -162,11 +168,11 @@ export default class MenuScene extends Phaser.Scene {
     let x = 8;
     this.tabRects = [];
     this.tabs.forEach((t, i) => {
-      const w = textW(t.name) + 10;
+      const w = textW(t.name) + 6;
       this.tabRects.push({ x, w });
       if (i === this.tab) { g.fillStyle(C[3]); g.fillRect(x, 5, w, 13); g.fillStyle(C[13]); g.fillRect(x, 17, w, 1); }
-      this.T(x + 5, 8, t.name, i === this.tab ? 6 : 4);
-      x += w + 3;
+      this.T(x + 3, 8, t.name, i === this.tab ? 6 : 4);
+      x += w + 1;
     });
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
     this.help = null;
@@ -184,7 +190,7 @@ export default class MenuScene extends Phaser.Scene {
     FILTERS.forEach(([n], i) => {
       const w = textW(n) + 4;
       if (i === this.filter) { g.fillStyle(C[13]); g.fillRect(fx - 2, 25, w, 9); this.T(fx, 26, n, 0); } else this.T(fx, 26, n, 4);
-      fx += w + 3;
+      fx += w + 1;
     });
     this.T(156 - 4 - textW(SORTS[this.sort]), 26, SORTS[this.sort], 15);
     g.fillStyle(C[3]); g.fillRect(8, 35, 146, 1);
