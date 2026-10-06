@@ -60,9 +60,11 @@ export function buildMines(seed, floor, o = {}) {
       const names = { moon: 'MOON (BLUE)', crown: 'CROWN (GOLD)', wolf: 'WOLF (RED)' };
       add({ t: 'sign', x: r.x + 2, y: r.y + 2, text: [`THE DELVERS SCRATCHED THIS ON THE WALL: ${order.map((o) => names[o]).join(', THEN ')}.`] });
       ['moon', 'crown', 'wolf'].forEach((rune, k) => add({ t: 'plate', rune, x: r.x + 2 + k * Math.floor((r.w - 4) / 2), y: r.cy + 1 }));
-      add({ t: 'vaultwall', x: r.x + r.w, y: r.cy });
-      g.rect(r.x + r.w + 1, r.cy - 1, 3, 3, TILE.CFLOOR);
-      add({ t: 'chest', id: `mn${floor}_${i}`, x: r.x + r.w + 2, y: r.cy, loot: [{ gen: tier + 1 }, { item: 'ember_ore' }, { gold: 60 + tier * 30 }] });
+      // the sealed alcove goes on whichever side of the room has space for it
+      const east = r.x + r.w + 4 < W - 1, wx = east ? r.x + r.w : r.x - 1, ax = east ? r.x + r.w + 1 : r.x - 4;
+      add({ t: 'vaultwall', x: wx, y: r.cy });
+      g.rect(ax, r.cy - 1, 3, 3, TILE.CFLOOR);
+      add({ t: 'chest', id: `mn${floor}_${i}`, x: east ? ax + 1 : ax + 1, y: r.cy, loot: [{ gen: tier + 1 }, { item: 'ember_ore' }, { gold: 60 + tier * 30 }] });
       foe(pick(mobs), r.cx, r.y + 2, { camp: `mine${floor}r${i}` });
     } else if (r.kind === 'treasure') {
       add({ t: 'chest', id: `mn${floor}_${i}a`, x: r.cx - 1, y: r.cy, lock: 'med', loot: [{ gen: tier }, { item: pick(['gem_ruby', 'gem_sapphire', 'gem_emerald', 'gem_topaz', 'gem_amber']) }, { gold: 40 + tier * 25 }] });
