@@ -18,6 +18,7 @@ import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
 import { installErrorLog } from './systems/debug.js';
+import { applyCvd } from './systems/access.js';
 installErrorLog();
 
 const q = new URLSearchParams(location.search);
@@ -56,6 +57,7 @@ export function applyScaling() {
 window.addEventListener('resize', () => settings.intScale && applyScaling());
 game.events.once('ready', () => applyScaling());
 window.__applyScaling = applyScaling;
+applyCvd();
 window.addEventListener('keydown', unlock);
 window.addEventListener('pointerdown', unlock);
 // Alt-tabbing away opens the pause menu so you never get ambushed.

@@ -88,6 +88,8 @@ const decodeHat = (v) => {
 
 let padInfo = { id: '', mapping: '', live: [] };
 export const getPadInfo = () => padInfo;
+let usingPad = false;                       // true after the last input came from a controller
+export const padActive = () => usingPad;
 let padCapture = null;
 export const capturePad = (cb) => { padCapture = cb || null; };
 export const capturingPad = () => !!padCapture;
@@ -118,6 +120,7 @@ export function pollPad() {
     const act = activeInputs(pad);
     padInfo = { id: pad.id, mapping: pad.mapping || 'non-standard', live: [...act] };
     const map = padMap();
+    if (act.size) usingPad = true;
     // left stick always moves / navigates
     const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
     if (ax < -0.45) want.add('KeyA'); if (ax > 0.45) want.add('KeyD');
@@ -149,6 +152,7 @@ export function installKeys(game) {
   game.events.on('prestep', pollPad);
   window.addEventListener('gamepadconnected', (e) => { import('./bus.js').then(({ bus }) => bus.emit('toast', 'CONTROLLER CONNECTED', 13)); void e; });
   window.addEventListener('keydown', (e) => {
+    usingPad = false;
     if (captureCb) { e.preventDefault(); if (!e.repeat) { const cb = captureCb; captureCb = null; cb(e.code); } return; }
     if (blockDefault.has(e.code) || e.code in codeToActions) e.preventDefault();
     if (!e.repeat) keys._press(e.code);

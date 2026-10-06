@@ -26,7 +26,7 @@ export function newState() {
     perks: {}, perkPoints: 0, charLevel: 1, pendingStat: 0, skillUps: 0,
     bonusHp: 0, bonusMp: 0, bonusSp: 0,
     upgrades: {}, enchants: {},
-    lore: {}, kills: {}, seen: {}, tips: {},
+    lore: {}, kills: {}, seen: {}, found: {}, tips: {},
     time: 9 * 60, weather: 'snow', respawn: { map: 'village', spawn: 'start' },
     follower: false, bossState: null, tracked: null,
     playtime: 0,

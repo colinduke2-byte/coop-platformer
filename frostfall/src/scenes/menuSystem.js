@@ -12,6 +12,7 @@ import { PAD_ACTIONS, padMap, setPadBinding, resetPadMap, getPadInfo, capturePad
 import { textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
+import { CVD_MODES, applyCvd } from '../systems/access.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
@@ -28,14 +29,14 @@ const DIFFS = ['easy', 'normal', 'hard'];
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
   let waitingPad = null;      // game key code being learned from the controller
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
   const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
@@ -43,6 +44,7 @@ export function systemTab(m) {
     if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
     else if (CHANNEL[r]) setChannel(CHANNEL[r][0], Math.round(((settings[CHANNEL[r][1]] ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'CLOAK') { const l = unlockedCloaks(), i = Math.max(0, l.indexOf(currentCloak())); S.cloak = l[(i + dir + l.length) % l.length].col; m.gs.player?.applyCloak?.(); }
+    else if (r === 'COLOUR MODE') { settings.cvd = CVD_MODES[(CVD_MODES.indexOf(settings.cvd) + dir + CVD_MODES.length) % CVD_MODES.length]; applyCvd(); }
     else if (r === 'SLOT') settings.slot = ((settings.slot - 1 + dir + SLOTS) % SLOTS) + 1;
     else if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
@@ -230,6 +232,7 @@ export function systemTab(m) {
         else if (r === 'MOUSE') { v = settings.mouse ? 'ON' : 'OFF'; vc = settings.mouse ? 8 : 4; }
         else if (r === 'SNEAK MODE') { v = settings.sneakToggle ? 'TOGGLE' : 'HOLD'; }
         else if (r === 'HOLD TO CHAIN') { v = settings.holdChain ? 'ON' : 'OFF'; vc = settings.holdChain ? 8 : 4; }
+        else if (r === 'COLOUR MODE') { v = settings.cvd.toUpperCase(); vc = settings.cvd === 'off' ? 4 : 8; }
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
         row(g, i, y, r, v, vc);
       });

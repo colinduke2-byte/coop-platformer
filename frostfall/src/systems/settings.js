@@ -13,6 +13,7 @@ export const settings = {
   mouse: false,           // mouse controls (click = sword, right-click = bow)
   sneakToggle: false,     // sneak key toggles instead of hold
   holdChain: true,        // holding the sword key keeps chaining the combo
+  cvd: 'off',             // colour-blind assist: off | deutan | protan | tritan
   largeUi: false,         // bigger HUD bars and text
   slot: 1,                // active save slot (1-3)
   padMap: null,           // learned controller map { inputId: keyCode } (null = defaults)

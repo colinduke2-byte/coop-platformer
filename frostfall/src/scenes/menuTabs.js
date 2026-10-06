@@ -54,6 +54,7 @@ export function tabs(m) {
           m.T(152, y, w, o.done ? 3 : 6);
           y += w.split('\n').length * 9 + 2;
         });
+        if (q.status !== 'done' && def.short) m.T(128, 136, wrap('NEXT: ' + def.short(q), 31), 13);
         if (S.flags.ending && id === 'king') m.T(128, 146, 'ENDING: ' + { give: 'THE HEARTH', keep: 'THE WINTER KING', sell: 'A COLD BARGAIN' }[S.flags.ending], 15);
       },
     },

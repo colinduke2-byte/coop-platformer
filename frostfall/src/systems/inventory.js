@@ -10,6 +10,7 @@ export const count = (id) => S.inv[id] || 0;
 
 export function addItem(id, n = 1, quiet = false) {
   S.inv[id] = (S.inv[id] || 0) + n;
+  (S.found ||= {})[id] = true;
   if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}`, 6);
   bus.emit('item:added', id, n);
 }

@@ -245,3 +245,10 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - New quests: Ragna's Company (a veteran companion with a second arrow), The Hunter's Trail (antler bow), The Bridge Troll's Toll (trollbone mace). Asta's hound can be returned or kept.
 - Replay: Daily Challenge (seeded world + daily modifiers + local leaderboard), Endless Winter and other mods, arena modes (incl. Gauntlet) with boon trials, trophy cloak colours.
 - Tests: stage39_story, stage40_replay.
+
+## Round 14 - UI and accessibility (Phase 7)
+- COLOUR MODE (Pause > System): deutan / protan / tritan assist filters.
+- Button prompts follow the last device used: tips say "HOLD X" on a controller or "HOLD C" on keyboard, using your learned pad map.
+- Lore tab now also holds an item index (every item you have owned) and shows discovery totals.
+- Journal shows a NEXT line for each active quest.
+- Test: stage41_access.
