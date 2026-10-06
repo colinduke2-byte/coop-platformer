@@ -194,7 +194,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.tickRegen(dt);
 
     // regen
-    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * dt);
+    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * (S.hearts?.tide ? 1.25 : 1) * dt);
     if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * dt);
 
     const moving = this.speedNow > 8;
@@ -233,7 +233,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   actions(ix, iy) {
-    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost)) {
+    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1))) {
       this.mode = 'roll';
       this.rollStart = this.scene.t;
       this.rollCount = (this.rollCount || 0) + 1;
@@ -342,7 +342,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
-      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1);
+      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1);
       const crit = Math.random() < stats.sum('crit');
       if (crit) dmg *= 1.8;
       if (exec) dmg = e.hp + 999;
@@ -450,10 +450,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const key = it.restore, maxKey = { hp: 'maxHp', mp: 'maxMp', sp: 'maxSp' }[key];
     if (S[key] >= S[maxKey]) return false;
     S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id];
-    S[key] = Math.min(S[maxKey], S[key] + it.amount);
+    const amt = Math.round(it.amount * (S.hearts?.root ? 1.25 : 1));
+    S[key] = Math.min(S[maxKey], S[key] + amt);
     sfx.play('potion');
     this.scene.fx.puff(this.x, this.y, key === 'hp' ? 11 : key === 'mp' ? 15 : 8, 8, 30, 0.5);
-    this.scene.fx.text(this.x, this.y - 12, '+' + it.amount, key === 'hp' ? 11 : key === 'mp' ? 15 : 8);
+    this.scene.fx.text(this.x, this.y - 12, '+' + amt, key === 'hp' ? 11 : key === 'mp' ? 15 : 8);
     return true;
   }
 
@@ -565,6 +566,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // ---------------------------------------------------------------- regen
   tickRegen(dt) {
     if (S.hp <= 0 || S.hp >= S.maxHp) return;
+    if (S.hearts?.root) S.hp = Math.min(S.maxHp, S.hp + 1.2 * dt);
     const sc = this.scene;
     if (sc.t - this.lastHurt < 6) return;
     if (sc.enemies.getChildren().some((e) => e.alerted && !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < 170)) return;

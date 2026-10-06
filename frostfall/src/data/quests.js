@@ -1,19 +1,24 @@
 import { S } from '../systems/state.js';
 import { count } from '../systems/inventory.js';
 
-import { heartsHeld, HEART_COUNT } from './hearts.js';
+import { heartsHeld, HEART_COUNT, HEART_ORDER, HEARTS, HEART_SITE } from './hearts.js';
 import { getReach } from './maps.js';
 
 export const QUESTS = {
   hearts: {
     title: 'The Four Hearts',
     giver: 'Elder Sigrid',
-    desc: 'The Frostheart was only the first of five. The Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Whatever you chose for the first, the cold will not break until the rest are found.',
-    short: () => (heartsHeld() >= 1 ? `Hearts ${heartsHeld()}/${HEART_COUNT}  -  find the next` : 'Find the Glacial Maw'),
+    desc: 'The Frostheart was only the first of five. The Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Whatever you chose for the first, the cold will not break until the rest are found. Four more lie in the Reach, and past them waits the Winter Throne.',
+    short: () => {
+      if (S.flags.finale) return 'The Winter has been decided';
+      if (heartsHeld() >= 4) return 'Open the Winter Throne';
+      const n = HEART_ORDER.find((k) => !S.hearts?.[k]);
+      return `Hearts ${heartsHeld()}/${HEART_COUNT}  -  ${HEARTS[n].place}`;
+    },
     objectives: () => [
-      { t: 'Seek the Glacial Maw in the frozen east', done: !!S.flags.maw },
-      { t: 'Slay the Rime Wyrm and take its Heart', done: !!S.hearts?.rime },
-      { t: 'More Hearts lie sealed. Sigrid will read the old maps again', done: false },
+      ...HEART_ORDER.map((k) => ({ t: `${HEARTS[k].name}: ${HEARTS[k].place}${S.hearts?.[k] ? '' : (k === 'rime' || S.hearts?.[HEART_ORDER[HEART_ORDER.indexOf(k) - 1]] || S.flags['seen_' + HEART_SITE[k].map]) ? '' : ' (not yet marked)'}`, done: !!S.hearts?.[k] })),
+      { t: 'Break into the Winter Throne and face the Long Winter', done: !!S.flags.winterDead },
+      { t: 'Decide what becomes of the Winter', done: !!S.flags.finale },
     ],
   },
   herbs: {
@@ -73,10 +78,16 @@ export const QUESTS = {
 
 // Quest targets for the map markers / HUD arrow: { map, x, y } in tiles.
 export const TARGETS = {
-  hearts: (q) => {
-    if (S.hearts?.rime) return { map: 'village', x: 19, y: 9 };
-    const p = getReach().pois.find((x) => x.id === 'maw0');
-    return S.flags.maw ? { map: 'maw', x: 18, y: 4 } : (p ? { map: 'forest', x: p.x, y: p.y - 1 } : { map: 'village', x: 19, y: 9 });
+  hearts: () => {
+    const reach = getReach();
+    const ARENA = { maw: [18, 4], keep: [20, 4], chapel: [18, 4], rootvault: [20, 4], throne: [20, 6] };
+    if (S.flags.finale) return { map: 'village', x: 19, y: 9 };
+    // next site in story order that you do not hold yet (the throne once you have all four)
+    const next = HEART_ORDER.find((k) => !S.hearts?.[k]);
+    const site = next ? HEART_SITE[next] : { poi: 'throne0', map: 'throne' };
+    if (S.flags['seen_' + site.map]) return { map: site.map, x: ARENA[site.map][0], y: ARENA[site.map][1] };
+    const p = reach.pois.find((x) => x.id === site.poi);
+    return p ? { map: 'forest', x: p.x, y: p.y - 1 } : { map: 'village', x: 19, y: 9 };
   },
   wolves: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'forest', x: 12, y: 10 }),
   king: (q) => (q.status === 'relic' ? { map: 'village', x: 19, y: 9 } : S.flags.crypt ? { map: 'crypt', x: 15, y: 4 } : { map: 'forest', x: 46, y: 3 }),

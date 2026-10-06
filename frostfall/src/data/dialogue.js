@@ -43,10 +43,20 @@ async function heartsTalk() {
     return true;
   }
   if (q.status === 'active') {
-    if (S.hearts?.rime) {
-      await say(SIGRID, 'You carry the second Heart. I can feel it from here. The cold bends around you now.');
-      await say(SIGRID, 'The other maps are still too faded for me to read. Rest, and gather your strength. When the winds change, I will have more to tell you.');
-    } else await say(SIGRID, 'The Glacial Maw lies far to the east, where the ice meets the mountains. Follow the roads and the fires. The marker on your map will help.');
+    const n = heartsHeld();
+    if (S.flags.finale) { await say(SIGRID, 'It is done. Whatever you chose, you chose it with open eyes. That is more than the kings ever did.'); return true; }
+    if (n >= 4) {
+      await say(SIGRID, 'Four Hearts. I can hear them beating from across the room. The old maps are clear at last: the Winter Throne, in the far corner of the Reach.');
+      await say(SIGRID, 'Its door opens only to someone who holds all four. Go. And whatever the Winter asks of you... remember that it is older than mercy.');
+    } else if (n === 0) await say(SIGRID, 'The Glacial Maw lies far to the east, where the ice meets the mountains. Follow the roads and the fires. The marker on your map will help.');
+    else {
+      const lines = {
+        1: 'The cold bends around you now. My maps show Ironwatch Keep next, a fortress the Hollow Kings left to a warden who never stopped marching. Look for black stone and old banners.',
+        2: 'Two Hearts. The ground trembles less, I think. The third lies under the lakes: the Drowned Chapel, where a congregation prayed until the water took them.',
+        3: 'Three. The last Heart lies where the trees have died and keep growing anyway: the Rootvault, in the blight. Be ready. It is the largest of the guardians.',
+      };
+      await say(SIGRID, lines[n]);
+    }
     return true;
   }
   return false;

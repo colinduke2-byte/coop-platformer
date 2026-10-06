@@ -96,6 +96,8 @@ export const STYLES = {
   conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 },
   hilda:  { skin: 10, hair: 12, body: 9, trim: 5, legs: 2, boots: 0, chest: 4, beard: null },
   ragna:  { skin: 10, hair: 13, hood: 8, body: 8, trim: 9, legs: 7, boots: 9, chest: 10 },
+  warlord: { skin: 4, hair: 3, body: 3, trim: 13, legs: 2, boots: 0, glow: 12, helm: 4, chest: 11, beard: 3, cape: 11, horns: 4 },
+  winter: { skin: 6, hair: 15, body: 15, trim: 6, legs: 3, boots: 0, glow: 15, helm: 6, horns: 5, crown: 15, cape: 5, chest: 6 },
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
@@ -133,6 +135,30 @@ function wyrmFrame(ctx, ox, fr) {
   r(6, 3, 12 + a, 1, 1);
 }
 
+// The Tidemother: a drowned queen, bell-shaped head over trailing tendrils (side view, faces right).
+function tideFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = [0, 1, 0][fr], b = [1, 0, 1][fr];
+  r(15, 4, 1, 8, 2); r(15, 3, 3, 10, 5); r(6, 5, 2, 4, 1); r(3, 3, 7, 10, 1);          // bell
+  r(8, 5, 4, 2, 2); r(13, 9, 4, 1, 1);                                                    // eye
+  r(14, 6, 8, 4, 1); r(14, 4, 8, 1, 1);                                                   // gills / mouth
+  r(15, 3, 8 + a, 2, 4); r(15, 6, 8 + b, 2, 5); r(15, 9, 8 + a, 2, 4); r(15, 12, 8 + b, 2, 3);  // tendrils
+  r(3, 4, 12 + a, 1, 2); r(3, 7, 13, 1, 2); r(3, 10, 12 + a, 1, 2); r(3, 13, 13, 1, 2);
+  r(5, 5, 1, 1, 1); r(13, 11, 2, 1, 1);
+}
+
+// The Ashen Root: a gnarled, many-armed blight tree with an ember glow in its hollow.
+function rootFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = [0, 1, 0][fr], b = [1, 0, 1][fr];
+  r(7, 4, 1, 8, 2); r(7, 3, 3 + a, 3, 2); r(7, 10, 2, 3, 3); r(8, 2, 3, 2, 1);          // crown of leaves
+  r(9, 4, 4, 8, 8); r(10, 5, 5, 6, 6); r(9, 4, 12, 8, 1);                                // trunk
+  r(0, 6, 7, 2, 3); r(12, 7, 8, 2, 2); r(12, 8, 7, 1, 1); r(12, 7, 6, 1, 1); r(12, 8, 6, 1, 1);  // hollow face and embers
+  r(9, 2, 5 + a, 2, 4); r(9, 12, 5 + b, 2, 4);                                            // arms
+  r(10, 3, 12, 2, 2 + a); r(10, 6, 13, 3, 2); r(10, 10, 12, 2, 2 + b);                   // roots
+  r(8, 0, 12, 2, 1); r(8, 14, 11, 2, 1);
+}
+
 // 1px dark outline inside each 16x16 cell so sprites read on bright snow.
 function outline(ctx, w, h) {
   const img = ctx.getImageData(0, 0, w, h), d = img.data;
@@ -164,6 +190,8 @@ function buildCharacters(scene) {
   make('spr_wolf', (ctx, x, d, f) => wolfFrame(ctx, x, f), ['side']);
   make('spr_grimfang', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }), ['side']);
   make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
+  make('spr_tide', (ctx, x, d, f) => tideFrame(ctx, x, f), ['side']);
+  make('spr_root', (ctx, x, d, f) => rootFrame(ctx, x, f), ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
 

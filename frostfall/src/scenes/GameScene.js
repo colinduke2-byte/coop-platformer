@@ -27,6 +27,10 @@ import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
 import RimeWyrm from '../entities/RimeWyrm.js';
+import { Warlord, Tidemother, AshenRoot, LongWinter } from '../entities/Guardians.js';
+import { HEART_SITE, heartsHeld, HEART_ORDER } from '../data/hearts.js';
+const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter };
+const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead' };
 import Breakable from '../entities/Breakable.js';
 import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
@@ -152,7 +156,13 @@ export default class GameScene extends Phaser.Scene {
         this.pickups.push(new Pickup(this, 15.5 * T, 5.5 * T, { type: 'item', id: 'frostheart', big: true }));
       }
     }
-    if (this.mapId === 'maw') { S.flags.maw = true; if (S.flags.wyrmDead && !S.hearts?.rime) this.pickups.push(new Pickup(this, 18.5 * T, 5.5 * T, { type: 'heart', id: 'rime', big: true })); }
+    for (const [heart, site] of Object.entries(HEART_SITE)) {
+      if (this.mapId !== site.map) continue;
+      S.flags['seen_' + site.map] = true;
+      const flag = { rime: 'wyrmDead', iron: 'warlordDead', tide: 'tideDead', root: 'rootDead' }[heart];
+      if (S.flags[flag] && !S.hearts?.[heart]) this.pickups.push(new Pickup(this, 20 * T, 5.5 * T, { type: 'heart', id: heart, big: true }));
+    }
+    if (this.mapId === 'maw') S.flags.maw = true;
     bus.emit('area', def.name);
 
     const cam = this.cameras.main;
@@ -234,8 +244,8 @@ export default class GameScene extends Phaser.Scene {
         break;
       }
       case 'boss':
-        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : e.kind === 'wyrm' ? S.flags.wyrmDead : S.flags.bossDead)) {
-          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : e.kind === 'wyrm' ? new RimeWyrm(this, wx, wy) : new Boss(this, wx, wy);
+        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : BOSS_FLAG[e.kind] ? S.flags[BOSS_FLAG[e.kind]] : S.flags.bossDead)) {
+          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : BOSS_CLASS[e.kind] ? new BOSS_CLASS[e.kind](this, wx, wy) : new Boss(this, wx, wy);
           this.enemies.add(this.boss);
         }
         break;
@@ -272,9 +282,9 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(sg);
         break;
       }
-      case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags.vaultOpen) pl.light(true); break; }
-      case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags.vaultOpen) this.openVault(true); break;
-      case 'vaultorder': this.plateOrder = e.order; break;
+      case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags[this.vaultKey()]) pl.light(true); break; }
+      case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags[this.vaultKey()]) this.openVault(true); break;
+      case 'vaultorder': case 'plateorder': this.plateOrder = e.order; break;
       case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
       case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
       case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
@@ -352,6 +362,19 @@ export default class GameScene extends Phaser.Scene {
       bus.emit('toast', 'FAST TRAVEL', 15);
     });
     return true;
+  }
+
+  // The Long Winter has fallen: decide what becomes of it.
+  startFinale() {
+    runScript(async () => {
+      await say('The Winter', 'You have broken the chains the kings forged. I was cold before the first star, and I will be cold after the last.');
+      await say('The Winter', 'But hear me, little Dreamer. Four Hearts beat in your hands. You may release me, bind me again, or take my crown. Choose.');
+      const c = await choose(['Let it go. Let the Winter end.', 'Bind it again, with you as warden.', 'Take the crown. Rule the cold.']);
+      const kind = ['thaw', 'warden', 'crown'][c];
+      S.flags.finale = kind; S.flags.ending = S.flags.ending || 'give';
+      S.quests.hearts.status = 'done';
+      bus.emit('ending', kind);
+    });
   }
 
   // ---- random events while exploring the open world
@@ -481,9 +504,12 @@ export default class GameScene extends Phaser.Scene {
     if (f.id === 'anvil') this.interactables.push(new HomeAnvil(this, wx, wy));
   }
 
+  // each dungeon keeps its own 'vault opened' flag (the crypt keeps the old one)
+  vaultKey() { return this.mapId === 'crypt' ? 'vaultOpen' : 'vaultOpen_' + this.mapId; }
+
   // ---- rune-plate puzzle: step on the plates in the right order
   plateStep(plate) {
-    if (S.flags.vaultOpen || !this.plateOrder) return;
+    if (S.flags[this.vaultKey()] || !this.plateOrder) return;
     const want = this.plateOrder[this.plateSeq.length];
     if (plate.rune === want) {
       this.plateSeq.push(plate.rune); plate.light(true); sfx.play('select');
@@ -499,7 +525,7 @@ export default class GameScene extends Phaser.Scene {
 
   openVault(quiet = false) {
     if (!this.vault || this.vaultIsOpen) return;
-    this.vaultIsOpen = true; S.flags.vaultOpen = true;
+    this.vaultIsOpen = true; S.flags[this.vaultKey()] = true;
     const { x, y } = this.vault;
     this.layer.putTileAt(TILE_FLOOR, x, y); this.solid[y][x] = false;
     if (quiet) return;
@@ -739,7 +765,15 @@ export default class GameScene extends Phaser.Scene {
     }
     if (this.t > 0.5 && !this.leaving) {
       const c = this.player.body.center;
-      for (const ex of this.exits) if (ex.rect.contains(c.x, c.y)) { this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break; }
+      for (const ex of this.exits) {
+        if (!ex.rect.contains(c.x, c.y)) continue;
+        if (ex.needs === 'hearts4' && heartsHeld() < 4) {
+          if (this.t - (this.lastGate || -9) > 3) { bus.emit('toast', `THE DOOR IS SEALED. HEARTS ${heartsHeld()}/4`, 11); sfx.play('nostamina'); this.lastGate = this.t; }
+          this.player.body.setVelocity(0, 40); this.player.y += 2;
+          break;
+        }
+        this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break;
+      }
     }
     for (const e of this.enemies.getChildren()) e.update(dt, this.player);
     for (const sh of this.shots.getChildren()) {

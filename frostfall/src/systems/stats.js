@@ -15,7 +15,7 @@ export const stats = {
   offhandDmg: () => { const o = eq('offhand'); return o && o.type === 'weapon' ? o.dmg + upg(S.equip.offhand) * 2 : 0; },
   shield: () => { const o = eq('offhand'); return o && o.type === 'shield' ? { id: S.equip.offhand, block: o.block + upg(S.equip.offhand) * 0.02, cost: o.cost } : null; },
   bowDmg: () => { const b = eq('bow'); return b ? b.dmg + upg(S.equip.bow) * 1.5 : 4; },
-  armor: () => { const a = eq('armor'); return a ? a.armor + upg(S.equip.armor) * 0.02 : 0; },
+  armor: () => { const a = eq('armor'); return (a ? a.armor + upg(S.equip.armor) * 0.02 : 0) + (S.hearts?.iron ? 0.08 : 0); },
   // armour-set traits: multipliers default to 1
   trait: (k) => (eq('armor')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)

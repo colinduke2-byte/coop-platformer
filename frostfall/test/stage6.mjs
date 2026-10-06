@@ -119,10 +119,11 @@ for (let i = 0; i < 40; i++) { await tap('KeyE', 40); await h.sleep(80); }
 await h.sleep(400);
 sc = await G(() => window.__ff.game.scene.getScenes(true).map((s) => s.scene.key));
 check('E returns to the village after the ending', !sc.includes('Ending') && sc.includes('Game'), sc.join());
+await talk([]); await h.sleep(300); await G(() => { window.__ff.S.quests.hearts.status = 'done'; });
 await goNear('sigrid');
 await tap('KeyE'); await h.sleep(200);
 const post = await dlg();
-check('NPC dialogue changes after the ending', post && /older\s+than/i.test(post.text), JSON.stringify(post));
+check('NPC dialogue changes after the ending', post && /Frostheart burns warm/i.test(post.text), JSON.stringify(post));
 await talk([]);
 
 // other branch: keep it

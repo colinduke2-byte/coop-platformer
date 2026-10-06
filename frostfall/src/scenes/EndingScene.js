@@ -20,6 +20,19 @@ const ENDINGS = {
   },
 };
 
+ENDINGS.thaw = {
+  title: 'THE LONG THAW', col: 8,
+  text: 'You set the Winter free, and it did not strike you down. It rose from the throne like breath from a sleeper and went north, over the mountains, and did not come back.\n\nThe snow melted off the Reach in a single week. The Hearts crumbled to dust in your hands, and you let them. In Hollowfrost, children learned the word summer.',
+};
+ENDINGS.warden = {
+  title: 'THE NEW WARDEN', col: 15,
+  text: 'You pressed the four Hearts back into the chains, and set your own into the fifth. The Winter sighed, and slept.\n\nThe cold did not leave the Reach. It softened, like a hound that has found its master. Travellers say there is a lantern burning at the Winter Throne, and that whoever keeps it never grows old, or warm.',
+};
+ENDINGS.crown = {
+  title: 'THE CROWN OF RIME', col: 14,
+  text: 'The crown was colder than anything you had touched, and it fit.\n\nThe wolves came first, then the dead, then the mountains. The Hollow Kings had bound the Winter; you wore it. Nothing in the Reach ever grew again, and nothing in the Reach ever dared to disagree.',
+};
+
 export default class EndingScene extends Phaser.Scene {
   constructor() { super('Ending'); }
   init(data) { this.kind = data.kind; }

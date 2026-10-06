@@ -91,16 +91,18 @@ export function buildReach(region, seed) {
     const b = bio[y][x];
     return b !== 'lake' && b !== 'mountain';
   };
-  const place = (kind, count, r, near = null, minTier = 0) => {
+  const place = (kind, count, r, near = null, minTier = 0, biomeWant = null) => {
     let made = 0;
-    for (let tries = 0; tries < 900 && made < count; tries++) {
+    for (let tries = 0; tries < 1800 && made < count; tries++) {
       const x = 12 + Math.floor(R() * (W - 24)), y = 8 + Math.floor(R() * (H - 16));
       if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
       if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
+      if (biomeWant && tries < 1200 && bio[y][x] !== biomeWant) continue;       // prefer the right biome, fall back to anywhere
       taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${kind}${made}` }); made++;
     }
   };
-  place('maw', 1, 10, null, 1);                 // the Glacial Maw: dungeon of the second Heart
+  const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
+  mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1);                 // the Glacial Maw: dungeon of the second Heart
   place('camp', 5, 11);
   place('den', 5, 9);
   place('ruin', 4, 10);
@@ -176,14 +178,31 @@ export function buildReach(region, seed) {
     } else if (p.kind === 'maw') {
       clearing(p, 13, 8);
       g.rect(p.x - 5, p.y - 4, 11, 3, TILE.STONE);
-      g.set(p.x, p.y - 3, TILE.STAIRS); g.set(p.x + 1, p.y - 3, TILE.STAIRS);
+      g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
       for (const dx of [-3, 4]) g.set(p.x + dx, p.y + 2, TILE.ROCK);
-      add({ t: 'exit', x: p.x, y: p.y - 3, w: 2, h: 1, to: 'maw', spawn: 'entry', fx: 'door' });
+      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: 'maw', spawn: 'entry', fx: 'door' });
       add({ t: 'spawn', name: 'maw', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
+    } else if (['fort', 'temple', 'rootvault', 'throne'].includes(p.kind)) {
+      const D = {
+        fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
+        temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
+        rootvault: { to: 'rootvault', col: 8, stone: TILE.ROCK, text: ['THE ROOTVAULT.', 'THE TREES HERE LEAN TOWARD THE DOOR, AND AWAY FROM YOU.'] },
+        throne: { to: 'throne', col: 15, stone: TILE.STONE, text: ['THE WINTER THRONE.', 'THE LAST DOOR IN THE REACH. FOUR HEARTS MUST BE YOURS TO OPEN IT.'] },
+      }[p.kind];
+      clearing(p, 13, 8);
+      g.rect(p.x - 5, p.y - 4, 11, 3, D.stone);
+      g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
+      for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
+      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: 'entry', fx: 'door', needs: p.kind === 'throne' ? 'hearts4' : null });
+      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : 'throne', x: p.x, y: p.y });
+      add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
+      add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
+      add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });
+      for (let i = 0; i < 2; i++) enemy(pickOf(mobs(p.tier).melee), p.x + (i ? 5 : -5), p.y + 3, p.tier, { roam: true });
     } else if (p.kind === 'tower') {
       clearing(p, 7, 7, TILE.STONE);
       g.rect(p.x - 2, p.y - 2, 5, 5, TILE.CFLOOR);

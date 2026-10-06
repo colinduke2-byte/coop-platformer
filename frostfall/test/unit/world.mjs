@@ -83,12 +83,30 @@ t('startNgPlus: character carries over, quests and kills reset', () => {
   assert.notEqual(S.seed, oldSeed);
   startNgPlus(); assert.equal(S.ngPlus, 2);
 });
-t('every seed places the Glacial Maw, and the Maw is fully reachable', () => {
-  for (let k = 1; k <= 25; k++) { S.seed = k * 7919; assert.ok(getReach().pois.some((p) => p.id === 'maw0' && p.tier >= 1), 'maw poi for seed ' + S.seed); }
-  const b = MAPS.maw.build();
-  const sp = b.entities.find((e) => e.t === 'spawn');
-  const seen = flood(b.grid, b.w, b.h, sp.x, sp.y);
-  for (const e of b.entities) if (['enemy', 'chest', 'boss', 'pot'].includes(e.t)) assert.ok(seen[e.y * b.w + e.x], `${e.t}@${e.x},${e.y} unreachable`);
-  assert.ok(b.entities.some((e) => e.t === 'boss' && e.kind === 'wyrm'));
+t('every seed places all five dungeon entrances, and each dungeon is fully reachable', () => {
+  for (let k = 1; k <= 25; k++) {
+    S.seed = k * 7919;
+    const ids = getReach().pois.map((p) => p.id);
+    for (const id of ['maw0', 'fort0', 'temple0', 'rootvault0', 'throne0']) assert.ok(ids.includes(id), `${id} missing for seed ${S.seed}`);
+    // every entrance is walkable from the start and its exit tile survived pruning
+    const r = getReach();
+    const seen = flood(r.grid, r.w, r.h, 4, 15);
+    for (const to of ['maw', 'keep', 'chapel', 'rootvault', 'throne']) {
+      const ex = r.entities.find((e) => e.t === 'exit' && e.to === to);
+      assert.ok(ex, `exit to ${to} missing for seed ${S.seed}`);
+      assert.ok(seen[ex.y * r.w + ex.x] || seen[(ex.y + 1) * r.w + ex.x], `exit to ${to} unreachable for seed ${S.seed}`);
+    }
+  }
+  const bosses = { maw: 'wyrm', keep: 'warlord', chapel: 'tide', rootvault: 'root', throne: 'winter' };
+  for (const [map, boss] of Object.entries(bosses)) {
+    const b = MAPS[map].build();
+    const sp = b.entities.find((e) => e.t === 'spawn' && e.name === 'entry');
+    const seen = flood(b.grid, b.w, b.h, sp.x, sp.y);
+    for (const e of b.entities) if (['enemy', 'boss', 'pot'].includes(e.t) || (e.t === 'chest' && !['chapel1'].includes(e.id))) assert.ok(seen[e.y * b.w + e.x], `${map}: ${e.t}@${e.x},${e.y} unreachable`);
+    assert.ok(b.entities.some((e) => e.t === 'boss' && e.kind === boss), map + ' has its boss');
+    // exits lead back to the open world and the spawn exists there
+    const ex = b.entities.find((e) => e.t === 'exit');
+    assert.equal(ex.to, 'forest');
+  }
 });
 console.log(`${n} world tests passed`);

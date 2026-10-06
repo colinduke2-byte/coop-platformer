@@ -56,8 +56,8 @@ function buildVillage() {
   g.scatter(TILE.STUMP, 4, 8);
   g.scatter(TILE.ROCK, 8, 4);
   g.add({ t: 'npc', id: 'sigrid', x: 20, y: 9 });
-  g.add({ t: 'board', x: 22, y: 11 });
-  g.res[11][22] = true; g.t[11][22] = TILE.PATH;
+  g.add({ t: 'board', x: 25, y: 13 });
+  g.res[13][25] = true; g.t[13][25] = TILE.PATH;
   g.add({ t: 'npc', id: 'bjorn', x: 7, y: 11 });
   g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
   g.dress('late');
@@ -198,6 +198,155 @@ function buildMaw() {
   return g.out();
 }
 MAPS.maw = { name: 'The Glacial Maw', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 10.6 * T && pc.x > 6 * T && pc.x < 30 * T, build: buildMaw, music: 'crypt', dim: 0.3, cave: true };
+
+
+// ---- Ironwatch Keep: a ruined fortress; stone, barricades and a garrison that never left
+function buildKeep() {
+  const g = new Grid(40, 62, TILE.CWALL);
+  const F = (x, y, w, h, t = TILE.CFLOOR) => g.rect(x, y, w, h, t);
+  F(14, 54, 12, 7);                      // gatehouse
+  F(19, 47, 2, 7);                       // lane
+  F(5, 32, 30, 15);                      // courtyard
+  F(2, 36, 3, 6); F(35, 36, 3, 6);       // wall towers (archers)
+  F(19, 26, 2, 6);                       // stair
+  F(6, 14, 28, 12);                      // barracks hall
+  F(1, 17, 5, 5); F(34, 17, 5, 5);       // armoury and mess
+  F(19, 11, 2, 3);                       // keep door
+  F(7, 1, 26, 10);                       // throne room (arena)
+  g.rect(19, 61, 2, 1, TILE.STAIRS);
+  g.noise(TILE.CFLOOR2, 0.2, 41, TILE.CFLOOR);
+  g.rect(18, 47, 4, 1, TILE.RUG); g.rect(19, 15, 2, 10, TILE.RUG); g.rect(19, 1, 2, 10, TILE.RUG);
+  // barricades across the courtyard (fences), pillars in the halls
+  for (const x of [8, 9, 10, 11, 28, 29, 30, 31]) g.set(x, 40, TILE.FENCE);
+  for (const [x, y] of [[8, 34], [31, 34], [8, 44], [31, 44], [9, 17], [9, 22], [30, 17], [30, 22], [10, 3], [29, 3], [10, 8], [29, 8]]) g.set(x, y, TILE.PILLAR);
+  g.add({ t: 'spawn', name: 'entry', x: 20, y: 58 });
+  g.add({ t: 'exit', x: 19, y: 61, w: 2, h: 1, to: 'forest', spawn: 'keep', fx: 'door' });
+  g.add({ t: 'fire', x: 16, y: 56, rest: true, id: 'keepin' }); g.set(16, 56, TILE.BRAZIER);
+  for (const [x, y, r, col] of [[16, 56, 44, 12], [20, 50, 36, 12], [12, 36, 44, 12], [28, 36, 44, 12], [20, 40, 50, 12], [12, 19, 44, 12], [28, 19, 44, 12], [20, 5, 70, 12], [3, 38, 28, 12], [36, 38, 28, 12]]) g.add({ t: 'glow', x, y, r, col });
+  g.add({ t: 'sign', x: 17, y: 55, text: ['IRONWATCH KEEP.', 'THE WARDEN HROLF SWORE TO HOLD THIS GATE UNTIL RELIEVED. NO RELIEF CAME.'] });
+  // courtyard garrison
+  for (const [k, x, y] of [['bandit', 12, 34], ['bandit', 26, 35], ['knight', 20, 38], ['draugr', 11, 44], ['draugr', 29, 44], ['warden', 20, 43]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
+  for (const [x, y] of [[3, 38], [36, 38], [3, 40], [36, 40]]) g.add({ t: 'enemy', kind: 'archer', x, y, tier: 2 });
+  g.add({ t: 'chest', id: 'keep1', x: 20, y: 33, lock: 'med', loot: [{ gen: 2 }, { item: 'iron_ingot', n: 3 }, { gold: 80 }] });
+  // barracks
+  for (const [k, x, y] of [['reaver', 12, 18], ['reaver', 28, 18], ['knight', 14, 23], ['warden', 26, 23], ['conjurer', 20, 16], ['fencer', 20, 21]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
+  g.add({ t: 'chest', id: 'keep2', x: 2, y: 19, lock: 'hard', loot: [{ gen: 3 }, { item: 'iron_greatsword' }, { gold: 100 }] });
+  g.add({ t: 'chest', id: 'keep3', x: 37, y: 19, loot: [{ item: 'hp_potion', n: 3 }, { item: 'sp_potion', n: 2 }, { arrows: 14 }] });
+  g.add({ t: 'enemy', kind: 'chief', x: 8, y: 36, tier: 2 });
+  g.set(21, 12, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 12, auto: true });
+  g.add({ t: 'boss', kind: 'warlord', x: 20, y: 5 });
+  g.add({ t: 'bossgate', x: 19, y: 11, w: 2 });
+  for (const [x, y] of [[9, 3], [30, 3], [9, 9], [30, 9]]) g.add({ t: 'pot', x, y, skin: 'urn' });
+  return g.out();
+}
+MAPS.keep = { name: 'Ironwatch Keep', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 7 * T && pc.x < 33 * T, build: buildKeep, music: 'crypt', dim: 0.34, cave: true };
+
+// ---- The Drowned Chapel: a flooded temple under the lake; black water, sunken pews, rune puzzle
+function buildChapel() {
+  const g = new Grid(36, 60, TILE.CWALL);
+  const F = (x, y, w, h, t = TILE.ICE2) => g.rect(x, y, w, h, t);
+  F(12, 52, 12, 7, TILE.CFLOOR);         // dry vestibule
+  F(17, 44, 2, 8);
+  F(5, 32, 26, 12);                      // nave (flooded)
+  F(1, 35, 4, 5, TILE.CFLOOR); F(32, 35, 3, 5, TILE.CFLOOR);   // side chapels (the east one is sealed by a rune wall)
+  F(17, 26, 2, 6);
+  F(5, 14, 26, 12);                      // cloister
+  F(17, 10, 2, 4);
+  F(6, 1, 24, 9);                        // sanctum (arena)
+  g.rect(17, 59, 2, 1, TILE.STAIRS);
+  g.noise(TILE.ICE, 0.35, 51, TILE.ICE2);
+  for (const [x, y] of [[8, 34], [8, 38], [8, 42], [27, 34], [27, 38], [27, 42], [9, 17], [9, 23], [26, 17], [26, 23], [10, 3], [25, 3], [10, 7], [25, 7]]) g.set(x, y, TILE.PILLAR);
+  for (const [x, y] of [[12, 36], [12, 40], [23, 36], [23, 40]]) g.set(x, y, TILE.GRAVE);     // sunken pews
+  g.add({ t: 'spawn', name: 'entry', x: 18, y: 56 });
+  g.add({ t: 'exit', x: 17, y: 59, w: 2, h: 1, to: 'forest', spawn: 'chapel', fx: 'door' });
+  g.add({ t: 'fire', x: 14, y: 54, rest: true, id: 'chapelin' }); g.set(14, 54, TILE.BRAZIER);
+  for (const [x, y, r] of [[14, 54, 44], [18, 46, 34], [10, 38, 40], [26, 38, 40], [10, 20, 44], [26, 20, 44], [18, 5, 70], [3, 37, 26], [33, 37, 26]]) g.add({ t: 'glow', x, y, r, col: 15 });
+  g.add({ t: 'sign', x: 16, y: 55, text: ['THE DROWNED CHAPEL.', 'WHEN THE LAKE ROSE, THE CONGREGATION STAYED TO PRAY. THEY ARE STILL PRAYING.'] });
+  // nave
+  for (const [k, x, y] of [['draugr', 11, 34], ['draugr', 25, 34], ['wight', 14, 40], ['wight', 22, 40], ['reaver', 18, 36], ['conjurer', 18, 42]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
+  // rune puzzle in the west chapel opens the east chapel's treasure (order shown on the sign)
+  g.add({ t: 'plateorder', order: ['wolf', 'moon', 'crown'] });
+  g.add({ t: 'plate', rune: 'moon', x: 12, y: 33 }); g.add({ t: 'plate', rune: 'crown', x: 24, y: 33 }); g.add({ t: 'plate', rune: 'wolf', x: 18, y: 43 });
+  g.add({ t: 'sign', x: 3, y: 36, text: ['THE CONGREGATION KNELT IN ORDER: THE WOLF FIRST, THEN THE MOON, THEN THE CROWN.', 'WOLF IS RED. MOON IS BLUE. CROWN IS GOLD.'] });
+  g.add({ t: 'vaultwall', x: 31, y: 37 });
+  g.add({ t: 'chest', id: 'chapel1', x: 33, y: 37, loot: [{ gen: 3 }, { gen: 2 }, { item: 'mp_potion_g', n: 2 }, { gold: 120 }] });
+  // cloister
+  for (const [k, x, y] of [['knight', 10, 18], ['reaver', 26, 18], ['wight', 14, 22], ['wight', 22, 22], ['conjurer', 18, 17], ['draugr', 18, 23]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
+  g.add({ t: 'chest', id: 'chapel2', x: 2, y: 37, lock: 'med', loot: [{ gen: 2 }, { item: 'frost_lily', n: 3 }, { gold: 70 }] });
+  g.set(19, 12, TILE.BRAZIER); g.add({ t: 'fire', x: 19, y: 12, auto: true });
+  g.add({ t: 'boss', kind: 'tide', x: 18, y: 5 });
+  g.add({ t: 'bossgate', x: 17, y: 10, w: 2 });
+  for (const [x, y] of [[8, 2], [27, 2], [8, 8], [27, 8]]) g.add({ t: 'pot', x, y, skin: 'urn' });
+  return g.out();
+}
+MAPS.chapel = { name: 'The Drowned Chapel', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 8.6 * T && pc.x > 6 * T && pc.x < 30 * T, build: buildChapel, music: 'crypt', dim: 0.4, cave: true };
+
+// ---- The Rootvault: twisting passages through the blight
+function buildRootvault() {
+  const g = new Grid(40, 62, TILE.DEADTREE);
+  const F = (x, y, w, h, t = TILE.SNOW2) => g.rect(x, y, w, h, t);
+  F(15, 54, 10, 7);
+  F(19, 46, 2, 8, TILE.PATH);
+  F(6, 36, 28, 10);                      // thicket
+  F(3, 38, 3, 6); F(34, 38, 3, 6);
+  F(19, 28, 2, 8, TILE.PATH);
+  F(5, 17, 30, 11);                      // the wound (blight pools)
+  F(19, 13, 2, 4, TILE.PATH);
+  F(7, 1, 26, 12);
+  g.rect(19, 61, 2, 1, TILE.STAIRS);
+  g.noise(TILE.STUMP, 0.5, 61, TILE.DEADTREE);
+  g.noise(TILE.ROCK, 0.1, 62, TILE.DEADTREE);
+  g.noise(TILE.SNOW3, 0.1, 63, TILE.SNOW2);
+  for (const [x, y] of [[10, 40], [29, 40], [12, 21], [27, 21], [12, 25], [27, 25], [10, 5], [29, 5], [10, 10], [29, 10]]) g.set(x, y, TILE.STUMP);
+  g.add({ t: 'spawn', name: 'entry', x: 20, y: 58 });
+  g.add({ t: 'exit', x: 19, y: 61, w: 2, h: 1, to: 'forest', spawn: 'rootvault', fx: 'door' });
+  g.add({ t: 'fire', x: 17, y: 56, rest: true, id: 'rootin' }); g.set(17, 56, TILE.BRAZIER);
+  for (const [x, y, r, col] of [[17, 56, 44, 12], [20, 48, 30, 8], [12, 40, 44, 8], [28, 40, 44, 8], [12, 22, 50, 8], [28, 22, 50, 8], [20, 6, 80, 8], [20, 14, 36, 12]]) g.add({ t: 'glow', x, y, r, col });
+  g.add({ t: 'sign', x: 18, y: 55, text: ['THE ROOTVAULT.', 'SOMETHING BELOW IS GROWING. THE TREES HERE HAVE STOPPED BEING TREES.'] });
+  for (const [k, x, y] of [['wolf', 10, 38], ['wolf', 28, 38], ['alpha', 20, 41], ['fencer', 14, 43], ['bandit', 26, 43], ['wolf', 8, 41]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  g.add({ t: 'chest', id: 'root1', x: 4, y: 41, lock: 'med', loot: [{ gen: 3 }, { item: 'snowberry', n: 4 }, { gold: 80 }] });
+  g.add({ t: 'chest', id: 'root2', x: 35, y: 41, loot: [{ item: 'hp_potion', n: 3 }, { item: 'frost_lily', n: 3 }, { arrows: 12 }] });
+  for (const [k, x, y] of [['reaver', 10, 20], ['reaver', 29, 20], ['knight', 14, 24], ['wight', 25, 24], ['conjurer', 20, 20], ['alpha', 20, 25]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  for (const [x, y] of [[9, 18], [30, 18], [20, 26], [11, 26], [28, 18]]) g.add({ t: 'herb', item: 'frost_lily', x, y });
+  g.add({ t: 'chest', id: 'root3', x: 20, y: 18, lock: 'hard', loot: [{ gen: 3 }, { gen: 2 }, { gold: 110 }, { item: 'hp_potion_g', n: 2 }] });
+  g.set(21, 14, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 14, auto: true });
+  g.add({ t: 'boss', kind: 'root', x: 20, y: 5 });
+  g.add({ t: 'bossgate', x: 19, y: 13, w: 2 });
+  return g.out();
+}
+MAPS.rootvault = { name: 'The Rootvault', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 11.6 * T && pc.x > 7 * T && pc.x < 33 * T, build: buildRootvault, music: 'crypt', dim: 0.36, cave: true };
+
+// ---- The Winter Throne: the end of the road. Opens only to someone who holds all four Hearts.
+function buildThrone() {
+  const g = new Grid(40, 70, TILE.ROCK);
+  const F = (x, y, w, h, t = TILE.ICE) => g.rect(x, y, w, h, t);
+  F(14, 62, 12, 7, TILE.SNOW2);
+  F(19, 55, 2, 7);
+  F(6, 42, 28, 13);                      // hall of the Kings
+  F(19, 36, 2, 6);
+  F(5, 24, 30, 12);                      // gallery of the Hearts
+  F(19, 19, 2, 5);
+  F(6, 1, 28, 18);                       // the throne
+  g.rect(19, 69, 2, 1, TILE.STAIRS);
+  g.noise(TILE.ICE2, 0.3, 71, TILE.ICE);
+  g.rect(19, 1, 2, 18, TILE.RUG);
+  for (const [x, y] of [[8, 44], [8, 52], [31, 44], [31, 52], [14, 46], [25, 46], [14, 50], [25, 50], [9, 27], [9, 33], [30, 27], [30, 33], [10, 4], [29, 4], [10, 14], [29, 14]]) g.set(x, y, TILE.PILLAR);
+  for (const [x, y] of [[6, 25], [33, 25], [6, 34], [33, 34]]) g.set(x, y, TILE.BRAZIER);
+  g.add({ t: 'spawn', name: 'entry', x: 20, y: 66 });
+  g.add({ t: 'exit', x: 19, y: 69, w: 2, h: 1, to: 'forest', spawn: 'throne', fx: 'door' });
+  g.add({ t: 'fire', x: 15, y: 64, rest: true, id: 'thronein' }); g.set(15, 64, TILE.BRAZIER);
+  for (const [x, y, r, col] of [[15, 64, 44, 15], [20, 58, 34, 15], [10, 46, 44, 15], [29, 46, 44, 15], [20, 49, 60, 15], [6, 25, 36, 12], [33, 25, 36, 12], [6, 34, 36, 15], [33, 34, 36, 15], [20, 9, 90, 15]]) g.add({ t: 'glow', x, y, r, col });
+  g.add({ t: 'sign', x: 17, y: 65, text: ['THE WINTER THRONE.', 'HERE THE FIVE KINGS CHAINED THE LONG WINTER. FOUR HEARTS HOLD ITS CHAINS. THE FIFTH WAS LOST TO GREED.'] });
+  for (const [k, x, y] of [['knight', 11, 46], ['knight', 28, 46], ['reaver', 15, 52], ['reaver', 24, 52], ['conjurer', 20, 45], ['wight', 10, 52], ['wight', 29, 52], ['warden', 20, 50]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  g.add({ t: 'chest', id: 'throne1', x: 7, y: 48, lock: 'hard', loot: [{ gen: 3, rarity: 2 }, { gold: 150 }, { item: 'hp_potion_g', n: 2 }] });
+  for (const [k, x, y] of [['fencer', 10, 29], ['fencer', 29, 29], ['knight', 14, 27], ['knight', 25, 27], ['conjurer', 20, 28], ['conjurer', 20, 33], ['reaver', 12, 32], ['reaver', 27, 32]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  g.add({ t: 'chest', id: 'throne2', x: 33, y: 30, loot: [{ item: 'hp_potion_g', n: 3 }, { item: 'mp_potion_g', n: 2 }, { item: 'sp_potion', n: 3 }] });
+  g.set(21, 21, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 21, auto: true });
+  g.add({ t: 'boss', kind: 'winter', x: 20, y: 8 });
+  g.add({ t: 'bossgate', x: 19, y: 19, w: 2 });
+  return g.out();
+}
+MAPS.throne = { name: 'The Winter Throne', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 17.6 * T && pc.x > 6 * T && pc.x < 34 * T, build: buildThrone, music: 'boss', dim: 0.36, cave: true };
 
 // The forest is now the north-west corner of the open world (same coordinates as before).
 let reachCache = null;
