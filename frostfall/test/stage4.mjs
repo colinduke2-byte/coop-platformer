@@ -28,7 +28,7 @@ const duel = (kind, dx) => G(([kind, dx]) => {
   const g = window.__ff.game.scene.getScene('Game');
   g.enemies.getChildren().slice().forEach((e) => { e.destroy(); });
   g.enemies.clear(); if (g.pend) g.pend.length = 0;      // no streamed spawns joining the duel
-  const p = g.player; p.setPosition(10.5 * 16, 10 * 16 + 8); p.mode = 'free'; p.stunT = 0; p.body.setVelocity(0, 0); p.invuln = 0; p.iframes = 0; p.face = { x: 1, y: 0 };
+  const p = g.player; p.setPosition(10.5 * 16, 10 * 16 + 8); p.mode = 'free'; p.stunT = 0; p.body.setVelocity(0, 0); p.invuln = 0; p.iframes = 0; p.statuses = {}; p.face = { x: 1, y: 0 };
   const S = window.__ff.S; S.hp = 100; S.sp = 100; S.weather = 'snow'; S.time = 12 * 60;      // daylight, no blizzard: sight range is the same every run
   const e = g.addEnemy(kind, p.x + dx, p.y); window.__sw = false; const sw0 = e.startWindup.bind(e); e.startWindup = (...a) => { window.__sw = true; return sw0(...a); }; e.alert(true); return true;
 }, [kind, dx]);
