@@ -42,7 +42,7 @@ for (const sc of SCENARIOS) {
       recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       const p = g.player;
       p.setPosition(sc.pos[0] * 16, sc.pos[1] * 16);
-      if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); }
+      if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; }
       else g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy());
       for (const [k, dx, dy] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16); e.alerted = true; e.state = 'chase'; e.cd = 0.5; }
       const keys = window.__ff.keys;
