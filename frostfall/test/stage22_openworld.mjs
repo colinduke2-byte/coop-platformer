@@ -49,7 +49,7 @@ check('praying grants a blessing or pact', !!bl.b, JSON.stringify(bl));
 check('the shrine is quiet after use', await G(() => window.__sh.label().includes('SILENT')));
 
 // ---- ore, digging, hunting
-const spot = (t) => G(([t]) => { const g = window.__ff.game.scene.getScene('Game'); const e = g.built.entities.find((x) => x.t === t); return { x: e.x, y: e.y }; }, [t]);
+const spot = (t) => G(([t]) => { const g = window.__ff.game.scene.getScene('Game'); const e = g.built.entities.find((x) => x.t === t && (x.kind || 'deer') === 'deer'); return { x: e.x, y: e.y }; }, [t]);
 const node = await spot('node');
 await tp(node.x, node.y + 1); await h.sleep(200);
 const ore0 = await G(() => (window.__ff.S.inv.iron_ingot || 0) + (window.__ff.S.inv.bone_dust || 0));
