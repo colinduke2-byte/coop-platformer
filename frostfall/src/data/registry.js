@@ -5,7 +5,7 @@ import { ENEMIES, BARKS } from './enemies.js';
 import { ITEMS } from './items.js';
 import { STATUS } from '../systems/status.js';
 
-const ITEM_TYPES = new Set(['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'food', 'ammo', 'ingredient', 'misc', 'quest', 'map', 'whistle', 'elixir', 'tome']);
+const ITEM_TYPES = new Set(['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'food', 'ammo', 'ingredient', 'misc', 'quest', 'map', 'whistle', 'elixir', 'tome', 'gem']);
 const AI_KINDS = new Set(['melee', 'cast', 'shoot', 'lunge', 'boss']);
 const num = (v) => typeof v === 'number' && Number.isFinite(v);
 

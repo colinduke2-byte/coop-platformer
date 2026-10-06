@@ -19,6 +19,12 @@ export const ENEMIES = {
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
     body: [8, 7, 4, 9], loot: { gold: [150, 210], drops: [['hp_potion_g', 1], ['iron_ingot', 1], ['iron_ingot', 1]] },
   },
+  kragnar: {
+    name: 'Kragnar', title: 'KRAGNAR THE HOLLOWED, KING UNDER THE LODE', tex: 'spr_kragnar', bark: 'undead', weak: { frost: 1.4, shock: 1.1, fire: 0.5 },
+    hp: 560, speed: 34, chase: 42, dmg: 24, detect: 9999,
+    kind: 'boss', range: 40, windup: 0.75, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
+    body: [8, 7, 4, 9], loot: { gold: [160, 220], drops: [['kragnar_core', 1], ['ember_ore', 1], ['hp_potion_g', 1]] },
+  },
   tide: {
     name: 'The Tidemother', title: 'THE TIDEMOTHER, DROWNED QUEEN', tex: 'spr_tide', sideOnly: true, bark: 'undead', weak: { shock: 1.6, fire: 0.8, frost: 0.3 },
     hp: 480, speed: 30, chase: 36, dmg: 22, detect: 9999,

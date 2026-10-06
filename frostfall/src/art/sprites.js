@@ -131,6 +131,28 @@ export const STYLES = {
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
+  // Emberhold
+  ysolde: { skin: 10, hair: 6, hood: 13, body: 13, trim: 12, legs: 3, boots: 9, chest: 12, crown: 12, cape: 11 },
+  brannoch: { skin: 10, hair: 11, helm: null, body: 9, trim: 12, legs: 2, boots: 1, chest: 4, beard: 11 },
+  tamsin: { skin: 10, hair: 15, hood: 14, body: 14, trim: 15, legs: 1, boots: 9, chest: 15 },
+  orrin: { skin: 10, hair: 6, helm: 5, body: 8, trim: 9, legs: 9, boots: 1, chest: 9, beard: 6 },
+  pell: { skin: 10, hair: 11, hood: 7, body: 7, trim: 9, legs: 9, boots: 1, chest: 8 },
+  hesper: { skin: 10, hair: 9, helm: 4, body: 12, trim: 13, legs: 2, boots: 0, chest: 5, cape: 11 },
+  corvin: { skin: 10, hair: 3, helm: 5, body: 2, trim: 3, legs: 1, boots: 0, chest: 4, beard: 3 },
+  maelis: { skin: 10, hair: 12, body: 11, trim: 13, legs: 2, boots: 9, chest: 13 },
+  goran: { skin: 10, hair: 6, body: 4, trim: 3, legs: 2, boots: 1, chest: 9, beard: 6 },
+  isolt: { skin: 10, hair: 11, body: 11, trim: 12, legs: 2, boots: 1, chest: 4 },
+  dunmar: { skin: 10, hair: 3, body: 14, trim: 15, legs: 3, boots: 9, chest: 14, beard: 3 },
+  hildsoot: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 1, boots: 9, chest: 8 },
+  rook: { skin: 10, hair: 1, hood: 1, body: 1, trim: 13, legs: 1, boots: 0, chest: 14, mask: 1 },
+  aurel: { skin: 10, hair: 6, hood: 5, body: 5, trim: 12, legs: 3, boots: 9, chest: 12 },
+  thessaly: { skin: 10, hair: 14, body: 3, trim: 15, legs: 1, boots: 9, chest: 15 },
+  garrow: { skin: 10, hair: 9, helm: 4, body: 9, trim: 12, legs: 2, boots: 1, chest: 10, beard: 9 },
+  nessa: { skin: 10, hair: 13, body: 5, trim: 11, legs: 2, boots: 9, chest: 5 },
+  varro: { skin: 10, hair: 1, body: 11, trim: 0, legs: 2, boots: 0, chest: 10, beard: 1, cape: 11 },
+  ketil: { skin: 10, hair: 11, body: 8, trim: 13, legs: 3, boots: 9, chest: 8, hood: 8 },
+  brisa: { skin: 10, hair: 5, body: 14, trim: 13, legs: 3, boots: 9, chest: 13, hood: 14 },
+  kragnar: { skin: 4, hair: 3, helm: 3, body: 9, trim: 12, legs: 2, boots: 0, glow: 12, chest: 10, beard: 3, horns: 3, crown: 12 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
 
@@ -777,6 +799,8 @@ export function buildIcon(scene, key, kind, col = 6) {
       case 'shout':
         for (let i = 0; i < 3; i++) { R(g, i === 0 ? 6 : 4, 3 + i * 3, 8 - i * 3, 1, 1 + i * 6); } R(g, col, 2, 6, 3, 4); R(g, col, 4, 5, 1, 6); break;
       case 'pick': l(6, 3, 13, 11, 5); l(col, 3, 12, 11, 4); R(g, 9, 11, 3, 3, 3); R(g, 13, 2, 12, 2, 2); l(4, 4, 11, 6, 8); break;
+      case 'gem': R(g, col, 6, 3, 4, 2); R(g, col, 4, 5, 8, 3); R(g, col, 5, 8, 6, 3); R(g, col, 7, 11, 2, 2); R(g, 6, 6, 4, 2, 1); R(g, 0, 4, 5, 1, 3); R(g, 0, 11, 5, 1, 3); R(g, 0, 6, 8, 1, 3); break;
+      case 'ore': R(g, 3, 4, 5, 8, 8); R(g, 3, 5, 4, 6, 1); R(g, 3, 3, 6, 10, 6); R(g, col, 5, 7, 2, 2); R(g, col, 9, 9, 2, 2); R(g, col, 7, 5, 1, 1); R(g, 0, 3, 12, 10, 1); break;
       case 'ingot': R(g, col, 3, 7, 10, 5); R(g, 6, 4, 6, 8, 1); R(g, 0, 3, 12, 10, 1); R(g, 0, 3, 7, 10, 1); R(g, 3, 4, 8, 6, 1); break;
       case 'fang': R(g, col, 6, 3, 4, 3); R(g, col, 7, 6, 2, 4); R(g, col, 8, 10, 1, 2); R(g, 5, 7, 4, 1, 2); R(g, 0, 5, 3, 1, 3); break;
       case 'dust': for (const [x, y] of [[4, 8], [7, 5], [9, 9], [6, 11], [11, 7], [5, 6]]) R(g, col, x, y, 2, 2); R(g, 4, 8, 9, 2, 1); break;

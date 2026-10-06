@@ -11,6 +11,7 @@ export const BOSS_TAUNTS = {
   tide: { name: 'THE TIDEMOTHER', engage: 'Every drowned prayer rises here. Hush, little light.', 2: 'The deep takes everything. Even you.', 3: 'Sink with us, child. It is quiet below.', death: 'The tide goes out... the song goes with it...' },
   root: { name: 'THE ASHEN ROOT', engage: 'We were seeds in the first fire. We are patient.', 2: 'The Wound spreads. The Wound is hungry.', 3: 'GROW. GROW. GROW.', death: 'Rot... returns to the soil... as it should...' },
   winter: { name: 'THE LONG WINTER', engage: 'Little Dreamer. You carry my chains and think them yours.', 2: 'I am the storm that made your fathers kneel.', 3: 'I am the silence after the last fire dies.', death: 'You broke the chains. Now break the choice.' },
+  kragnar: { name: 'KRAGNAR', engage: 'Who walks in my lode? The lanterns are mine. The dark is mine. You are mine.', 2: 'Dig! DIG! The mountain remembers every hand that wronged it!', 3: 'Break me and the lode breaks with me...', death: 'Sleep... at last... under... stone.' },
   dragon: { name: 'SKALDRATH', engage: 'Another small flame comes to my hoard. How it flickers.', 2: 'The sky burns because I wish it. Watch.', 3: 'EMBERS FALL WHERE I LOOK.', death: 'The last dragon... falls to a mortal spark...' },
 };
 

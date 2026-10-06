@@ -92,7 +92,7 @@ export function buildRegion(def, region, seed) {
       if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
       if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
       if (biomeWant && tries < 1200 && bio[y][x] !== biomeWant) continue;       // prefer the right biome, fall back to anywhere
-      taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${kind}${made}` }); made++;
+      taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` }); made++;
     }
   };
   const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
@@ -181,20 +181,21 @@ export function buildRegion(def, region, seed) {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
-    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest'].includes(p.kind)) {
+    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city'].includes(p.kind)) {
       const D = {
         fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
         temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
         rootvault: { to: 'rootvault', col: 8, stone: TILE.ROCK, text: ['THE ROOTVAULT.', 'THE TREES HERE LEAN TOWARD THE DOOR, AND AWAY FROM YOU.'] },
         nest: { to: 'nest', col: 12, stone: TILE.ROCK, text: ['THE EMBER NEST.', 'THE SNOW HAS MELTED FOR A HUNDRED PACES. THE AIR SHIMMERS.'] },
+        city: { to: 'emberhold', col: 12, stone: TILE.STONE, text: ['EMBERHOLD, THE FORGE-CITY.', 'THE GREAT GATE STANDS OPEN. SMOKE CLIMBS FROM A THOUSAND CHIMNEYS.'] },
         throne: { to: 'throne', col: 15, stone: TILE.STONE, text: ['THE WINTER THRONE.', 'THE LAST DOOR IN THE REACH. FOUR HEARTS MUST BE YOURS TO OPEN IT.'] },
       }[p.kind];
       clearing(p, 13, 8);
       g.rect(p.x - 5, p.y - 4, 11, 3, D.stone);
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
-      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: 'entry', fx: 'door', needs: p.kind === 'throne' ? 'hearts4' : null });
-      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : p.kind === 'nest' ? 'nest' : 'throne', x: p.x, y: p.y });
+      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: p.kind === 'throne' ? 'hearts4' : null });
+      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : p.kind === 'nest' ? 'nest' : p.kind === 'city' ? 'emberhold' : 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });
@@ -400,7 +401,8 @@ export const ASHEN = {
   },
   nodes: [{ x: ASH_START.x + 8, y: ASH_START.y }],
   taken: [{ x: ASH_START.x, y: ASH_START.y, r: 14 }],
-  plan(place) {
+  plan(place, mustHave) {
+    mustHave('city', 12, 1);
     place('champion', 3, 8); place('ruin', 3, 10); place('camp', 5, 11); place('den', 3, 9);
     place('tower', 3, 7); place('spring', 2, 6); place('rest', 7, 4);
     place('rest', 1, 4, { x: ASH_START.x + 22, y: ASH_START.y, r: 14 });

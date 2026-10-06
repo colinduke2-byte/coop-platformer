@@ -3,6 +3,7 @@ import { S } from '../systems/state.js';
 import { TROPHIES, trophyCount } from '../systems/achievements.js';
 import { wrap } from '../art/font.js';
 import { panel } from './MenuScene.js';
+import { FACTIONS, FACTION_IDS, rep, repTier } from '../data/factions.js';
 
 // Trophies tab: every milestone, greyed out until earned.
 export function trophyTab(m) {
@@ -24,6 +25,15 @@ export function trophyTab(m) {
       m.T(132, 27, t.name, got ? 13 : 4);
       m.T(132, 38, wrap(t.desc, 29), got ? 5 : 4);
       m.T(132, 70, got ? 'EARNED' : 'LOCKED', got ? 8 : 3);
+      if (S.flags.regions?.ashen || S.flags.metYsolde || FACTION_IDS.some((f) => rep(f) > 0)) {
+        m.T(132, 92, 'EMBERHOLD STANDING', 13);
+        FACTION_IDS.forEach((f, k) => {
+          const y = 103 + k * 13, v = rep(f);
+          m.T(132, y, FACTIONS[f].short, FACTIONS[f].col);
+          g.fillStyle(C[0]); g.fillRect(212, y, 64, 7); g.fillStyle(C[1]); g.fillRect(213, y + 1, 62, 5); g.fillStyle(C[FACTIONS[f].col]); g.fillRect(213, y + 1, Math.round(62 * v / 100), 5);
+          m.T(280, y, repTier(f).slice(0, 4), 5);
+        });
+      }
       m.T(132, 146, `${trophyCount()} / ${TROPHIES.length}`, 15);
     },
   };

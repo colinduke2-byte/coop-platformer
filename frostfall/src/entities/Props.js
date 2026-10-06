@@ -111,16 +111,16 @@ export class Door {
   constructor(scene, x, y, e) { this.scene = scene; this.ix = x; this.iy = y; this.e = e; }
   get forSale() { return !!this.e.price && !S.flags[this.e.flag]; }
   canInteract() { return true; }
-  label() { return this.forSale ? `E: COTTAGE FOR SALE ${this.e.price}G` : (this.e.label || 'E: ENTER'); }
+  label() { return this.forSale ? `E: ${this.e.house || 'COTTAGE'} FOR SALE ${this.e.price}G` : (this.e.label || 'E: ENTER'); }
   async interact() {
     if (!this.forSale) { this.scene.changeMap(this.e.to, this.e.spawn, 'door'); return; }
     await runScript(async () => {
-      await say('Notice', 'FOR SALE: SNOWDRIFT COTTAGE. A bed, a hearth, room to furnish. Yours for ' + this.e.price + ' gold.');
+      await say('Notice', `FOR SALE: ${this.e.houseName || 'SNOWDRIFT COTTAGE'}. A bed, a hearth, room to furnish. Yours for ${this.e.price} gold.`);
       const c = await choose([`Buy it (${this.e.price}G)`, 'Not now']);
       if (c !== 0) return;
       if (S.gold < this.e.price) { sfx.play('nostamina'); await say('Notice', 'You cannot afford it yet.'); return; }
       S.gold -= this.e.price; S.flags[this.e.flag] = true;
-      sfx.play('levelup'); bus.emit('toast', 'YOU OWN SNOWDRIFT COTTAGE', 13);
+      sfx.play('levelup'); bus.emit('toast', `YOU OWN ${this.e.houseName || 'SNOWDRIFT COTTAGE'}`, 13);
     });
   }
 }

@@ -5,6 +5,8 @@ import { hash } from '../util.js';
 import { S } from '../systems/state.js';
 import { buildReach, buildRegion, REGION_DEFS } from '../world/worldgen.js';
 import { buildBarrow } from '../world/barrowgen.js';
+import { buildMines, MINE_FLOORS } from '../world/minesgen.js';
+import { buildEmberhold, buildEmberInterior, EMBER_INTERIORS } from './emberhold_map.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
   // roof rows then 2 wall rows; door + windows on the top wall row
@@ -427,6 +429,24 @@ for (let i = 0; i < 3; i++) {
       MAPS['barrow' + i].name = b.title;
       return b;
     },
+  };
+}
+
+// Emberhold, the forge-city (reached from the Ashen Peaks), and its halls.
+MAPS.emberhold = { name: 'Emberhold', snow: false, outdoors: true, ambience: 'wind', build: buildEmberhold, music: 'village', dim: 0.12 };
+for (const [id, name] of Object.entries(EMBER_INTERIORS)) MAPS[id] = { name, snow: false, build: () => buildEmberInterior(id), music: 'village', dim: 0.12, interior: true };
+
+// The Deep Mines under Emberhold: three generated floors, cached per run seed.
+const minesCache = {};
+export function getMines(f) {
+  const seed = S.seed ?? 1337;
+  if (!minesCache[f] || minesCache[f].seed !== seed) minesCache[f] = { seed, built: buildMines(seed, f) };
+  return minesCache[f].built;
+}
+for (let f = 0; f < MINE_FLOORS; f++) {
+  MAPS['mines' + f] = {
+    name: ['The Deep Mines I', 'The Deep Mines II', "Kragnar's Lode"][f], snow: false, ambience: 'crypt', music: f === 2 ? 'throne' : 'crypt', dim: 0.4, cave: true, build: () => getMines(f), ...(f === 0 ? { flag: 'minesEntered' } : {}),
+    ...(f === 2 ? { bossTrigger: (pc, T) => { const r = getMines(2).bossRoom; return !!r && pc.y < (r.y + r.h - 1.6) * T && pc.y > r.y * T && pc.x > r.x * T && pc.x < (r.x + r.w) * T; } } : {}),
   };
 }
 

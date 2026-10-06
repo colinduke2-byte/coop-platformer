@@ -88,6 +88,16 @@ export const TUNE = {
     tail: { windup: 0.6, recover: 0.8, dmg: 20, r: 40 },
     leap: { windup: 0.85, recover: 1.0, dmg: 28, r: 34 },
   },
+  kragnar: {
+    slam: { windup: 0.75, recover: 0.8, dmg: 24, r: 34, reach: 24 },
+    sweep: { windup: 0.55, recover: 0.7, dmg: 18, w: 56, h: 40, reach: 26 },
+    volley: { windup: 0.7, recover: 0.7, dmg: 11, speed: 100, spread: 0.24 },
+    nova: { windup: 1.0, recover: 1.0, dmg: 11, speed: 78, count: 14 },
+    charge: { windup: 0.7, recover: 1.3, dmg: 26, speed: 190, time: 0.6 },
+    tail: { windup: 0.6, recover: 0.8, dmg: 18, r: 40 },
+    leap: { windup: 0.85, recover: 1.0, dmg: 26, r: 34 },
+    spikes: { windup: 0.7, recover: 0.9, dmg: 18, n: 5, r: 26, delay: 1.0 },
+  },
   tide: {
     charge: { windup: 0.9, recover: 1.4, dmg: 24, speed: 170, time: 0.55 },
     nova: { windup: 1.1, recover: 1.0, dmg: 13, speed: 76, count: 18 },

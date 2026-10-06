@@ -264,3 +264,15 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - The Ashen Peaks (160x120) is the first extra region: entry road, camps, ruins, towers, springs, campfires, champions, wildlife. It is a framework proof for now; its own places and art come in Phase 12. Reach it with `?map=ashen` until the story unlocks it.
 - Map tab: **R** switches region, waypoints and fog are per region, fast travel works across regions (loads the other map).
 - Tests: `reach_hash`, `stage42_regions` (builds, reachability, registry, map switching, cross-region travel, save/load, time of day, perf budget).
+
+## Round 17 - Emberhold and the Deep Mines (Phase 10)
+- **Emberhold**, the forge-city (88x60, five districts, day/night, three rest fires), reached from a gate in the Ashen Peaks. Seven halls: Brannoch's Forge, the Runehouse, the Court of Anvils, the Delvers' Hall, the Last Lantern, the Wardens' Post, and a house for sale (500G).
+- **Twenty named people**, each with state-aware dialogue; shops and services: Emberforge, tempering, repair/reforge, enchanting, gem shops, tavern rest, faction goods.
+- **Factions** (Anvil Court, Delvers' Guild, Ember Wardens): reputation 0-100 with four tiers; helping one house costs a little with its rival. Standing shows on the Feats tab.
+- **Gems and sockets**: seven gems (ruby, sapphire, emerald, topaz, onyx, amber, bloodstone), sockets on weapons/armour/shields/bows, set or removed at Tamsin's.
+- **Emberforged gear** (blade, axe, spear, mail, bulwark) forged from Ash Iron and Emberheart Ore after the core is delivered; the axe needs Delvers trust, the spear Wardens trust, the mail and bulwark Anvil trust.
+- **The Deep Mines**: three generated floors of ore vaults, rune-plate puzzles, gem chests, ending in **Kragnar the Hollowed** (two-phase guardian with rockfall spikes and summoned golems; drops his core).
+- Quests: The Silent Mines, A Core for the Anvil, The Ashen Road.
+- Points of interest in non-Reach regions now have region-prefixed ids (`ashen_camp0`) so bounties never collide.
+- Try it now: open the game with `?scene=game&map=emberhold&spawn=gate` (the story connects the road in Phase 11).
+- Tests: `stage43_emberhold`.

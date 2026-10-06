@@ -101,3 +101,17 @@ export class EmberDragon extends PatternBoss {
     }));
   }
 }
+
+// The Deep Mines: Kragnar the Hollowed, the Delvers' buried king, bound to the lode.
+export class Kragnar extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'kragnar', TUNE.kragnar, { scale: 2.6, flag: 'kragnarDead', heart: null, toast: 'KRAGNAR THE HOLLOWED FALLS', summon: ['golem', 'imp', 'golem'], col: 12, tier: 2 });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 46) o.push('slam', 'slam', 'sweep', 'tail');
+    else o.push('leap', 'volley', 'charge', 'spikes');
+    if (this.bphase >= 2) { o.push('nova', 'spikes', 'spikes', 'leap'); }
+    return o;
+  }
+}
