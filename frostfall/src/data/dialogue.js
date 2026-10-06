@@ -1,6 +1,7 @@
 // NPC scripts: async functions. `say` shows typewriter text, `choose` returns the picked index.
 import { S } from '../systems/state.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
+import { heartsHeld } from './hearts.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { ITEMS } from './items.js';
