@@ -284,3 +284,12 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Fixed**: roads could run into the stone front of a dungeon or tower and seal it (and silently delete its contents). Roads to dungeons and towers now arrive from the side and below the entrance.
 - **Map screen**: terrain is baked into one texture and cropped to the view, so the big map costs the same to draw as a small one; a new OVERVIEW zoom shows the whole Reach on one screen (Q cycles zoom).
 - Tests: `stage44_bigworld` (12 seeds: size, counts, reachability of every place and dungeon door, generation time, hamlet shops, all barrows, map bake and frame cost).
+
+## Round 19 - Chapter 3: The Ember Crown (Phase 11)
+- **Chapter Two now ends on a card**: breaking the Winter (thaw / warden / crown) no longer rolls the credits. It closes Chapter 2, opens the **Peak Road** (a new gate in the north-east of the Reach), unlocks the Ashen Peaks and starts the quest *The Ember Crown*. The full ending needs Chapter 3.
+- **The story**: the chains that held the Winter were forged from the First Fire, buried under Emberhold. Loosening the Winter woke it. Sigrid sends you north; Matriarch Ysolde reacts to your Winter choice and names three **seals**, one from each house: *The Silent Mines* (Delvers), *A Core for the Anvil* (Anvil Court), *The Ashen Road* (Wardens). Goran, Thessaly and Brannoch reveal the truth as you progress.
+- **The Forge of the First Fire**: a sealed dungeon on the Ashen Peaks (opens once all three seals are won): fight rooms, a rune-plate puzzle, then the **Ashen Sovereign**, a three-phase fire boss (the Crowned, the Cinder Storm, the Pyre).
+- **Your friends help**: the house you stand best with (45+) joins the fight. Anvil Court: +15% damage dealt. Delvers' Guild: the Sovereign hits 25% softer. Ember Wardens: +25 stamina at every phase change.
+- **Three final endings** (Quench the Flame / Wear the Ember Crown / Bind it to the Anvil, which needs a house you trust), each varying with your earlier Winter choice and the strongest house: 36 distinct endings. New items: **The Ember Crown** (charm), **Sovereign's Heart**. Five new trophies.
+- Ending screens now page through long text. The quest journal tracks every stage; map markers follow it.
+- Tests: `stage45_chapter3`.

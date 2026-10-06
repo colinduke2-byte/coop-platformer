@@ -8,6 +8,7 @@ import { T } from '../config.js';
 import { ITEMS } from '../data/items.js';
 import { S } from '../systems/state.js';
 import { saveGame } from '../systems/save.js';
+import { finalChoice } from '../data/chapter3.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
@@ -135,6 +136,8 @@ export const eventMethods = {
       this.snow?.destroy(); this.snow = null;
     } else this.endOverlay = this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, 0.34).setOrigin(0).setScrollFactor(0).setDepth(99700);
   },
+  // The Ashen Sovereign has fallen: the last choice.
+  startFinale3() { finalChoice(); },
   // Campfires you have found can be travelled to from the map.
   discoverFires() {
     S.flags.fires = S.flags.fires || {};

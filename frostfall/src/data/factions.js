@@ -25,3 +25,9 @@ export function addRep(id, n, quiet = false) {
     if (repTier(id) !== before) bus.emit('toast', `${FACTIONS[id].short}: ${repTier(id)}`, 15);
   }
 }
+// The house that will stand with you in the final fight: the highest standing of 45+ (ties go to the Court, then the Guild).
+export function bestHelp() {
+  let best = null;
+  for (const f of ['anvil', 'delvers', 'wardens']) if (rep(f) >= 45 && (!best || rep(f) > rep(best))) best = f;
+  return best;
+}

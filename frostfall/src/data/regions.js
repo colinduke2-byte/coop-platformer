@@ -12,7 +12,7 @@ export const regionUnlocked = (id) => !!REGIONS[id] && !REGIONS[id].locked();
 export const unlockedRegions = () => REGION_ORDER.filter(regionUnlocked);
 // Which region a map belongs to (the village and the Reach's dungeons count as the Reach).
 export function regionOfMap(mapId) {
-  if (mapId === 'emberhold' || mapId === 'ashen' || mapId.startsWith('mines') || ['forgehall', 'runehouse', 'courthall', 'guildhall', 'lantern', 'wardpost', 'emberhouse'].includes(mapId)) return 'ashen';
+  if (mapId === 'emberhold' || mapId === 'ashen' || mapId.startsWith('mines') || ['forge', 'forgehall', 'runehouse', 'courthall', 'guildhall', 'lantern', 'wardpost', 'emberhouse'].includes(mapId)) return 'ashen';
   for (const id of REGION_ORDER) if (REGIONS[id].map === mapId) return id;
   return 'reach';
 }

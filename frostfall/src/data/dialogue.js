@@ -32,6 +32,14 @@ export async function intro() {
 async function heartsTalk() {
   const q = S.quests.hearts;
   if (S.quests.king.status !== 'done') return false;
+  if (S.flags.chapter3) {
+    if (S.flags.finalChoice) { await say(SIGRID, 'The smoke has cleared from the Peaks. Whatever you decided up there, the sky is quiet. That is a gift I did not expect to live to see.'); return true; }
+    if (!S.flags.arrivedEmberhold) {
+      await say(SIGRID, 'Smoke on the Peaks, Dreamer. The Winter loosed its hold, and something older than the Winter has woken to fill the silence.');
+      await say(SIGRID, 'The Peak Road runs from the north-east of the Reach up to Emberhold, the forge-city of the Anvil Court. It has been drifted shut for a thousand years. It is open now. Go, and ask them what the chains were made of.');
+    } else await say(SIGRID, 'Emberhold is not Hollowfrost. Its people measure trust in what you will hold for them. Win their seals, and mind the fire.');
+    return true;
+  }
   if (q.status === 'inactive') {
     await say(SIGRID, 'Dreamer. Sit. What I have to tell you is older than the village.');
     await say(SIGRID, 'The Frostheart was never alone. The Hollow Kings bound the Long Winter, a thing older than snow, with five Hearts, and set a guardian to keep each one.');

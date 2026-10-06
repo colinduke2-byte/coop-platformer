@@ -23,6 +23,7 @@ export function newState() {
       silence: { status: 'inactive' },
       anvilcore: { status: 'inactive' },
       roadwatch: { status: 'inactive' },
+      crown: { status: 'inactive' },
     },
     flags: {},
     fog: {},

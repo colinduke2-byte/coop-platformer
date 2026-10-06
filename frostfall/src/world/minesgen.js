@@ -8,21 +8,22 @@ export const MINE_FLOORS = 3;
 const MOBS = [['imp', 'golem', 'bandit', 'archer'], ['golem', 'necro', 'wight', 'imp', 'warden'], ['golem', 'knight', 'imp', 'conjurer']];
 const TITLES = ['The Deep Mines: First Delve', 'The Deep Mines: The Lanterns Gone Dark', 'The Deep Mines: Kragnar\'s Lode'];
 
-export function buildMines(seed, floor) {
+export function buildMines(seed, floor, o = {}) {
   const R = rng(seed * 53 + floor * 1237 + 11);
-  const W = 46, H = 22 + 12 * 3 + 8, tier = 1 + floor;
+  const W = 46, H = 22 + 12 * 3 + 8, tier = o.tier ?? 1 + floor;
   const g = new Grid(W, H, TILE.CWALL);
-  const mobs = MOBS[floor], pick = (a) => a[Math.floor(R() * a.length)];
+  const mobs = o.mobs || MOBS[floor], pick = (a) => a[Math.floor(R() * a.length)];
   const rooms = [], ents = [], add = (e) => ents.push(e);
-  const n = floor === 2 ? 4 : 5;
+  const finalBoss = o.boss === undefined ? (floor === 2 ? 'kragnar' : null) : o.boss;
+  const n = o.rooms ?? (finalBoss ? 4 : 5);
   let y = H - 2, prevX = 23;
   for (let i = 0; i < n; i++) {
     const last = i === n - 1;
-    const rw = last && floor === 2 ? 26 : 10 + Math.floor(R() * 12), rh = last && floor === 2 ? 12 : 7 + Math.floor(R() * 3);
+    const rw = last && finalBoss ? 26 : 10 + Math.floor(R() * 12), rh = last && finalBoss ? 12 : 7 + Math.floor(R() * 3);
     const rx = Math.max(2, Math.min(W - rw - 2, Math.floor(prevX - rw / 2 + (R() - 0.5) * 10)));
     const ry = y - rh;
     g.rect(rx, ry, rw, rh, TILE.CFLOOR);
-    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : last ? (floor === 2 ? 'boss' : 'stairs') : ['fight', 'fight', 'trap', 'treasure'][Math.floor(R() * 4)] };
+    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : last ? (finalBoss ? 'boss' : 'stairs') : (o.kinds && o.kinds[i - 1]) || ['fight', 'fight', 'trap', 'treasure'][Math.floor(R() * 4)] };
     if (rooms.length) {
       const p = rooms[rooms.length - 1];
       const cx = Math.max(rx + 1, Math.min(rx + rw - 2, p.cx));
@@ -39,7 +40,7 @@ export function buildMines(seed, floor) {
   const e0 = rooms[0];
   // up: the previous floor (floor I leads back to Emberhold)
   add({ t: 'spawn', name: 'entry', x: e0.cx, y: e0.y + e0.h - 2 });
-  add({ t: 'exit', x: e0.cx, y: e0.y + e0.h - 1, w: 2, h: 1, to: floor === 0 ? 'emberhold' : 'mines' + (floor - 1), spawn: floor === 0 ? 'mines' : 'down', fx: 'door' });
+  add({ t: 'exit', x: e0.cx, y: e0.y + e0.h - 1, w: 2, h: 1, to: o.exitTo ?? (floor === 0 ? 'emberhold' : 'mines' + (floor - 1)), spawn: o.exitSpawn ?? (floor === 0 ? 'mines' : 'down'), fx: 'door' });
   g.set(e0.cx, e0.y + e0.h - 1, TILE.STAIRS); g.set(e0.cx + 1, e0.y + e0.h - 1, TILE.STAIRS);
   add({ t: 'fire', x: e0.x + 1, y: e0.y + 1, rest: true, id: 'mines' + floor }); g.set(e0.x + 1, e0.y + 1, TILE.BRAZIER);
   add({ t: 'glow', x: e0.x + 1, y: e0.y + 1, r: 40, col: 12 });
@@ -49,7 +50,7 @@ export function buildMines(seed, floor) {
     if (R() < 0.7) add({ t: 'glow', x: r.cx, y: r.cy, r: 36, col: R() < 0.6 ? 12 : 15 });
     const ore = () => add({ t: 'node', x: r.x + 1 + Math.floor(R() * (r.w - 2)), y: r.y + 1 + Math.floor(R() * (r.h - 2)), ore: R() < 0.25 ? 'ember_ore' : 'ash_iron' });
     if (r.kind === 'fight') {
-      const count = 3 + Math.floor(R() * 3) + floor;
+      const count = 3 + Math.floor(R() * 3) + Math.min(floor, 3);
       for (let k = 0; k < count; k++) foe(pick(mobs), r.x + 2 + Math.floor(R() * (r.w - 4)), r.y + 2 + Math.floor(R() * (r.h - 4)), { camp: `mine${floor}r${i}` });
       ore(); ore();
       for (let k = 0; k < 3; k++) { const px = r.x + 1 + Math.floor(R() * (r.w - 2)), py = r.y + r.h - 2; if (g.t[py][px] === TILE.CFLOOR || g.t[py][px] === TILE.CFLOOR2) add({ t: 'pot', x: px, y: py, skin: 'barrel' }); }
@@ -79,13 +80,23 @@ export function buildMines(seed, floor) {
       g.rect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, TILE.CFLOOR2);
       for (const dx of [3, r.w - 4]) for (const dy of [3, r.h - 4]) g.set(r.x + dx, r.y + dy, TILE.PILLAR);
       add({ t: 'bossgate', x: r.cx - 1, y: r.y + r.h - 1, w: 2 });
-      add({ t: 'boss', kind: 'kragnar', x: r.cx, y: r.y + 4 });
+      add({ t: 'boss', kind: finalBoss, x: r.cx, y: r.y + 4 });
       add({ t: 'glow', x: r.cx, y: r.y + 4, r: 60, col: 12 });
-      add({ t: 'sign', x: r.cx - 3, y: r.y + r.h - 3, text: ["KRAGNAR'S LODE.", 'THE DELVERS BURIED THEIR KING HERE. SOMETHING STILL DIGS.'] });
-      add({ t: 'chest', id: 'mn_boss', x: r.cx, y: r.y + 1, loot: [{ gen: 3, rarity: 2 }, { item: 'kragnar_core' }, { item: 'gem_ruby' }, { gold: 200 }] });
+      add({ t: 'sign', x: r.cx - 3, y: r.y + r.h - 3, text: o.bossSign || ["KRAGNAR'S LODE.", 'THE DELVERS BURIED THEIR KING HERE. SOMETHING STILL DIGS.'] });
+      add({ t: 'chest', id: (o.id || 'mn') + '_boss', x: r.cx, y: r.y + 1, loot: o.bossLoot || [{ gen: 3, rarity: 2 }, { item: 'kragnar_core' }, { item: 'gem_ruby' }, { gold: 200 }] });
     }
   });
-  add({ t: 'sign', x: e0.cx - 3, y: e0.y + e0.h - 3, text: [TITLES[floor].toUpperCase(), floor === 0 ? 'THE LANTERNS ALONG THE ROAD WENT OUT ONE BY ONE.' : 'GO CAREFULLY. THE LODE REMEMBERS.'] });
+  add({ t: 'sign', x: e0.cx - 3, y: e0.y + e0.h - 3, text: [(o.title || TITLES[floor]).toUpperCase(), o.signLine || (floor === 0 ? 'THE LANTERNS ALONG THE ROAD WENT OUT ONE BY ONE.' : 'GO CAREFULLY. THE LODE REMEMBERS.')] });
   const bossRoom = rooms.find((r) => r.kind === 'boss') || null;
-  return { grid: g.t, w: W, h: H, entities: ents, title: TITLES[floor], bossRoom };
+  return { grid: g.t, w: W, h: H, entities: ents, title: o.title || TITLES[floor], bossRoom };
+}
+
+// The Forge of the First Fire (Chapter 3): one long delve ending in the Ashen Sovereign's hall.
+export function buildForge(seed) {
+  return buildMines(seed, 7, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'sovereign', id: 'fg', mobs: ['imp', 'golem', 'knight', 'conjurer', 'wisp', 'necro'], exitTo: 'ashen', exitSpawn: 'forge',
+    title: 'The Forge of the First Fire', signLine: 'THE AIR SHIMMERS. THE ANVILS RING, AND NOTHING STRIKES THEM.',
+    bossSign: ['THE SOVEREIGN\'S HALL.', 'THE FIRST FIRE WEARS A CROWN OF CINDERS. IT HAS WAITED A THOUSAND YEARS TO BE ASKED A QUESTION.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sovereign_heart' }, { item: 'gem_ruby' }, { item: 'gem_bloodstone' }, { gold: 400 }],
+  });
 }

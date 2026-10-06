@@ -91,6 +91,8 @@ export const ITEMS = {
   ash_iron: { name: 'Ash Iron', type: 'misc', icon: ['ingot', 3], value: 30, desc: 'Dark iron smelted from the Deep Mines. Emberforged gear starts here.' },
   ember_ore: { name: 'Emberheart Ore', type: 'misc', icon: ['ore', 12], value: 80, desc: 'Ore that still holds a little of the first fire. Warm to the touch.' },
   kragnar_core: { name: "Kragnar's Core", type: 'misc', icon: ['ore', 13], value: 200, desc: 'The heart of the miner-king, still glowing. Master smiths pay dearly for it.' },
+  sovereign_heart: { name: "Sovereign's Heart", type: 'misc', icon: ['ore', 12], value: 400, desc: 'A coal that does not cool. The First Fire gave it up when its crown broke.' },
+  ember_crown: { name: 'The Ember Crown', type: 'charm', icon: ['charm', 12], maxHp: 40, maxMp: 40, maxSp: 30, crit: 0.08, lifesteal: 0.03, value: 900, desc: 'The First Fire, worn. +40 health and mana, +30 stamina, +8% crit, heals a little with every blow.' },
   gem_ruby: { name: 'Ruby', type: 'gem', icon: ['gem', 11], gem: { dmg: 3 }, value: 120, desc: 'Socket it: +3 weapon damage.' },
   gem_sapphire: { name: 'Sapphire', type: 'gem', icon: ['gem', 15], gem: { maxMp: 20 }, value: 100, desc: 'Socket it: +20 mana.' },
   gem_emerald: { name: 'Emerald', type: 'gem', icon: ['gem', 8], gem: { maxHp: 15 }, value: 100, desc: 'Socket it: +15 health.' },

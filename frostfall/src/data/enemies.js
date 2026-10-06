@@ -19,6 +19,12 @@ export const ENEMIES = {
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
     body: [8, 7, 4, 9], loot: { gold: [150, 210], drops: [['hp_potion_g', 1], ['iron_ingot', 1], ['iron_ingot', 1]] },
   },
+  sovereign: {
+    name: 'The Ashen Sovereign', title: 'THE ASHEN SOVEREIGN, CROWN OF THE FIRST FIRE', tex: 'spr_sovereign', bark: 'undead', weak: { frost: 1.6, shock: 1.0, fire: 0.2 },
+    hp: 980, speed: 38, chase: 46, dmg: 28, detect: 9999,
+    kind: 'boss', range: 42, windup: 0.7, atkDur: 0.2, recover: 0.65, cooldown: 0.8, kbResist: 0.97,
+    body: [8, 7, 4, 9], loot: { gold: [320, 420], drops: [['sovereign_heart', 1], ['hp_potion_g', 2], ['ember_ore', 2]] },
+  },
   kragnar: {
     name: 'Kragnar', title: 'KRAGNAR THE HOLLOWED, KING UNDER THE LODE', tex: 'spr_kragnar', bark: 'undead', weak: { frost: 1.4, shock: 1.1, fire: 0.5 },
     hp: 560, speed: 34, chase: 42, dmg: 24, detect: 9999,

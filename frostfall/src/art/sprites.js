@@ -155,6 +155,7 @@ export const STYLES = {
   varro: { skin: 10, hair: 1, body: 11, trim: 0, legs: 2, boots: 0, chest: 10, beard: 1, cape: 11 },
   ketil: { skin: 10, hair: 11, body: 8, trim: 13, legs: 3, boots: 9, chest: 8, hood: 8 },
   brisa: { skin: 10, hair: 5, body: 14, trim: 13, legs: 3, boots: 9, chest: 13, hood: 14 },
+  sovereign: { skin: 12, hair: 13, body: 11, trim: 13, legs: 11, boots: 0, glow: 13, helm: 12, horns: 13, crown: 13, cape: 12, chest: 13, beard: 12 },
   kragnar: { skin: 4, hair: 3, helm: 3, body: 9, trim: 12, legs: 2, boots: 0, glow: 12, chest: 10, beard: 3, horns: 3, crown: 12 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };

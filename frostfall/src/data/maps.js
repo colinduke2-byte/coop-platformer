@@ -5,7 +5,7 @@ import { hash } from '../util.js';
 import { S } from '../systems/state.js';
 import { buildReach, buildRegion, REGION_DEFS } from '../world/worldgen.js';
 import { buildBarrow } from '../world/barrowgen.js';
-import { buildMines, MINE_FLOORS } from '../world/minesgen.js';
+import { buildMines, buildForge, MINE_FLOORS } from '../world/minesgen.js';
 import { buildEmberhold, buildEmberInterior, EMBER_INTERIORS } from './emberhold_map.js';
 
 function house(g, x, y, w, rows, doorX, winXs) {
@@ -433,7 +433,7 @@ for (let i = 0; i < 8; i++) {
 }
 
 // Emberhold, the forge-city (reached from the Ashen Peaks), and its halls.
-MAPS.emberhold = { name: 'Emberhold', snow: false, outdoors: true, ambience: 'wind', build: buildEmberhold, music: 'village', dim: 0.12 };
+MAPS.emberhold = { name: 'Emberhold', snow: false, outdoors: true, ambience: 'wind', build: buildEmberhold, music: 'village', dim: 0.12, flag: 'arrivedEmberhold' };
 for (const [id, name] of Object.entries(EMBER_INTERIORS)) MAPS[id] = { name, snow: false, build: () => buildEmberInterior(id), music: 'village', dim: 0.12, interior: true };
 
 // The Deep Mines under Emberhold: three generated floors, cached per run seed.
@@ -449,6 +449,18 @@ for (let f = 0; f < MINE_FLOORS; f++) {
     ...(f === 2 ? { bossTrigger: (pc, T) => { const r = getMines(2).bossRoom; return !!r && pc.y < (r.y + r.h - 1.6) * T && pc.y > r.y * T && pc.x > r.x * T && pc.x < (r.x + r.w) * T; } } : {}),
   };
 }
+
+// The Forge of the First Fire (Chapter 3 dungeon), cached per run seed.
+let forgeCache = null;
+export function getForge() {
+  const seed = S.seed ?? 1337;
+  if (!forgeCache || forgeCache.seed !== seed) forgeCache = { seed, built: buildForge(seed) };
+  return forgeCache.built;
+}
+MAPS.forge = {
+  name: 'The Forge of the First Fire', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, build: () => getForge(), flag: 'forgeEntered',
+  bossTrigger: (pc, T) => { const r = getForge().bossRoom; return !!r && pc.y < (r.y + r.h - 1.6) * T && pc.y > r.y * T && pc.x > r.x * T && pc.x < (r.x + r.w) * T; },
+};
 
 function buildCrypt() {
   const g = new Grid(32, 54, TILE.CWALL);

@@ -66,6 +66,7 @@ import { submitScore } from '../systems/daily.js';
 import { finishQuest } from '../systems/quests.js';
 import '../data/emberhold.js';
 import '../data/hamlets.js';
+import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -204,7 +205,7 @@ export default class GameScene extends Phaser.Scene {
     this.on('charlevel', () => tip('perks'));
     this.on('item:added', (id) => { if (id === 'lockpick') tip('lock'); if (S.quests.wolves.status === 'active') tip('quest'); });
     this.on('ending', (kind) => { this.pendingEnding = kind; });
-    this.events.on('ending-done', () => { this.applyEnding(); });
+    this.events.on('ending-done', () => { this.applyEnding(); if (S.flags.finale && !S.flags.chapter3) startChapter3(); });
     this.applyEnding();
     if (this.opts.intro) this.startIntro();
     this.on('levelup', (skill, lv) => {
@@ -651,8 +652,8 @@ export default class GameScene extends Phaser.Scene {
       const c = this.player.body.center;
       for (const ex of this.exits) {
         if (!ex.rect.contains(c.x, c.y)) continue;
-        if (ex.needs === 'hearts4' && heartsHeld() < 4) {
-          if (this.t - (this.lastGate || -9) > 3) { bus.emit('toast', `THE DOOR IS SEALED. HEARTS ${heartsHeld()}/4`, 11); sfx.play('nostamina'); this.lastGate = this.t; }
+        if (ex.needs && GATES[ex.needs] && !GATES[ex.needs].ok()) {
+          if (this.t - (this.lastGate || -9) > 3) { bus.emit('toast', GATES[ex.needs].msg(), 11); sfx.play('nostamina'); this.lastGate = this.t; }
           this.player.body.setVelocity(0, 40); this.player.y += 2;
           break;
         }

@@ -95,13 +95,13 @@ export function buildRegion(def, region, seed) {
       taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` }); made++;
     }
   };
-  const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
+  const mustHave = (kind, r, tier, biome = null, near = null) => { place(kind, 1, r, near, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
   def.plan(place, mustHave);
 
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const remaining = [...pois].sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
-  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower']);   // a stone front sits north of the door: roads end below it
+  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge']);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
     const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
     let best = nodes[0], bd = 1e9;
@@ -186,12 +186,14 @@ export function buildRegion(def, region, seed) {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
-    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city'].includes(p.kind)) {
+    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city', 'peakroad', 'forge'].includes(p.kind)) {
       const D = {
         fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
         temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
         rootvault: { to: 'rootvault', col: 8, stone: TILE.ROCK, text: ['THE ROOTVAULT.', 'THE TREES HERE LEAN TOWARD THE DOOR, AND AWAY FROM YOU.'] },
         nest: { to: 'nest', col: 12, stone: TILE.ROCK, text: ['THE EMBER NEST.', 'THE SNOW HAS MELTED FOR A HUNDRED PACES. THE AIR SHIMMERS.'] },
+        peakroad: { to: 'ashen', col: 12, stone: TILE.STONE, text: ['THE PEAK ROAD.', 'THE PASS IS DRIFTED SHUT. SOMETHING HOT SLEEPS BEYOND IT.'] },
+        forge: { to: 'forge', col: 12, stone: TILE.ROCK, text: ['THE FORGE OF THE FIRST FIRE.', 'THREE SEALS, ONE FROM EACH HOUSE OF EMBERHOLD. THEN THE DOOR WILL OPEN.'] },
         city: { to: 'emberhold', col: 12, stone: TILE.STONE, text: ['EMBERHOLD, THE FORGE-CITY.', 'THE GREAT GATE STANDS OPEN. SMOKE CLIMBS FROM A THOUSAND CHIMNEYS.'] },
         throne: { to: 'throne', col: 15, stone: TILE.STONE, text: ['THE WINTER THRONE.', 'THE LAST DOOR IN THE REACH. FOUR HEARTS MUST BE YOURS TO OPEN IT.'] },
       }[p.kind];
@@ -199,8 +201,8 @@ export function buildRegion(def, region, seed) {
       g.rect(p.x - 5, p.y - 4, 11, 3, D.stone);
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
-      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: p.kind === 'throne' ? 'hearts4' : null });
-      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : p.kind === 'nest' ? 'nest' : p.kind === 'city' ? 'emberhold' : 'throne', x: p.x, y: p.y });
+      add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: { throne: 'hearts4', peakroad: 'chapter3', forge: 'forgeOpen' }[p.kind] || null });
+      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : p.kind === 'nest' ? 'nest' : p.kind === 'city' ? 'emberhold' : p.kind === 'peakroad' ? 'peakroad' : p.kind === 'forge' ? 'forge' : 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });
@@ -336,6 +338,7 @@ export const REACH = {
   taken: [{ x: 28, y: 16, r: 34 }],                          // the old forest region
   plan(place, mustHave) {
     mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);
+    mustHave('peakroad', 10, 2, null, { x: 290, y: 45, r: 55 });     // the road to the Ashen Peaks (opens in Chapter 3)
     place('champion', 9, 8);                 // placed early: later it finds no room on a map crowded with dungeons
     place('ruin', 9, 10);
     place('beardn', 5, 9, null, 1);          // a mother bear and her cubs
@@ -428,6 +431,7 @@ export const ASHEN = {
   taken: [{ x: ASH_START.x, y: ASH_START.y, r: 14 }],
   plan(place, mustHave) {
     mustHave('city', 12, 1);
+    mustHave('forge', 12, 3);
     place('champion', 3, 8); place('ruin', 3, 10); place('camp', 5, 11); place('den', 3, 9);
     place('tower', 3, 7); place('spring', 2, 6); place('rest', 7, 4);
     place('rest', 1, 4, { x: ASH_START.x + 22, y: ASH_START.y, r: 14 });
@@ -436,7 +440,7 @@ export const ASHEN = {
     g.rect(START.x - 3, START.y - 5, 8, 11, TILE.CFLOOR2);
     for (let y = START.y - 5; y <= START.y + 5; y++) for (let x = START.x - 3; x <= START.x + 4; x++) g.res[y][x] = true;
     add({ t: 'spawn', name: 'entry', x: START.x + 2, y: START.y });
-    add({ t: 'exit', x: 3, y: START.y - 3, w: 1, h: 7, to: 'forest', spawn: 'west', fx: 'door' });
+    add({ t: 'exit', x: 3, y: START.y - 3, w: 1, h: 7, to: 'forest', spawn: 'peakroad', fx: 'door' });
     add({ t: 'fire', x: START.x + 4, y: START.y + 2, rest: true, id: 'ashenfire' }); add({ t: 'glow', x: START.x + 4, y: START.y + 2, r: 52, col: 12 });
     add({ t: 'sign', x: START.x + 1, y: START.y - 3, text: ['THE ASHEN PEAKS.', 'THE ROAD WEST RETURNS TO THE HOLLOW REACH.'] });
     for (let i = 0, n = 0; i < 400 && n < 40; i++) {

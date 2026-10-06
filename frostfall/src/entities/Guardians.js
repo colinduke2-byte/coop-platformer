@@ -3,6 +3,8 @@ import { TUNE } from '../data/tuning.js';
 import { sfx } from '../audio/sfx.js';
 import Pickup from './Pickup.js';
 import { bus } from '../systems/bus.js';
+import { S } from '../systems/state.js';
+import { bestHelp, FACTIONS } from '../data/factions.js';
 
 // Ironwatch Keep: Hrolf Ironmarch, first Warden, still marching.
 export class Warlord extends PatternBoss {
@@ -114,4 +116,37 @@ export class Kragnar extends PatternBoss {
     if (this.bphase >= 2) { o.push('nova', 'spikes', 'spikes', 'leap'); }
     return o;
   }
+}
+
+// The Forge of the First Fire: the Ashen Sovereign. Three phases (the Crowned, the Cinder Storm, the Pyre). The house you
+// stand best with helps: the Court sharpens your blows, the Guild lights the hall, the Wardens hold the door.
+const scaleDmg = (t, f) => Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v && typeof v === 'object' && 'dmg' in v ? { ...v, dmg: Math.round(v.dmg * f) } : v]));
+export class AshenSovereign extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'sovereign', TUNE.sovereign, {
+      scale: 2.8, flag: 'sovereignDead', heart: null, toast: 'THE ASHEN SOVEREIGN FALLS', summon: ['golem', 'imp', 'conjurer', 'knight'], col: 12, tier: 3,
+      phaseAt: [0.66, 0.33], phaseText: { 2: 'THE CINDER STORM', 3: 'THE PYRE' },
+      onVictory: (sc) => sc.startFinale3(),
+    });
+    this.help = bestHelp();
+    if (this.help === 'delvers') this.B = scaleDmg(TUNE.sovereign, 0.75);
+  }
+  engage() {
+    super.engage();
+    if (this.help) bus.emit('toast', `${FACTIONS[this.help].name.toUpperCase()} STAND WITH YOU`, FACTIONS[this.help].col);
+  }
+  takeHit(info) { return super.takeHit(this.help === 'anvil' && info && info.dmg ? { ...info, dmg: info.dmg * 1.15 } : info); }
+  enterPhase() {
+    super.enterPhase();
+    if (this.help === 'wardens') { S.sp = Math.min(S.maxSp, S.sp + 25); bus.emit('toast', 'THE WARDENS RALLY: +STAMINA', 15); }
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 50) o.push('sweep', 'slam', 'tail', 'sweep');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'breath');
+    if (this.bphase >= 3) o.push('spikes', 'leap', 'nova', 'charge', 'nova');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
 }
