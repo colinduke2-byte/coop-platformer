@@ -12,7 +12,7 @@ export async function launch(opts = {}) {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] }).catch(async () => chromium.launch({ args: ['--no-sandbox'] }));
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
   const errors = [];
-  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message + (process.env.STACK ? '\n' + e.stack : '')));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   fs.mkdirSync(new URL('./out/', import.meta.url).pathname, { recursive: true });
   const open = async (query = '') => {
