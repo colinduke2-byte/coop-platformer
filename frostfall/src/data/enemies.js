@@ -231,6 +231,75 @@ export const ENEMIES = {
   },
 };
 
+// ---- Phase 14: twelve new creatures, three or four for each region beyond the Reach
+Object.assign(ENEMIES, {
+  ashhound: {
+    name: 'Ash Hound', tex: 'spr_ashhound', sideOnly: true, bark: 'wolf', weak: { frost: 1.4 }, hp: 34, speed: 50, chase: 98, dmg: 11, detect: 100,
+    kind: 'lunge', range: 72, windup: 0.32, atkDur: 0.3, recover: 0.55, cooldown: 0.6, kbResist: 0.15, lunge: 220,
+    body: [10, 6, 2, 8], loot: { gold: [4, 12], drops: [['bone_dust', 0.5], ['hide', 0.4]] },
+  },
+  cindersmith: {
+    name: 'Cinder Smith', tex: 'spr_cindersmith', blade: 12, bark: 'human', armored: true, weak: { frost: 1.3, shock: 1.2 }, hp: 96, speed: 22, chase: 34, dmg: 24, detect: 70,
+    kind: 'melee', range: 24, windup: 0.9, atkDur: 0.18, recover: 1.0, cooldown: 1.0, kbResist: 0.7,
+    body: [8, 7, 4, 9], loot: { gold: [18, 34], drops: [['warhammer', 0.04], ['rune_ignite', 0.05], ['iron_ingot', 0.7], ['ash_iron', 0.5], ['hp_potion', 0.2]] },
+  },
+  magmaslime: {
+    name: 'Magma Slime', tex: 'spr_slime', sideOnly: true, splits: { kind: 'slimeling', n: 2 }, weak: { frost: 1.5, fire: 0.2 }, hp: 42, speed: 24, chase: 50, dmg: 10, detect: 80,
+    kind: 'melee', range: 20, windup: 0.5, atkDur: 0.16, recover: 0.6, cooldown: 0.6, kbResist: 0.3,
+    body: [10, 7, 3, 8], loot: { gold: [3, 9], drops: [['ember_ore', 0.08], ['bone_dust', 0.3]] },
+  },
+  slimeling: {
+    name: 'Slimeling', tex: 'spr_slime', sideOnly: true, scale: 0.7, weak: { frost: 1.5, fire: 0.2 }, hp: 14, speed: 34, chase: 66, dmg: 5, detect: 90,
+    kind: 'melee', range: 16, windup: 0.4, atkDur: 0.14, recover: 0.5, cooldown: 0.5, kbResist: 0.1,
+    body: [10, 7, 3, 8], loot: { gold: [1, 4], drops: [] },
+  },
+  lavawraith: {
+    name: 'Lava Wraith', tex: 'spr_lavawraith', fly: true, bark: 'undead', weak: { frost: 1.6, shock: 1.2, fire: 0.1 }, hp: 36, speed: 28, chase: 42, dmg: 13, detect: 120,
+    kind: 'shoot', proj: 'eshot', projSpeed: 108, range: 118, keep: 62, windup: 0.6, atkDur: 0.1, recover: 0.5, cooldown: 1.5, kbResist: 0.2,
+    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['tome_embernova', 0.04], ['rune_drain', 0.04], ['mp_potion', 0.3], ['ember_ore', 0.1]] },
+  },
+  harpooner: {
+    name: 'Ice Harpooner', tex: 'spr_harpooner', bark: 'human', pull: true, weak: { fire: 1.2, shock: 1.2 }, hp: 34, speed: 30, chase: 40, dmg: 9, detect: 108,
+    kind: 'shoot', proj: 'arrow', projSpeed: 140, range: 124, keep: 70, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.4, kbResist: 0.1,
+    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['crossbow', 0.05], ['arrows', 0.6, [3, 8]], ['hunting_knife', 0.05]] },
+  },
+  wreckcrab: {
+    name: 'Wreck Crab', tex: 'spr_crab', sideOnly: true, shield: true, bark: 'wolf', weak: { shock: 1.4, fire: 0.9 }, hp: 70, speed: 22, chase: 44, dmg: 15, detect: 76,
+    kind: 'melee', range: 22, windup: 0.55, atkDur: 0.16, recover: 0.7, cooldown: 0.7, kbResist: 0.5,
+    body: [10, 7, 3, 8], loot: { gold: [6, 16], drops: [['hide', 0.3], ['smoked_pike', 0.15], ['iron_ingot', 0.2]] },
+  },
+  tidehag: {
+    name: 'Tide Hag', tex: 'spr_tidehag', raise: 8, raiseKind: 'draugr', bark: 'undead', weak: { fire: 1.3, shock: 1.6, frost: 0.3 }, hp: 48, speed: 24, chase: 32, dmg: 16, detect: 100,
+    kind: 'cast', range: 118, keep: 72, zoneR: 22, zoneDelay: 1.1, windup: 0.85, atkDur: 0.1, recover: 0.7, cooldown: 3.0, kbResist: 0.1,
+    body: [8, 7, 4, 9], loot: { gold: [14, 30], drops: [['tome_glacier', 0.04], ['rune_rime', 0.05], ['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.6], ['gem_sapphire', 0.06]] },
+  },
+  barnacle: {
+    name: 'Frost Barnacle', tex: 'spr_barnacle', sideOnly: true, bark: 'wolf', weak: { fire: 1.4, shock: 0.8 }, hp: 40, speed: 0, chase: 0, dmg: 12, detect: 100,
+    kind: 'shoot', proj: 'eshot', projSpeed: 100, range: 124, keep: 0, windup: 0.9, atkDur: 0.1, recover: 0.5, cooldown: 1.8, kbResist: 1,
+    body: [10, 8, 3, 6], loot: { gold: [4, 10], drops: [['frost_lily', 0.4]] },
+  },
+  phantom: {
+    name: 'Court Phantom', tex: 'spr_phantom', fly: true, blink: 3.4, bark: 'undead', weak: { fire: 1.2, shock: 1.5, frost: 0.4 }, hp: 44, speed: 32, chase: 56, dmg: 17, detect: 110,
+    kind: 'melee', range: 20, windup: 0.4, atkDur: 0.14, recover: 0.6, cooldown: 0.7, kbResist: 0.2,
+    body: [8, 7, 4, 9], loot: { gold: [14, 28], drops: [['rune_storm', 0.05], ['mp_potion', 0.35], ['bone_dust', 0.5]] },
+  },
+  herald: {
+    name: 'Hollow Herald', tex: 'spr_herald', aura: true, bark: 'undead', weak: { fire: 1.2, shock: 1.3, frost: 0.4 }, hp: 60, speed: 24, chase: 34, dmg: 10, detect: 110,
+    kind: 'shoot', proj: 'eshot', projSpeed: 90, range: 116, keep: 74, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.2, kbResist: 0.3,
+    body: [8, 7, 4, 9], loot: { gold: [18, 36], drops: [['rune_ward', 0.05], ['mp_potion', 0.4], ['gem_amber', 0.08], ['hp_potion', 0.3]] },
+  },
+  sentinel: {
+    name: 'Bone Sentinel', tex: 'spr_sentinel', leash: 64, armored: true, bark: 'undead', weak: { fire: 1.3, shock: 1.1, frost: 0.3 }, hp: 120, speed: 22, chase: 40, dmg: 26, detect: 70,
+    kind: 'melee', range: 24, windup: 0.85, atkDur: 0.18, recover: 0.9, cooldown: 0.9, kbResist: 0.8,
+    body: [8, 7, 4, 9], loot: { gold: [20, 40], drops: [['rune_thorns', 0.05], ['iron_ingot', 0.5], ['bone_dust', 0.8], ['gem_onyx', 0.06]] },
+  },
+  stalker: {
+    name: 'Moss Stalker', tex: 'spr_stalker', ambush: true, bark: 'human', weak: { fire: 1.6 }, hp: 52, speed: 34, chase: 80, dmg: 16, detect: 92,
+    kind: 'melee', range: 20, windup: 0.3, atkDur: 0.14, recover: 0.7, cooldown: 0.8, kbResist: 0.2,
+    body: [8, 7, 4, 9], loot: { gold: [10, 24], drops: [['hide', 0.5], ['frost_lily', 0.4], ['lockpick', 0.2]] },
+  },
+});
+
 // What each creature's hits do on top of damage (see systems/status.js): [{ type, chance, t, dps }]
 const INFLICTS = {
   wolf: [{ type: 'bleed', chance: 0.15, t: 4, dps: 2 }], alpha: [{ type: 'bleed', chance: 0.3, t: 5, dps: 3 }],
@@ -241,12 +310,15 @@ const INFLICTS = {
   frostworm: [{ type: 'chill', chance: 0.8, stacks: 1 }], wyrm: [{ type: 'chill', chance: 0.6, stacks: 1 }],
   shroom: [{ type: 'poison', chance: 0.8, t: 8, dps: 2 }], bandit: [{ type: 'bleed', chance: 0.1, t: 4, dps: 2 }],
   winter: [{ type: 'chill', chance: 0.7, stacks: 1 }], tide: [{ type: 'slow', chance: 0.5, t: 3 }],
+  ashhound: [{ type: 'burn', chance: 0.4, t: 3, dps: 3 }], cindersmith: [{ type: 'burn', chance: 0.35, t: 3, dps: 4 }], magmaslime: [{ type: 'burn', chance: 0.3, t: 3, dps: 3 }],
+  lavawraith: [{ type: 'burn', chance: 0.5, t: 3, dps: 4 }], harpooner: [{ type: 'bleed', chance: 0.25, t: 4, dps: 3 }], barnacle: [{ type: 'chill', chance: 0.5, stacks: 1 }],
+  tidehag: [{ type: 'slow', chance: 0.4, t: 3 }], phantom: [{ type: 'fear', chance: 0.25, t: 2.5 }], stalker: [{ type: 'poison', chance: 0.3, t: 6, dps: 2 }],
 };
-const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
+const IMMUNE = { ashhound: ['burn'], cindersmith: ['burn'], magmaslime: ['burn', 'bleed', 'poison'], slimeling: ['burn', 'bleed', 'poison'], lavawraith: ['burn', 'bleed', 'poison'], barnacle: ['chill', 'freeze'], phantom: ['bleed', 'poison', 'fear'], herald: ['fear'], sentinel: ['bleed', 'poison', 'fear'], tidehag: ['chill', 'freeze'], imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
 // creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
-for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll']) if (ENEMIES[k]) ENEMIES[k].crush = true;
+for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll', 'cindersmith', 'sentinel']) if (ENEMIES[k]) ENEMIES[k].crush = true;
 // pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught
-for (const k of ['wolf', 'alpha', 'lynx', 'fencer']) if (ENEMIES[k]) ENEMIES[k].flank = true;
+for (const k of ['wolf', 'alpha', 'lynx', 'fencer', 'ashhound']) if (ENEMIES[k]) ENEMIES[k].flank = true;
 for (const k of ['bandit', 'fencer']) if (ENEMIES[k]) { ENEMIES[k].flee = true; ENEMIES[k].drinks = true; }
 for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
 for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;

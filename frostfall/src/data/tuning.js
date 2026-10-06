@@ -22,7 +22,7 @@ export const TUNE = {
   // how a landed hit feels, per weapon style: hit-stop seconds, shake duration (ms) and strength
   hitFeel: {
     dagger: { stop: 0.025, ms: 50, amt: 0.0025 }, sword: { stop: 0.05, ms: 80, amt: 0.004 },
-    axe: { stop: 0.07, ms: 130, amt: 0.0065 }, spear: { stop: 0.03, ms: 60, amt: 0.003 }, mace: { stop: 0.085, ms: 150, amt: 0.0075 }, great: { stop: 0.09, ms: 170, amt: 0.009 },
+    axe: { stop: 0.07, ms: 130, amt: 0.0065 }, spear: { stop: 0.03, ms: 60, amt: 0.003 }, mace: { stop: 0.085, ms: 150, amt: 0.0075 }, great: { stop: 0.09, ms: 170, amt: 0.009 }, hammer: { stop: 0.1, ms: 190, amt: 0.0105 },
   },
   // weapon styles: each type of weapon has its own combo (sword uses `combo` above)
   styles: {
@@ -41,6 +41,10 @@ export const TUNE = {
       { dmg: 0.85, kb: 60, size: 18, reach: 22, narrow: 0.55, total: 0.3, cost: 0.8, flip: true, scale: 1, stun: 0.15 },
       { dmg: 1.6, kb: 190, size: 26, reach: 28, narrow: 0.5, total: 0.5, cost: 1.3, flip: false, scale: 1.3, stun: 0.4, poise: 1.3 },
     ],
+    hammer: [     // two-handed, ponderous: shatters armour and guards
+      { dmg: 1.5, kb: 180, size: 26, total: 0.62, cost: 1.6, flip: false, scale: 1.7, stun: 0.5, poise: 3, breaker: true, pierce: 0.6 },
+      { dmg: 2.4, kb: 300, size: 32, total: 0.8, cost: 2.2, flip: true, scale: 2.0, stun: 0.9, poise: 4, breaker: true, pierce: 0.7 },
+    ],
     mace: [       // slow, crushing: breaks guards, rattles armour
       { dmg: 1.2, kb: 120, size: 20, total: 0.5, cost: 1.25, flip: false, scale: 1.3, stun: 0.35, poise: 2.2, breaker: true, pierce: 0.45 },
       { dmg: 1.8, kb: 220, size: 24, total: 0.64, cost: 1.6, flip: true, scale: 1.6, stun: 0.6, poise: 3, breaker: true, pierce: 0.55 },
@@ -52,6 +56,7 @@ export const TUNE = {
     ],
   },
   hurt: { invuln: 0.7, stun: 0.2, kb: 130 },
+  xbow: { windup: 0.55, reload: 0.75, dmgMul: 1.6, speed: 330, shotCost: 8, pierce: 2 },
   bow: { maxArrows: 30, minDraw: 0.18, fullDraw: 0.85, startCost: 5, shotCost: 5, chargeCost: 14, speedMin: 150, speedMax: 270, dmgMin: 0.45, dmgMax: 1.7, move: 0.45 },
   shouts: {
     force: { cd: 12, name: 'FORCE', col: 6 },
@@ -59,6 +64,8 @@ export const TUNE = {
     cry: { cd: 20, name: 'BATTLE CRY', col: 12, time: 8, dmgMul: 1.35, r: 64 },
     surge: { cd: 12, name: 'TIDAL SURGE', col: 8, len: 120, w: 42, dmg: 10, kb: 340 },
     fire: { cd: 16, name: 'DRAGONFIRE', col: 12, r: 96, dmg: 24, burn: 4 },
+    hearthcall: { cd: 24, name: 'HEARTHCALL', col: 8, heal: 0.3, r: 70 },
+    cinderstep: { cd: 10, name: 'CINDERSTEP', col: 12, len: 96, dmg: 14, burn: 3 },
     grasp: { cd: 18, name: 'VERDANT GRASP', col: 8, r: 76, root: 3.2, dps: 5 },
   },
   shout: { cooldown: 12, radius: 74, push: 320, stun: 0.9, dmg: 5, lock: 0.45 },

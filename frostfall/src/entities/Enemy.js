@@ -120,6 +120,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.staggerT = Math.max(0, (this.staggerT || 0) - dt);
     if (this.poise > 0) { this.poiseT = (this.poiseT || 0) - dt; if (this.poiseT < 0) this.poise = Math.max(0, this.poise - this.maxHp * 0.16 * dt); }
     this.dodgeCd = (this.dodgeCd || 0) - dt;
+    this.auraT = (this.auraT || 0) - dt;
+    if (this.cfg.aura && this.alerted) {                // a herald rallies the allies around it: +25% damage
+      this.auraTick = (this.auraTick || 0) - dt;
+      if (this.auraTick <= 0) { this.auraTick = 0.25; let n = 0; for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && Math.hypot(o.x - this.x, o.y - this.y) < 96) { o.auraT = 0.5; n++; } if (n && !this.rallied) { this.rallied = true; this.scene.fx.text(this.x, this.y - 24, 'RALLY', 13, 0.8); } }
+    }
     if (this.markT > 0) {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
@@ -179,6 +184,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
+    // sentinels hold their post: they give up the chase past their leash and walk home
+    if (this.cfg.leash) {
+      const hm = this.home || (this.home = { x: this.x, y: this.y }), hd = Math.hypot(this.x - hm.x, this.y - hm.y);
+      if (this.alerted && hd > this.cfg.leash) { this.alerted = false; this.notice = 0; this.setState('idle'); }
+      if (!this.alerted && hd > 6) { const hh = norm(hm.x - this.x, hm.y - this.y); b.setVelocity(hh.x * 34, hh.y * 34); this.face = dir8(hh.x, hh.y); this.finish(dt, slow); return; }
+    }
+
     // ---- awareness
     if (!this.alerted) {
       const range = this.cfg.detect * player.detectMult() * (S.weather === 'blizzard' && sc.def.snow && BEASTS_NOSE.has(this.kind) ? 1.33 : 1);   // predators hunt by scent in a blizzard
@@ -211,7 +223,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const a = Math.random() * Math.PI * 2, r = 26 + Math.random() * 30;
       const x = this.x + Math.cos(a) * r, y = this.y + Math.sin(a) * r;
       if (sc.solidAt(x, y) || sc.solidAt(x + 6, y) || sc.solidAt(x - 6, y)) continue;
-      const m = sc.addEnemy('draugr', x, y, { tier: this.tier });
+      const m = sc.addEnemy(this.cfg.raiseKind || 'draugr', x, y, { tier: this.tier });
       m.alert(true); this.minions.push(m);
       sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('frost');
       break;
@@ -489,6 +501,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const spd = cfg.projSpeed || 125;
       const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2 });
       pr.inflict = cfg.inflicts;
+      if (cfg.pull) { pr.pull = true; pr.org = { x: this.x, y: this.y }; }
       this.scene.eshots.add(pr);
       pr.body.setVelocity(f.x * spd, f.y * spd);
       this.body.setVelocity(0, 0);
@@ -514,7 +527,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.cfg.kind === 'lunge') { const b = this.body; r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6); }
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
-      const landed = player.hurt(this.cfg.dmg, this.x, this.y, { attacker: this });
+      const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this });
       if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
     }
   }
@@ -609,7 +622,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
-    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul * (this.wallMul || 1) * (info.src === 'dot' ? 1 : modMul('dealMul'))));
+    let dmg = Math.max(1, Math.round(info.dmg / modMul('foeHpMul') * em * this.takenMul * (this.wallMul || 1) * (info.src === 'dot' ? 1 : modMul('dealMul'))));
     // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
     if (this.cfg.armored && info.src !== 'shout') {
       if (this.openT > 0) { dmg = Math.round(dmg * 1.6); }
@@ -675,6 +688,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   die(info) {
     this.dead = true;
+    if (this.cfg.splits && !info?.suicide) {                // slimes burst into smaller slimes
+      const sp = this.cfg.splits;
+      for (let i = 0; i < sp.n; i++) { const a = Math.random() * 6.28, kid = this.scene.addEnemy(sp.kind, this.x + Math.cos(a) * 9, this.y + Math.sin(a) * 6, { tier: this.tier }); kid.alert(true); }
+      this.scene.fx.puff(this.x, this.y, 12, 10, 50, 0.4);
+    }
     if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
     if (this.spawnKey || this.spec?.nemesis) this.scene.markKilled?.(this);
     if (this.champion) this.scene.onChampionDown?.(this);

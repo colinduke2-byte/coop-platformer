@@ -230,10 +230,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
     if (this.blocking) sp *= P.block.move;
+    const tileUnder = this.scene.tileIdAt(this.x, this.y + 7), skating = !!S.flags.skates && this.mode === 'free' && [TILE.ICE, TILE.ICE2, TILE.ICESHELF].includes(tileUnder);
+    if (skating) sp *= 1.3;
     const l = Math.hypot(ix, iy) || 1;
     const tx = (ix / l) * sp, ty = (iy / l) * sp;
-    const onIce = this.mode === 'free' && [TILE.ICE, TILE.ICE2].includes(this.scene.tileIdAt(this.x, this.y + 7));
-    const a = P.accel * dt * (onIce ? 0.12 : 1);
+    const onIce = this.mode === 'free' && [TILE.ICE, TILE.ICE2].includes(tileUnder);
+    const a = P.accel * dt * (onIce ? (skating ? 0.4 : 0.12) : 1);
     b.velocity.x += Phaser.Math.Clamp(tx - b.velocity.x, -a, a);
     b.velocity.y += Phaser.Math.Clamp(ty - b.velocity.y, -a, a);
     // facing: locked during swings, otherwise follows input (or the lock-on target)

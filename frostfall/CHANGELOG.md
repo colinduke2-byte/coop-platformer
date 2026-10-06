@@ -309,3 +309,16 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **A second companion**: *Pell Quickpick*, the Delvers' scout. Recruit him in Emberhold once the mines are safe. He darts in and stabs (melee, 9 damage), and your gold finds are 10% bigger. One companion at a time: hiring Ragna or Pell replaces the other. Talk to a companion (E) to send them home; they go back to their post.
 - **Aftermath**: once the First Fire is decided, Bjorn, Mirra, Hilda and Haldor have new things to say.
 - Tests: `stage47_campaign`.
+
+## Round 22 - Breadth (Phase 14)
+- **Twelve new creatures** (plus the Slimeling), three or four per region, each with its own trick and sprite: *Ash Hound* (fast, flanks, burns), *Cinder Smith* (armoured, shield-smashing hammer), *Magma Slime* (bursts into two slimelings), *Lava Wraith* (flies over lava, spits embers); *Ice Harpooner* (its harpoon drags you in), *Wreck Crab* (guards its front), *Tide Hag* (raises the drowned), *Frost Barnacle* (a turret that never moves); *Court Phantom* (blinks), *Hollow Herald* (rallies allies: +25% damage), *Bone Sentinel* (guards its post, gives up the chase), *Moss Stalker* (half-hidden ambusher). All have bestiary pages.
+- **Two new weapon types**: the **crossbow** (must be fully wound, one heavy bolt that pierces two foes, then a reload; no half-draw) and the **warhammer** (two-handed, slow, guard-breaking, rattles armour).
+- **Runes**: a second kind of socket. One per weapon or armour, adding an effect: Ignition, Rime, Storms (burn / chill / shock your blows), Draining (heal 5% of damage), Thorns (strikers take 7), Warding (+5% absorbed). Set them at Tamsin's; they also drop from the new creatures.
+- **Two new spells and two new shouts**: *Ember Nova* (a ring of fire that burns) and *Glacier Spear* (a lance of ice through a whole line), both learned from tomes. *Cinderstep* (dash through foes, burning them; after Kragnar) and *Hearthcall* (heal 30% and cleanse; after the Ashen Sovereign).
+- **Smithing and mining**: the Great Anvil sometimes forges a *masterwork* (already tempered twice; likelier with the Anvil Court's trust). Pell finds extra ore.
+- **Whaler's Skates** (250G from a coast fisher): 30% faster on the ice shelf, and the ice stops throwing you around.
+- **Three new daily modifiers** (Ironhide, Cinder Skin, Brittle Bones).
+- **Music**: a track for each new region (Ashen Peaks, Frozen Coast, Old Kingdom).
+- Not built: boss-rush mode and a summonable sled. Both stay on the list; the skates cover fast travel on ice for now.
+- Fixed: the skates' speed bonus was applied after the target speed was computed.
+- Tests: `stage48_breadth`.

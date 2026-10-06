@@ -272,7 +272,7 @@ export class OreNode extends Phaser.GameObjects.Image {
   label() { return 'E: MINE'; }
   interact() {
     const sc = this.scene;
-    addItem(this.ore, 1 + (Math.random() < 0.35 ? 1 : 0));
+    addItem(this.ore, 1 + (Math.random() < 0.35 + (S.follower && S.companion === 'pell' ? 0.25 : 0) ? 1 : 0));
     if (Math.random() < 0.12) addItem('mp_potion');
     sfx.play('smash'); sc.fx.puff(this.x, this.y, 5, 8, 40, 0.4);
     markGone(this.key, false);

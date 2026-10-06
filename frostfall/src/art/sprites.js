@@ -134,6 +134,15 @@ export const STYLES = {
   trapper: { skin: 10, hair: 9, hood: 9, body: 9, trim: 7, legs: 2, boots: 1, chest: 7, cape: 7 },
   fisher: { skin: 10, hair: 6, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4 },
   prospector: { skin: 10, hair: 11, helm: 3, body: 3, trim: 9, legs: 2, boots: 1, chest: 9, beard: 11 },
+  // Phase 14 creatures (humanoid)
+  cindersmith: { skin: 11, hair: 0, helm: 1, body: 1, trim: 12, legs: 0, boots: 0, glow: 12, chest: 11, beard: 0, cape: 9 },
+  lavawraith: { skin: 12, hair: 13, hood: 11, body: 11, trim: 13, legs: 11, boots: 11, glow: 13, chest: 12 },
+  harpooner: { skin: 10, hair: 5, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4, mask: 3 },
+  tidehag: { skin: 8, hair: 7, hood: 7, body: 14, trim: 15, legs: 7, boots: 0, glow: 15, chest: 14 },
+  phantom: { skin: 6, hair: 5, body: 5, trim: 14, legs: 5, boots: 5, glow: 14, crown: 13, chest: 6 },
+  herald: { skin: 10, hair: 13, helm: 13, body: 14, trim: 13, legs: 14, boots: 13, glow: 13, chest: 13, cape: 11, crown: 13 },
+  sentinel: { skin: 6, hair: 5, helm: 6, body: 4, trim: 3, legs: 4, boots: 3, glow: 15, chest: 5, horns: 6 },
+  stalker: { skin: 8, hair: 7, hood: 7, body: 8, trim: 7, legs: 7, boots: 7, chest: 8, mask: 7 },
   // Emberhold
   ysolde: { skin: 10, hair: 6, hood: 13, body: 13, trim: 12, legs: 3, boots: 9, chest: 12, crown: 12, cape: 11 },
   brannoch: { skin: 10, hair: 11, helm: null, body: 9, trim: 12, legs: 2, boots: 1, chest: 4, beard: 11 },
@@ -479,6 +488,21 @@ function buildCharacters(scene) {
     ctx.save(); ctx.translate(dx, ch - 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
   });
   make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
+  animalSheet(scene, 'spr_ashhound', (c, x, f) => wolfFrame(c, x, f, { fur: 1, dark: 0, light: 12, leg: 0 }));
+  // a lava slime (squashes as it creeps), a wreck crab, and a frost barnacle (a turret in a shell)
+  animalSheet(scene, 'spr_slime', (ctx, ox, f) => {
+    const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h), sq = [0, 1, 0][f];
+    r(11, 3, 8 - sq, 10, 5 + sq); r(11, 2, 9, 12, 4); r(12, 4, 9 - sq, 8, 2); r(13, 5, 8 - sq, 3, 1); r(0, 5, 10, 1, 2); r(0, 10, 10, 1, 2); r(13, 4, 12, 3, 1); r(0, 3, 13, 10, 1);
+  });
+  animalSheet(scene, 'spr_crab', (ctx, ox, f) => {
+    const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h), a = f === 1 ? 1 : 0, b = f === 2 ? 1 : 0;
+    r(4, 4, 7, 8, 5); r(3, 5, 8, 6, 3); r(5, 5, 7, 6, 1); r(0, 5, 6, 1, 1); r(0, 10, 6, 1, 1); r(11, 0, 5 - a, 3, 3); r(11, 13, 5 - b, 3, 3); r(11, 1, 6 - a, 1, 1); r(11, 14, 6 - b, 1, 1);
+    for (const x of [3, 5, 9, 11]) r(9, x, 12, 1, 2 + ((x + f) % 2));
+  });
+  animalSheet(scene, 'spr_barnacle', (ctx, ox, f) => {
+    const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+    r(3, 3, 11, 10, 3); r(5, 4, 8, 8, 4); r(6, 5, 5, 6, 4); r(5, 6, 7, 4, 1); r(6, 7, 6, 2, 1); r(0, 6, 8, 4, 2 + (f === 1 ? 1 : 0)); r(15, 7, 8 + (f === 1 ? 1 : 0), 2, 1); r(0, 3, 13, 10, 1);
+  });
   animalSheet(scene, 'spr_alpha', (c, x, f) => wolfFrame(c, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }));
 }
 
@@ -905,4 +929,4 @@ export function generateArt(scene) {
 }
 
 // Which held-weapon sprite an item uses.
-export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.style === 'spear' ? 'spear' : it.style === 'mace' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);
+export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);

@@ -17,6 +17,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.kind = kind;
     this.dmg = opts.dmg ?? 5;
     this.charge = opts.charge ?? 0;
+    this.pierceLeft = opts.pierce || 0;
     this.ally = !!opts.ally;
     this.ammo = opts.ammo || 'arrow';
     if (this.ammo === 'fire_arrow') this.setTint(0xf08a30); else if (this.ammo === 'bleed_arrow') this.setTint(0xc8383c);
@@ -97,6 +98,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       if (sneak) { sc.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); pl.gainXp('sneak', 8); sfx.play('crit'); } else sfx.play('hit');
       pl.gainXp('archery', 3 + Math.round(this.charge * 3) + (e.dead ? 3 : 0));
       sc.hitStop(0.035);
+      if (this.pierceLeft > 0) { this.pierceLeft--; this.dmg *= 0.8; return; }
       if (S.perks.piercing && !this.pierced) { this.pierced = true; this.dmg *= 0.7; return; }
       this.finish();
     } else if (this.kind === 'frost') {
@@ -137,6 +139,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   // ---- enemy projectile hits the player
   hitPlayer(p) {
     if (this.done || !this.enemyOwned) return;
-    if (p.hurt(this.dmg, this.x - this.body.velocity.x, this.y - this.body.velocity.y, { kb: 70, inflict: this.inflict })) this.finish();
+    // a harpoon drags you toward the one who threw it: aim the knock-back from a point beyond you
+    const sx = this.pull ? 2 * p.x - this.org.x : this.x - this.body.velocity.x, sy = this.pull ? 2 * p.y - this.org.y : this.y - this.body.velocity.y;
+    if (p.hurt(this.dmg, sx, sy, { kb: this.pull ? 150 : 70, inflict: this.inflict })) this.finish();
   }
 }

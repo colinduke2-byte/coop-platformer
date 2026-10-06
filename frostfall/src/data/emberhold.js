@@ -12,7 +12,7 @@ import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
 import { buyMenu, sellMenu, repairMenu, reforgeMenu, upgradeMenu, enchantMenu, pick, statLines } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
-import { socketCount, socketed, insertGem, removeGem, gemList } from '../systems/sockets.js';
+import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
 import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
@@ -234,6 +234,8 @@ export function forgeEmber(id) {
   if (S.gold < r.gold || !Object.entries(r.mats).every(([m, n]) => count(m) >= n)) return 'short';
   S.gold -= r.gold; for (const [m, n] of Object.entries(r.mats)) removeItem(m, n);
   addItem(r.id, 1, true);
+  // the Great Anvil sometimes sings: a masterwork comes out already tempered twice over
+  if (Math.random() < 0.15 + (S.rep?.anvil >= 45 ? 0.1 : 0) && (S.upgrades[r.id] || 0) < 2) { S.upgrades[r.id] = 2; S.flags.lastMasterwork = r.id; bus.emit('toast', 'MASTERWORK! TEMPERED +2', 13); }
   return 'ok';
 }
 export async function emberforgeMenu(who) {
@@ -284,17 +286,26 @@ SCRIPTS.brannoch = async function brannoch() {
 
 // ---------------------------------------------------------------------------------------------------- gem sockets
 export async function socketMenu(who) {
-  const slots = ['weapon', 'offhand', 'bow', 'armor'].filter((sl) => S.equip[sl] && socketCount(S.equip[sl]) > 0);
+  const slots = ['weapon', 'offhand', 'bow', 'armor'].filter((sl) => S.equip[sl] && (socketCount(S.equip[sl]) > 0 || runeSlot(S.equip[sl])));
   if (!slots.length) { await say(who, 'Nothing you carry has a socket worth the name. Wear something with some steel in it.'); return; }
   for (;;) {
-    const labels = slots.map((sl) => { const id = S.equip[sl]; return `${ITEMS[id].name} (${socketed(id).filter(Boolean).length}/${socketCount(id)})`; });
+    const labels = slots.map((sl) => { const id = S.equip[sl]; return `${ITEMS[id].name} (${socketed(id).filter(Boolean).length}/${socketCount(id)}${runeSlot(id) ? (runeOf(id) ? ' R' : ' r') : ''})`; });
     const i = await pick(labels, 'Done');
     if (i < 0) return;
     const id = S.equip[slots[i]];
     for (;;) {
       const a = socketed(id), opts = a.map((g, k) => (g ? `Remove ${ITEMS[g].name}` : `Set a gem (socket ${k + 1})`));
+      if (runeSlot(id)) opts.push(runeOf(id) ? `Remove ${ITEMS[runeOf(id)].name}` : 'Set a rune');
       const k = await pick(opts, 'Back');
       if (k < 0) break;
+      if (k === a.length) {                                       // the rune slot
+        if (runeOf(id)) { unsetRune(id); recalc(); sfx.play('equip'); continue; }
+        const rs = runeList(id);
+        if (!rs.length) { await say(who, 'You have no rune that fits this. Weapons take weapon runes, armour takes armour runes.'); continue; }
+        const r = await pick(rs.map((x) => `${ITEMS[x].name} x${count(x)}`), 'Back');
+        if (r >= 0 && setRune(id, rs[r])) { recalc(); sfx.play('levelup'); bus.emit('toast', `${ITEMS[rs[r]].name.toUpperCase()} SET`, 15); }
+        continue;
+      }
       if (a[k]) { removeGem(id, k); recalc(); sfx.play('equip'); continue; }
       const gems = gemList();
       if (!gems.length) { await say(who, 'You have no gems. Dunmar sells them. The mines give them.'); continue; }
@@ -309,5 +320,5 @@ SCRIPTS.tamsin = async function tamsin() {
   await say(N, cyc('tamsinN', ['A stone is a promise the earth made in a hurry. I just remind it.', 'Rubies for the blade, onyx for the plate, sapphires for the mind. Amber if you are tired of being tired.', 'Do not ask me what the runes say. Ask me what they want.']));
   const c = await choose(['Set or remove gems', 'Buy / sell', 'Leave']);
   if (c === 0) await socketMenu(N);
-  else if (c === 1) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }]);
+  else if (c === 1) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }, { id: 'rune_ignite', price: 220 }, { id: 'rune_rime', price: 220 }, { id: 'rune_storm', price: 240 }, { id: 'rune_drain', price: 260 }, { id: 'rune_thorns', price: 240 }, { id: 'rune_ward', price: 240 }]);
 };

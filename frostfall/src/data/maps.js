@@ -418,7 +418,7 @@ export function getRegion(id) {
   return regionCache[id].built;
 }
 export const getReach = () => getRegion('reach');
-MAPS.ashen = { name: 'The Ashen Peaks', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('ashen'), music: 'pass', dim: 0.16, stream: true };
+MAPS.ashen = { name: 'The Ashen Peaks', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('ashen'), music: 'ashen', dim: 0.16, stream: true };
 MAPS.forest = { name: 'The Hollow Reach', snow: true, ambience: 'wind', build: () => getReach(), music: 'forest', dim: 0.12, stream: true };
 for (let i = 0; i < 8; i++) {
   MAPS['barrow' + i] = {
@@ -451,8 +451,8 @@ for (let f = 0; f < MINE_FLOORS; f++) {
 }
 
 // The regions beyond the Reach: their overworld maps, small cave delves and boss dungeons.
-MAPS.coast = { flag: 'arrivedCoast', name: 'The Frozen Coast', snow: true, ambience: 'wind', build: () => getRegion('coast'), music: 'pass', dim: 0.14, stream: true, region: 'coast' };
-MAPS.kingdom = { flag: 'arrivedKingdom', name: 'The Old Kingdom', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('kingdom'), music: 'forest', dim: 0.2, stream: true, region: 'kingdom' };
+MAPS.coast = { flag: 'arrivedCoast', name: 'The Frozen Coast', snow: true, ambience: 'wind', build: () => getRegion('coast'), music: 'coast', dim: 0.14, stream: true, region: 'coast' };
+MAPS.kingdom = { flag: 'arrivedKingdom', name: 'The Old Kingdom', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('kingdom'), music: 'kingdom', dim: 0.2, stream: true, region: 'kingdom' };
 MAPS.ashen.region = 'ashen'; MAPS.forest.region = 'reach';
 const delveCache = {};
 const CAVE_THEME = { ashen: 'cinder', coast: 'sea', kingdom: 'royal' }, REGION_NO = { ashen: 1, coast: 2, kingdom: 3 }, HOME_MAP = { ashen: 'ashen', coast: 'coast', kingdom: 'kingdom' };

@@ -6,7 +6,7 @@ import { elixirVal } from './elixir.js';
 import { relicBonus } from './relics.js';
 import { modMul, modSum } from '../data/mods.js';
 import { isBroken, BROKEN_MUL } from './durability.js';
-import { gemBonus } from './sockets.js';
+import { gemBonus, runeElem } from './sockets.js';
 const blessMul = (k) => blessing()?.[k] ?? 1;
 
 const eq = (slot) => ITEMS[S.equip[slot]] || null;
@@ -17,6 +17,7 @@ const trophyHp = () => (S.flags?.furn?.trophywall ? Math.floor(Object.keys(S.tro
 
 export const stats = {
   weapon: () => eq('weapon'),
+  bow: () => eq('bow'),
   weight: () => eq('armor')?.weight || 'medium',
   weaponDmg: () => { const w = eq('weapon'); return (w ? w.dmg + upg(S.equip.weapon) * 2 + gemBonus('dmg') : 3) * (isBroken(S.equip.weapon) ? BROKEN_MUL.weapon : 1); },
   is2H: () => eq('weapon')?.type === 'weapon2h',
@@ -31,7 +32,7 @@ export const stats = {
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)
   sum: (k) => gemBonus(k) + modSum(k) + ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
   mul: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (k === 'goldMul' && S.follower && S.companion === 'pell' ? 1.1 : 1) * (blessing()?.[k] ?? 1),
-  enchant: () => S.enchants?.[S.equip.weapon] || eq('weapon')?.elem || null,
+  enchant: () => S.enchants?.[S.equip.weapon] || eq('weapon')?.elem || runeElem(),
 };
 
 // Recompute max pools from equipment, level-up choices and perks (call after equip changes / load).

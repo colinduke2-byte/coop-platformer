@@ -275,6 +275,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y - 1 });
       add({ t: 'glow', x: p.x, y: p.y - 1, r: 46, col: 14 });
       for (let i = 0; i < 3 + p.tier; i++) enemy(pickOf([...m.melee, ...m.ranged]), p.x + Math.round((R() - 0.5) * 11), p.y + 2 + Math.round(R() * 3), p.tier, { camp: p.id });
+      for (const dx of [-3, 3]) enemy('sentinel', p.x + dx, p.y + 5, p.tier, { camp: p.id });
       chest(p, 0, 4, p.tier + 1, 'hard');
       if (Number((p.id.match(/\d+$/) || ['0'])[0]) === 0) add({ t: 'npc', id: 'scribe', x: p.x - 4, y: p.y + 4 });
       add({ t: 'lore', id: 'court' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
@@ -559,10 +560,10 @@ export const ASHEN = {
   id: 'ashen', w: 160, h: 120, start: ASH_START, salt: 0x51ed,
   ground: TILE.ASH, ground2: TILE.CFLOOR2, clear: TILE.CFLOOR2, caveSign: 'A CINDER WARREN. THE ROCK IS WARM TO THE TOUCH.', flora: ['snowberry', 'frost_lily'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
-    { melee: ['bandit', 'imp'], ranged: ['archer'], wild: ['boar', 'imp', 'wolf'] },
-    { melee: ['imp', 'golem', 'bandit', 'warden'], ranged: ['archer', 'conjurer'], wild: ['boar', 'bear', 'imp', 'wyvern'] },
-    { melee: ['golem', 'warden', 'knight', 'imp'], ranged: ['conjurer', 'necro', 'wisp'], wild: ['bear', 'wyvern', 'boar'] },
-    { melee: ['golem', 'knight', 'reaver', 'warden'], ranged: ['conjurer', 'necro', 'wisp'], wild: ['wyvern', 'bear', 'alpha'] },
+    { melee: ['bandit', 'imp', 'magmaslime'], ranged: ['archer'], wild: ['boar', 'imp', 'ashhound', 'ashhound'] },
+    { melee: ['imp', 'golem', 'bandit', 'cindersmith', 'magmaslime'], ranged: ['archer', 'conjurer', 'lavawraith'], wild: ['boar', 'bear', 'imp', 'wyvern', 'ashhound'] },
+    { melee: ['golem', 'cindersmith', 'knight', 'imp', 'magmaslime'], ranged: ['conjurer', 'necro', 'lavawraith', 'wisp'], wild: ['bear', 'wyvern', 'ashhound'] },
+    { melee: ['golem', 'knight', 'cindersmith', 'reaver'], ranged: ['conjurer', 'necro', 'lavawraith', 'wisp'], wild: ['wyvern', 'bear', 'ashhound', 'alpha'] },
   ],
   tierAt: tierFrom(ASH_START, 50, 80, 110),
   biome(seed) {
@@ -608,10 +609,10 @@ export const COAST = {
   id: 'coast', w: 180, h: 130, start: COAST_START, salt: 0xc0a5,
   ground: TILE.ICESHELF, ground2: TILE.SHINGLE, clear: TILE.ICESHELF, caveSign: 'A SEA CAVE. THE TIDE COMES IN UNDER THE ICE.', flora: ['frost_lily', 'snowberry'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
-    { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'boar', 'fox'] },
-    { melee: ['draugr', 'warden', 'bandit', 'fencer'], ranged: ['archer', 'wight'], wild: ['wolf', 'bear', 'boar', 'frostworm'] },
-    { melee: ['reaver', 'warden', 'draugr', 'knight'], ranged: ['wight', 'conjurer', 'archer'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
-    { melee: ['reaver', 'knight', 'warden', 'golem'], ranged: ['conjurer', 'wight', 'wisp', 'necro'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
+    { melee: ['bandit', 'draugr', 'wreckcrab'], ranged: ['archer', 'harpooner'], wild: ['wolf', 'boar', 'wreckcrab'] },
+    { melee: ['draugr', 'warden', 'bandit', 'fencer', 'wreckcrab'], ranged: ['archer', 'wight', 'harpooner', 'barnacle'], wild: ['wolf', 'bear', 'boar', 'frostworm', 'wreckcrab'] },
+    { melee: ['reaver', 'warden', 'draugr', 'knight', 'wreckcrab'], ranged: ['wight', 'conjurer', 'harpooner', 'tidehag', 'barnacle'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
+    { melee: ['reaver', 'knight', 'warden', 'golem', 'wreckcrab'], ranged: ['conjurer', 'wight', 'tidehag', 'harpooner', 'barnacle'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
   ],
   tierAt: tierFrom(COAST_START, 50, 80, 110),
   biome(seed) {
@@ -655,10 +656,10 @@ export const KINGDOM = {
   id: 'kingdom', w: 180, h: 130, start: KING_START, salt: 0x4b1d,
   ground: TILE.MOSS, ground2: TILE.MARBLE, clear: TILE.MARBLE, pillar: TILE.PILLAR, caveSign: 'A CRYPT STAIR. THE KINGS DID NOT TRUST THE SURFACE WITH THEIR DEAD.', flora: ['frost_lily', 'snowberry'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
-    { melee: ['draugr', 'warden', 'bandit'], ranged: ['wight', 'archer'], wild: ['wolf', 'boar', 'bear'] },
-    { melee: ['knight', 'warden', 'draugr', 'reaver'], ranged: ['wight', 'conjurer', 'necro'], wild: ['bear', 'alpha', 'wyvern'] },
-    { melee: ['knight', 'reaver', 'warden', 'golem'], ranged: ['necro', 'conjurer', 'wisp', 'wight'], wild: ['alpha', 'wyvern', 'bear'] },
-    { melee: ['knight', 'reaver', 'warden', 'golem'], ranged: ['necro', 'conjurer', 'wisp', 'wight'], wild: ['alpha', 'wyvern', 'bear'] },
+    { melee: ['draugr', 'warden', 'phantom'], ranged: ['wight', 'archer'], wild: ['wolf', 'boar', 'stalker'] },
+    { melee: ['knight', 'warden', 'draugr', 'reaver', 'phantom'], ranged: ['wight', 'conjurer', 'necro', 'herald'], wild: ['bear', 'alpha', 'stalker', 'wyvern'] },
+    { melee: ['knight', 'reaver', 'warden', 'golem', 'phantom'], ranged: ['necro', 'conjurer', 'wisp', 'herald'], wild: ['alpha', 'wyvern', 'stalker'] },
+    { melee: ['knight', 'reaver', 'warden', 'golem', 'phantom'], ranged: ['necro', 'conjurer', 'wisp', 'herald'], wild: ['alpha', 'wyvern', 'stalker'] },
   ],
   tierAt: tierFrom(KING_START, 40, 70, 100),
   biome(seed) {

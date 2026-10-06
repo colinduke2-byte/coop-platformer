@@ -10,6 +10,7 @@ import { sfx } from '../audio/sfx.js';
 import { lvl } from '../systems/skills.js';
 import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
+import { clearStatus } from '../systems/status.js';
 
 // cost = mana. skill/lvl = unlock requirement.
 export const SPELLS = {
@@ -20,10 +21,12 @@ export const SPELLS = {
   blink: { name: 'Blink', cost: 20, icon: 'icon_blink', col: 14, skill: 'sneak', lvl: 4, desc: 'Teleport a short way, untouchable' },
   nova: { name: 'Frost Nova', cost: 30, dmg: 14, icon: 'icon_nova', col: 15, skill: 'destruction', lvl: 7, desc: 'Ring of ice around you' },
   wolf: { name: 'Spirit Wolf', cost: 34, dmg: 9, icon: 'icon_wolf', col: 15, skill: 'restoration', lvl: 5, desc: 'A spectral wolf fights for you' },
+  embernova: { name: 'Ember Nova', cost: 36, dmg: 18, icon: 'icon_embernova', col: 12, skill: 'destruction', lvl: 99, tome: true, desc: 'A ring of fire that burns' },
+  glacier: { name: 'Glacier Spear', cost: 28, dmg: 20, icon: 'icon_glacier', col: 15, skill: 'destruction', lvl: 99, tome: true, desc: 'A lance of ice through a whole line' },
   meteor: { name: 'Meteor', cost: 48, dmg: 38, icon: 'icon_meteor', col: 12, skill: 'destruction', lvl: 99, tome: true, desc: 'A star falls where you aim' },
   ward: { name: 'Ward', cost: 30, absorb: 30, time: 8, icon: 'icon_ward', col: 15, skill: 'restoration', lvl: 3, desc: 'Absorbs damage' },
 };
-export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'wolf', 'meteor'];
+export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'embernova', 'glacier', 'wolf', 'meteor'];
 export const spellUnlocked = (id) => !!S.tomes?.[id] || lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
 
 export const magicMethods = {
@@ -113,6 +116,33 @@ export const magicMethods = {
         this.gainXp('destruction', 6);
         break;
       }
+      case 'embernova': {
+        const R = 64;
+        sfx.play('fire'); sc.shake(200, 0.008);
+        sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0xf08a30); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xf4d460);
+        for (const e of sc.enemies.getChildren()) {
+          if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer ? 1.15 : 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 110, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 4, dps: 5 } });
+          sc.fx.text(e.x, e.y - 10, String(dealt), 12); sc.fx.puff(e.x, e.y, 12, 6, 40, 0.3);
+        }
+        for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
+        this.gainXp('destruction', 7);
+        break;
+      }
+      case 'glacier': {
+        const LEN = 128, W2 = 22;
+        sfx.play('frost'); sc.shake(150, 0.006);
+        for (let k = 1; k <= 8; k++) sc.fx.puff(this.x + f.x * k * 16, this.y + 3 + f.y * k * 16, 15, 5, 40, 0.4);
+        for (const e of sc.enemies.getChildren()) {
+          const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
+          if (e.dead || along < 0 || along > LEN || across > W2 / 2) continue;
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3, stun: 0.35 });
+          sc.fx.text(e.x, e.y - 10, String(dealt), 15);
+        }
+        for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < LEN) sh.finish(); }
+        this.gainXp('destruction', 6);
+        break;
+      }
       case 'meteor': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 70, y: this.y + 3 + f.y * 70 };
         const R = 38, dmg = spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer ? 1.15 : 1 });
@@ -153,7 +183,7 @@ export const magicMethods = {
     this.lockT = 0.5; this.lockMove = 0;
     this.body.setVelocity(0, 0);
     sfx.play('shout'); sc.shake(260, 0.01); sc.flashScreen(70); sc.noise(this.x, this.y, 150);
-    const col = { frost: 0x9fe8ff, cry: 0xf08a30, surge: 0x3f7050, grasp: 0x3f7050 }[id];
+    const col = { frost: 0x9fe8ff, cry: 0xf08a30, surge: 0x3f7050, grasp: 0x3f7050, hearthcall: 0xf4d460, cinderstep: 0xf08a30 }[id];
     if (id === 'frost') {
       sc.fx.text(this.x, this.y - 18, 'FROST BREATH', 15, 1);
       for (let i = -3; i <= 3; i++) { const a = Math.atan2(f.y, f.x) + i * 0.18; sc.fx.puff(this.x + Math.cos(a) * 30, this.y + 3 + Math.sin(a) * 30, 15, 6, 90, 0.6); sc.fx.puff(this.x + Math.cos(a) * 60, this.y + 3 + Math.sin(a) * 60, 6, 5, 70, 0.5); }
@@ -196,6 +226,23 @@ export const magicMethods = {
       }
       sc.breakAt(this.x + f.x * 40, this.y + f.y * 40, 40);
       for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if (Math.hypot(dx, dy) < T.r && (dx * f.x + dy * f.y) > 0) sh.finish(); }
+    } else if (id === 'hearthcall') {
+      sc.fx.text(this.x, this.y - 18, 'HEARTHCALL', 8, 1);
+      sc.fx.ring(this.x, this.y + 4, T.r / 32, 0.6, 'ring', 0xf4d460); sc.fx.puff(this.x, this.y, 13, 14, 40, 0.6);
+      S.hp = Math.min(S.maxHp, S.hp + Math.round(S.maxHp * T.heal));
+      if (this.statuses) clearStatus(this, 'potion');
+    } else if (id === 'cinderstep') {
+      sc.fx.text(this.x, this.y - 18, 'CINDERSTEP', 12, 1);
+      const L = T.len;
+      for (const e of sc.enemies.getChildren()) {
+        const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
+        if (e.dead || along < 0 || along > L || across > 16) continue;
+        const dealt = e.takeHit({ dmg: T.dmg * bonus.spell(), kx: f.x, ky: f.y, kb: 90, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 3, dps: T.burn } });
+        sc.fx.text(e.x, e.y - 10, String(dealt), 12);
+      }
+      for (let k = 1; k <= 6; k++) sc.fx.puff(this.x + f.x * k * (L / 6), this.y + 3 + f.y * k * (L / 6), k % 2 ? 12 : 13, 6, 40, 0.5);
+      let d = L; while (d > 8 && sc.solidAt(this.x + f.x * d, this.y + 4 + f.y * d)) d -= 8;
+      this.setPosition(this.x + f.x * d, this.y + f.y * d); this.body.updateFromGameObject(); this.iframes = Math.max(this.iframes, 0.35);
     } else if (id === 'grasp') {
       sc.fx.text(this.x, this.y - 18, 'VERDANT GRASP', 8, 1);
       sc.fx.ring(this.x, this.y + 4, T.r / 32, 0.6, 'ring', 0x3f7050);

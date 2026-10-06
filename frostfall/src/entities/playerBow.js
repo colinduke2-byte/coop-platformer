@@ -27,9 +27,11 @@ export const bowMethods = {
     bus.emit('toast', S.ammo === 'arrow' ? 'PLAIN ARROWS' : ITEMS[S.ammo].name.toUpperCase() + 'S', S.ammo === 'fire_arrow' ? 12 : S.ammo === 'bleed_arrow' ? 11 : 5);
   },
   bowInput() {
+    this.xbowT = Math.max(0, (this.xbowT || 0) - (this.currentDt || 0));
     if (keys.pressed('ammo') && !this.drawing) this.cycleAmmo();
     if (!this.drawing) {
       if (keys.pressed('bow')) {
+        if (this.xbowT > 0) { sfx.play('nostamina'); return; }
         if (this.ammoLeft() <= 0) { sfx.play('nostamina'); bus.emit('toast', 'NO ARROWS'); return; }
         if (S.sp < P.bow.startCost) { sfx.play('nostamina'); bus.emit('nostamina'); return; }
         this.drawing = true; this.drawT = 0; this.drawFull = false;
@@ -39,24 +41,27 @@ export const bowMethods = {
       return;
     }
     this.drawT += this.currentDt;
-    const full = P.bow.fullDraw * bonus.drawTime();
+    const full = (stats.bow()?.xbow ? P.xbow.windup : P.bow.fullDraw) * bonus.drawTime();
     if (!this.drawFull && this.drawT >= full) { this.drawFull = true; this.scene.fx.puff(this.x, this.y, 13, 4, 25, 0.25); }
     if (!keys.isDown('bow')) this.releaseBow(Math.min(1, this.drawT / full));
   },
   releaseBow(charge01) {
+    const X = stats.bow()?.xbow ? P.xbow : null;                  // crossbows must be fully wound; there is no half-draw
+    if (X && charge01 < 1) { this.drawing = false; this.aim.setVisible(false); return; }
     const wasDrawn = this.drawT >= P.bow.minDraw;
     this.drawing = false;
     this.aim.setVisible(false);
     if (!wasDrawn) return;
-    const cost = P.bow.shotCost + P.bow.chargeCost * charge01;
+    const cost = X ? X.shotCost : P.bow.shotCost + P.bow.chargeCost * charge01;
     S.sp = Math.max(0, S.sp - cost);
     this.spDelay = P.regenDelay + 0.2;
     const ammo = this.curAmmo();
     if (ammo === 'arrow') S.arrows--; else { S.inv[ammo]--; if (S.inv[ammo] <= 0) delete S.inv[ammo]; }
-    const sp = P.bow.speedMin + (P.bow.speedMax - P.bow.speedMin) * charge01;
-    const dmg = stats.bowDmg() * (P.bow.dmgMin + (P.bow.dmgMax - P.bow.dmgMin) * charge01) * bonus.arrow();
+    const sp = X ? X.speed : P.bow.speedMin + (P.bow.speedMax - P.bow.speedMin) * charge01;
+    const dmg = stats.bowDmg() * (X ? X.dmgMul : P.bow.dmgMin + (P.bow.dmgMax - P.bow.dmgMin) * charge01) * bonus.arrow();
     const f = this.face;
-    const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'arrow', f.x * sp, f.y * sp, { dmg, charge: charge01, life: 0.4 + 0.5 * charge01 + 0.5, ammo });
+    const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'arrow', f.x * sp, f.y * sp, { dmg, charge: charge01, life: 0.4 + 0.5 * charge01 + 0.5, ammo, pierce: X ? X.pierce : 0 });
+    if (X) this.xbowT = X.reload;
     this.scene.shots.add(pr);
     pr.body.setVelocity(f.x * sp, f.y * sp);
     sfx.play('shoot');

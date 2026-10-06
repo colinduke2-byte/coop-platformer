@@ -26,8 +26,19 @@ const trade = async (who, wares, hello) => {
 
 SCRIPTS.trapper = () => trade('Trapper', [{ id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'hp_potion', price: 26 }, { id: 'hunting_spear', price: 60, once: true }, ...dailyWares('Trapper', 1)],
   cyc('trapperN', ['Furs, arrows, and advice. The advice is free; the other two are not.', 'Tracks near the north fork. Big. Heavier than a bear and walking upright. I am staying inside tonight.', 'You hear the wolves at dusk? That is not hunting. That is a roll call.']));
-SCRIPTS.fisher = () => trade('Fisher', [{ id: 'grilled_trout', price: 16 }, { id: 'fish_stew', price: 40 }, { id: 'smoked_pike', price: 44 }, { id: 'hp_potion', price: 26 }],
+const fisherTrade = () => trade('Fisher', [{ id: 'grilled_trout', price: 16 }, { id: 'fish_stew', price: 40 }, { id: 'smoked_pike', price: 44 }, { id: 'hp_potion', price: 26 }],
   cyc('fisherN', ['The ice holds till spring, if spring comes. Cut a hole, wait, say nothing. That is the whole craft.', 'Pike near the east lakes. Eels in the south, if you can bear the taste. I cannot.', 'My grandmother said the lakes remember every name that fell in. I do not fish after dark.']));
+SCRIPTS.fisher = async () => {
+  if (!S.flags.skates) {
+    const c = await choose(["Whaler's Skates (250G)", 'Trade', 'Leave']);
+    if (c === 0) {
+      if (S.gold < 250) { await say('Fisher', 'Not enough. A good pair is worth a good price. Come back.'); return; }
+      S.gold -= 250; S.flags.skates = true; await say('Fisher', 'Bone runners, strapped to boots. On ice or the shelf you will fly 30% faster, and the ice will not throw you around. Mind the holes.'); return;
+    }
+    if (c === 2) return;
+  }
+  return fisherTrade();
+};
 SCRIPTS.prospector = () => trade('Prospector', [{ id: 'iron_ingot', price: 18 }, { id: 'bone_dust', price: 22 }, { id: 'gem_amber', price: 100 }, { id: 'gem_emerald', price: 110 }],
   cyc('prospectorN', ['Iron under the grey rock, bone dust where the old battles were. I sell what the mountain gives me.', 'There is a city of smiths up in the Peaks, they say. Past the great road. I have never been. I am saving for the boots.', 'Rock sings before it falls. If you hear it, run.']));
 

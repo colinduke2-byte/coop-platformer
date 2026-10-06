@@ -15,6 +15,8 @@ import { sfx } from '../audio/sfx.js';
 import { norm } from '../util.js';
 import { tip } from '../systems/tips.js';
 import { TUNE } from '../data/tuning.js';
+import { runeThorns } from '../systems/sockets.js';
+import { MODS } from '../data/mods.js';
 import { damageTaken, meleeDamage, blockResult, blockStaminaCost } from '../systems/damage.js';
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
@@ -215,8 +217,10 @@ export const combatMethods = {
     }
 
     S.hp -= taken;
+    if (!blocked && opts.attacker && !opts.attacker.dead && runeThorns() > 0) opts.attacker.takeHit({ dmg: runeThorns(), kx: opts.attacker.x - this.x, ky: opts.attacker.y - this.y, kb: 30, src: 'thorns' });
     if (!blocked) wear(S.equip.armor, 1); else wear(S.equip.offhand, 1);
     if (!blocked && opts.attacker?.cfg?.inflicts) inflictOn(this, opts.attacker.cfg.inflicts);
+    if (!blocked && Object.keys(S.mods || {}).some((m) => S.mods[m] && MODS[m]?.burnOnHit)) inflictOn(this, [{ type: 'burn', chance: 1, t: 2.5, dps: 3 }]);
     if (!blocked && opts.inflict) inflictOn(this, opts.inflict);
     this.lastHurt = sc.t;
     this.flashT = 0.12;

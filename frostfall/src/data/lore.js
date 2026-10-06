@@ -29,6 +29,19 @@ export const LORE = {
 for (const r of RELICS) LORE[r.id] = { title: r.name, text: r.text };
 
 export const BEASTS = {
+  ashhound: { name: 'Ash Hound', desc: 'A charcoal-black hound that runs hot. Fast, flanks in pairs, and its bite sets you alight.', weak: 'Frost. Immune to fire.' },
+  cindersmith: { name: 'Cinder Smith', desc: 'A foundry-keeper long since gone to cinders. Slow, armoured, and its hammer smashes straight through a raised shield.', weak: 'Frost, lightning. Immune to fire.' },
+  magmaslime: { name: 'Magma Slime', desc: 'A molten blob. Kill it and it bursts into two smaller ones, so finish them quickly.', weak: 'Frost shatters it. Immune to fire and poison.' },
+  slimeling: { name: 'Slimeling', desc: 'What a Magma Slime leaves behind. Small, quick, and annoyed.', weak: 'Frost.' },
+  lavawraith: { name: 'Lava Wraith', desc: 'A drifting shape of heat that flies over lava and spits embers. Keep moving.', weak: 'Frost, lightning.' },
+  harpooner: { name: 'Ice Harpooner', desc: 'A whaler who never stopped hunting. Its harpoon drags you in toward it. Roll to break the line.', weak: 'Fire, lightning.' },
+  wreckcrab: { name: 'Wreck Crab', desc: 'An armoured crab that guards from the front. Go around it, or use a guard-breaking weapon.', weak: 'Lightning from behind.' },
+  tidehag: { name: 'Tide Hag', desc: 'Raises the drowned dead every few seconds. Reach her first.', weak: 'Fire, lightning.' },
+  barnacle: { name: 'Frost Barnacle', desc: 'A shelled turret that never moves and never stops firing frost. Close in from the side, or avoid its line.', weak: 'Fire.' },
+  phantom: { name: 'Court Phantom', desc: 'A courtier who died without leave. Slips through the air to strike at your back. Keep your back to a wall.', weak: 'Lightning, fire.' },
+  herald: { name: 'Hollow Herald', desc: 'Its trumpet rallies every ally around it: +25% damage while it lives. Silence it first.', weak: 'Fire, lightning.' },
+  sentinel: { name: 'Bone Sentinel', desc: 'Guards a door and will not leave its post. Heavy blows that break a shield. Fight it where it stands, or not at all.', weak: 'Fire. Immune to fear.' },
+  stalker: { name: 'Moss Stalker', desc: 'Half-hidden in the undergrowth. Its poisoned blade comes from nowhere. Watch for the shimmer.', weak: 'Fire.' },
   wolf: { name: 'Wolf', desc: 'Pack hunter. Growls, then lunges. Roll through the lunge.', weak: 'Burns easily.' },
   alpha: { name: 'Wolf Alpha', desc: 'Leads the pack and howls to call every wolf nearby.', weak: 'Burns easily.' },
   draugr: { name: 'Draugr', desc: 'Slow, hard-hitting dead. Telegraphs every swing.', weak: 'Fire: +50%. Resists frost.' },

@@ -7,6 +7,9 @@ export const MODS = {
   winter: { name: 'Endless Winter', desc: 'The blizzard never ends.' },
   hunted: { name: 'Hunted', desc: 'Elite foes are twice as common.', eliteMul: 2 },
   famine: { name: 'Famine', desc: 'Potions heal half as much, but you have 25 more stamina.', potionMul: 0.5, maxSp: 25 },
+  ironhide: { name: 'Ironhide', desc: 'Foes take 20% less damage, but gold and drops flow 40% richer.', dealMul: 0.8, goldMul: 1.4 },
+  cinder: { name: 'Cinder Skin', desc: 'You deal 15% more damage, but every hit that lands on you burns.', dealMul: 1.15, burnOnHit: true },
+  brittle: { name: 'Brittle Bones', desc: 'You take 30% more damage, but foes have 25% less health.', takenMul: 1.3, foeHpMul: 0.75 },
   frail: { name: 'Frail', desc: 'You have 30% less health, but your hits stagger much harder.', maxHpMul: 0.7, poiseMul: 1.6 },
 };
 export const MOD_IDS = Object.keys(MODS);

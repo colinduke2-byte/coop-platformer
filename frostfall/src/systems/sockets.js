@@ -31,5 +31,25 @@ export function gemBonus(key) {
     if (!id) continue;
     for (const g of socketed(id)) if (g) n += ITEMS[g]?.gem?.[key] || 0;
   }
-  return n;
+  return n + runeBonus(key);
 }
+
+// ---- runes: one per weapon or armour, adding an effect rather than a stat
+const RUNE_ON = { weapon: 'weapon', weapon2h: 'weapon', armor: 'armor' };
+export const runeSlot = (id) => RUNE_ON[ITEMS[id]?.type] || null;
+export const runeOf = (id) => S.runes?.[id] || null;
+export const runeFits = (itemId, runeId) => !!runeSlot(itemId) && ITEMS[runeId]?.rune?.on === runeSlot(itemId);
+export const runeList = (itemId) => Object.keys(ITEMS).filter((k) => ITEMS[k].type === 'rune' && count(k) > 0 && runeFits(itemId, k));
+export function setRune(itemId, runeId) {
+  if (!runeFits(itemId, runeId) || count(runeId) < 1) return false;
+  if (runeOf(itemId)) unsetRune(itemId);
+  removeItem(runeId, 1); (S.runes = S.runes || {})[itemId] = runeId; return true;
+}
+export function unsetRune(itemId) {
+  const r = runeOf(itemId); if (!r) return false;
+  addItem(r, 1, true); delete S.runes[itemId]; return true;
+}
+const equippedRunes = () => ['weapon', 'armor'].map((sl) => ITEMS[runeOf(S.equip?.[sl])]?.rune).filter(Boolean);
+export const runeElem = () => ITEMS[runeOf(S.equip?.weapon)]?.rune?.elem || null;
+export const runeThorns = () => equippedRunes().reduce((a, r) => a + (r.thorns || 0), 0);
+export const runeBonus = (key) => equippedRunes().reduce((a, r) => a + (typeof r[key] === 'number' ? r[key] : 0), 0);
