@@ -158,7 +158,7 @@ export const ENEMIES = {
     name: 'Skaldrath', title: 'SKALDRATH, THE EMBER WYRM', tex: 'spr_dragon', sideOnly: true, bark: 'wolf', weak: { frost: 1.6, shock: 1.1, fire: 0.05 },
     hp: 1000, speed: 36, chase: 46, dmg: 30, detect: 9999,
     kind: 'boss', range: 46, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
-    body: [14, 8, 1, 7], loot: { gold: [350, 500], drops: [['hp_potion_g', 1], ['mp_potion_g', 1]] },
+    body: [28, 14, 10, 14], loot: { gold: [350, 500], drops: [['hp_potion_g', 1], ['mp_potion_g', 1]] },
   },
   // --- combat-variety enemies: each one asks the player to change habits ---
   reaver: {

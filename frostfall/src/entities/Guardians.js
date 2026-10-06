@@ -69,7 +69,7 @@ export class LongWinter extends PatternBoss {
 export class EmberDragon extends PatternBoss {
   constructor(scene, x, y) {
     super(scene, x, y, 'dragon', TUNE.dragon, {
-      scale: 3.6, flag: 'dragonDead', heart: null, toast: 'SKALDRATH FALLS', summon: ['wyvern'], col: 12, tier: 3,
+      scale: 1.9, flag: 'dragonDead', heart: null, toast: 'SKALDRATH FALLS', summon: ['wyvern'], col: 12, tier: 3,
       phaseAt: [0.66, 0.33], phaseText: { 2: 'THE SKY BURNS', 3: 'EMBER FURY' },
       onVictory: (sc, b) => {
         sc.pickups.push(new Pickup(sc, b.x - 16, b.y + 8, { type: 'item', id: 'dragonscale_armor', big: true }));

@@ -229,25 +229,91 @@ function wyvernFrame(ctx, ox, fr) {
   r(13, 11, 6, 4, 3); r(6, 13, 5, 1, 1); r(15, 14, 9, 1, 2); r(11, 13, 7, 1, 1); r(13, 8, 4, 2, 2);                                // head, horn, eye
   r(12, 14, 8, 2, 1);
 }
-function dragonFrame(ctx, ox, fr) {
+// Skaldrath is drawn on a bigger 48x32 cell so it can have a real dragon silhouette: horned head on a curving
+// neck, open jaw with fire, bat wings, spiked tail, clawed legs. Faces right; fr = wing beat (0 mid, 1 up, 2 down).
+function px(ctx, col, x, y) { ctx.fillStyle = PAL[col]; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
+function line(ctx, col, x0, y0, x1, y1) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+  for (let i = 0; i <= n; i++) px(ctx, col, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n);
+}
+function tri(ctx, col, ax, ay, bx, by, cx, cy) {
+  const x0 = Math.floor(Math.min(ax, bx, cx)), x1 = Math.ceil(Math.max(ax, bx, cx));
+  const y0 = Math.floor(Math.min(ay, by, cy)), y1 = Math.ceil(Math.max(ay, by, cy));
+  const d = (bx - ax) * (cy - ay) - (cx - ax) * (by - ay) || 1;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const u = ((x - ax) * (cy - ay) - (cx - ax) * (y - ay)) / d, v = ((bx - ax) * (y - ay) - (x - ax) * (by - ay)) / d;
+    if (u >= -0.02 && v >= -0.02 && u + v <= 1.02) px(ctx, col, x, y);
+  }
+}
+const DRAGON_WING = [
+  { el: [15, 8], wr: [8, 4], tips: [[0, 8], [2, 15], [8, 19], [13, 18]] },
+  { el: [17, 5], wr: [12, 0], tips: [[3, 2], [1, 9], [5, 15], [12, 17]] },
+  { el: [14, 17], wr: [6, 21], tips: [[0, 22], [3, 28], [10, 30], [15, 24]] },
+];
+function dragonWing(ctx, w, sx, sy, dx, dy, mem, bone) {
+  const S = [sx, sy], P = (p) => [p[0] + dx, p[1] + dy];
+  const el = P(w.el), wr = P(w.wr), tips = w.tips.map(P);
+  tri(ctx, mem, S[0], S[1], wr[0], wr[1], tips[0][0], tips[0][1]);
+  for (let i = 0; i < tips.length - 1; i++) tri(ctx, mem, S[0], S[1], tips[i][0], tips[i][1], tips[i + 1][0], tips[i + 1][1]);
+  line(ctx, bone, S[0], S[1], el[0], el[1]); line(ctx, bone, el[0], el[1], wr[0], wr[1]);
+  tips.forEach((t) => line(ctx, bone, wr[0], wr[1], t[0], t[1]));
+}
+function dragonBig(ctx, ox, fr) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
-  const up = fr === 1, dn = fr === 2;
-  r(11, up ? 0 : 2, up ? 0 : 1, 8, up ? 6 : 4); r(12, up ? 1 : 3, up ? 1 : 2, 5, up ? 4 : 2); r(1, up ? 0 : 2, up ? 0 : 1, 3, 1);  // near wing, claws
-  r(11, dn ? 5 : 3, dn ? 8 : 7, 7, 4); r(12, dn ? 6 : 4, dn ? 9 : 8, 5, 2);                                                       // far wing
-  r(11, 6, 5, 9, 6); r(6, 6, 5, 9, 1); r(12, 7, 9, 5, 2); r(11, 4, 8, 2, 4); r(3, 0, 7, 6, 1); r(11, 0, 8, 1, 3);                   // body, belly plates
-  r(11, 11, 4, 4, 5); r(6, 11, 4, 4, 1); r(12, 13, 7, 2, 2); r(13, 14, 9, 1, 2); r(0, 15, 6, 1, 2); r(12, 15, 8, 1, 1); r(3, 12, 3, 1, 3); // head, horns, jaw, fire, eye
-  r(11, 15, 11, 1, 2);
+  const P = (c, x, y) => px(ctx, c, ox + x, y);
+  const L = (c, x0, y0, x1, y1) => line(ctx, c, ox + x0, y0, ox + x1, y1);
+  const bob = fr === 1 ? 1 : 0;
+  const W = DRAGON_WING[fr];
+  // far wing first (darker, peeking behind)
+  dragonWing(ctx, W, ox + 22, 15 + bob, ox + 5, -2, 14, 1);
+  // tail: thick at the hip, whipping out to a spade tip, spikes on top
+  [[11, 20, 5, 4], [8, 22, 4, 3], [5, 23, 4, 3], [2, 24, 4, 2], [0, 25, 3, 2]].forEach(([x, y, w, h]) => r(11, x, y + bob, w, h));
+  r(12, 3, 24 + bob, 5, 1); r(12, 7, 22 + bob, 4, 1);
+  [[10, 19], [7, 21], [4, 22], [1, 23]].forEach(([x, y]) => { P(13, x, y + bob); P(13, x + 1, y + bob); P(13, x, y - 1 + bob); });
+  tri(ctx, 12, ox + 0, 24 + bob, ox + 0, 29 + bob, ox + 4, 27 + bob);   // spade tail tip
+  // hind leg + front leg (claws), walking
+  const lift = fr === 2 ? 1 : 0;
+  r(11, 13, 23, 6, 4); r(12, 14, 23, 4, 1);                      // thigh
+  r(11, 14, 26, 3, 3 - lift); r(13, 13, 29 - lift, 5, 1); P(6, 13, 30 - lift); P(6, 15, 30 - lift); P(6, 17, 30 - lift);
+  r(11, 27, 24, 4, 3); r(11, 28, 26, 3, 3 - (1 - lift)); r(13, 27, 29 - (1 - lift), 5, 1); P(6, 28, 30 - (1 - lift)); P(6, 30, 30 - (1 - lift)); P(6, 32, 30 - (1 - lift));
+  // body: barrel chest, golden belly plates, dorsal ridge
+  r(11, 11, 15 + bob, 20, 9); r(11, 13, 14 + bob, 16, 1); r(11, 14, 24 + bob, 14, 1);
+  r(12, 14, 16 + bob, 12, 2);                                    // scale highlight
+  r(13, 13, 22 + bob, 17, 2); for (let x = 14; x < 30; x += 3) P(12, x, 22 + bob);
+  [[13, 13], [16, 13], [19, 13], [22, 13], [25, 13]].forEach(([x, y]) => { P(13, x, y + bob); P(13, x, y - 1 + bob); });
+  // neck: sweeps up and forward in an S
+  r(11, 28, 13 + bob, 5, 7); r(11, 31, 10, 5, 7); r(11, 33, 7, 5, 6);
+  r(13, 31, 15, 2, 4); r(13, 33, 12, 2, 3); r(13, 35, 9, 2, 3);  // throat plates
+  [[30, 10], [33, 7], [35, 4]].forEach(([x, y]) => { P(13, x, y + (x === 30 ? bob : 0)); });
+  // head: wedge snout, brow, open jaw, teeth, nostril, ember eye, swept-back horns
+  const jaw = fr === 1 ? 4 : fr === 2 ? 2 : 3;
+  r(11, 35, 3, 6, 5); r(11, 40, 4, 6, 3); r(12, 41, 4, 4, 1);    // skull + upper snout
+  P(0, 44, 4); P(0, 45, 4);                                      // nostril
+  r(11, 36, 3, 4, 1); r(12, 36, 2, 3, 1);                        // brow ridge
+  tri(ctx, 11, ox + 36, 8, ox + 46, 7 + jaw, ox + 38, 8 + jaw);  // lower jaw
+  r(1, 38, 7, 8, 1 + Math.max(0, jaw - 2));                      // mouth gap shadow
+  r(12, 39, 7, 6, 1);                                            // tongue/glow
+  [40, 42, 44].forEach((x) => P(6, x, 7));                       // upper fangs
+  [41, 43, 45].forEach((x) => P(6, x, 6 + jaw));                 // lower fangs
+  if (fr === 1) { r(13, 46, 6, 2, 3); r(12, 47, 5, 1, 4); }      // fire licking from the open maw
+  P(13, 38, 4); P(0, 39, 4);                                     // eye
+  L(6, 36, 3, 31, 0); L(10, 37, 2, 33, 0); P(6, 35, 3);          // horns
+  L(13, 35, 6, 31, 7);                                           // spine frill
+  // near wing on top
+  dragonWing(ctx, W, ox + 20, 15 + bob, ox, bob, 12, 0);
+  // wing shoulder/muscle
+  r(11, 17, 14 + bob, 6, 3); r(12, 18, 14 + bob, 3, 1);
 }
 
 // 1px dark outline inside each 16x16 cell so sprites read on bright snow.
-function outline(ctx, w, h) {
+function outline(ctx, w, h, cw = 16) {
   const img = ctx.getImageData(0, 0, w, h), d = img.data;
   const a = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : d[(y * w + x) * 4 + 3]);
   const add = [];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (a(x, y)) continue;
-    const cx = x % 16;
-    const nb = (cx > 0 && a(x - 1, y)) || (cx < 15 && a(x + 1, y)) || (y > 0 && a(x, y - 1)) || (y < h - 1 && a(x, y + 1));
+    const cx = x % cw;
+    const nb = (cx > 0 && a(x - 1, y)) || (cx < cw - 1 && a(x + 1, y)) || (y > 0 && a(x, y - 1)) || (y < h - 1 && a(x, y + 1));
     if (nb) add.push([x, y]);
   }
   ctx.fillStyle = PAL[0];
@@ -279,7 +345,13 @@ function buildCharacters(scene) {
   make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
   make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
   make('spr_wyvern', (ctx, x, d, f) => wyvernFrame(ctx, x, f), ['side']);
-  make('spr_dragon', (ctx, x, d, f) => dragonFrame(ctx, x, f), ['side']);
+  {
+    const cv = canvas(48 * 3, 32), ctx = cv.getContext('2d');
+    for (let f = 0; f < 3; f++) dragonBig(ctx, f * 48, f);
+    outline(ctx, cv.width, cv.height, 48);
+    const tex = scene.textures.addCanvas('spr_dragon', cv);
+    for (let f = 0; f < 3; f++) tex.add(`side${f}`, 0, f * 48, 0, 48, 32);
+  }
   make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
