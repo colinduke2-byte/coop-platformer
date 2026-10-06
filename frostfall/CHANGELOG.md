@@ -252,3 +252,8 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - Lore tab now also holds an item index (every item you have owned) and shows discovery totals.
 - Journal shows a NEXT line for each active quest.
 - Test: stage41_access.
+
+## Round 15 - Technical debt (Phase 8)
+- GameScene split 1081 -> 702 lines: arena runs (`world/arenaRun.js`), pets/allies (`world/companions.js`), kill and boss handlers (`world/kills.js`), world events/quests/finale (`world/events.js`), shared tables (`world/sceneConsts.js`).
+- Player split 687 -> 314 lines: combat/blocking/damage (`entities/playerCombat.js`) and bow/ammo/shout/potions (`entities/playerBow.js`).
+- New `test/perf.mjs`: 34 enemies on screen, update loop must average under 4 ms (measured ~1 ms) and the scene must stay under 4000 objects.
