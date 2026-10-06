@@ -90,6 +90,30 @@ await G(() => { const g = window.__ff.game.scene.getScene('Game'); const ex = g.
 await h.sleep(1200);
 check('the stairs lead back to the open world', (await G(() => window.__ff.game.scene.getScene('Game').mapId)) === 'forest');
 
+// ---- fast travel + bounty board contracts
+await G(() => window.__ff.game.scene.getScene('Game').scene.restart({ map: 'forest', spawn: 'west' }));
+await h.sleep(900);
+const fire = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const f = g.fires[g.fires.length - 1]; return { x: f.x, y: f.y, key: f.key }; });
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.player.mode = 'free'; });
+await tp(fire.x / 16, fire.y / 16 + 3); await h.sleep(900);
+check('walking up to a campfire discovers it', await G(([k]) => !!window.__ff.S.flags.fires[k], [fire.key]));
+await tp(5, 15); await h.sleep(500);
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.getChildren().forEach((e) => { e.alerted = false; }); const f = g.fires[g.fires.length - 1]; g.fastTravel(f); });
+await h.sleep(1500);
+const moved = await G(([fx, fy]) => { const p = window.__ff.game.scene.getScene('Game').player; return Math.hypot(p.x - fx, p.y - fy); }, [fire.x, fire.y]);
+check('fast travel moves you to the campfire', moved < 40, String(moved));
+
+const con = await G(async () => {
+  const c = await import('/src/data/contracts.js'); const S = window.__ff.S;
+  S.bounty = {}; S.contracts = null;
+  const cs = c.ensureContracts(); const o = cs.offers[0];
+  c.acceptContract(o);
+  const wp = JSON.stringify(S.flags.waypoint);
+  const g0 = S.gold; const sc = window.__ff.game.scene.getScene('Game');
+  const done = c.completeContract(o.id, sc);
+  return { n: cs.offers.length, wp, done, paid: S.gold - g0, left: S.contracts.active.length, o: o.id, again: c.completeContract(o.id, sc) };
+});
+check('the board offers daily contracts, sets a waypoint, pays once', con.n >= 3 && con.done && con.paid > 40 && con.left === 0 && !con.again, JSON.stringify(con));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'OPEN WORLD FAILED' : 'OPEN WORLD PASSED');

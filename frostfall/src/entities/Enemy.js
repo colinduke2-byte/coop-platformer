@@ -27,6 +27,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shadow = scene.add.image(x, y, 'shadow');
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
     this.tier = spec.tier || 0;
+    this.poise = 0;
     this.camp = spec.camp || null;
     this.takenMul = 1;
     // regions further from the start hit harder and last longer
@@ -106,6 +107,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.slowT -= dt;
     this.guardBroken = Math.max(0, (this.guardBroken || 0) - dt);
     this.openT = Math.max(0, (this.openT || 0) - dt);
+    this.staggerT = Math.max(0, (this.staggerT || 0) - dt);
+    if (this.poise > 0) { this.poiseT = (this.poiseT || 0) - dt; if (this.poiseT < 0) this.poise = Math.max(0, this.poise - this.maxHp * 0.16 * dt); }
     this.dodgeCd = (this.dodgeCd || 0) - dt;
     if (this.markT > 0) {
       this.markT -= dt;
@@ -435,8 +438,19 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     if (em >= 1.2) sc.fx.text(this.x, this.y - 21, 'WEAK', 12, 0.8); else if (em <= 0.7) sc.fx.text(this.x, this.y - 21, 'RESIST', 4, 0.8);
     if (info.src === 'arrow') this.stuck = (this.stuck || 0) + 1;
+    if (this.staggerT > 0) dmg = Math.round(dmg * 1.35);
     this.hp -= dmg;
     this.flashT = 0.1;
+    // poise: chip away enough and the enemy staggers, opening it (and armour) up for a burst
+    if (!this.isBoss && !this.cfg.passive && (info.src === 'melee' || info.src === 'arrow' || info.src === 'fire' || info.src === 'shock')) {
+      this.poise = (this.poise || 0) + dmg * (info.poise || 1) * (info.src === 'melee' ? 1 : 0.6);
+      this.poiseT = 1.6;
+      if (this.poise >= this.maxHp * 0.42 && this.staggerT <= 0 && this.hp > 0) {
+        this.poise = 0; this.staggerT = 1.5; this.stun = Math.max(this.stun, 1.5); this.openT = Math.max(this.openT || 0, 1.5);
+        this.setState('recover', 1.5); this.marker?.destroy(); this.marker = null;
+        sc.fx.text(this.x, this.y - 24, 'STAGGERED', 13, 1); sfx.play('guardbreak'); sc.fx.ring(this.x, this.y + 4, 0.8, 0.4, 'ring', 0xf4d460);
+      }
+    }
     if (this.cfg.passive) this.scaredT = 5;
     if (!this.alerted && !this.cfg.passive) this.alert(true);
     if (info.slow) this.slowT = Math.max(this.slowT, info.slow);
@@ -479,6 +493,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.dead = true;
     if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
     if (this.spawnKey) this.scene.markKilled?.(this);
+    if (this.champion) this.scene.onChampionDown?.(this);
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;
     this.scene.enemies.remove(this);

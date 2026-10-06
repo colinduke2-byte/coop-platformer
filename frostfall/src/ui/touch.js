@@ -12,7 +12,7 @@ const BUTTONS = [
 // Everything else lives in a ring that opens from MORE. [label, code, toggle]
 const RING = [
   ['BOW', 'KeyK'], ['MAG', 'KeyL'], ['SWAP', 'KeyQ'], ['SHOUT', 'KeyR'],
-  ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['AMMO', 'KeyV'], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
+  ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['AMMO', 'KeyV'], ['HEAVY', 'KeyU'], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
 ];
 const TOP = [['||', 'Escape', 'right:10px;top:10px']];
 

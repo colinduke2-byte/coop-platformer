@@ -3,6 +3,7 @@ import { bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { dist } from '../util.js';
 import { S } from '../systems/state.js';
+import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { bl } from '../systems/bless.js';
 
@@ -84,7 +85,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       const special = this.ammo;
       const crit = Math.random() < stats.sum('crit');
       const dealt = e.takeHit({
-        dmg: this.dmg * mult * bl('dmgMul', 1) * (crit ? 1.8 : 1), kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
+        dmg: this.dmg * mult * bl('dmgMul', 1) * (crit ? 1.8 : 1) * (pl.counterT > 0 ? TUNE.player.perfect.mult : 1), kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
         element: special === 'fire_arrow' ? 'fire' : null,
         dot: special === 'fire_arrow' ? { dps: 4, t: 3, col: 12 } : special === 'bleed_arrow' ? { dps: 3, t: 5, col: 11 } : null,
       });

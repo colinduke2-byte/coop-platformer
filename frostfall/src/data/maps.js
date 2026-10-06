@@ -56,6 +56,8 @@ function buildVillage() {
   g.scatter(TILE.STUMP, 4, 8);
   g.scatter(TILE.ROCK, 8, 4);
   g.add({ t: 'npc', id: 'sigrid', x: 20, y: 9 });
+  g.add({ t: 'board', x: 22, y: 11 });
+  g.res[11][22] = true; g.t[11][22] = TILE.PATH;
   g.add({ t: 'npc', id: 'bjorn', x: 7, y: 11 });
   g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
   g.dress('late');

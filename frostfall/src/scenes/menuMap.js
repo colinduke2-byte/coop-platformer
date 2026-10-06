@@ -41,6 +41,10 @@ export function mapTab(m) {
           curMode = false; sfx.play('equip');
         }
       }
+      if (curMode && keys.pressed('block')) {
+        const f = (gs.fires || []).find((q) => S.flags.fires?.[q.key] && Math.abs(q.tx - cur.x) <= 1 && Math.abs(q.ty - cur.y) <= 1);
+        if (f) { m.close(); gs.fastTravel(f); return; }
+      }
       if (curMode) {
         rep -= 1;
         const dx = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0), dy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
@@ -89,7 +93,9 @@ export function mapTab(m) {
           if (seen(Math.floor(tx), Math.floor(ty)) && MAPS[e.to]) labels.push([tx, ty, 'TO ' + MAPS[e.to].name.toUpperCase()]);
         } else if (e.t === 'npc') dot(e.x, e.y, 6);
         else if (e.t === 'chest' && !S.flags['chest_' + e.id]) dot(e.x, e.y, 13);
-        else if (e.t === 'fire' && e.rest) dot(e.x, e.y, 12, sc + 1);
+        else if (e.t === 'fire' && e.rest) { const found = S.flags.fires?.[`${gs.mapId}:${e.x},${e.y}`]; if (found || !gs.def.stream) dot(e.x, e.y, 12, sc + 2); }
+        else if (e.t === 'shrine') dot(e.x, e.y, 14, sc + 1);
+        else if (e.t === 'bounty') { if (seen(Math.floor(e.x), Math.floor(e.y))) dot(e.x, e.y, S.bounty[e.id] ? 3 : 11, sc + 1); }
         else if (e.t === 'boss' && !S.flags.bossDead) dot(e.x, e.y, 11, sc + 2);
       }
       const marker = (tg, col) => {
@@ -105,6 +111,9 @@ export function mapTab(m) {
       if (wp && wp.map === gs.mapId) marker(wp, 8);
       const pxp = ox + Math.floor(p.x / T * sc), pyp = oy + Math.floor((p.y + 3) / T * sc);
       if (inView(pxp - 1, pyp - 1, 4, 4) && Math.floor(m.time.now / 350) % 2 === 0) { g.fillStyle(C[0]); g.fillRect(pxp - 1, pyp - 1, 4, 4); g.fillStyle(C[13]); g.fillRect(pxp, pyp, 2, 2); }
+      // fast travel hint: cursor on a found campfire
+      const fireAt = curMode && cur ? (gs.fires || []).find((f) => S.flags.fires?.[f.key] && Math.abs(f.tx - cur.x) <= 1 && Math.abs(f.ty - cur.y) <= 1) : null;
+      if (fireAt) m.T(10, 135, 'F: FAST TRAVEL TO THIS CAMPFIRE', 12);
       if (curMode && cur) {
         const [qx, qy] = [ox + cur.x * sc, oy + cur.y * sc];
         g.lineStyle(1, C[6]); g.strokeRect(qx - 1.5, qy - 1.5, sc + 3, sc + 3);
@@ -121,7 +130,7 @@ export function mapTab(m) {
       m.T(10, 26, MAPS[gs.mapId].name + (zoom ? '  ' + ZOOMS[zoom] + 'X' : ''), 13);
       const ly = 143;
       let lx = 12;
-      [[13, 'YOU'], [15, 'EXIT'], [12, 'CAMP'], [6, 'NPC'], [13, 'LOOT'], [11, 'BOSS'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {
+      [[13, 'YOU'], [15, 'EXIT'], [12, 'FIRE'], [14, 'SHRINE'], [11, 'FOE SITE'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {
         g.fillStyle(C[c]); g.fillRect(lx, ly + 1, 4, 4);
         m.T(lx + 7, ly, t, 4);
         lx += 7 + t.length * 6 + 3;

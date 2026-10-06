@@ -8,6 +8,8 @@ export const TUNE = {
   roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },
   sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4, rollCancel: 0.55 },
   lock: { range: 150, drop: 190 },
+  perfect: { window: 0.17, counter: 2.0, mult: 1.6, refund: 24, slow: 0.3, slowMs: 480 },
+  heavy: { cost: 30, windup: 0.3, total: 0.62, dmg: 2.3, kb: 300, size: 30, stun: 1.0, poise: 3 },
   // 3-hit combo: tap J again inside the chain window. The third swing is a heavy finisher.
   combo: [
     { dmg: 1, kb: 120, size: 18, total: 0.3, cost: 1, flip: false, scale: 1, stun: 0.22 },

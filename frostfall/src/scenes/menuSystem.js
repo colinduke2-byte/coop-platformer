@@ -12,13 +12,13 @@ import { MAPS } from '../data/maps.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
-  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['lockon', 'LOCK ON'], ['ammo', 'SWITCH ARROWS'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
+  ['spell', 'CAST SPELL'], ['swap', 'SWAP SPELL'], ['shout', 'SHOUT'], ['lockon', 'LOCK ON'], ['ammo', 'SWITCH ARROWS'], ['heavy', 'HEAVY ATTACK'], ['block', 'BLOCK'], ['sneak', 'SNEAK'], ['interact', 'INTERACT'],
   ['potion1', 'HEALTH POTION'], ['potion2', 'MANA POTION'], ['potion3', 'STAMINA POTION'], ['inventory', 'PACK'], ['journal', 'JOURNAL'], ['map', 'MAP'], ['pause', 'PAUSE MENU'],
   ['spell1', 'QUICK FIREBALL'], ['spell2', 'QUICK FROST'], ['spell3', 'QUICK LIGHTNING'], ['spell4', 'QUICK HEALING'], ['spell5', 'QUICK WARD'],
 ];
 const CONTROLS = [
   ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD 3X COMBO'], ['K HOLD', 'BOW, CHARGE'],
-  ['L / Q', 'SPELL / SWAP'], ['R', 'SHOUT'], ['T', 'LOCK ON TARGET'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK (HOLD)'],
+  ['L / Q', 'SPELL / SWAP'], ['R', 'SHOUT'], ['U', 'HEAVY ATTACK'], ['T', 'LOCK ON TARGET'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK (HOLD)'],
   ['E', 'TALK/OPEN/REST'], ['1 2 3', 'POTIONS'], ['4-8', 'QUICK-CAST SPELL'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
 ];
 const DIFFS = ['easy', 'normal', 'hard'];

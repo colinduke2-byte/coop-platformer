@@ -15,6 +15,7 @@ import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
 import { settings } from '../systems/settings.js';
 import { stats } from '../systems/stats.js';
+import { BLESSINGS } from '../systems/bless.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
@@ -152,8 +153,10 @@ export default class HudScene extends Phaser.Scene {
 
   // Small status row under the bars: ward / weapon enchant / lock-on, each with its remaining time.
   drawStatus(g, pl, y0) {
-    if (!this.statTxt) this.statTxt = [0, 1, 2, 3].map(() => txt(this, 0, 0, '', 15));
+    if (!this.statTxt) this.statTxt = [0, 1, 2, 3, 4, 5].map(() => txt(this, 0, 0, '', 15));
     const list = [];
+    if (pl.counterT > 0) list.push(['COUNTER ' + pl.counterT.toFixed(1), 15]);
+    if (S.blessing) list.push([BLESSINGS[S.blessing].name.toUpperCase(), BLESSINGS[S.blessing].kind === 'pact' ? 11 : 13]);
     if (pl.ward) list.push(['WARD ' + Math.ceil(pl.ward.t), 15]);
     const en = stats.enchant();
     if (en) list.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);

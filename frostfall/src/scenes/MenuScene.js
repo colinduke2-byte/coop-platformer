@@ -11,11 +11,13 @@ import { stats } from '../systems/stats.js';
 import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
+import { RARITY } from '../systems/genloot.js';
 
 const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
 const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
 const SORTS = ['TYPE', 'NAME', 'VALUE'];
+const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
 export function panel(g, x, y, w, h, fill = 1) {
   g.fillStyle(C[0]); g.fillRect(x, y, w, h);
@@ -193,7 +195,8 @@ export default class MenuScene extends Phaser.Scene {
       if (i === this.cursor) { g.fillStyle(C[3]); g.fillRect(8, y, 146, 17); g.fillStyle(C[13]); g.fillRect(8, y, 2, 17); }
       this.I(12, y, iconKey(id), 1);
       const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
-      this.T(30, y + 5, (it.name + up).slice(0, 17), i === this.cursor ? 6 : 5);
+      const rc = rarityCol(id);
+      this.T(30, y + 5, (it.name + up).slice(0, 17), rc ?? (i === this.cursor ? 6 : 5));
       const c = S.inv[id];
       const tag = S.equip.offhand === id ? 'O' : Object.values(S.equip).includes(id) ? 'E' : '';
       if (tag) this.T(146 - 6, y + 5, tag, 13);
@@ -213,7 +216,7 @@ export default class MenuScene extends Phaser.Scene {
       if (id) {
         this.I(rx + 46, y - 2, iconKey(id), 0.75);
         const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
-        this.T(rx + 60, y + 1, (ITEMS[id].name + up).slice(0, 15), 6);
+        this.T(rx + 60, y + 1, (ITEMS[id].name + up).slice(0, 15), rarityCol(id) ?? 6);
       } else this.T(rx + 60, y + 1, '-', 3);
     });
     // stats
@@ -228,14 +231,14 @@ export default class MenuScene extends Phaser.Scene {
     const id = list[this.cursor];
     if (id) {
       const it = ITEMS[id];
-      this.T(rx + 6, 123, it.name, 13);
-      let line = it.desc;
+      this.T(rx + 6, 123, it.name.slice(0, 24), rarityCol(id) ?? 13);
+      let line = it.gen ? [it.rarity.toUpperCase(), ...(it.affixLines || [])].join('. ') + '.' : it.desc;
       const slot = SLOT_OF[it.type];
       if (slot) {
         const cur = ITEMS[S.equip[slot]] || {};
         const diff = (a, b, pct) => { const d = (a || 0) - (b || 0); const f = pct ? Math.round(d * 100) + '%' : d; return d === 0 ? '' : (d > 0 ? ' (+' : ' (') + f + ')'; };
-        if (it.dmg) line = `DMG ${it.dmg}${diff(it.dmg, cur.dmg)}. ` + it.desc;
-        if (it.armor) line = `ARMOR ${Math.round(it.armor * 100)}%${diff(it.armor, cur.armor, true)}. ` + it.desc;
+        if (it.dmg) line = `DMG ${it.dmg}${diff(it.dmg, cur.dmg)}. ` + line;
+        if (it.armor) line = `ARMOR ${Math.round(it.armor * 100)}%${diff(it.armor, cur.armor, true)}. ` + line;
       }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
       this.T(rx + 6, 132, wrap(line, 24).split('\n').slice(0, 3).join('\n'), 5);

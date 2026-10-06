@@ -61,6 +61,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.lockG = scene.add.graphics();
   }
 
+  perfectDodge(attacker) {
+    const sc = this.scene;
+    this.lastPerfect = sc.t; this.counterT = P.perfect.counter;
+    S.sp = Math.min(S.maxSp, S.sp + P.perfect.refund);
+    sc.slowmo(P.perfect.slow, P.perfect.slowMs);
+    sc.fx.text(this.x, this.y - 22, 'PERFECT DODGE', 15, 1.1);
+    sc.fx.ring(this.x, this.y + 4, 1.1, 0.5, 'ring', 0x5cc8d8);
+    sfx.play('parry');
+    attacker.stun = Math.max(attacker.stun || 0, attacker.isBoss ? 0.25 : 0.7);
+    if (attacker.state === 'attack' || attacker.state === 'windup') attacker.setState('recover', 0.7);
+    this.gainXp('sneak', 3);
+  }
+
   // Gear / blessing lifesteal.
   leechHeal(dealt) {
     const ls = stats.sum('lifesteal');
@@ -131,6 +144,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.flashT -= dt;
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
     this.heat = Math.max(0, (this.heat || 0) - P.cast.heatDecay * dt);
+    this.counterT = Math.max(0, (this.counterT || 0) - dt);
     this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
@@ -212,6 +226,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   actions(ix, iy) {
     if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost)) {
       this.mode = 'roll';
+      this.rollStart = this.scene.t;
       this.rollCount = (this.rollCount || 0) + 1;
       this.rollT = P.roll.time;
       this.iframes = P.roll.iframes;
@@ -227,7 +242,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.lockT > 0) return;
     this.bowInput();
     if (this.drawing) return;
-    if (keys.pressed('sword') || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) this.startSwing();
+    if (keys.pressed('heavy')) this.startHeavy();
+    else if (keys.pressed('sword') || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) this.startSwing();
     else if (keys.pressed('spell')) this.cast();
     else if (this.quickCast()) { /* cast chosen spell directly */ }
     else if (keys.pressed('shout')) this.shout();
@@ -258,6 +274,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.velocity.x += this.face.x * (n === 2 ? 70 : 40); this.body.velocity.y += this.face.y * (n === 2 ? 70 : 40);
   }
 
+  // Heavy attack: a slow, telegraphed overhead blow that staggers and breaks guards.
+  startHeavy() {
+    const H = P.heavy, w = stats.weapon() || {};
+    if (!this.spend(H.cost * (w.costMul || 1) * bonus.swingCost())) return;
+    const c = { dmg: H.dmg, kb: H.kb, size: H.size + (w.sizeAdd || 0), total: H.total * (w.swing || 1), cost: 1, flip: false, scale: 1.6, stun: H.stun, hs: H.windup * (w.swing || 1), he: H.windup * (w.swing || 1) + 0.16, poise: H.poise, heavyAtk: true };
+    this.comboN = 0; this.comboT = 0;
+    this.swing = { t: 0, hit: new Set(), c };
+    this.lockT = c.total; this.lockMove = 0.12;
+    sfx.play('telegraph');
+    this.scene.fx.ring(this.x + this.face.x * 6, this.y + 3 + this.face.y * 6, 0.35, H.windup, 'ring', 0xf4d460);
+  }
+
   tickSwing(dt) {
     const s = this.swing;
     if (!s) { if (!this.blocking) this.heldImg.setVisible(false); return; }
@@ -272,7 +300,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         .setPosition(this.x + Math.cos(ang) * 3, this.y + 3 + Math.sin(ang) * 3).setRotation(ang).setScale(s.c.scale > 1 ? 1.15 : 1)
         .setDepth(this.y + (f.y < 0 ? 4 : 12)).setAlpha(1);
     }
-    if (s.t >= P.sword.hitStart && s.t <= P.sword.hitEnd) this.swordHit(s);
+    if (s.t >= (s.c.hs ?? P.sword.hitStart) && s.t <= (s.c.he ?? P.sword.hitEnd)) {
+      if (s.c.heavyAtk && !s.fired) {
+        s.fired = true; sfx.play('sword'); this.scene.shake(160, 0.007);
+        this.scene.fx.slash(this.x + this.face.x * 6, this.y + 2 + this.face.y * 6, Math.atan2(this.face.y, this.face.x), false, 1.7);
+        this.body.velocity.x += this.face.x * 90; this.body.velocity.y += this.face.y * 90;
+      }
+      this.swordHit(s);
+    }
     if (s.t >= s.c.total) this.swing = null;
   }
 
@@ -298,12 +333,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
-      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0));
+      dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1);
       const crit = Math.random() < stats.sum('crit');
       if (crit) dmg *= 1.8;
       if (exec) dmg = e.hp + 999;
       const dealt = e.takeHit({
-        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun, heavy,
+        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun, heavy, poise: s.c.poise || 1,
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
@@ -416,7 +451,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // ------------------------------------------------------------------ hurt
   hurt(dmg, sx, sy, opts = {}) {
     if (this.mode === 'dead' || this.mode === 'lying') return false;
-    if (this.iframes > 0 || this.invuln > 0) return false;
+    if (this.iframes > 0 || this.invuln > 0) {
+      // rolling at the very last moment is a perfect dodge: slow motion, stamina back, and a counter-attack bonus
+      if (this.mode === 'roll' && opts.attacker && !opts.attacker.dead && this.scene.t - (this.rollStart ?? -9) <= P.perfect.window && this.scene.t - (this.lastPerfect ?? -9) > 0.7) this.perfectDodge(opts.attacker);
+      return false;
+    }
     const sc = this.scene;
     let incoming = dmg, knock = opts.kb ?? P.hurt.kb, blocked = false;
 

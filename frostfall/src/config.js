@@ -53,6 +53,7 @@ export const BINDINGS = {
   shout: ['KeyR'],
   lockon: ['KeyT'],
   ammo: ['KeyV'],
+  heavy: ['KeyU'],
   block: ['KeyF'],
   sneak: ['KeyC', 'ShiftLeft'],
   interact: ['KeyE', 'Enter'],

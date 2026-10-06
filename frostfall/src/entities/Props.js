@@ -12,6 +12,7 @@ import { brewMenu, upgradeMenu, furnishMenu } from '../data/services.js';
 import { C } from '../config.js';
 import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
+import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
 
 // A readable wooden sign.
@@ -299,4 +300,17 @@ export class DigSpot extends Phaser.GameObjects.Image {
     }
     this.destroy();
   }
+}
+
+// The bounty board in the village plaza.
+export class BountyBoard extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'sign');
+    scene.add.existing(this); scene.physics.add.existing(this, true);
+    this.body.setSize(12, 8).setOffset(2, 7);
+    this.ix = x; this.iy = y; this.setDepth(y + 6).setTint(0xf4d460);
+  }
+  canInteract() { return true; }
+  label() { return 'E: BOUNTY BOARD'; }
+  async interact() { await runScript(async () => { await boardMenu(); }); }
 }

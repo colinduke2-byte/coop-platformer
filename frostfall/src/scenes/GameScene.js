@@ -6,6 +6,7 @@ import { rng, tierAt } from '../world/worldgen.js';
 import { applyElite } from '../entities/elite.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { hash } from '../util.js';
+import { completeContract } from '../data/contracts.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
 const TILE_DOOR = TILE.DOOR, TILE_FLOOR = TILE.CFLOOR;
 import { MAPS } from '../data/maps.js';
@@ -26,7 +27,7 @@ import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
 import Breakable from '../entities/Breakable.js';
-import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot } from '../entities/Props.js';
+import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
@@ -120,7 +121,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     built.entities.forEach((e, i) => { e._i = i; });
-    this.pend = []; this.campIds = new Set(); this.PickupClass = Pickup;
+    this.pend = []; this.fires = []; this.campIds = new Set(); this.PickupClass = Pickup;
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
     if (S.follower) this.spawnFollower();
@@ -214,6 +215,7 @@ export default class GameScene extends Phaser.Scene {
         break;
       }
       case 'bounty': this.campIds.add(e.id); break;
+      case 'board': { const bd = new BountyBoard(this, wx, wy); this.interactables.push(bd); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(bd); break; }
       case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
       case 'npc': {
         if (e.id === 'ragna' && S.follower) break;
@@ -277,7 +279,7 @@ export default class GameScene extends Phaser.Scene {
       case 'fire': {
         const f = this.add.image(wx, wy - 3, 'flame0').setDepth(wy + 12);
         this.flames.push({ f, ph: Math.random() * 3 });
-        if (e.rest) this.interactables.push(new RestSpot(this, wx, wy));
+        if (e.rest) { this.interactables.push(new RestSpot(this, wx, wy)); this.fires.push({ x: wx, y: wy, tx: e.x, ty: e.y, key: `${this.mapId}:${e.x},${e.y}` }); }
         if (e.auto) this.autoCheckpoints.push({ x: wx, y: wy, lit: false });
         break;
       }
@@ -325,6 +327,34 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // Campfires you have found can be travelled to from the map.
+  discoverFires() {
+    S.flags.fires = S.flags.fires || {};
+    for (const f of this.fires) {
+      if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
+      S.flags.fires[f.key] = true;
+      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('quest');
+    }
+  }
+
+  fastTravel(f) {
+    if (this.leaving || this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) { bus.emit('toast', 'NOT WITH ENEMIES NEAR', 11); return false; }
+    this.leaving = true;
+    const cam = this.cameras.main;
+    cam.fadeOut(350, 11, 14, 26);
+    cam.once('camerafadeoutcomplete', () => {
+      this.player.setPosition(f.x, f.y + 16); this.player.body.setVelocity(0, 0); this.player.mode = 'free'; this.player.target = null;
+      this.pend.forEach((p) => { if (p.live && !p.live.alerted) { p.live.despawn(); p.live = null; } });
+      this.streamTick();
+      cam.fadeIn(450, 11, 14, 26); this.leaving = false;
+      bus.emit('toast', 'FAST TRAVEL', 15);
+    });
+    return true;
+  }
+
+  // Brief bullet time (perfect dodges).
+  slowmo(scale, ms) { this.slowScale = scale; this.slowT = ms / 1000; this.physics.world.timeScale = 1 / scale; this.tweens.timeScale = scale; }
+
   // Persist a world kill; clearing every enemy of a camp pays a bounty.
   markKilled(en) {
     const sp = en.spec || {};
@@ -337,12 +367,21 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // A barrow champion falling counts as clearing that barrow.
+  onChampionDown(en) {
+    if (!/^barrow\d/.test(this.mapId) || !en.champion) return;
+    S.run.barrows++;
+    completeContract(this.mapId, this);
+    bus.emit('toast', 'THE BARROW GUARDIAN FALLS', 13);
+  }
+
   payBounty(id, tier) {
     if (S.bounty[id]) return;
     S.bounty[id] = true;
     const kind = (this.built.entities.find((x) => x.t === 'bounty' && x.id === id) || {}).kind || 'camp';
     const gold = Math.round((40 + 30 * tier) * (kind === 'champion' ? 1.6 : 1));
     S.gold += gold; S.run.camps++;
+    completeContract(id, this);
     this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(tier + (kind === 'champion' ? 1 : 0), Math.random, kind === 'champion' ? 2 : null) }));
     bus.emit('toast', `${kind.toUpperCase()} CLEARED  +${gold} GOLD`, 13);
     sfx.play('levelup'); this.fx.ring(this.player.x, this.player.y + 4, 1.4, 0.7, 'ring', 0xf4d460);
@@ -489,11 +528,13 @@ export default class GameScene extends Phaser.Scene {
         g.lineStyle(1, C[11], 0.35 + 0.5 * k);
         g.beginPath(); g.moveTo(Math.round(e.x), Math.round(e.y + 3)); g.lineTo(Math.round(e.x + e.dashDir.x * 90), Math.round(e.y + 3 + e.dashDir.y * 90)); g.strokePath();
       }
-      if (e.dead || e.hp >= e.maxHp || e.isBoss) continue;
-      const w = 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
-      g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, 4);
+      const pz = e.poise > e.maxHp * 0.06 || e.staggerT > 0;
+      if (e.dead || (e.hp >= e.maxHp && !pz) || e.isBoss) continue;
+      const w = e.elite ? 20 : 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
+      g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, pz ? 6 : 4);
       g.fillStyle(C[1]); g.fillRect(x, y, w, 2);
-      g.fillStyle(C[11]); g.fillRect(x, y, Math.max(1, Math.round((w * e.hp) / e.maxHp)), 2);
+      g.fillStyle(e.champion ? C[13] : e.elite ? C[14] : C[11]); g.fillRect(x, y, Math.max(1, Math.round((w * e.hp) / e.maxHp)), 2);
+      if (pz) { g.fillStyle(C[1]); g.fillRect(x, y + 3, w, 1); g.fillStyle(e.staggerT > 0 ? C[6] : C[13]); g.fillRect(x, y + 3, e.staggerT > 0 ? w : Math.min(w, Math.round(w * e.poise / (e.maxHp * 0.42))), 1); }
     }
   }
 
@@ -568,7 +609,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(time, ms) {
-    const dt = Math.min(ms, 50) / 1000;
+    const real = Math.min(ms, 50) / 1000;
+    if (this.slowT > 0) { this.slowT -= real; if (this.slowT <= 0) { this.physics.world.timeScale = 1; this.tweens.timeScale = 1; } }
+    const dt = real * (this.slowT > 0 ? this.slowScale : 1);
     if (ui.modal) { this.physics.world.pause(); return; }
     if (this.hitStopT > 0) { this.hitStopT -= dt; this.physics.world.pause(); return; }
     this.physics.world.resume();
@@ -576,7 +619,7 @@ export default class GameScene extends Phaser.Scene {
     this.t += dt;
     this.player.update(dt);
     updateTutorial(this, dt);
-    if (this.def.stream) { this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
+    if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
     if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
     for (const p of this.plates) p.update(this.player);
     for (const c of this.autoCheckpoints) {
