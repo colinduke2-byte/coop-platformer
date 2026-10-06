@@ -44,6 +44,7 @@ export default class PatternBoss extends Boss {
     this.phase2Stats();
     this.scene.arenaPhase?.(2);
     bus.emit('boss:phase', this.bphase);
+    music.setPhase(this.bphase);
   }
   enterPhase2() { /* handled by enterPhase */ }
   phase2Stats() { this.cdMul = this.bphase >= 3 ? 0.5 : 0.7; this.speedMul = this.bphase >= 3 ? 1.8 : 1.5; }
@@ -162,7 +163,7 @@ export default class PatternBoss extends Boss {
 
   restoreState(st) {
     this.hp = Math.max(1, Math.min(this.maxHp, st.hp));
-    if (st.phase >= 2) { this.bphase = st.phase; this.phase2Stats(); this.summoned = true; this.scene.arenaPhase?.(2); }
+    if (st.phase >= 2) { music.setPhase(st.phase); this.bphase = st.phase; this.phase2Stats(); this.summoned = true; this.scene.arenaPhase?.(2); }
   }
 
   victory(sc) {

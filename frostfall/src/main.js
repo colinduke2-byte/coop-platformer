@@ -15,6 +15,10 @@ import { unlock } from './audio/sfx.js';
 import { ui } from './systems/ui.js';
 import { settings } from './systems/settings.js';
 import { installTouch } from './ui/touch.js';
+import { loadPack } from './data/registry.js';
+import { TIER_MOBS } from './world/worldgen.js';
+import { installErrorLog } from './systems/debug.js';
+installErrorLog();
 
 const q = new URLSearchParams(location.search);
 
@@ -62,4 +66,12 @@ window.addEventListener('blur', () => {
 wireQuests();
 
 // Handy handle for the console and the automated tests.
-window.__ff = { game, S, keys, resetState, loadInto };
+window.__ff = { game, S, keys, resetState, loadInto, loadPack: (pack) => loadContentPack(pack) };
+// ?pack=<url> loads a JSON content pack (see src/data/registry.js) before the world is built
+function loadContentPack(pack) {
+  const r = loadPack(pack, TIER_MOBS);
+  console.log(`[pack ${r.name}] added ${r.added.length}, rejected ${r.rejected.length}`, r.rejected.length ? r.rejected : '');
+  return r;
+}
+const packUrl = new URLSearchParams(location.search).get('pack');
+if (packUrl) fetch(packUrl).then((r) => r.json()).then(loadContentPack).catch((e) => console.warn('pack failed', e));

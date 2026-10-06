@@ -1,4 +1,6 @@
 import { ITEMS } from '../data/items.js';
+import { statusList } from '../systems/status.js';
+import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
 import { txt, textW, wrap, normText } from '../art/font.js';
@@ -78,7 +80,8 @@ export default class HudScene extends Phaser.Scene {
     this.onHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 5, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; };
     bus.on('hint', this.onHint);
     this.debugTxt = txt(this, 4, 32, '', 15).setVisible(false);
-    this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); } };
+    this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); }
+      if (e.code === 'F4') { e.preventDefault(); copyDebugInfo(this).then((ok) => bus.emit('toast', ok ? 'DEBUG INFO COPIED' : 'DEBUG INFO READY (CONSOLE)', ok ? 13 : 4)); } };
     window.addEventListener('keydown', this.onKey);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
@@ -165,6 +168,7 @@ export default class HudScene extends Phaser.Scene {
     if (en) list.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);
     if (S.flags.restedUntil > S.playtime) list.push(['RESTED ' + Math.ceil((S.flags.restedUntil - S.playtime) / 60) + 'M', 8]);
     if (S.flags.food && S.flags.foodUntil > S.playtime) list.push([ITEMS[S.flags.food].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
+    for (const sl of statusList(pl)) list.push(sl);
     if (pl.sneaking) list.push(['SNEAK', 4]);
     if (pl.blocking) list.push(['GUARD', 7]);
     let x = 3;

@@ -136,6 +136,6 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   // ---- enemy projectile hits the player
   hitPlayer(p) {
     if (this.done || !this.enemyOwned) return;
-    if (p.hurt(this.dmg, this.x - this.body.velocity.x, this.y - this.body.velocity.y, { kb: 70 })) this.finish();
+    if (p.hurt(this.dmg, this.x - this.body.velocity.x, this.y - this.body.velocity.y, { kb: 70, inflict: this.inflict })) this.finish();
   }
 }

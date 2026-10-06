@@ -258,7 +258,7 @@ function dragonWing(ctx, w, sx, sy, dx, dy, mem, bone) {
   line(ctx, bone, S[0], S[1], el[0], el[1]); line(ctx, bone, el[0], el[1], wr[0], wr[1]);
   tips.forEach((t) => line(ctx, bone, wr[0], wr[1], t[0], t[1]));
 }
-function dragonBig(ctx, ox, fr) {
+function dragonBig(ctx, ox, fr, mode = null) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const P = (c, x, y) => px(ctx, c, ox + x, y);
   const L = (c, x0, y0, x1, y1) => line(ctx, c, ox + x0, y0, ox + x1, y1);
@@ -286,7 +286,7 @@ function dragonBig(ctx, ox, fr) {
   r(13, 31, 15, 2, 4); r(13, 33, 12, 2, 3); r(13, 35, 9, 2, 3);  // throat plates
   [[30, 10], [33, 7], [35, 4]].forEach(([x, y]) => { P(13, x, y + (x === 30 ? bob : 0)); });
   // head: wedge snout, brow, open jaw, teeth, nostril, ember eye, swept-back horns
-  const jaw = fr === 1 ? 4 : fr === 2 ? 2 : 3;
+  const jaw = mode === 'attack' ? 5 : mode === 'hurt' || mode === 'dead' ? 1 : fr === 1 ? 4 : fr === 2 ? 2 : 3;
   r(11, 35, 3, 6, 5); r(11, 40, 4, 6, 3); r(12, 41, 4, 4, 1);    // skull + upper snout
   P(0, 44, 4); P(0, 45, 4);                                      // nostril
   r(11, 36, 3, 4, 1); r(12, 36, 2, 3, 1);                        // brow ridge
@@ -295,8 +295,9 @@ function dragonBig(ctx, ox, fr) {
   r(12, 39, 7, 6, 1);                                            // tongue/glow
   [40, 42, 44].forEach((x) => P(6, x, 7));                       // upper fangs
   [41, 43, 45].forEach((x) => P(6, x, 6 + jaw));                 // lower fangs
-  if (fr === 1) { r(13, 46, 6, 2, 3); r(12, 47, 5, 1, 4); }      // fire licking from the open maw
-  P(13, 38, 4); P(0, 39, 4);                                     // eye
+  if (fr === 1 || mode === 'attack') { r(13, 46, 6, 2, 3); r(12, 47, 5, 1, 4); }      // fire licking from the open maw
+  if (mode === 'attack') { r(12, 44, 8, 3, 1); r(13, 45, 8, 1, 1); r(11, 47, 7, 1, 2); }   // a bigger gout of fire
+  if (mode === 'hurt' || mode === 'dead') { P(0, 38, 4); P(0, 39, 4); } else { P(13, 38, 4); P(0, 39, 4); }   // eye (shut when hurt)
   L(6, 36, 3, 31, 0); L(10, 37, 2, 33, 0); P(6, 35, 3);          // horns
   L(13, 35, 6, 31, 7);                                           // spine frill
   // near wing on top
@@ -318,6 +319,17 @@ function outline(ctx, w, h, cw = 16) {
   }
   ctx.fillStyle = PAL[0];
   for (const [x, y] of add) ctx.fillRect(x, y, 1, 1);
+}
+
+// A sheet of named frames of any cell size: frames = [{ name, draw(ctx, ox) }]. Used by creatures that need more than the
+// standard 3-frame humanoid layout (see ANIM_CLIPS in art/anim.js for how frames are grouped into animations).
+function buildSheet(scene, key, cw, ch, frames, post = null) {
+  const cv = canvas(cw * frames.length, ch), ctx = cv.getContext('2d');
+  frames.forEach((f, i) => f.draw(ctx, i * cw));
+  if (post) post(ctx, cw, ch, frames);
+  outline(ctx, cv.width, cv.height, cw);
+  const tex = scene.textures.addCanvas(key, cv);
+  frames.forEach((f, i) => tex.add(f.name, 0, i * cw, 0, cw, ch));
 }
 
 function buildCharacters(scene) {
@@ -345,13 +357,20 @@ function buildCharacters(scene) {
   make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
   make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
   make('spr_wyvern', (ctx, x, d, f) => wyvernFrame(ctx, x, f), ['side']);
-  {
-    const cv = canvas(48 * 3, 32), ctx = cv.getContext('2d');
-    for (let f = 0; f < 3; f++) dragonBig(ctx, f * 48, f);
-    outline(ctx, cv.width, cv.height, 48);
-    const tex = scene.textures.addCanvas('spr_dragon', cv);
-    for (let f = 0; f < 3; f++) tex.add(`side${f}`, 0, f * 48, 0, 48, 32);
-  }
+  buildSheet(scene, 'spr_dragon', 48, 32, [
+    { name: 'side0', draw: (c, ox) => dragonBig(c, ox, 0) },
+    { name: 'side1', draw: (c, ox) => dragonBig(c, ox, 1) },
+    { name: 'side2', draw: (c, ox) => dragonBig(c, ox, 2) },
+    { name: 'attack0', draw: (c, ox) => dragonBig(c, ox, 1, 'attack') },
+    { name: 'hurt0', draw: (c, ox) => dragonBig(c, ox, 2, 'hurt') },
+    { name: 'death0', draw: (c, ox) => dragonBig(c, ox, 2, 'dead') },
+  ], (ctx, cw, ch) => {
+    // the death frame is the hurt pose rolled onto its back: copy it flipped, then clear the original
+    const dx = cw * 5, img = ctx.getImageData(dx, 0, cw, ch);
+    ctx.clearRect(dx, 0, cw, ch);
+    const tmp = canvas(cw, ch), t = tmp.getContext('2d'); t.putImageData(img, 0, 0);
+    ctx.save(); ctx.translate(dx, ch - 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
+  });
   make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }

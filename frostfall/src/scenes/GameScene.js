@@ -317,6 +317,25 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // Ambient accents: distant howls on snowy nights, crackling near campfires, creaking old wood indoors.
+  ambientTick(dt) {
+    this.ambT = (this.ambT || 0) - dt;
+    if (this.ambT > 0) return;
+    this.ambT = 0.3 + Math.random() * 0.3;
+    const p = this.player;
+    if (this.fires?.length) {
+      let near = 999;
+      for (const f of this.fires) near = Math.min(near, Math.hypot(f.x - p.x, f.y - p.y));
+      if (near < 110 && Math.random() < 0.7 * (1 - near / 110)) sfx.play('crackle');
+    }
+    this.howlT = (this.howlT ?? 20 + Math.random() * 30) - 0.45;
+    if (this.howlT <= 0) {
+      this.howlT = 40 + Math.random() * 60;
+      if (this.def.snow && this.nightness() > 0.4) sfx.play('howl_far');
+      else if (this.def.interior && Math.random() < 0.5) sfx.play('creak');
+    }
+  }
+
   // ---- the Hollow Arena
   startArena() {
     this.arena = { active: true, wave: 1, t: 3, foes: [] };
@@ -794,6 +813,7 @@ export default class GameScene extends Phaser.Scene {
     updateTutorial(this, dt);
     this.worldEvents(dt);
     foodTick();
+    this.ambientTick(dt);
     for (const i of this.interactables) if (i.tick) i.tick(dt, this);
     this.trophyT = (this.trophyT || 0) - dt; if (this.trophyT <= 0) { this.trophyT = 2; checkTrophies(); }
     if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }

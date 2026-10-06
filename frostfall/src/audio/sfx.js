@@ -4,21 +4,31 @@
 import { settings, saveSettings } from '../systems/settings.js';
 export { settings, saveSettings };
 
-let ctx = null, master = null, sfxBus = null, musicBus = null;
+let ctx = null, master = null, sfxBus = null, musicBus = null, ambBus = null;
+const musicLevel = () => (settings.music ? 0.5 * (settings.musicVol ?? 1) : 0);
 function ac() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = settings.volume; master.connect(ctx.destination);
-    sfxBus = ctx.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master);
-    musicBus = ctx.createGain(); musicBus.gain.value = settings.music ? 0.5 : 0; musicBus.connect(master);
+    sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sfxVol ?? 1; sfxBus.connect(master);
+    musicBus = ctx.createGain(); musicBus.gain.value = musicLevel(); musicBus.connect(master);
+    ambBus = ctx.createGain(); ambBus.gain.value = settings.ambVol ?? 1; ambBus.connect(master);
   }
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
 }
 export function setVolume(v) { settings.volume = Math.max(0, Math.min(1, v)); if (master) master.gain.value = settings.volume; saveSettings(); }
-export function setMusic(on) { settings.music = on; if (musicBus) musicBus.gain.value = on ? 0.5 : 0; saveSettings(); }
+export function setMusic(on) { settings.music = on; if (musicBus) musicBus.gain.value = musicLevel(); saveSettings(); }
+// Channel mixes: 'music' | 'sfx' | 'amb', each 0..1.
+export function setChannel(ch, v) {
+  v = Math.max(0, Math.min(1, v));
+  if (ch === 'music') { settings.musicVol = v; if (musicBus) musicBus.gain.value = musicLevel(); }
+  else if (ch === 'sfx') { settings.sfxVol = v; if (sfxBus) sfxBus.gain.value = v; }
+  else { settings.ambVol = v; if (ambBus) ambBus.gain.value = v; }
+  saveSettings();
+}
 
 // type, start freq, end freq, duration, volume, delay
 function tone(type, f0, f1, dur, vol = 0.15, delay = 0, dest = null) {
@@ -95,6 +105,13 @@ const SOUNDS = {
   execute: () => { noise(0.25, 0.3, 0, 6000, 200); tone('sawtooth', 500, 60, 0.3, 0.2); tone('square', 120, 40, 0.3, 0.2); },
   smash: () => { noise(0.18, 0.22, 0, 5000, 600); tone('square', 260, 90, 0.1, 0.08); },
   step: () => { noise(0.045, 0.05, 0, 2600, 700); },
+  step_snow: () => { noise(0.06, 0.05, 0, 1700, 500); },
+  step_ice: () => { noise(0.03, 0.04, 0, 6000, 2500); tone('sine', 2100, 1500, 0.04, 0.025); },
+  step_stone: () => { noise(0.03, 0.06, 0, 3800, 900); tone('square', 170, 110, 0.04, 0.03); },
+  step_wood: () => { tone('triangle', 190, 120, 0.06, 0.07); noise(0.03, 0.03, 0, 2400, 600); },
+  crackle: () => { noise(0.02 + Math.random() * 0.03, 0.05, 0, 7000, 2000, ambBus); if (Math.random() < 0.4) noise(0.015, 0.04, 0.05, 8000, 3000, ambBus); },
+  howl_far: () => { tone('triangle', 260, 520, 0.8, 0.025, 0, ambBus); tone('triangle', 520, 330, 0.9, 0.025, 0.8, ambBus); },
+  creak: () => { tone('sawtooth', 90, 130, 0.35, 0.03, 0, ambBus); tone('sawtooth', 130, 80, 0.3, 0.025, 0.3, ambBus); },
   nova: () => { tone('sawtooth', 600, 100, 0.5, 0.14); noise(0.4, 0.2, 0, 6000, 400); },
 };
 
@@ -142,10 +159,10 @@ SONGS.throne = { bpm: 104, lead: 'sawtooth', bass: 'sawtooth', root: 41,
 SONGS.dragon = { bpm: 140, lead: 'square', bass: 'sawtooth', root: 38,
   A: { chords: [[0, 3, 7], [0, 3, 7], [1, 5, 8], [-2, 2, 5]], melody: [12, 12, 15, null, 12, 10, 12, null, 13, 13, 17, null, 13, 12, 10, null] },
   B: { chords: [[1, 5, 8], [-2, 2, 5], [0, 3, 7], [-1, 2, 6]], melody: [17, null, 15, 13, 17, null, 20, null, 19, 17, null, 15, 13, null, 12, null] } };
-let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0;
+let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0, bossPhase = 1;
 function schedule() {
   const a = ac(); if (!a || !song) return;
-  const stepDur = 60 / song.bpm / 2;
+  const stepDur = 60 / (song.bpm * (1 + 0.07 * (bossPhase - 1))) / 2;
   while (nextT < a.currentTime + 0.6) {
     const secB = song.B && Math.floor(step / 64) % 2 === 1;
     const sec = secB ? song.B : song.A;
@@ -170,14 +187,17 @@ function schedule() {
 export const music = {
   play(name) {
     if (name === songName) return;
-    songName = name; song = SONGS[name] || null; step = 0;
+    songName = name; song = SONGS[name] || null; step = 0; bossPhase = 1;
     const a = ac(); if (!a) return;
     nextT = a.currentTime + 0.1;
     if (!timer) timer = setInterval(schedule, 150);
     schedule();
   },
   current() { return songName; },
-  setIntensity(v) { intensity = v ? 1 : 0; },
+  setIntensity(v) { intensity = v || bossPhase >= 2 ? 1 : 0; },
+  // Boss phases speed the music up 7% each and keep the drum layer on from phase two.
+  setPhase(p) { bossPhase = Math.max(1, p | 0); if (bossPhase >= 2) intensity = 1; },
+  phase() { return bossPhase; },
   intensity() { return intensity; },
   // A short brass call when a fight begins.
   stinger() {
@@ -210,16 +230,16 @@ export const ambience = {
       lfo.connect(lg); lg.connect(g.gain);
       const lfo2 = a.createOscillator(); lfo2.frequency.value = 0.05;
       const lg2 = a.createGain(); lg2.gain.value = 180; lfo2.connect(lg2); lg2.connect(f.frequency);
-      src.connect(f); f.connect(g); g.connect(musicBus);
+      src.connect(f); f.connect(g); g.connect(ambBus);
       src.start(); lfo.start(); lfo2.start();
       ambNodes = [src, lfo, lfo2];
     } else if (kind === 'crypt') {
       for (const fr of [55, 55.6, 82.4]) {
         const o = a.createOscillator(), g = a.createGain();
         o.type = 'sine'; o.frequency.value = fr; g.gain.value = fr > 80 ? 0.012 : 0.028;
-        o.connect(g); g.connect(musicBus); o.start(); ambNodes.push(o);
+        o.connect(g); g.connect(ambBus); o.start(); ambNodes.push(o);
       }
-      const drip = () => { tone('sine', 1900, 1300, 0.12, 0.035, 0, musicBus); tone('sine', 950, 700, 0.2, 0.02, 0.07, musicBus); };
+      const drip = () => { tone('sine', 1900, 1300, 0.12, 0.035, 0, ambBus); tone('sine', 950, 700, 0.2, 0.02, 0.07, ambBus); };
       ambTimer = setInterval(() => { if (Math.random() < 0.6) drip(); }, 3200);
     }
   },

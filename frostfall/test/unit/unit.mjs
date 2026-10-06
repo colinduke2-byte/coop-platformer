@@ -84,4 +84,35 @@ t('tuning sanity (all player numbers positive)', () => {
   for (const k of ['speed', 'sneakSpeed', 'accel', 'regen']) assert.ok(TUNE.player[k] > 0, k);
   assert.ok(TUNE.player.roll.iframes < TUNE.player.roll.time);
 });
+import { validateAll, loadPack } from '../../src/data/registry.js';
+import { TIER_MOBS } from '../../src/world/worldgen.js';
+import { ENEMIES } from '../../src/data/enemies.js';
+import { ITEMS } from '../../src/data/items.js';
+import { applyStatus, statusMods, tickStatuses, clearStatus } from '../../src/systems/status.js';
+import { arenaWave } from '../../src/world/arena.js';
+import { ANIM_CLIPS, clipFrame } from '../../src/art/anim.js';
+t('all enemies, items and spawn tables are valid data', () => assert.deepEqual(validateAll(ENEMIES, ITEMS, TIER_MOBS), []));
+t('arena pools only use real creatures', () => { for (let w = 1; w <= 30; w++) for (const f of arenaWave(w)) assert.ok(ENEMIES[f.kind], f.kind + ' wave ' + w); });
+t('content packs add valid content and reject bad content', () => {
+  const r = loadPack({ name: 't', enemies: { testrat: { name: 'Rat', tex: 'spr_wolf', hp: 5, speed: 20, chase: 30, dmg: 2, detect: 50, kind: 'melee', body: [8, 6, 4, 8] }, badrat: { name: 'x' } }, items: { ratmeat: { name: 'Rat Meat', type: 'misc', value: 1, icon: ['fang', 4] } }, spawns: { 0: { wild: ['testrat', 'nonexistent'] } } }, TIER_MOBS);
+  assert.ok(ENEMIES.testrat && ITEMS.ratmeat && !ENEMIES.badrat);
+  assert.ok(r.rejected.some((x) => x.includes('badrat')) && r.rejected.some((x) => x.includes('nonexistent')));
+  assert.ok(TIER_MOBS[0].wild.includes('testrat'));
+  TIER_MOBS[0].wild.pop(); delete ENEMIES.testrat; delete ITEMS.ratmeat;
+});
+t('chill stacks into freeze; fire thaws; immunity holds', () => {
+  const e = { x: 0, y: 0, hp: 50, cfg: {} };
+  applyStatus(e, 'chill'); applyStatus(e, 'chill'); assert.equal(statusMods(e).act, true);
+  applyStatus(e, 'chill'); assert.equal(statusMods(e).act, false);
+  applyStatus(e, 'burn'); assert.ok(!e.statuses.freeze && !e.statuses.burn);
+  assert.equal(applyStatus({ x: 0, y: 0, cfg: { immune: ['burn'] } }, 'burn'), false);
+});
+t('damage over time ticks and expires', () => {
+  let dmg = 0; const e = { x: 0, y: 0, cfg: {}, statusHit: (n) => { dmg += n; } };
+  applyStatus(e, 'poison', { t: 2, dps: 4 });
+  for (let i = 0; i < 40; i++) tickStatuses(e, 0.1);
+  assert.ok(dmg >= 4 && !e.statuses.poison);
+  applyStatus(e, 'bleed'); clearStatus(e, 'potion'); assert.ok(!e.statuses.bleed);
+});
+t('animation clips name real frames', () => { assert.equal(clipFrame('spr_dragon', 'death'), 'death0'); assert.equal(clipFrame('spr_dragon', 'nope'), 'side0'); for (const c of Object.values(ANIM_CLIPS)) assert.ok(c.idle && c.walk); });
 console.log(`UNIT PASSED (${n} tests)`);

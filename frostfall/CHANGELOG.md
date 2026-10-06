@@ -3,6 +3,21 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 8: foundations (hardening + shared systems)
+**Hardening**
+- `stress_transitions.mjs`: hammers rapid scene changes with text, toasts and random key presses in flight (120 changes, clean). The one-off `null reading 'chars'` seen under load could not be reproduced; the stress test is now the guard.
+- **F4 copies a debug report** (seed, map, player state, enemy counts, flags, status effects, last 12 errors, browser) for bug reports. `src/systems/debug.js`.
+- **Art regression test** (`art_baseline.mjs`): every generated sprite sheet and icon is hashed against `test/baseline/sprites.json` (121 textures). Intentional art change: `UPDATE=1 node test/art_baseline.mjs`.
+- Monkey test: `ONLY=<map>` runs one map, `STACK=1` prints stack traces.
+
+**Shared systems**
+- **Status effects** (`src/systems/status.js`): burn, bleed, poison, chill (stacks to 3, then freeze), freeze, shock (+25% damage taken), fear (enemies flee), slow, root. One system for enemies and the player: damage over time, speed and action limits, immunities, cures (health potions clear bleed/poison/burn, resting clears all), HUD labels. Fire thaws ice; ice puts fires out; bosses are only slowed by freeze. Creatures now inflict statuses (`INFLICTS` / `IMMUNE` tables in `enemies.js`): bears and lynx bleed, imps and the dragon burn, wisps shock, frost worms chill, spore mothers poison. Frost hits now chill (three in a row freeze), shock hits can shock. The old `slow` and `dot` fields still work.
+- **Animation clips** (`src/art/anim.js`, `buildSheet`): any sheet can define idle, walk, windup, attack, hurt and death clips with any frame size. The dragon now has all six: breathing idle, jaw-wide attack with fire, eyes-shut hurt, and a roll-onto-its-back death.
+- **Data layer** (`src/data/registry.js`): validation of every enemy, item and spawn table (unit-tested, so a typo in content now fails a test), and **content packs**: JSON files that add creatures, items and spawn entries, loaded with `__ff.loadPack({...})` or `?pack=<url>`; bad entries are rejected with a reason.
+- **Audio mixer and layers:** separate Music / Effects / Ambience levels in Pause > System (ambience no longer disappears when music is off); footsteps differ on snow, ice, stone and wood; distant wolf howls on snowy nights, campfire crackle near fires, creaking wood indoors; boss phases speed the music 7% per phase and keep the drum layer on.
+- The pause menu's controls cheat sheet no longer overflows its panel.
+- Tests: `stage33_status`, `stage34_audio`, plus new unit tests (data validation, packs, statuses, clips, arena pools).
+
 ## Round 7: the long list (a real dragon, life in the wild, and things to do between fights)
 - **Skaldrath redrawn.** The Ember Wyrm now has its own 48x32 sprite: a horned, fanged head on an S-curved neck, a barrel chest with golden belly plates and a spiked back, two bat wings that beat in three frames (the far wing is darker for depth), clawed legs and a spiked tail, with fire licking from the jaw. Body and hitbox were resized to match (`enemies.js` body, `Guardians.js` scale 1.9).
 - **Wildlife:** **Snow Hares** (tiny, very fast, drop venison) and **Ember Foxes** (russet, fast, drop hide and fangs) bound away as you approach, like deer. Bestiary entries included.

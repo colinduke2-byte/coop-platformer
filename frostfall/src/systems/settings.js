@@ -2,6 +2,7 @@
 const KEY = 'frostfall_settings';
 export const settings = {
   volume: 0.6, music: true,
+  musicVol: 1, sfxVol: 1, ambVol: 1,   // per-channel mixes (0..1) on top of the master volume
   difficulty: 'normal',   // easy | normal | hard
   shake: 1,               // 0 | 0.5 | 1  (screen shake strength)
   flashes: true,          // screen flashes

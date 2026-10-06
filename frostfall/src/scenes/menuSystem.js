@@ -2,7 +2,7 @@ import { C, W, H, BINDINGS } from '../config.js';
 import { S } from '../systems/state.js';
 import { keys, capture, capturing, setBinding, resetBindings, codeName } from '../systems/keys.js';
 import { saveGame, loadGame, saveInfo, fmtTime, SLOTS } from '../systems/save.js';
-import { sfx, setVolume, setMusic, music } from '../audio/sfx.js';
+import { sfx, setVolume, setMusic, setChannel, music } from '../audio/sfx.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
@@ -19,25 +19,27 @@ const ACTION_NAMES = [
 ];
 const CONTROLS = [
   ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD 3X COMBO'], ['K HOLD', 'BOW, CHARGE'],
-  ['L / Q', 'SPELL / SWAP'], ['R / G', 'SHOUT / SWAP SHOUT'], ['U', 'HEAVY ATTACK'], ['T', 'LOCK ON TARGET'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK (HOLD)'],
-  ['E', 'TALK/OPEN/REST'], ['1 2 3', 'POTIONS'], ['4-8', 'QUICK-CAST SPELL'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
+  ['L / Q', 'SPELL / SWAP'], ['R / G', 'SHOUT / SWAP'], ['U / T', 'HEAVY / LOCK ON'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK'],
+  ['E', 'TALK/OPEN/REST'], ['1-3 / 4-8', 'POTIONS / SPELLS'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
 ];
 const DIFFS = ['easy', 'normal', 'hard'];
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
   let waitingPad = null;      // game key code being learned from the controller
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['VOLUME', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const SLIDERS = ['VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
     const r = rows[m.cursor];
     if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
+    else if (CHANNEL[r]) setChannel(CHANNEL[r][0], Math.round(((settings[CHANNEL[r][1]] ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'SLOT') settings.slot = ((settings.slot - 1 + dir + SLOTS) % SLOTS) + 1;
     else if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
@@ -201,8 +203,8 @@ export function systemTab(m) {
       rows.slice(m.scroll, m.scroll + VISIBLE).forEach((r, k) => {
         const i = m.scroll + k, y = 28 + k * 13;
         let v = null, vc = 5;
-        if (r === 'VOLUME') {
-          const n = Math.round(settings.volume * 10);
+        if (r === 'VOLUME' || CHANNEL[r]) {
+          const n = Math.round((r === 'VOLUME' ? settings.volume : (settings[CHANNEL[r][1]] ?? 1)) * 10);
           if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 124, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
           m.T(14, y, r, i === m.cursor ? 6 : 5);
           g.fillStyle(C[0]); g.fillRect(70, y, 56, 7); g.fillStyle(C[1]); g.fillRect(71, y + 1, 54, 5); g.fillStyle(C[15]); g.fillRect(71, y + 1, n * 5.4, 5);
@@ -232,10 +234,9 @@ export function systemTab(m) {
       m.T(144, 36, 'PLAYTIME ' + fmtTime(S.playtime), 5);
       m.T(144, 45, info ? (info.recovered ? 'SLOT RECOVERED FROM BACKUP' : 'LAST SAVE ' + new Date(info.t).toLocaleTimeString().slice(0, 5)) : 'SLOT ' + settings.slot + ' IS EMPTY', 4);
       g.fillStyle(C[3]); g.fillRect(144, 52, W - 156, 1);
-      m.T(144, 55, 'CONTROLS', 15);
       CONTROLS.forEach(([k, v], i) => {
-        m.T(144, 65 + i * 8, k, 6);
-        m.T(204, 65 + i * 8, v, 4);
+        m.T(144, 57 + i * 8, k, 6);
+        m.T(204, 57 + i * 8, v, 4);
       });
     },
   };

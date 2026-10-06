@@ -4,6 +4,7 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
+import { tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm } from '../util.js';
@@ -153,6 +154,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.currentDt = dt;
     if (this.mode === 'dead') { this.animate(false); return; }
     this.flashT -= dt;
+    if (this.statuses) tickStatuses(this, dt, this.speedNow > 8);
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
     this.heat = Math.max(0, (this.heat || 0) - P.cast.heatDecay * dt);
     this.counterT = Math.max(0, (this.counterT || 0) - dt);
@@ -204,7 +206,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (moving) {
       const before = Math.floor(this.phase);
       this.phase += this.speedNow * dt * 0.16;
-      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking) sfx.play('step');
+      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking) sfx.play(this.stepSound());
     }
     this.animate(moving);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
@@ -217,9 +219,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  // Footstep sound for the tile underfoot.
+  stepSound() {
+    const id = this.scene.tileIdAt(this.x, this.y + 7);
+    if (id === TILE.ICE || id === TILE.ICE2) return 'step_ice';
+    if (id === TILE.WOODFLOOR || id === TILE.RUG) return 'step_wood';
+    if (id === TILE.CFLOOR || id === TILE.CFLOOR2 || id === TILE.PATH || id === TILE.PATH2 || id === TILE.STAIRS) return 'step_stone';
+    return 'step_snow';
+  }
+
   move(ix, iy, dt) {
     const b = this.body;
-    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul');
+    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul') * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1);
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
     if (this.blocking) sp *= P.block.move;
@@ -458,6 +469,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const key = it.restore, maxKey = { hp: 'maxHp', mp: 'maxMp', sp: 'maxSp' }[key];
     if (S[key] >= S[maxKey]) return false;
     S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id];
+    if (key === 'hp') clearStatus(this, 'potion');
     const amt = Math.round(it.amount * (S.hearts?.root ? 1.25 : 1));
     S[key] = Math.min(S[maxKey], S[key] + amt);
     sfx.play('potion');
@@ -501,7 +513,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)));
+    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1));
 
     // ---- ward absorbs first
     if (this.ward && this.ward.hp > 0) {
@@ -513,6 +525,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     S.hp -= taken;
+    if (!blocked && opts.attacker?.cfg?.inflicts) inflictOn(this, opts.attacker.cfg.inflicts);
+    if (!blocked && opts.inflict) inflictOn(this, opts.inflict);
     this.lastHurt = sc.t;
     this.flashT = 0.12;
     this.invuln = blocked ? 0.3 : P.hurt.invuln;
@@ -536,6 +550,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       bus.emit('player:dead');
     }
     return true;
+  }
+
+  // Damage-over-time from statuses (burn, bleed, poison).
+  statusHit(n, col) {
+    if (this.mode === 'dead' || this.mode === 'lying' || this.invuln > 90) return;
+    S.hp -= n; this.flashT = 0.06;
+    this.scene.fx.text(this.x, this.y - 10, String(n), col, 0.5);
+    if (S.hp <= 0) { S.hp = 0; this.mode = 'dead'; this.body.setVelocity(0, 0); sfx.play('die'); bus.emit('player:dead'); }
   }
 
   onParry(attacker, sx, sy) {

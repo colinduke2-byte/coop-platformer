@@ -191,6 +191,21 @@ export const ENEMIES = {
   },
 };
 
+// What each creature's hits do on top of damage (see systems/status.js): [{ type, chance, t, dps }]
+const INFLICTS = {
+  wolf: [{ type: 'bleed', chance: 0.15, t: 4, dps: 2 }], alpha: [{ type: 'bleed', chance: 0.3, t: 5, dps: 3 }],
+  bear: [{ type: 'bleed', chance: 0.4, t: 5, dps: 4 }], lynx: [{ type: 'bleed', chance: 0.45, t: 5, dps: 3 }],
+  boar: [{ type: 'bleed', chance: 0.2, t: 4, dps: 3 }], imp: [{ type: 'burn', chance: 0.7, t: 3, dps: 4 }],
+  wyvern: [{ type: 'burn', chance: 0.35, t: 3, dps: 4 }], dragon: [{ type: 'burn', chance: 0.7, t: 4, dps: 6 }],
+  wisp: [{ type: 'shock', chance: 0.6, t: 4 }], golem: [{ type: 'chill', chance: 0.5, stacks: 1 }],
+  frostworm: [{ type: 'chill', chance: 0.8, stacks: 1 }], wyrm: [{ type: 'chill', chance: 0.6, stacks: 1 }],
+  shroom: [{ type: 'poison', chance: 0.8, t: 8, dps: 2 }], bandit: [{ type: 'bleed', chance: 0.1, t: 4, dps: 2 }],
+  winter: [{ type: 'chill', chance: 0.7, stacks: 1 }], tide: [{ type: 'slow', chance: 0.5, t: 3 }],
+};
+const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['bleed', 'poison'], wight: ['bleed', 'poison'], necro: ['poison'] };
+for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
+for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;
+
 // Spoken lines (shown above the head). Keys: alert / flee / rally.
 export const BARKS = {
   wolf: { alert: ['GRRR', 'GRAAR'], flee: ['*WHINE*'] },

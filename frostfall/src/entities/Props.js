@@ -16,6 +16,7 @@ import { makeGenItem } from '../systems/genloot.js';
 import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
 import { COOKABLE } from '../systems/food.js';
+import { clearStatus } from '../systems/status.js';
 
 // A readable wooden sign.
 export class Sign extends Phaser.GameObjects.Image {
@@ -57,6 +58,7 @@ export class RestSpot {
       sfx.play('select');
       await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
+      clearStatus(sc.player, 'rest');
       sc.player.invuln = 0.5;
       await sc.delay(500);
       S.respawn = { map: sc.mapId, x: Math.round(sc.player.x), y: Math.round(sc.player.y) };

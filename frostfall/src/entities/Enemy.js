@@ -13,6 +13,8 @@ import { BARKS } from '../data/enemies.js';
 import { settings } from '../systems/settings.js';
 import { applyElite } from './elite.js';
 import { stats } from '../systems/stats.js';
+import { hasClips, clipFrame, clipOf } from '../art/anim.js';
+import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
 const BEASTS_NOSE = new Set(['wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -118,9 +120,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
     }
-    const slow = this.slowT > 0 ? 0.5 : 1;
-    if (this.dot) this.tickDot(dt);
-    if (this.dead) return;
+    const sm = this.statuses ? statusMods(this) : null;
+    const slow = Math.min(this.slowT > 0 ? 0.5 : 1, sm ? sm.speed : 1);
+    if (this.statuses) { tickStatuses(this, dt, Math.hypot(b.velocity.x, b.velocity.y) > 8); if (this.dead) return; }
+    if (sm && !sm.act) this.stun = Math.max(this.stun, 0.12);       // frozen solid
+    if (sm && sm.flee && !this.isBoss && !this.cfg.passive) {        // terrified: runs from the player
+      const away = norm(this.x - player.x, this.y - player.y);
+      b.setVelocity(away.x * (this.cfg.chase || 40) * 0.9 * slow, away.y * (this.cfg.chase || 40) * 0.9 * slow);
+      this.face = dir8(away.x, away.y);
+      this.finish(dt, slow);
+      return;
+    }
     if (this.regen && this.hp < this.maxHp && this.flashT < -2.5) this.hp = Math.min(this.maxHp, this.hp + this.maxHp * this.regen * dt);
 
     // ---- stun / knockback: velocity decays, no AI
@@ -247,19 +257,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     return false;
   }
 
-  // Burning / bleeding: small ticks of damage every half second.
-  tickDot(dt) {
-    const d = this.dot;
-    d.t -= dt; d.tick -= dt;
-    if (d.tick <= 0) {
-      d.tick = 0.5;
-      const n = Math.max(1, Math.round(d.dps * 0.5));
-      this.hp -= n; this.flashT = 0.05;
-      this.scene.fx.text(this.x, this.y - 12, String(n), d.col, 0.5);
-      if (!this.alerted) this.alert(true);
-      if (this.hp <= 0) { this.dot = null; this.die({ dot: true }); return; }
-    }
-    if (d.t <= 0) this.dot = null;
+  // Damage-over-time from the status system (burn, bleed, poison).
+  statusHit(n, col) {
+    this.hp -= n; this.flashT = 0.05;
+    this.scene.fx.text(this.x, this.y - 12, String(n), col, 0.5);
+    if (!this.alerted) this.alert(true);
+    if (this.hp <= 0) this.die({ dot: true });
+  }
+  // Compatibility: the damage-over-time status currently on this enemy (or null); assigning applies one.
+  get dot() { const s = this.statuses; return s && (s.burn || s.bleed || s.poison) || null; }
+  set dot(v) {
+    if (!v) { if (this.statuses) { delete this.statuses.burn; delete this.statuses.bleed; delete this.statuses.poison; } return; }
+    applyStatus(this, v.col === 11 ? 'bleed' : v.col === 8 ? 'poison' : 'burn', { t: v.t, dps: v.dps });
   }
 
   doIdle(dt, slow) {
@@ -427,6 +436,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const f = this.dashDir;
       const spd = cfg.projSpeed || 125;
       const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2 });
+      pr.inflict = cfg.inflicts;
       this.scene.eshots.add(pr);
       pr.body.setVelocity(f.x * spd, f.y * spd);
       this.body.setVelocity(0, 0);
@@ -469,7 +479,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const sp = Math.hypot(b.velocity.x, b.velocity.y);
     if (sp > 6) this.phase += sp * dt * 0.16;
     const fr = sp > 6 ? 1 + (Math.floor(this.phase) % 2) : 0;
-    if (this.cfg.sideOnly || this.cfg.tex === 'spr_wolf') {
+    if (hasClips(this.cfg.tex)) {
+      if (sp <= 6) this.phase += dt * 2;                  // idle clips breathe
+      this.setFrame(clipFrame(this.cfg.tex, clipOf(this), this.phase));
+      this.setFlipX(this.face.x < 0 || (this.face.x === 0 && this.flipX));
+    } else if (this.cfg.sideOnly || this.cfg.tex === 'spr_wolf') {
       this.setFrame('side' + fr);
       this.setFlipX(this.face.x < 0 || (this.face.x === 0 && this.flipX));
     } else {
@@ -564,7 +578,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.cfg.passive) this.scaredT = 5;
     if (!this.alerted && !this.cfg.passive) this.alert(true);
     if (info.slow) this.slowT = Math.max(this.slowT, info.slow);
-    if (info.dot) this.dot = { dps: info.dot.dps, t: info.dot.t, col: info.dot.col, acc: 0, tick: 0 };
+    if (info.dot) this.dot = info.dot;
+    if (info.element && ELEMENT_STATUS[info.element] && !info.dot && Math.random() < ELEMENT_STATUS[info.element].chance) applyStatus(this, ELEMENT_STATUS[info.element].type, {});
+    if (info.status) for (const st of [].concat(info.status)) applyStatus(this, st.type, st);
     const resist = this.cfg.kbResist ?? 0;
     if (info.kb && !this.noKnock) {
       const n = norm(info.kx, info.ky);
@@ -615,9 +631,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shadow.destroy();
     this.weaponImg?.destroy(); this.weaponImg = null;
     const sc = this.scene, dir = this.flipX ? -1 : 1;
+    const dframe = hasClips(this.cfg.tex) ? clipFrame(this.cfg.tex, 'death') : null;
+    if (dframe) this.setFrame(dframe);
     // fall over, lie there a moment, then crumble away
     sc.tweens.add({
-      targets: this, angle: 90 * dir, y: this.y + 4, duration: 260, ease: 'Back.easeOut',
+      targets: this, angle: dframe ? 0 : 90 * dir, y: this.y + 4, duration: 260, ease: 'Back.easeOut',
       onComplete: () => {
         sc.fx.puff(this.x, this.y + 4, 5, 6, 30, 0.4);
         sc.time.delayedCall(900, () => {

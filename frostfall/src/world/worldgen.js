@@ -38,7 +38,7 @@ export function tierAt(x, y) {
   const d = Math.hypot(x - START.x, (y - START.y) * 0.9);
   return d < 72 ? 0 : d < 108 ? 1 : d < 142 ? 2 : 3;
 }
-const TIER_MOBS = [
+export const TIER_MOBS = [
   { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'boar', 'boar', 'imp'] },
   { melee: ['bandit', 'draugr', 'fencer', 'warden', 'imp'], ranged: ['archer', 'wight', 'necro'], wild: ['wolf', 'boar', 'lynx', 'bear', 'imp'] },
   { melee: ['reaver', 'warden', 'fencer', 'draugr', 'golem'], ranged: ['wight', 'conjurer', 'archer', 'necro', 'wisp'], wild: ['wolf', 'alpha', 'bear', 'lynx', 'wyvern', 'boar'] },

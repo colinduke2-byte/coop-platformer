@@ -15,7 +15,7 @@ npm run monkey     # random-input stress test on every map
 ```
 
 Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|hall|lodge|shop`, `&spawn=...`,
-`?renderer=canvas` forces Canvas, `?touch=1` shows the touch controls. In the console `__ff.S` is the live game state. F3 shows FPS / entity counts.
+`?renderer=canvas` forces Canvas, `?touch=1` shows the touch controls. In the console `__ff.S` is the live game state. F3 shows FPS / entity counts; F4 copies a debug report (seed, map, recent errors) to the clipboard for bug reports.
 
 ## World
 
