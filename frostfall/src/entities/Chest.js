@@ -26,7 +26,20 @@ export default class Chest extends Phaser.GameObjects.Image {
   get locked() { return !!this.spec.lock && !S.flags[this.flag + '_u']; }
   label() { return this.locked ? 'E: PICK LOCK' : 'E: OPEN'; }
 
+  // A mimic never opens: it wakes up hungry.
+  reveal() {
+    const sc = this.scene;
+    S.flags[this.flag] = true;
+    sc.interactables = sc.interactables.filter((i) => i !== this);
+    sfx.play('roar'); bus.emit('toast', 'IT WAS A MIMIC!', 11);
+    const m = sc.addEnemy('mimic', this.x, this.y, { tier: this.spec.tier ?? 1, camp: null });
+    m.alert(true); m.cfg = { ...m.cfg, detect: 200 };
+    sc.fx.puff(this.x, this.y, 5, 10, 50, 0.5); sc.shake(160, 0.008);
+    this.body.enable = false; this.destroy();
+  }
+
   async interact() {
+    if (this.spec.mimic && !S.flags[this.flag]) { this.reveal(); return; }
     if (this.locked) {
       if (!count('lockpick')) { bus.emit('toast', 'LOCKED - NEED LOCKPICKS', 11); sfx.play('nostamina'); return; }
       let ok = false;

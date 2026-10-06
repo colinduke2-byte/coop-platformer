@@ -39,10 +39,10 @@ export function tierAt(x, y) {
   return d < 72 ? 0 : d < 108 ? 1 : d < 142 ? 2 : 3;
 }
 const TIER_MOBS = [
-  { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf'] },
-  { melee: ['bandit', 'draugr', 'fencer', 'warden'], ranged: ['archer', 'wight'], wild: ['wolf', 'wolf', 'alpha'] },
-  { melee: ['reaver', 'warden', 'fencer', 'draugr'], ranged: ['wight', 'conjurer', 'archer'], wild: ['alpha', 'wolf'] },
-  { melee: ['reaver', 'knight', 'warden'], ranged: ['conjurer', 'wight'], wild: ['alpha'] },
+  { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'wolf', 'boar'] },
+  { melee: ['bandit', 'draugr', 'fencer', 'warden', 'imp'], ranged: ['archer', 'wight', 'necro'], wild: ['wolf', 'alpha', 'boar', 'lynx'] },
+  { melee: ['reaver', 'warden', 'fencer', 'draugr', 'golem'], ranged: ['wight', 'conjurer', 'archer', 'necro', 'wisp'], wild: ['alpha', 'bear', 'lynx', 'wyvern', 'boar'] },
+  { melee: ['reaver', 'knight', 'warden', 'golem', 'imp'], ranged: ['conjurer', 'wight', 'necro', 'wisp'], wild: ['alpha', 'bear', 'wyvern', 'frostworm', 'lynx'] },
 ];
 
 export function buildReach(region, seed) {
@@ -102,7 +102,7 @@ export function buildReach(region, seed) {
     }
   };
   const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
-  mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1);                 // the Glacial Maw: dungeon of the second Heart
+  mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);                 // the Glacial Maw: dungeon of the second Heart
   place('camp', 5, 11);
   place('den', 5, 9);
   place('ruin', 4, 10);
@@ -131,7 +131,7 @@ export function buildReach(region, seed) {
   const mobs = (tier) => TIER_MOBS[Math.min(3, tier)];
   const enemy = (kind, x, y, tier, extra = {}) => add({ t: 'enemy', kind, x, y, tier, ...extra });
   const clearing = (p, w, h, tile = TILE.SNOW2) => g.rect(p.x - (w >> 1), p.y - (h >> 1), w, h, tile);
-  const chest = (p, dx, dy, tier, lock) => add({ t: 'chest', id: `${p.id}_c${dx}${dy}`, x: p.x + dx, y: p.y + dy, lock, loot: [{ gen: tier }, { gold: 20 + tier * 25 }, ...(R() < 0.6 ? [{ item: 'hp_potion', n: 1 + tier }] : [])] });
+  const chest = (p, dx, dy, tier, lock) => add({ t: 'chest', id: `${p.id}_c${dx}${dy}`, x: p.x + dx, y: p.y + dy, lock, tier, mimic: tier >= 1 && R() < 0.1, loot: [{ gen: tier }, { gold: 20 + tier * 25 }, ...(R() < 0.6 ? [{ item: 'hp_potion', n: 1 + tier }] : [])] });
   const potsAround = (p, n, rad, skin = 'pot') => { for (let i = 0; i < n; i++) add({ t: 'pot', x: p.x + Math.round((R() - 0.5) * rad * 2), y: p.y + Math.round((R() - 0.5) * rad * 2), skin }); };
 
   for (const p of pois) {
@@ -186,11 +186,12 @@ export function buildReach(region, seed) {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
-    } else if (['fort', 'temple', 'rootvault', 'throne'].includes(p.kind)) {
+    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest'].includes(p.kind)) {
       const D = {
         fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
         temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
         rootvault: { to: 'rootvault', col: 8, stone: TILE.ROCK, text: ['THE ROOTVAULT.', 'THE TREES HERE LEAN TOWARD THE DOOR, AND AWAY FROM YOU.'] },
+        nest: { to: 'nest', col: 12, stone: TILE.ROCK, text: ['THE EMBER NEST.', 'THE SNOW HAS MELTED FOR A HUNDRED PACES. THE AIR SHIMMERS.'] },
         throne: { to: 'throne', col: 15, stone: TILE.STONE, text: ['THE WINTER THRONE.', 'THE LAST DOOR IN THE REACH. FOUR HEARTS MUST BE YOURS TO OPEN IT.'] },
       }[p.kind];
       clearing(p, 13, 8);
@@ -198,7 +199,7 @@ export function buildReach(region, seed) {
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
       add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: 'entry', fx: 'door', needs: p.kind === 'throne' ? 'hearts4' : null });
-      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : 'throne', x: p.x, y: p.y });
+      add({ t: 'spawn', name: p.kind === 'fort' ? 'keep' : p.kind === 'temple' ? 'chapel' : p.kind === 'rootvault' ? 'rootvault' : p.kind === 'nest' ? 'nest' : 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });
@@ -243,7 +244,12 @@ export function buildReach(region, seed) {
     else if (roll < 0.5) add({ t: 'deer', x, y });
     else if (roll < 0.62 && bio[y][x] !== 'tundra') add({ t: 'node', x, y, ore: R() < 0.8 ? 'iron_ingot' : 'bone_dust' });
     else if (roll < 0.78) add({ t: 'dig', x, y, id: `dig${i}` });
-    else enemy(pickOf(mobs(tier).wild), x, y, tier, { roam: true });
+    else {
+      let kind = pickOf(mobs(tier).wild);
+      if (bio[y][x] === 'blight' && R() < 0.45) kind = 'shroom';
+      else if (bio[y][x] === 'tundra' && tier >= 1 && R() < 0.2) kind = 'frostworm';
+      enemy(kind, x, y, tier, { roam: true });
+    }
   }
 
   // keep every placed thing on open ground

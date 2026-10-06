@@ -30,6 +30,8 @@ export const ITEMS = {
   hunter_garb: { name: 'Hunter\'s Leathers', type: 'armor', icon: ['armor', 8], armor: 0.12, moveMul: 1.08, detectMul: 0.85, value: 100, desc: 'Light set. Absorbs 12%, +8% speed, harder to spot.' },
   mage_robe: { name: 'Frostweave Robe', type: 'armor', icon: ['armor', 14], armor: 0.05, maxMp: 30, manaCostMul: 0.85, value: 140, desc: 'Caster set. Absorbs 5%, +30 mana, spells cost 15% less.' },
   bulwark_plate: { name: 'Bulwark Plate', type: 'armor', icon: ['armor', 3], armor: 0.34, moveMul: 0.88, spRegenMul: 0.8, value: 320, desc: 'Heavy set. Absorbs 34%, but -12% speed and slower stamina.' },
+  dragonscale_armor: { name: 'Dragonscale Mail', type: 'armor', icon: ['armor', 12], armor: 0.36, maxHp: 30, moveMul: 1.04, value: 600, desc: 'Scales of the Ember Wyrm. Absorbs 36%, +30 health, a little faster.' },
+  dragonbone_blade: { name: 'Dragonbone Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 12], dmg: 40, elem: { type: 'fire', power: 10 }, value: 700, desc: 'Two-handed. Forged from dragon bone; every blow burns.' },
   warm_amulet: { name: 'Amulet of Warmth', type: 'charm', icon: ['charm', 12], maxHp: 25, value: 60, desc: '+25 max health.' },
   mana_ring: { name: 'Ring of Insight', type: 'charm', icon: ['charm', 14], maxMp: 30, value: 60, desc: '+30 max mana.' },
   bear_charm: { name: 'Bear Charm', type: 'charm', icon: ['charm', 10], maxSp: 30, value: 60, desc: '+30 max stamina.' },

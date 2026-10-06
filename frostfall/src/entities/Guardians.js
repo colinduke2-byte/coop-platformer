@@ -1,6 +1,8 @@
 import PatternBoss from './PatternBoss.js';
 import { TUNE } from '../data/tuning.js';
 import { sfx } from '../audio/sfx.js';
+import Pickup from './Pickup.js';
+import { bus } from '../systems/bus.js';
 
 // Ironwatch Keep: Hrolf Ironmarch, first Warden, still marching.
 export class Warlord extends PatternBoss {
@@ -61,4 +63,40 @@ export class LongWinter extends PatternBoss {
     return o;
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
+}
+
+// The Ember Nest: Skaldrath, the Ember Wyrm. An optional dragon with sweeping fire, falling stars and crashing dives.
+export class EmberDragon extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'dragon', TUNE.dragon, {
+      scale: 3.6, flag: 'dragonDead', heart: null, toast: 'SKALDRATH FALLS', summon: ['wyvern'], col: 12, tier: 3,
+      phaseAt: [0.66, 0.33], phaseText: { 2: 'THE SKY BURNS', 3: 'EMBER FURY' },
+      onVictory: (sc, b) => {
+        sc.pickups.push(new Pickup(sc, b.x - 16, b.y + 8, { type: 'item', id: 'dragonscale_armor', big: true }));
+        sc.pickups.push(new Pickup(sc, b.x + 16, b.y + 8, { type: 'item', id: 'dragonbone_blade', big: true }));
+        bus.emit('toast', 'YOU LEARN DRAGONFIRE (G TO SWAP SHOUT)', 12);
+      },
+    });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 54) o.push('tail', 'sweep', 'slam', 'tail');
+    else o.push('breath', 'breath', 'spikes', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'breath');
+    if (this.bphase >= 3) o.push('charge', 'nova', 'spikes');
+    return o;
+  }
+  // the breath rakes the floor three times
+  fireAttack(player) {
+    if (this.atk !== 'breath') { super.fireAttack(player); return; }
+    super.fireAttack(player);
+    this.setState('attack', 0.95);
+    const sc = this.scene;
+    [0.3, 0.6].forEach((t, i) => sc.time.delayedCall(t * 1000, () => {
+      if (this.dead || !this.scene) return;
+      const p = sc.player.body.center, base = Math.atan2(p.y - this.cy, p.x - this.cx) + (i ? 0.24 : -0.24), n = this.B.breath.count;
+      for (let k = 0; k < n; k++) this.orb(base + (k - (n - 1) / 2) * this.B.breath.spread, this.B.breath.speed + (k % 2) * 14, this.B.breath.dmg);
+      sfx.play('frost'); sc.shake(140, 0.006);
+    }));
+  }
 }

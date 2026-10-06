@@ -3,6 +3,12 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 6: a wilder world (predators, strange foes, dragons)
+- **Predators:** the **Snow Bear** (huge, slow swipes), the **Shadow Lynx** (fades into the snow, pounces from range), the **Tusk Boar** (straight-line charge). They join the wild spawn tables by region; bears and lynxes appear further out.
+- **Strange foes:** **Cinder Imp** (sprints at you and bursts), **Grave Caller** (raises draugr every few seconds), **Spore Mother** (rooted, seeds the ground with a pattern of bursts), **Rime Golem** (armoured ice giant), **Pale Wisp** (flies over walls, blinks away), **Frost Worm** (tunnels unseen and untouchable, marks the spot, then surfaces and bites), and the **Mimic** (some chests in the open world are not chests).
+- **Dragonkind:** **Ash Wyverns** circle overhead and dive (flyers ignore walls), and **Skaldrath, the Ember Wyrm**: an optional dragon in the **Ember Nest** (an entrance in every world, deep in the far regions). Sweeping triple breath, falling stars, crashing dives, three phases, wyvern hatchlings. Rewards: **Dragonscale Mail**, the **Dragonbone Greatsword**, and the **Dragonfire** shout (a burning cone).
+- Every new creature has a bestiary entry and a first-sight tip.
+
 ## Round 5: chapter two, "The Four Hearts"
 - **New main quest** (from Sigrid once you have dealt with the Frostheart): the Hollow Kings bound the Long Winter with five Hearts and set a guardian over each. Epic, mythic tone; the Frostheart was only the first. Sigrid reads one more faded map after each Heart.
 - **Four new dungeons, each a different kind of place, each in every seed's open world:**

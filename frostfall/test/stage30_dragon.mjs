@@ -1,0 +1,42 @@
+import { launch, check, failCount } from './harness.mjs';
+const h = await launch();
+await h.open('scene=game&map=village&spawn=start&seed=424242');
+await h.sleep(700);
+const G = (fn, a) => h.ev(fn, a);
+await h.ev(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.__ff.S.flags.introDone = true; });
+await G(() => { window.gs().changeMap('nest', 'entry', 'door'); });
+await h.sleep(1600);
+const info = await G(() => { const g = window.gs(); return { map: g.mapId, boss: g.boss && g.boss.kind, hp: g.boss && g.boss.maxHp, foes: g.enemies.getLength(), kinds: [...new Set(g.enemies.getChildren().map((e) => e.kind))].sort().join() }; });
+check('the Ember Nest has a dragon and its brood', info.map === 'nest' && info.boss === 'dragon' && info.hp >= 1000 && info.foes >= 18, JSON.stringify(info));
+await h.shot('s30_nest');
+await G(() => { const g = window.gs(); g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy()); g.player.setPosition(20 * 16, 8 * 16); g.player.invuln = 999; window.__ff.S.hp = window.__ff.S.maxHp; });
+await h.sleep(900);
+check('the gate shuts and Skaldrath wakes', await G(() => window.gs().boss.engaged && window.gs().gate.closed));
+await h.sleep(2600);
+await h.shot('s30_dragon');
+const pool = await G(() => { const b = window.gs().boss; const set = new Set(); for (const ph of [1, 2, 3]) for (const dist of [20, 90]) { b.bphase = ph; for (let i = 0; i < 40; i++) b.attackPool(dist).forEach((a) => set.add(a)); } b.bphase = 1; return [...set]; });
+for (const a of pool) {
+  await G((a) => { const b = window.gs().boss; b.invulnerable = false; b.state = 'chase'; b.atk = a; const p = window.gs().player.body.center; const l = Math.hypot(p.x - b.cx, p.y - b.cy) || 1; b.dir = { x: (p.x - b.cx) / l, y: (p.y - b.cy) / l }; b.setState('windup', 0.3); b.windTotal = 0.3; b.makeTele(a); }, a);
+  await h.sleep(1500);
+}
+check(`every dragon move runs (${pool.join(' ')})`, h.errors.length === 0, h.errors.join('\n'));
+await G(() => { const b = window.gs().boss; b.invulnerable = false; b.state = 'chase'; b.takeHit({ dmg: b.hp - b.maxHp * 0.6, kx: 0, ky: 0, kb: 0, src: 'melee' }); });
+await h.sleep(3000);
+check('phase two brings wyvern hatchlings', await G(() => window.gs().boss.bphase === 2 && window.gs().enemies.getChildren().some((e) => e.kind === 'wyvern')));
+await G(() => { const b = window.gs().boss; b.invulnerable = false; b.state = 'chase'; b.takeHit({ dmg: b.hp - b.maxHp * 0.3, kx: 0, ky: 0, kb: 0, src: 'melee' }); });
+await h.sleep(3000);
+check('phase three: ember fury', await G(() => window.gs().boss.bphase === 3));
+await G(() => { window.gs().enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy()); const b = window.gs().boss; b.invulnerable = false; b.takeHit({ dmg: 99999, kx: 0, ky: 0, kb: 0, src: 'melee' }); });
+await h.sleep(5500);
+const loot = await G(() => ({ flag: window.__ff.S.flags.dragonDead, armor: !!window.__ff.S.inv.dragonscale_armor, blade: !!window.__ff.S.inv.dragonbone_blade, pk: window.gs().pickups.filter((p) => p.spec.id && p.spec.id.startsWith('dragon')).length }));
+check('Skaldrath falls and drops dragonscale mail and a dragonbone greatsword', loot.flag && ((loot.armor && loot.blade) || loot.pk >= 1), JSON.stringify(loot));
+const sh = await G(async () => (await import('/src/systems/shouts.js')).unlockedShouts().join());
+check('Dragonfire joins your shouts', sh.includes('fire'), sh);
+// use the shout
+await G(() => { window.__ff.S.shout = 'fire'; const g = window.gs(); g.enemies.getChildren().forEach((e) => e.destroy()); const p = g.player; p.setPosition(300, 100); p.shoutCd = 0; p.lockT = 0; p.mode = 'free'; p.face = { x: 1, y: 0 }; const e = g.addEnemy('draugr', p.x + 40, p.y); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0 }; window.__fe = e; p.shout(); });
+await h.sleep(300);
+check('Dragonfire burns foes in a cone', await G(() => window.__fe.hp < window.__fe.maxHp && !!window.__fe.dot));
+check('no page errors', h.errors.length === 0, h.errors.join('\n'));
+await h.close();
+console.log(failCount() ? 'DRAGON FAILED' : 'DRAGON PASSED');
+process.exit(failCount() ? 1 : 0);

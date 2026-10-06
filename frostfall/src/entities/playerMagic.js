@@ -165,6 +165,19 @@ export const magicMethods = {
         sc.fx.text(e.x, e.y - 10, String(dealt), 8);
       }
       for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < T.len) sh.finish(); }
+    } else if (id === 'fire') {
+      sc.fx.text(this.x, this.y - 18, 'DRAGONFIRE', 12, 1);
+      sc.shake(380, 0.014);
+      for (let i = -4; i <= 4; i++) { const a = Math.atan2(f.y, f.x) + i * 0.17; for (const rr of [26, 52, 78]) sc.fx.puff(this.x + Math.cos(a) * rr, this.y + 3 + Math.sin(a) * rr, i % 2 ? 12 : 13, 6, 80, 0.6); }
+      for (const e of sc.enemies.getChildren()) {
+        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy);
+        if (e.dead || d > T.r || d < 1 || (dx * f.x + dy * f.y) / d < 0.45) continue;
+        const dealt = e.takeHit({ dmg: T.dmg * bonus.spell(), kx: dx, ky: dy, kb: 120, src: 'fire', element: 'fire', stun: 0.5, forceStun: !e.isBoss });
+        e.dot = { dps: T.burn, t: 4, col: 12, acc: 0, tick: 0 };
+        sc.fx.text(e.x, e.y - 10, String(dealt), 12);
+      }
+      sc.breakAt(this.x + f.x * 40, this.y + f.y * 40, 40);
+      for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if (Math.hypot(dx, dy) < T.r && (dx * f.x + dy * f.y) > 0) sh.finish(); }
     } else if (id === 'grasp') {
       sc.fx.text(this.x, this.y - 18, 'VERDANT GRASP', 8, 1);
       sc.fx.ring(this.x, this.y + 4, T.r / 32, 0.6, 'ring', 0x3f7050);

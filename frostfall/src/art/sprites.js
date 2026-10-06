@@ -116,6 +116,9 @@ export const STYLES = {
   ragna:  { skin: 10, hair: 13, hood: 8, body: 8, trim: 9, legs: 7, boots: 9, chest: 10 },
   warlord: { skin: 4, hair: 3, body: 3, trim: 13, legs: 2, boots: 0, glow: 12, helm: 4, chest: 11, beard: 3, cape: 11, horns: 4 },
   winter: { skin: 6, hair: 15, body: 15, trim: 6, legs: 3, boots: 0, glow: 15, helm: 6, horns: 5, crown: 15, cape: 5, chest: 6 },
+  imp: { skin: 11, hair: 12, body: 11, trim: 12, legs: 11, boots: 0, glow: 13, horns: 12, chest: 12 },
+  necro: { skin: 4, hair: 14, hood: 1, body: 1, trim: 14, legs: 0, boots: 0, glow: 14, chest: 14 },
+  golem: { skin: 4, hair: 3, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, helm: 4, chest: 5 },
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
@@ -177,6 +180,65 @@ function rootFrame(ctx, ox, fr) {
   r(8, 0, 12, 2, 1); r(8, 14, 11, 2, 1);
 }
 
+// ---- creatures (side view, facing right, 3 frames each)
+function bearFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(3, 2, 11, 3, a ? 2 : 3); r(3, 5, 11, 3, b ? 2 : 3); r(3, 9, 11, 3, b ? 2 : 3); r(3, 12, 11, 3, a ? 2 : 3);
+  r(5, 1, 4, 11, 7); r(6, 2, 3, 10, 5); r(4, 2, 10, 11, 1);                   // body, back, belly shadow
+  r(6, 6, 2, 3, 3);                                                             // shoulder hump
+  r(5, 11, 3, 5, 6); r(6, 11, 3, 4, 3); r(4, 13, 3, 2, 2); r(2, 12, 4, 1, 1);   // head, snout, ear
+  r(0, 15, 7, 1, 2); r(11, 13, 5, 1, 1); r(0, 15, 5, 1, 1);                    // nose, eye
+}
+function boarFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(1, 3, 12, 1, a ? 2 : 3); r(1, 5, 12, 1, b ? 2 : 3); r(1, 10, 12, 1, b ? 2 : 3); r(1, 12, 12, 1, a ? 2 : 3);
+  r(9, 2, 7, 11, 5); r(9, 5, 6, 8, 1); r(3, 3, 6, 4, 1); r(3, 2, 7, 1, 1);        // body, ridge of bristles
+  r(9, 12, 6, 4, 4); r(10, 14, 8, 2, 1); r(5, 12, 5, 2, 2);                       // head, snout, ear
+  r(5, 14, 11, 1, 2); r(5, 14, 12, 1, 2); r(0, 15, 9, 1, 2); r(11, 13, 7, 1, 1);  // tusk, tusk tip, nose, eye
+}
+function wispFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const w = [0, 1, 0][fr];
+  r(5, 5, 4 + w, 6, 6); r(15, 4, 5 + w, 8, 4); r(6, 3, 6 + w, 4, 2); r(15, 5, 3 + w, 6, 6);
+  r(13, 6, 8 + w, 4, 2); r(6, 7, 7 + w, 2, 2); r(15, 10, 11 + w, 2, 3); r(5, 7, 13 + w, 2, 2); r(0, 6, 7 + w, 1, 1); r(0, 9, 7 + w, 1, 1);
+}
+function wormFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = [0, 1, 0][fr], b = [1, 0, 1][fr];
+  r(9, 0, 11 + b, 3, 4); r(10, 3, 9 + a, 4, 6); r(9, 7, 8 + b, 4, 6); r(10, 10, 9 + a, 4, 5); r(9, 5, 5, 6, 8);   // segments
+  r(10, 12, 4, 2, 4); r(8, 5, 7, 1, 2); r(13, 7, 6, 1, 1); r(0, 14, 6, 1, 2); r(12, 13, 5, 3, 1); r(6, 12, 5, 3, 1);  // ringed head, maw
+  r(8, 3, 9 + a, 1, 1);
+}
+function mimicFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const open = [0, 3, 1][fr];
+  r(9, 1, 8 + open, 14, 4); r(10, 2, 8 + open, 12, 1); r(13, 1, 9 + open, 14, 1);    // lid
+  r(9, 1, 11, 14, 4); r(10, 2, 11, 12, 1); r(13, 1, 12, 14, 1); r(3, 2, 11, 1, 3); r(3, 13, 11, 1, 3);   // body, bands
+  for (let i = 0; i < 4; i++) { r(6, 3 + i * 3, 11 + (open ? 0 : 0), 2, 2); r(6, 4 + i * 3, 8 + open + 2, 2, 2); }   // teeth
+  r(11, 7, 9 + open, 2, 2); r(0, 7, 9 + open, 1, 1); r(11, 12, 15, 2, 1);                // eyes
+  if (open > 1) r(11, 3, 10, 10, 1);
+}
+function wyvernFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const up = fr === 1, dn = fr === 2;
+  r(2, up ? 0 : 2, up ? 1 : 3, 5, up ? 6 : 4); r(3, up ? 1 : 3, up ? 2 : 4, 3, up ? 4 : 2); r(13, up ? 0 : 3, up ? 6 : 8, 3, 1); // wing near
+  r(2, dn ? 5 : 3, dn ? 8 : 6, 5, 4);                                                                                              // wing far
+  r(13, 5, 6, 7, 5); r(6, 6, 7, 5, 1); r(13, 11, 7, 3, 4); r(2, 0, 6, 5, 1);                                                      // body, spine, tail
+  r(13, 11, 6, 4, 3); r(6, 13, 5, 1, 1); r(15, 14, 9, 1, 2); r(11, 13, 7, 1, 1); r(13, 8, 4, 2, 2);                                // head, horn, eye
+  r(12, 14, 8, 2, 1);
+}
+function dragonFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const up = fr === 1, dn = fr === 2;
+  r(11, up ? 0 : 2, up ? 0 : 1, 8, up ? 6 : 4); r(12, up ? 1 : 3, up ? 1 : 2, 5, up ? 4 : 2); r(1, up ? 0 : 2, up ? 0 : 1, 3, 1);  // near wing, claws
+  r(11, dn ? 5 : 3, dn ? 8 : 7, 7, 4); r(12, dn ? 6 : 4, dn ? 9 : 8, 5, 2);                                                       // far wing
+  r(11, 6, 5, 9, 6); r(6, 6, 5, 9, 1); r(12, 7, 9, 5, 2); r(11, 4, 8, 2, 4); r(3, 0, 7, 6, 1); r(11, 0, 8, 1, 3);                   // body, belly plates
+  r(11, 11, 4, 4, 5); r(6, 11, 4, 4, 1); r(12, 13, 7, 2, 2); r(13, 14, 9, 1, 2); r(0, 15, 6, 1, 2); r(12, 15, 8, 1, 1); r(3, 12, 3, 1, 3); // head, horns, jaw, fire, eye
+  r(11, 15, 11, 1, 2);
+}
+
 // 1px dark outline inside each 16x16 cell so sprites read on bright snow.
 function outline(ctx, w, h) {
   const img = ctx.getImageData(0, 0, w, h), d = img.data;
@@ -210,6 +272,15 @@ function buildCharacters(scene) {
   make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
   make('spr_tide', (ctx, x, d, f) => tideFrame(ctx, x, f), ['side']);
   make('spr_root', (ctx, x, d, f) => rootFrame(ctx, x, f), ['side']);
+  make('spr_bear', (ctx, x, d, f) => bearFrame(ctx, x, f), ['side']);
+  make('spr_lynx', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 10, dark: 9, light: 13, leg: 9 }), ['side']);
+  make('spr_boar', (ctx, x, d, f) => boarFrame(ctx, x, f), ['side']);
+  make('spr_wisp', (ctx, x, d, f) => wispFrame(ctx, x, f), ['side']);
+  make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
+  make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
+  make('spr_wyvern', (ctx, x, d, f) => wyvernFrame(ctx, x, f), ['side']);
+  make('spr_dragon', (ctx, x, d, f) => dragonFrame(ctx, x, f), ['side']);
+  make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
   make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
 }
 

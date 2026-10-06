@@ -87,17 +87,17 @@ t('every seed places all five dungeon entrances, and each dungeon is fully reach
   for (let k = 1; k <= 25; k++) {
     S.seed = k * 7919;
     const ids = getReach().pois.map((p) => p.id);
-    for (const id of ['maw0', 'fort0', 'temple0', 'rootvault0', 'throne0']) assert.ok(ids.includes(id), `${id} missing for seed ${S.seed}`);
+    for (const id of ['maw0', 'fort0', 'temple0', 'rootvault0', 'throne0', 'nest0']) assert.ok(ids.includes(id), `${id} missing for seed ${S.seed}`);
     // every entrance is walkable from the start and its exit tile survived pruning
     const r = getReach();
     const seen = flood(r.grid, r.w, r.h, 4, 15);
-    for (const to of ['maw', 'keep', 'chapel', 'rootvault', 'throne']) {
+    for (const to of ['maw', 'keep', 'chapel', 'rootvault', 'throne', 'nest']) {
       const ex = r.entities.find((e) => e.t === 'exit' && e.to === to);
       assert.ok(ex, `exit to ${to} missing for seed ${S.seed}`);
       assert.ok(seen[ex.y * r.w + ex.x] || seen[(ex.y + 1) * r.w + ex.x], `exit to ${to} unreachable for seed ${S.seed}`);
     }
   }
-  const bosses = { maw: 'wyrm', keep: 'warlord', chapel: 'tide', rootvault: 'root', throne: 'winter' };
+  const bosses = { nest: 'dragon', maw: 'wyrm', keep: 'warlord', chapel: 'tide', rootvault: 'root', throne: 'winter' };
   for (const [map, boss] of Object.entries(bosses)) {
     const b = MAPS[map].build();
     const sp = b.entities.find((e) => e.t === 'spawn' && e.name === 'entry');

@@ -27,10 +27,10 @@ import Npc from '../entities/Npc.js';
 import Boss from '../entities/Boss.js';
 import Grimfang from '../entities/Grimfang.js';
 import RimeWyrm from '../entities/RimeWyrm.js';
-import { Warlord, Tidemother, AshenRoot, LongWinter } from '../entities/Guardians.js';
+import { Warlord, Tidemother, AshenRoot, LongWinter, EmberDragon } from '../entities/Guardians.js';
 import { HEART_SITE, heartsHeld, HEART_ORDER } from '../data/hearts.js';
-const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter };
-const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead' };
+const BOSS_CLASS = { wyrm: RimeWyrm, warlord: Warlord, tide: Tidemother, root: AshenRoot, winter: LongWinter, dragon: EmberDragon };
+const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlordDead', tide: 'tideDead', root: 'rootDead', winter: 'winterDead', dragon: 'dragonDead' };
 import Breakable from '../entities/Breakable.js';
 import { Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
@@ -116,8 +116,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.player = new Player(this, px, py);
     this.physics.add.collider(this.player, this.layer);
-    this.physics.add.collider(this.enemies, this.layer);
-    this.physics.add.collider(this.enemies, this.enemies);
+    // flyers and burrowed worms pass through walls and other creatures
+    const solidFoe = (a, b) => !(a.cfg?.fly || b.cfg?.fly || a.hidden || b.hidden);
+    this.physics.add.collider(this.enemies, this.layer, null, (en) => !(en.cfg?.fly || en.hidden));
+    this.physics.add.collider(this.enemies, this.enemies, null, solidFoe);
     this.physics.add.collider(this.shots, this.layer, (sh) => sh.wall());
     this.physics.add.collider(this.eshots, this.layer, (sh) => sh.wall());
     this.physics.add.overlap(this.shots, this.enemies, (sh, en) => sh.hitEnemy(en));
@@ -567,7 +569,7 @@ export default class GameScene extends Phaser.Scene {
 
   onFirstAlert(en) {
     tip('sneak');
-    if (en && ['reaver', 'knight', 'fencer'].includes(en.kind)) tip(en.kind);
+    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear'].includes(en.kind)) tip(en.kind);
     if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
   }
 

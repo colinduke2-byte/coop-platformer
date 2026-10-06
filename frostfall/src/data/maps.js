@@ -348,6 +348,41 @@ function buildThrone() {
 }
 MAPS.throne = { name: 'The Winter Throne', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 17.6 * T && pc.x > 6 * T && pc.x < 34 * T, build: buildThrone, music: 'boss', dim: 0.36, cave: true };
 
+
+// ---- The Ember Nest: a volcanic cave; Skaldrath's lair (optional super-boss)
+function buildNest() {
+  const g = new Grid(40, 62, TILE.ROCK);
+  const F = (x, y, w, h, t = TILE.CFLOOR) => g.rect(x, y, w, h, t);
+  F(14, 54, 12, 7); F(19, 47, 2, 7);
+  F(5, 33, 30, 14);                      // first cavern
+  F(2, 36, 3, 6); F(35, 36, 3, 6);
+  F(19, 27, 2, 6);
+  F(4, 15, 32, 12);                      // the forge cavern
+  F(19, 11, 2, 4);
+  F(4, 0, 32, 11);                       // the nest
+  g.rect(19, 61, 2, 1, TILE.STAIRS);
+  g.noise(TILE.CFLOOR2, 0.25, 81, TILE.CFLOOR);
+  g.rect(19, 15, 2, 10, TILE.PATH); g.rect(19, 28, 2, 4, TILE.PATH);
+  // lava pools (solid) and pillars
+  for (const [x, y] of [[9, 36], [10, 36], [9, 37], [10, 37], [29, 41], [30, 41], [29, 42], [30, 42], [8, 20], [9, 20], [8, 21], [9, 21], [30, 24], [31, 24], [30, 25], [31, 25], [12, 4], [13, 4], [26, 6], [27, 6], [8, 8], [31, 8]]) g.set(x, y, TILE.FIRE);
+  for (const [x, y] of [[14, 40], [25, 38], [14, 22], [26, 19], [11, 2], [28, 2]]) g.set(x, y, TILE.PILLAR);
+  g.add({ t: 'spawn', name: 'entry', x: 20, y: 58 });
+  g.add({ t: 'exit', x: 19, y: 61, w: 2, h: 1, to: 'forest', spawn: 'nest', fx: 'door' });
+  g.add({ t: 'fire', x: 16, y: 57, rest: true, id: 'nestin' }); g.set(16, 57, TILE.BRAZIER);
+  for (const [x, y, r] of [[16, 57, 44], [20, 50, 34], [9, 36, 40], [30, 41, 40], [20, 38, 60], [8, 20, 40], [30, 24, 40], [20, 20, 70], [12, 4, 50], [27, 6, 50], [20, 5, 110], [20, 13, 36]]) g.add({ t: 'glow', x, y, r, col: 12 });
+  g.add({ t: 'sign', x: 17, y: 58, text: ['THE EMBER NEST.', 'THE ROCK IS WARM UNDERFOOT. SOMETHING VERY LARGE BREATHES BELOW.'] });
+  for (const [k, x, y] of [['imp', 10, 40], ['imp', 14, 44], ['imp', 28, 36], ['imp', 24, 44], ['wyvern', 18, 38], ['wyvern', 26, 40], ['golem', 20, 36], ['necro', 8, 44]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  g.add({ t: 'chest', id: 'nest1', x: 3, y: 38, lock: 'hard', loot: [{ gen: 3 }, { gen: 3, rarity: 1 }, { gold: 140 }] });
+  g.add({ t: 'chest', id: 'nest2', x: 36, y: 38, loot: [{ item: 'hp_potion_g', n: 3 }, { item: 'mp_potion_g', n: 2 }, { arrows: 14 }] });
+  for (const [k, x, y] of [['golem', 12, 18], ['golem', 28, 18], ['necro', 20, 17], ['imp', 14, 24], ['imp', 26, 22], ['wyvern', 20, 22], ['shroom', 8, 24], ['shroom', 32, 20], ['wisp', 18, 24], ['wisp', 24, 16]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  g.add({ t: 'chest', id: 'nest3', x: 5, y: 17, lock: 'hard', loot: [{ gen: 3, rarity: 2 }, { gold: 160 }, { item: 'hp_potion_g', n: 2 }] });
+  g.set(21, 13, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 13, auto: true });
+  g.add({ t: 'boss', kind: 'dragon', x: 20, y: 5 });
+  g.add({ t: 'bossgate', x: 19, y: 11, w: 2 });
+  return g.out();
+}
+MAPS.nest = { name: 'The Ember Nest', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 5 * T && pc.x < 35 * T, build: buildNest, music: 'boss', dim: 0.3, cave: true };
+
 // The forest is now the north-west corner of the open world (same coordinates as before).
 let reachCache = null;
 export function getReach() {

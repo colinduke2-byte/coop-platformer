@@ -28,6 +28,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
     this.tier = spec.tier || 0;
     this.poise = 0;
+    if (cfg.scale) this.setScale(cfg.scale);
     const ng = S.ngPlus || 0;
     if (ng > 0 && !cfg.title) { this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.15 * ng)) }; this.maxHp = Math.round(this.maxHp * (1 + 0.4 * ng)); }
     this.camp = spec.camp || null;
@@ -173,6 +174,78 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.finish(dt, slow);
   }
 
+  // ---- strange behaviours -----------------------------------------------------------------------------
+  // Grave Caller: raises draugr from the ground every few seconds (up to three at a time).
+  raiseTick(dt) {
+    this.raiseT = (this.raiseT ?? 2.5) - dt;
+    if (this.raiseT > 0 || this.state === 'windup') return;
+    this.raiseT = this.cfg.raise;
+    this.minions = (this.minions || []).filter((m) => !m.dead && m.active);
+    if (this.minions.length >= 3) return;
+    const sc = this.scene;
+    for (let i = 0; i < 20; i++) {
+      const a = Math.random() * Math.PI * 2, r = 26 + Math.random() * 30;
+      const x = this.x + Math.cos(a) * r, y = this.y + Math.sin(a) * r;
+      if (sc.solidAt(x, y) || sc.solidAt(x + 6, y) || sc.solidAt(x - 6, y)) continue;
+      const m = sc.addEnemy('draugr', x, y, { tier: this.tier });
+      m.alert(true); this.minions.push(m);
+      sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('frost');
+      break;
+    }
+  }
+
+  // Pale Wisp: slips away through the air when you press it.
+  blinkTick(dt, player, d) {
+    this.blinkT = (this.blinkT ?? this.cfg.blink) - dt;
+    if (this.blinkT > 0 || d > 150) return;
+    this.blinkT = this.cfg.blink + Math.random();
+    const sc = this.scene;
+    for (let i = 0; i < 20; i++) {
+      const a = Math.random() * Math.PI * 2, r = 64 + Math.random() * 30;
+      const x = player.x + Math.cos(a) * r, y = player.y + Math.sin(a) * r;
+      if (sc.solidAt(x, y) && !this.cfg.fly) continue;
+      sc.fx.puff(this.x, this.y, 13, 8, 30, 0.4);
+      this.setPosition(x, y); this.body.updateFromGameObject(); this.evade = 0.15;
+      sc.fx.puff(x, y, 13, 8, 30, 0.4);
+      break;
+    }
+  }
+
+  // Frost Worm: tunnels toward you unseen and untouchable, marks the spot where it will surface, then bites.
+  burrowAI(dt, player, d, to, slow) {
+    const cfg = this.cfg, b = this.body, sc = this.scene;
+    this.bs = this.bs || 'under';
+    this.bT = (this.bT ?? 0) - dt;
+    if (this.bs === 'under') {
+      this.hidden = true;
+      b.setVelocity(to.x * cfg.chase * slow, to.y * cfg.chase * slow);
+      this.face = dir8(to.x, to.y);
+      if (Math.random() < 0.35) sc.fx.puff(this.x, this.y + 6, 5, 3, 16, 0.35);
+      if (d < 44) {
+        this.bs = 'tele'; this.bT = 0.95; b.setVelocity(0, 0);
+        this.popAt = { x: player.x, y: player.y + 3 };
+        sc.addZone(this.popAt.x, this.popAt.y, 24, 0.95, cfg.dmg, this);
+        sfx.play('telegraph');
+      }
+      return true;
+    }
+    if (this.bs === 'tele') {
+      b.setVelocity(0, 0);
+      if (this.bT <= 0) {
+        this.setPosition(this.popAt.x, this.popAt.y); b.updateFromGameObject();
+        this.hidden = false; this.bs = 'up'; this.bT = 3.2;
+        sc.fx.puff(this.x, this.y + 4, 5, 12, 60, 0.5); sc.shake(120, 0.006); sfx.play('boom');
+      }
+      return true;
+    }
+    // surfaced: fights like a normal melee enemy for a few seconds, then digs in again
+    if (this.bT <= 0 && (this.state === 'chase' || this.state === 'idle')) {
+      this.bs = 'under'; this.hidden = true; sc.fx.puff(this.x, this.y + 4, 5, 10, 40, 0.4);
+      return true;
+    }
+    return false;
+  }
+
   // Burning / bleeding: small ticks of damage every half second.
   tickDot(dt) {
     const d = this.dot;
@@ -207,6 +280,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const cfg = this.cfg, b = this.body, sc = this.scene;
     this.stateT -= dt;
     const to = norm(player.x - this.x, player.y - this.y);
+    if (cfg.burrow && this.burrowAI(dt, player, d, to, slow)) return;
+    if (cfg.raise) this.raiseTick(dt);
+    if (cfg.blink) this.blinkTick(dt, player, d);
     switch (this.state) {
       case 'idle':
       case 'chase': {
@@ -220,6 +296,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
           if (sc.takeToken(this)) { this.startWindup(to); break; }
           // others wait their turn: circle the player instead of crowding in
           this.strafe(to, d, slow);
+          break;
+        }
+        if (cfg.orbit) {                                      // wyverns circle overhead, then dive
+          this.orbitDir = this.orbitDir || (Math.random() < 0.5 ? 1 : -1);
+          const radial = d > 100 ? 1 : d < 64 ? -1 : 0;
+          const vx = -to.y * this.orbitDir + to.x * radial * 0.9, vy = to.x * this.orbitDir + to.y * radial * 0.9;
+          const nn = norm(vx, vy);
+          b.setVelocity(nn.x * cfg.chase * slow, nn.y * cfg.chase * slow);
+          if (this.cd <= 0 && d < cfg.range && sc.takeToken(this)) this.startWindup(to);
           break;
         }
         // approach: straight if the way is clear, else follow the tile path
@@ -320,8 +405,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   attackStart(player, to) {
     const cfg = this.cfg;
+    if (cfg.suicide) {                                    // imps burst: a short fuse, then a blast where they stood
+      this.scene.addZone(this.x, this.y + 3, 28, 0.22, cfg.dmg, this);
+      this.scene.fx.puff(this.x, this.y, 12, 10, 50, 0.4); sfx.play('alert');
+      this.explodes = false; this.dead = false; this.hp = 0; this.die({ suicide: true });
+      return;
+    }
     if (cfg.kind === 'cast') {
-      this.scene.addZone(this.castTarget.x, this.castTarget.y, cfg.zoneR, cfg.zoneDelay, cfg.dmg, this);
+      const zn = cfg.zoneN || 1;
+      for (let i = 0; i < zn; i++) {
+        const jx = i ? rand(-34, 34) : 0, jy = i ? rand(-26, 26) : 0;
+        this.scene.addZone(this.castTarget.x + jx, this.castTarget.y + jy, cfg.zoneR, cfg.zoneDelay + i * 0.16, cfg.dmg, this);
+      }
       this.body.setVelocity(0, 0);
       sfx.play('frost');
       this.scene.fx.puff(this.x, this.y, 14, 8, 40, 0.3);
@@ -396,6 +491,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     else this.clearTint();
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
+    if (this.cfg.fly) this.setOrigin(0.5, 0.5 + 9 / 16);
+    this.setAlpha(this.hidden ? 0 : this.cfg.ambush && !this.alerted ? 0.28 : 1);
+    this.shadow.setVisible(!this.hidden);
     this.updateBlade();
     if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 18 - (this.scaleX > 1 ? 10 : 0))).setDepth(99300);
   }
@@ -434,6 +532,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
       }
     }
+    if (this.hidden) return 0;                       // a burrowed worm cannot be hit
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
