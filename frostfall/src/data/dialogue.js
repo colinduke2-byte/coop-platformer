@@ -11,6 +11,7 @@ import { bus } from '../systems/bus.js';
 import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
+import { setCompanion } from '../systems/companion.js';
 
 const SIGRID = 'Sigrid', BJORN = 'Bjorn', MIRRA = 'Mirra';
 
@@ -286,7 +287,7 @@ export async function hilda() {
 
 export async function ragna() {
   const R = 'Ragna';
-  if (S.follower) {
+  if (S.follower && S.companion !== 'pell') {
     const c = await choose(['Stay in the village', 'Keep following', 'Chat']);
     if (c === 0) { S.follower = false; bus.emit('follower', false); await say(R, 'I will be at the lodge. Whistle if you want me.'); }
     else if (c === 2) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.']));
@@ -299,7 +300,7 @@ export async function ragna() {
     if (q === 0) {
       startQuest('company');
       S.gold += 0;
-      if (!S.follower) { S.follower = true; bus.emit('follower', true); }
+      setCompanion('ragna');
       await say(R, 'Then my bow is yours, for nothing. Bring me to the Keep, Dreamer. Let me lay them down.');
       return;
     }
@@ -309,7 +310,7 @@ export async function ragna() {
   const c = await choose(['Hire Ragna (150G)', 'Not now']);
   if (c !== 0) return;
   if (S.gold < 150) { sfx.play('nostamina'); await say(R, 'Come back with coin.'); return; }
-  S.gold -= 150; S.follower = true; bus.emit('follower', true);
+  S.gold -= 150; setCompanion('ragna');
   await say(R, 'Lead on. I will keep to your heels and my arrows will keep to their throats.');
 }
 function cycleLine(key, lines) { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; }

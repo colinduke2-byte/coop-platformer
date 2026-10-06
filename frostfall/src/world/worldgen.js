@@ -247,6 +247,7 @@ export function buildRegion(def, region, seed) {
       for (let i = 0; i < 2; i++) enemy(pickOf(m.ranged), p.x + (i ? 4 : -4), p.y - 3, p.tier, { camp: p.id });
       for (let i = 0; i < 3; i++) add({ t: 'node', x: p.x - 4 + i * 4, y: p.y + 3, ore: R() < 0.3 ? 'ember_ore' : 'ash_iron' });
       chest(p, 0, -3, p.tier + 1, 'hard');
+      add({ t: 'lore', id: 'foundry', tex: 'book', x: p.x + 3, y: p.y - 1 });
       add({ t: 'glow', x: p.x, y: p.y - 1, r: 44, col: 12 });
       add({ t: 'sign', x: p.x - 6, y: p.y + 3, text: ['A DERELICT FOUNDRY.', 'THE ANVILS STILL RING WHEN THE WIND CATCHES THEM.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
@@ -256,7 +257,7 @@ export function buildRegion(def, region, seed) {
       g.set(p.x + 1, p.y - 3, TILE.WRECK); g.set(p.x + 1, p.y - 4, TILE.WRECK);
       for (let i = 0; i < 3 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(['draugr', 'warden', 'wight'].concat(m.melee)), p.x - 3 + i * 3, p.y, p.tier, { camp: p.id });
       chest(p, 1, 0, p.tier + 1, 'med'); chest(p, -2, 1, p.tier, 'med');
-      add({ t: 'lore', id: 'ruin' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 3, y: p.y });
+      add({ t: 'lore', id: 'wreck' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 3, y: p.y });
       add({ t: 'sign', x: p.x - 7, y: p.y + 2, text: ['A WRECK IN THE ICE.', 'THE FIGUREHEAD STILL FACES THE HORIZON. THE CREW HAS STOPPED LOOKING.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'lighthouse') {    // a lamp that never went out, and the keeper who tends it
@@ -276,7 +277,7 @@ export function buildRegion(def, region, seed) {
       for (let i = 0; i < 3 + p.tier; i++) enemy(pickOf([...m.melee, ...m.ranged]), p.x + Math.round((R() - 0.5) * 11), p.y + 2 + Math.round(R() * 3), p.tier, { camp: p.id });
       chest(p, 0, 4, p.tier + 1, 'hard');
       if (Number((p.id.match(/\d+$/) || ['0'])[0]) === 0) add({ t: 'npc', id: 'scribe', x: p.x - 4, y: p.y + 4 });
-      add({ t: 'lore', id: 'ruin' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
+      add({ t: 'lore', id: 'court' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'hamlet') {
       const who = ['trapper', 'fisher', 'prospector'][Number((p.id.match(/\d+$/) || ['0'])[0]) % 3];
@@ -293,7 +294,7 @@ export function buildRegion(def, region, seed) {
       for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; g.set(p.x + Math.round(Math.cos(a) * 4.4), p.y + Math.round(Math.sin(a) * 3.4), TILE.PILLAR); }
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y, r: 46, col: 14 });
-      add({ t: 'lore', id: 'ruin' + (p.id.slice(-1) % 3), tex: 'book', x: p.x + 2, y: p.y + 1 });
+      add({ t: 'lore', id: 'stone' + (p.id.slice(-1) % 3), tex: 'book', x: p.x + 2, y: p.y + 1 });
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A CIRCLE OF STANDING STONES.', 'THE AIR HUMS. SOMETHING OLD BLESSES THOSE WHO PAUSE HERE.'] });
     } else if (p.kind === 'rest') {
       clearing(p, 5, 5);
@@ -343,6 +344,51 @@ export function buildRegion(def, region, seed) {
   // ---- scenery ---------------------------------------------------------------------------------
   def.scenery(g, bio, W, H);
   for (const d of def.dress) g.dress(d);
+
+  // ---- repair: every place must be walkable from the entrance. Carve a road through whatever sealed one in
+  {
+    const flood = () => {
+      const seen = new Uint8Array(W * H), q = [[START.x, START.y]]; seen[START.y * W + START.x] = 1;
+      for (let i = 0; i < q.length; i++) {
+        const [x, y] = q[i];
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx] || SOLID_SET.has(g.t[ny][nx])) continue;
+          seen[ny * W + nx] = 1; q.push([nx, ny]);
+        }
+      }
+      return seen;
+    };
+    let seen = flood();
+    const reached = (p) => { for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const x = p.x + dx, y = p.y + dy; if (x >= 0 && y >= 0 && x < W && y < H && seen[y * W + x]) return true; } return false; };
+    for (const p of pois) {
+      if (reached(p)) continue;
+      // cheapest way out (open ground costs 1, rock 5, the world's wall 60), found with a small Dijkstra
+      const dist = new Float32Array(W * H).fill(Infinity), prev = new Int32Array(W * H).fill(-1), heap = [];
+      const push = (d, i) => { heap.push([d, i]); let k = heap.length - 1; while (k > 0) { const par = (k - 1) >> 1; if (heap[par][0] <= heap[k][0]) break; [heap[par], heap[k]] = [heap[k], heap[par]]; k = par; } };
+      const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { let l = 2 * k + 1, r = l + 1, m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; [heap[m], heap[k]] = [heap[k], heap[m]]; k = m; } } return top; };
+      const start = p.y * W + p.x; dist[start] = 0; push(0, start);
+      let goal = -1;
+      while (heap.length) {
+        const [d, i] = pop();
+        if (d > dist[i]) continue;
+        if (seen[i]) { goal = i; break; }
+        const x = i % W, y = (i / W) | 0;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 1 || ny < 1 || nx >= W - 1 || ny >= H - 1) continue;
+          const cost = Math.min(nx, ny, W - 1 - nx, H - 1 - ny) < 3 ? 60 : SOLID_SET.has(g.t[ny][nx]) ? 5 : 1, ni = ny * W + nx;
+          if (d + cost < dist[ni]) { dist[ni] = d + cost; prev[ni] = i; push(d + cost, ni); }
+        }
+      }
+      for (let i = goal; i >= 0; i = prev[i]) {
+        const x = i % W, y = (i / W) | 0;
+        for (const [ox, oy] of [[0, 0], [1, 0]]) { const tx = x + ox, ty = y + oy; if (tx > 2 && ty > 2 && tx < W - 3 && ty < H - 3 && (SOLID_SET.has(g.t[ty][tx]) && g.t[ty][tx] !== TILE.FIRE && g.t[ty][tx] !== TILE.BRAZIER)) { g.t[ty][tx] = TILE.PATH; g.res[ty][tx] = true; } }
+        if (i === start) break;
+      }
+      seen = flood();
+    }
+  }
 
   // drop anything that ended up sealed off from the entrance (mountain pockets, tree knots)
   const seen = new Uint8Array(W * H), q = [[START.x, START.y]];

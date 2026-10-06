@@ -16,6 +16,7 @@ import { socketCount, socketed, insertGem, removeGem, gemList } from '../systems
 import { recalc } from '../systems/stats.js';
 import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
+import { setCompanion } from '../systems/companion.js';
 import { SEAL_QUESTS, sealCount } from './chapter3.js';
 
 const def = (id, name, tex = id) => { NPC_DEFS[id] = { name, tex: 'spr_' + tex }; };
@@ -79,7 +80,20 @@ SCRIPTS.corvin = async function corvin() {
 };
 SCRIPTS.pell = async function pell() {
   const N = 'Pell';
-  await say(N, cyc('pellN', ['Pell Quickpick! Fastest hands in the Delvers! Ask anyone. Well. Ask anyone alive.', 'Shortcut to the mines? Through the market, past the fish stall that does not sell fish. Do not ask.', 'If I had a coin for every cave-in I walked out of, I would have... one coin. A very heavy one.']));
+  if (S.follower && S.companion === 'pell') {
+    const c = await choose(['Wait here in Emberhold', 'Keep following', 'Chat']);
+    if (c === 0) { setCompanion(null); await say(N, 'I will be at the Last Lantern. Whistle, and I will come running. Probably.'); }
+    else if (c === 2) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a gentleman.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.']));
+    return;
+  }
+  if (S.quests.silence.status === 'done' || rep('delvers') >= 20) {
+    await say(N, 'You cleared the mines! I was going to say I knew you would, but I was actually hiding behind a barrel. A very good barrel.');
+    await say(N, 'Take me with you. I stab things from behind, I find extra coin, and I have never once gotten us lost. Statistically.');
+    const c = await choose(['Come along, Pell.', 'Not today.']);
+    if (c === 0) { setCompanion('pell'); await say(N, 'Wonderful! I will keep to your heels. And your pockets. For safekeeping. Of the gold I find. For you.'); }
+    return;
+  }
+  await say(N, cyc('pellN', ['Pell Quickpick! Fastest hands in the Delvers! Ask anyone. Well. Ask anyone alive.', 'Shortcut to the mines? Through the market, past the fish stall that does not sell fish. Do not ask.', 'If I had a coin for every cave-in I walked out of, I would have... one coin. A very heavy one.', 'Once the mines are safe, come find me. I will make myself useful. I have a plan. The plan is: be useful.']));
 };
 SCRIPTS.rook = async function rook() {
   const N = 'Rook', wares = [{ id: 'lockpick', price: 22, n: 2, name: 'Lockpick x2' }, { id: 'hp_potion_g', price: 90 }, { id: 'gem_topaz', price: 160, once: true }, ...(rep('delvers') >= 20 ? [{ id: 'gem_bloodstone', price: 240, once: true }] : [])];

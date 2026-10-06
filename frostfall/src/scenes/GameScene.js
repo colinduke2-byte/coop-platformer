@@ -66,6 +66,7 @@ import { submitScore } from '../systems/daily.js';
 import { finishQuest } from '../systems/quests.js';
 import '../data/emberhold.js';
 import '../data/hamlets.js';
+import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
 
@@ -158,14 +159,16 @@ export default class GameScene extends Phaser.Scene {
     if ((S.flags.houndOwned || S.flags.cubOwned) && !this.def.interior) this.spawnHound();
     if (this.boss && S.bossState && S.bossState.map === this.mapId) this.pendingBossRestore = true;
     this.on('follower', (on) => {
+      const hide = (id) => { const rn = this.npcs.find((n) => n.id === id); if (rn) { this.npcs = this.npcs.filter((n) => n !== rn); this.interactables = this.interactables.filter((i) => i !== rn); rn.shadow.destroy(); rn.nameTxt.destroy(); rn.destroy(); } };
       if (on) {
-        const rn = this.npcs.find((n) => n.id === 'ragna');
-        if (rn) { this.npcs = this.npcs.filter((n) => n !== rn); this.interactables = this.interactables.filter((i) => i !== rn); rn.shadow.destroy(); rn.nameTxt.destroy(); rn.destroy(); }
+        hide(S.companion === 'pell' ? 'pell' : 'ragna');
         this.spawnFollower();
       } else if (this.follower) {
+        const kind = this.follower.kind;
+        this.interactables = this.interactables.filter((i) => i !== this.follower);
         this.follower.destroy(); this.follower = null;
-        const spec = this.built.entities.find((x) => x.t === 'npc' && x.id === 'ragna');
-        if (spec && this.mapId === 'village') this.spawnEntity(spec);
+        const spec = this.built.entities.find((x) => x.t === 'npc' && x.id === kind);
+        if (spec && (kind === 'ragna' ? this.mapId === 'village' : this.mapId === 'emberhold')) this.spawnEntity(spec);
       }
     });
     if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
@@ -269,7 +272,7 @@ export default class GameScene extends Phaser.Scene {
       case 'board': { const bd = new BountyBoard(this, wx, wy); this.interactables.push(bd); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(bd); break; }
       case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
       case 'npc': {
-        if (e.id === 'ragna' && S.follower) break;
+        if (S.follower && e.id === (S.companion === 'pell' ? 'pell' : 'ragna')) break;
         if (e.night && !isNightHour(hourOf())) break;               // indoor spot: only occupied at night
         let ax = wx, ay = wy;
         if (e.id === 'sigrid' && this.opts.intro) { ax = 21.5 * T; ay = 15.5 * T; }

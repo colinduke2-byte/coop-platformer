@@ -3,11 +3,15 @@ import Projectile from './Projectile.js';
 import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
 import { norm, dist, facingKind, dir8 } from '../util.js';
+import { runScript } from '../systems/dialogue.js';
+import { SCRIPTS } from '../data/dialogue.js';
 
-// Ragna, a hired archer who follows the player and shoots nearby enemies.
+// A companion who follows the player: Ragna (an archer who shoots nearby enemies) or Pell (a scout who darts in with a knife
+// and brings a little extra gold). Talk to them (E) to send them home.
 export default class Follower extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'spr_ragna', 'down0');
+  constructor(scene, x, y, kind = 'ragna') {
+    super(scene, x, y, kind === 'pell' ? 'spr_pell' : 'spr_ragna', 'down0');
+    this.kind = kind;
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.body.setSize(8, 7).setOffset(4, 9);
@@ -17,6 +21,12 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
     this.phase = 0;
     this.wp = null; this.pathT = 0;
   }
+  // you can talk to a companion: dismiss, chat
+  get ix() { return this.x; }
+  get iy() { return this.y; }
+  canInteract() { return this.active && !this.scene.leaving; }
+  label() { return `E: TALK TO ${this.kind.toUpperCase()}`; }
+  async interact() { await runScript(() => SCRIPTS[this.kind]()); }
 
   update(dt, player) {
     const sc = this.scene, b = this.body;
@@ -34,6 +44,10 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
     if (tgt) {
       const to = norm(tgt.x - this.x, tgt.y - this.y);
       this.face = dir8(to.x, to.y);
+      if (this.kind === 'pell') {                                  // the scout darts in and stabs
+        if (td > 16) { vx = to.x * 96; vy = to.y * 96; }
+        if (td < 22 && this.cd <= 0) { this.cd = 0.8; tgt.takeHit({ dmg: 9, kx: to.x, ky: to.y, kb: 40, src: 'melee' }); sfx.play('hit'); }
+      } else {
       if (td < 46) { vx = -to.x * 50; vy = -to.y * 50; }          // keep some distance
       if (this.cd <= 0) {
         this.cd = 1.15;
@@ -42,6 +56,7 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
         pr.body.setVelocity(to.x * 220, to.y * 220);
         sfx.play('shoot');
         if (S.flags.ragnaVeteran) sc.time.delayedCall(140, () => { if (!this.active) return; const p2 = new Projectile(sc, this.x + to.x * 8, this.y + 3 + to.y * 8, 'arrow', to.x * 220, to.y * 220, { dmg: 8, life: 0.9, ally: true }); sc.shots.add(p2); p2.body.setVelocity(to.x * 220, to.y * 220); });
+      }
       }
     } else if (d > 30) {
       let tx = player.x, ty = player.y;

@@ -30,7 +30,8 @@ export const companionMethods = {
   },
   spawnFollower() {
     if (this.follower) return;
-    this.follower = new Follower(this, this.player.x - 14, this.player.y + 2);
+    this.follower = new Follower(this, this.player.x - 14, this.player.y + 2, S.companion || 'ragna');
+    this.interactables.push(this.follower);
     this.physics.add.collider(this.follower, this.layer);
   },
   reviveByFollower() {

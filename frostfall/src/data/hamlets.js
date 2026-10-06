@@ -16,6 +16,7 @@ NPC_DEFS.prospector = { name: 'PROSPECTOR', tex: 'spr_prospector' };
 
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
 const trade = async (who, wares, hello) => {
+  S.flags['met' + who] = true;
   await say(who, hello);
   for (;;) {
     const c = await choose(['Buy', 'Sell', 'Leave']);

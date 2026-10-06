@@ -30,7 +30,7 @@ export const stats = {
   trait: (k) => (eq('armor')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) * elixirVal('moveMul', 1) * modMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)
   sum: (k) => gemBonus(k) + modSum(k) + ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
-  mul: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (blessing()?.[k] ?? 1),
+  mul: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (k === 'goldMul' && S.follower && S.companion === 'pell' ? 1.1 : 1) * (blessing()?.[k] ?? 1),
   enchant: () => S.enchants?.[S.equip.weapon] || eq('weapon')?.elem || null,
 };
 

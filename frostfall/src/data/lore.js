@@ -10,6 +10,20 @@ export const LORE = {
   grimfang: { title: 'The Pale Alpha', text: ['The wolves of the pass answer to one grey beast, older than the village. Hunters call him Grimfang.', 'Some say a wolf that old understands mercy. Few have tested it.'] },
   bandit: { title: 'Bandit Camp Ledger', text: ['Take: one silver locket, one wolf-hide coat, two sacks of grain.', 'The chief keeps the locket in the iron-banded chest. He says he will give it to his daughter. He has no daughter.'] },
   tower: { title: 'Watchtower Log', text: ['Day 41. The pass is quiet except for the howling. The howling is getting closer.', 'Day 44. I have seen it. It is bigger than a horse.'] },
+  ruin0: { title: 'Fragment of a Ledger', text: ['Grain: forty sacks, three spoiled. Salt: none. Candles: none. Hope: unrecorded.', 'The Kings paid in promises. We have been trying to cash them for a thousand years.'] },
+  ruin1: { title: "A Soldier's Letter", text: ['Dear Mother, the wall holds. The Winter does not hate us; it does not know us. That is somehow worse.', 'If I do not come home, plant something at the door. It does not have to grow.'] },
+  ruin2: { title: 'Scratches on a Wall', text: ['FIVE CHAINS. FIVE HEARTS. FIVE KEEPERS. ONE OF THE FIVE WAS NEVER A HEART.', 'THE LAST ONE WAS A FIRE. WE WERE TOLD NOT TO WRITE THAT DOWN.'] },
+  chains: { title: 'The Book of Chains, Page One', text: ['Let it be written: the Winter was bound with five links, and the fifth link was warm.', 'We chained a flame to hold a frost, and called it kindness to the frost. The flame did not agree.'] },
+  stone0: { title: 'The Humming Stones', text: ['They hum at the pitch of a held breath. Stand in the circle and you will hear your own name, very faintly, spoken kindly.', 'Pilgrims leave a coin and a promise. The coins are always gone by morning. The promises are not.'] },
+  stone1: { title: 'Why the Kings Raised Circles', text: ['A king cannot be everywhere. So the Kings raised stones that remembered how to bless, and set them where roads cross.', 'The stones outlived the Kings. They bless whoever stops. They have never once checked who is worthy.'] },
+  stone2: { title: "A Pilgrim's Note", text: ['Walked nine days to see the circle. It was smaller than I imagined, and I cried anyway.', 'Left my boots. Walking home in my socks. Best decision of my life.'] },
+  wreck0: { title: 'Log of the Mourning Gull', text: ['Day 3: ice to the horizon. Captain says the sea will open by the thaw.', 'Day 40: the sea did not open. The ice is singing at night. Cook says it is the pipes. The pipes are iron and frozen.'] },
+  wreck1: { title: "The Cook's Complaint", text: ['Salt cod, again. Salt cod for the Admiral, salt cod for the crew, salt cod for the rats.', 'If the ice takes this ship I want it known: I never once complained about the rats. Only the cod.'] },
+  wreck2: { title: 'The Last Entry', text: ['We are not leaving. The Admiral will not give the order, and nobody has the heart to ask.', 'If you read this, bring the order to him. He is a good man and a terrible sailor.'] },
+  court0: { title: 'The Court of Marble', text: ['In the Court of Marble, the Kings sat in a ring, so that none would sit at the head.', 'It was the last argument they won. The next one, about the Winter, ended with five chains and no ring at all.'] },
+  court1: { title: "A Herald's Scroll", text: ['BE IT KNOWN: THE KING WILL RECEIVE NO PETITIONS ON THE DAY OF THE BINDING.', 'BE IT FURTHER KNOWN: THE KING WILL RECEIVE NO ONE ON THE DAY AFTER EITHER.'] },
+  court2: { title: "The Queen's Question", text: ['The last Queen of the Hollow Kings asked one thing of the Binding: who will remember us?', 'Nobody answered. She wrote it on the wall of the court, in her own hand, and left it for the moss.'] },
+  foundry: { title: "A Smith's Lament", text: ['I made the sixth link. They told me it was for a gate. It was warm in my hands, and it whispered while I worked.', 'I have not forged since. My anvil still rings when the wind is right, and the ring is a name I do not know.'] },
 };
 
 for (const r of RELICS) LORE[r.id] = { title: r.name, text: r.text };

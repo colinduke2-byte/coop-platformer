@@ -27,7 +27,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
   const R = rng(seed * 31 + idx * 977 + 5);
   const theme = o.theme ? EXTRA_THEMES[o.theme] : barrowTheme(seed, idx);
   const rooms = [];
-  const W = 44, H = 20 + 12 * 3;
+  const W = 44, H = 72;                // tall enough for five rooms of nine rows and the gaps between
   const g = new Grid(W, H, TILE.CWALL);
   const n = 4 + Math.floor(R() * 2);                  // 4-5 rooms, bottom to top
   let y = H - 2, prevX = 22;

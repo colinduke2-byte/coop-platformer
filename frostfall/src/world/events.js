@@ -34,7 +34,7 @@ export const eventMethods = {
     if (Q.trail.status === 'active' && S.flags.rb_elk) { Q.trail.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); sfx.play('quest'); }
     if (Q.toll.status === 'active' && S.flags.rb_troll) { Q.toll.status = 'ready'; bus.emit('toast', 'QUEST READY: SHOW HILDA', 13); sfx.play('quest'); }
     // Ragna lays her company to rest once the Warlord is down and she is with you
-    if (Q.company.status === 'active' && S.flags.warlordDead && S.follower && this.follower && !ui.modal && this.player.mode === 'free') this.companionScene();
+    if (Q.company.status === 'active' && S.flags.warlordDead && S.follower && S.companion !== 'pell' && this.follower && !ui.modal && this.player.mode === 'free') this.companionScene();
   },
   companionScene() {
     S.quests.company.status = 'ready';

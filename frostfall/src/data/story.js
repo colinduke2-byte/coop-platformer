@@ -27,19 +27,19 @@ export const NPC_BARKS = {
   ],
   bjorn: () => [
     S.flags.rb_elk ? 'You felled Frostbrow? Gods. I have waited my whole life to see his antlers.' : 'Tracks near the north trail. Big. Bigger than any elk has a right to be.',
-    'The dogs are restless tonight. They smell the aurora coming.',
+    S.flags.finalChoice ? 'They say the mountain went quiet. The dogs sleep all night now. I do not trust it, and I like it.' : 'The dogs are restless tonight. They smell the aurora coming.',
   ],
   mirra: () => [
-    'Snowberries keep. Fear does not. Drink up.',
+    S.flags.finalChoice ? 'A trader from Emberhold sells me ember ore for the cauldron. Prices have never been better. Or worse. I am conflicted.' : 'Snowberries keep. Fear does not. Drink up.',
     S.flags.alchemy ? 'Three drops of frost lily, one of bone dust. Do not ask what it tastes like.' : 'I could teach you, if you brought me herbs.',
   ],
   hilda: () => [
     S.flags.rb_troll ? 'Trollbone. Do you know what that does to a hammer? ...No. Nobody does. Yet.' : 'A good edge outlives its smith.',
-    'Steel remembers every blow. So should you.',
+    S.flags.finalChoice ? 'Emberforged steel, they say, out of Brannoch\'s forge. I would pay good coin to watch him hammer.' : 'Steel remembers every blow. So should you.',
   ],
   guard: () => [
     S.flags.finale === 'thaw' ? 'The palisade is dripping. I have forgotten what that sounds like.' : 'Nothing on the road tonight. That is the part that worries me.',
-    'The aurora means the Kings are dreaming. Do not look too long.',
+    S.flags.finalChoice ? 'Wardens came through yesterday, singing. Wardens. Singing. I checked their flasks.' : 'The aurora means the Kings are dreaming. Do not look too long.',
   ],
   child: () => [
     S.flags.houndOwned ? 'Is that a frost hound? Can I pet him? ...Is he yours?' : 'Mama says the stars are the Kings\' lanterns.',

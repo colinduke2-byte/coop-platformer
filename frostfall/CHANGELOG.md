@@ -302,3 +302,10 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - New gear: Cinderjaw Maul, Floe Harpoon, Sealskin Mail, Admiral's Cutlass, the Hollow King's Blade, the King's Signet.
 - Caves (3-4 per region) are generated per seed with region themes (cinder, sea, royal). The map screen cycles all four regions with R. Three new trophies, epilogue lines.
 - Tests: `stage46_regions3` (tiles, 15 builds, reachability, gates, caves, boss dungeons, both bosses, quests, loot, map cycling, per-region perf budget).
+
+## Round 21 - A longer campaign (Phase 13)
+- **Fixed**: books in the Reach's ruins and the city's Court pointed at lore entries that did not exist. 14 new books now fill the standing stones, wrecks, courtyards, the foundry and the ruins, each readable and added to the Lore tab. A test now checks every book on every map.
+- **Five side-quest chains**, offered by the people of Hollowfrost as the story opens up, answered by the open world: *Hamlet Rounds* (Bjorn; talk to a trapper, a fisher and a prospector), *The Den-Mother's Debt* (Bjorn, after Grimfang; clear 3 wolf dens), *Stones That Hum* (Sigrid, after a Heart; pray at 3 standing stones), *The Restless Barrows* (Mirra; clear 3 barrows), *Retake the Watch* (Haldor; retake 3 towers). Each has map markers and a reward (gold, gems, a spear, draughts).
+- **A second companion**: *Pell Quickpick*, the Delvers' scout. Recruit him in Emberhold once the mines are safe. He darts in and stabs (melee, 9 damage), and your gold finds are 10% bigger. One companion at a time: hiring Ragna or Pell replaces the other. Talk to a companion (E) to send them home; they go back to their post.
+- **Aftermath**: once the First Fire is decided, Bjorn, Mirra, Hilda and Haldor have new things to say.
+- Tests: `stage47_campaign`.
