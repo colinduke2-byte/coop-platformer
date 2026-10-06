@@ -18,6 +18,11 @@ for (let i = 0; i < N; i++) {
   }, [m, sp]);
   for (let k = 0; k < 6; k++) { const key = KEYS[Math.floor(Math.random() * KEYS.length)]; await h.ev((key) => { window.__ff.keys._press(key); setTimeout(() => window.__ff.keys._release(key), 60); }, key); await h.sleep(40 + Math.random() * 90); }
 }
+// the HUD is stopped and relaunched (as after the title screen or an ending): its text must not outlive the scene
+for (let i = 0; i < 4; i++) {
+  await h.ev(() => { const m = window.__ff.game.scene; m.stop('Hud'); m.start('Hud'); });
+  await h.sleep(500);
+}
 await h.sleep(1500);
 check(`${N} rapid scene changes without an exception`, h.errors.length === 0, h.errors.join('\n'));
 await h.close();

@@ -5,7 +5,7 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 
 ## Round 8: foundations (hardening + shared systems)
 **Hardening**
-- `stress_transitions.mjs`: hammers rapid scene changes with text, toasts and random key presses in flight (120 changes, clean). The one-off `null reading 'chars'` seen under load could not be reproduced; the stress test is now the guard.
+- `stress_transitions.mjs`: hammers rapid scene changes with text, toasts and random key presses in flight (120 changes, clean). The one-off `null reading 'chars'` / `'scaleX'` errors were traced to a real bug: the HUD cached text objects on the scene instance, and when the HUD was stopped and restarted the cached texts were already destroyed. The HUD now clears them on create, and the stress test relaunches the HUD to guard it.
 - **F4 copies a debug report** (seed, map, player state, enemy counts, flags, status effects, last 12 errors, browser) for bug reports. `src/systems/debug.js`.
 - **Art regression test** (`art_baseline.mjs`): every generated sprite sheet and icon is hashed against `test/baseline/sprites.json` (121 textures). Intentional art change: `UPDATE=1 node test/art_baseline.mjs`.
 - Monkey test: `ONLY=<map>` runs one map, `STACK=1` prints stack traces.
