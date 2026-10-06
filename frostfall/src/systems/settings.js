@@ -5,6 +5,8 @@ export const settings = {
   musicVol: 1, sfxVol: 1, ambVol: 1,   // per-channel mixes (0..1) on top of the master volume
   difficulty: 'normal',   // easy | normal | hard
   shake: 1,               // 0 | 0.5 | 1  (screen shake strength)
+  dmgNumbers: true,       // floating damage numbers
+  hitStop: true,          // brief freeze on landed hits
   flashes: true,          // screen flashes
   intScale: false,        // integer pixel scaling
   mouse: false,           // mouse controls (click = sword, right-click = bow)

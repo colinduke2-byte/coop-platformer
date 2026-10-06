@@ -16,6 +16,11 @@ export const TUNE = {
     { dmg: 1.1, kb: 135, size: 18, total: 0.3, cost: 1, flip: true, scale: 1, stun: 0.24 },
     { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
   ],
+  // how a landed hit feels, per weapon style: hit-stop seconds, shake duration (ms) and strength
+  hitFeel: {
+    dagger: { stop: 0.025, ms: 50, amt: 0.0025 }, sword: { stop: 0.05, ms: 80, amt: 0.004 },
+    axe: { stop: 0.07, ms: 130, amt: 0.0065 }, great: { stop: 0.09, ms: 170, amt: 0.009 },
+  },
   // weapon styles: each type of weapon has its own combo (sword uses `combo` above)
   styles: {
     dagger: [

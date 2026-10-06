@@ -92,17 +92,17 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.4]] },
   },
   deer: {
-    name: 'Deer', tex: 'spr_wolf', sideOnly: true, tint: 0xd8a870, passive: true, hp: 14, speed: 24, chase: 92, dmg: 0, detect: 70,
+    name: 'Deer', tex: 'spr_deer', sideOnly: true, passive: true, hp: 14, speed: 24, chase: 92, dmg: 0, detect: 70,
     kind: 'melee', range: 0, windup: 1, atkDur: 0.1, recover: 0.5, cooldown: 9, kbResist: 0,
     body: [12, 6, 2, 8], loot: { gold: [0, 0], drops: [['venison', 1], ['hide', 0.7]] },
   },
   hare: {
-    name: 'Snow Hare', tex: 'spr_wolf', sideOnly: true, tint: 0xeaf2f8, scale: 0.6, passive: true, hp: 6, speed: 30, chase: 118, dmg: 0, detect: 80,
+    name: 'Snow Hare', tex: 'spr_hare', sideOnly: true, passive: true, hp: 6, speed: 30, chase: 118, dmg: 0, detect: 80,
     kind: 'melee', range: 0, windup: 1, atkDur: 0.1, recover: 0.5, cooldown: 9, kbResist: 0,
     body: [12, 6, 2, 8], loot: { gold: [0, 0], drops: [['venison', 0.7], ['hide', 0.25]] },
   },
   fox: {
-    name: 'Ember Fox', tex: 'spr_wolf', sideOnly: true, tint: 0xf08a30, scale: 0.8, passive: true, hp: 10, speed: 30, chase: 104, dmg: 0, detect: 90,
+    name: 'Ember Fox', tex: 'spr_fox', sideOnly: true, passive: true, hp: 10, speed: 30, chase: 104, dmg: 0, detect: 90,
     kind: 'melee', range: 0, windup: 1, atkDur: 0.1, recover: 0.5, cooldown: 9, kbResist: 0,
     body: [12, 6, 2, 8], loot: { gold: [4, 14], drops: [['hide', 0.8], ['wolf_fang', 0.3]] },
   },

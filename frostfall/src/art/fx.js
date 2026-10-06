@@ -1,3 +1,4 @@
+import { settings } from '../systems/settings.js';
 import { txtS } from './font.js';
 import { C } from '../config.js';
 
@@ -33,6 +34,7 @@ export class Fx {
   }
 
   text(x, y, str, col = 6, life = 0.8) {
+    if (settings.dmgNumbers === false && /^\d+$/.test(str)) return;       // option: hide damage numbers
     // damage numbers pile up in crowd fights: merge close ones into a running total and fade sooner
     if (/^\d+$/.test(str) && life === 0.8) {
       const near = this.texts.find((o) => o.num != null && o.col === col && o.life > o.t0 * 0.35 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);

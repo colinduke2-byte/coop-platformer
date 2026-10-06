@@ -13,6 +13,7 @@ import { BARKS } from '../data/enemies.js';
 import { settings } from '../systems/settings.js';
 import { applyElite } from './elite.js';
 import { stats } from '../systems/stats.js';
+import { walkFrame } from '../util.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
@@ -477,8 +478,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   finish(dt, slow) {
     const b = this.body;
     const sp = Math.hypot(b.velocity.x, b.velocity.y);
-    if (sp > 6) this.phase += sp * dt * 0.16;
+    if (sp > 6) this.phase += sp * dt * (this.hasPoses ? 0.24 : 0.16);
     const fr = sp > 6 ? 1 + (Math.floor(this.phase) % 2) : 0;
+    const wf = sp > 6 ? walkFrame(this.phase) : 0;
     if (hasClips(this.cfg.tex)) {
       if (sp <= 6) this.phase += dt * 2;                  // idle clips breathe
       this.setFrame(clipFrame(this.cfg.tex, clipOf(this), this.phase));
@@ -496,7 +498,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         else if (this.state === 'attack') pf = 'atk' + k + '1';
         else if (this.state === 'recover' && this.stun <= 0) pf = 'atk' + k + '2';
       }
-      this.setFrame(pf || k + fr);
+      this.setFrame(pf || k + (this.hasPoses ? wf : fr));
       this.setFlipX(k === 'side' && this.face.x < 0);
     }
     if (this.flashT > 0) this.setTintFill(0xffffff);
@@ -631,8 +633,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shadow.destroy();
     this.weaponImg?.destroy(); this.weaponImg = null;
     const sc = this.scene, dir = this.flipX ? -1 : 1;
-    const dframe = hasClips(this.cfg.tex) ? clipFrame(this.cfg.tex, 'death') : null;
-    if (dframe) this.setFrame(dframe);
+    const dframe = hasClips(this.cfg.tex) ? clipFrame(this.cfg.tex, 'death') : (this.scene.textures.get(this.cfg.tex).has('dead0') ? 'dead0' : null);
+    if (dframe) { this.setFrame(dframe); if (dframe === 'dead0') this.setFlipX(false); }
     // fall over, lie there a moment, then crumble away
     sc.tweens.add({
       targets: this, angle: dframe ? 0 : 90 * dir, y: this.y + 4, duration: 260, ease: 'Back.easeOut',

@@ -90,9 +90,16 @@ export default class HudScene extends Phaser.Scene {
     const d1 = txt(this, W / 2, 74, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
     this.dead.add(d1);
 
+    // boss intro card: letterbox bars slide in and the boss's name appears
+    this.intro = null;
+    this.introG = this.add.graphics().setDepth(900);
+    this.introTxt = txt(this, 0, 0, '', 13).setVisible(false).setDepth(901);
+    this.introSub = txt(this, 0, 0, '', 4).setVisible(false).setDepth(901);
+    this.onBossIntro = (b) => { if (b?.cfg) this.intro = { t: 0, title: b.cfg.title || b.cfg.name.toUpperCase(), sub: (MAPS[this.gs?.mapId]?.name || '').toUpperCase() }; };
+    bus.on('boss:engaged', this.onBossIntro);
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
 
   // ------------------------------------------------------- dialogue API
@@ -277,8 +284,25 @@ export default class HudScene extends Phaser.Scene {
     if (d.n < page.length) this.dMore.setVisible(false);
   }
 
+  // The boss intro card: bars slide in over 0.4 s, hold, then slide out (2.6 s total).
+  updateIntro(dt) {
+    const g = this.introG; g.clear();
+    const it = this.intro;
+    if (!it) { this.introTxt.setVisible(false); this.introSub.setVisible(false); return; }
+    it.t += dt;
+    const T = 2.6, a = it.t < 0.4 ? it.t / 0.4 : it.t > T - 0.4 ? Math.max(0, (T - it.t) / 0.4) : 1;
+    const bar = Math.round(18 * a);
+    g.fillStyle(C[0], 1); g.fillRect(0, 0, W, bar); g.fillRect(0, H - bar, W, bar);
+    const show = a > 0.9;
+    this.introTxt.setVisible(show).setText(it.title); this.introSub.setVisible(show && !!it.sub).setText(it.sub);
+    this.introTxt.x = Math.round((W - this.introTxt.width) / 2); this.introTxt.y = 5;
+    this.introSub.x = Math.round((W - this.introSub.width) / 2); this.introSub.y = H - 13;
+    if (it.t >= T) this.intro = null;
+  }
+
   update(_, ms) {
     const dt = ms / 1000;
+    this.updateIntro(dt);
     if (this.lock) this.updateLock(dt); else this.updateDialogue(dt);
     const g = this.g;
     const pl = this.gs.player;

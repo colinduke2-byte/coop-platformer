@@ -18,6 +18,15 @@ const R = (ctx, col, x, y, w = 1, h = 1) => {
 function humanoid(ctx, ox, dir, frIn, s) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const eye = s.eye ?? 0;
+  if (dir === 'dead') {            // lying on the ground, head left, feet right
+    r(s.legs, 9, 11, 4, 2); r(s.boots, 13, 11, 2, 2);
+    r(s.body, 4, 10, 6, 3); r(s.trim, 7, 10, 1, 3);
+    r(s.skin, 1, 10, 3, 3); r(s.hair, 0, 9, 3, 2); if (s.helm) r(s.helm, 1, 9, 3, 1);
+    r(s.body, 5, 13, 3, 1); r(s.skin, 4, 14, 2, 1);
+    if (s.cape) r(s.cape, 4, 9, 5, 1);
+    r(0, 2, 11, 1, 1);
+    return;
+  }
   // poses: atkdown / atkup / atkside (frame 0 windup, 1 strike, 2 recover) and hurt
   let pose = null;
   if (dir.startsWith('atk')) { pose = 'atk'; dir = dir.slice(3); } else if (dir === 'hurt') { pose = 'hurt'; dir = 'down'; }
@@ -139,6 +148,48 @@ function wolfFrame(ctx, ox, fr, pal = { fur: 4, dark: 3, light: 5, leg: 3 }) {
   r(2, 11, 3, 1, 1); r(2, 13, 3, 1, 1); // ears
   r(0, 15, 7, 1, 2); r(6, 13, 8, 2, 1); // nose / teeth
   r(11, 13, 5, 1, 1); // eye
+}
+
+
+// Deer: long legs, arched neck, branching antlers (side view, facing right).
+function deerFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(9, 3, 10, 1, a ? 5 : 6); r(9, 5, 10, 1, b ? 5 : 6); r(9, 9, 10, 1, b ? 5 : 6); r(9, 11, 10, 1, a ? 5 : 6);   // long legs
+  r(10, 2, 6, 11, 5); r(9, 2, 6, 11, 1); r(6, 3, 10, 8, 1); r(6, 1, 6, 1, 2);                                    // body, dark back, pale belly, white tail
+  r(10, 10, 3, 3, 4); r(10, 12, 1, 4, 3); r(10, 14, 3, 3, 2); r(0, 15, 3, 1, 1); r(0, 14, 2, 1, 1);               // neck, head, snout, nose, eye
+  r(9, 11, 0, 1, 2); r(9, 13, 0, 1, 2); r(9, 10, 1, 1, 1); r(9, 14, 1, 1, 1); r(9, 12, 2, 1, 1); r(10, 12, 1, 1, 1);   // antlers, ear
+}
+// Shadow lynx: low and heavy, tufted ears, ruff, stub tail with a dark tip, spotted coat.
+function lynxFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(9, 3, 11, 2, a ? 2 : 3); r(9, 5, 11, 1, b ? 2 : 3); r(9, 9, 11, 1, b ? 2 : 3); r(9, 11, 11, 2, a ? 2 : 3);   // thick legs
+  r(10, 3, 6, 10, 5); r(9, 3, 10, 10, 1); r(6, 4, 6, 7, 1);                                                      // body, belly shadow, light back
+  r(9, 5, 7, 1, 1); r(9, 8, 8, 1, 1); r(9, 10, 7, 1, 1);                                                          // spots
+  r(10, 1, 7, 2, 2); r(0, 1, 7, 1, 2);                                                                            // stub tail, dark tip
+  r(10, 11, 4, 4, 5); r(6, 11, 8, 5, 2); r(6, 12, 9, 3, 1);                                                       // head, ruff
+  r(0, 11, 2, 1, 2); r(0, 13, 2, 1, 2); r(10, 11, 3, 1, 1); r(10, 13, 3, 1, 1);                                   // ear tufts
+  r(0, 15, 7, 1, 1); r(13, 13, 5, 1, 1);                                                                          // nose, eye
+}
+// Ember fox: small and quick, black socks, a big white-tipped brush.
+function foxFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(0, 4, 11, 1, a ? 2 : 3); r(0, 6, 11, 1, b ? 2 : 3); r(0, 9, 11, 1, b ? 2 : 3); r(0, 11, 11, 1, a ? 2 : 3);
+  r(12, 3, 7, 9, 4); r(13, 4, 7, 7, 1); r(6, 4, 10, 6, 1);
+  r(12, 0, 6, 4, 3); r(12, 1, 5, 3, 1); r(6, 0, 7, 2, 2); r(6, 0, 9, 1, 1);                                        // brush and white tip
+  r(12, 11, 5, 4, 4); r(6, 11, 8, 3, 1); r(6, 13, 6, 2, 1); r(0, 15, 7, 1, 1);                                     // head, cheek, nose
+  r(12, 11, 3, 1, 2); r(0, 11, 3, 1, 1); r(12, 13, 3, 1, 2); r(0, 13, 3, 1, 1); r(0, 13, 5, 1, 1);                // ears, eye
+}
+// Snow hare: round body, long upright ears, big hind legs, hops (frame 1 stretched, frame 2 tucked).
+function hareFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const air = fr === 1 ? -1 : 0, tuck = fr === 2;
+  r(5, 3, 11 + air, 3, tuck ? 2 : 3); r(5, 4, 12 + air, 2, 1); r(5, 8, 12 + air, 2, 1);
+  r(6, 3, 8 + air, 8, 4); r(5, 4, 11 + air, 6, 1); r(4, 3, 8 + air, 2, 2);                                          // body, haunch, tail
+  r(6, 10, 6 + air, 4, 4); r(5, 13, 8 + air, 1, 2); r(0, 14, 7 + air, 1, 1); r(0, 12, 7 + air, 1, 1);               // head, nose, eye
+  r(6, 10, 2 + air, 2, 4); r(4, 10, 2 + air, 2, 1); r(6, 12, 3 + air, 1, 2); r(5, 11, 2 + air, 1, 2);               // long ears (dark tips)
 }
 
 // Glacial wyrm: an undulating ice serpent seen from the side, head to the right.
@@ -332,8 +383,27 @@ function buildSheet(scene, key, cw, ch, frames, post = null) {
   frames.forEach((f, i) => tex.add(f.name, 0, i * cw, 0, cw, ch));
 }
 
+
+// Four-legged creatures: side0..2 (stand, stride, stride) + hurt0 (jolted upright) + death0 (on its back, legs in the air).
+function animalSheet(scene, key, draw) {
+  buildSheet(scene, key, 16, 16, [
+    { name: 'side0', draw: (c, ox) => draw(c, ox, 0) },
+    { name: 'side1', draw: (c, ox) => draw(c, ox, 1) },
+    { name: 'side2', draw: (c, ox) => draw(c, ox, 2) },
+    { name: 'hurt0', draw: (c, ox) => draw(c, ox, 1) },
+    { name: 'death0', draw: (c, ox) => draw(c, ox, 0) },
+  ], (ctx, cw, ch) => {
+    const hurt = ctx.getImageData(cw * 3, 0, cw, ch);                       // hurt: the stride frame shoved up and back a pixel
+    ctx.clearRect(cw * 3, 0, cw, ch); ctx.putImageData(hurt, cw * 3 - 1, -1, 1, 1, cw - 1, ch - 1);
+    const dead = ctx.getImageData(cw * 4, 0, cw, ch);                       // death: flipped belly-up and dropped to the ground
+    ctx.clearRect(cw * 4, 0, cw, ch);
+    const tmp = canvas(cw, ch); tmp.getContext('2d').putImageData(dead, 0, 0);
+    ctx.save(); ctx.translate(cw * 4, ch + 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
+  });
+}
+
 function buildCharacters(scene) {
-  const make = (key, fn, frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt']) => {
+  const make = (key, fn, frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt', 'dead']) => {
     const cv = canvas(16 * frames.length * 3, 16);
     const ctx = cv.getContext('2d');
     // Draw first, upload second: WebGL snapshots the canvas when it is added.
@@ -345,14 +415,17 @@ function buildCharacters(scene) {
   for (const [name, st] of Object.entries(STYLES)) {
     make('spr_' + name, (ctx, x, d, f) => humanoid(ctx, x, d, f, st));
   }
-  make('spr_wolf', (ctx, x, d, f) => wolfFrame(ctx, x, f), ['side']);
-  make('spr_grimfang', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }), ['side']);
+  animalSheet(scene, 'spr_wolf', (c, x, f) => wolfFrame(c, x, f));
+  animalSheet(scene, 'spr_deer', deerFrame);
+  animalSheet(scene, 'spr_fox', foxFrame);
+  animalSheet(scene, 'spr_hare', hareFrame);
+  animalSheet(scene, 'spr_grimfang', (c, x, f) => wolfFrame(c, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }));
   make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
   make('spr_tide', (ctx, x, d, f) => tideFrame(ctx, x, f), ['side']);
   make('spr_root', (ctx, x, d, f) => rootFrame(ctx, x, f), ['side']);
-  make('spr_bear', (ctx, x, d, f) => bearFrame(ctx, x, f), ['side']);
-  make('spr_lynx', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 10, dark: 9, light: 13, leg: 9 }), ['side']);
-  make('spr_boar', (ctx, x, d, f) => boarFrame(ctx, x, f), ['side']);
+  animalSheet(scene, 'spr_bear', bearFrame);
+  animalSheet(scene, 'spr_lynx', lynxFrame);
+  animalSheet(scene, 'spr_boar', boarFrame);
   make('spr_wisp', (ctx, x, d, f) => wispFrame(ctx, x, f), ['side']);
   make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
   make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
@@ -372,7 +445,7 @@ function buildCharacters(scene) {
     ctx.save(); ctx.translate(dx, ch - 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
   });
   make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
-  make('spr_alpha', (ctx, x, d, f) => wolfFrame(ctx, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }), ['side']);
+  animalSheet(scene, 'spr_alpha', (c, x, f) => wolfFrame(c, x, f, { fur: 2, dark: 1, light: 3, leg: 1 }));
 }
 
 // --------------------------------------------------------------------- tiles

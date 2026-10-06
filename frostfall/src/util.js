@@ -28,3 +28,7 @@ export function facingKind(fx, fy) {
   if (Math.abs(fy) > Math.abs(fx) + 0.01) return fy > 0 ? 'down' : 'up';
   return 'side';
 }
+
+// Four-beat walk cycle: stride, pass, stride, pass (frames 1, 0, 2, 0 of a 3-frame walk).
+const WALK = [1, 0, 2, 0];
+export const walkFrame = (phase) => WALK[Math.floor(phase) % 4];

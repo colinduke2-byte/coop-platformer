@@ -3,6 +3,16 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 9: art and feel (Phase 2)
+- **Dedicated animal art:** the **deer** (long legs, antlers), **shadow lynx** (tufted ears, ruff, spots, stub tail), **ember fox** (white-tipped brush, black socks), **snow hare** (long ears, hops) and the **boar** and **bear** now each have their own drawn sheet instead of recoloured wolves. Every animal, including the wolves, has a **hurt** frame (jolted) and a **death** frame (on its back, legs in the air).
+- **Humanoid death pose:** bandits, draugr, archers, guardians and you now collapse into a lying-down pose instead of rotating sideways. Everything uses the clip system from Round 8.
+- **Smoother walking:** humanoids use a four-beat walk (stride, pass, stride, pass) for you and for enemies; footsteps sound on the strides.
+- **Weapon-weight hit feel:** hit-stop and camera shake now depend on the weapon: dagger 0.025 s, sword 0.05 s, axe 0.07 s, greatsword 0.09 s; heavy attacks x1.6, crits x1.25 (`hitFeel` in `tuning.js`).
+- **New options (Pause > System):** HIT STOP on/off and DAMAGE NUMBERS on/off.
+- **Boss intro card:** engaging any boss slides in letterbox bars with the boss's full title on top and the area name below (2.6 s; the fight starts during its roar as before).
+- **Dragon:** fire puffs at the jaw on each breath volley; the sprite now uses the full six-frame clip set.
+- Tests: `stage35_polish`, art baseline refreshed, `test/sheet.mjs` dumps any sprite sheet at 6x for eyeballing.
+
 ## Round 8: foundations (hardening + shared systems)
 **Hardening**
 - `stress_transitions.mjs`: hammers rapid scene changes with text, toasts and random key presses in flight (120 changes, clean). The one-off `null reading 'chars'` / `'scaleX'` errors were traced to a real bug: the HUD cached text objects on the scene instance, and when the HUD was stopped and restarted the cached texts were already destroyed. The HUD now clears them on create, and the stress test relaunches the HUD to guard it.

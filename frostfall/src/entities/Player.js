@@ -7,7 +7,7 @@ import { foodVal } from '../systems/food.js';
 import { tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
-import { dir8, facingKind, norm } from '../util.js';
+import { dir8, facingKind, norm, walkFrame } from '../util.js';
 import Projectile from './Projectile.js';
 import { TILE } from '../config.js';
 import { tip } from '../systems/tips.js';
@@ -205,8 +205,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const moving = this.speedNow > 8;
     if (moving) {
       const before = Math.floor(this.phase);
-      this.phase += this.speedNow * dt * 0.16;
-      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking) sfx.play(this.stepSound());
+      this.phase += this.speedNow * dt * 0.24;
+      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking && walkFrame(this.phase) !== 0) sfx.play(this.stepSound());
     }
     this.animate(moving);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
@@ -378,9 +378,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       } else if (sneak) { this.scene.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); this.gainXp('sneak', 10); sfx.play('crit'); }
       else sfx.play('hit');
       this.gainXp('oneHanded', P.sword.xp + (e.dead ? 3 : 0));
-      if (!exec) { this.scene.hitStop(heavy ? 0.09 : 0.05); this.scene.shake(heavy ? 160 : 80, heavy ? 0.008 : 0.004); }
+      if (!exec) { const hf = this.hitFeel(heavy, crit); this.scene.hitStop(hf.stop); this.scene.shake(hf.ms, hf.amt); }
       if (heavy) this.scene.fx.text(e.x, e.y - 20, 'HEAVY', 12);
     }
+  }
+
+  // Weight of a landed hit: a dagger flick, a sword cut, an axe chop or a greatsword blow, heavier on heavy attacks and crits.
+  hitFeel(heavy, crit) {
+    const w = stats.weapon(), F = TUNE.player.hitFeel;
+    const f = F[w?.style] || (w?.type === 'weapon2h' ? F.great : F.sword);
+    const m = (heavy ? 1.6 : 1) * (crit ? 1.25 : 1);
+    return { stop: settings.hitStop === false ? 0 : f.stop * m, ms: Math.round(f.ms * m), amt: f.amt * m };
   }
 
   // ------------------------------------------------------------------ bow
@@ -609,7 +617,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // ------------------------------------------------------------------ anim
   animate(moving) {
     const kind = facingKind(this.face.x, this.face.y);
-    const fr = moving && this.mode !== 'roll' ? 1 + (Math.floor(this.phase) % 2) : 0;
+    const fr = moving && this.mode !== 'roll' ? walkFrame(this.phase) : 0;
     // attack / cast / hurt poses
     let pf = null, lean = 0;
     if (this.mode === 'hurt' || (this.stunT > 0 && this.mode !== 'roll')) pf = 'hurt0';
@@ -623,7 +631,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5 - (kind === 'side' ? this.face.x : 0) * lean / 16, 0.5 - (kind !== 'side' ? this.face.y : 0) * lean / 16);
     this.setFlipX(kind === 'side' && this.face.x < 0);
     this.setRotation(this.mode === 'roll' ? (this.face.x < 0 ? -this.spin : this.spin) : 0);
-    if (this.mode === 'lying') { this.setFrame('side0'); this.setRotation(-Math.PI / 2); this.setFlipX(false); }
+    if (this.mode === 'lying') { this.setFrame('dead0'); this.setRotation(0); this.setFlipX(false); this.setOrigin(0.5, 0.5); }
     if (this.flashT > 0) this.setTintFill(0xffffff);
     else if (this.invuln > 0 && this.mode !== 'roll' && Math.floor(this.invuln * 18) % 2 === 0) this.setTint(0xff9090);
     else if (this.sneaking) this.setTint(0x8fa0d0);
