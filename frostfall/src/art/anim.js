@@ -3,7 +3,7 @@
 const ANIMAL = { idle: ['side0'], walk: ['side1', 'side2'], windup: ['side0'], attack: ['side1'], hurt: ['hurt0'], death: ['death0'] };
 export const ANIM_CLIPS = {
   spr_wolf: ANIMAL, spr_grimfang: ANIMAL, spr_alpha: ANIMAL, spr_bear: ANIMAL, spr_lynx: ANIMAL, spr_boar: ANIMAL,
-  spr_deer: ANIMAL, spr_fox: ANIMAL, spr_hare: { ...ANIMAL, idle: ['side0'], walk: ['side1', 'side2', 'side0'] },
+  spr_deer: ANIMAL, spr_elk: ANIMAL, spr_fox: ANIMAL, spr_hare: { ...ANIMAL, idle: ['side0'], walk: ['side1', 'side2', 'side0'] },
   spr_dragon: { idle: ['side0', 'side0', 'side2'], walk: ['side1', 'side2'], windup: ['side1'], attack: ['attack0'], hurt: ['hurt0'], death: ['death0'] },
 };
 

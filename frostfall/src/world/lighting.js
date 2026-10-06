@@ -42,6 +42,7 @@ export const lightingMethods = {
       if (dusk > 0.05) { color = lerpColor(color, 0x3a1a2a, dusk * 0.5); }
       alpha = Math.max(base, nAlpha);
       if (S.weather === 'blizzard') { color = lerpColor(color, 0x7b8fb5, 0.7 * (1 - night)); alpha = Math.max(alpha, 0.2 + 0.2 * night); }
+      if (S.weather === 'whiteout') { color = lerpColor(0xe4ecf6, 0x3a4a6a, night * 0.8); alpha = Math.max(alpha, 0.56); }
     }
     return { color, alpha };
   },
@@ -80,17 +81,20 @@ export const lightingMethods = {
     const h = hourOf();
     if (Math.floor(before) !== Math.floor(h)) {
       if (Math.floor(h) === 21) { bus.emit('toast', 'NIGHT FALLS', 4); tip('night'); }
-      if (Math.floor(h) === 6) bus.emit('toast', 'DAWN BREAKS', 13);
+      if (Math.floor(h) === 6) { bus.emit('toast', 'DAWN BREAKS', 13); if (S.weather === 'aurora') { S.weather = 'clear'; this.applyWeather(); } }
     }
     this.weatherT -= dt;
     if (this.weatherT <= 0) {
       this.weatherT = 150 + Math.random() * 120;
       const r = Math.random();
-      const next = S.weather === 'blizzard' ? 'snow' : r < 0.22 ? 'clear' : r < 0.42 ? 'blizzard' : 'snow';
+      let next = S.weather === 'blizzard' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 ? 'clear' : r < 0.42 ? 'blizzard' : 'snow';
+      if (this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
       if (next !== S.weather) {
         S.weather = next;
         this.applyWeather();
         if (next === 'blizzard') bus.emit('toast', 'A BLIZZARD ROLLS IN', 15);
+        else if (next === 'whiteout') bus.emit('toast', 'WHITEOUT: YOU CAN HARDLY SEE', 15);
+        else if (next === 'aurora') { bus.emit('toast', 'THE AURORA SHIMMERS: SPELLS COST LESS', 8); this.auroraWisps(); }
         else if (next === 'clear') bus.emit('toast', 'THE SNOW THINS', 5);
       }
     }
@@ -103,6 +107,6 @@ export const lightingMethods = {
   // Multiplier on enemies' sight: darkness and blizzards help the sneaky.
   stealthEnv() {
     if (!this.def.snow) return 1;
-    return (this.isNight() ? 0.85 : 1) * (S.weather === 'blizzard' ? 0.75 : 1);
+    return (this.isNight() ? 0.85 : 1) * (S.weather === 'blizzard' ? 0.75 : S.weather === 'whiteout' ? 0.5 : 1);
   },
 };

@@ -14,6 +14,7 @@ import { settings } from '../systems/settings.js';
 import { applyElite } from './elite.js';
 import { stats } from '../systems/stats.js';
 import { walkFrame } from '../util.js';
+import { routePos } from '../world/roamers.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
@@ -44,6 +45,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.maxHp = Math.round(this.maxHp * (1 + 0.28 * this.tier));
     }
     this.hp = this.maxHp;
+    if (this.cfg.regenRate) this.regen = this.cfg.regenRate;
     this.displayName = this.cfg.name;
     this.home = { x, y };
     this.alerted = false;
@@ -267,6 +269,14 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     return false;
   }
 
+  // Mother bear: faster and harder-hitting once her cubs are hurt.
+  enrage() {
+    if (this.enraged) return;
+    this.enraged = true;
+    this.cfg = { ...this.cfg, chase: this.cfg.chase * 1.3, dmg: Math.round(this.cfg.dmg * 1.3), cooldown: this.cfg.cooldown * 0.75, tint: 0xff9a80 };
+    this.scene.fx.text(this.x, this.y - 26, 'ENRAGED', 11, 1); sfx.play('roar');
+  }
+
   // Damage-over-time from the status system (burn, bleed, poison).
   statusHit(n, col) {
     this.hp -= n; this.flashT = 0.05;
@@ -281,7 +291,19 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     applyStatus(this, v.col === 11 ? 'bleed' : v.col === 8 ? 'poison' : 'burn', { t: v.t, dps: v.dps });
   }
 
+  // A roaming world boss walks its loop (the same loop the footprints mark) while it has not noticed you.
+  roamStep(dt, slow) {
+    const sp = this.spec, b = this.body;
+    const t = routePos(sp.roamRoute, (this.scene.t0 ?? 0) + (S.playtime || 0) + 2.5, sp.roamPhase);
+    const d = dist(this.x, this.y, t.x, t.y);
+    if (d > 70 && !this.scene.cameras.main.worldView.contains(this.x, this.y)) { this.setPosition(t.x, t.y); b.setVelocity(0, 0); return; }   // off screen: catch up with the loop
+    const n = norm(t.x - this.x, t.y - this.y), v = Math.min(this.cfg.speed * slow * 0.7, d * 2);
+    b.setVelocity(n.x * v, n.y * v);
+    if (d > 2) this.face = dir8(n.x, n.y);
+  }
+
   doIdle(dt, slow) {
+    if (this.spec?.roamRoute) { this.roamStep(dt, slow); return; }
     const w = this.wander, b = this.body;
     w.t -= dt;
     if (w.t <= 0) {
@@ -560,6 +582,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   // info: { dmg, kx, ky, kb, src, stun, slow, sneak }  -> returns damage dealt
   takeHit(info) {
     if (this.dead) return 0;
+    if (this.spec?.cub && !this.cubCried) {                            // hurt a cub and the mother comes for you
+      this.cubCried = true;
+      const mom = this.scene.enemies.getChildren().find((o) => o.spec?.mother && o.spec.camp === this.spec.camp && !o.dead);
+      if (mom) { mom.alert(); mom.enrage(); }
+    }
     const sc = this.scene;
     // shield guard: frontal melee / arrows are blocked unless the guard is broken by a heavy blow
     if (this.cfg.shield && (info.src === 'melee' || info.src === 'arrow')) {

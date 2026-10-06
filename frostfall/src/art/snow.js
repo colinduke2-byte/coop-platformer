@@ -13,7 +13,7 @@ export class SnowFx {
     while (this.f.length < 160) this.f.push({ x: Math.random() * W, y: Math.random() * H, s: 8 + Math.random() * 14, d: Math.random() < 0.3 ? 2 : 1, w: Math.random() * 6 });
   }
   setMode(w) {
-    const m = { clear: [22, 3, 0.8], snow: [this.max, 6, 1], blizzard: [160, 70, 2.2] }[w] || [this.max, 6, 1];
+    const m = { clear: [22, 3, 0.8], snow: [this.max, 6, 1], blizzard: [160, 70, 2.2], whiteout: [160, 150, 3.2], aurora: [22, 3, 0.8] }[w] || [this.max, 6, 1];
     [this.n, this.wind, this.fall] = m;
   }
   update(dt, windX = this.wind) {

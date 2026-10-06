@@ -130,6 +130,7 @@ export const STYLES = {
   golem: { skin: 4, hair: 3, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, helm: 4, chest: 5 },
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
+  troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
   boss:   { skin: 4, hair: 3, body: 1, trim: 13, legs: 2, boots: 0, glow: 15, helm: 3, horns: 5, crown: 13, cape: 14, chest: 13 },
 };
 
@@ -152,13 +153,14 @@ function wolfFrame(ctx, ox, fr, pal = { fur: 4, dark: 3, light: 5, leg: 3 }) {
 
 
 // Deer: long legs, arched neck, branching antlers (side view, facing right).
-function deerFrame(ctx, ox, fr) {
+function deerFrame(ctx, ox, fr, pal = { body: 10, back: 9, belly: 6, leg: 9, ant: 9 }) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const a = fr === 1, b = fr === 2;
-  r(9, 3, 10, 1, a ? 5 : 6); r(9, 5, 10, 1, b ? 5 : 6); r(9, 9, 10, 1, b ? 5 : 6); r(9, 11, 10, 1, a ? 5 : 6);   // long legs
-  r(10, 2, 6, 11, 5); r(9, 2, 6, 11, 1); r(6, 3, 10, 8, 1); r(6, 1, 6, 1, 2);                                    // body, dark back, pale belly, white tail
-  r(10, 10, 3, 3, 4); r(10, 12, 1, 4, 3); r(10, 14, 3, 3, 2); r(0, 15, 3, 1, 1); r(0, 14, 2, 1, 1);               // neck, head, snout, nose, eye
-  r(9, 11, 0, 1, 2); r(9, 13, 0, 1, 2); r(9, 10, 1, 1, 1); r(9, 14, 1, 1, 1); r(9, 12, 2, 1, 1); r(10, 12, 1, 1, 1);   // antlers, ear
+  r(pal.leg, 3, 10, 1, a ? 5 : 6); r(pal.leg, 5, 10, 1, b ? 5 : 6); r(pal.leg, 9, 10, 1, b ? 5 : 6); r(pal.leg, 11, 10, 1, a ? 5 : 6);   // long legs
+  r(pal.body, 2, 6, 11, 5); r(pal.back, 2, 6, 11, 1); r(pal.belly, 3, 10, 8, 1); r(6, 1, 6, 1, 2);                                    // body, dark back, pale belly, white tail
+  r(pal.body, 10, 3, 3, 4); r(pal.body, 12, 1, 4, 3); r(pal.body, 14, 3, 3, 2); r(0, 15, 3, 1, 1); r(0, 14, 2, 1, 1);               // neck, head, snout, nose, eye
+  r(pal.ant, 11, 0, 1, 2); r(pal.ant, 13, 0, 1, 2); r(pal.ant, 10, 1, 1, 1); r(pal.ant, 14, 1, 1, 1); r(pal.ant, 12, 2, 1, 1); r(pal.body, 12, 1, 1, 1);   // antlers, ear
+  if (pal.ant === 6) { r(6, 9, 0, 1, 1); r(6, 15, 0, 1, 1); r(6, 8, 1, 1, 1); r(6, 12, 0, 1, 1); }   // a crown of extra tines
 }
 // Shadow lynx: low and heavy, tufted ears, ruff, stub tail with a dark tip, spotted coat.
 function lynxFrame(ctx, ox, fr) {
@@ -417,6 +419,7 @@ function buildCharacters(scene) {
   }
   animalSheet(scene, 'spr_wolf', (c, x, f) => wolfFrame(c, x, f));
   animalSheet(scene, 'spr_deer', deerFrame);
+  animalSheet(scene, 'spr_elk', (c, x, f) => deerFrame(c, x, f, { body: 4, back: 3, belly: 6, leg: 3, ant: 6 }));
   animalSheet(scene, 'spr_fox', foxFrame);
   animalSheet(scene, 'spr_hare', hareFrame);
   animalSheet(scene, 'spr_grimfang', (c, x, f) => wolfFrame(c, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }));
@@ -570,6 +573,14 @@ function buildFx(scene) {
   });
   tex(scene, 'icehole', 16, 16, (g) => {
     R(g, 3, 3, 5, 10, 7); R(g, 1, 4, 6, 8, 5); R(g, 0, 5, 7, 6, 3); R(g, 15, 6, 8, 3, 1); R(g, 6, 4, 6, 8, 1);
+  });
+  // footprints, ravens, hot spring, steam
+  tex(scene, 'paw', 8, 8, (g) => { R(g, 3, 3, 4, 2, 2); R(g, 3, 1, 2, 1, 1); R(g, 3, 3, 1, 1, 1); R(g, 3, 5, 2, 1, 1); R(g, 3, 6, 4, 1, 1); });
+  tex(scene, 'foot', 4, 4, (g) => { R(g, 3, 0, 0, 2, 3); R(g, 3, 1, 3, 1, 1); });
+  tex(scene, 'raven0', 8, 6, (g) => { R(g, 0, 1, 2, 5, 3); R(g, 0, 5, 1, 2, 2); R(g, 0, 0, 2, 2, 1); R(g, 12, 6, 2, 1, 1); R(g, 0, 2, 5, 1, 1); });
+  tex(scene, 'raven1', 8, 6, (g) => { R(g, 0, 1, 3, 5, 2); R(g, 0, 5, 2, 2, 1); R(g, 0, 0, 3, 2, 1); R(g, 0, 0, 0, 3, 1); R(g, 0, 5, 0, 3, 1); R(g, 12, 6, 3, 1, 1); });
+  tex(scene, 'spring', 16, 16, (g) => {
+    R(g, 2, 2, 5, 12, 8); R(g, 3, 1, 4, 14, 8); R(g, 15, 2, 5, 12, 6); R(g, 15, 3, 6, 10, 4); R(g, 6, 4, 6, 2, 1); R(g, 6, 9, 8, 3, 1); R(g, 5, 2, 4, 1, 1); R(g, 5, 13, 4, 1, 1);
   });
   tex(scene, 'mound', 16, 16, (g) => {
     R(g, 0, 3, 11, 10, 3); R(g, 5, 2, 9, 12, 3); R(g, 6, 4, 8, 8, 2); R(g, 6, 5, 9, 6, 1); R(g, 13, 7, 8, 1, 1); R(g, 9, 10, 8, 1, 1);

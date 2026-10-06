@@ -111,6 +111,7 @@ const SOUNDS = {
   step_wood: () => { tone('triangle', 190, 120, 0.06, 0.07); noise(0.03, 0.03, 0, 2400, 600); },
   crackle: () => { noise(0.02 + Math.random() * 0.03, 0.05, 0, 7000, 2000, ambBus); if (Math.random() < 0.4) noise(0.015, 0.04, 0.05, 8000, 3000, ambBus); },
   howl_far: () => { tone('triangle', 260, 520, 0.8, 0.025, 0, ambBus); tone('triangle', 520, 330, 0.9, 0.025, 0.8, ambBus); },
+  caw: () => { tone('sawtooth', 520, 330, 0.12, 0.03, 0, ambBus); tone('sawtooth', 480, 300, 0.12, 0.025, 0.14, ambBus); noise(0.08, 0.02, 0, 3000, 900, ambBus); },
   creak: () => { tone('sawtooth', 90, 130, 0.35, 0.03, 0, ambBus); tone('sawtooth', 130, 80, 0.3, 0.025, 0.3, ambBus); },
   nova: () => { tone('sawtooth', 600, 100, 0.5, 0.14); noise(0.4, 0.2, 0, 6000, 400); },
 };

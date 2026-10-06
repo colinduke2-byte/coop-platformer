@@ -9,6 +9,8 @@ const THEMES = [
   { id: 'wolf', name: 'Den under the Hill', mobs: ['wolf', 'alpha', 'fencer'] },
   { id: 'bandit', name: 'Smugglers\' Hollow', mobs: ['bandit', 'archer', 'fencer', 'chief'] },
   { id: 'rime', name: 'Rimebound Vault', mobs: ['reaver', 'knight', 'conjurer', 'wight'] },
+  { id: 'mine', name: 'The Frozen Mine', mobs: ['golem', 'frostworm', 'imp', 'necro'] },
+  { id: 'warren', name: 'The Beast Warren', mobs: ['bear', 'boar', 'lynx', 'alpha'] },
 ];
 
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }

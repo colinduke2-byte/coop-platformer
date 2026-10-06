@@ -5,19 +5,21 @@ import { norm } from '../util.js';
 
 // Your frost hound: follows you everywhere, hunts what hunts you, and cannot be killed (it just gets knocked back).
 export default class Hound extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'spr_wolf', 'side0');
+  constructor(scene, x, y, kind = 'hound') {
+    super(scene, x, y, kind === 'cub' ? 'spr_bear' : 'spr_wolf', 'side0');
+    this.kind = kind;
     scene.add.existing(this); scene.physics.add.existing(this);
     this.body.setSize(12, 6).setOffset(2, 8);
-    this.setTint(0xcfe8ff).setScale(0.85);
+    if (kind === 'cub') this.setScale(0.7); else this.setTint(0xcfe8ff).setScale(0.85);
     this.shadow = scene.add.image(x, y, 'shadow');
     this.cd = 0; this.phase = 0; this.howl = 0;
   }
-  get dmg() { return 6 + Math.floor((S.charLevel || 1) * 0.7); }
+  get dmg() { return this.kind === 'cub' ? 3 + Math.floor((S.charLevel || 1) * 0.5) : 6 + Math.floor((S.charLevel || 1) * 0.7); }
 
   update(dt, player) {
     const sc = this.scene, b = this.body;
     this.cd -= dt;
+    if (this.kind === 'cub' && S.hp < S.maxHp && S.hp > 0) S.hp = Math.min(S.maxHp, S.hp + 0.8 * dt);      // a cub's company soothes wounds
     const pd = Math.hypot(player.x - this.x, player.y - this.y);
     if (pd > 170) { this.setPosition(player.x - 12, player.y + 4); b.setVelocity(0, 0); }
     let tgt = null, td = 120;

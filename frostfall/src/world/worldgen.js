@@ -6,9 +6,10 @@ import { Grid } from '../data/mapkit.js';
 import { TILE, SOLID_TILES } from '../config.js';
 const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
+import { buildLoop, trackSpots } from './roamers.js';
 
-export const REACH_W = 176;
-export const REACH_H = 128;
+export const REACH_W = 200;
+export const REACH_H = 144;
 export const START = { x: 4, y: 15 };                 // where you enter from the village (west edge of the old forest)
 
 // Small seeded RNG (mulberry32).
@@ -104,9 +105,11 @@ export function buildReach(region, seed) {
   const mustHave = (kind, r, tier, biome = null) => { place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
   mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);                 // the Glacial Maw: dungeon of the second Heart
   place('champion', 4, 8);                // placed early: later it finds no room on a map crowded with dungeons
+  place('ruin', 4, 10);
+  place('beardn', 2, 9, null, 1);          // a mother bear and her cubs
+  place('spring', 2, 6);                   // hot springs: heal, cure, warm
   place('camp', 5, 11);
   place('den', 5, 9);
-  place('ruin', 4, 10);
   place('barrow', 3, 6);
   place('tower', 3, 7);
   place('grove', 3, 8);
@@ -155,6 +158,18 @@ export function buildReach(region, seed) {
       if (p.tier >= 1) enemy('alpha', p.x, p.y, p.tier, { camp: p.id });
       for (let i = 0; i < 3; i++) add({ t: 'herb', item: R() < 0.5 ? 'snowberry' : 'frost_lily', x: p.x + Math.round((R() - 0.5) * 12), y: p.y + 6 + Math.round(R() * 2) });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'den' });
+    } else if (p.kind === 'beardn') {
+      clearing(p, 11, 9);
+      enemy('bear', p.x, p.y - 1, p.tier, { camp: p.id, mother: true });
+      for (const dx of [-2, 2]) enemy('bearcub', p.x + dx, p.y + 1, p.tier, { camp: p.id, cub: true });
+      chest(p, 0, -4, p.tier, 'med');
+      add({ t: 'sign', x: p.x - 6, y: p.y + 2, text: ['A BEAR DEN. CLAW MARKS ON EVERY TREE.', 'THE MOTHER DOES NOT FORGIVE ANYONE WHO HURTS HER CUBS.'] });
+      add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'beardn' });
+    } else if (p.kind === 'spring') {
+      clearing(p, 9, 7, TILE.SNOW2);
+      add({ t: 'spring', x: p.x, y: p.y }); add({ t: 'glow', x: p.x, y: p.y, r: 40, col: 15 });
+      add({ t: 'sign', x: p.x - 4, y: p.y + 2, text: ['A HOT SPRING. SOAK TO HEAL, CLEAR YOUR WOUNDS AND WARM UP.'] });
+      for (let i = 0; i < 2; i++) add({ t: 'deer', x: p.x + (i ? 4 : -4), y: p.y + 3, kind: 'fox' });
     } else if (p.kind === 'ruin') {
       clearing(p, 13, 11, TILE.CFLOOR);
       for (const [dx, dy] of [[-5, -4], [5, -4], [-5, 4], [5, 4], [0, -5]]) g.set(p.x + dx, p.y + dy, TILE.PILLAR);
@@ -254,6 +269,24 @@ export function buildReach(region, seed) {
 
   add({ t: 'hound', x: START.x + 12, y: START.y + 4 });
 
+  // ---- roaming world bosses: a winter elk and a bridge troll walk loops between points of interest, leaving tracks
+  {
+    const stops = pois.filter((q) => ['camp', 'den', 'ruin', 'tower', 'grove', 'rest', 'beardn', 'spring', 'champion'].includes(q.kind));
+    const pickLoop = (n, minTier, salt) => {
+      const cand = stops.filter((q) => q.tier >= minTier);
+      const pool = (cand.length >= n ? cand : stops).slice();
+      const way = [];
+      let a = pool[Math.floor(R() * pool.length)];
+      for (let i = 0; i < n && pool.length; i++) { pool.splice(pool.indexOf(a), 1); way.push({ x: a.x, y: a.y + 3 }); a = pool.sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y))[Math.min(pool.length - 1, 1 + Math.floor(R() * 3))] || a; }
+      return buildLoop(way);
+    };
+    for (const [id, kind, tier, minTier] of [['elk', 'elk', 1, 1], ['troll', 'troll', 2, 2]]) {
+      const loop = pickLoop(4, minTier);
+      add({ t: 'roamboss', id, kind, tier, route: loop, phase: Math.floor(R() * 900) });
+      for (const s of trackSpots(loop, 120)) add({ t: 'track', x: s.x, y: s.y, who: id });
+    }
+  }
+
   // small wildlife scattered everywhere, even between the points of interest: hares and foxes bolt when you come near
   for (let i = 0, n = 0; i < 400 && n < 18; i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12)), b = bio[y][x];
@@ -270,7 +303,7 @@ export function buildReach(region, seed) {
   }
 
   // keep every placed thing on open ground
-  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'hound', 'pot', 'sign', 'spawn']);
+  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'hound', 'spring', 'pot', 'sign', 'spawn']);
   for (const e of entities) {
     if (!PLACED.has(e.t) || e.x < rw && e.y < rh) continue;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {

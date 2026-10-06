@@ -64,6 +64,8 @@ export const ITEMS = {
   eel_roast: { name: 'Eel Roast', type: 'food', icon: ['dish', 12], value: 80, food: { moveMul: 1.08, heal: 30 }, desc: 'Eat (E): heal 30, move 8% faster for 5 minutes.' },
   hunters_stew: { name: "Hunter's Stew", type: 'food', icon: ['dish', 11], value: 30, food: { regen: 1.6 }, desc: 'Eat (E): regenerate health for 5 minutes.' },
   treasure_map: { name: 'Treasure Map', type: 'map', icon: ['scroll', 13], value: 30, desc: 'Read (E): marks a buried chest somewhere in the Reach.' },
+  warmth: { name: 'Spring Warmth', type: 'misc', icon: ['dish', 15], value: 0, food: { regen: 1.0, maxSp: 15 }, desc: 'Warmed through by a hot spring.' },
+  pet_whistle: { name: 'Pet Whistle', type: 'whistle', icon: ['fang', 13], value: 0, desc: 'Use (E in Items) to swap between your hound and your bear cub.' },
   frost_hound_bone: { name: 'Hound Whistle', type: 'misc', icon: ['fang', 6], value: 0, desc: 'Carved from bone. Calls your frost hound.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };

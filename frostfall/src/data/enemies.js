@@ -106,6 +106,22 @@ export const ENEMIES = {
     kind: 'melee', range: 0, windup: 1, atkDur: 0.1, recover: 0.5, cooldown: 9, kbResist: 0,
     body: [12, 6, 2, 8], loot: { gold: [4, 14], drops: [['hide', 0.8], ['wolf_fang', 0.3]] },
   },
+  bearcub: {
+    name: 'Bear Cub', tex: 'spr_bear', sideOnly: true, scale: 0.65, bark: 'wolf', weak: { fire: 1.2 }, hp: 24, speed: 38, chase: 78, dmg: 6, detect: 70,
+    kind: 'melee', range: 16, windup: 0.4, atkDur: 0.14, recover: 0.5, cooldown: 0.6, kbResist: 0,
+    body: [12, 7, 2, 8], loot: { gold: [1, 3], drops: [['hide', 0.5]] },
+  },
+  // --- roaming world bosses (see world/roamers.js)
+  elk: {
+    name: 'Winter Elk', tex: 'spr_elk', sideOnly: true, scale: 1.9, bark: 'wolf', weak: { fire: 1.3 }, hp: 300, speed: 34, chase: 96, dmg: 24, detect: 110,
+    kind: 'lunge', range: 84, windup: 0.7, atkDur: 0.45, recover: 1.0, cooldown: 1.1, kbResist: 0.7, lunge: 250,
+    body: [16, 8, 0, 7], loot: { gold: [90, 160], drops: [['venison', 1], ['hide', 1], ['hp_potion_g', 0.8]] },
+  },
+  troll: {
+    name: 'Bridge Troll', tex: 'spr_troll', scale: 2.0, bark: 'undead', weak: { fire: 1.5 }, hp: 460, speed: 26, chase: 44, dmg: 30, detect: 90, regenRate: 0.012,
+    kind: 'melee', range: 30, windup: 0.95, atkDur: 0.22, recover: 1.1, cooldown: 0.8, kbResist: 0.85,
+    body: [9, 8, 3, 8], loot: { gold: [120, 220], drops: [['hp_potion_g', 0.8], ['mp_potion_g', 0.5], ['iron_ingot', 1]] },
+  },
   // --- predators of the wild
   bear: {
     name: 'Snow Bear', tex: 'spr_bear', sideOnly: true, scale: 1.5, bark: 'wolf', weak: { fire: 1.2 }, hp: 95, speed: 30, chase: 62, dmg: 20, detect: 84,
@@ -194,7 +210,7 @@ export const ENEMIES = {
 // What each creature's hits do on top of damage (see systems/status.js): [{ type, chance, t, dps }]
 const INFLICTS = {
   wolf: [{ type: 'bleed', chance: 0.15, t: 4, dps: 2 }], alpha: [{ type: 'bleed', chance: 0.3, t: 5, dps: 3 }],
-  bear: [{ type: 'bleed', chance: 0.4, t: 5, dps: 4 }], lynx: [{ type: 'bleed', chance: 0.45, t: 5, dps: 3 }],
+  bear: [{ type: 'bleed', chance: 0.4, t: 5, dps: 4 }], elk: [{ type: 'bleed', chance: 0.3, t: 5, dps: 4 }], troll: [{ type: 'slow', chance: 0.4, t: 2.5 }], lynx: [{ type: 'bleed', chance: 0.45, t: 5, dps: 3 }],
   boar: [{ type: 'bleed', chance: 0.2, t: 4, dps: 3 }], imp: [{ type: 'burn', chance: 0.7, t: 3, dps: 4 }],
   wyvern: [{ type: 'burn', chance: 0.35, t: 3, dps: 4 }], dragon: [{ type: 'burn', chance: 0.7, t: 4, dps: 6 }],
   wisp: [{ type: 'shock', chance: 0.6, t: 4 }], golem: [{ type: 'chill', chance: 0.5, stacks: 1 }],
@@ -204,7 +220,7 @@ const INFLICTS = {
 };
 const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
 // creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
-for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord']) if (ENEMIES[k]) ENEMIES[k].crush = true;
+for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll']) if (ENEMIES[k]) ENEMIES[k].crush = true;
 // pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught
 for (const k of ['wolf', 'alpha', 'lynx', 'fencer']) if (ENEMIES[k]) ENEMIES[k].flank = true;
 for (const k of ['bandit', 'fencer']) if (ENEMIES[k]) { ENEMIES[k].flee = true; ENEMIES[k].drinks = true; }

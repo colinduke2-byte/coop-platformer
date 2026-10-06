@@ -36,6 +36,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.t += dt;
     this.life -= dt;
     this.setDepth(this.y + 20);
+    if (this.kind === 'arrow' || this.kind === 'bolt') { const w = this.scene.windX?.() || 0; if (w) { this.body.velocity.x += w * dt; this.setRotation(Math.atan2(this.body.velocity.y, this.body.velocity.x)); } }
     if (this.kind === 'fire') { this.setScale(1 + Math.sin(this.t * 30) * 0.12); if (Math.random() < 0.7) this.scene.fx.trail(this.x, this.y, Math.random() < 0.5 ? 12 : 13, 0.28); }
     if (this.kind === 'frost') { this.rotation += dt * 10; if (Math.random() < 0.6) this.scene.fx.trail(this.x, this.y, Math.random() < 0.5 ? 15 : 6, 0.25); }
     if (this.kind === 'eshot') { this.rotation += dt * 8; if (Math.random() < 0.5) this.scene.fx.trail(this.x, this.y, 15, 0.2); }

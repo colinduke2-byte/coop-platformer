@@ -371,6 +371,64 @@ export class FishHole extends Phaser.GameObjects.Image {
   }
 }
 
+// A hot spring: soak to heal over a few seconds, clear every ailment and get a warm-blooded buff.
+export class SoakSpot extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'spring');
+    scene.add.existing(this);
+    this.ix = x; this.iy = y; this.setDepth(y - 3); this.steamT = 0;
+  }
+  canInteract() { return !this.scene.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive); }
+  label() { return 'E: SOAK'; }
+  tick(dt, sc) {
+    this.steamT -= dt;
+    if (this.steamT <= 0 && sc.cameras.main.worldView.contains(this.x, this.y)) { this.steamT = 0.5 + Math.random() * 0.5; sc.fx.puff(this.x + (Math.random() - 0.5) * 12, this.y - 4, 6, 3, -14, 0.6); }
+  }
+  async interact() {
+    const sc = this.scene;
+    await runScript(async () => {
+      sfx.play('select');
+      bus.emit('toast', 'YOU SINK INTO THE WARM WATER...', 15);
+      const p = sc.player; p.invuln = 99; p.mode = 'free';
+      for (let i = 0; i < 8; i++) {
+        await sc.delay(450);
+        S.hp = Math.min(S.maxHp, S.hp + S.maxHp * 0.13); S.mp = Math.min(S.maxMp, S.mp + S.maxMp * 0.13); S.sp = Math.min(S.maxSp, S.sp + S.maxSp * 0.2);
+        sc.fx.puff(this.x, this.y - 2, 15, 4, 20, 0.5);
+      }
+      p.invuln = 0.4;
+      clearStatus(p, 'rest');
+      S.hp = S.maxHp;
+      S.flags.food = 'warmth'; S.flags.foodUntil = (S.playtime || 0) + 240; recalc();
+      bus.emit('toast', 'WARMED THROUGH: HEALED, ALL AILMENTS GONE', 13); sfx.play('potion');
+    });
+  }
+}
+
+// An orphaned bear cub, left behind when its mother falls.
+export class OrphanCub extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'spr_bear', 'side0');
+    scene.add.existing(this);
+    this.ix = x; this.iy = y; this.setScale(0.7).setDepth(y + 6);
+    this.sh = scene.add.image(x, y + 5, 'shadow').setDepth(y + 5);
+  }
+  canInteract() { return !S.flags.cubOwned; }
+  label() { return 'E: ADOPT THE CUB'; }
+  async interact() {
+    const sc = this.scene;
+    await runScript(async () => {
+      await say('Cub', 'The little bear sniffs your hand, then curls against your boot. It has nowhere else to go.');
+      const c = await choose(['Take it with you', 'Leave it']);
+      if (c !== 0) return;
+      S.flags.cubOwned = true; S.pet = 'cub';
+      if (S.flags.houndOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (ITEMS TAB)', 13); }
+      bus.emit('toast', 'A BEAR CUB JOINS YOU!', 15); sfx.play('quest');
+      sc.spawnHound(true);
+      this.sh.destroy(); sc.interactables = sc.interactables.filter((i) => i !== this); this.destroy();
+    });
+  }
+}
+
 // A starving frost hound by the road. Feed it venison and it is yours.
 export class WoundedHound extends Phaser.GameObjects.Image {
   constructor(scene, x, y) {
@@ -390,7 +448,8 @@ export class WoundedHound extends Phaser.GameObjects.Image {
       if (c !== 0) return;
       const food = S.inv.venison ? 'venison' : S.inv.hunters_stew ? 'hunters_stew' : 'grilled_trout';
       S.inv[food]--; if (S.inv[food] <= 0) delete S.inv[food];
-      S.flags.houndOwned = true;
+      S.flags.houndOwned = true; if (!S.pet) S.pet = 'hound';
+      if (S.flags.cubOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (ITEMS TAB)', 13); }
       await say('Hound', 'It wolfs the meal down, then presses its cold nose into your palm. It rises to follow.');
       bus.emit('toast', 'A FROST HOUND JOINS YOU!', 15);
       sfx.play('quest');

@@ -19,7 +19,7 @@ export const stats = {
   bowDmg: () => { const b = eq('bow'); return b ? b.dmg + upg(S.equip.bow) * 1.5 : 4; },
   armor: () => { const a = eq('armor'); return (a ? a.armor + upg(S.equip.armor) * 0.02 : 0) + (S.hearts?.iron ? 0.08 : 0); },
   // armour-set traits: multipliers default to 1
-  trait: (k) => (eq('armor')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) : k === 'manaCostMul' ? blessMul('manaCostMul') : 1),
+  trait: (k) => (eq('armor')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)
   sum: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
   mul: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (blessing()?.[k] ?? 1),

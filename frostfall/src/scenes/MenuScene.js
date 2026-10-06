@@ -147,6 +147,8 @@ export default class MenuScene extends Phaser.Scene {
         this.gs.player.usePotion(id);
       } else if (it.type === 'food' && wantEquip) {
         eatFood(id, this.gs);
+      } else if (it.type === 'whistle' && wantEquip) {
+        this.gs.swapPet();
       } else if (it.type === 'map' && wantEquip) {
         readMap(id, this.gs);
       } else sfx.play('nostamina');

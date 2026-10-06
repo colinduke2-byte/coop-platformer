@@ -3,6 +3,17 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 11: world and creatures (Phase 4)
+- **Bear dens:** a new point of interest with a **mother bear** and two **cubs**, a cache chest and a bounty. Hurt a cub and the mother is alerted and **enraged** (+30% speed and damage); she crushes shields. When she falls the surviving cubs are orphaned and you can **adopt a cub**.
+- **Two companions:** the **bear cub** follows you, bites for a little and soothes your wounds; the **frost hound** still hunts. Own both and an item, the **Pet Whistle** (E in the Items tab), swaps between them.
+- **Roaming world bosses:** **Frostbrow, the Winter Elk** (a charging giant) and **Grungnir, the Bridge Troll** (slow, huge, regenerating) each walk a closed loop between points of interest, even while you are far away, leaving **tracks** in the snow along the route. Where one is at any moment is a function of the play clock, so the tracks always lead to it. Each drops a legendary item and gold; once dead they stay dead. New bestiary entries and first-sight tips.
+- **Hot springs:** new points of interest. **E: Soak** for about 4 seconds to heal fully, clear every ailment and get **Spring Warmth** (health regeneration and +15 stamina for 4 minutes).
+- **Frozen Mine and Beast Warren:** two new barrow themes (golems, frost worms, imps and necromancers; bears, boars, lynx and alphas).
+- **Whiteout and aurora weather:** a blizzard can build into a **whiteout** (bright veil, sight halved, a strong wind that bends arrows sideways). On clear nights there is a chance of an **aurora**: shimmering ribbons, **spells cost 20% less**, and a pack of spirit wisps drifts in (they carry elite loot). Predators still hunt by scent in a storm.
+- **Ambient life:** ravens perch in the snow by day and scatter (with a caw) when you approach; frost motes drift in the dark; **you leave footprints** in the snow that fade (faster in a storm).
+- **A bigger world:** the Hollow Reach grew from 176x128 to 200x144 tiles because the extra points of interest did not fit; a unit test checks that 25 seeds get every kind of site.
+- Tests: `stage37_world4` (dens, rage, adoption, pets, roaming bosses, springs, ravens, footprints, whiteout, aurora, wind).
+
 ## Round 10: combat depth (Phase 3)
 - **New weapon families** (each with its own 2-3 hit move set, held sprite, icon and hit feel): **axes** (Hand Axe, Bearded Axe: two heavy chops), **spears** (Hunting Spear, Ash Spear: long narrow reach, jab-jab-thrust, works with a shield), **maces** (Iron Mace, War Mace: slow, **breaks shield guards**, and chews through armoured knights instead of bouncing). Hilda sells the starter ones; generated loot can roll them too.
 - **Riposte:** a successful parry arms a 1.1 s window; your next sword blow hits x1.8, staggers hard and shows RIPOSTE (status row shows the timer).

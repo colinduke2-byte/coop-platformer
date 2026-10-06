@@ -38,7 +38,8 @@ import Breakable from '../entities/Breakable.js';
 import { ArenaMaster } from '../entities/Props.js';
 import { arenaWave } from '../world/arena.js';
 import Hound from '../entities/Hound.js';
-import { WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
+import { routePos } from '../world/roamers.js';
+import { OrphanCub, SoakSpot, WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
@@ -51,6 +52,7 @@ import { fogMethods } from '../world/fog.js';
 import { lootMethods } from '../world/loot.js';
 import { zoneMethods } from '../world/zones.js';
 import { lightingMethods, hourOf, isNightHour } from '../world/lighting.js';
+import { ambientMethods } from '../world/ambient.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -141,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
     if (S.nemesis && this.def.stream) this.summonNemesis();
     if (S.follower) this.spawnFollower();
     this.hound = null;
-    if (S.flags.houndOwned && !this.def.interior) this.spawnHound();
+    if ((S.flags.houndOwned || S.flags.cubOwned) && !this.def.interior) this.spawnHound();
     if (this.boss && S.bossState && S.bossState.map === this.mapId) this.pendingBossRestore = true;
     this.on('follower', (on) => {
       if (on) {
@@ -185,6 +187,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.snow = def.snow ? new SnowFx(this, 55) : null;
     this.initLighting();
+    this.initAmbient();
     this.on('player:dead', () => { this.deadT = 0.001; });
     this.on('nostamina', () => tip('stamina'));
     this.on('charlevel', () => tip('perks'));
@@ -233,6 +236,15 @@ export default class GameScene extends Phaser.Scene {
       case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(this, wx, wy, key, tierAt(e.x, e.y)) : new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
       case 'hound': if (!S.flags.houndOwned) this.interactables.push(new WoundedHound(this, wx, wy)); break;
       case 'arenamaster': { const am = new ArenaMaster(this, wx, wy); this.interactables.push(am); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(am); break; }
+      case 'spring': { const sp = new SoakSpot(this, wx, wy); this.interactables.push(sp); this.springs = (this.springs || []).concat(sp); break; }
+      case 'track': this.add.image(wx, wy, 'paw').setDepth(wy - 8).setAlpha(0.45).setAngle(((e.x * 37 + e.y * 11) % 360)); break;
+      case 'roamboss': {
+        const key = `${this.mapId}:rb${e.id}`;
+        if (isGone(key)) break;
+        const p = routePos(e.route, S.playtime || 0, e.phase || 0);
+        this.pend.push({ spec: { kind: e.kind, tier: e.tier, roamRoute: e.route, roamPhase: e.phase || 0, rid: e.id }, key, wx: p.x, wy: p.y, live: null, kind: e.kind });
+        break;
+      }
       case 'fish': this.interactables.push(new FishHole(this, wx, wy, tierAt(e.x, e.y))); break;
       case 'shrine': {
         const sh = new Shrine(this, wx, wy, e.id);
@@ -386,10 +398,21 @@ export default class GameScene extends Phaser.Scene {
     a.wave++;
   }
 
-  spawnHound() {
+  // Your companion: the hound or the bear cub (S.pet picks which; the whistle swaps them).
+  spawnHound(force = false) {
+    const want = S.pet === 'cub' && S.flags.cubOwned ? 'cub' : S.flags.houndOwned ? 'hound' : S.flags.cubOwned ? 'cub' : null;
+    if (!want) return;
+    if (this.hound && (force || this.hound.kind !== want)) { this.hound.destroy(); this.hound = null; }
     if (this.hound) return;
-    this.hound = new Hound(this, this.player.x + 12, this.player.y + 4);
+    this.hound = new Hound(this, this.player.x + 12, this.player.y + 4, want);
     this.physics.add.collider(this.hound, this.layer);
+  }
+  swapPet() {
+    if (!(S.flags.houndOwned && S.flags.cubOwned)) return false;
+    S.pet = S.pet === 'cub' ? 'hound' : 'cub';
+    this.spawnHound(true);
+    bus.emit('toast', S.pet === 'cub' ? 'THE CUB FOLLOWS YOU' : 'THE HOUND FOLLOWS YOU', 15); sfx.play('select');
+    return true;
   }
 
   spawnFollower() {
@@ -420,6 +443,10 @@ export default class GameScene extends Phaser.Scene {
       applyElite(en, R, spec.champion ? 2 : 1);
       if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
     }
+    if (spec.roamRoute) {
+      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll' }[spec.rid] || en.displayName;
+      en.worldBoss = true; en.cfg = { ...en.cfg, call: 0 };
+    }
     if (spec.nemesis) {
       const k = spec.kills || 1;
       en.nemesis = true; en.champion = false;
@@ -436,6 +463,7 @@ export default class GameScene extends Phaser.Scene {
     const px = this.player.x, py = this.player.y;
     for (let i = this.pend.length - 1; i >= 0; i--) {
       const p = this.pend[i];
+      if (p.spec.roamRoute && !p.live) { const rp = routePos(p.spec.roamRoute, S.playtime || 0, p.spec.roamPhase); p.wx = rp.x; p.wy = rp.y; }
       if (p.live) {
         if (p.live.dead || !p.live.active) { if (p.live.dead) this.pend.splice(i, 1); else p.live = null; continue; }
         if (Math.hypot(p.live.x - px, p.live.y - py) > 520 && !p.live.alerted) { p.live.despawn(); p.live = null; }
@@ -573,10 +601,33 @@ export default class GameScene extends Phaser.Scene {
     S.run.kills++;
     if (en.champion) S.run.champions++;
     if (sp.nemesis) this.onNemesisDown(en);
+    if (sp.roamRoute) this.onWorldBossDown(en);
+    if (sp.mother) this.onMotherDown(en);
     if (sp.camp && !S.bounty[sp.camp]) {
       const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
       if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
     }
+  }
+
+  // A world boss falls: a legendary item, gold and a trophy flag.
+  onWorldBossDown(en) {
+    const id = en.spec.rid;
+    S.flags['rb_' + id] = true;
+    S.gold += 150 + 100 * (en.tier || 0);
+    this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((en.tier || 0) + 1, Math.random, 3) }));
+    bus.emit('toast', `${en.displayName.split(',')[0].toUpperCase()} FALLS`, 13); sfx.play('quest');
+    this.shake(500, 0.01);
+  }
+
+  // The mother bear dies: any cubs still alive are orphaned and can be adopted.
+  onMotherDown(en) {
+    const cubs = this.enemies.getChildren().filter((c) => c.spec?.cub && c.spec.camp === en.spec.camp && !c.dead);
+    if (!cubs.length) return;
+    const c = cubs[0];
+    for (const x of cubs) { if (x.spawnKey) markGone(x.spawnKey, true); x.despawn?.(); }
+    if (S.flags.cubOwned) return;
+    this.interactables.push(new OrphanCub(this, c.x, c.y));
+    bus.emit('toast', 'A CUB WHIMPERS... (E TO ADOPT)', 13);
   }
 
   onNemesisDown(en) {
@@ -685,7 +736,7 @@ export default class GameScene extends Phaser.Scene {
 
   onFirstAlert(en) {
     tip('sneak');
-    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear'].includes(en.kind)) tip(en.kind);
+    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear', 'elk', 'troll', 'bearcub'].includes(en.kind)) tip(en.kind);
     if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
   }
 
@@ -846,6 +897,7 @@ export default class GameScene extends Phaser.Scene {
     updateTutorial(this, dt);
     this.worldEvents(dt);
     foodTick();
+    this.ambientLife(dt);
     this.ambientTick(dt);
     for (const i of this.interactables) if (i.tick) i.tick(dt, this);
     this.trophyT = (this.trophyT || 0) - dt; if (this.trophyT <= 0) { this.trophyT = 2; checkTrophies(); }
@@ -963,4 +1015,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods);
