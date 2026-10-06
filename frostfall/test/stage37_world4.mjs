@@ -90,7 +90,11 @@ check('ravens perch in the snow by day', rv >= 1, String(rv));
 const flee = await G(() => { const g = window.gs(), r = g.ravens[0]; if (!r) return null; g.player.setPosition(r.img.x - 20, r.img.y); return true; });
 await h.sleep(500);
 check('ravens scatter when you come close', await G(() => window.gs().ravens.some((r) => r.fly) || window.gs().ravens.length === 0));
-const prints = await G(async () => { const g = window.gs(), p = g.player; p.body.setVelocity(100, 0); for (let i = 0; i < 20; i++) { g.printT = 0; g.ambientLife(0.05); } return g.prints.length; });
+const prints = await G(async () => {
+  const g = window.gs(), p = g.player, SN = new Set([0, 1, 22, 23, 30]);
+  // stand on open snow (ravens may have left us on a road or a tree)
+  outer: for (let r = 0; r < 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const x = p.x + dx * 16, y = p.y + dy * 16; if (SN.has(g.tileIdAt(x, y + 7)) && SN.has(g.tileIdAt(x + 16, y + 7))) { p.setPosition(x, y); break outer; } }
+  p.mode = 'free'; p.speedNow = 100; p.body.setVelocity(100, 0); for (let i = 0; i < 20; i++) { g.printT = 0; g.ambientLife(0.05); } return g.prints.length; });
 check('walking on snow leaves footprints', prints >= 1, String(prints));
 
 // ---- weather: whiteout and aurora
