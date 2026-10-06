@@ -171,6 +171,7 @@ export default class HudScene extends Phaser.Scene {
     if (!this.statTxt) this.statTxt = [0, 1, 2, 3, 4, 5].map(() => txt(this, 0, 0, '', 15));
     const list = [];
     if (pl.counterT > 0) list.push(['COUNTER ' + pl.counterT.toFixed(1), 15]);
+    if (pl.riposteT > 0) list.push(['RIPOSTE ' + pl.riposteT.toFixed(1), 13]);
     if (S.blessing) list.push([BLESSINGS[S.blessing].name.toUpperCase(), BLESSINGS[S.blessing].kind === 'pact' ? 11 : 13]);
     if (pl.ward) list.push(['WARD ' + Math.ceil(pl.ward.t), 15]);
     const en = stats.enchant();

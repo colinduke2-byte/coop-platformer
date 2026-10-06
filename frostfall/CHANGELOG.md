@@ -3,6 +3,16 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Round 10: combat depth (Phase 3)
+- **New weapon families** (each with its own 2-3 hit move set, held sprite, icon and hit feel): **axes** (Hand Axe, Bearded Axe: two heavy chops), **spears** (Hunting Spear, Ash Spear: long narrow reach, jab-jab-thrust, works with a shield), **maces** (Iron Mace, War Mace: slow, **breaks shield guards**, and chews through armoured knights instead of bouncing). Hilda sells the starter ones; generated loot can roll them too.
+- **Riposte:** a successful parry arms a 1.1 s window; your next sword blow hits x1.8, staggers hard and shows RIPOSTE (status row shows the timer).
+- **Guard crush:** bears, golems, boars, knights, reavers, warlords and boss slams/charges/leaps smash through a raised shield (22 stamina and a short stun, you still take 80%). Only a perfectly timed parry beats them.
+- **Winded:** trying to act with an empty stamina bar (or spending the last of it) leaves you winded: 25% slower for 1.8 s and slower stamina recovery.
+- **Armour weight classes:** every armour is light, medium or heavy. Light: rolls cost 20% less, 10% faster stamina, but you are shoved 25% further. Heavy: rolls cost 30% more, 15% slower stamina, but knockback is nearly halved. Shown in item stats (`weights` in `tuning.js`).
+- **Smarter enemies:** wolves, alphas, lynx and fencers **flank** (circle to opposite sides) and **pounce together**; **knights and wardens form a shield wall** (-25% damage taken when two stand together); bandits and fencers **slip away at low health and drink a healing draught** (40% health, once).
+- **Nemesis:** whatever finishes you off in the open world waits where you fell (one rank stronger, elite, with a waypoint). Each time it wins it grows (+25% health, +12% damage). Beat it for gold and a rare (or legendary after three losses) item. New trophy: Settled Scores.
+- Tests: `stage36_combat3` (weapons, reach, mace guard break, riposte, crush, winded, weights, flanking, shield wall, drinking, nemesis).
+
 ## Round 9: art and feel (Phase 2)
 - **Dedicated animal art:** the **deer** (long legs, antlers), **shadow lynx** (tufted ears, ruff, spots, stub tail), **ember fox** (white-tipped brush, black socks), **snow hare** (long ears, hops) and the **boar** and **bear** now each have their own drawn sheet instead of recoloured wolves. Every animal, including the wolves, has a **hurt** frame (jolted) and a **death** frame (on its back, legs in the air).
 - **Humanoid death pose:** bandits, draugr, archers, guardians and you now collapse into a lying-down pose instead of rotating sideways. Everything uses the clip system from Round 8.

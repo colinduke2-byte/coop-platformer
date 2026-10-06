@@ -9,6 +9,7 @@
 //   fear    runs away (enemies only)
 //   slow    moves at half speed
 //   root    cannot move
+//   winded  out of breath after running dry of stamina: slower for a moment
 export const STATUS = {
   burn: { name: 'BURN', col: 12, dot: true, dps: 4, tick: 0.5, dur: 4 },
   bleed: { name: 'BLEED', col: 11, dot: true, dps: 3, tick: 0.5, dur: 5, movingMul: 1.6 },
@@ -18,6 +19,7 @@ export const STATUS = {
   shock: { name: 'SHOCK', col: 13, takenMul: 1.25, dur: 4 },
   fear: { name: 'FEAR', col: 14, flee: true, dur: 3 },
   slow: { name: 'SLOW', col: 15, speed: 0.5, dur: 3 },
+  winded: { name: 'WINDED', col: 8, speed: 0.75, dur: 1.8 },
   root: { name: 'ROOT', col: 8, speed: 0, dur: 2 },
 };
 

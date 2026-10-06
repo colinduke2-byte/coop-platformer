@@ -728,6 +728,12 @@ export function buildIcon(scene, key, kind, col = 6) {
       case 'sword':
         l(col, 4, 11, 12, 3); l(col, 5, 11, 12, 4); l(6, 6, 10, 11, 5);
         R(g, 13, 3, 11, 4, 1); R(g, 13, 5, 9, 1, 4); l(9, 3, 12, 5, 10); R(g, 9, 2, 13, 2, 2); break;
+      case 'axe':
+        l(9, 7, 4, 7, 14); l(9, 8, 4, 8, 14); R(g, col, 8, 3, 6, 5); R(g, col, 9, 2, 5, 2); R(g, 6, 9, 3, 4, 1); R(g, 0, 8, 8, 6, 1); break;
+      case 'spear':
+        l(9, 3, 14, 12, 3); l(9, 4, 14, 13, 3); R(g, col, 11, 1, 3, 4); R(g, col, 12, 0, 1, 2); R(g, 6, 12, 1, 1, 3); break;
+      case 'mace':
+        l(9, 4, 14, 10, 6); l(9, 5, 14, 11, 6); R(g, col, 8, 2, 6, 6); R(g, 6, 9, 2, 2, 1); R(g, 0, 8, 8, 6, 1); R(g, col, 7, 4, 1, 2); R(g, col, 14, 4, 1, 2); break;
       case 'bow':
         for (let y = 2; y <= 13; y++) { const x = 4 + Math.round(Math.sin(((y - 2) / 11) * Math.PI) * 5); R(g, col, x, y); R(g, 9, x + 1, y); }
         l(6, 4, 2, 4, 13); R(g, 10, 5, 7, 7, 1); R(g, 6, 11, 7, 1, 1); break;
@@ -799,6 +805,27 @@ export function buildHeld(scene, key, kind, col = 5) {
     });
     return;
   }
+  if (kind === 'spear') {
+    tex(scene, key, 24, 5, (g) => {
+      R(g, 0, 0, 1, 23, 3); R(g, 9, 1, 2, 17, 1);               // shaft
+      R(g, 0, 17, 0, 6, 5); R(g, col, 18, 1, 5, 3); R(g, 6, 18, 2, 4, 1); R(g, 0, 23, 2, 1, 1);   // head
+    });
+    return;
+  }
+  if (kind === 'mace') {
+    tex(scene, key, 16, 9, (g) => {
+      R(g, 0, 0, 3, 11, 3); R(g, 9, 1, 4, 10, 1);               // haft
+      R(g, 0, 10, 0, 6, 9); R(g, col, 11, 1, 4, 7); R(g, 6, 11, 2, 2, 5); R(g, 0, 12, 4, 1, 1);   // flanged head
+    });
+    return;
+  }
+  if (kind === 'axe') {
+    tex(scene, key, 16, 10, (g) => {
+      R(g, 0, 0, 4, 12, 3); R(g, 9, 1, 5, 11, 1);               // haft
+      R(g, 0, 8, 0, 7, 10); R(g, col, 9, 1, 5, 8); R(g, 6, 9, 2, 1, 6); R(g, 0, 11, 4, 1, 2);     // blade
+    });
+    return;
+  }
   const L = kind === 'greatblade' ? 17 : 12;
   tex(scene, key, L + 4, 7, (g) => {
     R(g, 0, 0, 1, L + 4, 5);                 // outline
@@ -815,3 +842,6 @@ export function generateArt(scene) {
   buildTiles(scene);
   buildFx(scene);
 }
+
+// Which held-weapon sprite an item uses.
+export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.style === 'spear' ? 'spear' : it.style === 'mace' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);

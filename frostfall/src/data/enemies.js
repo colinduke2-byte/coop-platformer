@@ -203,6 +203,11 @@ const INFLICTS = {
   winter: [{ type: 'chill', chance: 0.7, stacks: 1 }], tide: [{ type: 'slow', chance: 0.5, t: 3 }],
 };
 const IMMUNE = { imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
+// creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
+for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord']) if (ENEMIES[k]) ENEMIES[k].crush = true;
+// pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught
+for (const k of ['wolf', 'alpha', 'lynx', 'fencer']) if (ENEMIES[k]) ENEMIES[k].flank = true;
+for (const k of ['bandit', 'fencer']) if (ENEMIES[k]) { ENEMIES[k].flee = true; ENEMIES[k].drinks = true; }
 for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
 for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;
 

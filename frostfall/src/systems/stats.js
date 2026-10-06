@@ -9,6 +9,7 @@ const upg = (id) => (S.upgrades && S.upgrades[id]) || 0;
 
 export const stats = {
   weapon: () => eq('weapon'),
+  weight: () => eq('armor')?.weight || 'medium',
   weaponDmg: () => { const w = eq('weapon'); return w ? w.dmg + upg(S.equip.weapon) * 2 : 3; },
   is2H: () => eq('weapon')?.type === 'weapon2h',
   offhand: () => eq('offhand'),

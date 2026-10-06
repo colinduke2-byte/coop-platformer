@@ -4,7 +4,7 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
-import { tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
+import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm, walkFrame } from '../util.js';
@@ -143,9 +143,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   spend(cost) {
-    if (S.sp < cost) { sfx.play('nostamina'); bus.emit('nostamina'); return false; }
+    if (S.sp < cost) { sfx.play('nostamina'); bus.emit('nostamina'); if (S.sp < 6) this.catchBreath(); return false; }
     S.sp -= cost; this.spDelay = P.regenDelay;
+    if (S.sp < 0.5) this.catchBreath();
     return true;
+  }
+
+  // Running out of stamina leaves you winded: slower, and the stamina is slower to come back.
+  catchBreath() {
+    if (this.statuses?.winded || this.mode === 'dead') return;
+    applyStatus(this, 'winded');
+    this.spDelay = Math.max(this.spDelay, P.regenDelay + 0.8);
+    this.scene.fx.text(this.x, this.y - 14, 'WINDED', 8, 0.9);
   }
 
   gainXp(skill, amt) { addXp(skill, amt); }
@@ -158,6 +167,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.invuln -= dt; this.iframes -= dt; this.rollCd -= dt; this.lockT -= dt;
     this.heat = Math.max(0, (this.heat || 0) - P.cast.heatDecay * dt);
     this.counterT = Math.max(0, (this.counterT || 0) - dt);
+    this.riposteT = Math.max(0, (this.riposteT || 0) - dt);
     this.cryT = Math.max(0, (this.cryT || 0) - dt);
     this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
 
@@ -199,7 +209,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.tickRegen(dt);
 
     // regen
-    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * (S.hearts?.tide ? 1.25 : 1) * dt);
+    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * P.weights[stats.weight()].sp * (S.hearts?.tide ? 1.25 : 1) * dt);
     if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * dt);
 
     const moving = this.speedNow > 8;
@@ -247,7 +257,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   actions(ix, iy) {
-    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1))) {
+    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * P.weights[stats.weight()].roll)) {
       this.mode = 'roll';
       this.rollStart = this.scene.t;
       this.rollCount = (this.rollCount || 0) + 1;
@@ -339,9 +349,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   swordHit(s) {
     const f = this.face;
-    const cx = this.x + f.x * P.sword.reach, cy = this.y + 3 + f.y * P.sword.reach;
-    const sz = s.c.size;
-    const r = new Phaser.Geom.Rectangle(cx - sz / 2, cy - sz / 2, sz, sz);
+    const reach = s.c.reach ?? P.sword.reach;
+    const cx = this.x + f.x * reach, cy = this.y + 3 + f.y * reach;
+    const sz = s.c.size, nw = s.c.narrow ? sz * s.c.narrow : sz;           // spears: long and thin
+    const horiz = Math.abs(f.x) >= Math.abs(f.y);
+    const rw = horiz ? sz : nw, rh = horiz ? nw : sz;
+    const r = new Phaser.Geom.Rectangle(cx - rw / 2, cy - rh / 2, rw, rh);
     this.scene.breakRect(r);
     const en = stats.enchant();
     const off = stats.offhandDmg();
@@ -360,14 +373,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
       dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1);
+      const riposte = this.riposteT > 0;
+      if (riposte) dmg *= P.riposte.mult;
       const crit = Math.random() < stats.sum('crit');
       if (crit) dmg *= 1.8;
       if (exec) dmg = e.hp + 999;
       const dealt = e.takeHit({
-        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: s.c.stun, heavy, poise: s.c.poise || 1,
+        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: riposte ? Math.max(s.c.stun, 0.9) : s.c.stun, heavy: heavy || !!s.c.breaker, pierce: s.c.pierce || 0, poise: (s.c.poise || 1) * (riposte ? 2 : 1),
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
+      if (riposte) { this.riposteT = 0; this.scene.fx.text(e.x, e.y - 30, 'RIPOSTE', 13, 1); this.scene.fx.ring(e.x, e.y + 3, 0.5, 0.3, 'ring', 0xf4d460); }
       if (crit) this.scene.fx.text(e.x, e.y - 21, 'CRIT', 13, 0.8);
       this.leechHeal(dealt);
       this.scene.fx.text(e.x, e.y - 10, String(Math.min(dealt, 999)), sneak ? 13 : en ? ({ fire: 12, frost: 15, shock: 13 })[en.type] : 6);
@@ -495,11 +511,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       return false;
     }
     const sc = this.scene;
-    let incoming = dmg, knock = opts.kb ?? P.hurt.kb, blocked = false;
+    let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * P.weights[stats.weight()].knock, blocked = false;
+    const crush = !!(opts.crush || opts.attacker?.cfg?.crush);
 
     // ---- shield block / parry
     const sh = this.blocking ? stats.shield() : null;
-    if (sh) {
+    if (sh && crush && !(this.blockT <= P.block.parry)) {            // a crushing blow smashes through the guard (only a parry beats it)
+      this.blocking = false; this.stunT = Math.max(this.stunT, 0.55); S.sp = Math.max(0, S.sp - 22); this.spDelay = P.regenDelay + 0.5;
+      sfx.play('guardbreak'); sc.fx.text(this.x, this.y - 14, 'GUARD CRUSHED', 11, 0.9); incoming *= 0.8;
+    } else if (sh) {
       const n = norm(sx - this.x, sy - this.y);
       const r = blockResult({
         dmg: incoming, blocking: true, blockT: this.blockT, parryWindow: P.block.parry + (S.perks.duelist ? 0.1 : 0),
@@ -552,12 +572,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     sc.shake(blocked ? 70 : 130, blocked ? 0.004 : 0.008);
     if (S.hp <= 0) {
       S.hp = 0;
+      this.noteKiller(opts.attacker);
       this.mode = 'dead';
       this.body.setVelocity(0, 0);
       sfx.play('die');
       bus.emit('player:dead');
     }
     return true;
+  }
+
+  // Whoever finishes you off in the open world becomes your nemesis: it comes back stronger, where you fell.
+  noteKiller(a) {
+    const sc = this.scene;
+    if (!a || a.isBoss || !a.kind || !sc.def.stream) return;
+    if (a.nemesis && S.nemesis) { S.nemesis.kills++; S.nemesis.x = Math.round(a.x); S.nemesis.y = Math.round(a.y); return; }
+    if (!S.nemesis) S.nemesis = { kind: a.kind, tier: a.tier || 0, x: Math.round(a.x), y: Math.round(a.y), kills: 1, name: a.cfg.name };
   }
 
   // Damage-over-time from statuses (burn, bleed, poison).
@@ -571,6 +600,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   onParry(attacker, sx, sy) {
     const sc = this.scene;
     sfx.play('parry'); rumble(90, 0.5, 0.5);
+    this.riposteT = P.riposte.window;                        // strike back now
     this.invuln = 0.35;
     sc.fx.ring(this.x + this.face.x * 9, this.y + 3 + this.face.y * 9, 0.5, 0.3, 'ring', 0xeaf2f8);
     sc.fx.text(this.x, this.y - 14, 'PARRY!', 13, 0.8);

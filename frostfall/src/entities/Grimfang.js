@@ -154,7 +154,7 @@ export default class Grimfang extends Boss {
       sc.fx.ring(L.to.x, L.to.y, this.B.leap.r / 32 * 1.1, 0.35, 'ring', 0xeaf2f8);
       sc.fx.puff(L.to.x, L.to.y, 5, 14, 70, 0.5);
       const pc = player.body.center;
-      if (dist(L.to.x, L.to.y, pc.x, pc.y) < this.B.leap.r + 3) player.hurt(this.B.leap.dmg, L.to.x, L.to.y, { kb: 190, attacker: this });
+      if (dist(L.to.x, L.to.y, pc.x, pc.y) < this.B.leap.r + 3) player.hurt(this.B.leap.dmg, L.to.x, L.to.y, { kb: 190, attacker: this, crush: true });
       this.setState('recover', this.B.leap.recover);
     }
   }

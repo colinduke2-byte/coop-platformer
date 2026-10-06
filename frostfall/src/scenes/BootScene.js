@@ -1,7 +1,7 @@
 import { setIconBuilder, rehydrateGen } from '../systems/genloot.js';
 import Phaser from 'phaser';
 import { S } from '../systems/state.js';
-import { generateArt, buildIcon, buildHeld } from '../art/sprites.js';
+import { generateArt, buildIcon, buildHeld, heldKind } from '../art/sprites.js';
 import { buildFonts } from '../art/font.js';
 import { ITEMS, iconKey } from '../data/items.js';
 
@@ -15,18 +15,14 @@ export default class BootScene extends Phaser.Scene {
       if (!this.textures.exists(iconKey(id))) buildIcon(this, iconKey(id), it.icon[0], it.icon[1]);
       const hk = 'held_' + id;
       if (!this.textures.exists(hk)) {
-        if (it.type === 'weapon') buildHeld(this, hk, 'blade', it.icon[1]);
-        else if (it.type === 'weapon2h') buildHeld(this, hk, 'greatblade', it.icon[1]);
-        else if (it.type === 'shield') buildHeld(this, hk, 'shield', it.icon[1]);
+        const k = heldKind(it); if (k) buildHeld(this, hk, k, it.icon[1]);
       }
     });
     rehydrateGen();
     buildHeld(this, 'blade_default', 'blade', 5);
     for (const col of [3, 4, 5]) buildHeld(this, 'held_e' + col, 'blade', col);
     for (const [id, it] of Object.entries(ITEMS)) {
-      if (it.type === 'weapon') buildHeld(this, 'held_' + id, 'blade', it.icon[1]);
-      else if (it.type === 'weapon2h') buildHeld(this, 'held_' + id, 'greatblade', it.icon[1]);
-      else if (it.type === 'shield') buildHeld(this, 'held_' + id, 'shield', it.icon[1]);
+      const k = heldKind(it); if (k) buildHeld(this, 'held_' + id, k, it.icon[1]);
     }
     for (const [k, kind, col] of [['shock', 'shock', 13], ['heal', 'heal', 8], ['ward', 'ward', 15], ['blink', 'blink', 14], ['nova', 'nova', 15], ['wolf', 'wolf', 15], ['coin', 'coin', 13], ['fire', 'fire', 12], ['frost', 'frost', 15], ['shout', 'shout', 6], ['arrows', 'arrows', 5]]) {
       buildIcon(this, 'icon_' + k, kind, col);

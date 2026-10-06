@@ -221,7 +221,7 @@ export default class Boss extends Enemy {
       sc.fx.ring(c.x, c.y, this.B.slam.r / 32 * 1.1, 0.35, 'ring', 0xeaf2f8);
       sc.fx.puff(c.x, c.y, 5, 14, 70, 0.5);
       sc.fx.puff(c.x, c.y, 15, 8, 50, 0.5);
-      if (dist(c.x, c.y, pc.x, pc.y) < this.B.slam.r + 3) player.hurt(this.B.slam.dmg, c.x, c.y, { kb: 170, attacker: this });
+      if (dist(c.x, c.y, pc.x, pc.y) < this.B.slam.r + 3) player.hurt(this.B.slam.dmg, c.x, c.y, { kb: 170, attacker: this, crush: true });
     } else if (a === 'sweep') {
       const r = this.sweepRect();
       sfx.play('sword');
@@ -263,7 +263,7 @@ export default class Boss extends Enemy {
     this.scene.fx.puff(this.cx, this.cy + 10, 5, 1, 20, 0.3);
     if (!this.chargeHit) {
       const r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6);
-      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) { this.chargeHit = true; player.hurt(dc.dmg, this.cx, this.cy, { kb: 200, attacker: this }); }
+      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) { this.chargeHit = true; player.hurt(dc.dmg, this.cx, this.cy, { kb: 200, attacker: this, crush: true }); }
     }
     const crashed = b.blocked.left || b.blocked.right || b.blocked.up || b.blocked.down;
     if (crashed || this.chargeT <= 0) {

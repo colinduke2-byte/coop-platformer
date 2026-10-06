@@ -121,6 +121,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
     }
+    if ((this.cfg.shield || this.cfg.armored) && this.alerted) {      // shield wall: guards standing shoulder to shoulder take less
+      this.wallT = (this.wallT || 0) - dt;
+      if (this.wallT <= 0) {
+        this.wallT = 0.4;
+        let n = 0; for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && o.alerted && (o.cfg.shield || o.cfg.armored) && Math.hypot(o.x - this.x, o.y - this.y) < 44) n++;
+        if (n >= 1 && !this.wallMul) { sc.fx.text(this.x, this.y - 24, 'SHIELD WALL', 5, 0.8); }
+        this.wallMul = n >= 1 ? 0.75 : 0;
+      }
+    }
     const sm = this.statuses ? statusMods(this) : null;
     const slow = Math.min(this.slowT > 0 ? 0.5 : 1, sm ? sm.speed : 1);
     if (this.statuses) { tickStatuses(this, dt, Math.hypot(b.velocity.x, b.velocity.y) > 8); if (this.dead) return; }
@@ -325,6 +334,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
           if (this.pathT <= 0 || !this.wp) { this.wp = sc.nextWaypoint(this.cx, this.cy, player.body.center.x, player.body.center.y); this.pathT = 0.25; }
           if (this.wp) { tx = this.wp.x; ty = this.wp.y; }
         } else this.wp = null;
+        if (cfg.flank && d > 46) {                          // pack hunters come at you from opposite sides
+          if (!this.flankSide || (this.flankT = (this.flankT || 0) - dt) < 0) { this.flankSide = this.pickFlankSide(); this.flankT = 2.5; }
+          const px = -to.y * this.flankSide, py = to.x * this.flankSide, spread = Math.min(34, d * 0.45);
+          tx += px * spread; ty += py * spread;
+        }
         const n = norm(tx - this.cx, ty - this.cy);
         const sp = cfg.chase * slow;
         b.setVelocity(n.x * sp, n.y * sp);
@@ -336,7 +350,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (b.blocked.left || b.blocked.right) { ax = 0; ay = away.y || 1; } else if (b.blocked.up || b.blocked.down) { ay = 0; ax = away.x || 1; }
         b.setVelocity(ax * cfg.chase * 1.1 * slow, ay * cfg.chase * 1.1 * slow);
         this.face = dir8(-ax, -ay);
-        if (this.stateT <= 0) { this.setState('chase'); this.cd = 0.4; }
+        if (this.stateT <= 0) {
+          if (cfg.drinks && !this.drank) {                    // slips away and drinks a healing draught
+            this.drank = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.4);
+            sc.fx.text(this.x, this.y - 16, 'GULP', 11, 0.9); sfx.play('potion'); sc.fx.puff(this.x, this.y, 11, 6, 30, 0.4);
+          }
+          this.setState('chase'); this.cd = 0.4;
+        }
         break;
       }
       case 'windup': {
@@ -396,7 +416,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  // The side to circle to: opposite to the pack mates already circling nearby.
+  pickFlankSide() {
+    let sum = 0;
+    for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && o.cfg.flank && o.flankSide && Math.hypot(o.x - this.x, o.y - this.y) < 140) sum += o.flankSide;
+    return sum > 0 ? -1 : sum < 0 ? 1 : (Math.random() < 0.5 ? 1 : -1);
+  }
+
   startWindup(to) {
+    if (this.cfg.flank) for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && o.alerted && o.cfg.flank && o.cd > 0.25 && Math.hypot(o.x - this.x, o.y - this.y) < 80) o.cd = 0.25;   // the pack pounces together
     this.setState('windup', this.cfg.windup);
     this.face = dir8(to.x, to.y);
     this.dashDir = to;
@@ -553,12 +581,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
-    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul));
+    let dmg = Math.max(1, Math.round(info.dmg * em * this.takenMul * (this.wallMul || 1)));
     // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
     if (this.cfg.armored && info.src !== 'shout') {
       if (this.openT > 0) { dmg = Math.round(dmg * 1.6); }
       else {
-        dmg = Math.max(1, Math.round(dmg * (info.element ? 0.45 : 0.18)));
+        dmg = Math.max(1, Math.round(dmg * Math.max(info.element ? 0.45 : 0.18, info.pierce || 0)));
         sc.fx.text(this.x, this.y - 22, 'ARMORED', 4, 0.7); sfx.play('block');
       }
     }
@@ -620,7 +648,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   die(info) {
     this.dead = true;
     if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
-    if (this.spawnKey) this.scene.markKilled?.(this);
+    if (this.spawnKey || this.spec?.nemesis) this.scene.markKilled?.(this);
     if (this.champion) this.scene.onChampionDown?.(this);
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;

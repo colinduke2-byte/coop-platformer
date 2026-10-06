@@ -3,6 +3,7 @@ import { TUNE } from '../data/tuning.js';
 import { updateTutorial } from '../systems/tutorial.js';
 import { isGone, markGone } from '../systems/bless.js';
 import { rng, tierAt } from '../world/worldgen.js';
+import { ENEMIES } from '../data/enemies.js';
 import { applyElite } from '../entities/elite.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { hash } from '../util.js';
@@ -137,6 +138,7 @@ export default class GameScene extends Phaser.Scene {
     this.pend = []; this.fires = []; this.campIds = new Set(); this.PickupClass = Pickup;
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
+    if (S.nemesis && this.def.stream) this.summonNemesis();
     if (S.follower) this.spawnFollower();
     this.hound = null;
     if (S.flags.houndOwned && !this.def.interior) this.spawnHound();
@@ -396,6 +398,18 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.follower, this.layer);
   }
 
+  // The creature that killed you last waits where you fell (stronger each time it wins).
+  summonNemesis() {
+    const n = S.nemesis;
+    if (!ENEMIES[n.kind]) { delete S.nemesis; return; }
+    let x = n.x, y = n.y;
+    for (let k = 0; k < 24 && (this.solidAt(x, y) || this.solidAt(x + 8, y) || this.solidAt(x, y + 8)); k++) { x = n.x + (Math.random() - 0.5) * 12 * (1 + k); y = n.y + (Math.random() - 0.5) * 12 * (1 + k); }
+    const spec = { kind: n.kind, tier: Math.min(3, (n.tier || 0) + 1), elite: true, nemesis: true, kills: n.kills, roam: true };
+    this.pend.push({ spec, key: null, wx: x, wy: y, live: null, kind: n.kind });
+    S.flags.waypoint = { map: 'forest', x: Math.floor(x / T), y: Math.floor(y / T) };
+    this.time.delayedCall(1800, () => bus.emit('toast', `YOUR NEMESIS WAITS: ${ENEMIES[n.kind].name.toUpperCase()}`, 11));
+  }
+
   // spec: { tier, elite, champion, camp }; key marks a streamed world spawn (so kills persist)
   addEnemy(kind, wx, wy, spec = {}, key = null) {
     if (typeof spec === 'number') spec = {};
@@ -405,6 +419,13 @@ export default class GameScene extends Phaser.Scene {
       const R = rng(((S.seed || 1) ^ ((spec._i || 7) * 2654435761)) >>> 0);
       applyElite(en, R, spec.champion ? 2 : 1);
       if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
+    }
+    if (spec.nemesis) {
+      const k = spec.kills || 1;
+      en.nemesis = true; en.champion = false;
+      en.maxHp = Math.round(en.maxHp * (1.35 + 0.25 * (k - 1))); en.hp = en.maxHp;
+      en.cfg = { ...en.cfg, dmg: Math.round(en.cfg.dmg * (1.1 + 0.12 * (k - 1))), detect: en.cfg.detect * 1.4 };
+      en.displayName = 'Nemesis ' + en.cfg.name;
     }
     this.enemies.add(en);
     return en;
@@ -548,13 +569,24 @@ export default class GameScene extends Phaser.Scene {
   // Persist a world kill; clearing every enemy of a camp pays a bounty.
   markKilled(en) {
     const sp = en.spec || {};
-    markGone(en.spawnKey, !!(sp.camp || sp.champion || sp.elite));
+    if (en.spawnKey) markGone(en.spawnKey, !!(sp.camp || sp.champion || sp.elite));
     S.run.kills++;
     if (en.champion) S.run.champions++;
+    if (sp.nemesis) this.onNemesisDown(en);
     if (sp.camp && !S.bounty[sp.camp]) {
       const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
       if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
     }
+  }
+
+  onNemesisDown(en) {
+    const k = S.nemesis?.kills || 1, tier = en.tier || 0;
+    delete S.nemesis;
+    if (S.flags.waypoint && S.flags.waypoint.map === 'forest') delete S.flags.waypoint;
+    S.nemesisSlain = (S.nemesisSlain || 0) + 1;
+    S.gold += 80 + 60 * k + 40 * tier;
+    this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem(tier + 1, Math.random, k >= 3 ? 3 : 2) }));
+    bus.emit('toast', 'NEMESIS VANQUISHED', 13); sfx.play('quest');
   }
 
   // A barrow champion falling counts as clearing that barrow.

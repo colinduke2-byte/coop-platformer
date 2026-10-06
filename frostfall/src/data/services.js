@@ -38,6 +38,8 @@ export function statLines(id) {
   if (it.armor) out.push([`ARMOR ${Math.round(it.armor * 100)}%`, 6]);
   if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
+  if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
+  if (it.weight) out.push([`${it.weight.toUpperCase()} ARMOUR`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);
   if (it.manaCostMul) out.push(['SPELLS COST -15%', 8]);

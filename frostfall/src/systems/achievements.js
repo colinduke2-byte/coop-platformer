@@ -33,6 +33,7 @@ export const TROPHIES = [
   { id: 'hound', name: "Winter's Best Friend", desc: 'Befriend a frost hound.', test: () => !!S.flags.houndOwned },
   { id: 'rich', name: 'Dragon Hoard', desc: 'Hold 2000 gold at once.', test: () => S.gold >= 2000 },
   { id: 'level10', name: 'Seasoned', desc: 'Reach character level 10.', test: () => (S.charLevel || 1) >= 10 },
+  { id: 'nemesis', name: 'Settled Scores', desc: 'Defeat the creature that killed you.', test: () => (S.nemesisSlain || 0) >= 1 },
   { id: 'ngplus', name: 'Another Winter', desc: 'Begin New Game+.', test: () => (S.ngPlus || 0) >= 1 },
 ];
 

@@ -133,7 +133,7 @@ export default class PatternBoss extends Boss {
           sc.fx.ring(this.cx, this.cy + 4, this.B.leap.r / 32 * 1.2, 0.4, 'ring', 0xeaf2f8);
           sc.fx.puff(this.cx, this.cy + 4, 5, 14, 70, 0.5);
           const q = sc.player.body.center;
-          if (dist(this.cx, this.cy, q.x, q.y) < this.B.leap.r + 3) sc.player.hurt(this.B.leap.dmg, this.cx, this.cy, { kb: 200, attacker: this });
+          if (dist(this.cx, this.cy, q.x, q.y) < this.B.leap.r + 3) sc.player.hurt(this.B.leap.dmg, this.cx, this.cy, { kb: 200, attacker: this, crush: true });
         },
       });
     }

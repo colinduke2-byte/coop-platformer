@@ -16,10 +16,13 @@ export const TUNE = {
     { dmg: 1.1, kb: 135, size: 18, total: 0.3, cost: 1, flip: true, scale: 1, stun: 0.24 },
     { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
   ],
+  // armour weight classes: roll stamina, knockback taken, stamina regen
+  weights: { light: { roll: 0.8, knock: 1.25, sp: 1.1 }, medium: { roll: 1, knock: 1, sp: 1 }, heavy: { roll: 1.3, knock: 0.55, sp: 0.85 } },
+  riposte: { window: 1.1, mult: 1.8 },        // after a parry, the next sword blow
   // how a landed hit feels, per weapon style: hit-stop seconds, shake duration (ms) and strength
   hitFeel: {
     dagger: { stop: 0.025, ms: 50, amt: 0.0025 }, sword: { stop: 0.05, ms: 80, amt: 0.004 },
-    axe: { stop: 0.07, ms: 130, amt: 0.0065 }, great: { stop: 0.09, ms: 170, amt: 0.009 },
+    axe: { stop: 0.07, ms: 130, amt: 0.0065 }, spear: { stop: 0.03, ms: 60, amt: 0.003 }, mace: { stop: 0.085, ms: 150, amt: 0.0075 }, great: { stop: 0.09, ms: 170, amt: 0.009 },
   },
   // weapon styles: each type of weapon has its own combo (sword uses `combo` above)
   styles: {
@@ -32,6 +35,15 @@ export const TUNE = {
     axe: [
       { dmg: 1.35, kb: 150, size: 20, total: 0.4, cost: 1.15, flip: false, scale: 1.2, stun: 0.3 },
       { dmg: 2.0, kb: 260, size: 26, total: 0.52, cost: 1.5, flip: true, scale: 1.5, stun: 0.55 },
+    ],
+    spear: [      // long reach and narrow: jab, jab, then a deep thrust
+      { dmg: 0.85, kb: 60, size: 18, reach: 22, narrow: 0.55, total: 0.3, cost: 0.8, flip: false, scale: 1, stun: 0.15 },
+      { dmg: 0.85, kb: 60, size: 18, reach: 22, narrow: 0.55, total: 0.3, cost: 0.8, flip: true, scale: 1, stun: 0.15 },
+      { dmg: 1.6, kb: 190, size: 26, reach: 28, narrow: 0.5, total: 0.5, cost: 1.3, flip: false, scale: 1.3, stun: 0.4, poise: 1.3 },
+    ],
+    mace: [       // slow, crushing: breaks guards, rattles armour
+      { dmg: 1.2, kb: 120, size: 20, total: 0.5, cost: 1.25, flip: false, scale: 1.3, stun: 0.35, poise: 2.2, breaker: true, pierce: 0.45 },
+      { dmg: 1.8, kb: 220, size: 24, total: 0.64, cost: 1.6, flip: true, scale: 1.6, stun: 0.6, poise: 3, breaker: true, pierce: 0.55 },
     ],
     great: [
       { dmg: 1.3, kb: 170, size: 30, total: 0.46, cost: 1.2, flip: false, scale: 1.5, stun: 0.35 },
