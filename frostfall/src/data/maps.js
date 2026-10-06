@@ -62,6 +62,9 @@ function buildVillage() {
   g.add({ t: 'npc', id: 'mirra', x: 32, y: 10 });
   g.dress('late');
   g.add({ t: 'door', x: 19, y: 7, to: 'hall', spawn: 'in', label: "E: ENTER HALL" });
+  g.rect(34, 14, 5, 3, TILE.PATH); g.set(34, 14, TILE.PILLAR); g.set(38, 14, TILE.PILLAR); g.set(36, 14, TILE.STAIRS);
+  g.add({ t: 'door', x: 36, y: 14, to: 'arena', spawn: 'in', label: 'E: HOLLOW ARENA' });
+  g.add({ t: 'spawn', name: 'arena', x: 36, y: 15 });
   g.add({ t: 'door', x: 7, y: 9, to: 'lodge', spawn: 'in', label: 'E: ENTER LODGE' });
   g.add({ t: 'door', x: 32, y: 8, to: 'shop', spawn: 'in', label: 'E: ENTER SHOP' });
   g.add({ t: 'door', x: 24, y: 20, to: 'cottage', spawn: 'in', label: 'E: ENTER COTTAGE', price: 300, flag: 'houseBought' });
@@ -382,6 +385,24 @@ function buildNest() {
   return g.out();
 }
 MAPS.nest = { name: 'The Ember Nest', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 5 * T && pc.x < 35 * T, build: buildNest, music: 'cavern', bossMusic: 'dragon', dim: 0.3, cave: true };
+
+// ---- The Hollow Arena: endless waves; see GameScene.startArena
+function buildArena() {
+  const g = new Grid(32, 24, TILE.CWALL);
+  g.rect(3, 3, 26, 18, TILE.CFLOOR);
+  g.noise(TILE.CFLOOR2, 0.25, 91, TILE.CFLOOR);
+  g.rect(15, 21, 2, 2, TILE.CFLOOR);
+  g.rect(15, 23, 2, 1, TILE.STAIRS);
+  for (const [x, y] of [[8, 8], [23, 8], [8, 15], [23, 15], [15, 11], [16, 11]]) g.set(x, y, TILE.PILLAR);
+  g.add({ t: 'spawn', name: 'in', x: 16, y: 20 });
+  g.add({ t: 'exit', x: 15, y: 23, w: 2, h: 1, to: 'village', spawn: 'arena', fx: 'door' });
+  g.add({ t: 'arenamaster', x: 16, y: 18 });
+  for (const [x, y] of [[4, 4], [27, 4], [4, 19], [27, 19]]) { g.set(x, y, TILE.BRAZIER); g.add({ t: 'glow', x, y, r: 56, col: 12 }); }
+  g.add({ t: 'glow', x: 16, y: 12, r: 120, col: 13 });
+  g.add({ t: 'sign', x: 13, y: 20, text: ['THE HOLLOW ARENA.', 'SURVIVE THE WAVES. THE LONGER YOU STAND, THE RICHER THE PURSE.'] });
+  return g.out();
+}
+MAPS.arena = { name: 'The Hollow Arena', snow: false, ambience: 'crypt', build: buildArena, music: 'throne', dim: 0.2, cave: true, arena: true };
 
 // The forest is now the north-west corner of the open world (same coordinates as before).
 let reachCache = null;

@@ -252,6 +252,8 @@ export function buildReach(region, seed) {
     }
   }
 
+  add({ t: 'hound', x: START.x + 12, y: START.y + 4 });
+
   // ice-fishing holes out on the frozen lakes
   for (let i = 0, n = 0; i < 600 && n < 14; i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
@@ -261,7 +263,7 @@ export function buildReach(region, seed) {
   }
 
   // keep every placed thing on open ground
-  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'pot', 'sign', 'spawn']);
+  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'hound', 'pot', 'sign', 'spawn']);
   for (const e of entities) {
     if (!PLACED.has(e.t) || e.x < rw && e.y < rh) continue;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {

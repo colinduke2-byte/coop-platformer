@@ -34,7 +34,10 @@ const BOSS_FLAG = { grimfang: 'grimfangDone', wyrm: 'wyrmDead', warlord: 'warlor
 import { foodTick } from '../systems/food.js';
 import { checkTrophies } from '../systems/achievements.js';
 import Breakable from '../entities/Breakable.js';
-import { TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
+import { ArenaMaster } from '../entities/Props.js';
+import { arenaWave } from '../world/arena.js';
+import Hound from '../entities/Hound.js';
+import { WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
@@ -135,6 +138,8 @@ export default class GameScene extends Phaser.Scene {
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
     if (S.follower) this.spawnFollower();
+    this.hound = null;
+    if (S.flags.houndOwned && !this.def.interior) this.spawnHound();
     if (this.boss && S.bossState && S.bossState.map === this.mapId) this.pendingBossRestore = true;
     this.on('follower', (on) => {
       if (on) {
@@ -224,6 +229,8 @@ export default class GameScene extends Phaser.Scene {
         break;
       }
       case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(this, wx, wy, key, tierAt(e.x, e.y)) : new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
+      case 'hound': if (!S.flags.houndOwned) this.interactables.push(new WoundedHound(this, wx, wy)); break;
+      case 'arenamaster': { const am = new ArenaMaster(this, wx, wy); this.interactables.push(am); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(am); break; }
       case 'fish': this.interactables.push(new FishHole(this, wx, wy, tierAt(e.x, e.y))); break;
       case 'shrine': {
         const sh = new Shrine(this, wx, wy, e.id);
@@ -308,6 +315,60 @@ export default class GameScene extends Phaser.Scene {
       }
       default: break;
     }
+  }
+
+  // ---- the Hollow Arena
+  startArena() {
+    this.arena = { active: true, wave: 1, t: 3, foes: [] };
+    bus.emit('toast', 'THE TRIAL BEGINS!', 13); sfx.play('roar');
+  }
+  endArena(yield_ = false) {
+    if (!this.arena) return;
+    const done = this.arena.cleared || 0;
+    this.arena.active = false;
+    for (const e of this.arena.foes) if (e.active && !e.dead) e.despawn?.();
+    this.arena.foes = [];
+    bus.emit('toast', yield_ ? `YOU YIELD AT WAVE ${done}` : `WAVES CLEARED: ${done}`, 13);
+  }
+  arenaTick(dt) {
+    const a = this.arena;
+    if (!a || !a.active || this.player.mode === 'dead') return;
+    a.foes = a.foes.filter((e) => e.active && !e.dead);
+    if (a.foes.length) return;
+    if (a.cleared !== a.wave - 1) {
+      // the previous wave just fell
+      if (a.wave > 1) {
+        const w = a.wave - 1;
+        S.arena ||= { best: 0 };
+        S.arena.best = Math.max(S.arena.best || 0, w);
+        const gold = 20 + w * 12;
+        S.gold += gold;
+        bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
+        if (w % 3 === 0 || w % 5 === 0) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
+        S.run.kills += 0;
+      }
+      a.cleared = a.wave - 1;
+      a.t = 4;
+    }
+    a.t -= dt;
+    if (a.t > 0) return;
+    const foes = arenaWave(a.wave);
+    const pts = [[4, 11], [27, 11], [16, 4], [8, 5], [24, 5], [5, 17], [26, 17], [16, 8]];
+    foes.forEach((f, i) => {
+      const [tx, ty] = pts[i % pts.length];
+      const e = this.addEnemy(f.kind, tx * 16 + 8, ty * 16 + 8, { tier: f.tier, elite: f.elite });
+      e.alert(true);
+      a.foes.push(e);
+    });
+    bus.emit('toast', foes.some((f) => f.elite) ? `WAVE ${a.wave}: A CHAMPION APPEARS!` : `WAVE ${a.wave}`, foes.some((f) => f.elite) ? 11 : 15);
+    sfx.play('roar');
+    a.wave++;
+  }
+
+  spawnHound() {
+    if (this.hound) return;
+    this.hound = new Hound(this, this.player.x + 12, this.player.y + 4);
+    this.physics.add.collider(this.hound, this.layer);
   }
 
   spawnFollower() {
@@ -761,6 +822,8 @@ export default class GameScene extends Phaser.Scene {
     for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
     for (const n of this.npcs) n.update(dt, this.player);
     this.follower?.update(dt, this.player);
+    this.hound?.update(dt, this.player);
+    this.arenaTick(dt);
     if (this.spirit && !this.spirit.dead) this.spirit.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i];

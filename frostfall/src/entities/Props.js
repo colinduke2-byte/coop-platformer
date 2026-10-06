@@ -369,6 +369,62 @@ export class FishHole extends Phaser.GameObjects.Image {
   }
 }
 
+// A starving frost hound by the road. Feed it venison and it is yours.
+export class WoundedHound extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'spr_wolf', 'side0');
+    scene.add.existing(this);
+    this.ix = x; this.iy = y; this.setTint(0xcfe8ff).setScale(0.85).setAngle(-8).setDepth(y + 6);
+    this.sh = scene.add.image(x, y + 6, 'shadow').setDepth(y + 5);
+  }
+  canInteract() { return !S.flags.houndOwned; }
+  label() { return 'E: THE HOUND'; }
+  async interact() {
+    const sc = this.scene;
+    await runScript(async () => {
+      await say('Hound', 'A frost hound lies by the road, ribs showing. It lifts its head and watches your pack.');
+      if (!S.inv.venison && !S.inv.grilled_trout && !S.inv.hunters_stew) { await say('Hound', 'It is too weak to follow. Bring it something to eat: venison, or a cooked meal.'); return; }
+      const c = await choose(['Share your food', 'Leave it']);
+      if (c !== 0) return;
+      const food = S.inv.venison ? 'venison' : S.inv.hunters_stew ? 'hunters_stew' : 'grilled_trout';
+      S.inv[food]--; if (S.inv[food] <= 0) delete S.inv[food];
+      S.flags.houndOwned = true;
+      await say('Hound', 'It wolfs the meal down, then presses its cold nose into your palm. It rises to follow.');
+      bus.emit('toast', 'A FROST HOUND JOINS YOU!', 15);
+      sfx.play('quest');
+      sc.spawnHound();
+      this.sh.destroy(); sc.interactables = sc.interactables.filter((i) => i !== this); this.destroy();
+    });
+  }
+}
+
+// The Arena Master: starts the wave challenge and pays out.
+export class ArenaMaster extends Phaser.GameObjects.Image {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'spr_trader', 'down0');
+    scene.add.existing(this); scene.physics.add.existing(this, true);
+    this.body.setSize(10, 8).setOffset(3, 7);
+    this.ix = x; this.iy = y; this.setDepth(y + 8).setTint(0xffd0a0);
+    scene.add.image(x, y + 7, 'shadow').setDepth(y + 6);
+  }
+  canInteract() { return true; }
+  label() { return this.scene.arena?.active ? 'E: ARENA MASTER' : 'E: ENTER THE ARENA'; }
+  async interact() {
+    const sc = this.scene;
+    await runScript(async () => {
+      const best = S.arena?.best || 0;
+      if (sc.arena?.active) {
+        const c = await choose(['Keep fighting', 'Yield and collect']);
+        if (c === 1) { sc.endArena(true); await say('Arena Master', `A fine showing: ${sc.arena.cleared || 0} waves cleared.`); }
+        return;
+      }
+      await say('Arena Master', best ? `Your best is ${best} waves. Think you can beat it?` : 'Waves of the Hollow\'s worst, one after another. Every wave pays. Every fifth wave brings a champion.');
+      const c = await choose(['Begin the trial', 'Not today']);
+      if (c === 0) sc.startArena();
+    });
+  }
+}
+
 // The bounty board in the village plaza.
 export class BountyBoard extends Phaser.GameObjects.Image {
   constructor(scene, x, y) {
