@@ -55,6 +55,7 @@ import { TILE_DOOR, TILE_FLOOR, BOSS_CLASS, BOSS_FLAG } from '../world/sceneCons
 import { ambientMethods } from '../world/ambient.js';
 import { arenaMethods } from '../world/arenaRun.js';
 import { quickScore } from '../arena/heroes.js';
+import { quickMethods } from '../arena/quickRun.js';
 import { companionMethods } from '../world/companions.js';
 import { killMethods } from '../world/kills.js';
 import { eventMethods } from '../world/events.js';
@@ -218,7 +219,7 @@ export default class GameScene extends Phaser.Scene {
       this.fx.puff(this.player.x, this.player.y, 13, 14, 55, 0.7, -20);
     });
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
-    if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startArena('classic')); }
+    if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startQuick()); }
     this.events.once('shutdown', () => {
       this.snow?.destroy();
       this.fx.clear();
@@ -633,6 +634,7 @@ export default class GameScene extends Phaser.Scene {
     this.follower?.update(dt, this.player);
     this.hound?.update(dt, this.player);
     this.arenaTick(dt);
+    this.quickTick?.(dt);
     if (this.spirit && !this.spirit.dead) this.spirit.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i];
@@ -698,8 +700,8 @@ export default class GameScene extends Phaser.Scene {
   endQuickRun() {
     this.respawning = true;
     const q = S.quick, a = this.arena || {};
-    const res = { hero: q.hero, waves: a.cleared || 0, kills: a.killed || 0, champions: a.champs || 0, time: (Date.now() - q.startedAt) / 1000 };
-    res.score = quickScore(res.waves, res.kills, res.champions);
+    const res = { hero: q.hero, mode: q.mode, arena: q.arena, waves: a.cleared || 0, kills: a.killed || 0, champions: a.champs || 0, time: (Date.now() - q.startedAt) / 1000, daily: q.daily };
+    res.score = quickScore(res.waves, q.pts || 0, res.champions, q.mode);
     this.cameras.main.fadeOut(500, 11, 14, 26);
     this.cameras.main.once('camerafadeoutcomplete', () => { music.stop(); this.scene.stop('Hud'); this.scene.start('ArenaResults', res); });
   }
@@ -717,4 +719,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, companionMethods, killMethods, eventMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, companionMethods, killMethods, eventMethods);

@@ -63,7 +63,7 @@ const res = await G(() => { const s = window.__ff.game.scene.getScene('ArenaResu
 check('falling ends the run and shows the results card', res.active && !res.hud, JSON.stringify(res));
 await h.shot('s49_results');
 const rec = await G(() => JSON.parse(localStorage.getItem('frostfall_arena_records') || '{}'));
-check('the run is recorded as a personal best', rec.warden && rec.warden.score >= 100 && rec.warden.runs === 1, JSON.stringify(rec));
+check('the run is recorded as a personal best', rec['warden:survival'] && rec['warden:survival'].score >= 100 && rec['warden:survival'].runs === 1, JSON.stringify(rec));
 
 // again -> a fresh run; the real save is still untouched
 await h.sleep(900);

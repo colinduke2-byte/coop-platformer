@@ -1,5 +1,6 @@
 // Player spellcasting (mixed into Player). Spells unlock with skill levels.
 import { S } from '../systems/state.js';
+import { modMul } from '../data/mods.js';
 import { unlockedShouts, currentShout } from '../systems/shouts.js';
 import { stats } from '../systems/stats.js';
 import { keys } from '../systems/keys.js';
@@ -32,7 +33,7 @@ export const spellUnlocked = (id) => !!S.tomes?.[id] || lvl(SPELLS[id].skill) >=
 export const magicMethods = {
   // Mana cost climbs while casts are chained (overcast), and cools off again.
   spellCost(sp) {
-    return sp.cost * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
+    return sp.cost * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
   },
 
   quickCast() {

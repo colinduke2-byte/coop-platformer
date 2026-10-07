@@ -37,7 +37,7 @@ export default class HudScene extends Phaser.Scene {
 
   create() {
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
-    this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
+    this.quickTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
     this.g = this.add.graphics();
     this.flash = { hp: 0, mp: 0, sp: 0 };
     this.labels = BARS.map((b, i) => txt(this, 3, 3 + i * 8, b.label, 5));
@@ -333,6 +333,18 @@ export default class HudScene extends Phaser.Scene {
     const pl = this.gs.player;
     g.clear();
     this.dead.setVisible(S.hp <= 0);
+    if (S.quick) {
+      const q = S.quick, a = this.gs.arena || {}, mult = Math.min(3, 1 + Math.floor(Math.max(0, q.combo - 1) / 4) * 0.25);
+      const score = (a.cleared || 0) * (q.mode === 'rush' ? 500 : 100) + (q.pts || 0);
+      const lines = [[`${q.mode === 'rush' ? 'BOSS' : 'WAVE'} ${Math.max(1, a.wave - (q.mode === 'rush' ? 0 : 1))}   SCORE ${score}`, 6]];
+      if (q.combo >= 2) lines.push([`COMBO ${q.combo}  x${mult.toFixed(2).replace(/0$/, '')}`, mult >= 2 ? 11 : 13]);
+      if (q.rageT > 0) lines.push([`RAGE ${Math.ceil(q.rageT)}`, 12]);
+      const key = lines.map((l) => l[0]).join('|');
+      if (this.quickKey !== key) {
+        this.quickKey = key; (this.quickTxt || []).forEach((t) => t.destroy());
+        this.quickTxt = lines.map(([t, c], i) => { const o = txt(this, 0, 4 + i * 9, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
+      }
+    } else if (this.quickTxt) { this.quickTxt.forEach((t) => t.destroy()); this.quickTxt = null; this.quickKey = null; }
 
     // panels
     const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;

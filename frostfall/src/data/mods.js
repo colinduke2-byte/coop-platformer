@@ -24,6 +24,14 @@ export const BOONS = {
   lifeblood: { name: 'Lifeblood', desc: 'Heal 15% after each wave', waveHeal: 0.15 },
   gilded: { name: 'Gilded', desc: '+30% wave gold', goldMul: 1.3 },
   keen: { name: 'Keen Edge', desc: '+8% crit chance', crit: 0.08 },
+  vampiric: { name: 'Vampiric', desc: 'Heal 4% of damage dealt', lifesteal: 0.04 },
+  thornmail: { name: 'Thornmail', desc: 'Foes that strike you take 6', thorns: 6 },
+  berserk: { name: 'Berserk', desc: '+25% damage, take 15% more', dealMul: 1.25, takenMul: 1.15 },
+  giant: { name: 'Giant', desc: '+40 max health, 3% slower', maxHp: 40, moveMul: 0.97 },
+  arcane: { name: 'Arcane Flow', desc: 'Spells cost 25% less mana', manaMul: 0.75 },
+  vanguard: { name: 'Vanguard', desc: 'Take 15% less damage, 5% slower', takenMul: 0.85, moveMul: 0.95 },
+  reaper: { name: 'Reaper', desc: '+12% crit, +5% damage', crit: 0.12, dealMul: 1.05 },
+  scavenger: { name: 'Scavenger', desc: 'Orbs drop twice as often', dropMul: 2 },
 };
 export const BOON_IDS = Object.keys(BOONS);
 
@@ -32,6 +40,7 @@ export function modMul(key, none = 1) {
   let v = none, hit = false;
   for (const id of Object.keys(S.mods || {})) if (S.mods[id] && MODS[id]?.[key] != null) { v *= MODS[id][key]; hit = true; }
   for (const [id, n] of Object.entries(S.boons || {})) if (BOONS[id]?.[key] != null) { v *= Math.pow(BOONS[id][key], n); hit = true; }
+  if (key === 'dealMul' && S.quick?.rageT > 0) { v *= 1.4; hit = true; }          // an Arena Mode rage orb
   return hit ? v : none;
 }
 // Sum of an additive key (max health / mana / stamina, crit).

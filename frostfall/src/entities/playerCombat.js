@@ -7,7 +7,7 @@ import { bus } from '../systems/bus.js';
 import { bonus } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
 import { elixirVal } from '../systems/elixir.js';
-import { modMul } from '../data/mods.js';
+import { modMul, modSum } from '../data/mods.js';
 import { wear } from '../systems/durability.js';
 import { statusMods, inflictOn } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
@@ -46,7 +46,7 @@ export const combatMethods = {
   },
   // Gear / blessing lifesteal.
   leechHeal(dealt) {
-    const ls = stats.sum('lifesteal');
+    const ls = stats.sum('lifesteal') + modSum('lifesteal');
     if (ls > 0 && dealt > 0) S.hp = Math.min(S.maxHp, S.hp + Math.max(0.5, dealt * ls));
   },
   // ---------------------------------------------------------------- sword

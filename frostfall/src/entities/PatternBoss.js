@@ -168,6 +168,7 @@ export default class PatternBoss extends Boss {
 
   victory(sc) {
     sc.onEnemyKilled(this);
+    if (S.quick) { sc.setGate?.(false); return; }          // Arena Mode: no hearts, finales or saves
     sc.setGate(false);
     music.play('crypt');
     bus.emit('toast', this.info.toast, 13);

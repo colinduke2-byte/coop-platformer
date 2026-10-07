@@ -45,7 +45,8 @@ export const arenaMethods = {
   arenaTick(dt) {
     const a = this.arena;
     if (!a || !a.active || this.player.mode === 'dead') return;
-    for (const e of a.foes) if (e.dead && !e.__counted) { e.__counted = true; a.killed = (a.killed || 0) + 1; if (e.champion || e.spec?.elite || e.elite) a.champs = (a.champs || 0) + 1; }
+    if (a.mode === 'rush') { this.rushTick(dt); return; }
+    for (const e of a.foes) if (e.dead && !e.__counted) { e.__counted = true; a.killed = (a.killed || 0) + 1; if (e.champion || e.spec?.elite || e.elite) a.champs = (a.champs || 0) + 1; this.onQuickFoe?.(e); }
     a.foes = a.foes.filter((e) => e.active && !e.dead);
     if (a.foes.length || a.offering) return;
     if (a.cleared !== a.wave - 1) {
@@ -55,11 +56,14 @@ export const arenaMethods = {
         S.arena ||= { best: 0 };
         S.arena.best = Math.max(S.arena.best || 0, w);
         S.arena.modes = S.arena.modes || {}; S.arena.modes[a.mode] = Math.max(S.arena.modes[a.mode] || 0, w);
+        if (S.quick) { bus.emit('toast', `WAVE ${w} CLEARED`, 13); sfx.play('quest'); this.quickWaveCleared(w); }
+        else {
         const gold = Math.round((20 + w * 12) * modMul('goldMul') * (a.mode === 'gauntlet' ? 1.4 : 1));
         S.gold += gold;
         bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
-        if (w % 3 === 0 || w % 5 === 0) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
-        if (w % 5 === 0) maybeRelic(this, 0.35);
+        }
+        if (!S.quick && (w % 3 === 0 || w % 5 === 0)) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));
+        if (!S.quick && w % 5 === 0) maybeRelic(this, 0.35);
       }
       a.cleared = a.wave - 1;
       a.t = 4;
@@ -67,12 +71,14 @@ export const arenaMethods = {
     }
     a.t -= dt;
     if (a.t > 0) return;
-    const foes = arenaWave(a.wave, Math.random, a.mode);
+    const foes = arenaWave(a.wave, a.rnd || Math.random, a.mode);
+    this.quickWaveHook?.(a, foes);
     const pts = [[4, 11], [27, 11], [16, 4], [8, 5], [24, 5], [5, 17], [26, 17], [16, 8]];
     foes.forEach((f, i) => {
       const [tx, ty] = pts[i % pts.length];
       const e = this.addEnemy(f.kind, tx * 16 + 8, ty * 16 + 8, { tier: f.tier, elite: f.elite });
       e.alert(true);
+      this.quickApplyTwist?.(e);
       a.foes.push(e);
     });
     bus.emit('toast', foes.some((f) => f.elite) ? `WAVE ${a.wave}: A CHAMPION APPEARS!` : `WAVE ${a.wave}`, foes.some((f) => f.elite) ? 11 : 15);

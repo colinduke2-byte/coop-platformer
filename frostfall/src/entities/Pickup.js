@@ -13,7 +13,7 @@ import { C } from '../config.js';
 // spec: { type: 'gold'|'arrows'|'item', n, id }
 export default class Pickup extends Phaser.GameObjects.Image {
   constructor(scene, x, y, spec) {
-    const tex = spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : spec.type === 'heart' ? 'icon_frostheart' : 'icon_' + spec.id;
+    const tex = spec.type === 'orb' ? 'orb_' + spec.kind : spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : spec.type === 'heart' ? 'icon_frostheart' : 'icon_' + spec.id;
     super(scene, x, y, tex);
     scene.add.existing(this);
     this.spec = spec;
@@ -22,7 +22,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     this.vx = rand(-30, 30); this.vy = rand(-45, -20);
     this.z = 0; this.vz = rand(60, 90);
     this.done = false;
-    if (spec.type !== 'gold') this.setScale(0.75);
+    if (spec.type !== 'gold' && spec.type !== 'orb') this.setScale(0.75);
     const rar = spec.type === 'item' && ITEMS[spec.id]?.rarity;
     if (rar && rar !== 'common') {
       const col = RARITY.find((r) => r.id === rar).col;
@@ -58,7 +58,8 @@ export default class Pickup extends Phaser.GameObjects.Image {
   collect() {
     this.done = true;
     const s = this.spec;
-    if (s.type === 'gold') { addGold(s.n); sfx.play('coin'); }
+    if (s.type === 'orb') { this.scene.collectOrb?.(s.kind); sfx.play('pickup'); }
+    else if (s.type === 'gold') { addGold(s.n); sfx.play('coin'); }
     else if (s.type === 'arrows') { addArrows(s.n); sfx.play('pickup'); }
     else if (s.type === 'heart') { S.hearts = S.hearts || {}; S.hearts[s.id] = true; recalc(); sfx.play('levelup'); bus.emit('toast', HEARTS[s.id].name.toUpperCase() + ' CLAIMED', 15); bus.emit('heart', s.id); }
     else { addItem(s.id, s.n || 1); sfx.play('pickup'); }

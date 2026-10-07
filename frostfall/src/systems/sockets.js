@@ -1,5 +1,6 @@
 // Gems: equipment can carry sockets; each socketed gem adds a flat bonus while the item is equipped.
 import { S } from './state.js';
+import { modSum } from '../data/mods.js';
 import { ITEMS } from '../data/items.js';
 import { count, addItem, removeItem } from './inventory.js';
 
@@ -51,5 +52,5 @@ export function unsetRune(itemId) {
 }
 const equippedRunes = () => ['weapon', 'armor'].map((sl) => ITEMS[runeOf(S.equip?.[sl])]?.rune).filter(Boolean);
 export const runeElem = () => ITEMS[runeOf(S.equip?.weapon)]?.rune?.elem || null;
-export const runeThorns = () => equippedRunes().reduce((a, r) => a + (r.thorns || 0), 0);
+export const runeThorns = () => equippedRunes().reduce((a, r) => a + (r.thorns || 0), 0) + modSum('thorns');
 export const runeBonus = (key) => equippedRunes().reduce((a, r) => a + (typeof r[key] === 'number' ? r[key] : 0), 0);

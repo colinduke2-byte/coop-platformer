@@ -3,6 +3,8 @@ import { S, resetState } from '../systems/state.js';
 import { recalc } from '../systems/stats.js';
 import { readSlot, loadGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
+import { dayStamp, dailyMods } from '../systems/daily.js';
+import { ARENAS, arenaById } from './arenas.js';
 
 const POTS = { hp_potion: 5, mp_potion: 3, sp_potion: 3 };
 // Each hero is plain data: gear, skill levels, perks, tomes, hearts (for shouts) and the starting spell.
@@ -23,7 +25,20 @@ export const HEROES = [
 export const heroById = (id) => HEROES.find((h) => h.id === id);
 
 // Begin a fresh quick run in memory. The save slots are never written while S.quick is set (see systems/save.js).
-export function beginQuickRun(heroId) {
+export const MODES = [
+  { id: 'survival', name: 'SURVIVAL', blurb: 'ENDLESS WAVES. A CHAMPION EVERY 5.' },
+  { id: 'boon', name: 'BOON TRIAL', blurb: 'PICK A BOON BETWEEN WAVES.' },
+  { id: 'gauntlet', name: 'GAUNTLET', blurb: 'A CHAMPION IN EVERY WAVE.' },
+  { id: 'rush', name: 'BOSS RUSH', blurb: 'TEN BOSSES, ONE AFTER ANOTHER.' },
+  { id: 'daily', name: 'DAILY ARENA', blurb: 'SAME WAVES AND TWO MODIFIERS FOR ALL.' },
+];
+export const modeById = (id) => MODES.find((m) => m.id === id) || MODES[0];
+// Today's arena is fixed by the date, so the daily is the same room for everyone.
+export const dailyArena = (day = dayStamp()) => ARENAS[day % ARENAS.length].id;
+
+export function beginQuickRun(heroId, opts = {}) {
+  const mode = opts.mode || 'survival', day = dayStamp();
+  const arena = mode === 'daily' ? dailyArena(day) : (opts.arena || 'pit');
   const hero = heroById(heroId);
   if (heroId === 'own') {
     if (!hasOwnHero() || !loadGame(settings.slot)) return false;
@@ -43,7 +58,8 @@ export function beginQuickRun(heroId) {
     Object.assign(S.flags, hero.flags || {});
   }
   S.flags.introDone = true; S.flags.tutDone = true;
-  S.quick = { hero: heroId, startedAt: Date.now() };
+  S.quick = { hero: heroId, mode, arena, startedAt: Date.now() };
+  if (mode === 'daily') { S.quick.daily = day; S.mods = Object.fromEntries(dailyMods(day).map((m) => [m, true])); }
   recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
   return true;
 }
@@ -51,13 +67,15 @@ export function beginQuickRun(heroId) {
 export const hasOwnHero = () => !!readSlot(settings.slot);
 
 // ---- score and records (this device only)
-export const quickScore = (waves, kills, champions) => waves * 100 + kills * 10 + champions * 40;
+// waves cleared (or bosses felled x5), the combo-weighted points from kills, and champions
+export const quickScore = (waves, pts, champions, mode = 'survival') => waves * (mode === 'rush' ? 500 : 100) + pts + champions * 40;
 const KEY = 'frostfall_arena_records';
 export function loadRecords() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } }
-export function submitRecord(heroId, score, waves) {
-  const r = loadRecords(), cur = r[heroId] || { score: 0, waves: 0, runs: 0 };
+export const recordKey = (heroId, mode) => `${heroId}:${mode}`;
+export function submitRecord(heroId, score, waves, mode = 'survival') {
+  const key = recordKey(heroId, mode), r = loadRecords(), cur = r[key] || { score: 0, waves: 0, runs: 0 };
   const isBest = score > cur.score;
-  r[heroId] = { score: Math.max(cur.score, score), waves: Math.max(cur.waves, waves), runs: cur.runs + 1 };
+  r[key] = { score: Math.max(cur.score, score), waves: Math.max(cur.waves, waves), runs: cur.runs + 1 };
   try { localStorage.setItem(KEY, JSON.stringify(r)); } catch { /* storage blocked */ }
-  return { isBest, best: r[heroId] };
+  return { isBest, best: r[key] };
 }
