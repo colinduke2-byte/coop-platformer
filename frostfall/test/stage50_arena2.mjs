@@ -17,6 +17,18 @@ await G(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); });
 // make the boon pick instant
 const autoPick = () => G(async () => { const dlg = await import('/src/systems/dialogue.js'); const real = dlg.dialogue.hud; window.__real = real; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene }; });
 
+// ---- rooms unlock with waves reached
+const lk = await G(async () => {
+  const H = await import('/src/arena/heroes.js'); localStorage.removeItem('frostfall_arena_records'); const out = {};
+  out.locked = !H.arenaUnlocked('lake') && H.arenaUnlocked('pit') && H.nextRoomAt() === 5;
+  H.beginQuickRun('warden', { mode: 'survival', arena: 'court' }); out.fallback = window.__ff.S.quick.arena === 'pit';
+  localStorage.setItem('frostfall_arena_records', JSON.stringify({ 'warden:survival': { score: 1, waves: 8, runs: 1 }, 'warden:rush': { score: 1, waves: 99, runs: 1 } }));
+  out.lake = H.arenaUnlocked('lake') && H.arenaUnlocked('foundry') && !H.arenaUnlocked('court') && H.nextRoomAt() === 10;
+  localStorage.setItem('frostfall_arena_records', JSON.stringify({ 'warden:survival': { score: 1, waves: 10, runs: 1 } }));
+  return out;
+});
+check('the Lake, Foundry and Court unlock at waves 5, 8 and 10 (Boss Rush does not count)', lk.locked && lk.fallback && lk.lake, JSON.stringify(lk));
+
 // ---- the four rooms
 for (const [id, mapId] of [['pit', 'pit'], ['lake', 'pit_lake'], ['foundry', 'pit_foundry'], ['court', 'pit_court']]) {
   await startRun('warden', { mode: 'survival', arena: id }); await h.sleep(1800);

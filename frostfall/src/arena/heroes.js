@@ -14,13 +14,13 @@ export const HEROES = [
   { id: 'reaver', name: 'REAVER', col: 12, blurb: ['GREATSWORD. SLOW, HUGE HITS.', 'BATTLE CRY ON R.'],
     equip: { weapon: 'iron_greatsword', armor: 'iron_cuirass' }, skills: { oneHanded: 7 }, perks: ['keenedge'], spell: 'heal', hearts: { iron: true }, shout: 'cry' },
   { id: 'ranger', name: 'RANGER', col: 8, blurb: ['LONGBOW AND FIRE ARROWS.', 'KITE THEM. BLINK AWAY.'],
-    equip: { weapon: 'hunting_knife', bow: 'long_bow', armor: 'hunter_garb' }, skills: { archery: 8, sneak: 4, oneHanded: 3 }, perks: ['steadyhand', 'eagleeye'], spell: 'blink', arrows: 60, extra: { fire_arrow: 40 } },
-  { id: 'frostmage', name: 'FROSTMAGE', col: 15, blurb: ['FROST, LIGHTNING AND A WARD.', 'FROST BREATH ON R.'],
-    equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, skills: { destruction: 8, restoration: 3 }, perks: ['spellweaver'], spell: 'frost', hearts: { rime: true }, shout: 'frost' },
+    equip: { weapon: 'hunting_knife', bow: 'long_bow', armor: 'hunter_garb' }, skills: { archery: 9, sneak: 4, oneHanded: 3 }, perks: ['steadyhand', 'eagleeye', 'piercing'], spell: 'blink', arrows: 60, extra: { fire_arrow: 40 } },
+  { id: 'frostmage', name: 'FROSTMAGE', col: 15, blurb: ['GLACIER SPEAR, FROST AND WARD.', 'FROST BREATH ON R.'],
+    equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, mp: 40, skills: { destruction: 8, restoration: 3 }, perks: ['spellweaver'], spell: 'glacier', tomes: { glacier: true }, hearts: { rime: true }, shout: 'frost' },
   { id: 'pyromancer', name: 'PYROMANCER', col: 11, blurb: ['FIREBALL, EMBER NOVA, METEOR.', 'BURN EVERYTHING.'],
-    equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, skills: { destruction: 7 }, perks: ['spellweaver', 'pyromancer'], spell: 'fire', tomes: { embernova: true, meteor: true } },
+    equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, mp: 40, skills: { destruction: 7 }, perks: ['spellweaver', 'pyromancer'], spell: 'fire', tomes: { embernova: true, meteor: true } },
   { id: 'shadow', name: 'SHADOW', col: 14, blurb: ['TWIN DAGGERS. SNEAK, STRIKE.', 'BLINK AND CINDERSTEP.'],
-    equip: { weapon: 'hunting_knife', offhand: 'hunting_knife', armor: 'hunter_garb' }, skills: { sneak: 8, oneHanded: 5 }, perks: ['shadowstep', 'ghost'], spell: 'blink', flags: { kragnarDead: true }, shout: 'cinderstep' },
+    equip: { weapon: 'hunting_knife', offhand: 'hunting_knife', armor: 'hunter_garb' }, skills: { sneak: 8, oneHanded: 7 }, perks: ['shadowstep', 'ghost', 'keenedge'], spell: 'blink', flags: { kragnarDead: true }, shout: 'cinderstep' },
 ];
 export const heroById = (id) => HEROES.find((h) => h.id === id);
 
@@ -38,7 +38,7 @@ export const dailyArena = (day = dayStamp()) => ARENAS[day % ARENAS.length].id;
 
 export function beginQuickRun(heroId, opts = {}) {
   const mode = opts.mode || 'survival', day = dayStamp();
-  const arena = mode === 'daily' ? dailyArena(day) : (opts.arena || 'pit');
+  const arena = mode === 'daily' ? dailyArena(day) : (arenaUnlocked(opts.arena || 'pit') ? (opts.arena || 'pit') : 'pit');
   const hero = heroById(heroId);
   if (heroId === 'own') {
     if (!hasOwnHero() || !loadGame(settings.slot)) return false;
@@ -53,7 +53,7 @@ export function beginQuickRun(heroId, opts = {}) {
     for (const [k, v] of Object.entries(hero.skills)) S.skills[k].lvl = v;
     S.perks = Object.fromEntries(hero.perks.map((p) => [p, true]));
     S.spell = hero.spell; S.tomes = { ...(hero.tomes || {}) }; S.hearts = { ...(hero.hearts || {}) };
-    S.arrows = hero.arrows || 25;
+    S.arrows = hero.arrows || 25; S.bonusMp = hero.mp || 0;
     if (hero.shout) S.shout = hero.shout;
     Object.assign(S.flags, hero.flags || {});
   }
@@ -63,6 +63,12 @@ export function beginQuickRun(heroId, opts = {}) {
   recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
   return true;
 }
+
+// Rooms open as you reach waves in any run (Boss Rush does not count). One constant to change if this feels too slow.
+export const ARENA_UNLOCK = { pit: 0, lake: 5, foundry: 8, court: 10 };
+export const bestWave = () => Object.entries(loadRecords()).filter(([k]) => !k.endsWith(':rush')).reduce((m, [, v]) => Math.max(m, v.waves || 0), 0);
+export const arenaUnlocked = (id) => bestWave() >= (ARENA_UNLOCK[id] || 0);
+export const nextRoomAt = () => Object.values(ARENA_UNLOCK).filter((w) => w > bestWave()).sort((a, b) => a - b)[0] || 0;
 
 export const hasOwnHero = () => !!readSlot(settings.slot);
 

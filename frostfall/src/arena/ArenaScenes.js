@@ -6,7 +6,7 @@ import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { sfx, music } from '../audio/sfx.js';
-import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey } from './heroes.js';
+import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey, arenaUnlocked, nextRoomAt } from './heroes.js';
 import { ARENAS, arenaById } from './arenas.js';
 
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -38,7 +38,7 @@ export class ArenaSetupScene extends Phaser.Scene {
     this.rows.forEach((o, i) => o.setFont(this.list[i].off ? 'f4' : i === this.sel ? 'f13' : 'f6'));
     this.cursor.y = this.rows[this.sel].y;
     const lines = h.id === 'own' ? [['YOUR HERO', 13], [h.off ? 'NO SAVE FOUND.' : 'YOUR CURRENT SAVE,', 6], [h.off ? 'START A GAME FIRST.' : 'GEAR AND LEVELS AS THEY ARE.', 6], ['NOTHING IS SAVED OR LOST.', 4]] : [[hero.name, hero.col], ...hero.blurb.map((b) => [b, 6])];
-    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}` : 'NO RECORD YET', 15], [r ? `${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : '', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, 8]);
+    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}` : 'NO RECORD YET', 15], [r ? `${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : '', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, 8], [nextRoomAt() ? `NEXT ROOM AT WAVE ${nextRoomAt()}` : '', 4]);
     this.info.forEach((o, i) => { const l = lines[i] || ['', 6]; o.setText(l[0]); o.setFont(i === 0 ? 'f13' : l[1] === 15 ? 'f15' : l[1] === 4 ? 'f4' : l[1] === 12 ? 'f12' : l[1] === 8 ? 'f8' : 'f6'); });
   }
   begin() {
@@ -59,7 +59,7 @@ export class ArenaSetupScene extends Phaser.Scene {
       if (s !== this.sel) { this.sel = s; sfx.play('move'); }
     }
     if (keys.pressed('left') || keys.pressed('right')) { this.modeI = (this.modeI + (keys.pressed('right') ? 1 : MODES.length - 1)) % MODES.length; sfx.play('move'); }
-    if (keys.pressed('swap')) { this.arenaI = (this.arenaI + 1) % ARENAS.length; sfx.play('move'); }
+    if (keys.pressed('swap')) { let i = this.arenaI; do { i = (i + 1) % ARENAS.length; } while (!arenaUnlocked(ARENAS[i].id)); this.arenaI = i; sfx.play('move'); }
     this.refresh();
     if (keys.pressed('pause')) { sfx.play('back'); this.go = true; this.scene.start('Title'); return; }
     if (keys.pressed('interact') || keys.pressed('roll')) this.begin();

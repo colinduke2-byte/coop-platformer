@@ -62,6 +62,7 @@ All keyboard keys can be rebound in **Pause > System > Controls**.
   15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower, Emberforged masterwork crafting.
 * **Story**: three chapters, dozens of quests with real choices (the Frostheart, Asta's locket, Grimfang, the Ember Crown), faction reputation, recruitable companions (Ragna, Pell), 36 endings.
 * **Life in the wild**: ice fishing, campfire cooking with meal buffs, treasure maps, a frost hound companion, the Hollow Arena wave challenge, 26 trophies, hares/foxes/bears/lynx/boar and a real dragon.
+* **Arena Mode** (title screen): quick play with six fixed heroes or your own, five modes (Survival, Boon Trial, Gauntlet, Boss Rush, Daily), four rooms, orbs, combo and wave twists. Never touches your save.
 * **UX**: quest tracking with map/HUD markers, one-time tooltips, filterable inventory, fog-of-war map, lore and bestiary,
   3 save slots with backups and mid-boss saves, difficulty, screen-shake and flash options, integer scaling.
 

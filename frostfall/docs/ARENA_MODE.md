@@ -51,7 +51,9 @@ Each is one generated room (like the barrow generator), fixed size so the camera
 - **Unlocks**: heroes, arenas and cloak colours come from reaching wave and score milestones. No gold or grind.
 
 ## Status
-Phase 1 is built (title entry, six heroes plus your own, Survival on the pit map, results and local records). Later phases below are not.
+All four phases are built: title entry, six heroes plus your own, five modes (Survival, Boon Trial, Gauntlet, Boss Rush, Daily), four rooms with milestone unlocks, orbs, combo meter, wave twists, eight new boons, results and local records per hero and mode. See CHANGELOG rounds 24 and 25.
+
+Not built: online boards (local only by decision), co-op, Horde mode, more than ten rush bosses.
 
 ## Scope and phases
 1. **Core loop** (smallest playable): title entry, hero pick (3 heroes), Survival on the existing Pit map, results screen, restart. Tests: starts without a save, does not alter the save, results appear on death.

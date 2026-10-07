@@ -335,3 +335,14 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - The pause menu hides Save and Load during a quick run.
 - Tests: `stage49_arena` (every hero's items, perks, spells and shouts exist; run starts, counts, ends; records; the real save is untouched).
 - Not yet (later phases): more arenas, pickups and combo meter, wave twists, new boons, Boss Rush, daily arena, unlocks. See `docs/ARENA_MODE.md`.
+
+## Round 25 - Arena Mode, phases 2 to 4
+- **Four rooms**, picked with **Q** on the hero screen: *Hollow Pit*, *Frozen Lake* (everything is ice, so nothing stops when you do), *Ember Foundry* (lava, and telegraphed embers fall near you), *Old Court* (pillars to fight around). The three new rooms open as you reach waves 5, 8 and 10 in any mode.
+- **Five modes**, picked with **A/D**: *Survival*, *Boon Trial* (pick one of three boons between waves), *Gauntlet* (a champion every wave), *Boss Rush* (ten bosses from the Rime Wyrm to the Hollow King, then again, tougher; a boon and 35% health between bosses, no hearts or endings) and *Daily Arena* (the day's fixed room, a seeded wave order and the day's two modifiers).
+- **Orbs** drop from foes (health, stamina and mana, rage for +40% damage for 12 s, bomb) and a health orb appears at the end of each wave. Champions always drop two.
+- **Combo**: chain kills within 3 seconds for a score multiplier up to x3; it breaks when you are hit. The HUD shows wave, score, combo and rage.
+- **Wave twists** from wave 3: Fast Foes, Armoured Foes, Blood Moon, Darkness, Swarm, Double Champions, announced as the wave starts.
+- **Eight new boons**: Vampiric, Thornmail, Berserk, Giant, Arcane Flow, Vanguard, Reaper, Scavenger (they also appear in the Hollow Arena's Boon Trial).
+- **Records** are kept per hero and mode on this device and shown on the hero screen. Score is waves x100 (Boss Rush: bosses x500) plus combo-weighted kill points plus champions x40.
+- **Balance**: `node test/balance_arena.mjs [trials] [hero] [seconds]` plays each hero with a crude policy for its style. Findings drove a few changes: the Frostmage now starts with Glacier Spear (Frost Bolt does a third of a Fireball's damage), the Ranger gets Piercing Shot and a higher bow skill, the Shadow gets Keen Edge and more One-Handed.
+- Tests: `stage50_arena2` (rooms, orbs, combo, twists, boons, Boss Rush, daily, setup keys).
