@@ -73,6 +73,7 @@ export const quickMethods = {
   // ---- a foe fell: combo, score and orbs
   onQuickFoe(e) {
     const q = S.quick;
+    if (!q) return;
     q.combo++; q.comboT = COMBO_WINDOW;
     q.pts += Math.round(10 * comboMult(q.combo));
     if (q.combo === 5 || q.combo === 9 || q.combo === 13) { bus.emit('toast', `COMBO x${comboMult(q.combo).toFixed(2).replace(/0$/, '')}`, 13); sfx.play('quest'); }
@@ -104,6 +105,7 @@ export const quickMethods = {
   // ---- wave twists: a modifier on some waves, announced as the wave starts
   quickWaveHook(a, foes) {
     a.twist = null;
+    if (!S.quick) return;
     if (a.mode === 'gauntlet' || a.wave < 3) return;
     const rnd = a.rnd || Math.random;
     if (a.wave % 3 !== 0 && rnd() > 0.25) return;
@@ -115,6 +117,7 @@ export const quickMethods = {
     bus.emit('toast', `TWIST: ${TWISTS[a.twist].name}`, TWISTS[a.twist].col);
   },
   quickApplyTwist(e) {
+    if (!S.quick) return;
     const t = this.arena?.twist;
     if (!t || e.isBoss) return;
     if (t === 'fast') e.cfg = { ...e.cfg, speed: e.cfg.speed * 1.35, chase: e.cfg.chase * 1.35 };
