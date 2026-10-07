@@ -403,7 +403,9 @@ export function buildRegion(def, region, seed) {
       seen[ny * W + nx] = 1; q.push([nx, ny]);
     }
   }
-  const keep = entities.filter((e) => e.x == null || !PLACED.has(e.t) && e.t !== 'exit' || e.x < rw && e.y < rh || seen[e.y * W + e.x]);
+  // pots and signs dressed over a house wall or a tree (a hamlet near the old forest) would sit inside it: drop those
+  const buried = (e) => (e.t === 'pot' || e.t === 'sign') && e.x != null && solidAt(e.x, e.y);
+  const keep = entities.filter((e) => !buried(e) && (e.x == null || !PLACED.has(e.t) && e.t !== 'exit' || e.x < rw && e.y < rh || seen[e.y * W + e.x]));
   // ---- entrance: the old forest's west exit stays where it was ---------------------------------
   // (exits to the village, the pass and the crypt already live in the stamped entities)
   return { grid: g.t, entities: keep, w: W, h: H, pois, bio, region: def.id };

@@ -346,3 +346,8 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Records** are kept per hero and mode on this device and shown on the hero screen. Score is waves x100 (Boss Rush: bosses x500) plus combo-weighted kill points plus champions x40.
 - **Balance**: `node test/balance_arena.mjs [trials] [hero] [seconds]` plays each hero with a crude policy for its style. Findings drove a few changes: the Frostmage now starts with Glacier Spear (Frost Bolt does a third of a Fireball's damage), the Ranger gets Piercing Shot and a higher bow skill, the Shadow gets Keen Edge and more One-Handed.
 - Tests: `stage50_arena2` (rooms, orbs, combo, twists, boons, Boss Rush, daily, setup keys).
+
+## Round 26 - Controller fixes and a world fix
+- **Controller vs on-screen buttons**: the touch buttons now hide while a controller is in use and return when you touch the screen. A key-up from another source (a brushed on-screen button) can no longer cancel a direction or button the controller is still holding. Test in `stage24_pad`.
+- **World**: a hamlet next to the old forest area could put a pot or sign inside a house wall or tree on about 1 seed in 100. Those are now dropped.
+- Phone speed was measured with a throttled CPU (a 30-foe forest is the worst case); see the notes in the chat history. No change made.
