@@ -19,6 +19,7 @@ import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
 import { installErrorLog } from './systems/debug.js';
+import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
 installErrorLog();
 
@@ -44,8 +45,21 @@ installTouch();
 // Integer (pixel-perfect) scaling option: whole-number zoom with letterboxing.
 export function applyScaling() {
   const sc = game.scale;
+  if (rotated()) {
+    // turned sideways: Phaser's FIT cannot measure a rotated parent, so size the canvas ourselves and let the flex box centre it
+    const z = Math.min(window.innerHeight / W, window.innerWidth / H);
+    sc.autoCenter = Phaser.Scale.NO_CENTER;
+    sc.scaleMode = Phaser.Scale.NONE;
+    const zz = settings.intScale ? Math.max(1, Math.floor(z)) : z;
+    sc.setZoom(zz);
+    sc.canvas.style.width = Math.round(W * zz) + 'px'; sc.canvas.style.height = Math.round(H * zz) + 'px';
+    sc.canvas.style.marginLeft = sc.canvas.style.marginTop = '0px';
+    return;
+  }
+  sc.autoCenter = Phaser.Scale.CENTER_BOTH;
   if (settings.intScale) {
-    const z = Math.max(1, Math.floor(Math.min(window.innerWidth / W, window.innerHeight / H)));
+    const [vw, vh] = rotated() ? [window.innerHeight, window.innerWidth] : [window.innerWidth, window.innerHeight];
+    const z = Math.max(1, Math.floor(Math.min(vw / W, vh / H)));
     sc.setGameSize(W, H);
     sc.scaleMode = Phaser.Scale.NONE;
     sc.setZoom(z);
@@ -55,7 +69,10 @@ export function applyScaling() {
     sc.refresh();
   }
 }
-window.addEventListener('resize', () => settings.intScale && applyScaling());
+window.addEventListener('resize', () => { settings.intScale && applyScaling(); updateRotate(applyScaling); });
+window.addEventListener('orientationchange', () => setTimeout(() => updateRotate(applyScaling), 200));
+setInterval(() => updateRotate(applyScaling), 300);
+window.__updateRotate = () => updateRotate(applyScaling);
 game.events.once('ready', () => applyScaling());
 window.__applyScaling = applyScaling;
 applyCvd();

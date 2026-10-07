@@ -50,7 +50,7 @@ See `docs/EMBERHOLD.md`, `docs/CHAPTER3.md`, `docs/world_map.png`, `docs/creatur
 | I / O / M / Esc | Pack and perks / journal / map / pause menu |
 | Mouse (option) | click = sword, right-click = bow, middle = spell, wheel = swap, aims at the pointer |
 | Touch | on-screen stick and buttons on touch devices |
-| Gamepad | left stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, R3 lock-on, Back swaps shout, Start pause (the map is a tab in the pause menu); right stick up = heavy attack, down = switch arrows, left / right = health / mana potion. Any layout (8BitDo in X-input, Switch or D-input mode) can be re-learned in **Pause > System > Controller** |
+| Gamepad (on a phone held upright, the picture turns sideways while the controller is in use; Pause > System > Rotate view) | left stick / d-pad move, A roll, X sword, Y bow, B interact, RB spell, LB swap, RT shout, LT sneak, L3 block, R3 lock-on, Back swaps shout, Start pause (the map is a tab in the pause menu); right stick up = heavy attack, down = switch arrows, left / right = health / mana potion. Any layout (8BitDo in X-input, Switch or D-input mode) can be re-learned in **Pause > System > Controller** |
 
 All keyboard keys can be rebound in **Pause > System > Controls**.
 

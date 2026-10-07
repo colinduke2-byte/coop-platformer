@@ -96,5 +96,5 @@ export function installTouch(force = false) {
   // While a controller is in use the on-screen buttons step aside, so a stray thumb cannot fight it. Touching the screen brings them back.
   const sync = () => { root.style.display = padActive() ? 'none' : ''; };
   setInterval(sync, 250);
-  window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && root.style.display === 'none') { touchUsed(); sync(); } }, true);
+  window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && root.style.display === 'none') { touchUsed(); sync(); window.__updateRotate?.(); } }, true);
 }
