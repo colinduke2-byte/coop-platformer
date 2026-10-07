@@ -4,6 +4,7 @@ import { installKeys, keys } from './systems/keys.js';
 import { S, resetState, loadInto } from './systems/state.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/TitleScene.js';
+import { ArenaSetupScene, ArenaResultsScene } from './arena/ArenaScenes.js';
 import GameScene from './scenes/GameScene.js';
 import HudScene from './scenes/HudScene.js';
 import MenuScene from './scenes/MenuScene.js';
@@ -34,7 +35,7 @@ const game = new Phaser.Game({
   roundPixels: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: q.get('physics') === '1' } },
-  scene: [BootScene, TitleScene, IntroScene, GameScene, HudScene, MenuScene, ShopScene, EndingScene],
+  scene: [BootScene, TitleScene, ArenaSetupScene, ArenaResultsScene, IntroScene, GameScene, HudScene, MenuScene, ShopScene, EndingScene],
 });
 
 installKeys(game);

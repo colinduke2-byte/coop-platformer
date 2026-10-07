@@ -32,7 +32,7 @@ export default class TitleScene extends Phaser.Scene {
     this.add.rectangle(W / 2, 121, 120, 58, 0x0b0e1a, 0.55);
     const done = listSaves().find((x) => readSlot(x.slot)?.data.s.flags?.ending);
     this.ngSlot = done ? done.slot : null;
-    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'daily', label: 'DAILY CHALLENGE' }];
+    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }];
     this.sel = this.items[1].off ? 0 : 1;
     this.texts = this.items.map((it, i) => {
       const t = txt(this, 0, 98 + i * 14, it.label, 6);
@@ -130,6 +130,7 @@ export default class TitleScene extends Phaser.Scene {
     if (keys.pressed('interact') || keys.pressed('roll')) {
       sfx.play('select');
       this.go = true;
+      if (this.items[this.sel].id === 'arena') { music.stop(); this.scene.start('ArenaSetup'); return; }
       if (this.items[this.sel].id === 'daily') { this.go = false; this.openDaily(); return; }
       if (this.items[this.sel].id === 'ng') {
         if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else this.go = false;

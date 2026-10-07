@@ -41,6 +41,7 @@ export function listSaves() { return Array.from({ length: SLOTS }, (_, i) => ({ 
 
 // auto: silent save to the current slot (e.g. when travelling).
 export function saveGame(scene, { auto = false, slot = settings.slot } = {}) {
+  if (S.quick) return false;          // Arena Mode never writes a save
   try {
     if (auto) { S.x = S.y = null; S.bossState = null; }
     else if (scene?.player) { S.x = Math.round(scene.player.x); S.y = Math.round(scene.player.y); }

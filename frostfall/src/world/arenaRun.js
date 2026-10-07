@@ -45,6 +45,7 @@ export const arenaMethods = {
   arenaTick(dt) {
     const a = this.arena;
     if (!a || !a.active || this.player.mode === 'dead') return;
+    for (const e of a.foes) if (e.dead && !e.__counted) { e.__counted = true; a.killed = (a.killed || 0) + 1; if (e.champion || e.spec?.elite || e.elite) a.champs = (a.champs || 0) + 1; }
     a.foes = a.foes.filter((e) => e.active && !e.dead);
     if (a.foes.length || a.offering) return;
     if (a.cleared !== a.wave - 1) {

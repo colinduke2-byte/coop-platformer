@@ -54,6 +54,7 @@ import { lightingMethods, hourOf, isNightHour } from '../world/lighting.js';
 import { TILE_DOOR, TILE_FLOOR, BOSS_CLASS, BOSS_FLAG } from '../world/sceneConsts.js';
 import { ambientMethods } from '../world/ambient.js';
 import { arenaMethods } from '../world/arenaRun.js';
+import { quickScore } from '../arena/heroes.js';
 import { companionMethods } from '../world/companions.js';
 import { killMethods } from '../world/kills.js';
 import { eventMethods } from '../world/events.js';
@@ -217,6 +218,7 @@ export default class GameScene extends Phaser.Scene {
       this.fx.puff(this.player.x, this.player.y, 13, 14, 55, 0.7, -20);
     });
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
+    if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startArena('classic')); }
     this.events.once('shutdown', () => {
       this.snow?.destroy();
       this.fx.clear();
@@ -688,8 +690,18 @@ export default class GameScene extends Phaser.Scene {
       this.deadT += dt;
       // a hired companion drags you out of the fight once in a while instead of letting you fall
       if (this.follower && !this.respawning && this.deadT > 1.1 && (S.flags.reviveAt ?? -999) + TUNE.follower.reviveCooldown < S.playtime) this.reviveByFollower();
-      else if (this.deadT > 2.4 && !this.respawning) this.respawn();
+      else if (this.deadT > 2.4 && !this.respawning) { if (S.quick) this.endQuickRun(); else this.respawn(); }
     }
+  }
+
+  // Arena Mode: falling ends the run and shows the results card (nothing is saved).
+  endQuickRun() {
+    this.respawning = true;
+    const q = S.quick, a = this.arena || {};
+    const res = { hero: q.hero, waves: a.cleared || 0, kills: a.killed || 0, champions: a.champs || 0, time: (Date.now() - q.startedAt) / 1000 };
+    res.score = quickScore(res.waves, res.kills, res.champions);
+    this.cameras.main.fadeOut(500, 11, 14, 26);
+    this.cameras.main.once('camerafadeoutcomplete', () => { music.stop(); this.scene.stop('Hud'); this.scene.start('ArenaResults', res); });
   }
 
   respawn() {

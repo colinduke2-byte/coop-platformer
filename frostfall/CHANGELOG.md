@@ -327,3 +327,11 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Mastery is earned**: skill levels now come much slower (XP per level `25 + 12 x level^1.6`: level 5 is about 125 sword hits, level 10 about 900, level 20 several thousand) and each skill level adds +7% damage instead of +10% (a level 20 skill is about 2.3x, was 2.9x). Early levelling no longer makes everything a one-hit kill; grinding matters.
 - **Balance bot**: new rows for Kragnar, the Ashen Sovereign, Admiral Veyl and the Hollow King (with gear and level fitting where each is met), and it now reports how much boss health was left. Grimfang re-checked over 8 trials (7 wins). The late bosses beat the bot but it gets the Sovereign to 30%; they stay hard on purpose.
 - README rewritten for the four regions, Chapter 3 and the new systems.
+
+## Round 24 - Arena Mode, phase 1 (quick play)
+- **ARENA** on the title screen: pick a hero and fight endless waves in the Hollow Pit within seconds. No story, no save needed, and **nothing is ever saved** (a test checks the real save file is byte-for-byte unchanged).
+- **Six fixed heroes** (Warden, Reaver, Ranger, Frostmage, Pyromancer, Shadow), each a small data table in `src/arena/heroes.js` (gear, skills, perks, tomes, shout), plus **Your Hero**, which uses your current save for a run without changing it.
+- Survival uses the Hollow Arena's wave table (a champion every 5 waves). Falling ends the run and shows a results card: waves cleared, foes, champions, time and score (`waves x100 + foes x10 + champions x40`), with a personal best per hero on this device. **E** plays again, **H** changes hero, **Esc** returns to the title.
+- The pause menu hides Save and Load during a quick run.
+- Tests: `stage49_arena` (every hero's items, perks, spells and shouts exist; run starts, counts, ends; records; the real save is untouched).
+- Not yet (later phases): more arenas, pickups and combo meter, wave twists, new boons, Boss Rush, daily arena, unlocks. See `docs/ARENA_MODE.md`.

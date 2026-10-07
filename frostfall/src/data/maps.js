@@ -389,7 +389,7 @@ function buildNest() {
 MAPS.nest = { name: 'The Ember Nest', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 9.6 * T && pc.x > 5 * T && pc.x < 35 * T, build: buildNest, music: 'cavern', bossMusic: 'dragon', dim: 0.3, cave: true };
 
 // ---- The Hollow Arena: endless waves; see GameScene.startArena
-function buildArena() {
+function buildArena(quick = false) {
   const g = new Grid(32, 24, TILE.CWALL);
   g.rect(3, 3, 26, 18, TILE.CFLOOR);
   g.noise(TILE.CFLOOR2, 0.25, 91, TILE.CFLOOR);
@@ -397,13 +397,13 @@ function buildArena() {
   g.rect(15, 23, 2, 1, TILE.STAIRS);
   for (const [x, y] of [[8, 8], [23, 8], [8, 15], [23, 15], [15, 11], [16, 11]]) g.set(x, y, TILE.PILLAR);
   g.add({ t: 'spawn', name: 'in', x: 16, y: 20 });
-  g.add({ t: 'exit', x: 15, y: 23, w: 2, h: 1, to: 'village', spawn: 'arena', fx: 'door' });
-  g.add({ t: 'arenamaster', x: 16, y: 18 });
+  if (!quick) { g.add({ t: 'exit', x: 15, y: 23, w: 2, h: 1, to: 'village', spawn: 'arena', fx: 'door' }); g.add({ t: 'arenamaster', x: 16, y: 18 }); }
   for (const [x, y] of [[4, 4], [27, 4], [4, 19], [27, 19]]) { g.set(x, y, TILE.BRAZIER); g.add({ t: 'glow', x, y, r: 56, col: 12 }); }
   g.add({ t: 'glow', x: 16, y: 12, r: 120, col: 13 });
-  g.add({ t: 'sign', x: 13, y: 20, text: ['THE HOLLOW ARENA.', 'SURVIVE THE WAVES. THE LONGER YOU STAND, THE RICHER THE PURSE.'] });
+  if (!quick) g.add({ t: 'sign', x: 13, y: 20, text: ['THE HOLLOW ARENA.', 'SURVIVE THE WAVES. THE LONGER YOU STAND, THE RICHER THE PURSE.'] });
   return g.out();
 }
+MAPS.pit = { name: 'The Hollow Pit', snow: false, ambience: 'crypt', build: () => buildArena(true), music: 'throne', dim: 0.2, cave: true, arena: true, quick: true };
 MAPS.arena = { name: 'The Hollow Arena', snow: false, ambience: 'crypt', build: buildArena, music: 'throne', dim: 0.2, cave: true, arena: true };
 
 // The forest is now the north-west corner of the open world (same coordinates as before).

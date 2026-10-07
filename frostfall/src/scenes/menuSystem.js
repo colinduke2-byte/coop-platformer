@@ -30,6 +30,7 @@ const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
   const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  if (S.quick) rows.splice(rows.indexOf('SAVE GAME'), 2);        // no saving or loading inside Arena Mode
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
   let waitingPad = null;      // game key code being learned from the controller
