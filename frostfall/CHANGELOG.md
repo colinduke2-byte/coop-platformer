@@ -322,3 +322,8 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - Not built: boss-rush mode and a summonable sled. Both stay on the list; the skates cover fast travel on ice for now.
 - Fixed: the skates' speed bonus was applied after the target speed was computed.
 - Tests: `stage48_breadth`.
+
+## Round 23 - Balance and polish (Phase 15)
+- **Mastery is earned**: skill levels now come much slower (XP per level `25 + 12 x level^1.6`: level 5 is about 125 sword hits, level 10 about 900, level 20 several thousand) and each skill level adds +7% damage instead of +10% (a level 20 skill is about 2.3x, was 2.9x). Early levelling no longer makes everything a one-hit kill; grinding matters.
+- **Balance bot**: new rows for Kragnar, the Ashen Sovereign, Admiral Veyl and the Hollow King (with gear and level fitting where each is met), and it now reports how much boss health was left. Grimfang re-checked over 8 trials (7 wins). The late bosses beat the bot but it gets the Sovereign to 30%; they stay hard on purpose.
+- README rewritten for the four regions, Chapter 3 and the new systems.
