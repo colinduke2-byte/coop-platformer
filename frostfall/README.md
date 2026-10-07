@@ -19,9 +19,15 @@ Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|ha
 
 ## World
 
-Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (camps, dens, ruins with shrines, watchtowers, champions, procedural barrow dungeons, a travelling trader) ->
-Crypt of the Hollow King (boss Jarl Valdrek) and Frostwind Pass (boss Grimfang). A 12-minute day/night cycle and
-changing weather affect stealth; villagers go indoors at night.
+Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (320x224 tiles: camps,
+dens, ruins, standing stones, hamlets, watchtowers, champions, procedural barrow dungeons, a travelling trader) with the
+Crypt of the Hollow King (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie three more seeded regions,
+each opened by story or travel: the **Ashen Peaks** (lava, foundries, the forge-city **Emberhold** with its three factions:
+the Anvil Court, the Delvers' Guild and the Ember Wardens), the **Frozen Coast** (wrecks, lighthouses, the drowned Tidebreak Hall)
+and the **Old Kingdom** (courtyards, the Sepulchre). Chapter 3, "The Ember Crown", is needed for the full ending
+(36 ending variants). A 12-minute day/night cycle and changing weather affect stealth; villagers go indoors at night.
+Bosses: Valdrek, Grimfang, the Frost Wyrm, Kragnar, the Ashen Sovereign, Admiral Veyl, the Hollow King.
+See `docs/EMBERHOLD.md`, `docs/CHAPTER3.md`, `docs/world_map.png`, `docs/creatures.png`.
 
 ## Controls
 
@@ -51,10 +57,10 @@ All keyboard keys can be rebound in **Pause > System > Controls**.
 ## Systems at a glance
 
 * **Combat**: sword combo, shields (block / parry), two-handed and dual-wield, bow with charge and recoverable arrows,
-  5 spells, shout, finishing blows, enchantments, elemental weaknesses, enemy telegraphs, crowd tactics, 11 enemy types, 2 bosses.
+  spells (incl. Ember Nova, Glacier Spear, Cinderstep, Hearthcall), shouts, crossbows and warhammers, gem and rune sockets, enchantments, elemental weaknesses, enemy telegraphs, crowd tactics, 24 enemy types, 7 bosses.
 * **Progression**: 5 skills that level by use (Archery, One-Handed, Destruction, Restoration, Sneak), character level,
-  15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower.
-* **Story**: 5 quests with real choices (the Frostheart ending, Asta's locket, sparing or killing Grimfang).
+  15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower, Emberforged masterwork crafting.
+* **Story**: three chapters, dozens of quests with real choices (the Frostheart, Asta's locket, Grimfang, the Ember Crown), faction reputation, recruitable companions (Ragna, Pell), 36 endings.
 * **Life in the wild**: ice fishing, campfire cooking with meal buffs, treasure maps, a frost hound companion, the Hollow Arena wave challenge, 26 trophies, hares/foxes/bears/lynx/boar and a real dragon.
 * **UX**: quest tracking with map/HUD markers, one-time tooltips, filterable inventory, fog-of-war map, lore and bestiary,
   3 save slots with backups and mid-boss saves, difficulty, screen-shake and flash options, integer scaling.

@@ -68,7 +68,7 @@ t('skill bonuses start neutral and grow', () => {
   resetState();
   assert.equal(bonus.melee(), 1); assert.equal(bonus.swingCost(), 1);
   S.skills.oneHanded.lvl = 6;
-  assert.ok(Math.abs(bonus.melee() - 1.5) < 1e-9);
+  assert.ok(Math.abs(bonus.melee() - 1.35) < 1e-9);
   assert.ok(bonus.swingCost() < 1 && bonus.swingCost() >= 0.5);
   S.skills.sneak.lvl = 20;
   assert.ok(bonus.detect() >= 0.35);

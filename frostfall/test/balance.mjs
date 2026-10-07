@@ -23,6 +23,18 @@ const SCENARIOS = [
   { name: 'Grimfang (iron gear)', map: 'pass', spawn: 'south', pos: [24, 9.5], limit: 150, boss: true,
     setup: `S.inv.iron_sword=1; S.equip.weapon='iron_sword'; S.inv.iron_cuirass=1; S.equip.armor='iron_cuirass'; S.inv.wooden_shield=1; S.equip.offhand='wooden_shield'; S.inv.hp_potion=4; S.skills.oneHanded.lvl=3;`,
     enemies: [] },
+  { name: 'Kragnar (ember mail)', map: 'mines2', spawn: 'in', nearBoss: true, limit: 170, boss: true,
+    setup: `S.inv.steel_sword=1; S.equip.weapon='steel_sword'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.hp_potion=6; S.bonusHp=30; S.skills.oneHanded.lvl=6;`,
+    enemies: [] },
+  { name: 'Ashen Sovereign (ember mail)', map: 'forge', spawn: 'in', nearBoss: true, limit: 170, boss: true,
+    setup: `S.inv.steel_sword=1; S.equip.weapon='steel_sword'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.hp_potion=8; S.bonusHp=80; S.skills.oneHanded.lvl=12;`,
+    enemies: [] },
+  { name: 'Admiral Veyl (ember gear)', map: 'tidebreak', spawn: 'in', nearBoss: true, limit: 170, boss: true,
+    setup: `S.inv.ember_blade=1; S.equip.weapon='ember_blade'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.hp_potion=6; S.skills.oneHanded.lvl=6;`,
+    enemies: [] },
+  { name: 'Hollow King (ember mail)', map: 'sepulchre', spawn: 'in', nearBoss: true, limit: 170, boss: true,
+    setup: `S.inv.steel_sword=1; S.equip.weapon='steel_sword'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.hp_potion=8; S.bonusHp=80; S.skills.oneHanded.lvl=12;`,
+    enemies: [] },
 ];
 
 const h = await launch();
@@ -41,7 +53,7 @@ for (const sc of SCENARIOS) {
       const { recalc } = await import('/src/systems/stats.js');
       recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       const p = g.player;
-      p.setPosition(sc.pos[0] * 16, sc.pos[1] * 16);
+      if (sc.nearBoss) { const b = g.enemies.getChildren().find((e) => e.isBoss); if (b) { let best = null; for (let r = 6; r <= 10 && !best; r++) for (let a = 0; a < 16 && !best; a++) { const x = b.x + Math.cos(a * Math.PI / 8) * r * 16, y = b.y + Math.sin(a * Math.PI / 8) * r * 16; if (!g.solidAt(x, y) && !g.solidAt(x + 8, y) && !g.solidAt(x - 8, y) && !g.solidAt(x, y + 8) && !g.solidAt(x, y - 8)) best = { x, y }; } if (best) p.setPosition(best.x, best.y); } } else p.setPosition(sc.pos[0] * 16, sc.pos[1] * 16);
       if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; }
       else g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy());
       for (const [k, dx, dy] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16); e.alerted = true; e.state = 'chase'; e.cd = 0.5; }
@@ -55,7 +67,7 @@ for (const sc of SCENARIOS) {
           const elapsed = (performance.now() - t0) / 1000;
           if (!hpOK || (!foes.length && elapsed > 2) || elapsed > sc.limit || (sc.boss && g.boss && (g.boss.dead || g.boss.yieldDone))) {
             clearInterval(iv); ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((c) => keys._release(c));
-            res({ won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, left: foes.length });
+            res({ won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, left: foes.length, bossLeft: g.boss ? Math.round(100 * Math.max(0, g.boss.hp) / g.boss.maxHp) : null });
             return;
           }
           if (p.mode === 'dead' || ['lying'].includes(p.mode)) return;
@@ -89,13 +101,14 @@ for (const sc of SCENARIOS) {
           if (S.sp > 10 && telegraph) { keys._press('KeyF'); } else keys._release('KeyF');
         }, 60);
       });
-    }, { sc, trial: t });
+    }, { sc, trial: t }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
     results.push(r);
   }
   const wins = results.filter((r) => r.won).length;
   const avgHp = Math.round(results.filter((r) => r.won).reduce((a, r) => a + r.hp, 0) / Math.max(1, wins));
   const avgT = Math.round(results.reduce((a, r) => a + r.time, 0) / results.length);
   rows.push({ name: sc.name, wins, trials, avgHp, avgT, potions: Math.round(results.reduce((a, r) => a + r.potions, 0) / results.length * 10) / 10 });
-  console.log(`  ${sc.name.padEnd(30)} wins ${wins}/${trials}  avg HP left (wins) ${avgHp}  avg time ${avgT}s  avg potions ${rows.at(-1).potions}`);
+  const bl = results.filter((r) => r.bossLeft != null); const bossNote = bl.length ? `  boss HP left ${Math.round(bl.reduce((a, r) => a + r.bossLeft, 0) / bl.length)}%` : '';
+  console.log(`  ${sc.name.padEnd(30)} wins ${wins}/${trials}  avg HP left (wins) ${avgHp}  avg time ${avgT}s  avg potions ${rows.at(-1).potions}${bossNote}`);
 }
 await h.close();

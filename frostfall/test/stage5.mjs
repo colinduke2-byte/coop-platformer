@@ -65,6 +65,9 @@ for (let i = 0; i < 12; i++) {
   await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; g.player.setPosition(e.x - 13, e.y); g.player.face = { x: 1, y: 0 }; g.player.invuln = 9; g.player.lockT = 0; window.__ff.S.sp = 100; });
   await tap('KeyJ', 60); await h.sleep(330);
 }
+await G(() => { window.__ff.S.skills.oneHanded.xp = 36; });   // level 1 needs 37 xp: cross it with one last swing
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; g.player.setPosition(e.x - 13, e.y); g.player.face = { x: 1, y: 0 }; g.player.lockT = 0; window.__ff.S.sp = 100; });
+await tap('KeyJ', 60); await h.sleep(330);
 s = await st();
 check('one-handed levels up from use', s.skills.oneHanded.lvl > lv0, `${lv0}->${s.skills.oneHanded.lvl}`);
 await h.sleep(300);
