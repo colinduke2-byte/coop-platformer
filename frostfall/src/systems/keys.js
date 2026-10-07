@@ -90,6 +90,7 @@ let padInfo = { id: '', mapping: '', live: [] };
 export const getPadInfo = () => padInfo;
 let usingPad = false;                       // true after the last input came from a controller
 export const padActive = () => usingPad;
+export const touchUsed = () => { usingPad = false; };      // the on-screen controls were touched
 let padCapture = null;
 export const capturePad = (cb) => { padCapture = cb || null; };
 export const capturingPad = () => !!padCapture;
@@ -136,6 +137,8 @@ export function pollPad() {
   } else padInfo = { id: '', mapping: '', live: [] };
   for (const c of want) if (!padHeld.has(c)) { keys._press(c); padHeld.add(c); }
   for (const c of [...padHeld]) if (!want.has(c)) { keys._release(c); padHeld.delete(c); }
+  // another source (the on-screen buttons, a stray key-up) may have released a key the controller is still holding: put it back
+  for (const c of padHeld) if (!down.has(c)) down.add(c);
 }
 
 // Short vibration for hits, parries and big moments (ignored if the pad has no motors).

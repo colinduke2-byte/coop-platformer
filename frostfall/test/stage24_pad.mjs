@@ -28,6 +28,24 @@ check('standard pad: right stick up is the heavy attack', await G(() => !!window
 await setPad(null);
 await h.sleep(300); await free();
 
+// ---- the controller and the on-screen buttons share one key set: a touch release must not cancel a held stick
+await setPad({ id: 'x', mapping: 'standard', axes: [0.9, 0, 0, 0], nb: 17, down: [] });
+await h.sleep(200);
+await G(() => window.__ff.keys._release('KeyD'));            // as a brushed on-screen button would
+await h.sleep(250);
+const xr = (await pl()).x; await h.sleep(350);
+check('a key-up from another source does not cancel a held stick', (await pl()).x > xr + 3);
+await setPad(null); await h.sleep(300);
+// the touch overlay hides while the pad is in use and returns on touch
+await G(async () => { (await import('/src/ui/touch.js')).installTouch(true); });
+await setPad({ id: 'x', mapping: 'standard', axes: [0, 0, 0, 0], nb: 17, down: [0] });
+await h.sleep(900); await setPad(null);
+check('the on-screen controls hide while a controller is in use', await G(() => document.getElementById('touch-ui')?.style.display === 'none'));
+await G(() => { const e = new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true }); document.body.dispatchEvent(e); });
+await h.sleep(400);
+check('touching the screen brings them back', await G(() => document.getElementById('touch-ui')?.style.display !== 'none'));
+await h.sleep(100); await free();
+
 // ---- non-standard pad (8BitDo in D-input mode): hat on axis 9, odd button order
 await setPad({ id: '8Bitdo Pro 2 (Vendor: 2dc8 Product: 6003)', mapping: '', axes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1.2857], nb: 16, down: [] });
 await h.sleep(200);
