@@ -340,7 +340,7 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(sg);
         break;
       }
-      case 'spiketrap': case 'mire': case 'ambush': this.addSetPiece(e, wx, wy); break;
+      case 'spiketrap': case 'mire': case 'ambush': case 'crumble': this.addSetPiece(e, wx, wy); break;
       case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags[this.vaultKey()]) pl.light(true); break; }
       case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags[this.vaultKey()]) this.openVault(true); break;
       case 'vaultorder': case 'plateorder': this.plateOrder = e.order; break;

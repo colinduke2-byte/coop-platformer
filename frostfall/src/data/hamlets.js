@@ -9,15 +9,31 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
+import { isBlood, isFull, isNew } from '../systems/moon.js';
+import { today } from '../systems/bless.js';
 
 NPC_DEFS.trapper = { name: 'TRAPPER', tex: 'spr_trapper' };
 NPC_DEFS.fisher = { name: 'FISHER', tex: 'spr_fisher' };
 NPC_DEFS.prospector = { name: 'PROSPECTOR', tex: 'spr_prospector' };
 
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
+// Once a day each hamlet's stallholder shares news drawn from the state of the world.
+export function newsLine() {
+  const lines = [];
+  if (isBlood()) lines.push('The moon is the colour of a wound tonight. The great wolf will be hunting. Bar your door, or go and kill it.');
+  else if (isFull()) lines.push('Full moon coming. The wolves run wrong when it is full. Bigger. Bolder. Carry silver if you can.');
+  else if (isNew()) lines.push('A new moon. Dark nights, and the pale folk walk the roads on dark nights. Some of them trade.');
+  if (S.weather === 'blizzard' || S.weather === 'whiteout') lines.push('This storm will freeze a man in an hour. Warm armour, or a fire. Not both is how people die.');
+  if ((S.flags.raidsStopped || 0) > 2) lines.push('They say someone has been breaking up the raiders. The hamlets owe them a drink.');
+  else lines.push('Raiders have been testing the hamlets. If you hear shouting, go and look.');
+  lines.push('Travellers say they can see the high places from miles off, if you look for the shape of them against the sky.');
+  if (!S.flags.skates) lines.push('The fisher sells skates if you have the coin. Ice is quicker than snow.');
+  return lines[today() % lines.length];
+}
 const trade = async (who, wares, hello) => {
   S.flags['met' + who] = true;
   await say(who, hello);
+  if (S.flags['news' + who] !== today()) { S.flags['news' + who] = today(); await say(who, newsLine()); }
   for (;;) {
     const c = await choose(['Buy', 'Sell', 'Leave']);
     if (c === 0) await buyMenu(who, wares); else if (c === 1) await sellMenu(who); else return;

@@ -88,6 +88,19 @@ const uniq = await G(async () => {
   return { out, all };
 });
 check('every dungeon theme ends in its own named item', uniq.all && Object.values(uniq.out).every(Boolean) && Object.keys(uniq.out).length >= 5, JSON.stringify(uniq));
+const cr = await G(() => {
+  const g = window.gs(), S = window.__ff.S, p = g.player, out = {};
+  g.addSetPiece({ t: 'crumble', x: 6, y: 6, w: 2, h: 1, tier: 0 }, 0, 0);
+  const cell = g.crumbles[g.crumbles.length - 1].cells[0];
+  p.setPosition(cell.x + 8, cell.y + 4); S.hp = S.maxHp; p.mode = 'free';
+  g.setPieceTick(0.05); out.shaking = cell.st === 1;
+  p.setPosition(cell.x + 8, cell.y - 40); g.setPieceTick(0.8); out.gone = cell.st === 2;
+  g.setPieceTick(4.1); out.back = cell.st === 0;
+  // standing on it when it falls hurts
+  p.setPosition(cell.x + 8, cell.y + 4); g.setPieceTick(0.05); const hp0 = S.hp; g.setPieceTick(0.8); out.hurt = S.hp < hp0;
+  return out;
+});
+check('cracked floor shakes, drops, comes back, and hurts if you stay', Object.values(cr).every(Boolean), JSON.stringify(cr));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'SETPIECES FAILED' : 'SETPIECES PASSED');

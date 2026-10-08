@@ -23,6 +23,7 @@ export function dressSpecialRoom(r, ctx) {
   if (r.kind === 'ambush') {
     // a quiet room with a chest in the middle. The chest is bait.
     add({ t: 'chest', id: `${key}_am`, x: r.cx, y: r.cy, lock: 'med', loot: [{ gen: tier + 1 }, { gen: tier }, { gold: 50 + tier * 35 }] });
+    if ((r.cx + r.cy) % 2 === 0) add({ t: 'crumble', x: r.x + 2, y: r.cy + 1, w: r.w - 4, h: 1, tier });
     add({ t: 'ambush', x: r.x + 2, y: r.y + 2, w: r.w - 4, h: r.h - 4, kinds: [pick(mobs), pick(mobs), pick(mobs)], n: 3 + Math.min(3, tier), tier });
     add({ t: 'sign', x: r.x + 2, y: r.y + r.h - 2, text: ['THE DUST ON THE FLOOR IS UNDISTURBED. VERY UNDISTURBED.', 'NOBODY HAS BEEN IN HERE. NOBODY HAS COME OUT, EITHER.'] });
     return true;
