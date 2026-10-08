@@ -19,13 +19,14 @@ ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
             "shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
             "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost",
             "cocobonk", "swoopbeak", "nibblefin", "chamelia",
-            "windup", "sparkbot", "springbot", "cuckoolossus"]}
+            "windup", "sparkbot", "springbot", "cuckoolossus",
+            "pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
 class LevelKit:
     SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7,
-               "jungle": 8, "ruins": 9, "factory": 10}
+               "jungle": 8, "ruins": 9, "factory": 10, "ocean": 11, "deep": 12, "nebula": 13}
 
     def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
                  scenery="hills", backdrop=None):
@@ -165,6 +166,10 @@ class LevelKit:
         "ruins": [("fern", 2.5), ("big_leaf", 2), ("totem", 0.35), ("rock", 1.5), ("grass", 1.5), ("bromeliad", 0.6)],
         "swamp": [("reeds", 3), ("fern", 2), ("mushrooms", 1.2), ("big_leaf", 1), ("log", 0.4), ("stump", 0.5)],
         "factory": [("pipes", 1.0), ("gear", 1.4), ("toyblocks", 1.2), ("clock", 0.5), ("rock", 0.6), ("grass", 0.8)],
+        "beach": [("shell", 2), ("starfish", 1.2), ("palm", 0.6), ("grass", 1.2), ("rock", 0.8), ("reeds", 0.6)],
+        "reef": [("coral", 3), ("seaweed", 2.5), ("shell", 1), ("starfish", 0.8), ("rock", 0.8)],
+        "wreck": [("seaweed", 2), ("anchor", 0.4), ("chest", 0.3), ("rock", 1), ("coral", 1), ("shell", 0.6)],
+        "dream": [("crystals", 2), ("mushrooms", 1.2), ("big_flower", 0.6), ("rock", 0.8), ("lantern", 0.3)],
     }
 
     # Small props drawn IN FRONT of the players every few dressed spots (low, so they never hide anything).
@@ -172,7 +177,8 @@ class LevelKit:
         "meadow": ["grass", "flowers", "grass"], "forest": ["fern", "grass"], "cave": ["mushrooms"],
         "river": ["reeds", "grass"], "snow": ["rock"], "icecave": ["crystals"], "thorn": ["grass", "rock"],
         "jungle": ["fern", "grass", "big_leaf"], "ruins": ["fern", "grass"], "swamp": ["reeds", "fern"],
-        "factory": ["grass"],
+        "factory": ["grass"], "beach": ["shell", "grass"], "reef": ["seaweed", "coral"], "wreck": ["seaweed"],
+        "dream": ["crystals"],
     }
 
     def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=4, skip=(), trees=True):
@@ -306,6 +312,24 @@ class LevelKit:
                           wait_time=float(wait), one_way=True, wait_for_rider=rider or None,
                           start_offset=float(offset) if offset else None)
 
+    def bubbles(self, x, y, w=120, h=600, rise=None):
+        """Bubble column (inside water): swimmers are carried up. Origin top-left."""
+        return self._tool("Toys", "Bubbles", "Area2D", "bubble_column", x, y, size=V(w, h), rise=rise)
+
+    def clam(self, x, y, open_time=None, closed_time=None, phase=None, height=None):
+        """Giant clam: a bounce pad only while it's open. Origin bottom centre."""
+        return self._tool("Toys", "Clam", "Area2D", "clam", x, y, open_time=open_time, closed_time=closed_time,
+                          phase=phase, launch_height=height)
+
+    def tide(self, x, y, w, h, amplitude=120.0, period=7.0, phase=None):
+        """Water whose surface rises and falls (y = the HIGH-tide surface; the bottom stays)."""
+        return self._tool("Toys", "Tide", "Area2D", "tide_water", x, y, size=V(w, h), amplitude=float(amplitude),
+                          period=float(period), phase=phase)
+
+    def kelp(self, x, top, length):
+        """A climbable kelp strand (a vine in the theme's sea-green)."""
+        return self.vine(x, top, length)
+
     def beat(self, x, y, w=128, h=32, group=0, beat=None):
         """Tick-tock block (top-left x, y): group 0 pink / 1 blue take turns being solid."""
         return self._n("Blocks", "BeatBlock", "StaticBody2D", f"{RES}world/beat_block.gd",
@@ -373,7 +397,7 @@ class LevelKit:
         return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
 
     def ambience(self, kind="pollen", density=1.0, darkness=None, tint=None):
-        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain"]
+        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain", "bubbles", "stars"]
         props = {"script": self.s.script(RES + "world/ambience.gd"), "kind": kinds.index(kind),
                  "density": float(density) if density != 1.0 else None, "darkness": darkness, "tint": tint}
         return self.s.node("Ambience", "Node2D", "Decor", {k: v for k, v in props.items() if v is not None})
@@ -532,7 +556,8 @@ class LevelKit:
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
                  "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS",
-                 "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD", "GEAR", "PIPES", "CLOCK", "TOYBLOCKS"]
+                 "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD", "GEAR", "PIPES", "CLOCK", "TOYBLOCKS",
+                 "CORAL", "SEAWEED", "SHELL", "ANCHOR", "STARFISH", "CHEST"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

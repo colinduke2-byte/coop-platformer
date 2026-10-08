@@ -8,10 +8,11 @@ extends Node2D
 
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
 		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
-		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD, GEAR, PIPES, CLOCK, TOYBLOCKS }
+		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD, GEAR, PIPES, CLOCK, TOYBLOCKS,
+		CORAL, SEAWEED, SHELL, ANCHOR, STARFISH, CHEST }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
-		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD]
+		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD, Kind.SEAWEED]
 
 @export var kind := Kind.FLOWERS:
 	set(v):
@@ -418,6 +419,75 @@ func _paint(mp: MeshPainter) -> void:
 			var fc: Color = th.flower_colors[rng.randi() % th.flower_colors.size()]
 			Art.shape(mp, PackedVector2Array([Vector2(-8, -10) * s, Vector2(0, -52) * s, Vector2(8, -10) * s]), fc, o, 2.0)
 			mp.draw_circle(Vector2(0, -50) * s, 4.0 * s, Color("ffd23f"))
+		Kind.CORAL:
+			# A branching coral fan in the theme's flower colours.
+			var cc: Color = th.flower_colors[rng.randi() % th.flower_colors.size()]
+			var branches := [[Vector2(0, 0), Vector2(0, -70)], [Vector2(0, -30), Vector2(-30, -78)], [Vector2(0, -42), Vector2(28, -92)],
+					[Vector2(-16, -56), Vector2(-40, -60)], [Vector2(14, -66), Vector2(36, -64)], [Vector2(0, -70), Vector2(-8, -104)]]
+			for b in branches:
+				mp.draw_line(b[0] * s, b[1] * s, o, 13.0 * s)
+			for b in branches:
+				mp.draw_line(b[0] * s, b[1] * s, cc, 9.0 * s)
+				mp.draw_circle(b[1] * s, 6.0 * s, cc.lightened(0.2))
+			for k in 6:
+				mp.draw_circle(Vector2(rng.randf_range(-30, 30), rng.randf_range(-90, -20)) * s, 2.0 * s, cc.lightened(0.45))
+		Kind.SEAWEED:
+			# Tall wavy fronds (they sway).
+			for k in 3:
+				var x0 := (float(k) - 1.0) * 14.0 * s
+				var h := rng.randf_range(90, 150) * s
+				var pts := PackedVector2Array()
+				for i in 10:
+					var t := float(i) / 9.0
+					pts.append(Vector2(x0 + sin(t * 7.0 + k) * 8.0 * s, -h * t))
+				mp.draw_polyline(pts, o, 10.0 * s)
+				mp.draw_polyline(pts, th.foliage if k % 2 == 0 else th.foliage_dark, 7.0 * s)
+		Kind.SHELL:
+			# A scallop shell lying in the sand.
+			var sc: Color = th.flower_colors[rng.randi() % th.flower_colors.size()].lerp(Color.WHITE, 0.4)
+			var fan := PackedVector2Array([Vector2(0, -4) * s])
+			for i in 13:
+				var a := PI + PI * float(i) / 12.0
+				var r := (26.0 if i % 2 == 0 else 23.0) * s
+				fan.append(Vector2(cos(a) * r, -6 * s + sin(a) * r * 0.9))
+			Art.shape(mp, fan, sc, o, 2.5)
+			for i in 5:
+				var a := PI + PI * (float(i) + 1.0) / 6.0
+				mp.draw_line(Vector2(0, -4) * s, Vector2(cos(a), sin(a) * 0.9) * 20.0 * s + Vector2(0, -6) * s, sc.darkened(0.2), 1.5)
+			Art.shape(mp, Art.rect(Vector2(-7, -6) * s, Vector2(7, 0)), sc.darkened(0.15), o, 2.0)
+		Kind.ANCHOR:
+			# An old anchor half buried, with a bit of chain.
+			var iron := th.ground_dark.lerp(Color("5a6070"), 0.6)
+			mp.draw_line(Vector2(0, -6) * s, Vector2(0, -110) * s, o, 14.0 * s)
+			mp.draw_line(Vector2(0, -6) * s, Vector2(0, -110) * s, iron, 9.0 * s)
+			mp.draw_line(Vector2(-26, -92) * s, Vector2(26, -92) * s, o, 12.0 * s)
+			mp.draw_line(Vector2(-26, -92) * s, Vector2(26, -92) * s, iron, 7.0 * s)
+			mp.draw_arc(Vector2(0, -36) * s, 36.0 * s, 0.15, PI - 0.15, 16, o, 14.0 * s)
+			mp.draw_arc(Vector2(0, -36) * s, 36.0 * s, 0.15, PI - 0.15, 16, iron, 9.0 * s)
+			mp.draw_arc(Vector2(0, -122) * s, 11.0 * s, 0, TAU, 14, o, 8.0 * s)
+			mp.draw_arc(Vector2(0, -122) * s, 11.0 * s, 0, TAU, 14, iron, 4.0 * s)
+			mp.draw_colored_polygon(Art.ellipse(Vector2(0, -2) * s, 40 * s, 8 * s, 14), th.top)
+		Kind.STARFISH:
+			var sf: Color = th.flower_colors[rng.randi() % th.flower_colors.size()]
+			var star := PackedVector2Array()
+			for i in 10:
+				var a := -PI * 0.5 + TAU * float(i) / 10.0
+				var r := (20.0 if i % 2 == 0 else 8.0) * s
+				star.append(Vector2(cos(a), sin(a)) * r + Vector2(0, -14) * s)
+			Art.shape(mp, star, sf, o, 2.0)
+			for i in 5:
+				var a := -PI * 0.5 + TAU * float(i) / 5.0
+				mp.draw_circle(Vector2(cos(a), sin(a)) * 9.0 * s + Vector2(0, -14) * s, 1.8 * s, sf.lightened(0.4))
+		Kind.CHEST:
+			# A treasure chest spilling Lum-gold coins.
+			var wood := th.ledge
+			Art.shape(mp, Art.rounded_rect(Vector2(-36, -44) * s, Vector2(36, 0), 4.0 * s), wood, o, 3.0)
+			Art.shape(mp, Art.rounded_rect(Vector2(-38, -64) * s, Vector2(38, -40) * s, 10.0 * s), wood.darkened(0.12), o, 3.0)
+			for x: float in [-24.0, 24.0]:
+				Art.shape(mp, Art.rect(Vector2(x - 4, -64) * s, Vector2(x + 4, 0)), Color("e8c04a"), o, 1.5)
+			Art.shape(mp, Art.rect(Vector2(-7, -48) * s, Vector2(7, -34) * s), Color("e8c04a"), o, 2.0)
+			for k in 7:
+				mp.draw_circle(Vector2(rng.randf_range(-44, 44), rng.randf_range(-6, 0)) * s, 5.0 * s, Color("ffd23f"))
 		Kind.GEAR:
 			# A big brass cog half-sunk in the ground (scenery).
 			var c := Vector2(0, -40) * s

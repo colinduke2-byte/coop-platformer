@@ -22,6 +22,9 @@ enum Scenery {
 	JUNGLE,     ## misty rainforest: waterfalls, giant trees, palms, hanging vines
 	RUINS,      ## jungle with old stepped temples and broken pillars
 	FACTORY,    ## the clockwork dream factory: smokestacks, giant gears, pipes and girders
+	OCEAN,      ## a bright seaside: the sea on the horizon, sea stacks, gulls, a reef below the waterline
+	DEEP,       ## deep under the sea: rock spires, kelp, glowing jellies and passing fish
+	NEBULA,     ## the dream's edge: planets, nebula swirls, floating islands and crystal spires
 }
 
 @export var horizon_y := 600.0:
@@ -81,7 +84,7 @@ func _rebuild() -> void:
 	_th = theme_override if theme_override else LevelTheme.find(self)
 	_rng.seed = seed_value
 	_build_sky()
-	if clouds and scenery != Scenery.CAVE:
+	if clouds and not scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA]:
 		_build_clouds()
 	match scenery:
 		Scenery.HILLS: _hills_scene()
@@ -95,6 +98,9 @@ func _rebuild() -> void:
 		Scenery.JUNGLE: _jungle_scene(false)
 		Scenery.RUINS: _jungle_scene(true)
 		Scenery.FACTORY: _factory_scene()
+		Scenery.OCEAN: _ocean_scene()
+		Scenery.DEEP: _deep_scene()
+		Scenery.NEBULA: _nebula_scene()
 	if cloud_sea:
 		_build_cloud_sea()
 	if light_shafts:
@@ -124,7 +130,7 @@ func _build_sky() -> void:
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(sky)
 	var mp := MeshPainter.new()
-	if stars or scenery == Scenery.CAVE:
+	if stars or scenery in [Scenery.CAVE, Scenery.NEBULA]:
 		for i in 90:
 			var p := Vector2(_rng.randf_range(0, 1920), _rng.randf_range(0, 700))
 			var r := _rng.randf_range(1.0, 2.6)
@@ -132,7 +138,17 @@ func _build_sky() -> void:
 			if r > 2.2:
 				mp.draw_line(p - Vector2(r * 3, 0), p + Vector2(r * 3, 0), Color(1, 1, 1, 0.3), 1.0)
 				mp.draw_line(p - Vector2(0, r * 3), p + Vector2(0, r * 3), Color(1, 1, 1, 0.3), 1.0)
-	if scenery != Scenery.CAVE:
+	if scenery == Scenery.NEBULA:  # a big ringed dream planet instead of a sun
+		var pc := Vector2(1420, 230)
+		mp.draw_circle(pc, 150, Color(_th.accent, 0.12))
+		mp.draw_circle(pc, 96, _th.far_hills.lightened(0.25))
+		mp.draw_circle(pc + Vector2(-26, -24), 60, Color(1, 1, 1, 0.12))
+		var ring := PackedVector2Array()
+		for i in 49:
+			var a := TAU * i / 48.0
+			ring.append(pc + Vector2(cos(a) * 170.0, sin(a) * 34.0).rotated(-0.25))
+		mp.draw_polyline(ring, Color(_th.accent, 0.7), 8.0)
+	elif not scenery in [Scenery.CAVE, Scenery.DEEP]:
 		var sc := Vector2(1480, 190)
 		if stars:  # a moon
 			mp.draw_circle(sc, 120, Color(_th.sun, 0.12))
@@ -545,6 +561,151 @@ func _factory_scene() -> void:
 		near.painter.draw_rect(Rect2(gx, horizon_y - 420, 22, 360), steel)
 		near.painter.draw_line(Vector2(gx + 11, horizon_y - 420), Vector2(gx + 211, horizon_y - 70), steel, 6.0)
 	near.painter.draw_rect(Rect2(0, horizon_y - 430, 1800, 18), steel)
+	_commit(near)
+
+
+func _ocean_scene() -> void:
+	# Far: the open sea on the horizon with little islands and glints.
+	var far := _layer(0.04, 3000.0)
+	var sea := _haze(_th.accent.lerp(_th.far_hills, 0.5), 0.35)
+	far.painter.draw_rect(Rect2(0, horizon_y - 140, 3000, DEPTH + 140), sea)
+	for i in 4:
+		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - 140)
+		var w := _rng.randf_range(160, 320)
+		far.painter.draw_colored_polygon(Art.ellipse(c, w, _rng.randf_range(40, 80), 24), _haze(_th.foliage_dark, 0.5))
+		_palm(far, c + Vector2(_rng.randf_range(-40, 40), -30), 0.6, _haze(_th.foliage, 0.5), _haze(_th.ground_dark, 0.5))
+	for i in 40:
+		var g := Vector2(_rng.randf_range(0, 3000), horizon_y - 130 + _rng.randf_range(0, 120))
+		far.painter.draw_line(g, g + Vector2(_rng.randf_range(10, 34), 0), Color(1, 1, 1, 0.35), 2.0)
+	_commit(far)
+	# Mid: sea stacks and a rock arch topped with greenery.
+	var mid := _layer(0.18, 2400.0)
+	var rock := _haze(_th.ground.lerp(_th.far_hills, 0.3), 0.35)
+	for i in 4:
+		var x := _rng.randf_range(0, 2400)
+		var h := _rng.randf_range(260, 520)
+		var w := _rng.randf_range(90, 160)
+		mid.painter.draw_colored_polygon(PackedVector2Array([Vector2(x - w, horizon_y + 40), Vector2(x - w * 0.7, horizon_y - h),
+				Vector2(x + w * 0.6, horizon_y - h - 20), Vector2(x + w, horizon_y + 40)]), rock)
+		mid.painter.draw_colored_polygon(Art.ellipse(Vector2(x - w * 0.05, horizon_y - h - 6), w * 0.8, 26, 16), _haze(_th.foliage, 0.35))
+	mid.painter.draw_rect(Rect2(0, horizon_y + 30, 2400, DEPTH), _haze(_th.accent.lerp(_th.ground, 0.25), 0.3))
+	_commit(mid)
+	# Gulls drifting across (an autoscrolled layer).
+	var gulls := _parallax(0.12, 2600.0, Vector2(-22, 0))
+	var gp := MeshPainter.new()
+	for i in 7:
+		var c := Vector2(_rng.randf_range(0, 2600), horizon_y - _rng.randf_range(600, 1000))
+		gp.draw_polyline(PackedVector2Array([c + Vector2(-16, -2), c + Vector2(-7, -9), c, c + Vector2(7, -9), c + Vector2(16, -2)]), Color(1, 1, 1, 0.85), 3.0)
+	gulls.add_child(MeshArt.new(gp.build()))
+	# Near: the reef under the waterline (seen while diving) with swaying kelp silhouettes.
+	var near := _layer(0.45, 2000.0)
+	var reef := _haze(_th.near_hills, 0.15)
+	var x2 := 0.0
+	while x2 < 2000.0:
+		var r := _rng.randf_range(60, 140)
+		near.painter.draw_colored_polygon(Art.ellipse(Vector2(x2, horizon_y + 260), r, r * 0.7, 18), reef)
+		x2 += r * 1.2
+	near.painter.draw_rect(Rect2(0, horizon_y + 260, 2000, DEPTH), reef)
+	for i in 14:
+		var kx := _rng.randf_range(0, 2000)
+		var kh := _rng.randf_range(160, 320)
+		var pts := PackedVector2Array()
+		for k in 9:
+			var t := float(k) / 8.0
+			pts.append(Vector2(kx + sin(t * 6.0 + i) * 12.0, horizon_y + 240 - kh * t))
+		near.painter.draw_polyline(pts, _haze(_th.foliage_dark, 0.25), 9.0)
+	_commit(near)
+	_fish_school(0.3, 0.4)
+
+
+func _deep_scene() -> void:
+	# Far: tall rock spires fading into the blue.
+	var far := _layer(0.06, 2800.0)
+	var spire := _haze(_th.ground.lerp(_th.far_hills, 0.6), 0.45)
+	for i in 9:
+		var x := _rng.randf_range(0, 2800)
+		var h := _rng.randf_range(500, 1300)
+		var w := _rng.randf_range(60, 140)
+		far.painter.draw_colored_polygon(PackedVector2Array([Vector2(x - w, horizon_y + 200), Vector2(x - w * 0.3, horizon_y - h),
+				Vector2(x + w * 0.2, horizon_y - h - 30), Vector2(x + w, horizon_y + 200)]), spire)
+	far.painter.draw_rect(Rect2(0, horizon_y + 180, 2800, DEPTH), spire)
+	_commit(far)
+	# Mid: kelp forest silhouettes and arches.
+	var mid := _layer(0.22, 2400.0)
+	var kelp := _haze(_th.foliage_dark, 0.45)
+	for i in 22:
+		var kx := _rng.randf_range(0, 2400)
+		var kh := _rng.randf_range(300, 760)
+		var pts := PackedVector2Array()
+		for k in 12:
+			var t := float(k) / 11.0
+			pts.append(Vector2(kx + sin(t * 7.0 + i) * 16.0, horizon_y + 120 - kh * t))
+		mid.painter.draw_polyline(pts, kelp, 12.0)
+	mid.painter.draw_rect(Rect2(0, horizon_y + 110, 2400, DEPTH), _haze(_th.near_hills, 0.4))
+	_commit(mid)
+	# Glowing jellies and plankton specks (drift slowly upward).
+	var glow := _parallax(0.3, 2200.0, Vector2(-6, -4))
+	var gp := MeshPainter.new()
+	for i in 16:
+		var c := Vector2(_rng.randf_range(0, 2200), horizon_y - _rng.randf_range(-200, 900))
+		var col: Color = _th.flower_colors[i % _th.flower_colors.size()]
+		gp.draw_circle(c, 26.0, Color(col, 0.12))
+		gp.draw_colored_polygon(Art.ellipse(c, 14, 10, 14), Color(col, 0.55))
+		for k in 3:
+			gp.draw_line(c + Vector2(-8 + k * 8, 6), c + Vector2(-8 + k * 8 + 3, 30), Color(col, 0.35), 2.0)
+	for i in 60:
+		gp.draw_circle(Vector2(_rng.randf_range(0, 2200), horizon_y - _rng.randf_range(-300, 1100)), 1.6, Color(1, 1, 1, 0.3))
+	glow.add_child(MeshArt.new(gp.build()))
+	_fish_school(0.36, 0.25)
+	_fish_school(0.5, 0.15)
+
+
+## A school of little fish swimming across (one autoscrolled baked layer).
+func _fish_school(scale: float, haze: float) -> void:
+	var p := _parallax(scale, 2600.0, Vector2(-40.0 * scale - 10.0, 0))
+	var mp := MeshPainter.new()
+	for g in 3:
+		var c := Vector2(_rng.randf_range(0, 2600), horizon_y + _rng.randf_range(-200, 500))
+		var col := _haze(_th.flower_colors[g % _th.flower_colors.size()], haze)
+		for i in 9:
+			var f := c + Vector2(_rng.randf_range(-120, 120), _rng.randf_range(-50, 50))
+			mp.draw_colored_polygon(Art.ellipse(f, 12, 6, 10), col)
+			mp.draw_colored_polygon(PackedVector2Array([f + Vector2(10, 0), f + Vector2(20, -6), f + Vector2(20, 6)]), col)
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -70
+
+
+func _nebula_scene() -> void:
+	# Far: soft nebula swirls.
+	var far := _layer(0.03, 3000.0)
+	for i in 12:
+		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - _rng.randf_range(200, 1100))
+		var col: Color = _th.flower_colors[i % _th.flower_colors.size()]
+		for k in 3:
+			far.painter.draw_colored_polygon(Art.ellipse(c + Vector2(k * 60, k * -20), 300.0 - k * 70.0, 120.0 - k * 25.0, 24), Color(col, 0.06))
+	_commit(far)
+	# Mid: floating dream islands with crystals.
+	var mid := _layer(0.16, 2600.0)
+	var isle := _haze(_th.ground, 0.4)
+	for i in 6:
+		var c := Vector2(_rng.randf_range(0, 2600), horizon_y - _rng.randf_range(250, 800))
+		var w := _rng.randf_range(90, 180)
+		mid.painter.draw_colored_polygon(PackedVector2Array([c + Vector2(-w, 0), c + Vector2(w, 0), c + Vector2(w * 0.3, w * 0.9), c + Vector2(-w * 0.2, w * 0.7)]), isle)
+		mid.painter.draw_colored_polygon(Art.ellipse(c, w, 16, 16), _haze(_th.top, 0.35))
+		for k in 3:
+			var cx := c.x + _rng.randf_range(-w * 0.6, w * 0.6)
+			mid.painter.draw_colored_polygon(PackedVector2Array([Vector2(cx - 10, c.y), Vector2(cx, c.y - _rng.randf_range(40, 90)), Vector2(cx + 10, c.y)]), _haze(_th.accent, 0.3))
+	_commit(mid)
+	# Near: jagged crystal spires along the bottom.
+	var near := _layer(0.4, 2000.0)
+	var cry := _haze(_th.ground_dark, 0.2)
+	var x := 0.0
+	while x < 2000.0:
+		var h := _rng.randf_range(120, 420)
+		var w := _rng.randf_range(40, 90)
+		near.painter.draw_colored_polygon(PackedVector2Array([Vector2(x, horizon_y + 80), Vector2(x + w * 0.5, horizon_y + 80 - h), Vector2(x + w, horizon_y + 80)]), cry)
+		x += w * 0.8
+	near.painter.draw_rect(Rect2(0, horizon_y + 78, 2000, DEPTH), cry)
 	_commit(near)
 
 

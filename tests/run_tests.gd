@@ -6898,3 +6898,188 @@ func test_candy_gumdrop_hops_down_to_the_meadow_gate() -> void:
 	check(ok or gm().level_complete, "hopping the gumdrops down to the candy meadow (at %s)" % p.global_position)
 	check(gm().level_complete, "the meadow gate completes Candy Canopy")
 	await _finish_demo()
+
+
+# --- World 5: Deep Sea Dream pieces and enemies --------------------------------------------
+
+func _add_water(rect: Rect2) -> Water:
+	var w := Water.new()
+	w.position = rect.position
+	w.size = rect.size
+	_arena.add_child(w)
+	return w
+
+
+func test_bubble_column_carries_swimmers_up() -> void:
+	_add_water(Rect2(-600, -800, 1200, 800))
+	var col := BubbleColumn.new()
+	col.position = Vector2(-60, -800)
+	col.size = Vector2(120, 800)
+	_arena.add_child(col)
+	var p := add_player(0, Vector2(0, -150))
+	await frames(20)
+	check(_state(p) == &"Swim", "the player swims in the water (%s)" % _state(p))
+	var y0 := p.global_position.y
+	await seconds(1.0)
+	check(p.global_position.y < y0 - 200.0, "the bubbles carry you up (%.0f -> %.0f)" % [y0, p.global_position.y])
+
+
+func test_clam_bounces_only_while_open() -> void:
+	var c := Clam.new()
+	c.position = Vector2(0, 0)
+	c.open_time = 1.0
+	c.closed_time = 1.0
+	_arena.add_child(c)
+	var p := add_player(0, Vector2(300, -2))
+	await settle(p)
+	# Wait until it is shut, then stand on it: no bounce.
+	for i in 300:
+		await get_tree().physics_frame
+		if not c.is_open() and fposmod(c._tt + c.phase, 2.0) < 1.15:
+			break
+	p.global_position = Vector2(0, -60)
+	p.velocity = Vector2.ZERO
+	await frames(8)
+	check(p.velocity.y >= -100.0, "a shut clam doesn't launch you (vy %.0f)" % p.velocity.y)
+	var launched := false
+	for i in 200:
+		await get_tree().physics_frame
+		if p.velocity.y < -600.0:
+			launched = true
+			break
+	check(launched, "once it opens, it flings you up")
+
+
+func test_tide_water_rises_and_falls() -> void:
+	var t := TideWater.new()
+	t.position = Vector2(-400, -300)
+	t.size = Vector2(800, 300)
+	t.amplitude = 120.0
+	t.period = 2.0
+	_arena.add_child(t)
+	var lo := 99999.0
+	var hi := -99999.0
+	for i in 150:
+		await get_tree().physics_frame
+		lo = minf(lo, t.surface_y())
+		hi = maxf(hi, t.surface_y())
+	check(hi - lo > 100.0, "the tide moves the surface up and down (%.0f..%.0f)" % [lo, hi])
+
+
+func test_pufferfin_is_all_spikes_when_puffed() -> void:
+	var f := _spawn_enemy("res://enemies/pufferfin.tscn", Vector2(-200, -80)) as Pufferfin
+	f.puff_every = 0.5
+	f.puff_time = 2.0
+	await seconds(1.0)
+	check(f.is_puffed() and not f.stompable, "puffed up, it can't be stomped")
+	f.take_hit(null, Vector2.RIGHT)
+	check(not f.dead, "punches bounce off the spikes")
+	f.puff_every = 100.0
+	f._t = 0.0
+	await seconds(0.5)
+	f.take_hit(null, Vector2.RIGHT)
+	check(f.dead, "small again, a punch pops it")
+
+
+func test_crabbit_claw_blocks_punches_from_the_front() -> void:
+	var p := add_player(0, Vector2(100, -2))
+	await settle(p)
+	var c := _spawn_enemy("res://enemies/crabbit.tscn", Vector2(0, 0), 1) as Crabbit
+	c.walk_speed = 0.0
+	await frames(3)
+	c.facing = 1
+	check(c.blocks_hit(p, Enemy.HitKind.PUNCH), "a punch from the claw's side clanks")
+	c.facing = -1
+	check(not c.blocks_hit(p, Enemy.HitKind.PUNCH), "a punch from behind lands")
+	check(c.stompable, "you can always jump on its back")
+
+
+func test_jellybob_is_a_trampoline() -> void:
+	var j := _spawn_enemy("res://enemies/jellybob.tscn", Vector2(0, -100)) as Jellybob
+	j.bob = 0.0
+	var p := add_player(0, Vector2(0, -400))
+	var top := 0.0
+	var bounced := false
+	for i in 200:
+		await get_tree().physics_frame
+		if p.velocity.y < -900.0:
+			bounced = true
+		top = minf(top, p.global_position.y)
+	check(bounced and not j.dead, "stomping it bounces you high and it doesn't mind (peak %.0f)" % top)
+
+
+func test_eelectra_lunges_only_when_you_come_close() -> void:
+	var e := _spawn_enemy("res://enemies/eelectra.tscn", Vector2(-300, -100), 1) as Eelectra
+	await frames(10)
+	check(e.st == Eelectra.St.HIDE and e.blocks_hit(null, Enemy.HitKind.PUNCH), "it hides (and can't be hit) when nobody is near")
+	var p := add_player(0, Vector2(-100, -2))
+	p.invulnerable_timer = 100.0
+	var out := false
+	for i in 120:
+		await get_tree().physics_frame
+		if e._ext > 0.9:
+			out = true
+			break
+	check(out and e.global_position.x > -150.0, "it lunges out at you (x %.0f)" % e.global_position.x)
+	check(not e.blocks_hit(p, Enemy.HitKind.PUNCH), "while it's out it can be hit")
+
+
+func test_anglerling_drifts_toward_you_and_glows() -> void:
+	var a := _spawn_enemy("res://enemies/anglerling.tscn", Vector2(-400, -120)) as Anglerling
+	var p := add_player(0, Vector2(0, -2))
+	p.invulnerable_timer = 100.0
+	await seconds(1.5)
+	check(a.global_position.x > -330.0, "it drifts toward you (x %.0f)" % a.global_position.x)
+	check(a.find_children("*", "GlowLight", true, false).size() == 1, "its lure is a light")
+
+
+func test_inkabella_only_her_stuck_tentacle_can_be_hurt() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	var b := _spawn_enemy("res://enemies/inkabella.tscn", Vector2(-300, 0), 1) as Inkabella
+	var p := add_player(0, Vector2(150, -2))
+	await settle(p)
+	p.invulnerable_timer = 100.0
+	b.set_active(true)
+	await frames(2)
+	var hp := b.health
+	b.take_hit(p, Vector2.RIGHT)
+	check(b.health == hp, "her body shrugs off punches")
+	b._slams_left = 1
+	b._start_aim()
+	var stuck := false
+	for i in 240:
+		await get_tree().physics_frame
+		if b.st == Inkabella.St.STUCK:
+			stuck = true
+			break
+	check(stuck, "the tentacle slams down and sticks")
+	check(absf(b.tip().x - p.global_position.x) < 120.0, "it slams where you were (tip %.0f, you %.0f)" % [b.tip().x, p.global_position.x])
+	p.global_position = b.tip() + Vector2(0, -160)
+	p.velocity = Vector2.ZERO
+	p.state_machine.transition_to(&"Fall")
+	for i in 120:
+		await get_tree().physics_frame
+		if b.health < hp:
+			break
+	check(b.health == hp - 1, "a stomp on the stuck tentacle hurts her (hp %d -> %d)" % [hp, b.health])
+
+
+func test_inkabella_slam_hurts_whoever_is_underneath() -> void:
+	for n in [^"Wall"]:
+		if _arena.has_node(n):
+			_arena.get_node(n).free()
+	var b := _spawn_enemy("res://enemies/inkabella.tscn", Vector2(-300, 0), 1) as Inkabella
+	var p := add_player(0, Vector2(150, -2))
+	await settle(p)
+	b.set_active(true)
+	await frames(2)
+	p.invulnerable_timer = 0.0
+	b._slams_left = 1
+	b._start_aim()
+	var hit := false
+	for i in 240:
+		await get_tree().physics_frame
+		hit = hit or p.is_bubbled()
+	check(hit, "standing under the slam gets you hit")

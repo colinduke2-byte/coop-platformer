@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/shipwreck.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+ground = Color(0.3608, 0.2902, 0.2275, 1)
+ground_dark = Color(0.2706, 0.2157, 0.1686, 1)
+top = Color(0.4980, 0.6588, 0.6039, 1)
+top_dark = Color(0.3725, 0.5412, 0.4863, 1)
+outline = Color(0.1137, 0.0863, 0.0706, 1)
+pattern = 2
+ledge = Color(0.5412, 0.3922, 0.2510, 1)
+ledge_dark = Color(0.3961, 0.2706, 0.1569, 1)
+accent = Color(1.0000, 0.8118, 0.2471, 1)
+accent_dark = Color(0.7882, 0.6039, 0.1216, 1)
+sky_top = Color(0.1216, 0.3725, 0.5412, 1)
+sky_bottom = Color(0.3725, 0.6902, 0.7882, 1)
+far_hills = Color(0.2471, 0.4980, 0.6039, 1)
+near_hills = Color(0.1843, 0.4157, 0.5098, 1)
+sun = Color(0.8118, 0.9373, 1.0000, 1)
+foliage = Color(0.2471, 0.6039, 0.4980, 1)
+foliage_dark = Color(0.1647, 0.4353, 0.3529, 1)
+flower_colors = Array[Color]([Color(1.0000, 0.8118, 0.2471, 1), Color(1.0000, 0.4353, 0.4353, 1), Color(0.4980, 0.8784, 1.0000, 1), Color(1.0000, 1.0000, 1.0000, 1)])
+music = ExtResource("2")

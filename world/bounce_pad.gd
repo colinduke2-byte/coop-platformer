@@ -36,6 +36,11 @@ func _ready() -> void:
 		add_child(col, false, Node.INTERNAL_MODE_FRONT)
 
 
+## Override to switch the pad off for a while (see Clam).
+func can_launch() -> bool:
+	return true
+
+
 ## Launch speed that reaches `h` px against the player's rise gravity.
 static func speed_for_height(t: PlayerTuning, h: float) -> float:
 	return sqrt(2.0 * t.rise_gravity() * h)
@@ -51,6 +56,8 @@ func _physics_process(delta: float) -> void:
 		_cooldowns[p] -= delta
 		if _cooldowns[p] <= 0.0:
 			_cooldowns.erase(p)
+	if not can_launch():
+		return
 	var up := Vector2.UP.rotated(global_rotation)
 	for body in get_overlapping_bodies():
 		var p := body as Player

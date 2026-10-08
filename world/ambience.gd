@@ -7,7 +7,7 @@ extends Node2D
 ## Optional `darkness` dims the level for caves (a CanvasModulate) - glowing
 ## things (fireflies, crystals, GlowLight) then really pop.
 
-enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW, RAIN }
+enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW, RAIN, BUBBLES, STARS }
 
 @export var kind := Kind.POLLEN:
 	set(v):
@@ -172,6 +172,37 @@ func _configure(p: CPUParticles2D) -> void:
 			p.scale_amount_max = 1.0
 			if col.a == 0.0:
 				col = Color(0.85, 0.95, 1.0, 0.45)
+		Kind.BUBBLES:
+			# Little air bubbles wobbling up through the water.
+			p.amount = int(60 * density)
+			p.lifetime = 7.0
+			p.texture = _bubble()
+			p.gravity = Vector2(0, -40)
+			p.initial_velocity_min = 10.0
+			p.initial_velocity_max = 40.0
+			p.direction = Vector2(0, -1)
+			p.spread = 25.0
+			p.scale_amount_min = 0.3
+			p.scale_amount_max = 0.9
+			p.tangential_accel_min = -6.0
+			p.tangential_accel_max = 6.0
+			if col.a == 0.0:
+				col = Color(0.85, 0.97, 1.0, 0.7)
+			p.color_ramp = _ramp([Color(col, 0.0), col, col, Color(col, 0.0)])
+		Kind.STARS:
+			# Twinkling dream-stars that drift very slowly.
+			p.amount = int(80 * density)
+			p.lifetime = 5.0
+			p.texture = _dot(24, 1.0)
+			p.gravity = Vector2.ZERO
+			p.initial_velocity_min = 1.0
+			p.initial_velocity_max = 6.0
+			p.spread = 180.0
+			p.scale_amount_min = 0.15
+			p.scale_amount_max = 0.45
+			if col.a == 0.0:
+				col = Color(1.0, 0.9, 1.0, 1.0)
+			p.color_ramp = _ramp([Color(col, 0.0), col, Color(col, 0.3), col, Color(col, 0.0)])
 	p.color = Color.WHITE if p.color_ramp else col  # ramps already carry the colour
 	p.preprocess = p.lifetime
 
@@ -195,6 +226,21 @@ func _process(_delta: float) -> void:
 		_p.global_position = View.rect.get_center()
 	elif Engine.is_editor_hint():
 		_p.position = Vector2.ZERO
+
+
+## A hollow ring with a highlight (an air bubble).
+static func _bubble() -> Texture2D:
+	var n := 24
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var c := Vector2(n, n) * 0.5
+	for y in n:
+		for x in n:
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(c) / (n * 0.5)
+			var a := clampf(1.0 - absf(d - 0.82) * 7.0, 0.0, 1.0) + (0.25 if d < 0.8 else 0.0) * 0.4
+			if Vector2(x, y).distance_to(c + Vector2(-4, -4)) < 2.5:
+				a = 1.0
+			img.set_pixel(x, y, Color(1, 1, 1, clampf(a, 0.0, 1.0)))
+	return ImageTexture.create_from_image(img)
 
 
 static func _dot(size: int, hard: float) -> Texture2D:

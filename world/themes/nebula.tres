@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/level_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://audio/music/nebula.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+ground = Color(0.2275, 0.1647, 0.3529, 1)
+ground_dark = Color(0.1647, 0.1137, 0.2706, 1)
+top = Color(0.7725, 0.5451, 1.0000, 1)
+top_dark = Color(0.6039, 0.4157, 0.8392, 1)
+outline = Color(0.0510, 0.0314, 0.0941, 1)
+pattern = 3
+ledge = Color(0.4784, 0.3529, 0.6902, 1)
+ledge_dark = Color(0.3529, 0.2471, 0.5412, 1)
+accent = Color(1.0000, 0.3647, 0.5608, 1)
+accent_dark = Color(0.7882, 0.2275, 0.4118, 1)
+sky_top = Color(0.0510, 0.0392, 0.1412, 1)
+sky_bottom = Color(0.2275, 0.1647, 0.4157, 1)
+far_hills = Color(0.1647, 0.1255, 0.3137, 1)
+near_hills = Color(0.1216, 0.0941, 0.2510, 1)
+sun = Color(1.0000, 0.9020, 1.0000, 1)
+foliage = Color(0.4784, 0.3529, 0.6902, 1)
+foliage_dark = Color(0.3529, 0.2471, 0.5412, 1)
+flower_colors = Array[Color]([Color(1.0000, 0.3647, 0.5608, 1), Color(0.4980, 0.8784, 1.0000, 1), Color(1.0000, 0.8235, 0.2471, 1), Color(0.7725, 0.5451, 1.0000, 1)])
+music = ExtResource("2")

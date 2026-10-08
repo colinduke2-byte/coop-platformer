@@ -166,3 +166,14 @@ track("steam", "D", 108, [vi, IV, I, V] * 2 + [ii, vi, IV, V, vi, (2, "min7"), I
 track("tower", "A", 116, [I, iii, vi, IV] * 2 + [IV, V, iii, vi, ii, V, I, (7, "sus")], lead="sine", seed=97, bright=0.9)
 track("nightshift", "E", 96, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), IV, V, ii, vi, IV, V], lead="sine", seed=99, bright=0.65)
 track("cuckoo", "B", 152, [vi, V, IV, V] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=101, drums="busy", bass_shape="square")
+# World 5 - Deep Sea Dream (watery sine/tri leads, gentle swing).
+track("shore", "D", 112, [I, IV, I, V] * 2 + [vi, IV, I, V, IV, V, I, (7, "sus")], lead="tri", seed=111, swing=0.14, bright=1.05)
+track("reef", "A", 104, [I, vi, IV, V] * 2 + [ii, V, iii, vi, IV, V, I, I], lead="sine", seed=113, swing=0.1, bright=0.95)
+track("shipwreck", "E", 124, [vi, IV, V, iii] * 2 + [vi, IV, (7, "sus"), V, vi, ii, iii, V], lead="square", seed=115, swing=0.16, drums="busy")
+track("kelp", "G", 132, [I, V, vi, IV] * 2 + [IV, V, I, vi, ii, V, I, I], lead="tri", seed=117, drums="busy")
+track("trench", "C", 84, [vi, ii, V, vi] * 2 + [IV, iii, ii, V, vi, (2, "min7"), IV, V], lead="sine", seed=119, bright=0.55)
+track("octopus", "F", 150, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), V, iii, ii, V, vi, V], lead="saw", seed=121, drums="busy", bass_shape="square")
+# Secret world - Nightmare Nebula, and the Lum shop.
+track("nebula", "B", 100, [vi, (5, "maj7"), IV, V] * 2 + [ii, vi, IV, V, vi, (2, "min7"), IV, (7, "sus")], lead="sine", seed=131, bright=0.7)
+track("nebula_boss", "C", 158, [vi, IV, V, V] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=133, drums="busy", bass_shape="square")
+track("shop", "F", 116, [I, vi, ii, V] * 2 + [I, iii, IV, V], lead="tri", seed=135, swing=0.2)

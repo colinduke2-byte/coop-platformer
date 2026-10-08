@@ -7,7 +7,8 @@ const ENEMIES := ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonk
 		"shellbert", "bumblebonk", "diggle", "ribbiton", "prickleroll", "puffcap", "wispet",
 		"slidgewick", "snowl", "yetling", "grumblefrost",
 		"cocobonk", "swoopbeak", "nibblefin", "chamelia",
-		"windup", "sparkbot", "springbot", "cuckoolossus"]
+		"windup", "sparkbot", "springbot", "cuckoolossus",
+		"pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella"]
 
 
 func _ready() -> void:
@@ -18,9 +19,9 @@ func _ready() -> void:
 	add_child(bg)
 	var floor_block: Block = load("res://world/block.tscn").instantiate()
 	floor_block.position = Vector2(-200, 0)
-	floor_block.size = Vector2(3600, 200)
+	floor_block.size = Vector2(4000, 200)
 	add_child(floor_block)
-	var cols := 7
+	var cols := 9
 	for i in ENEMIES.size():
 		var e: Enemy = load("res://enemies/%s.tscn" % ENEMIES[i]).instantiate()
 		var row := i / cols
@@ -38,8 +39,8 @@ func _ready() -> void:
 			shelf.size = Vector2(200, 30)
 			add_child(shelf)
 	var cam := Camera2D.new()
-	cam.position = Vector2(860, -330)
-	cam.zoom = Vector2(0.9, 0.9)
+	cam.position = Vector2(1100, -560)
+	cam.zoom = Vector2(0.62, 0.62)
 	add_child(cam)
 	cam.make_current()
 	await get_tree().create_timer(0.7).timeout
