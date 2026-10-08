@@ -7083,3 +7083,157 @@ func test_inkabella_slam_hurts_whoever_is_underneath() -> void:
 		await get_tree().physics_frame
 		hit = hit or p.is_bubbled()
 	check(hit, "standing under the slam gets you hit")
+
+
+## General bot: hold right; jump at ledges / gaps and when blocked; in water swim up and
+## stroke, leaping out at banks. Good for mixed land-and-water stretches. Returns true when
+## standing past end_x.
+func _auto_run(p: Player, end_x: float, max_s := 20.0, sprint := false) -> bool:
+	press(0, "move_right")
+	if sprint:
+		press(0, "sprint")
+	var held := 0
+	var stuck := 0
+	var space := p.get_world_2d().direct_space_state
+	for i in int(max_s * 60.0):
+		await get_tree().physics_frame
+		if held > 0:
+			held -= 1
+			if held == 0:
+				release(0, "jump")
+		var st := _state(p)
+		if st == &"Swim":
+			press(0, "move_up")
+			if i % 16 == 0 and held == 0:
+				press(0, "jump")
+				held = 6
+		else:
+			release(0, "move_up")
+			if p.is_on_floor() and held == 0:
+				stuck = stuck + 1 if absf(p.velocity.x) < 40.0 else 0
+				var ahead := p.global_position + Vector2(60, -10)
+				var q := PhysicsRayQueryParameters2D.create(ahead, ahead + Vector2(0, 90), 1)
+				var edge := space.intersect_ray(q).is_empty()
+				if stuck > 5 or edge:
+					press(0, "jump")
+					held = 40
+					stuck = 0
+		if p.global_position.x >= end_x and p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "sprint")
+	release(0, "jump")
+	release(0, "move_up")
+	return p.global_position.x >= end_x and not p.is_bubbled()
+
+
+## Bot: swim through a list of points (steering with the d-pad, stroking now and then).
+func _swim_path(p: Player, pts: Array, max_s := 12.0) -> bool:
+	var k := 0
+	for i in int(max_s * 60.0):
+		await get_tree().physics_frame
+		if k >= pts.size():
+			break
+		var d: Vector2 = pts[k] - p.global_position
+		for a in ["move_left", "move_right", "move_up", "move_down"]:
+			release(0, a)
+		if d.x > 20.0: press(0, "move_right")
+		elif d.x < -20.0: press(0, "move_left")
+		if d.y > 20.0: press(0, "move_down")
+		elif d.y < -20.0: press(0, "move_up")
+		if i % 30 == 0:
+			press(0, "jump")
+		elif i % 30 == 6:
+			release(0, "jump")
+		if d.length() < 50.0:
+			k += 1
+	for a in ["move_left", "move_right", "move_up", "move_down", "jump"]:
+		release(0, a)
+	return k >= pts.size()
+
+
+const W5_1 := "res://levels/w5_1_seashell_shore.tscn"
+
+
+func test_w5_1_beach_and_tide_pools() -> void:
+	var p: Player = await _load_demo(W5_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 3100, 16.0)
+	check(ok, "along the beach and over the tide pools (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_1_dive_under_the_arch_for_gem_0() -> void:
+	var p: Player = await _load_demo(W5_1)
+	await _clear_enemies()
+	await _place(p, Vector2(3300, -2))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(3600, 460), Vector2(4300, 470), Vector2(4500, 540), Vector2(4520, 60)])
+	check(ok, "swimming down and under the rock arch (at %s)" % p.global_position)
+	check(gm().gems[0], "gem 0 waits on the pool floor")
+	ok = await _auto_run(p, 4800, 6.0)
+	check(ok, "and out on the far bank (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_1_clam_flings_you_to_the_ledge() -> void:
+	var p: Player = await _load_demo(W5_1)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(5300, 0), -580.0, 5520.0, 6.0)
+	check(p.global_position.y < -530.0 and p.is_on_floor(), "the open clam throws you up onto the ledge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_1_jelly_bounce_reaches_gem_1() -> void:
+	var p: Player = await _load_demo(W5_1)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Jellybob:
+			e.queue_free()
+		else:
+			e.bob = 0.0
+	await _place(p, Vector2(8000, -300))
+	p.state_machine.transition_to(&"Fall")
+	var bounced := false
+	var top := 0.0
+	for i in 200:
+		await get_tree().physics_frame
+		top = minf(top, p.global_position.y)
+		if p.velocity.y < -900.0:
+			bounced = true
+		if bounced:
+			press(0, "move_right")
+		if p.global_position.x > 8170.0:
+			release(0, "move_right")
+		if gm().gems[1]:
+			break
+	release(0, "move_right")
+	check(gm().gems[1], "a jellybob bounce reaches gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_1_jelly_bay_dune_and_the_sea_well() -> void:
+	var p: Player = await _load_demo(W5_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(7280, -2))
+	var ok := await _auto_run(p, 11400, 20.0)
+	check(ok, "across the jelly bay and over the dune (at %s, %s)" % [p.global_position, _state(p)])
+	await _clear_enemies()
+	ok = await _auto_run(p, 11900, 14.0)
+	check(ok and p.global_position.y < -790.0, "the bubbles in the sea-well carry you up to the cliffs (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_1_cliffs_and_dunes_to_the_gate() -> void:
+	var p: Player = await _load_demo(W5_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(11950, -802))
+	var ok := await _auto_run(p, 14700, 12.0)
+	ok = await _hop_run(p, [14900], 16100, false, 8.0)
+	check(gm().level_complete, "down the dunes and over the sandcastle to the gate (at %s)" % p.global_position)
+	await _finish_demo()

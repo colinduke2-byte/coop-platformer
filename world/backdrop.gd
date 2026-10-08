@@ -64,6 +64,7 @@ enum Scenery {
 		theme_override = v
 		_rebuild()
 
+const SEA := Color("3fa9e0")   ## open-sea blue (ocean scenery)
 const DEPTH := 5000.0          ## how far below the horizon layers extend
 const CLOUD_REPEAT := 3200.0
 
@@ -567,7 +568,7 @@ func _factory_scene() -> void:
 func _ocean_scene() -> void:
 	# Far: the open sea on the horizon with little islands and glints.
 	var far := _layer(0.04, 3000.0)
-	var sea := _haze(_th.accent.lerp(_th.far_hills, 0.5), 0.35)
+	var sea := _haze(SEA.lerp(_th.far_hills, 0.3), 0.3)
 	far.painter.draw_rect(Rect2(0, horizon_y - 140, 3000, DEPTH + 140), sea)
 	for i in 4:
 		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - 140)
@@ -588,7 +589,7 @@ func _ocean_scene() -> void:
 		mid.painter.draw_colored_polygon(PackedVector2Array([Vector2(x - w, horizon_y + 40), Vector2(x - w * 0.7, horizon_y - h),
 				Vector2(x + w * 0.6, horizon_y - h - 20), Vector2(x + w, horizon_y + 40)]), rock)
 		mid.painter.draw_colored_polygon(Art.ellipse(Vector2(x - w * 0.05, horizon_y - h - 6), w * 0.8, 26, 16), _haze(_th.foliage, 0.35))
-	mid.painter.draw_rect(Rect2(0, horizon_y + 30, 2400, DEPTH), _haze(_th.accent.lerp(_th.ground, 0.25), 0.3))
+	mid.painter.draw_rect(Rect2(0, horizon_y + 30, 2400, DEPTH), _haze(SEA.darkened(0.15), 0.25))
 	_commit(mid)
 	# Gulls drifting across (an autoscrolled layer).
 	var gulls := _parallax(0.12, 2600.0, Vector2(-22, 0))
