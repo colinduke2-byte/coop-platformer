@@ -14,7 +14,7 @@ QUESTS.pelldebt = {
   objectives: (q) => [{ t: `Find Emberheart Ore (${Math.min(count('ember_ore'), 4)}/4)`, done: count('ember_ore') >= 4 || q.status === 'done' }, { t: 'Give it to Pell (talk to him while he walks with you)', done: q.status === 'done' }],
 };
 QUESTS.ragnagrave = {
-  title: "Ragna's Cairn", giver: 'Ragna',
+  title: "Ragna's Cairn", giver: 'Ragna the archer',
   desc: 'Ragna wants a cairn raised for Hrolf and the Company, with proper iron. Three ingots, and a promise to say the names.',
   short: () => `Bring Ragna iron ingots ${Math.min(count('iron_ingot'), 3)}/3`,
   objectives: (q) => [{ t: `Gather iron ingots (${Math.min(count('iron_ingot'), 3)}/3)`, done: count('iron_ingot') >= 3 || q.status === 'done' }, { t: 'Give them to Ragna (talk to her while she walks with you)', done: q.status === 'done' }],

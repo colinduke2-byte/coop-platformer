@@ -79,7 +79,7 @@ check('smith enchants the weapon (flame)', (await S('enchants.iron_sword.type'))
 // enchant applies in combat
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(300, 250); p.face = { x: 1, y: 0 }; p.mode = 'free'; p.lockT = 0; p.invuln = 99; window.__ff.S.sp = 100; const e = g.addEnemy('draugr', 314, 250); e.cfg = { ...e.cfg, detect: 0, speed: 0 }; });
 await tap('KeyJ', 60); await h.sleep(250);
-const eh = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e.hp; });
+const eh = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e ? e.hp : 0; });
 check('enchanted hits deal elemental bonus', eh < 40 - (13 + 2 + 5) * 0.8, `hp=${eh}`);
 unstub();
 
