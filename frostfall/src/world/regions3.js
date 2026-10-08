@@ -83,7 +83,7 @@ export const GLASSWOOD = {
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y + 3 }); add({ t: 'glow', x: p.x, y: p.y, r: 50, col: 15 });
       for (let i = 0; i < 2 + p.tier; i++) enemy(i % 2 ? 'wisp' : 'glimmerkin', p.x + Math.round((i - 1) * 4), p.y - 3, p.tier, { camp: p.id });
       for (let i = 0; i < 3; i++) add({ t: 'herb', item: 'glass_bloom', x: p.x - 4 + i * 4, y: p.y + 4 });
-      chest(p, 0, 5, p.tier, 'med');
+      chest(p, 0, 4, p.tier, 'med');
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A GLIMMERING POOL.', 'LOOK INTO IT AND YOU SEE THE SKY AS IT WAS WHEN YOU WERE SMALL.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     },
@@ -177,7 +177,7 @@ export const UNDERDEEP = {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 42, col: 12 });
       for (let i = 0; i < 2 + p.tier; i++) enemy('lodeling', p.x + Math.round((i % 3 - 1) * 4), p.y + 2, p.tier, { camp: p.id });
       chest(p, 0, -2, p.tier + 1, 'hard');
-      add({ t: 'pickup', x: p.x - 2, y: p.y + 4, spec: { type: 'item', id: 'iron_ingot' } }); add({ t: 'pickup', x: p.x + 2, y: p.y + 4, spec: { type: 'item', id: 'iron_ingot' } });
+      add({ t: 'pickup', x: p.x - 2, y: p.y + 3, spec: { type: 'item', id: 'iron_ingot' } }); add({ t: 'pickup', x: p.x + 2, y: p.y + 3, spec: { type: 'item', id: 'iron_ingot' } });
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A RICH VEIN.', 'SOMEONE MARKED IT WITH A CHALK X AND THEN STOPPED MARKING THINGS.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     },

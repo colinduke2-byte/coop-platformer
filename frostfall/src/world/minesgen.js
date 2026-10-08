@@ -93,7 +93,12 @@ export function buildMines(seed, floor, o = {}) {
   });
   add({ t: 'sign', x: e0.cx - 3, y: e0.y + e0.h - 3, text: [(o.title || TITLES[floor]).toUpperCase(), o.signLine || (floor === 0 ? 'THE LANTERNS ALONG THE ROAD WENT OUT ONE BY ONE.' : 'GO CAREFULLY. THE LODE REMEMBERS.')] });
   // key puzzle: the deepest hall is barred; the key waits in a chest in the first hall past the entrance
-  if (o.keyGate && rooms[1]) add({ t: 'chest', id: `${o.id}_key`, x: rooms[1].x + 1, y: rooms[1].y + 1, lock: 'med', loot: [{ item: 'delve_key' }, { gold: 30 + tier * 20 }] });
+  if (o.keyGate && rooms[1]) {
+    const kr = rooms[1]; let kp = null;
+    for (let yy = kr.y + 1; yy < kr.y + kr.h - 1 && !kp; yy++) for (let xx = kr.x + 1; xx < kr.x + kr.w - 1; xx++) if ((g.t[yy][xx] === TILE.CFLOOR || g.t[yy][xx] === TILE.CFLOOR2) && !ents.some((e) => Math.abs(e.x - xx) < 2 && Math.abs(e.y - yy) < 2)) { kp = { x: xx, y: yy }; break; }
+    if (kp) add({ t: 'chest', id: `${o.id}_key`, x: kp.x, y: kp.y, loot: [{ item: 'delve_key' }, { gold: 30 + tier * 20 }] });
+    else { const gi = ents.findIndex((e) => e.t === 'keygate'); if (gi >= 0) ents.splice(gi, 1); }        // no room for the key chest: leave the gate open rather than lock the player out
+  }
   const bossRoom = rooms.find((r) => r.kind === 'boss') || null;
   return { grid: g.t, w: W, h: H, entities: ents, title: o.title || TITLES[floor], bossRoom };
 }

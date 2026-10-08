@@ -95,3 +95,9 @@ function loadContentPack(pack) {
 }
 const packUrl = new URLSearchParams(location.search).get('pack');
 if (packUrl) fetch(packUrl).then((r) => r.json()).then(loadContentPack).catch((e) => console.warn('pack failed', e));
+
+// Offline play: a tiny service worker (public/sw.js) keeps the game in the browser after the first visit. Quietly skipped when the
+// page is not served over http(s) (a single-file copy, a sandboxed frame) or while developing.
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !import.meta.env.DEV && window.top === window) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
