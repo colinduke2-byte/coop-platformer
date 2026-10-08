@@ -461,6 +461,8 @@ Object.assign(INFLICTS, {
 Object.assign(IMMUNE, { glimmerkin: ['shock'], crystalgolem: ['bleed', 'poison'], hartking: ['bleed'], caveweaver: ['poison'], gloomcap: ['poison'], lodeling: ['poison', 'bleed'], lodecolossus: ['burn', 'poison'] });
 for (const k of ['wreckcrab', 'barnacle']) if (ENEMIES[k]) ENEMIES[k].loot.drops.push(['pearl', k === 'barnacle' ? 0.22 : 0.18], ['salt_crystal', 0.18]);
 for (const k of ['crystalgolem', 'lodeling', 'lodecolossus']) ENEMIES[k].crush = true;
+// found pages: each starts a small quest when read (see systems/notes.js)
+for (const [k, id, ch] of [['archer', 'pilgrim_letter', 0.06], ['bandit', 'pilgrim_letter', 0.03], ['reaver', 'torn_map', 0.12], ['draugr', 'torn_map', 0.04], ['chief', 'hunters_journal', 0.25], ['nomad', 'hunters_journal', 0.05], ['wolf', 'hunters_journal', 0.01]]) ENEMIES[k]?.loot.drops.push([id, ch]);
 // creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
 for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll', 'cindersmith', 'sentinel', 'mammoth', 'stonegiant']) if (ENEMIES[k]) ENEMIES[k].crush = true;
 // pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught

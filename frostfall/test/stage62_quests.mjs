@@ -72,6 +72,19 @@ const sv = await G(async () => {
   return { ok, cleared, days: S2.days, mode: S2.followMode, killed: S2.killed, note: S2.flags.noteCache?.id, disc: S2.discovered, mods: S2.mods, perk: !!S2.perks.deadeye, blood: S2.flags.bloodAlphas };
 });
 check('saving and loading keeps the calendar, camps, notes, discoveries, orders, modifiers and capstone perks', sv.ok && sv.days === 11 && sv.mode === 'wait' && sv.killed['forest:1'] === -1003 && sv.note === 'cache1' && sv.disc['forest:camp0'] === 1 && sv.mods.moonbound && sv.perk && sv.blood === 2, JSON.stringify(sv));
+const pages = await G(async () => {
+  const S = window.__ff.S, g = window.gs ? window.gs() : window.__ff.game.scene.getScene('Game'), N = await import('/src/systems/notes.js'), M = await import('/src/data/maps.js'), out = {};
+  S.flags.introDone = true;
+  g.mapId = 'forest';
+  for (const id of ['torn_map', 'pilgrim_letter', 'hunters_journal']) {
+    const q = N.NOTES[id].quest; S.inv[id] = 1; S.discovered = {}; S.gold = 0;
+    const read = N.readNote(id, g), t = S.flags.noteTargets?.[q], poi = t && M.getReach().pois.find((p) => p.id === t.id);
+    N.noteDiscovered('forest', poi || {});
+    out[id] = read && S.quests[q].status === 'done' && S.gold > 0 && poi?.kind === N.NOTES[id].kind;
+  }
+  return out;
+});
+check('torn maps, pilgrim letters and hunters\' journals each start a quest that pays when you find the place', Object.values(pages).every(Boolean), JSON.stringify(pages));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'QUESTS FAILED' : 'QUESTS PASSED');

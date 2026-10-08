@@ -5,6 +5,24 @@ import { heartsHeld, HEART_COUNT, HEART_ORDER, HEARTS, HEART_SITE } from './hear
 import { getReach } from './maps.js';
 
 export const QUESTS = {
+  tornmap: {
+    title: 'Half a Map', giver: 'A torn map',
+    desc: 'A half-burnt map with a ruin circled in charcoal. Whatever the owner hid there, they never came back for it.',
+    short: () => 'Find the ruin the map shows',
+    objectives: (q) => [{ t: 'Find the ruin the map circles (it is marked on your map)', done: q.status === 'done' }],
+  },
+  letter: {
+    title: 'An Undelivered Letter', giver: 'A sealed letter',
+    desc: 'A pilgrim carried this to a hamlet and never arrived. The seal is unbroken. Somebody there is still waiting.',
+    short: () => 'Carry the letter to its hamlet',
+    objectives: (q) => [{ t: 'Reach the hamlet the letter is addressed to (it is marked)', done: q.status === 'done' }],
+  },
+  journal: {
+    title: "The Hunter's Last Page", giver: "A hunter's journal",
+    desc: 'The last page sketches the lair of whatever killed the writer. The sketch is very good. The hunter was not lucky, but was careful.',
+    short: () => 'Find the lair the journal sketches',
+    objectives: (q) => [{ t: 'Find the beast lair the journal sketches (it is marked)', done: q.status === 'done' }],
+  },
   smugglers: {
     title: 'The Smuggler\'s Note', giver: 'A note taken off a bandit chief',
     desc: 'A scrawled page from a bandit chief\'s belt names a cache hidden in the wild: someone\'s savings, left under a rock. Whoever wrote it did not come back for it.',
@@ -117,6 +135,9 @@ export const QUESTS = {
 
 // Quest targets for the map markers / HUD arrow: { map, x, y } in tiles.
 export const TARGETS = {
+  tornmap: () => S.flags.noteTargets?.tornmap || null,
+  letter: () => S.flags.noteTargets?.letter || null,
+  journal: () => S.flags.noteTargets?.journal || null,
   smugglers: () => (S.flags.noteCache ? { map: S.flags.noteCache.map, x: S.flags.noteCache.x, y: S.flags.noteCache.y } : null),
   hearts: () => {
     const reach = getReach();
