@@ -592,6 +592,12 @@ export default class GameScene extends Phaser.Scene {
     const real = Math.min(ms, 50) / 1000;
     if (this.slowT > 0) { this.slowT -= real; if (this.slowT <= 0) { this.physics.world.timeScale = 1; this.tweens.timeScale = 1; } }
     const dt = real * (this.slowT > 0 ? this.slowScale : 1);
+    // Safety net: a death must always end, even if it happened under a menu or a hit-stop, or was never announced.
+    if (S.hp <= 0 && this.deadT === 0 && !this.respawning && this.player?.active) { this.player.mode = 'dead'; this.deadT = 0.001; }
+    if (this.deadT > 0 && !this.respawning && (ui.modal || this.hitStopT > 0)) {
+      this.deadT += real; this.hitStopT = 0;
+      if (this.deadT > 2.4) { ui.modal = false; if (this.scene.isActive('Menu')) this.scene.stop('Menu'); if (S.quick) this.endQuickRun(); else this.respawn(); }
+    }
     if (ui.modal) { this.physics.world.pause(); return; }
     if (this.hitStopT > 0) { this.hitStopT -= dt; this.physics.world.pause(); return; }
     this.physics.world.resume();
@@ -697,22 +703,31 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // Arena Mode: falling ends the run and shows the results card (nothing is saved).
+  // Run `go` once, when the fade-out ends or, if that event never arrives (a throttled tab, a paused scene), after a short timer.
+  afterFade(go) {
+    let done = false;
+    const once = () => { if (done) return; done = true; go(); };
+    this.cameras.main.fadeOut(500, 11, 14, 26);
+    this.cameras.main.once('camerafadeoutcomplete', once);
+    setTimeout(once, 1500);
+  }
+
+  // Arena Mode: falling ends the run and shows the results card (nothing is saved).
   endQuickRun() {
     this.respawning = true;
     const q = S.quick, a = this.arena || {};
     const res = { hero: q.hero, mode: q.mode, arena: q.arena, waves: a.cleared || 0, kills: a.killed || 0, champions: a.champs || 0, time: (Date.now() - q.startedAt) / 1000, daily: q.daily };
     res.score = quickScore(res.waves, q.pts || 0, res.champions, q.mode);
-    this.cameras.main.fadeOut(500, 11, 14, 26);
-    this.cameras.main.once('camerafadeoutcomplete', () => { music.stop(); this.scene.stop('Hud'); this.scene.start('ArenaResults', res); });
+    this.afterFade(() => { music.stop(); this.scene.stop('Hud'); this.scene.start('ArenaResults', res); });
   }
 
   respawn() {
     this.respawning = true;
-    this.cameras.main.fadeOut(500, 11, 14, 26);
-    this.cameras.main.once('camerafadeoutcomplete', () => {
+    this.afterFade(() => {
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       S.gold = Math.floor(S.gold * 0.9);
-      const r = S.respawn || { map: 'village', spawn: 'start' };
+      let r = S.respawn || { map: 'village', spawn: 'start' };
+      if (!MAPS[r.map]) r = { map: 'village', spawn: 'start' };          // never respawn into a map that does not exist
       S.map = r.map;
       this.scene.restart(r.x != null ? { map: r.map, pos: { x: r.x, y: r.y } } : { map: r.map, spawn: r.spawn || 'start' });
     });
