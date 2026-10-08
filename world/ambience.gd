@@ -52,6 +52,24 @@ func _rebuild() -> void:
 		_mod = CanvasModulate.new()
 		_mod.color = darkness
 		add_child(_mod, false, Node.INTERNAL_MODE_FRONT)
+		var t := Timer.new()
+		t.wait_time = 0.5
+		t.autostart = true
+		t.timeout.connect(_light_players)
+		add_child(t, false, Node.INTERNAL_MODE_FRONT)
+
+
+## In the dark, each dreamer glows a little (their own colour) so you can always find yourself.
+func _light_players() -> void:
+	for p: Player in GameManager.players.values():
+		if is_instance_valid(p) and not p.has_node(^"DreamLight"):
+			var g := GlowLight.new()
+			g.name = "DreamLight"
+			g.radius = 230.0
+			g.energy = 0.45
+			g.color = p.player_color.lerp(Color.WHITE, 0.6)
+			g.position = Vector2(0, -50)
+			p.add_child(g)
 
 
 func _configure(p: CPUParticles2D) -> void:

@@ -10,6 +10,8 @@ extends Node2D
 ## The landscape is baked into a single mesh; only small bits animate.
 
 const BONUS_POS := Vector2(115, 905)
+const SHOP_POS := Vector2(150, 1010)        ## the Lum Shop stall (World 1, below the balloon)
+const LUM_SHOP := "res://ui/lum_shop.tscn"
 const GATE_W2_POS := Vector2(1830, 170)     ## the gate onward to the next world (top right)
 const GATE_W1_POS := Vector2(110, 975)      ## the path back to the previous world (bottom left)
 ## How each world's gates are named: [onward from the world before, back from the world after].
@@ -19,6 +21,7 @@ const GATE_TEXT := {
 	"w3": ["Down to the Rainbloom Jungle", "Back to the Rainbloom Jungle", "World 3! Follow the river down into the warm, rainy jungle."],
 	"w4": ["Up to the Clockwhirl Works", "Back to the Clockwhirl Works", "World 4! Climb past the temple to the clanking dream factory."],
 	"w5": ["Down to the Deep Sea Dream", "Back to the Deep Sea Dream", "World 5! Out of the factory's back door and down to the seaside."],
+	"w6": ["The Nightmare Nebula", "Back to the Nightmare Nebula", "The secret world, up past Inkabella's palace. Only the bravest dreamers..."],
 }
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
@@ -56,6 +59,7 @@ func _ready() -> void:
 		"w3": art = _bake_w3()
 		"w4": art = _bake_w4()
 		"w5": art = _bake_w5()
+		"w6": art = _bake_w6()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
 	var live := LiveBits.new()
@@ -71,7 +75,7 @@ func _ready() -> void:
 	else:
 		index = 0
 		for i in nodes.size():
-			if nodes[i]["unlocked"] and not nodes[i]["bonus"] and not nodes[i].has("gate"):
+			if nodes[i]["unlocked"] and not nodes[i]["bonus"] and not nodes[i].has("gate") and not nodes[i].has("shop"):
 				index = i
 	_gang_pos = nodes[index]["pos"]
 	var slots := Net.all_slots() if Net.is_online() else InputRouter.get_bound_slots()
@@ -95,11 +99,13 @@ func _ready() -> void:
 			n["unlocked"] = n["unlocked"] or Net.is_client()
 		if Net.is_client():
 			_show_toast("The host picks the level - enjoy the ride!")
-	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef"}.get(world, "worldmap"))
+	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef", "w6": "nebula"}.get(world, "worldmap"))
 
 
 func _build_nodes() -> void:
 	if world == "w1":
+		nodes.append({"id": "shop", "pos": SHOP_POS, "name": "The Lum Shop", "bonus": false, "shop": true, "unlocked": true,
+				"done": false, "blurb": "Spend your Lums on new outfits and hats! Try them on before you buy."})
 		nodes.append({"id": "bonus", "pos": BONUS_POS, "name": "Bonus Dreams", "bonus": true, "unlocked": true, "done": false,
 				"blurb": "Hop in the balloon to visit the old favourites: the Playground, Candy Canopy, Sunset Gusts and Glacier Grotto."})
 	else:
@@ -112,9 +118,14 @@ func _build_nodes() -> void:
 				"boss": l.get("boss", false), "scene": l["scene"]})
 	var onward := LevelCatalog.next_world(world)
 	if onward != "" and LevelCatalog.exists(onward + "_1"):
+		var open := LevelCatalog.world_done(world) or OS.has_feature("unlock_all")
+		var blurb: String = GATE_TEXT[onward][2]
+		if onward == LevelCatalog.SECRET_WORLD:
+			open = open and LevelCatalog.secret_open()
+			blurb += "  It opens with %d Dream Gems from Worlds 1-5 (you have %d)." % [
+					LevelCatalog.secret_gems_needed(), LevelCatalog.gems_before_secret()]
 		nodes.append({"id": "gate_" + onward, "pos": GATE_W2_POS, "name": GATE_TEXT[onward][0], "bonus": false, "gate": onward,
-				"unlocked": LevelCatalog.world_done(world) or OS.has_feature("unlock_all"), "done": false,
-				"blurb": GATE_TEXT[onward][2]})
+				"unlocked": open, "done": false, "blurb": blurb})
 	var pts: Array[Vector2] = []
 	for n in nodes:
 		pts.append(n["pos"])
@@ -167,8 +178,15 @@ func _refresh_panel() -> void:
 	_panel_blurb.text = n["blurb"]
 	if n["bonus"]:
 		_panel_stats.text = "Always open"
+	elif n.has("shop"):
+		_panel_stats.text = "You have %d Lums to spend - press JUMP to shop" % SaveData.lum_bank()
 	elif n.has("gate"):
-		_panel_stats.text = "Press JUMP to ride" if n["unlocked"] else "Locked - beat Thornwood Keep's boss first"
+		if n["unlocked"]:
+			_panel_stats.text = "Press JUMP to ride"
+		elif n["gate"] == LevelCatalog.SECRET_WORLD and LevelCatalog.world_done(world):
+			_panel_stats.text = "Locked - find %d more Dream Gems" % (LevelCatalog.secret_gems_needed() - LevelCatalog.gems_before_secret())
+		else:
+			_panel_stats.text = "Locked - beat this world's boss first"
 	elif not n["unlocked"]:
 		_panel_stats.text = "Locked - finish the level before it"
 	else:
@@ -288,6 +306,8 @@ func _enter() -> void:
 		GameManager.goto_scene(GameManager.WORLD_MAP)
 	elif n["bonus"]:
 		GameManager.goto_scene(GameManager.LEVEL_SELECT)
+	elif n.has("shop"):
+		GameManager.goto_scene(LUM_SHOP)
 	else:
 		GameManager.goto_scene(n["scene"])
 
@@ -961,6 +981,50 @@ func _bake_w5() -> ArrayMesh:
 	return mp.build()
 
 
+func _bake_w6() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 61
+	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("120a2a"), Color("4a2a7a"), 14)
+	# Nebula clouds.
+	for i in 14:
+		var c := Vector2(rng.randf_range(0, 1920), rng.randf_range(0, 900))
+		var col: Color = [Color("ff5d8f"), Color("7b5cff"), Color("3bceac")][i % 3]
+		for k in 3:
+			mp.draw_colored_polygon(Art.ellipse(c + Vector2(k * 40, -k * 14), 260.0 - k * 60.0, 90.0 - k * 20.0, 24), Color(col, 0.07))
+	# A ringed planet, and the Nightmare Core (a dark star) at the top right.
+	mp.draw_colored_polygon(Art.ellipse(Vector2(330, 260), 90, 90, 32), Color("ff9e5e"))
+	mp.draw_arc(Vector2(330, 260), 150.0, -0.3, PI + 0.3, 40, Color(1, 0.85, 0.6, 0.6), 8.0)
+	mp.draw_colored_polygon(Art.star(Vector2(1600, 250), 90.0, 12), Color("2a0a2a"))
+	mp.draw_colored_polygon(Art.ellipse(Vector2(1600, 250), 54, 54, 24), Color("ff3f6c"))
+	mp.draw_colored_polygon(Art.ellipse(Vector2(1600, 250), 26, 26, 16), Color("1d1726"))
+	# Floating dream islands for each level (bits of the old worlds).
+	var isle_cols := [Color("7ad13f"), Color("e8c04a"), Color("3fa9e0"), Color("8a3ab0")]
+	var k := 0
+	for n in nodes:
+		if n.has("gate"):
+			continue
+		var p: Vector2 = n["pos"]
+		var col: Color = isle_cols[k % isle_cols.size()]
+		mp.draw_colored_polygon(PackedVector2Array([p + Vector2(-150, 20), p + Vector2(150, 20), p + Vector2(60, 140),
+				p + Vector2(-50, 120)]), Color("3a2a5a"))
+		mp.draw_colored_polygon(Art.ellipse(p + Vector2(0, 20), 150, 26, 24), col)
+		for j in 3:
+			var cx := p.x - 100 + j * 90 + rng.randf_range(-10, 10)
+			mp.draw_colored_polygon(PackedVector2Array([Vector2(cx - 12, p.y + 10), Vector2(cx, p.y - rng.randf_range(40, 80)),
+					Vector2(cx + 12, p.y + 10)]), Color("c9a0ff"))
+		k += 1
+	# The path: a ribbon of starlight.
+	mp.draw_polyline(_path, Color(1, 1, 1, 0.25), 26.0)
+	mp.draw_polyline(_path, Color("ffe9a8"), 10.0)
+	var d := 0.0
+	var total := _poly_len(_path)
+	while d < total:
+		mp.draw_colored_polygon(Art.star(_sample(_path, d), 7.0), Color.WHITE)
+		d += 46.0
+	return mp.build()
+
+
 func _w5_shore(mp: MeshPainter, c: Vector2) -> void:
 	for k in 2:  # palms
 		var base := c + Vector2(-110 + k * 200, 0)
@@ -1180,6 +1244,9 @@ class LiveBits extends Node2D:
 		if map.world == "w5":
 			_draw_w5()
 			return
+		if map.world == "w6":
+			_draw_w6()
+			return
 		# Gondola bobbing up the cable to World 2.
 		if LevelCatalog.exists("w2_1"):
 			var a := WorldMap.GATE_W2_POS + Vector2(26, -50)
@@ -1311,6 +1378,22 @@ class LiveBits extends Node2D:
 			draw_line(Vector2(x, y), Vector2(x + 3, y + 16), Color(0.85, 0.95, 1.0, 0.35), 1.5)
 		_clouds()
 
+	func _draw_w6() -> void:
+		# Twinkling stars and a slow comet.
+		for i in 60:
+			var p := Vector2(fposmod(i * 211.0, 1920.0), fposmod(i * 97.0, 620.0))
+			var tw := 0.5 + 0.5 * sin(t * 2.0 + i * 1.3)
+			draw_circle(p, 1.5 + tw * 1.5, Color(1, 1, 1, 0.4 + 0.6 * tw))
+		var f := fposmod(t * 0.12, 1.0)
+		var c := Vector2(-100 + f * 2200, 120 + f * 260)
+		for k in 8:
+			draw_circle(c - Vector2(k * 14, k * 2.5), 7.0 - k * 0.8, Color(1, 0.9, 0.7, 0.9 - k * 0.11))
+		# The Nightmare Core pulsing.
+		var core := Vector2(1600, 250)
+		var pulse := 0.5 + 0.5 * sin(t * 2.5)
+		draw_circle(core, 70 + pulse * 10, Color(1.0, 0.25, 0.45, 0.15))
+		draw_circle(core, 44 + pulse * 6, Color(1.0, 0.3, 0.5, 0.25))
+
 	func _draw_w5() -> void:
 		var o := Color("1d1726")
 		# Waves lapping along the shore line.
@@ -1394,9 +1477,12 @@ class Badges extends Node2D:
 		var to_jungle: bool = n["gate"] == "w3"
 		var to_works: bool = n["gate"] == "w4"
 		var to_sea: bool = n["gate"] == "w5"
+		var to_nebula: bool = n["gate"] == "w6"
 		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
 		if to_sea:
 			fill = Color("a8e4ff")
+		if to_nebula:
+			fill = Color("6a4ab0")
 		if not n["unlocked"]:
 			fill = Color("9a93a8")
 		draw_circle(p + Vector2(0, 6), r, Color(0, 0, 0, 0.25))
@@ -1404,6 +1490,9 @@ class Badges extends Node2D:
 		if not n["unlocked"]:
 			draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), o)
 			draw_arc(p + Vector2(0, -3), 7.0, PI, TAU, 10, o, 3.0)
+		elif to_nebula:
+			Art.shape(self, Art.star(p, 17.0), Color("ffd23f"), o, 2.0)
+			draw_circle(p + Vector2(10, -10), 4.0, Color.WHITE)
 		elif to_sea:
 			var shell := PackedVector2Array()
 			for k in 9:  # a scallop shell
@@ -1433,6 +1522,22 @@ class Badges extends Node2D:
 		if sel:
 			draw_arc(p, r + 10.0, 0, TAU, 32, Color.WHITE, 4.0)
 
+	## The Lum Shop: a little market stall with a striped awning and a Lum sign.
+	func _draw_shop(p: Vector2, sel: bool) -> void:
+		var o := Color("1d1726")
+		draw_rect(Rect2(p + Vector2(-34, -20), Vector2(68, 36)), Color("c98a4b"))
+		draw_rect(Rect2(p + Vector2(-34, -20), Vector2(68, 36)), o, false, 3.0)
+		for k in 4:
+			var x := -40.0 + k * 20.0
+			draw_colored_polygon(PackedVector2Array([p + Vector2(x, -48), p + Vector2(x + 20, -48), p + Vector2(x + 20, -24),
+					p + Vector2(x + 10, -18), p + Vector2(x, -24)]), Color("ff5d8f") if k % 2 == 0 else Color("fff6e8"))
+		draw_line(p + Vector2(-40, -48), p + Vector2(40, -48), o, 3.0)
+		var lum := p + Vector2(0, -66 + sin(t * 3.0) * 4.0)
+		draw_circle(lum, 14.0, Color(1.0, 0.9, 0.36, 0.35))
+		Art.shape(self, Art.ellipse(lum, 9, 9, 12), Color("ffe45c"), o, 2.5)
+		if sel:
+			draw_arc(p + Vector2(0, -20), 56.0, 0, TAU, 32, Color.WHITE, 4.0)
+
 	func _process(delta: float) -> void:
 		t += delta
 		queue_redraw()
@@ -1453,13 +1558,17 @@ class Badges extends Node2D:
 			if n.has("gate"):
 				_draw_gate(p, n, sel, r)
 				continue
+			if n.has("shop"):
+				_draw_shop(p, sel)
+				continue
 			var fill := Color("ffd23f") if n["done"] else (UIStyle.ACCENT if n["unlocked"] else Color("9a93a8"))
 			if n.get("boss", false) and n["unlocked"]:
 				fill = Color("ff5d3f") if not n["done"] else Color("ffd23f")
 			draw_circle(p + Vector2(0, 6), r, Color(0, 0, 0, 0.25))
 			Art.shape(self, Art.ellipse(p, r, r, 28), fill, Color("1d1726"), 4.0)
 			draw_circle(p + Vector2(-8, -9), r * 0.3, Color(1, 1, 1, 0.35))
-			var label := str(i) if not n.get("boss", false) else "!"
+			var num := LevelCatalog.levels_in(map.world).find(LevelCatalog.by_id(n["id"])) + 1
+			var label := str(num) if not n.get("boss", false) else "!"
 			if not n["unlocked"]:
 				# Padlock.
 				draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), Color("1d1726"))

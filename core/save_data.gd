@@ -2,6 +2,7 @@ class_name SaveData
 ## Best results per level, stored in user://save.json.
 ## records[level_id] = {"time": float, "lums": int, "gems": [bool, bool, bool], "done": bool,
 ##                      "snoozling": bool}
+## records["_shop"] = {"bank": int, "owned": [item names]} - the Lum Shop.
 
 const PATH := "user://save.json"
 
@@ -54,6 +55,47 @@ static func submit(id: String, time: float, lums: int, gems: Array, snoozling :=
 	if f:
 		f.store_string(JSON.stringify(records, "\t"))
 	return news
+
+
+static func _write() -> void:
+	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(records, "\t"))
+
+
+static func _shop() -> Dictionary:
+	load_records()
+	if not records.get("_shop") is Dictionary:
+		records["_shop"] = {"bank": 0, "owned": []}
+	return records["_shop"]
+
+
+## Lums saved up for the Lum Shop (every Lum from every finished run goes in).
+static func lum_bank() -> int:
+	return int(_shop().get("bank", 0))
+
+
+static func bank_lums(n: int) -> void:
+	var s := _shop()
+	s["bank"] = int(s.get("bank", 0)) + maxi(n, 0)
+	_write()
+
+
+static func owns(item: String) -> bool:
+	return item in _shop().get("owned", [])
+
+
+## Spend `price` Lums on `item`. False (and nothing spent) if it's owned or too dear.
+static func buy(item: String, price: int) -> bool:
+	var s := _shop()
+	if owns(item) or int(s.get("bank", 0)) < price:
+		return false
+	s["bank"] = int(s["bank"]) - price
+	var owned: Array = s.get("owned", [])
+	owned.append(item)
+	s["owned"] = owned
+	_write()
+	return true
 
 
 static func has_snoozling(id: String) -> bool:

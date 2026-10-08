@@ -46,9 +46,10 @@ decor/       deco.gd (baked scenery props, sway via skew), signpost
 enemies/     enemy.gd base + 28 enemies + 6 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella)
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
-             w1_*..w5_*.tscn (Worlds 1-5 - GENERATED, see below), bonus levels, demo_level
+             w1_*..w6_*.tscn (Worlds 1-5 + secret World 6 - GENERATED, see below), bonus levels, demo_level
 ui/          title -> character_select -> world_map (one per world, gates between) -> level -> results;
-             hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus)
+             hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus), lum_shop (World 1 map),
+             screen_wipe (circle-wipe scene changes via GameManager.goto_scene)
 tools/       check.sh, levelgen/ (Python level kit + level scripts), bench (draw
              calls / blame), scene_shot + shots.sh (screenshots), audio/ (music gen)
 tests/       run_tests.gd (feel, pieces, enemies, bots that play each W1 level)

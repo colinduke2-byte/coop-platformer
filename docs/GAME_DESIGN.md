@@ -83,12 +83,20 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   when she's angry). Mixed land and swimming, no air meter. New: bubble
   columns, giant clams, tides, kelp, pufferfins, crabbits, jellybobs, eels and
   anglerlings. Reached from the top of World 4's map.
+- **World 6 - Nightmare Nebula (secret)**: 6-1 Starfall Gardens, 6-2 Comet
+  Clockworks, 6-3 Abyssal Canopy, 6-4 The Nightmare Core. Short, hard remix
+  levels mixing every world's pieces over a starry void; the finale is a boss
+  rush (Cuckoolossus, then Inkabella). Opens from the top of World 5's map once
+  World 5 is beaten AND 75% of the Dream Gems in Worlds 1-5 are found (68 of 90).
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.
 
 ## Collectibles & progression
-- **Lums** (common, shared counter; best count saved per level). A **Dream Bell**
+- **Lums** (common, shared counter; best count saved per level). Every Lum from
+  a finished run is also saved up for the **Lum Shop** (World 1 map, below the
+  Bonus balloon): 7 outfits for sale, some with their own hat; your dreamer tries
+  each one on before you buy. Wear them from the character select (UP / DOWN). A **Dream Bell**
   in each W1 level starts a Lum Rush: 10 s where every Lum is gold and worth 2.
 - **3 gems** per level (at least one behind a secret wall / hidden room).
 - **1 Snoozling** per level: a sleepy dream-critter in a cage - punch it open.

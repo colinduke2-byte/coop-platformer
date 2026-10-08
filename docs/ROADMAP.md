@@ -98,6 +98,19 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Fixes found while building it: wall-slide / ground-pound into water now switch to swimming; swimmers can grab kelp / vines at the surface
 - [ ] Playtest: is the rapids current (240) too strong with 4 players? Is Inkabella fair solo (`stuck_time` 2.4)?
 
+## Visuals & juice pass ✅
+- [x] Circle-wipe scene transitions (`ui/screen_wipe.gd`, closes on player 1; instant when headless)
+- [x] Impact stars on punches and defeats, fireworks + "DREAM GEM!" on gems, a fireworks finale and a short slow-mo when a level is completed
+- [x] Living skies: drifting bird flocks (hills, forest, river, canopy, castle, candy, ice), parrots (jungle / ruins), gulls (ocean), factory smoke, shooting stars (nebula) - `Backdrop.critters`
+- [x] Dark levels: every dreamer carries a soft light in their own colour (Ambience darkness)
+- [x] Results screen pops in and reveals its rows one by one
+- [ ] Ideas: per-world map critters for Worlds 1-4, a character idle "yawn" for long waits, pause menu art
+
+## Rewards ✅
+- [x] Lum Shop: every Lum from a finished run goes into a bank (`SaveData.lum_bank()`); 7 shop outfits in `Wardrobe.OUTFITS` with `"price"` (some with `"hat"`); stall on the World 1 map
+- [x] Nightmare Nebula (secret World 6): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-5's gems (`LevelCatalog.SECRET_SHARE`)
+- [ ] Playtest: are shop prices right (250-2000 Lums)? Is 6-4's boss rush too hard solo?
+
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)
 - [x] Character select screen + in-level wardrobe pedestals

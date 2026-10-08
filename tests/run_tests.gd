@@ -7769,3 +7769,408 @@ func test_w5_secret_chests_hold_gem_2() -> void:
 		release(0, "move_right")
 		check(gm().gems[2], "%s: punching the chest open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
 		await _finish_demo()
+
+
+# --- Phase 2/3: wipes, Lum Shop, Nightmare Nebula -----------------------------------------
+
+func test_lum_shop_banks_lums_and_sells_outfits() -> void:
+	SaveData.load_records()
+	var saved: Dictionary = SaveData.records.duplicate(true)
+	SaveData.records.erase("_shop")
+	check(SaveData.lum_bank() == 0, "the bank starts empty")
+	var idx := -1
+	for i in Wardrobe.OUTFITS.size():
+		if Wardrobe.OUTFITS[i].has("price"):
+			idx = i
+			break
+	check(idx > 0, "the wardrobe has shop outfits")
+	var o: Dictionary = Wardrobe.OUTFITS[idx]
+	check(not Wardrobe.is_unlocked(idx) or OS.has_feature("unlock_all"), "a shop outfit is locked until bought")
+	check(not SaveData.buy(o["name"], int(o["price"])), "can't buy without the Lums")
+	SaveData.bank_lums(int(o["price"]) + 50)
+	check(SaveData.buy(o["name"], int(o["price"])), "buying with enough Lums works")
+	check(SaveData.lum_bank() == 50, "the price comes out of the bank (have %d)" % SaveData.lum_bank())
+	check(SaveData.owns(o["name"]) and Wardrobe.is_unlocked(idx), "the outfit is yours")
+	check(not SaveData.buy(o["name"], int(o["price"])), "can't buy it twice")
+	var hat_idx := -1
+	for i in Wardrobe.OUTFITS.size():
+		if Wardrobe.OUTFITS[i].has("hat"):
+			hat_idx = i
+	var dressed := Wardrobe.dress(GameManager.CHARACTERS[0], hat_idx)
+	check(dressed.headwear == Wardrobe.OUTFITS[hat_idx]["hat"], "a shop outfit can come with its own hat")
+	SaveData.records = saved
+	SaveData._write()
+
+
+func test_lum_shop_scene_browses_and_buys() -> void:
+	SaveData.load_records()
+	var saved: Dictionary = SaveData.records.duplicate(true)
+	SaveData.records.erase("_shop")
+	SaveData.bank_lums(5000)
+	router().bind_slot(0, 0)
+	var shop: Control = load("res://ui/lum_shop.tscn").instantiate()
+	_arena.add_child(shop)
+	await frames(3)
+	check(shop.items().size() >= 5, "the shop has outfits for sale (%d)" % shop.items().size())
+	var first: int = shop.selected()
+	press(0, "move_right")
+	await frames(3)
+	release(0, "move_right")
+	await frames(3)
+	check(shop.selected() != first, "RIGHT browses to the next outfit")
+	var name: String = Wardrobe.OUTFITS[shop.selected()]["name"]
+	check(shop.buy_selected(), "buying the outfit you're trying on works")
+	check(SaveData.owns(name), "and it's saved")
+	shop.queue_free()
+	await frames(2)
+	SaveData.records = saved
+	SaveData._write()
+
+
+func test_world_1_map_has_the_lum_shop() -> void:
+	WorldMap.world = "w1"
+	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
+	_arena.add_child(m)
+	await frames(3)
+	var has_shop := false
+	for n in m.nodes:
+		has_shop = has_shop or n.has("shop")
+	check(has_shop, "World 1's map has a Lum Shop stall")
+	m.queue_free()
+	await frames(2)
+
+
+func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
+	SaveData.load_records()
+	var saved: Dictionary = SaveData.records.duplicate(true)
+	var need := LevelCatalog.secret_gems_needed()
+	check(need == int(ceil(30 * 3 * 0.75)), "75%% of Worlds 1-5's gems are needed (%d)" % need)
+	# Finish every level of Worlds 1-5 with no gems: the gate stays shut.
+	for w in ["w1", "w2", "w3", "w4", "w5"]:
+		for l in LevelCatalog.levels_in(w):
+			SaveData.records[l["id"]] = {"done": true, "gems": [false, false, false], "time": 1.0, "lums": 0}
+	if not (OS.has_feature("unlock_all") or LevelCatalog.dev_unlock):
+		check(not LevelCatalog.is_unlocked("w6_1"), "beating World 5 alone doesn't open the secret world")
+	# Now give them enough gems.
+	var given := 0
+	for w in ["w1", "w2", "w3", "w4", "w5"]:
+		for l in LevelCatalog.levels_in(w):
+			if given < need:
+				var g := mini(3, need - given)
+				SaveData.records[l["id"]]["gems"] = [g > 0, g > 1, g > 2]
+				given += g
+	check(LevelCatalog.is_unlocked("w6_1"), "with %d gems the Nightmare Nebula opens" % need)
+	WorldMap.world = "w5"
+	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
+	_arena.add_child(m)
+	await frames(3)
+	var gate_open := false
+	for n in m.nodes:
+		if n.get("gate", "") == "w6":
+			gate_open = n["unlocked"]
+	check(gate_open, "World 5's map shows the gate to the Nebula open")
+	m.queue_free()
+	await frames(2)
+	WorldMap.world = "w6"
+	m = load("res://ui/world_map.tscn").instantiate()
+	_arena.add_child(m)
+	await frames(3)
+	var ids: Array = []
+	for n in m.nodes:
+		ids.append(n["id"])
+	check(ids.has("w6_1") and ids.has("w6_4") and ids.has("gate_w5"), "the Nebula map has its four levels and a way back (%s)" % [ids])
+	m.queue_free()
+	await frames(2)
+	WorldMap.world = "w1"
+	SaveData.records = saved
+	SaveData._write()
+
+
+func test_screen_wipe_changes_scenes_instantly_when_headless() -> void:
+	check(DisplayServer.get_name() == "headless", "tests run headless")
+	var w := ScreenWipe.new()
+	check(w is CanvasLayer and w.layer > 100, "the wipe is an overlay above everything")
+	w.free()
+
+
+const W6_1 := "res://levels/w6_1_starfall_gardens.tscn"
+const W6_2 := "res://levels/w6_2_comet_clockworks.tscn"
+const W6_3 := "res://levels/w6_3_abyssal_canopy.tscn"
+const W6_4 := "res://levels/w6_4_nightmare_core.tscn"
+
+
+func test_w6_1_crumbling_stars_over_the_void() -> void:
+	var p: Player = await _load_demo(W6_1)
+	await _clear_enemies()
+	await _place(p, Vector2(780, -2))
+	var ok := await _hop_run(p, [860, 1204, 1504, 1804, 2104, 2404], 2700, false, 10.0)
+	check(ok, "hopping the crumbling stars crosses the void (at %s)" % p.global_position)
+	check(gm().gems[0], "gem 0 sits on the arc of a full jump between the stars")
+	await _finish_demo()
+
+
+func test_w6_1_bramble_garden_and_the_ice() -> void:
+	var p: Player = await _load_demo(W6_1)
+	await _clear_enemies()
+	await _place(p, Vector2(2700, -2))
+	var ok := await _hop_run(p, [2850, 3350, 4660, 5310], 5800, false, 14.0)
+	check(ok, "over the brambles and across the icy comet slabs (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_1_mushroom_bounces_you_to_gem_1() -> void:
+	var p: Player = await _load_demo(W6_1)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(3780, 0), -560.0, 3700.0, 6.0)
+	check(gm().gems[1], "the mushroom bounces you up to gem 1 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_1_starlit_gate() -> void:
+	var p: Player = await _load_demo(W6_1)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6100, -2))
+	await _hop_run(p, [7000], 7700, false, 8.0)
+	check(gm().level_complete, "over the star-chest to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_2_tick_tock_row_over_the_void() -> void:
+	var p: Player = await _load_demo(W6_2)
+	await _clear_enemies()
+	await _place(p, Vector2(800, -2))
+	await _beat_hops(p, [[1060, 0], [1300, 1], [1540, 0], [1780, 1], [2100, -1]])
+	check(p.global_position.x > 2000.0 and p.global_position.y < 10.0 and not p.is_bubbled(), "the tick-tock row crosses the void (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_2_belt_between_the_zaps() -> void:
+	var p: Player = await _load_demo(W6_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(2100, -2))
+	var ok := await _auto_run(p, 4300, 16.0)
+	check(ok, "up the belt between the zaps (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w6_2_tick_tock_climb_to_gem_1() -> void:
+	var p: Player = await _load_demo(W6_2)
+	await _clear_enemies()
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(4420, -2))
+	await _beat_hops(p, [[4630, 0], [4830, 1], [5030, 0], [5230, 1], [5560, -1]])
+	check(p.global_position.y < -590.0 and not p.is_bubbled(), "the tick-tock steps climb to the plateau (at %s)" % p.global_position)
+	check(gm().gems[1], "gem 1 waits at the top of the climb")
+	await _finish_demo()
+
+
+func test_w6_2_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W6_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5600, -602))
+	await _auto_run(p, 7000, 12.0)
+	await _hop_run(p, [7100], 7900, false, 8.0)
+	check(gm().level_complete, "down from the plateau and over the crate to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_3_liana_ravine() -> void:
+	var p: Player = await _load_demo(W6_3)
+	await _clear_enemies()
+	await _place(p, Vector2(950, -2))
+	var ok := await _liana_cross(p, 1090.0, 2300.0)
+	check(ok, "the lianas swing you over the void (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_3_starry_pool_and_the_sea_well() -> void:
+	var p: Player = await _load_demo(W6_3)
+	await _clear_enemies()
+	await _place(p, Vector2(2600, -2))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(3100, 500), Vector2(3390, 578), Vector2(3430, 578), Vector2(3800, 450), Vector2(4100, 200)], 16.0)
+	check(gm().gems[0], "gem 0 lies under the rock (at %s)" % p.global_position)
+	ok = await _auto_run(p, 4300, 12.0)
+	check(ok and p.global_position.y < -790.0, "the sea-well's bubbles carry you up to the canopy (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w6_3_jellies_over_the_void() -> void:
+	var p: Player = await _load_demo(W6_3)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Jellybob:
+			e.queue_free()
+		else:
+			e.bob = 0.0
+	await _place(p, Vector2(4880, -802))
+	var targets := [5260.0, 5620.0, 6150.0]
+	var k := 0
+	var jumped := false
+	press(0, "move_right")
+	for i in 600:
+		await get_tree().physics_frame
+		if not jumped and p.global_position.x >= 4955.0 and p.is_on_floor():
+			press(0, "jump")
+			jumped = true
+		if i > 30 and jumped and p.velocity.y < -900.0 and k < targets.size() - 1 and p.global_position.x > targets[k] - 80.0:
+			k += 1
+		if jumped and p.velocity.y > 0.0:
+			release(0, "jump")
+		var dx: float = targets[k] - p.global_position.x
+		release(0, "move_left")
+		release(0, "move_right")
+		if dx > 12.0:
+			press(0, "move_right")
+		elif dx < -12.0:
+			press(0, "move_left")
+		if k == targets.size() - 1 and p.is_on_floor() and p.global_position.x > 6050.0:
+			break
+	release(0, "move_right")
+	release(0, "move_left")
+	release(0, "jump")
+	check(p.is_on_floor() and p.global_position.x > 6000.0 and not p.is_bubbled(), "bouncing jelly to jelly crosses the void (at %s)" % p.global_position)
+	check(gm().gems[1], "gem 1 hangs on the arc between the jellies")
+	await _finish_demo()
+
+
+func test_w6_3_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W6_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6200, -802))
+	await _auto_run(p, 6850, 10.0)
+	await _hop_run(p, [6900], 7700, false, 8.0)
+	check(gm().level_complete, "down the slope and over the log to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_4_the_gauntlet() -> void:
+	var p: Player = await _load_demo(W6_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(950, -2))
+	var ok := await _hop_run(p, [1760, 2054, 2354], 2850, false, 10.0)
+	check(ok, "through the gauntlet and over the crumbling stars (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_4_both_bosses_can_be_beaten() -> void:
+	seed(20261009)
+	var p: Player = await _load_demo(W6_4)
+	var cuckoo: Cuckoolossus = null
+	var ink: Inkabella = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Cuckoolossus:
+			cuckoo = e
+		elif e is Inkabella:
+			ink = e
+		else:
+			e.queue_free()
+	check(cuckoo != null and ink != null and cuckoo.asleep and ink.asleep, "both bosses wait asleep in the Core")
+	# Round one: Cuckoolossus.
+	await _place(p, Vector2(3500, -2))
+	await frames(10)
+	check(not cuckoo.asleep, "walking into the first arena wakes Cuckoolossus")
+	for round in 24:
+		if not is_instance_valid(cuckoo) or cuckoo.dead:
+			break
+		p.invulnerable_timer = 100.0
+		var side := -1.0 if cuckoo.global_position.x > 3874.0 else 1.0
+		p.global_position = Vector2(cuckoo.global_position.x + side * 340.0, -2.0)
+		p.velocity = Vector2.ZERO
+		await frames(2)
+		cuckoo.st = Cuckoolossus.St.RATTLE
+		cuckoo._timer = 0.2
+		cuckoo._cuckoos_left = 1
+		for i in 300:
+			await get_tree().physics_frame
+			if not is_instance_valid(cuckoo) or cuckoo.st == Cuckoolossus.St.STUCK:
+				break
+		if not is_instance_valid(cuckoo) or cuckoo.st != Cuckoolossus.St.STUCK:
+			continue
+		var hp := cuckoo.health
+		p.global_position = cuckoo.bird_head() + Vector2(0, -160)
+		p.velocity = Vector2.ZERO
+		p.state_machine.transition_to(&"Fall")
+		for i in 120:
+			await get_tree().physics_frame
+			if not is_instance_valid(cuckoo) or cuckoo.dead or cuckoo.health < hp:
+				break
+		await seconds(0.8)
+	check(not is_instance_valid(cuckoo) or cuckoo.dead, "Cuckoolossus falls in round one")
+	await seconds(1.5)
+	# Round two: Inkabella.
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5600, -2))
+	await frames(10)
+	check(not ink.asleep, "walking into the second arena wakes Inkabella")
+	for round in 24:
+		if not is_instance_valid(ink) or ink.dead:
+			break
+		p.invulnerable_timer = 100.0
+		var side := -1.0 if ink.global_position.x > 6074.0 else 1.0
+		p.global_position = Vector2(ink.global_position.x + side * 340.0, -2.0)
+		p.velocity = Vector2.ZERO
+		await frames(2)
+		for c in ink.get_parent().get_children():
+			if c is Inkabella.InkCloud or (c is Projectile and c.shooter == ink):
+				c.queue_free()
+		ink._slams_left = 1
+		ink._start_aim()
+		for i in 300:
+			await get_tree().physics_frame
+			if not is_instance_valid(ink) or ink.st == Inkabella.St.STUCK:
+				break
+		if not is_instance_valid(ink) or ink.st != Inkabella.St.STUCK:
+			continue
+		var hp := ink.health
+		p.global_position = ink.tip() + Vector2(-60, -10)
+		p.velocity = Vector2.ZERO
+		p.facing = 1
+		await frames(2)
+		press(0, "attack")
+		await frames(4)
+		release(0, "attack")
+		for i in 60:
+			await get_tree().physics_frame
+			if not is_instance_valid(ink) or ink.dead or ink.health < hp:
+				break
+		await seconds(0.6)
+	check(not is_instance_valid(ink) or ink.dead, "Inkabella falls in round two")
+	await seconds(1.5)
+	var exits := 0
+	for g in _demo.find_children("*", "Gate", true, false):
+		if (g.global_position.x > 4400.0 and g.global_position.x < 4600.0 or g.global_position.x > 6600.0) and g.is_open():
+			exits += 1
+	check(exits == 2, "both exit gates open (%d)" % exits)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(6800, -2))
+	await _hop_run(p, [6900], 7950, false, 6.0)
+	check(gm().level_complete, "past the dream-chest to the gate: the Nightmare is over (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w6_every_snoozling_cage_and_chest() -> void:
+	for spot: Array in [[W6_1, Vector2(7000, -2)], [W6_2, Vector2(7100, -2)], [W6_3, Vector2(6900, -2)], [W6_4, Vector2(6900, -2)]]:
+		var p: Player = await _load_demo(spot[0])
+		await _clear_enemies_except_bosses()
+		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
+		await _place(p, cage.global_position + Vector2(-55, -4))
+		p.facing = 1
+		await _punch()
+		await frames(20)
+		check(cage._opened, "%s: the Snoozling's cage opens with a punch" % String(spot[0]).get_file())
+		await _place(p, spot[1])
+		p.facing = 1
+		await _run_to(p, spot[1].x + 50.0, "move_right", 1.0)
+		release(0, "move_right")
+		await _punch()
+		await frames(20)
+		press(0, "move_right")
+		await seconds(1.0)
+		release(0, "move_right")
+		check(gm().gems[2], "%s: punching the chest open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
+		await _finish_demo()

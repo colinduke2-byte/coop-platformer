@@ -49,6 +49,8 @@ func _ready() -> void:
 	EventBus.cannon_fired.connect(_on_cannon_fired)
 	EventBus.secret_found.connect(_on_secret_found)
 	EventBus.stomp_chain.connect(_on_stomp_chain)
+	EventBus.level_completed.connect(_on_level_completed)
+	EventBus.gem_collected.connect(_on_gem_collected)
 
 
 # --- Public ----------------------------------------------------------------------
@@ -159,6 +161,44 @@ func confetti(pos: Vector2, count := 24) -> void:
 		tw.tween_callback(bit.queue_free)
 
 
+## A firework: a bright ring and a burst of coloured sparks that fall and fade.
+func firework(pos: Vector2, color: Color) -> void:
+	var layer := _get_layer()
+	if layer == null:
+		return
+	ring(pos, 120.0, color, 0.45, 6.0)
+	for i in 18:
+		var bit := _circle(5.0, color.lightened(randf() * 0.4))
+		bit.position = pos
+		layer.add_child(bit)
+		var dir := Vector2.from_angle(TAU * i / 18.0 + randf() * 0.2)
+		var out := pos + dir * randf_range(110.0, 170.0)
+		var tw := bit.create_tween()
+		tw.tween_property(bit, ^"position", out, 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(bit, ^"position", out + Vector2(0, 70), 0.6).set_ease(Tween.EASE_IN)
+		tw.parallel().tween_property(bit, ^"modulate:a", 0.0, 0.6)
+		tw.parallel().tween_property(bit, ^"scale", Vector2(0.3, 0.3), 0.6)
+		tw.tween_callback(bit.queue_free)
+
+
+## A white star that pops at an impact point.
+func impact(pos: Vector2, size := 1.0) -> void:
+	var layer := _get_layer()
+	if layer == null:
+		return
+	var st := Polygon2D.new()
+	st.polygon = _star(34.0 * size, 5, 0.42)
+	st.color = Color(1, 1, 1, 0.95)
+	st.position = pos
+	st.rotation = randf() * TAU
+	st.scale = Vector2(0.3, 0.3)
+	layer.add_child(st)
+	var tw := st.create_tween()
+	tw.tween_property(st, ^"scale", Vector2.ONE, 0.08).set_ease(Tween.EASE_OUT)
+	tw.tween_property(st, ^"modulate:a", 0.0, 0.12)
+	tw.tween_callback(st.queue_free)
+
+
 func shake(amount: float) -> void:
 	EventBus.screen_shake.emit(amount)
 
@@ -260,6 +300,7 @@ func _on_punch_landed(_p: Player, target: Node2D, power: float) -> void:
 		return
 	var at := target.global_position + Vector2(0, -24)
 	ring(at, 40.0 + 40.0 * power, SPARK, 0.18, 4.0 + 3.0 * power)
+	impact(at, 0.6 + 0.6 * power)
 	shake(0.12 + 0.3 * power)
 	# Only a blink: a tiny one for jabs, a bit more for a fully charged punch.
 	hit_stop(0.02 + 0.04 * power * power)
@@ -271,6 +312,7 @@ func _on_enemy_defeated(enemy: Node2D, _by: Player) -> void:
 	var at := enemy.global_position + Vector2(0, -24)
 	puff(at, 10, Color(1, 1, 1, 0.95), Vector2.UP, TAU, Vector2(20, 55), Vector2(8, 15), 0.45)
 	sparkle(at, 6, SPARK, 60.0)
+	impact(at, 1.1)
 
 
 func _on_breakable_broken(b: Node2D, _by: Player) -> void:
@@ -397,6 +439,33 @@ func text(pos: Vector2, msg: String, color := Color.WHITE, size := 34) -> void:
 func _layer_for_world() -> Node:
 	var scene := get_tree().current_scene
 	return scene if scene else get_tree().root
+
+
+## The big finish: fireworks over the gate and a slow-motion moment.
+func _on_level_completed(_results: Dictionary) -> void:
+	var at := Vector2.ZERO
+	var n := 0
+	for p: Player in GameManager.players.values():
+		if is_instance_valid(p):
+			at += p.global_position
+			n += 1
+	if n == 0:
+		return
+	at /= n
+	text(at + Vector2(0, -260), "DREAM COMPLETE!", Color("ffd23f"), 56)
+	for i in 7:
+		get_tree().create_timer(0.12 + i * 0.17, true, false, true).timeout.connect(func() -> void:
+			firework(at + Vector2(randf_range(-420, 420), randf_range(-520, -260)), CONFETTI[i % CONFETTI.size()]))
+	if hit_stop_enabled and DisplayServer.get_name() != "headless":
+		Engine.time_scale = 0.4
+		get_tree().create_timer(0.35, true, false, true).timeout.connect(func() -> void: Engine.time_scale = 1.0)
+
+
+func _on_gem_collected(index: int, _slot: int, pos: Vector2) -> void:
+	var cols := [Color("ff5d8f"), Color("5bc8ff"), Color("7ee05a")]
+	text(pos + Vector2(0, -70), "DREAM GEM!", cols[index % cols.size()], 40)
+	firework(pos, cols[index % cols.size()])
+	shake(0.2)
 
 
 func _on_stomp_chain(p: Player, count: int) -> void:

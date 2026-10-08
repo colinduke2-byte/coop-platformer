@@ -210,6 +210,7 @@ func complete_level() -> void:
 		if Wardrobe.is_unlocked(k):
 			had.append(k)
 	var news := SaveData.submit(id, level_time, lums, gems, snoozling)
+	SaveData.bank_lums(lums)
 	var new_outfits: Array[String] = []
 	for k in Wardrobe.OUTFITS.size():
 		if Wardrobe.is_unlocked(k) and not k in had:
@@ -226,7 +227,7 @@ func complete_level() -> void:
 func goto_scene(path: String) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	get_tree().change_scene_to_file.call_deferred(path)
+	ScreenWipe.go(get_tree(), path)
 
 
 func restart_level() -> void:

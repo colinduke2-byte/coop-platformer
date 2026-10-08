@@ -6,6 +6,11 @@ class_name LevelCatalog
 ## Within a world, a level unlocks when the one before it is finished.
 ## Bonus Dreams are always open.
 
+## The secret last world: it opens once World 5 is beaten AND you've found
+## SECRET_SHARE of every Dream Gem in the worlds before it.
+const SECRET_WORLD := "w6"
+const SECRET_SHARE := 0.75
+
 ## F9 on the world map (dev shortcut, this session only): everything is open.
 static var dev_unlock := false
 
@@ -15,6 +20,7 @@ const WORLDS: Array[Dictionary] = [
 	{"id": "w3", "name": "Rainbloom Jungle", "blurb": "Warm rain, swinging vines and a queen you can't always see."},
 	{"id": "w4", "name": "Clockwhirl Works", "blurb": "A dream factory of belts, gears and a clock that strikes thirteen."},
 	{"id": "w5", "name": "Deep Sea Dream", "blurb": "Sun, sand, coral and kelp - and something with eight arms in the temple."},
+	{"id": "w6", "name": "Nightmare Nebula", "blurb": "The secret world: every dream at once, and none of them friendly.", "secret": true},
 	{"id": "bonus", "name": "Bonus Dreams", "blurb": "Old favourites and tricky extras."},
 ]
 
@@ -109,6 +115,18 @@ const LEVELS: Array[Dictionary] = [
 	{"id": "w5_6", "world": "w5", "name": "The Drowned Palace", "scene": "res://levels/w5_6_sunken_temple.tscn",
 		"blurb": "INKABELLA waits in the great hall. Hit her tentacles when they stick!",
 		"theme": "res://world/themes/octopus.tres", "map": Vector2(1650, 330), "boss": true},
+	{"id": "w6_1", "world": "w6", "name": "Starfall Gardens", "scene": "res://levels/w6_1_starfall_gardens.tscn",
+		"blurb": "Thorns, crumbling stars and icy comets - the Lullaby Woods gone wrong.",
+		"theme": "res://world/themes/nebula.tres", "map": Vector2(300, 820)},
+	{"id": "w6_2", "world": "w6", "name": "Comet Clockworks", "scene": "res://levels/w6_2_comet_clockworks.tscn",
+		"blurb": "Tick-tock blocks over the void, zaps and saws. Keep the beat!",
+		"theme": "res://world/themes/nebula.tres", "map": Vector2(720, 600)},
+	{"id": "w6_3", "world": "w6", "name": "Abyssal Canopy", "scene": "res://levels/w6_3_abyssal_canopy.tscn",
+		"blurb": "Swinging vines over starry seas, eels and jellies. Hold on tight.",
+		"theme": "res://world/themes/nebula.tres", "map": Vector2(1160, 780)},
+	{"id": "w6_4", "world": "w6", "name": "The Nightmare Core", "scene": "res://levels/w6_4_nightmare_core.tscn",
+		"blurb": "The heart of the bad dream. Two old foes wait at the end...",
+		"theme": "res://world/themes/nebula_boss.tres", "map": Vector2(1600, 380), "boss": true},
 	{"id": "demo", "world": "bonus", "name": "Dreamer's Playground", "scene": "res://levels/demo_level.tscn",
 		"blurb": "Every move in one long sunny playground.", "theme": "res://world/themes/meadow.tres"},
 	{"id": "candy", "world": "bonus", "name": "Candy Canopy", "scene": "res://levels/candy_canopy.tscn",
@@ -169,7 +187,30 @@ static func is_unlocked(id: String) -> bool:
 		return SaveData.get_record(list[k - 1]["id"]).get("done", false)
 	# The first level of a world opens when the world before it is finished.
 	var prev := previous_world(info["world"])
+	if info["world"] == SECRET_WORLD and not secret_open():
+		return false
 	return prev == "" or world_done(prev)
+
+
+## Dream Gems needed to open the secret world (SECRET_SHARE of the worlds before it).
+static func secret_gems_needed() -> int:
+	var total := 0
+	for w in story_worlds():
+		if w != SECRET_WORLD:
+			total += levels_in(w).size() * 3
+	return int(ceil(total * SECRET_SHARE))
+
+
+static func gems_before_secret() -> int:
+	var n := 0
+	for w in story_worlds():
+		if w != SECRET_WORLD:
+			n += SaveData.world_totals(w)["gems"]
+	return n
+
+
+static func secret_open() -> bool:
+	return dev_unlock or OS.has_feature("unlock_all") or gems_before_secret() >= secret_gems_needed()
 
 
 ## The story worlds in order ("w1", "w2", ...; not the bonus levels).

@@ -73,6 +73,7 @@ func _build() -> void:
 	var t_text := "Time  %s%s" % [UIStyle.fmt_time(_results.get("time", 0.0)), "   NEW BEST!" if news.has("time") else ""]
 	_add(v, UIStyle.label(t_text, 30))
 	_add(v, UIStyle.label("Lums  %d%s" % [_results.get("lums", 0), "   NEW BEST!" if news.has("lums") else ""], 30))
+	_add(v, UIStyle.label("+%d Lums for the Lum Shop  (saved up: %d)" % [_results.get("lums", 0), SaveData.lum_bank()], 22, Color("b8860b")))
 	# Per-player Lums, with a crown for the top collector.
 	var by: Dictionary = _results.get("lums_by_slot", {})
 	var best_slot := -1
@@ -113,8 +114,10 @@ func _build() -> void:
 				t["snoozlings"], t["levels"], t["gems"], t["gems_total"]], 24))
 		var ws := LevelCatalog.story_worlds()
 		var nxt := ws.find(world) + 1
-		if nxt < ws.size():
+		if nxt < ws.size() and LevelCatalog.is_unlocked(ws[nxt] + "_1"):
 			_add(v, UIStyle.label("A new world is open: %s!" % LevelCatalog.world_info(ws[nxt])["name"], 26, UIStyle.ACCENT))
+		elif nxt < ws.size() and ws[nxt] == LevelCatalog.SECRET_WORLD:
+			_add(v, UIStyle.label("Something stirs beyond the palace... find %d Dream Gems to see." % LevelCatalog.secret_gems_needed(), 24, Color("c58bff")))
 	if story:
 		var freed: bool = _results.get("snoozling", false)
 		var s_text := "Snoozling rescued!" if freed else ("Snoozling already safe" if SaveData.has_snoozling(info["id"]) else "The Snoozling is still caged somewhere...")
@@ -133,6 +136,25 @@ func _build() -> void:
 	_list.add_theme_constant_override(&"separation", 50)
 	v.add_child(_list)
 	_refresh_items()
+	_animate_in(pc, v)
+
+
+## Pop the panel in, then reveal its rows one after another.
+func _animate_in(panel: Control, rows: VBoxContainer) -> void:
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.7, 0.7)
+	panel.modulate.a = 0.0
+	var tw := panel.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(panel, ^"scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(panel, ^"modulate:a", 1.0, 0.2)
+	var k := 0
+	for c in rows.get_children():
+		if c is CanvasItem:
+			c.modulate.a = 0.0
+			var t2 := c.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+			t2.tween_interval(0.2 + k * 0.07)
+			t2.tween_property(c, ^"modulate:a", 1.0, 0.18)
+			k += 1
 
 
 func _add(parent: Control, l: Label) -> void:

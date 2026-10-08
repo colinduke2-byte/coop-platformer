@@ -59,6 +59,10 @@ enum Scenery {
 	set(v):
 		cloud_sea = v
 		_rebuild()
+@export var critters := true:                ## drifting birds / parrots / gulls / smoke / shooting stars
+	set(v):
+		critters = v
+		_rebuild()
 @export var theme_override: LevelTheme:
 	set(v):
 		theme_override = v
@@ -102,6 +106,8 @@ func _rebuild() -> void:
 		Scenery.OCEAN: _ocean_scene()
 		Scenery.DEEP: _deep_scene()
 		Scenery.NEBULA: _nebula_scene()
+	if critters:
+		_critters()
 	if cloud_sea:
 		_build_cloud_sea()
 	if light_shafts:
@@ -662,6 +668,73 @@ func _deep_scene() -> void:
 
 
 ## A school of little fish swimming across (one autoscrolled baked layer).
+## Little life in the sky: drifting layers of birds (parrots in the jungle,
+## gulls at sea), smoke over the factory, shooting stars in the nebula.
+func _critters() -> void:
+	match scenery:
+		Scenery.HILLS, Scenery.FOREST, Scenery.RIVER, Scenery.CANOPY, Scenery.CASTLE, Scenery.CANDY:
+			_flock(0.12, 0.45, [_th.outline.lerp(_th.sky_bottom, 0.55)], 34.0)
+			_flock(0.22, 0.3, [_th.outline.lerp(_th.sky_bottom, 0.4)], 48.0)
+		Scenery.JUNGLE, Scenery.RUINS:
+			_flock(0.2, 0.2, [Color("ff4f5e"), Color("ffd23f"), Color("3bb3ff"), Color("4fd16a")], 52.0, true)
+		Scenery.OCEAN:
+			_flock(0.16, 0.35, [Color(1, 1, 1, 0.85)], 40.0)
+		Scenery.ICE:
+			_flock(0.14, 0.5, [_th.outline.lerp(_th.sky_bottom, 0.6)], 30.0)
+		Scenery.FACTORY:
+			_smoke(0.1)
+			_smoke(0.2)
+		Scenery.NEBULA:
+			_shooting_stars()
+
+
+## A drifting layer of birds (little flapping V's; colourful parrots when `parrots`).
+func _flock(scale: float, haze: float, cols: Array, drift: float, parrots := false) -> void:
+	var p := _parallax(scale, 3000.0, Vector2(-drift, 0))
+	var mp := MeshPainter.new()
+	for g in 3:
+		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - _rng.randf_range(350, 900))
+		for i in _rng.randi_range(3, 6):
+			var b := c + Vector2(i * 46.0 + _rng.randf_range(-10, 10), absf(i - 2.5) * 16.0 + _rng.randf_range(-6, 6))
+			var col: Color = _haze(cols[(g + i) % cols.size()], haze)
+			var s := _rng.randf_range(0.8, 1.2) * (1.4 if parrots else 1.3)
+			if parrots:
+				mp.draw_colored_polygon(Art.ellipse(b, 10 * s, 5 * s, 10), col)
+				mp.draw_colored_polygon(PackedVector2Array([b + Vector2(-2, -2) * s, b + Vector2(-12, -14) * s, b + Vector2(6, -3) * s]), col.darkened(0.15))
+				mp.draw_colored_polygon(PackedVector2Array([b + Vector2(-8, 0) * s, b + Vector2(-22, 6) * s, b + Vector2(-8, 4) * s]), col.lightened(0.2))
+			else:
+				mp.draw_polyline(PackedVector2Array([b + Vector2(-12, -5) * s, b + Vector2(-5, -6) * s, b,
+						b + Vector2(5, -6) * s, b + Vector2(12, -5) * s]), col, 3.0)
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -95
+
+
+## Slow drifting smoke puffs above the factory roofs.
+func _smoke(scale: float) -> void:
+	var p := _parallax(scale, 2600.0, Vector2(-14.0 - scale * 40.0, 0))
+	var mp := MeshPainter.new()
+	for i in 10:
+		var c := Vector2(_rng.randf_range(0, 2600), horizon_y - _rng.randf_range(420, 760))
+		for k in 3:
+			mp.draw_colored_polygon(Art.ellipse(c + Vector2(k * 34, -k * 10), 40.0 - k * 6.0, 26.0 - k * 4.0, 14),
+					Color(_haze(Color("e9e2e8"), 0.3), 0.35))
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -95
+
+
+## Streaks of falling stars racing across the nebula.
+func _shooting_stars() -> void:
+	var p := _parallax(0.05, 4000.0, Vector2(-520, 0))
+	var mp := MeshPainter.new()
+	for i in 4:
+		var a := Vector2(_rng.randf_range(0, 4000), horizon_y - _rng.randf_range(500, 1100))
+		for k in 6:
+			mp.draw_line(a + Vector2(k * 16, -k * 4), a + Vector2(k * 16 + 18, -k * 4 - 4), Color(1, 1, 1, 0.9 - k * 0.14), 4.0 - k * 0.5)
+		mp.draw_circle(a, 4.0, Color(1, 1, 0.85))
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -95
+
+
 func _fish_school(scale: float, haze: float) -> void:
 	var p := _parallax(scale, 2600.0, Vector2(-40.0 * scale - 10.0, 0))
 	var mp := MeshPainter.new()

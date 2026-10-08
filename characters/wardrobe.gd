@@ -4,6 +4,7 @@ class_name Wardrobe
 ## Pick one on the character select screen with UP / DOWN.
 ## Add an outfit: append to OUTFITS. "need_gems" / "need_snoozlings" are totals
 ## over every story world; colours replace the character's main/accent/trim.
+## "price" (Lums) puts it in the Lum Shop instead; "hat" swaps the headwear.
 
 const OUTFITS: Array[Dictionary] = [
 	{"name": "Classic"},
@@ -19,6 +20,21 @@ const OUTFITS: Array[Dictionary] = [
 		"main": Color("2a2f55"), "accent": Color("ffd23f"), "trim": Color("c9a0ff")},
 	{"name": "Golden Dreamer", "need_gems": 36, "need_snoozlings": 12,
 		"main": Color("f2b632"), "accent": Color("fff6c9"), "trim": Color("b87a1a")},
+	# --- the Lum Shop ---
+	{"name": "Coral Reef", "price": 250,
+		"main": Color("ff6f91"), "accent": Color("ffd8a8"), "trim": Color("2fb6a8")},
+	{"name": "Bubblegum", "price": 400,
+		"main": Color("ff8ad8"), "accent": Color("8ae1ff"), "trim": Color("c04f9e")},
+	{"name": "Pirate Captain", "price": 600, "hat": CharacterDef.Headwear.BANDANA,
+		"main": Color("3a2e4a"), "accent": Color("e8c04a"), "trim": Color("b8323a")},
+	{"name": "Knight of Dreams", "price": 800, "hat": CharacterDef.Headwear.BUCKET_HELM,
+		"main": Color("9aa6c0"), "accent": Color("ffd23f"), "trim": Color("4a5a80")},
+	{"name": "Starry Wizard", "price": 1000, "hat": CharacterDef.Headwear.WIZARD_HAT,
+		"main": Color("2a2470"), "accent": Color("fff3a0"), "trim": Color("7b5cff")},
+	{"name": "Painter", "price": 1200, "hat": CharacterDef.Headwear.BERET,
+		"main": Color("f4ecd8"), "accent": Color("ff5d8f"), "trim": Color("5b8cff")},
+	{"name": "Nightmare", "price": 2000,
+		"main": Color("1d1726"), "accent": Color("ff3f6c"), "trim": Color("8a3ab0")},
 ]
 
 
@@ -35,6 +51,8 @@ static func is_unlocked(index: int) -> bool:
 	if OS.has_feature("unlock_all") or LevelCatalog.dev_unlock:
 		return true
 	var o: Dictionary = OUTFITS[index]
+	if o.has("price"):
+		return SaveData.owns(o["name"])
 	var t := totals()
 	return t["gems"] >= o.get("need_gems", 0) and t["snoozlings"] >= o.get("need_snoozlings", 0)
 
@@ -42,6 +60,8 @@ static func is_unlocked(index: int) -> bool:
 ## "Find 12 Dream Gems" / "Rescue 6 Snoozlings" (what's still missing).
 static func requirement(index: int) -> String:
 	var o: Dictionary = OUTFITS[index]
+	if o.has("price"):
+		return "buy it in the Lum Shop (%d Lums)" % o["price"]
 	var t := totals()
 	var parts: Array[String] = []
 	if o.has("need_gems") and t["gems"] < o["need_gems"]:
@@ -60,6 +80,8 @@ static func dress(def: CharacterDef, index: int) -> CharacterDef:
 	d.main_color = o["main"]
 	d.accent_color = o["accent"]
 	d.trim_color = o["trim"]
+	if o.has("hat"):
+		d.headwear = o["hat"]
 	d.resource_name = def.display_name  # remember who's underneath
 	return d
 
