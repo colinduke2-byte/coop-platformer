@@ -122,6 +122,18 @@ export class Herb extends Phaser.GameObjects.Image {
 }
 
 // Enter a building / go through a door by pressing E.
+// A barred gate in a dungeon: opens with the delve key from a chest elsewhere in the halls.
+export class LockedGate {
+  constructor(scene, x, y, e) { this.scene = scene; this.ix = x; this.iy = y; this.e = e; }
+  canInteract() { return !S.flags[this.e.id]; }
+  label() { return S.inv.delve_key > 0 ? 'E: UNLOCK THE GATE' : 'E: BARRED'; }
+  interact() {
+    if (!(S.inv.delve_key > 0)) { sfx.play('nostamina'); bus.emit('toast', 'THE GATE IS BARRED. A KEY LIES SOMEWHERE IN THESE HALLS.', 11); return; }
+    S.inv.delve_key--; if (!S.inv.delve_key) delete S.inv.delve_key;
+    S.flags[this.e.id] = true; this.scene.openKeyGate(this.e);
+  }
+}
+
 export class Door {
   constructor(scene, x, y, e) { this.scene = scene; this.ix = x; this.iy = y; this.e = e; }
   get forSale() { return !!this.e.price && !S.flags[this.e.flag]; }

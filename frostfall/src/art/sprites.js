@@ -136,6 +136,9 @@ export const STYLES = {
   nomad: { skin: 10, hair: 9, hood: 10, body: 10, trim: 9, legs: 9, boots: 1, chest: 4, cape: 9 },
   shaman: { skin: 10, hair: 6, hood: 15, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, chest: 14, horns: 6, cape: 4 },
   stonegiant: { skin: 3, hair: 2, body: 2, trim: 4, legs: 2, boots: 1, helm: 3, chest: 4, beard: 3, horns: 4 },
+  hartking: { skin: 4, hair: 6, body: 15, trim: 5, legs: 3, boots: 1, glow: 15, helm: 5, chest: 15, beard: 6, cape: 5, crown: 15, horns: 15 },
+  lodecolossus: { skin: 2, hair: 1, body: 2, trim: 12, legs: 1, boots: 0, glow: 12, helm: 3, chest: 3, beard: 1, horns: 12 },
+  brinegut: { skin: 10, hair: 1, hood: 1, body: 4, trim: 13, legs: 1, boots: 0, chest: 4, cape: 11, helm: 1, beard: 9, crown: 13 },
   stormgiant: { skin: 5, hair: 6, body: 3, trim: 15, legs: 2, boots: 0, glow: 15, helm: 4, chest: 15, beard: 6, cape: 15, crown: 13, horns: 6 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
@@ -259,6 +262,14 @@ function leechFrame(ctx, ox, fr) {
   r(9, 5, 12 + b, 2, 1); r(9, 8, 12 + b, 2, 1);                                      // underbelly ridges
   r(1, 10, 10 - b, 3, 4); r(11, 12, 11, 2, 1); r(11, 13, 10, 1, 1); r(13, 12, 12, 1, 1);   // head, eye, teeth
   r(8, 11, 9, 1, 1);                                                                  // a sickly spot
+}
+
+// Cave weaver: a long-legged spider, seen from the side, facing right.
+function spiderFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1 ? 1 : 0, b = fr === 2 ? 1 : 0;
+  r(1, 4, 6, 6, 5); r(0, 5, 7, 4, 3); r(8, 6, 7, 2, 1); r(1, 9, 7, 3, 3); r(11, 11, 8, 1, 1); r(11, 11, 10, 1, 1);
+  for (let i = 0; i < 4; i++) { const x = 3 + i * 2, up = i % 2 ? a : b; r(0, x - 2, 4 + up, 1, 3); r(0, x - 2, 3 + up, 2, 1); r(0, x - 1 + (i > 1 ? 4 : 0), 11, 1, 3 - up); r(0, x - 2 + (i > 1 ? 4 : 0), 13 - up, 2, 1); }
 }
 
 // Glacial wyrm: an undulating ice serpent seen from the side, head to the right.
@@ -492,6 +503,7 @@ function buildCharacters(scene) {
   animalSheet(scene, 'spr_fox', foxFrame);
   animalSheet(scene, 'spr_hare', hareFrame);
   animalSheet(scene, 'spr_leech', leechFrame);
+  animalSheet(scene, 'spr_spider', spiderFrame);
   animalSheet(scene, 'spr_werewolf', (c, x, f) => wolfFrame(c, x, f, { fur: 9, dark: 7, light: 10, leg: 7 }));
   animalSheet(scene, 'spr_grimfang', (c, x, f) => wolfFrame(c, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }));
   make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
@@ -635,6 +647,12 @@ function drawTile(ctx, id, ox) {
     case TILE.SLATE: o(2, 0, 0, 16, 16); speckle(ctx, ox, 0, 191, [3, 1, 2, 4], 22); o(1, 0, 8, 16, 1); o(3, 5, 0, 1, 8); o(1, 11, 9, 1, 7); break;
     case TILE.BOGTREE: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 171, [1, 9, 8, 1], 22); o(0, 4, 14, 8, 1); o(9, 7, 6, 2, 8); o(9, 4, 5, 3, 1); o(9, 3, 3, 1, 3); o(9, 9, 7, 4, 1); o(9, 12, 4, 1, 4); o(10, 7, 6, 1, 8); o(8, 5, 4, 2, 1); o(8, 11, 3, 2, 1); o(8, 6, 11, 4, 1); break;
     case TILE.BOGREED: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 171, [1, 9, 8, 1], 22); for (const [x, h] of [[3, 9], [6, 12], [9, 8], [12, 10]]) { o(8, x, 14 - h, 1, h); o(10, x, 14 - h, 1, 2); o(9, x - 1, 14 - h + 1, 3, 2); } o(0, 2, 14, 12, 1); break;
+    case TILE.GLASSMOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); for (const [x, y] of [[3, 5], [10, 9], [6, 12]]) { o(15, x, y, 1, 2); o(6, x + 1, y + 1, 1, 1); } o(8, 0, 15, 16, 1); break;
+    case TILE.CRYSTAL: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); o(0, 3, 14, 10, 1); o(4, 6, 3, 4, 11); o(5, 7, 2, 2, 12); o(15, 7, 1, 1, 8); o(6, 2, 7, 4, 7); o(15, 3, 6, 1, 4); o(5, 10, 6, 4, 8); o(15, 11, 5, 1, 5); o(4, 3, 10, 3, 4); break;
+    case TILE.GLADEPATH: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 261, [6, 15, 4, 5], 22); o(6, 1, 4, 5, 1); o(4, 9, 11, 5, 1); o(15, 12, 3, 1, 1); break;
+    case TILE.DEEPSTONE: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 271, [2, 3, 0, 2], 30); o(0, 2, 5, 5, 1); o(2, 9, 10, 4, 1); o(0, 4, 13, 7, 1); break;
+    case TILE.GLOWCAP: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 271, [2, 3, 0, 2], 30); o(0, 3, 14, 10, 1); o(5, 7, 8, 2, 6); o(8, 3, 4, 10, 4); o(15, 4, 5, 3, 1); o(8, 4, 3, 8, 1); o(15, 9, 5, 1, 1); o(8, 11, 7, 2, 3); o(5, 12, 9, 1, 1); break;
+    case TILE.CAVERNPOOL: o(0, 0, 0, 16, 16); o(1, 1, 3, 6, 1); o(4, 8, 9, 7, 1); o(15, 3, 6, 4, 1); o(4, 9, 12, 5, 1); o(15, 10, 4, 2, 1); o(1, 12, 14, 2, 1); break;
     case TILE.HEATHROCK: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 181, [8, 9, 8, 10], 26); o(3, 2, 5, 12, 9); o(3, 4, 3, 8, 2); o(4, 3, 6, 6, 4); o(6, 4, 3, 6, 2); o(2, 2, 13, 12, 1); o(5, 5, 6, 3, 1); o(14, 11, 10, 2, 1); break;
     case TILE.ICE2: o(4, 0, 0, 16, 16); o(5, 2, 3, 6, 1); o(3, 0, 8, 16, 1); o(2, 3, 2, 1, 4); o(2, 4, 5, 3, 1); o(2, 7, 6, 1, 5); o(2, 8, 10, 4, 1); o(6, 11, 3, 2, 1); break;
     case TILE.TUFT: snow(); for (const [x, y] of [[4, 8], [8, 6], [11, 9]]) { o(8, x, y, 1, 3); o(7, x + 1, y + 1, 1, 2); o(8, x - 1, y + 1, 1, 2); } o(6, 4, 7, 1, 1); break;

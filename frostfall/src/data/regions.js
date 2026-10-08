@@ -4,7 +4,7 @@ import { S } from '../systems/state.js';
 
 import { MAPS } from './maps.js';
 
-export const REGION_ORDER = ['reach', 'ashen', 'coast', 'kingdom', 'fens', 'highlands'];
+export const REGION_ORDER = ['reach', 'ashen', 'coast', 'kingdom', 'fens', 'highlands', 'glasswood', 'underdeep'];
 export const REGIONS = {
   reach: { id: 'reach', map: 'forest', name: 'The Hollow Reach', locked: () => false },
   ashen: { id: 'ashen', map: 'ashen', name: 'The Ashen Peaks', locked: () => !S.flags.regions?.ashen },
@@ -12,6 +12,8 @@ export const REGIONS = {
   kingdom: { id: 'kingdom', map: 'kingdom', name: 'The Old Kingdom', locked: () => !S.flags.regions?.kingdom },
   fens: { id: 'fens', map: 'fens', name: 'The Weeping Fens', locked: () => false },
   highlands: { id: 'highlands', map: 'highlands', name: 'The Stormcrown Highlands', locked: () => false },
+  glasswood: { id: 'glasswood', map: 'glasswood', name: 'The Glasswood', locked: () => false },
+  underdeep: { id: 'underdeep', map: 'underdeep', name: 'The Underdeep', locked: () => !S.flags.regions?.ashen },
 };
 export const unlockRegion = (id) => { S.flags.regions = S.flags.regions || {}; S.flags.regions[id] = true; };
 export const regionUnlocked = (id) => !!REGIONS[id] && !REGIONS[id].locked();

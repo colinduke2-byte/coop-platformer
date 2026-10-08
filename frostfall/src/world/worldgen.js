@@ -50,6 +50,8 @@ export const TIER_MOBS = [
 // grid + entities stamped into the north-west corner (the old forest); new regions pass null.
 export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'forge', 'peakroad', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire']);
 export const EXTRA_KIND_NAME = {};
+export const EXTRA_GATES = {};             // extra door kinds: { to, col, stone, text, spawn } (filled in by regions3.js)
+export const FACADE_EXTRA = new Set();
 const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS', tower: 'A WATCHTOWER', grove: 'A QUIET GROVE', hamlet: 'A SMALL HAMLET', standing: 'A CIRCLE OF STANDING STONES', barrow: 'A BARROW', champion: 'A MONSTER\'S LAIR', beardn: 'A BEAR DEN',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
   city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE',
@@ -117,7 +119,7 @@ export function buildRegion(def, region, seed) {
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const edges = [];
   const remaining = pois.filter((p) => !HIDDEN_KINDS.has(p.kind)).sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
-  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire']);   // a stone front sits north of the door: roads end below it
+  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire', ...FACADE_EXTRA]);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
     const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
     let best = nodes[0], bd = 1e9;
@@ -217,7 +219,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
-    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire'].includes(p.kind)) {
+    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire'].includes(p.kind) || EXTRA_GATES[p.kind]) {
       const D = {
         fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
         temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
@@ -237,13 +239,13 @@ export function buildRegion(def, region, seed) {
         skarnhold: { to: 'skarnhold', col: 12, stone: TILE.STONE, text: ['SKARN HOLD.', 'A RING OF HEARTH-FIRES AND WIND-BLEACHED TENTS. THE CLANS WILL HEAR YOU OUT.'] },
         stormspire: { to: 'stormspire', col: 15, stone: TILE.STONE, text: ['THE STORMSPIRE.', 'LIGHTNING WALKS UP THIS TOWER, NOT DOWN. A GIANT SITS AT THE TOP, WAITING FOR THE CLOUDS.'] },
         sepulchre: { to: 'sepulchre', col: 14, stone: TILE.RUINWALL, text: ['THE HOLLOW SEPULCHRE.', 'THE LAST OF THE KINGS WAITS BELOW. HE HAS BEEN WAITING A LONG TIME TO BE REMEMBERED.'] },
-      }[p.kind];
+      }[p.kind] || EXTRA_GATES[p.kind];
       clearing(p, 13, 8);
       g.rect(p.x - 5, p.y - 4, 11, 3, D.stone);
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
       add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: { throne: 'hearts4', peakroad: 'chapter3', coastroad: 'chapter3', forge: 'forgeOpen', kingroad: 'sovereignDead' }[p.kind] || null });
-      add({ t: 'spawn', name: { fort: 'keep', temple: 'chapel', rootvault: 'rootvault', nest: 'nest', city: 'emberhold', peakroad: 'peakroad', forge: 'forge', coastroad: 'coastroad', kingroad: 'kingroad', tidebreak: 'tidebreak', sepulchre: 'sepulchre', fenroad: 'fenroad', stormroad: 'stormroad', reedwick: 'reedwick', mirebarrow: 'mirebarrow', skarnhold: 'skarnhold', stormspire: 'stormspire' }[p.kind] || 'throne', x: p.x, y: p.y });
+      add({ t: 'spawn', name: { fort: 'keep', temple: 'chapel', rootvault: 'rootvault', nest: 'nest', city: 'emberhold', peakroad: 'peakroad', forge: 'forge', coastroad: 'coastroad', kingroad: 'kingroad', tidebreak: 'tidebreak', sepulchre: 'sepulchre', fenroad: 'fenroad', stormroad: 'stormroad', reedwick: 'reedwick', mirebarrow: 'mirebarrow', skarnhold: 'skarnhold', stormspire: 'stormspire' }[p.kind] || EXTRA_GATES[p.kind]?.spawn || 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });

@@ -14,12 +14,14 @@ export const PLACE_NAME = {
   cave: 'CAVE', foundry: 'OLD FOUNDRY', wreck: 'SHIPWRECK', lighthouse: 'LIGHTHOUSE', courtyard: 'BROKEN COURTYARD', fort: 'IRONWATCH KEEP', temple: 'THE DROWNED CHAPEL', rootvault: 'THE ROOTVAULT', throne: 'THE WINTER THRONE',
   maw: 'THE GLACIAL MAW', nest: "SKALDRATH'S NEST", city: 'EMBERHOLD', forge: 'FORGE OF THE FIRST FIRE', peakroad: 'THE PEAK ROAD', coastroad: 'THE COAST ROAD', kingroad: "THE KINGS' ROAD", tidebreak: 'TIDEBREAK CAVERN',
   sepulchre: 'THE HOLLOW SEPULCHRE', fenroad: 'THE FEN ROAD', stormroad: 'THE STORMCROWN PASS', reedwick: 'REEDWICK', mirebarrow: 'THE SUNKEN BARROW', skarnhold: 'SKARN HOLD', stormspire: 'THE STORMSPIRE',
+  glassroad: 'THE GLASSWOOD ROAD', lanternglade: 'LANTERN GLADE', hartspire: 'THE HART SPIRE', deepdoor: 'THE DEEP STAIR', lanternfall: 'LANTERNFALL', lodenest: 'THE LODE CHASM', saltgate: 'SALTMARKET', smugglercove: 'SEAWEED COVE',
+  crystalgrove: 'CRYSTAL GROVE', glimmerpool: 'GLIMMERING POOL', antlerstone: 'ANTLER STONE', glowcapgrove: 'GLOWCAP GROVE', weavernest: 'WEAVER NEST', lodevein: 'RICH VEIN',
   peatfire: 'PEAT FIRE', hagshut: "HAG'S HUT", drownedshrine: 'DROWNED SHRINE', hearthcamp: 'CLAN HEARTH', giantcairn: "GIANT'S CAIRN", stormcircle: 'STORM CIRCLE', spring: 'HOT SPRING', rest: "TRAVELLERS' FIRE", cache: 'HIDDEN CACHE', hermit: "HERMIT'S HOLLOW", ancient: 'ANCIENT TREE',
 };
 // What a place looks like on the map: a colour index and whether it is hostile.
 export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6, tower: 6, grove: 8, hamlet: 13, standing: 14, barrow: 14, cave: 6, foundry: 11, wreck: 6, lighthouse: 13, courtyard: 6, spring: 15, rest: 12, cache: 13, hermit: 8, ancient: 14 };
 // Tall things you can see from a long way off: a place on this list is "sighted" (compass and map show a ? for it) from far away.
-export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest']);
+export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest', 'hartspire', 'saltgate']);
 export const SIGHT_RANGE = 42;
 export const isSighted = (mapId, p) => !!S.sighted?.[mapId + ':' + p.id];
 export const placeName = (p) => PLACE_NAME[p.kind] || p.kind.toUpperCase();

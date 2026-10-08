@@ -26,9 +26,9 @@ export function trophyTab(m) {
       m.T(132, 38, wrap(t.desc, 29), got ? 5 : 4);
       m.T(132, 70, got ? 'EARNED' : 'LOCKED', got ? 8 : 3);
       if (S.flags.regions?.ashen || S.flags.metYsolde || FACTION_IDS.some((f) => rep(f) > 0)) {
-        m.T(132, 92, 'EMBERHOLD STANDING', 13);
+        m.T(132, 80, 'STANDING', 13);
         FACTION_IDS.forEach((f, k) => {
-          const y = 103 + k * 13, v = rep(f);
+          const y = 91 + k * 10, v = rep(f);
           m.T(132, y, FACTIONS[f].short, FACTIONS[f].col);
           g.fillStyle(C[0]); g.fillRect(212, y, 64, 7); g.fillStyle(C[1]); g.fillRect(213, y + 1, 62, 5); g.fillStyle(C[FACTIONS[f].col]); g.fillRect(213, y + 1, Math.round(62 * v / 100), 5);
           m.T(280, y, repTier(f).slice(0, 4), 5);

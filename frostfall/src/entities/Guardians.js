@@ -214,3 +214,50 @@ export class StormGiant extends PatternBoss {
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
 }
+
+// The Glasswood: the Hartking, guardian of the wood that the glass has grown over. Charges, then rains antler-shards.
+export class HartKing extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'hartking', TUNE.hartking, { scale: 2.6, flag: 'hartKingDead', heart: null, toast: 'THE HARTKING LAYS DOWN HIS ANTLERS', summon: ['glimmerkin', 'glimmerkin', 'crystalgolem'], col: 15, tier: 3, phaseAt: [0.66, 0.33], phaseText: { 2: 'THE GLASS RINGS', 3: 'THE STAMPEDE' } });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 50) o.push('sweep', 'slam', 'tail', 'sweep');
+    else o.push('charge', 'volley', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'charge', 'spikes');
+    if (this.bphase >= 3) o.push('charge', 'leap', 'nova', 'charge');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}
+
+// The Underdeep: the Lode Colossus, a thing of living ore. Slow and enormous; every blow is a landslide.
+export class LodeColossus extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'lodecolossus', TUNE.lodecolossus, { scale: 3.0, flag: 'lodeColossusDead', heart: null, toast: 'THE LODE COLOSSUS CRUMBLES', summon: ['lodeling', 'lodeling', 'caveweaver'], col: 12, tier: 3, phaseAt: [0.66, 0.33], phaseText: { 2: 'THE VEIN OPENS', 3: 'THE CAVE-IN' } });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 54) o.push('slam', 'sweep', 'slam', 'tail');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'spikes', 'slam');
+    if (this.bphase >= 3) o.push('spikes', 'nova', 'leap', 'spikes');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}
+
+// Saltmarket's Cove: Captain Brinegut, a smuggler lord with a crew. Fast, shoots, and shouts for help.
+export class Brinegut extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'brinegut', TUNE.brinegut, { scale: 2.4, flag: 'brinegutDead', heart: null, toast: 'CAPTAIN BRINEGUT STRIKES HIS COLOURS', summon: ['bandit', 'harpooner', 'reaver'], col: 13, tier: 3, phaseAt: [0.5], phaseText: { 2: 'ALL HANDS' } });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 48) o.push('sweep', 'slam', 'charge', 'sweep');
+    else o.push('volley', 'volley', 'charge', 'leap');
+    if (this.bphase >= 2) o.push('nova', 'volley', 'charge', 'spikes');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}

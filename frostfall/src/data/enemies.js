@@ -392,6 +392,70 @@ Object.assign(INFLICTS, {
   mammoth: [{ type: 'bleed', chance: 0.3, t: 5, dps: 4 }], stormgiant: [{ type: 'shock', chance: 0.5, t: 3 }],
 });
 Object.assign(IMMUNE, { bogwraith: ['poison', 'bleed'], boghag: ['poison'], leech: ['poison'], mudlurker: ['poison'], miremother: ['poison'], thunderbird: ['shock'], nomadshaman: ['shock'], stonegiant: ['bleed', 'poison'], stormgiant: ['shock'] });
+// ---- Round 6 (leftovers): the Glasswood, the Underdeep, Saltmarket's Cove
+Object.assign(ENEMIES, {
+  glimmerkin: {
+    name: 'Glimmerkin', tex: 'spr_wisp', tint: 0xc8fff0, sideOnly: true, fly: true, blink: 2.6, bark: 'undead', weak: { shock: 1.2, fire: 1.1, frost: 0.7 }, hp: 34, speed: 32, chase: 54, dmg: 12, detect: 116,
+    kind: 'shoot', proj: 'eshot', projSpeed: 88, range: 116, keep: 62, windup: 0.6, atkDur: 0.1, recover: 0.5, cooldown: 1.5, kbResist: 0.2,
+    body: [8, 8, 4, 4], loot: { gold: [8, 18], drops: [['glimmer_dust', 0.5], ['mp_potion', 0.3]] },
+  },
+  crystalgolem: {
+    name: 'Crystal Golem', tex: 'spr_golem', tint: 0xa8f0ff, scale: 1.6, armored: true, bark: 'undead', weak: { shock: 1.2, fire: 0.9, frost: 0.4 }, hp: 150, speed: 22, chase: 34, dmg: 26, detect: 72,
+    kind: 'melee', range: 26, windup: 0.9, atkDur: 0.2, recover: 1.0, cooldown: 0.9, kbResist: 0.88,
+    body: [8, 7, 4, 9], loot: { gold: [18, 40], drops: [['glimmer_dust', 0.5], ['iron_ingot', 0.6], ['gem_topaz', 0.05]] },
+  },
+  glassstag: {
+    name: 'Glass Stag', tex: 'spr_elk', tint: 0xbfe8ff, sideOnly: true, scale: 1.2, bark: 'wolf', weak: { fire: 1.2, shock: 1.0 }, hp: 90, speed: 42, chase: 96, dmg: 20, detect: 96,
+    kind: 'lunge', range: 60, windup: 0.55, atkDur: 0.35, recover: 0.9, cooldown: 1.1, kbResist: 0.5, lunge: 230,
+    body: [12, 8, 2, 7], loot: { gold: [20, 40], drops: [['hide', 0.7], ['venison', 0.8], ['glimmer_dust', 0.4]] },
+  },
+  hartking: {
+    name: 'The Hartking', title: 'THE HARTKING, WEARER OF THE WOOD', tex: 'spr_hartking', bark: 'undead', weak: { fire: 1.5, shock: 1.1, frost: 0.5 },
+    hp: 1000, speed: 38, chase: 48, dmg: 28, detect: 9999,
+    kind: 'boss', range: 42, windup: 0.7, atkDur: 0.2, recover: 0.7, cooldown: 0.85, kbResist: 0.96,
+    body: [8, 7, 4, 9], loot: { gold: [360, 480], drops: [['glass_heart', 1], ['hp_potion_g', 2], ['glimmer_dust', 4]] },
+  },
+  caveweaver: {
+    name: 'Cave Weaver', tex: 'spr_spider', sideOnly: true, scale: 1.2, ambush: true, bark: 'wolf', weak: { fire: 1.7, frost: 0.9 }, hp: 44, speed: 40, chase: 92, dmg: 14, detect: 84,
+    kind: 'lunge', range: 40, windup: 0.4, atkDur: 0.25, recover: 0.7, cooldown: 0.9, kbResist: 0.15, lunge: 170,
+    body: [10, 7, 3, 8], loot: { gold: [8, 20], drops: [['weaver_silk', 0.5], ['bone_dust', 0.3], ['hide', 0.2]] },
+  },
+  lodeling: {
+    name: 'Lodeling', tex: 'spr_crab', tint: 0xc09060, sideOnly: true, shield: true, scale: 1.2, bark: 'wolf', weak: { shock: 1.2, frost: 1.0, fire: 0.6 }, hp: 96, speed: 24, chase: 48, dmg: 22, detect: 76,
+    kind: 'melee', range: 24, windup: 0.6, atkDur: 0.16, recover: 0.7, cooldown: 0.8, kbResist: 0.6,
+    body: [10, 7, 3, 8], loot: { gold: [14, 30], drops: [['iron_ingot', 0.7], ['ember_ore', 0.05], ['gem_amber', 0.05]] },
+  },
+  deepdelver: {
+    name: 'Hollowed Delver', tex: 'spr_prospector', tint: 0x9ab0c8, bark: 'undead', weak: { fire: 1.3, shock: 1.2, frost: 0.8 }, hp: 70, speed: 34, chase: 56, dmg: 20, detect: 80,
+    kind: 'melee', range: 22, windup: 0.42, atkDur: 0.14, recover: 0.6, cooldown: 0.55, kbResist: 0.3,
+    body: [8, 7, 4, 9], loot: { gold: [12, 28], drops: [['iron_ingot', 0.4], ['hp_potion', 0.25], ['lockpick', 0.15], ['bone_dust', 0.3]] },
+  },
+  gloomcap: {
+    name: 'Gloomcap', tex: 'spr_shroom', tint: 0xb0a0ff, sideOnly: true, stationary: true, scale: 1.3, bark: 'undead', weak: { fire: 1.8 }, hp: 52, speed: 0, chase: 0, dmg: 13, detect: 100,
+    kind: 'cast', range: 112, keep: 0, zoneR: 22, zoneN: 4, zoneDelay: 0.9, windup: 0.8, atkDur: 0.1, recover: 0.6, cooldown: 2.3, kbResist: 0.9,
+    body: [12, 8, 2, 7], loot: { gold: [8, 18], drops: [['glowcap', 0.7], ['bone_dust', 0.2]] },
+  },
+  lodecolossus: {
+    name: 'The Lode Colossus', title: 'THE LODE COLOSSUS, EATER OF THE DEEP', tex: 'spr_lodecolossus', armored: false, bark: 'undead', weak: { shock: 1.3, frost: 1.1, fire: 0.5 },
+    hp: 1300, speed: 30, chase: 40, dmg: 32, detect: 9999,
+    kind: 'boss', range: 46, windup: 0.8, atkDur: 0.2, recover: 0.8, cooldown: 0.9, kbResist: 0.97,
+    body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['lode_heart', 1], ['hp_potion_g', 2], ['ember_ore', 3]] },
+  },
+  brinegut: {
+    name: 'Captain Brinegut', title: 'CAPTAIN BRINEGUT, LORD OF SEAWEED COVE', tex: 'spr_brinegut', bark: 'human', weak: { fire: 1.2, shock: 1.3, frost: 0.9 },
+    hp: 1100, speed: 40, chase: 52, dmg: 28, detect: 9999,
+    kind: 'boss', range: 42, windup: 0.65, atkDur: 0.2, recover: 0.65, cooldown: 0.8, kbResist: 0.95,
+    body: [8, 7, 4, 9], loot: { gold: [420, 560], drops: [['brine_ledger', 1], ['hp_potion_g', 2], ['pearl', 3]] },
+  },
+});
+Object.assign(INFLICTS, {
+  glimmerkin: [{ type: 'shock', chance: 0.3, t: 3 }], crystalgolem: [{ type: 'slow', chance: 0.3, t: 3 }], glassstag: [{ type: 'bleed', chance: 0.3, t: 4, dps: 3 }],
+  hartking: [{ type: 'bleed', chance: 0.4, t: 5, dps: 3 }], caveweaver: [{ type: 'poison', chance: 0.6, t: 6, dps: 3 }], gloomcap: [{ type: 'poison', chance: 0.7, t: 7, dps: 2 }],
+  lodecolossus: [{ type: 'burn', chance: 0.4, t: 3, dps: 4 }], brinegut: [{ type: 'bleed', chance: 0.4, t: 5, dps: 3 }],
+});
+Object.assign(IMMUNE, { glimmerkin: ['shock'], crystalgolem: ['bleed', 'poison'], hartking: ['bleed'], caveweaver: ['poison'], gloomcap: ['poison'], lodeling: ['poison', 'bleed'], lodecolossus: ['burn', 'poison'] });
+for (const k of ['wreckcrab', 'barnacle']) if (ENEMIES[k]) ENEMIES[k].loot.drops.push(['pearl', k === 'barnacle' ? 0.22 : 0.18], ['salt_crystal', 0.18]);
+for (const k of ['crystalgolem', 'lodeling', 'lodecolossus']) ENEMIES[k].crush = true;
 // creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
 for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll', 'cindersmith', 'sentinel', 'mammoth', 'stonegiant']) if (ENEMIES[k]) ENEMIES[k].crush = true;
 // pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught

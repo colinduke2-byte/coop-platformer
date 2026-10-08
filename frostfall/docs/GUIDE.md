@@ -82,8 +82,8 @@ A large open land of forest, ruins, camps, dens, standing stones, hamlets, watch
 - **Fishing, hunting and digging** (treasure maps lead you to dig spots) all give rewards.
 - **The Hollow Arena**: wave challenges for gold and trophies.
 
-### The five other regions
-Three open as the story progresses (see section 6). **The Weeping Fens and the Stormcrown Highlands can be walked to from the start**: the roads leave the Hollow Reach at its south-west and north-east. They are dangerous. Go when you are ready.
+### The seven other regions
+Three open as the story progresses (see section 6). **The Weeping Fens, the Stormcrown Highlands and the Glasswood can be walked to from the start**: the roads leave the Hollow Reach at its south-west, north-east and south. The Underdeep is entered by the Deep Stair in the Ashen Peaks. They are dangerous. Go when you are ready.
 
 | Region | What it is like |
 |---|---|
@@ -91,7 +91,12 @@ Three open as the story progresses (see section 6). **The Weeping Fens and the S
 | **The Frozen Coast** | Wrecks, lighthouses, drowned things. Ends at **Tidebreak Hall**. |
 | **The Old Kingdom** | Courtyards, sentinels, ghosts of a lost court. Ends in **the Sepulchre**. |
 | **The Weeping Fens** | A drowned bog of black water and boardwalks. The stilt village **Reedwick** has an inn, a smith and a chartmaker; the **Sunken Barrow** ends in the **Mire Mother**. Poison everywhere; fire works well. |
+| **The Glasswood** | A crystalline forest of ringing glass trees. **Lantern Glade** has an inn, a smith, a mapmaker and a Moon-Reader who only talks after dark; the **Hart Spire** ends in the **Hartking** (a barred gate: find the key in the first hall). Lightning and fire work well. |
+| **The Underdeep** | The caverns under the Ashen Peaks: glowing fungus, cave weavers, hollowed Delvers. **Lanternfall** has Orm's ferry up to Emberhold; the **Lode Chasm** ends in the **Lode Colossus**. Dark: carry a lantern. |
+| **Saltmarket** | The Frozen Coast's harbour city, two guilds (Tide and Smugglers: they are rivals), a tailor and sea quests. **Seaweed Cove** below ends in **Captain Brinegut**. |
 | **The Stormcrown Highlands** | Windswept heath under a storm that never leaves. **Skarn Hold** is a clan ring with an inn, a smith and a chartmaker; the **Stormspire** ends in the **Storm Giant**. Lightning everywhere; frost works well. |
+
+Gear sets (two or three matching pieces) give a bonus: Emberforged, the Court, Delvers, Wardens, Prism, Deepforged, Tide-Guild. Storms chill you unless you wear warm armour or stand by a fire. Silver weapons and daylight both hurt the undead. Moonpetals only bloom at night.
 
 Each region has its own camps, caves, hamlets, loot and a boss. Check the **map tab** and press **R** to cycle regions.
 

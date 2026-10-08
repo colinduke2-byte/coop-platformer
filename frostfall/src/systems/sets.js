@@ -14,6 +14,18 @@ export const SETS = {
     name: "Delver's Kit", items: ['delver_hauberk', 'delver_pick', 'delver_charm'],
     bonus: { 2: { crit: 0.05 }, 3: { crit: 0.05, maxSp: 25, lifesteal: 0.02 } },
   },
+  prism: {
+    name: 'Prism Regalia', items: ['prism_mail', 'shardblade', 'antler_crown'],
+    bonus: { 2: { crit: 0.04 }, 3: { crit: 0.04, maxMp: 40, armor: 0.04 } },
+  },
+  deepforged: {
+    name: 'Deepforged', items: ['deep_plate', 'lode_pick', 'deep_lamp'],
+    bonus: { 2: { armor: 0.04 }, 3: { armor: 0.04, maxHp: 30, lifesteal: 0.02 } },
+  },
+  tide: {
+    name: 'Tide-Guild Kit', items: ['tide_coat', 'tide_blade', 'tide_charm'],
+    bonus: { 2: { maxSp: 15 }, 3: { maxSp: 15, crit: 0.05, armor: 0.04 } },
+  },
   warden: {
     name: 'Warden Panoply', items: ['warden_cuirass', 'warden_shield', 'warden_badge'],
     bonus: { 2: { armor: 0.04 }, 3: { armor: 0.04, maxHp: 30, maxMp: 20 } },

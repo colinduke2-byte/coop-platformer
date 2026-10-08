@@ -266,6 +266,8 @@ export async function emberforgeMenu(who) {
 export const ARMOURY = [
   { id: 'court_plate', need: ['anvil', 45], gold: 700 }, { id: 'court_hammer', need: ['anvil', 45], gold: 520 }, { id: 'court_signet', need: ['anvil', 75], gold: 480 },
   { id: 'delver_hauberk', need: ['delvers', 45], gold: 620 }, { id: 'delver_pick', need: ['delvers', 45], gold: 500 }, { id: 'delver_charm', need: ['delvers', 75], gold: 460 },
+  { id: 'tide_coat', need: ['tide', 45], gold: 480 }, { id: 'tide_blade', need: ['tide', 45], gold: 520 }, { id: 'tide_charm', need: ['tide', 75], gold: 440 },
+  { id: 'smuggler_cloak', need: ['smugglers', 45], gold: 460 }, { id: 'smuggler_knife', need: ['smugglers', 45], gold: 420 },
   { id: 'warden_cuirass', need: ['wardens', 45], gold: 660 }, { id: 'warden_shield', need: ['wardens', 45], gold: 480 }, { id: 'warden_badge', need: ['wardens', 75], gold: 440 },
 ];
 export const canBuyArmoury = (r) => rep(r.need[0]) >= r.need[1];
@@ -275,15 +277,16 @@ export function buyArmoury(id) {
   if (S.gold < r.gold) return 'short';
   S.gold -= r.gold; addItem(id, 1, true); return 'ok';
 }
-export async function armouryMenu(who) {
+export async function armouryMenu(who, only = null) {
+  const list = only ? ARMOURY.filter((r) => only.includes(r.need[0])) : ARMOURY.filter((r) => ['anvil', 'delvers', 'wardens'].includes(r.need[0]));
   await listScreen({
     title: 'FACTION ARMOURY', hint: 'E BUY   ESC DONE',
-    rows: () => ARMOURY.map((r) => {
+    rows: () => list.map((r) => {
       const open = canBuyArmoury(r), ok = open && S.gold >= r.gold;
       return { id: r.id, name: ITEMS[r.id].name, tag: open ? `${r.gold}G` : `${FACTIONS[r.need[0]].short} ${r.need[1]}`, ok, sub: open ? (ok ? 'READY' : 'NEED GOLD') : 'NOT TRUSTED YET', lines: [...statLines(r.id), [setSummary().join(', ') || 'SETS GIVE BONUSES', 8]], desc: ITEMS[r.id].desc };
     }),
     onSelect: (i, ui) => {
-      const res = buyArmoury(ARMOURY[i].id);
+      const res = buyArmoury(list[i].id);
       if (res === 'locked') { sfx.play('nostamina'); ui.say('THEY DO NOT TRUST YOU ENOUGH', 11); }
       else if (res === 'short') { sfx.play('nostamina'); ui.say('NEED MORE GOLD', 11); }
       else { sfx.play('levelup'); ui.say('BOUGHT', 8); }

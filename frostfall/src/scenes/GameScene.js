@@ -42,7 +42,7 @@ import { ArenaMaster } from '../entities/Props.js';
 import { arenaWave } from '../world/arena.js';
 import Hound from '../entities/Hound.js';
 import { routePos } from '../world/roamers.js';
-import { StashChest, GardenPlot, TrophyWall, CookPot, OrphanCub, SoakSpot, WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
+import { LockedGate, StashChest, GardenPlot, TrophyWall, CookPot, OrphanCub, SoakSpot, WoundedHound, TreasureSpot, FishHole, Sign, RestSpot, Prop, Herb, Door, Lore, Bed, Cauldron, Plate, PLATE_COL, Furnisher, HomeAnvil, Shrine, OreNode, DigSpot, BountyBoard } from '../entities/Props.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
@@ -76,6 +76,7 @@ import { finishQuest } from '../systems/quests.js';
 import '../data/emberhold.js';
 import '../data/hamlets.js';
 import '../data/regions2_story.js';
+import '../data/regions3_story.js';
 import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
@@ -344,6 +345,10 @@ export default class GameScene extends Phaser.Scene {
       case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags[this.vaultKey()]) pl.light(true); break; }
       case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags[this.vaultKey()]) this.openVault(true); break;
       case 'vaultorder': case 'plateorder': this.plateOrder = e.order; break;
+      case 'keygate': {
+        if (!S.flags[e.id]) { for (let i = 0; i < e.w; i++) { this.layer.putTileAt(TILE_DOOR, e.x + i, e.y); this.solid[e.y][e.x + i] = true; } }
+        this.interactables.push(new LockedGate(this, (e.x + e.w / 2) * T, (e.y + 1.4) * T, e)); break;
+      }
       case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
       case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
       case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
@@ -393,7 +398,7 @@ export default class GameScene extends Phaser.Scene {
       if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
     }
     if (spec.roamRoute) {
-      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll', cinder: 'Cinderjaw, the Magma Golem', floe: 'Hrimgar, the Floe Troll', lastknight: 'Sir Aldric, the Last Knight', slough: 'Slough, the Mire Hulk', greytusk: 'Greytusk, the Mammoth King' }[spec.rid] || en.displayName;
+      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll', cinder: 'Cinderjaw, the Magma Golem', floe: 'Hrimgar, the Floe Troll', lastknight: 'Sir Aldric, the Last Knight', slough: 'Slough, the Mire Hulk', greytusk: 'Greytusk, the Mammoth King', shardstag: 'Shardstag, the Glass King', lodehulk: 'Lodehulk, the Walking Vein' }[spec.rid] || en.displayName;
       en.worldBoss = true; en.cfg = { ...en.cfg, call: 0 };
       const hpMul = { greytusk: 3.2 }[spec.rid]; if (hpMul) { en.maxHp = Math.round(en.maxHp * hpMul); en.hp = en.maxHp; }
     }
@@ -475,6 +480,11 @@ export default class GameScene extends Phaser.Scene {
     sfx.play('door'); this.shake(300, 0.01);
     this.fx.puff((x + 0.5) * T, (y + 0.5) * T, 5, 12, 50, 0.6);
     bus.emit('toast', 'A WALL SLIDES AWAY', 13);
+  }
+
+  openKeyGate(e) {
+    for (let i = 0; i < e.w; i++) { this.layer.putTileAt(TILE_FLOOR, e.x + i, e.y); this.solid[e.y][e.x + i] = false; }
+    sfx.play('door'); this.shake(250, 0.008); bus.emit('toast', 'THE GATE GROANS OPEN', 13);
   }
 
   setGate(closed) {

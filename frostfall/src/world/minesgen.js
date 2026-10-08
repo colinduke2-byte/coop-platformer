@@ -84,6 +84,7 @@ export function buildMines(seed, floor, o = {}) {
       g.rect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, TILE.CFLOOR2);
       for (const dx of [3, r.w - 4]) for (const dy of [3, r.h - 4]) g.set(r.x + dx, r.y + dy, TILE.PILLAR);
       add({ t: 'bossgate', x: r.cx - 1, y: r.y + r.h - 1, w: 2 });
+      if (o.keyGate) add({ t: 'keygate', id: `${o.id}_keygate`, x: r.cx - 1, y: r.y + r.h - 1, w: 2 });
       add({ t: 'boss', kind: finalBoss, x: r.cx, y: r.y + 4 });
       add({ t: 'glow', x: r.cx, y: r.y + 4, r: 60, col: 12 });
       add({ t: 'sign', x: r.cx - 3, y: r.y + r.h - 3, text: o.bossSign || ["KRAGNAR'S LODE.", 'THE DELVERS BURIED THEIR KING HERE. SOMETHING STILL DIGS.'] });
@@ -91,6 +92,8 @@ export function buildMines(seed, floor, o = {}) {
     }
   });
   add({ t: 'sign', x: e0.cx - 3, y: e0.y + e0.h - 3, text: [(o.title || TITLES[floor]).toUpperCase(), o.signLine || (floor === 0 ? 'THE LANTERNS ALONG THE ROAD WENT OUT ONE BY ONE.' : 'GO CAREFULLY. THE LODE REMEMBERS.')] });
+  // key puzzle: the deepest hall is barred; the key waits in a chest in the first hall past the entrance
+  if (o.keyGate && rooms[1]) add({ t: 'chest', id: `${o.id}_key`, x: rooms[1].x + 1, y: rooms[1].y + 1, lock: 'med', loot: [{ item: 'delve_key' }, { gold: 30 + tier * 20 }] });
   const bossRoom = rooms.find((r) => r.kind === 'boss') || null;
   return { grid: g.t, w: W, h: H, entities: ents, title: o.title || TITLES[floor], bossRoom };
 }
@@ -140,5 +143,33 @@ export function buildStormspire(seed) {
     title: 'The Stormspire', signLine: 'THE AIR HAS AN EDGE. EVERY SO OFTEN THE WALLS FLASH WHITE.',
     bossSign: ['THE GIANT\'S SEAT.', 'HE HAS SAT HERE SO LONG THE STORM HAS FORGOTTEN IT CAN LEAVE. SO HAS HE.'],
     bossLoot: [{ gen: 3, rarity: 2 }, { item: 'storm_heart' }, { item: 'gem_sapphire' }, { gold: 520 }],
+  });
+}
+
+// The Glasswood's boss delve: the Hart Spire, ending in the Hartking.
+export function buildHartSpire(seed) {
+  return buildMines(seed, 12, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'hartking', id: 'hs', keyGate: true, mobs: ['glimmerkin', 'crystalgolem', 'glassstag', 'wisp', 'warden'], exitTo: 'glasswood', exitSpawn: 'hartspire',
+    title: 'The Hart Spire', signLine: 'THE WALLS ARE GLASS AND THEY ARE SINGING. THE SONG IS A WARNING.',
+    bossSign: ['THE HARTKING\'S COURT.', 'HE WALKED THESE HALLS BEFORE THE GLASS. HE WALKS THEM STILL, BUT HE IS NO LONGER SURE WHICH WAY IS OUT.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'antler_crown' }, { item: 'gem_topaz' }, { gold: 460 }],
+  });
+}
+// The Underdeep's boss delve: the Lode Chasm, ending in the Lode Colossus.
+export function buildLodeNest(seed) {
+  return buildMines(seed, 13, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'lodecolossus', id: 'ln', keyGate: true, mobs: ['lodeling', 'caveweaver', 'deepdelver', 'gloomcap', 'golem'], exitTo: 'underdeep', exitSpawn: 'lodenest',
+    title: 'The Lode Chasm', signLine: 'THE ORE IS WARM. IT PULSES, VERY SLOWLY, LIKE A SLEEPER\'S CHEST.',
+    bossSign: ['THE HEART OF THE LODE.', 'EVERY LANTERN DOWN HERE GOES OUT IN THIS ROOM. THE ORE GIVES ITS OWN LIGHT, AND IT IS WATCHING.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'deep_plate' }, { item: 'gem_amber' }, { gold: 560 }],
+  });
+}
+// Saltmarket's Cove: Seaweed Cove, ending in Captain Brinegut.
+export function buildSmugglerCove(seed) {
+  return buildMines(seed, 14, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'brinegut', id: 'sc', keyGate: true, mobs: ['bandit', 'harpooner', 'reaver', 'wreckcrab', 'tidehag'], exitTo: 'coast', exitSpawn: 'smugglercove',
+    title: 'Seaweed Cove', signLine: 'TAR, SALT AND THE ECHO OF A GOOD DEAL. SOMEONE IS ALWAYS WATCHING THE DOOR.',
+    bossSign: ['THE CAPTAIN\'S CABIN.', 'A SHIP TOO BIG FOR THE COVE, BUILT INSIDE IT. THE CAPTAIN HAS NEVER ONCE SAILED IT. HE LIKES THE WAY IT LOOKS.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'brine_ledger' }, { item: 'gem_sapphire' }, { gold: 520 }],
   });
 }

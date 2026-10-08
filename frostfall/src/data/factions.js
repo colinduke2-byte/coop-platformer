@@ -7,6 +7,8 @@ export const FACTIONS = {
   delvers: { id: 'delvers', name: "The Delvers' Guild", short: 'DELVERS', col: 8, rival: 'anvil', blurb: 'Miners and tunnel-wardens of the Deep Mines.' },
   wardens: { id: 'wardens', name: 'The Ember Wardens', short: 'WARDENS', col: 15, rival: null, blurb: "The city's soldiers and the road's guardians." },
 };
+FACTIONS.tide = { id: 'tide', name: 'The Tide Guild', short: 'TIDE GUILD', col: 15, rival: 'smugglers', blurb: "Saltmarket's harbour guild: ship-owners, lane-wardens and the tax on every cargo." };
+FACTIONS.smugglers = { id: 'smugglers', name: "The Smugglers' Guild", short: 'SMUGGLERS', col: 11, rival: 'tide', blurb: "The other half of Saltmarket's trade, below the quays." };
 export const FACTION_IDS = Object.keys(FACTIONS);
 export const REP_TIERS = [[0, 'STRANGER'], [20, 'KNOWN'], [45, 'TRUSTED'], [75, 'HONOURED']];
 

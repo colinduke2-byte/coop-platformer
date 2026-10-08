@@ -188,6 +188,15 @@ SONGS.reedwick = { bpm: 66, lead: 'sine', bass: 'triangle', root: 52,
 SONGS.skarnhold = { bpm: 108, lead: 'triangle', bass: 'square', root: 50,
   A: { chords: [[0, 7, 12], [-2, 5, 10], [-5, 2, 7], [-3, 4, 9]], melody: [19, null, 19, 17, null, 16, null, 14, 16, null, 17, null, 19, null, null, null] },
   B: { chords: [[-5, 2, 7], [-3, 4, 9], [0, 7, 12], [-2, 5, 10]], melody: [16, null, 17, null, 19, 21, null, 19, 17, null, 16, null, 14, null, null, null] } };
+SONGS.glasswood = { bpm: 78, lead: 'triangle', bass: 'sine', root: 52,
+  A: { chords: [[0, 4, 7], [-5, -1, 2], [-3, 0, 4], [-7, -3, 0]], melody: [19, null, 16, null, 14, null, 16, 19, null, 21, null, 19, null, 16, null, null] },
+  B: { chords: [[-3, 0, 4], [-7, -3, 0], [0, 4, 7], [-5, -1, 2]], melody: [16, null, 19, null, 21, null, 23, null, 21, null, 19, 16, null, 14, null, null] } };
+SONGS.underdeep = { bpm: 56, lead: 'sine', bass: 'triangle', root: 33,
+  A: { chords: [[0, 7, 12], [-2, 5, 10], [-5, 2, 7], [-7, 0, 5]], melody: [null, null, null, 19, null, null, 17, null, null, null, 15, null, null, 14, null, null] },
+  B: { chords: [[-5, 2, 7], [-7, 0, 5], [0, 7, 12], [-2, 5, 10]], melody: [null, 14, null, null, null, 15, null, null, 17, null, null, null, 15, null, 12, null] } };
+SONGS.saltmarket = { bpm: 96, lead: 'square', bass: 'triangle', root: 48,
+  A: { chords: [[0, 4, 7], [-5, -1, 2], [-3, 0, 4], [-7, -3, 0]], melody: [12, null, 16, 16, null, 19, null, 16, 14, null, 14, 16, null, 14, 12, null] },
+  B: { chords: [[-3, 0, 4], [-7, -3, 0], [0, 4, 7], [-5, -1, 2]], melody: [16, null, 19, null, 21, 19, null, 16, 14, null, 12, null, 14, 16, null, null] } };
 let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0, bossPhase = 1;
 function schedule() {
   const a = ac(); if (!a || !song) return;

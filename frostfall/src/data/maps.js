@@ -5,8 +5,10 @@ import { hash } from '../util.js';
 import { S } from '../systems/state.js';
 import { buildReach, buildRegion, REGION_DEFS } from '../world/worldgen.js';
 import { buildBarrow } from '../world/barrowgen.js';
-import { buildMines, buildForge, buildTidebreak, buildSepulchre, buildMireBarrow, buildStormspire, MINE_FLOORS } from '../world/minesgen.js';
+import { buildMines, buildForge, buildTidebreak, buildSepulchre, buildMireBarrow, buildStormspire, buildHartSpire, buildLodeNest, buildSmugglerCove, MINE_FLOORS } from '../world/minesgen.js';
 import '../world/regions2.js';
+import '../world/regions3.js';
+import { buildLanternGlade, buildLanternfall, buildSaltmarket } from './hubs3.js';
 import { buildReedwick, buildSkarnhold } from './hubs2.js';
 import { buildEmberhold, buildEmberInterior, EMBER_INTERIORS } from './emberhold_map.js';
 
@@ -459,9 +461,14 @@ MAPS.fens = { flag: 'arrivedFens', name: 'The Weeping Fens', snow: false, outdoo
 MAPS.highlands = { flag: 'arrivedHighlands', name: 'The Stormcrown Highlands', snow: true, ambience: 'wind', build: () => getRegion('highlands'), music: 'highlands', dim: 0.16, stream: true, region: 'highlands' };
 MAPS.reedwick = { flag: 'arrivedReedwick', name: 'Reedwick', snow: false, outdoors: true, ambience: 'wind', build: buildReedwick, music: 'reedwick', dim: 0.2, region: 'fens' };
 MAPS.skarnhold = { flag: 'arrivedSkarn', name: 'Skarn Hold', snow: true, ambience: 'wind', build: buildSkarnhold, music: 'skarnhold', dim: 0.14, region: 'highlands' };
+MAPS.glasswood = { flag: 'arrivedGlasswood', name: 'The Glasswood', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('glasswood'), music: 'glasswood', dim: 0.16, stream: true, region: 'glasswood' };
+MAPS.underdeep = { flag: 'arrivedUnderdeep', name: 'The Underdeep', snow: false, ambience: 'crypt', cave: false, build: () => getRegion('underdeep'), music: 'underdeep', dim: 0.5, stream: true, region: 'underdeep' };
+MAPS.lanternglade = { flag: 'arrivedGlade', name: 'Lantern Glade', snow: false, outdoors: true, ambience: 'wind', build: buildLanternGlade, music: 'glasswood', dim: 0.14, region: 'glasswood' };
+MAPS.lanternfall = { flag: 'arrivedLanternfall', name: 'Lanternfall', snow: false, ambience: 'crypt', build: buildLanternfall, music: 'underdeep', dim: 0.4, region: 'underdeep', hub: true };
+MAPS.saltmarket = { flag: 'arrivedSaltmarket', name: 'Saltmarket', snow: true, ambience: 'wind', build: buildSaltmarket, music: 'saltmarket', dim: 0.12, region: 'coast' };
 MAPS.ashen.region = 'ashen'; MAPS.forest.region = 'reach';
 const delveCache = {};
-const CAVE_THEME = { ashen: 'cinder', coast: 'sea', kingdom: 'royal', fens: 'bog', highlands: 'storm' }, REGION_NO = { ashen: 1, coast: 2, kingdom: 3, fens: 4, highlands: 5 }, HOME_MAP = { ashen: 'ashen', coast: 'coast', kingdom: 'kingdom', fens: 'fens', highlands: 'highlands' };
+const CAVE_THEME = { ashen: 'cinder', coast: 'sea', kingdom: 'royal', fens: 'bog', highlands: 'storm', glasswood: 'glass', underdeep: 'deep' }, REGION_NO = { ashen: 1, coast: 2, kingdom: 3, fens: 4, highlands: 5, glasswood: 6, underdeep: 7 }, HOME_MAP = { ashen: 'ashen', coast: 'coast', kingdom: 'kingdom', fens: 'fens', highlands: 'highlands', glasswood: 'glasswood', underdeep: 'underdeep' };
 for (const rid of Object.keys(CAVE_THEME)) for (let n = 0; n < 4; n++) {
   const id = `${rid}_cave${n}`;
   MAPS[id] = {
@@ -476,7 +483,10 @@ for (const rid of Object.keys(CAVE_THEME)) for (let n = 0; n < 4; n++) {
     },
   };
 }
-let tideCache = null, sepCache = null, mireCache = null, spireCache = null;
+let tideCache = null, sepCache = null, mireCache = null, spireCache = null, hartCache = null, lodeCache = null, coveCache = null;
+export function getHartSpire() { const seed = S.seed ?? 1337; if (!hartCache || hartCache.seed !== seed) hartCache = { seed, built: buildHartSpire(seed) }; return hartCache.built; }
+export function getLodeNest() { const seed = S.seed ?? 1337; if (!lodeCache || lodeCache.seed !== seed) lodeCache = { seed, built: buildLodeNest(seed) }; return lodeCache.built; }
+export function getSmugglerCove() { const seed = S.seed ?? 1337; if (!coveCache || coveCache.seed !== seed) coveCache = { seed, built: buildSmugglerCove(seed) }; return coveCache.built; }
 export function getMireBarrow() { const seed = S.seed ?? 1337; if (!mireCache || mireCache.seed !== seed) mireCache = { seed, built: buildMireBarrow(seed) }; return mireCache.built; }
 export function getStormspire() { const seed = S.seed ?? 1337; if (!spireCache || spireCache.seed !== seed) spireCache = { seed, built: buildStormspire(seed) }; return spireCache.built; }
 export function getTidebreak() { const seed = S.seed ?? 1337; if (!tideCache || tideCache.seed !== seed) tideCache = { seed, built: buildTidebreak(seed) }; return tideCache.built; }
@@ -485,6 +495,9 @@ const bossRoomTrigger = (get) => (pc, T) => { const r = get().bossRoom; return !
 MAPS.tidebreak = { name: 'Tidebreak Cavern', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, region: 'coast', build: () => getTidebreak(), bossTrigger: bossRoomTrigger(getTidebreak), flag: 'tidebreakEntered' };
 MAPS.mirebarrow = { name: 'The Sunken Barrow', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, region: 'fens', build: () => getMireBarrow(), bossTrigger: bossRoomTrigger(getMireBarrow), flag: 'mirebarrowEntered' };
 MAPS.stormspire = { name: 'The Stormspire', snow: false, ambience: 'crypt', music: 'throne', dim: 0.4, cave: true, region: 'highlands', build: () => getStormspire(), bossTrigger: bossRoomTrigger(getStormspire), flag: 'stormspireEntered' };
+MAPS.hartspire = { name: 'The Hart Spire', snow: false, ambience: 'crypt', music: 'throne', dim: 0.4, cave: true, region: 'glasswood', build: () => getHartSpire(), bossTrigger: bossRoomTrigger(getHartSpire), flag: 'hartspireEntered' };
+MAPS.lodenest = { name: 'The Lode Chasm', snow: false, ambience: 'crypt', music: 'throne', dim: 0.45, cave: true, region: 'underdeep', build: () => getLodeNest(), bossTrigger: bossRoomTrigger(getLodeNest), flag: 'lodenestEntered' };
+MAPS.smugglercove = { name: 'Seaweed Cove', snow: false, ambience: 'crypt', music: 'throne', dim: 0.4, cave: true, region: 'coast', build: () => getSmugglerCove(), bossTrigger: bossRoomTrigger(getSmugglerCove), flag: 'smugglercoveEntered' };
 MAPS.sepulchre = { name: 'The Hollow Sepulchre', snow: false, ambience: 'crypt', music: 'throne', dim: 0.42, cave: true, region: 'kingdom', build: () => getSepulchre(), bossTrigger: bossRoomTrigger(getSepulchre), flag: 'sepulchreEntered' };
 
 // The Forge of the First Fire (Chapter 3 dungeon), cached per run seed.
