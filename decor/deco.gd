@@ -38,6 +38,8 @@ var _glow := false   ## GIANT_MUSHROOM: pulsing glow drawn live
 
 
 func _ready() -> void:
+	if Gfx.at_least(Gfx.Level.MEDIUM):   # soft brushwork over the prop's flat colours
+		material = PaintedSurface.material("cloth", 0.24, 220.0, 0.12)
 	z_index = 20 if front else -10
 	_t = float(hash(global_position) % 1000) * 0.01
 

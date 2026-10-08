@@ -8302,3 +8302,47 @@ func test_boss_defeat_flourish_runs() -> void:
 	b.hit_tentacle(p, Enemy.HitKind.STOMP)
 	await seconds(1.2)
 	check(not is_instance_valid(b) or b.dead, "Inkabella falls and the boss flourish plays without errors")
+
+
+# --- Phase 4: storybook UI ---------------------------------------------------------------
+
+func test_storybook_ui_kit_paper_panels_fonts_and_cards() -> void:
+	var sb := UIStyle.panel()
+	check(sb is StyleBoxTexture and (sb as StyleBoxTexture).texture != null, "panels are the baked paper card")
+	check(UIStyle.bold_font() != null, "the bold Fredoka font loads")
+	var big := UIStyle.label("Hi", 60)
+	check(big.has_theme_font_override(&"font"), "big labels use the bold font")
+	var small := UIStyle.label("hi", 20)
+	check(not small.has_theme_font_override(&"font"), "small labels keep the regular font")
+	var pp := PaperPanel.new()
+	_arena.add_child(pp)
+	pp.color = Color(0.85, 1, 0.85, 0.8)
+	await frames(2)
+	pp.queue_free()
+	var rs := load("res://ui/results.gd")
+	var m: Control = rs.MedalStar.new(true, 1)
+	check(m is Control, "medal stars exist")
+	m.free()
+	var cs: CharacterSelect = load("res://ui/character_select.tscn").instantiate()
+	cs.auto_start = false
+	_arena.add_child(cs)
+	await frames(3)
+	check(cs._cards[0].panel is PaperPanel and cs._cards[0].spot is Node2D, "character cards use paper panels and spotlights")
+	cs.queue_free()
+	await frames(2)
+
+
+func test_results_screen_builds_with_medals_and_counts_up() -> void:
+	var p: Player = await _load_demo(W1_1)
+	var rs: Node = load("res://ui/results.tscn").instantiate()
+	_arena.add_child(rs)
+	rs._results = {"id": "w1_1", "name": "Pillow Meadow", "time": 62.5, "lums": 40, "lums_by_slot": {0: 40},
+			"gems": [true, true, false], "snoozling": true, "secrets": 1, "secrets_total": 2, "new": {"lums": true},
+			"next": "", "new_outfits": []}
+	rs._build()
+	await seconds(2.0)
+	var medals: Array = rs.find_children("*", "Control", true, false).filter(func(n: Node) -> bool: return n.get_script() != null and "earned" in n)
+	check(medals.size() == 3, "three medal stars (%d)" % medals.size())
+	check(medals[0].earned and medals[1].earned and not medals[2].earned, "finishing and a gem earn medals, but not all three gems")
+	rs.queue_free()
+	await _finish_demo()

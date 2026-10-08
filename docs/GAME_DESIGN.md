@@ -107,8 +107,10 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   Pick with UP / DOWN on character select. Edit the list in `characters/wardrobe.gd`.
 
 ## Art & audio direction
-- Hand-painted look, layered parallax backgrounds, cutout-animated characters
-  (Godot Skeleton2D or Spine). TODO: color palette, mood board links.
+- Painted, storybook look (see docs/VISUAL_OVERHAUL.md): shapes drawn in code with baked
+  painterly textures, hand-inked tapered outlines, per-world colour grades, layered parallax
+  with mist and framing foreground silhouettes, rim-lit cutout characters, paper-card UI in
+  Fredoka. Quality presets (Low / Medium / High) scale it from phones to desktops.
 - Music: generated chiptune-ish tracks per level (`tools/audio/gen_music.py`),
   boss theme, map theme. TODO: Colin's taste - replace with composed tracks later?
 

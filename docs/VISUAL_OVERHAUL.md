@@ -217,3 +217,14 @@ Deliverable: character + outfit gallery, a short clip if possible (`tools/clip.s
 
 ## Rough size
 Phase 0 ≈ 1 session · Phase 1 ≈ 3–4 · Phase 2 ≈ 2–3 · Phase 3 ≈ 3 · Phase 4 ≈ 2 · Phase 5 ≈ 1.
+
+
+---
+
+## Status (all phases done)
+Phases 0-5 shipped. What exists: baked textures + Gfx presets (Low/Medium/High, auto-picked, web watchdog),
+painted ground/blocks with inked edges, per-world colour grade, foreground framing, backdrop mist + brushwork,
+sun shafts, bending grass, water caustics, rim-lit expressive characters with follow-through and contact
+shadows, painted enemies with boss flourishes, storybook UI (Fredoka, paper cards, parchment-framed maps).
+Not done / ideas: extra backdrop layers per scenery, bloom on Lums, per-deco rim light, waterfall foam,
+light pools in dark levels, boss intro camera, warning-tell glows, painted HUD gem slots.

@@ -41,6 +41,11 @@ func _on_body_entered(body: Node2D) -> void:
 
 func _draw() -> void:
 	var th := LevelTheme.find(self)
+	if Gfx.at_least(Gfx.Level.MEDIUM):  # the gate glows: soft halo breathing around the portal
+		var pulse := 0.5 + 0.5 * sin(_t * 2.2)
+		for k in 4:
+			draw_colored_polygon(Art.ellipse(Vector2(0, -SIZE.y * 0.45), 150.0 + k * 34.0 + pulse * 14.0, 190.0 + k * 40.0 + pulse * 16.0, 28),
+					Color(0.62, 0.55, 1.0, 0.07 - k * 0.012))
 	var o := th.outline
 	var w := SIZE.x * 0.5
 	var h := SIZE.y

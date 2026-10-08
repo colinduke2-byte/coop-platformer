@@ -61,6 +61,7 @@ func _ready() -> void:
 		rig.build(GameManager.CHARACTERS[i])
 		_rigs.append(rig)
 	_build_logo()
+	_add_finish()
 	InputRouter.join_requested.connect(_on_join)
 	Audio.play_music("menu")
 	# The start page's "Host a game" / "Join" buttons skip straight to online play.
@@ -74,6 +75,40 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if InputRouter.join_requested.is_connected(_on_join):
 		InputRouter.join_requested.disconnect(_on_join)
+
+
+## Vignette + colour grade over the scene, drifting sparkles round the logo, letters popping in.
+func _add_finish() -> void:
+	var cg := ColorGrade.new()
+	add_child(cg)
+	cg.setup(level_theme)
+	var sp := CanvasLayer.new()
+	sp.layer = 4
+	sp.add_child(Sparkles.new())
+	add_child(sp)
+	for i in _letters.size():
+		var l := _letters[i]
+		l.pivot_offset = l.size * 0.5
+		l.scale = Vector2.ZERO
+		var tw := l.create_tween()
+		tw.tween_interval(0.12 * i)
+		tw.tween_property(l, ^"scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+class Sparkles extends Node2D:
+	var _t := 0.0
+
+	func _process(delta: float) -> void:
+		_t += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		for i in 26:
+			var a := fposmod(_t * 0.45 + i * 0.173, 1.0)
+			var p := Vector2(430.0 + fposmod(i * 197.0, 1060.0), 120.0 + fposmod(i * 83.0, 330.0)) + Vector2(sin(_t + i) * 14.0, -a * 40.0)
+			var s := (1.0 - absf(a * 2.0 - 1.0)) * (4.0 + (i % 4) * 2.0)
+			if s > 1.0:
+				draw_colored_polygon(Art.star(p, s, 4, 0.3), Color(1, 0.96, 0.7, 0.85))
 
 
 func _build_logo() -> void:
@@ -100,8 +135,8 @@ func _build_logo() -> void:
 	_prompt.custom_minimum_size.x = 1000
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layer.add_child(_prompt)
-	_ribbon = UIStyle.label("NEW!  World 5, the Lum Shop... and a secret", 32, Color("ffd23f"), 12)
-	_ribbon.position = Vector2(1330, 380)
+	_ribbon = UIStyle.label("NEW!  World 5, Lum Shop, secret world", 30, Color("ffd23f"), 12)
+	_ribbon.position = Vector2(1250, 400)
 	_ribbon.rotation = -0.12
 	layer.add_child(_ribbon)
 	if OS.has_feature("web"):

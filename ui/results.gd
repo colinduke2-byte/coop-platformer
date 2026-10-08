@@ -69,10 +69,18 @@ func _build() -> void:
 	pc.add_child(v)
 	var news: Dictionary = _results.get("new", {})
 	_add(v, UIStyle.label("DREAM COMPLETE!", 60, UIStyle.ACCENT, 8, UIStyle.OUTLINE))
+	v.add_child(_medals())
 	_add(v, UIStyle.label(_results.get("name", ""), 30))
 	var t_text := "Time  %s%s" % [UIStyle.fmt_time(_results.get("time", 0.0)), "   NEW BEST!" if news.has("time") else ""]
 	_add(v, UIStyle.label(t_text, 30))
-	_add(v, UIStyle.label("Lums  %d%s" % [_results.get("lums", 0), "   NEW BEST!" if news.has("lums") else ""], 30))
+	var lum_label := UIStyle.label("Lums  0", 30)
+	_add(v, lum_label)
+	var lum_total: int = _results.get("lums", 0)
+	var lum_tail := "   NEW BEST!" if news.has("lums") else ""
+	var count := create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)   # numbers tick up
+	count.tween_interval(0.5)
+	count.tween_method(func(n: float) -> void: lum_label.text = "Lums  %d" % int(n), 0.0, float(lum_total), minf(0.35 + lum_total * 0.012, 1.4))
+	count.tween_callback(func() -> void: lum_label.text = "Lums  %d%s" % [lum_total, lum_tail])
 	_add(v, UIStyle.label("+%d Lums for the Lum Shop  (saved up: %d)" % [_results.get("lums", 0), SaveData.lum_bank()], 22, Color("b8860b")))
 	# Per-player Lums, with a crown for the top collector.
 	var by: Dictionary = _results.get("lums_by_slot", {})
@@ -137,6 +145,49 @@ func _build() -> void:
 	v.add_child(_list)
 	_refresh_items()
 	_animate_in(pc, v)
+
+
+## Three medal stars: one for finishing, one for every Dream Gem found / the Snoozling, one for all three gems.
+func _medals() -> Control:
+	var gems: Array = _results.get("gems", [])
+	var found := 0
+	for g in gems:
+		found += 1 if g else 0
+	var earned := [true, found >= 1 or _results.get("snoozling", false), found >= 3]
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", 14)
+	for i in 3:
+		row.add_child(MedalStar.new(earned[i], i))
+	return row
+
+
+class MedalStar extends Control:
+	var earned := false
+	var index := 0
+	var _t := 0.0
+
+	func _init(e: bool, i: int) -> void:
+		earned = e
+		index = i
+		custom_minimum_size = Vector2(74, 74)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		var pop := clampf((_t - 0.5 - index * 0.28) / 0.35, 0.0, 1.0)
+		var s := (1.0 + 0.25 * sin(pop * PI)) * pop
+		if s < 0.05:
+			return
+		var c := size * 0.5
+		var tilt := sin(_t * 2.0 + index) * 0.08 if earned else 0.0
+		var col := Color("ffd23f") if earned else Color(0.55, 0.52, 0.6, 0.6)
+		draw_colored_polygon(Art.star(c + Vector2(0, 3), 33.0 * s, 5, 0.46, tilt), Color(0, 0, 0, 0.22))
+		Art.shape(self, Art.star(c, 33.0 * s, 5, 0.46, tilt), col, UIStyle.OUTLINE, 3.0)
+		if earned:
+			draw_colored_polygon(Art.ellipse(c + Vector2(-8, -10) * s, 6.0 * s, 4.0 * s, 10), Color(1, 1, 1, 0.55))
 
 
 ## Pop the panel in, then reveal its rows one after another.

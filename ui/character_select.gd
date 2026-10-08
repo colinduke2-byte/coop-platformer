@@ -43,7 +43,8 @@ class Card:
 	var prev_x := 0.0
 	var prev_y := 0.0
 	var input: PlayerInput
-	var panel: Polygon2D
+	var panel: PaperPanel
+	var spot: Node2D
 	var rig: CharacterRig
 	var title: Label
 	var name_label: Label
@@ -55,6 +56,8 @@ class Card:
 
 func _ready() -> void:
 	var w := 1920.0
+	add_child(DreamBackdrop.new())
+	_add_vignette()
 	_label("Choose your dreamer", 64, Vector2(0, 50), w)
 	_label("Join: SPACE (WASD)  /  ENTER (arrows)  /  A (gamepad)     Left / Right: pick     Up / Down: outfit     Jump: ready     Punch: leave",
 			22, Vector2(0, 150), w)
@@ -263,15 +266,43 @@ func _next_free(index: int, dir: int, slot: int) -> int:
 
 # --- Visuals --------------------------------------------------------------------
 
+## A soft pool of light on the card under a dreamer, tinted by their colour, plus a floor shadow.
+class Spotlight extends Node2D:
+	var tint := Color.WHITE:
+		set(v):
+			tint = v
+			queue_redraw()
+
+	func _draw() -> void:
+		for k in 5:
+			var f := 1.0 - k * 0.17
+			draw_colored_polygon(Art.ellipse(Vector2(0, -150), 190.0 * f, 250.0 * f, 24), Color(tint.lerp(Color.WHITE, 0.5), 0.07))
+		draw_colored_polygon(Art.ellipse(Vector2(0, 6), 74, 11, 20), Color(0.1, 0.05, 0.15, 0.22))
+
+
+func _add_vignette() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = -1
+	var v := ColorRect.new()
+	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://world/shaders/vignette.gdshader")
+	m.set_shader_parameter(&"vignette", 0.3)
+	v.material = m
+	layer.add_child(v)
+	add_child(layer)
+
 func _make_card(slot: int, center_x: float) -> Card:
 	var c := Card.new()
 	c.slot = slot
 	var half := CARD_SIZE.x * 0.5
-	c.panel = Polygon2D.new()
-	c.panel.polygon = PackedVector2Array([
-		Vector2(center_x - half, CARD_TOP), Vector2(center_x + half, CARD_TOP),
-		Vector2(center_x + half, CARD_TOP + CARD_SIZE.y), Vector2(center_x - half, CARD_TOP + CARD_SIZE.y)])
+	c.panel = PaperPanel.new()
+	c.panel.rect = Rect2(center_x - half, CARD_TOP, CARD_SIZE.x, CARD_SIZE.y)
 	add_child(c.panel)
+	c.spot = Spotlight.new()
+	c.spot.position = Vector2(center_x, CARD_TOP + 390)
+	add_child(c.spot)
 	c.title = _label("P%d" % (slot + 1), 36, Vector2(center_x - half, CARD_TOP + 16), CARD_SIZE.x)
 	c.rig = CharacterRig.new()
 	c.rig.position = Vector2(center_x, CARD_TOP + 390)
@@ -288,6 +319,7 @@ func _make_card(slot: int, center_x: float) -> Card:
 
 func _refresh(c: Card) -> void:
 	c.rig.visible = c.joined
+	c.spot.visible = c.joined
 	c.arrows.visible = c.joined and not c.ready
 	c.name_label.visible = c.joined
 	c.blurb.visible = c.joined
@@ -308,6 +340,7 @@ func _refresh(c: Card) -> void:
 	c.panel.color = PANEL_READY if c.ready else PANEL
 	c.name_label.text = def.display_name
 	c.name_label.add_theme_color_override(&"font_color", def.main_color.darkened(0.25))
+	(c.spot as Spotlight).tint = def.main_color
 	c.blurb.text = def.blurb
 	c.status.text = "READY!  (attack to change)" if c.ready else ("Jump: ready   Attack: leave" if unlocked else "Pick an unlocked outfit")
 

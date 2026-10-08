@@ -253,6 +253,54 @@ TEXTURES = {
 }
 
 
+# --- UI: storybook paper panel (9-slice, RGBA) ---------------------------------------------
+
+def ui_panel(size=192, margin=60, radius=30, border=5):
+    """A cream paper card with a hand-inked border, deckled edge and a soft drop shadow.
+    Bake at 4x and downsample so the edges are smooth. Returns an RGBA PIL image."""
+    from PIL import ImageFilter
+    S = 4
+    n = size * S
+    r = np.random.default_rng(777)
+    ys, xs = np.mgrid[0:n, 0:n].astype(np.float32)
+    # rounded-rect signed distance (negative inside), inset to leave room for the shadow
+    inset = 16 * S
+    cx = cy = n / 2.0
+    hw = n / 2.0 - inset
+    qx = np.abs(xs - cx) - (hw - radius * S)
+    qy = np.abs(ys - cy) - (hw - radius * S)
+    outside = np.sqrt(np.maximum(qx, 0) ** 2 + np.maximum(qy, 0) ** 2)
+    inside = np.minimum(np.maximum(qx, qy), 0)
+    sd = outside + inside - radius * S
+    # deckle: wobble the edge a little with low-frequency noise
+    wob = (noise(n, n, 40 * S, r) - 0.5) * 7.0 * S * 0.25 + (noise(n, n, 9 * S, r) - 0.5) * 2.0 * S * 0.25
+    sd = sd + wob
+    edge = border * S
+    mask = np.clip(0.5 - sd / 2.0, 0, 1)                      # 1 inside the card
+    ink = np.clip(0.5 - (sd + edge) / 2.0, 0, 1)              # 1 inside the inner (fill) region
+    band = mask - ink                                          # the ink border ring
+    paper = np.zeros((n, n))
+    fibre = strokes(256, 256, 1100, 12, 0.7, 0.0, 3.0, np.random.default_rng(5), 0.1)
+    mott = fbm(256, 256, 120, 4, np.random.default_rng(6)) - 0.5
+    detail = np.clip(0.5 + fibre + mott * 0.25, 0, 1)
+    detail = np.array(Image.fromarray((detail * 255).astype(np.uint8), "L").resize((n, n), Image.BICUBIC)) / 255.0
+    cream = np.array([255, 246, 228], dtype=np.float32)
+    shade = 0.93 + 0.14 * detail                                   # paper grain
+    glow = np.clip(1.0 - (xs + ys) / (2.0 * n), 0, 1) * 0.03       # light from the top-left
+    fill_rgb = cream[None, None, :] * (shade + glow)[:, :, None]
+    ink_rgb = np.array([29, 23, 38], dtype=np.float32)[None, None, :]
+    rgb = fill_rgb * ink[:, :, None] + ink_rgb * band[:, :, None]
+    alpha = mask
+    # soft drop shadow (blurred, offset down)
+    sh = Image.fromarray((np.roll(mask, 8 * S, axis=0) * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(7 * S))
+    sh = np.array(sh) / 255.0 * 0.32
+    out_a = alpha + sh * (1 - alpha)
+    out_rgb = (rgb * alpha[:, :, None] + np.array([20, 10, 30], dtype=np.float32)[None, None, :] * (sh * (1 - alpha))[:, :, None]) / np.maximum(out_a, 1e-4)[:, :, None]
+    img = np.dstack([np.clip(out_rgb, 0, 255), np.clip(out_a * 255, 0, 255)]).astype(np.uint8)
+    return Image.fromarray(img, "RGBA").resize((size, size), Image.LANCZOS)
+
+
+
 def seam_error(a):
     """How different the wrap-around edge is vs. a normal neighbouring row/column."""
     wrap = np.abs(a[:, 0] - a[:, -1]).mean() + np.abs(a[0, :] - a[-1, :]).mean()
@@ -273,6 +321,10 @@ def main():
         img.save(os.path.join(OUT, name + ".png"), optimize=True)
         tiles.append((name, a))
         print(f"{name:16s} {a.shape[1]}x{a.shape[0]}  mean {a.mean():.2f}  seam x{seam_error(a):.2f}")
+    ui_dir = os.path.join(os.path.dirname(OUT), "ui")
+    os.makedirs(ui_dir, exist_ok=True)
+    ui_panel().save(os.path.join(ui_dir, "panel_paper.png"), optimize=True)
+    print("panel_paper      192x192  (art/ui)")
     if check_path:
         cols = 5
         cell = 2 * SIZE // 2

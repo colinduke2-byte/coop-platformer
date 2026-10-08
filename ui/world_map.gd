@@ -62,6 +62,8 @@ func _ready() -> void:
 		"w6": art = _bake_w6()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
+	if Gfx.at_least(Gfx.Level.MEDIUM):
+		add_child(MapFrame.new())
 	var live := LiveBits.new()
 	live.map = self
 	add_child(live)
@@ -163,7 +165,7 @@ func _build_ui() -> void:
 	_panel_stats = UIStyle.label("", 22, UIStyle.ACCENT)
 	v.add_child(_panel_stats)
 	var hint := UIStyle.label("Left / Right: walk     Jump: play     Punch: back     Pause: controls", 20, Color.WHITE, 6)
-	hint.position = Vector2(40, 1044)
+	hint.position = Vector2(44, 1022)
 	layer.add_child(hint)
 	_toast = UIStyle.label("", 28, Color.WHITE, 10)
 	_toast.position = Vector2(560, 840)
@@ -1217,9 +1219,57 @@ class MapArt extends Node2D:
 
 	func _init(m: ArrayMesh) -> void:
 		mesh = m
+		if Gfx.at_least(Gfx.Level.MEDIUM):  # painterly brushwork over the whole landscape
+			material = PaintedSurface.material("cloth", 0.2, 520.0, 0.16)
 
 	func _draw() -> void:
 		draw_mesh(mesh, null)
+
+
+## The map as a paper keepsake: a soft vignette and a parchment frame with an inked inner edge.
+class MapFrame extends CanvasLayer:
+	func _init() -> void:
+		layer = 4
+
+	func _ready() -> void:
+		var v := ColorRect.new()
+		v.set_anchors_preset(Control.PRESET_FULL_RECT)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var m := ShaderMaterial.new()
+		m.shader = preload("res://world/shaders/vignette.gdshader")
+		m.set_shader_parameter(&"vignette", 0.28)
+		v.material = m
+		add_child(v)
+		var f := FrameArt.new()
+		add_child(f)
+
+
+class FrameArt extends Node2D:
+	var _mesh: ArrayMesh
+
+	func _ready() -> void:
+		var mp := MeshPainter.new()
+		var W := 1920.0
+		var H := 1080.0
+		var w := 24.0
+		var paper := Color("e8d6ae")
+		var shade := Color("c9b283")
+		mp.draw_rect(Rect2(0, 0, W, w), paper)
+		mp.draw_rect(Rect2(0, H - w, W, w), paper)
+		mp.draw_rect(Rect2(0, 0, w, H), paper)
+		mp.draw_rect(Rect2(W - w, 0, w, H), paper)
+		mp.draw_rect(Rect2(w - 6, w - 6, W - 2 * w + 12, 6), shade)       # inner bevel
+		mp.draw_ink(PackedVector2Array([Vector2(w, w), Vector2(W - w, w), Vector2(W - w, H - w), Vector2(w, H - w)]),
+				Color("3a2a1e"), true, 3.0, 5.0, 7)
+		for c: Vector2 in [Vector2(w * 0.5, w * 0.5), Vector2(W - w * 0.5, w * 0.5), Vector2(w * 0.5, H - w * 0.5), Vector2(W - w * 0.5, H - w * 0.5)]:
+			mp.draw_circle(c, 5.0, Color("8a6a42"))
+			mp.draw_circle(c, 2.5, Color("e8d6ae"))
+		_mesh = mp.build()
+		queue_redraw()
+
+	func _draw() -> void:
+		if _mesh:
+			draw_mesh(_mesh, null)
 
 
 ## Little animated things: clouds, windmill, river sparkle, flags, the balloon.
@@ -1256,6 +1306,11 @@ class LiveBits extends Node2D:
 			draw_line(g, g + Vector2(0, 14), Color("1d1726"), 2.0)
 			Art.shape(self, Art.rounded_rect(g + Vector2(-12, 14), g + Vector2(12, 34), 4.0), Color("ff5d5d"), Color("1d1726"), 2.0)
 			draw_rect(Rect2(g + Vector2(-8, 18), Vector2(16, 6)), Color("bfe6ff"))
+		# A little sailboat bobbing on the western sea.
+		var sea := Vector2(60 + sin(t * 0.25) * 18.0, 600 + sin(t * 1.3) * 3.0)
+		draw_colored_polygon(PackedVector2Array([sea + Vector2(-22, 0), sea + Vector2(22, 0), sea + Vector2(14, 10), sea + Vector2(-14, 10)]), Color("8a5a36"))
+		draw_colored_polygon(PackedVector2Array([sea + Vector2(0, -4), sea + Vector2(0, -42), sea + Vector2(20, -6)]), Color("fff8ec"))
+		draw_line(sea + Vector2(0, 0), sea + Vector2(0, -44), Color("3a2a1e"), 2.0)
 		# Windmill blades.
 		var hub := Vector2(617, 570)
 		for k in 4:
@@ -1300,12 +1355,27 @@ class LiveBits extends Node2D:
 		_clouds()
 
 	func _clouds() -> void:
-		# Drifting clouds (over everything).
+		# Drifting clouds (over everything), with their shadows sliding across the land.
 		for i in 5:
 			var x := fposmod(i * 460.0 + t * 12.0, 2300.0) - 200.0
 			var y := 160.0 + (i % 3) * 120.0
+			if Gfx.at_least(Gfx.Level.MEDIUM):
+				draw_colored_polygon(Art.ellipse(Vector2(x + 54, y + 330 + (i % 3) * 70), 70.0, 22.0, 16), Color(0.05, 0.1, 0.2, 0.09))
 			for k in 3:
 				draw_circle(Vector2(x + k * 30, y - (k % 2) * 12), 26.0, Color(1, 1, 1, 0.75))
+		_birds()
+
+
+	## A little flock crossing the sky.
+	func _birds() -> void:
+		if map.world in ["w5", "w6"]:
+			return
+		var o := Color(0.12, 0.09, 0.16, 0.7)
+		for k in 5:
+			var f := fposmod(t * 0.025 + k * 0.045, 1.0)
+			var p := Vector2(-80 + f * 2100.0, 120 + sin(f * 6.0 + k) * 24.0 + k * 14.0)
+			var flap := sin(t * 7.0 + k * 1.3) * 5.0
+			draw_polyline(PackedVector2Array([p + Vector2(-9, flap), p, p + Vector2(9, flap)]), o, 2.2)
 
 
 	func _draw_w2() -> void:

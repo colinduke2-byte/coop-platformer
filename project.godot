@@ -52,3 +52,7 @@ common/max_physics_steps_per_frame.web=4
 [rendering]
 
 environment/defaults/default_clear_color=Color(0.56, 0.8, 0.9, 1)
+
+[gui]
+
+theme/custom_font="res://ui/fonts/Fredoka-Medium.ttf"

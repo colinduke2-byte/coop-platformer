@@ -47,6 +47,10 @@ enemies/     enemy.gd base + 28 enemies + 6 bosses (king_grumblo, baron_bristleb
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
              w1_*..w6_*.tscn (Worlds 1-5 + secret World 6 - GENERATED, see below), bonus levels, demo_level
+art/         BAKED by tools/art/bake_textures.py: textures/*.png (greyscale detail maps), ui/panel_paper.png
+world/shaders/ painted (terrain/blocks/deco/backdrop brushwork), grade + vignette (per-world colour), rig + creature
+             (characters / enemies); Gfx quality presets (core/gfx.gd) gate every heavy effect; BlobShadow, Foreground,
+             ColorGrade, PaintedSurface are the visual-overhaul building blocks (see docs/VISUAL_OVERHAUL.md)
 ui/          title -> character_select -> world_map (one per world, gates between) -> level -> results;
              hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus), lum_shop (World 1 map),
              screen_wipe (circle-wipe scene changes via GameManager.goto_scene)
