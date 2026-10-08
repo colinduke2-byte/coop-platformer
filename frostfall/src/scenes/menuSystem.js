@@ -67,8 +67,19 @@ export function systemTab(m) {
 
   const toggle = (key) => { settings[key] = !settings[key]; saveSettings(); sfx.play('select'); m.dirty = true; };
 
+  // The list is long, so it is grouped into four pages. Q jumps to the first row of the next page; the page name shows under the list.
+  const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
+    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
+  const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
+  function nextPage() {
+    const to = (pageOf(rows[m.cursor]) + 1) % PAGES.length;
+    const i = rows.findIndex((r) => PAGES[to][1].includes(r));
+    if (i < 0) return;
+    m.cursor = i; m.scroll = Math.max(0, Math.min(i, rows.length - VISIBLE)); sfx.play('select'); m.dirty = true;
+  }
   function mainInput() {
     m.nav(rows.length, VISIBLE);
+    if (keys.pressed('swap')) nextPage();
     if (SLIDERS.includes(rows[m.cursor])) {
       if (keys.pressed('left')) adjust(-1);
       if (keys.pressed('right')) adjust(1);
@@ -254,6 +265,7 @@ export function systemTab(m) {
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
         row(g, i, y, r, v, vc);
       });
+      m.T(12, 146, `${PAGES[pageOf(rows[m.cursor])][0]} ${pageOf(rows[m.cursor]) + 1}/${PAGES.length}  Q NEXT`, 13);
       if (rows.length > VISIBLE) {
         const frac = m.scroll / (rows.length - VISIBLE);
         g.fillStyle(C[3]); g.fillRect(131, 24, 2, 128); g.fillStyle(C[13]); g.fillRect(131, 24 + frac * 116, 2, 12);

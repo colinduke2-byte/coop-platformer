@@ -1,0 +1,10 @@
+import { launch } from './harness.mjs';
+const h = await launch();
+await h.open('scene=game&map=village&spawn=start&seed=424242'); await h.sleep(900);
+await h.ev(() => { window.__ff.S.flags.introDone = true; window.__ff.game.scene.getScene('Game').openMenu(-1, 'SYSTEM'); });
+await h.sleep(600);
+await h.ev(() => { window.__ff.keys._press('KeyQ'); setTimeout(() => window.__ff.keys._release('KeyQ'), 80); });
+await h.sleep(500);
+const c = await h.ev(() => window.__ff.game.scene.getScene('Menu').cursor);
+console.log('cursor after Q', c);
+await h.shot('s5_system'); await h.close();

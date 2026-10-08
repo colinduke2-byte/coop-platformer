@@ -61,6 +61,10 @@ const sk = await G(async () => {
   return o;
 });
 check('a gentle stick push walks slower, a full push runs, the keyboard is unaffected', Object.values(sk).every(Boolean), JSON.stringify(sk));
+await G(() => { window.__ff.game.scene.getScene('Game').openMenu(-1, 'SYSTEM'); }); await h.sleep(500);
+const pg = [];
+for (let i = 0; i < 5; i++) { await G(() => { window.__ff.keys._press('KeyQ'); setTimeout(() => window.__ff.keys._release('KeyQ'), 80); }); await h.sleep(300); pg.push(await G(() => window.__ff.game.scene.getScene('Menu').cursor)); }
+check('Q in Pause > System steps through four pages and wraps', new Set(pg.slice(0, 4)).size === 4 && pg[4] === pg[0] && pg[3] > pg[0] - 1, JSON.stringify(pg));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'TOWN FAILED' : 'TOWN PASSED');
