@@ -406,3 +406,10 @@ Both regions are reachable from the Hollow Reach from the start (roads leave the
 - **Dungeon set pieces** (barrows, mines and the new caves): *spike halls* (three lanes of floor that glow red for 0.7 s before they strike, so a roll or a sprint beats them), *flooded halls* (wading slows you to 55%, leeches in the water) and *ambush rooms* (a chest in an undisturbed room; step in and the room fills with foes, once).
 - **Named loot**: every dungeon theme now ends in its own named item with a line of story (Grave-Brand, Packbreaker, Smuggler's Cloak, Rimebound Mail, the Delver's Lantern-Charm, the Bear-Claw Charm, and one for each region's caves).
 - Tests: `stage59_setpieces`; `stage58_regions4` covers inns, charts, sell-all-junk.
+
+## Round 34 - Overnight Round 9: builds, companions and crafting
+- **Perk page 2: five capstones** (skill 12, behind the last perk of each chain), each changing how a build plays: *Unbroken* (sword finishers refund 12 stamina), *Deadeye* (a fully drawn arrow hits 35% harder), *Archmage* (every fourth spell is free), *Second Wind* (a blow that would leave you under a quarter of your health heals you 35% instead, once per 90 seconds), *Assassin* (sneak attacks a further +1.0x).
+- **Companion orders**: talk to Ragna or Pell and pick *Orders*: stay close (default), hold this spot, or hunt on your own (they range further and close in).
+- **Region recipes**: Fen Tonic (marsh orchids, 85 health), Bogward Brew (take 20% less, 120 s) and Stormbrew (+12% damage and speed, take 10% more, 120 s), brewed from the new region ingredients.
+- Test: `stage60_builds`.
+- Test harness: `h.ev` now sanitises what the page returns (a test returning a Phaser object used to make Playwright serialise the whole game for minutes); the full regression runs much faster.

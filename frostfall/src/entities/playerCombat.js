@@ -124,10 +124,11 @@ export const combatMethods = {
       if (!Phaser.Geom.Intersects.RectangleToRectangle(r, e.rect)) continue;
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
+      if (heavy && S.perks.unbroken && !s.refunded) { s.refunded = true; S.sp = Math.min(S.maxSp, S.sp + 12); this.scene.fx.text(this.x, this.y - 16, '+STAMINA', 8, 0.6); }
       const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1);
       let dmg = meleeDamage({
         weapon: stats.weaponDmg() + off * 0.6, skill: bonus.melee(), combo: s.c.dmg, perk: perkMult,
-        sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0), noise: 0.9 + Math.random() * 0.2,
+        sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0) + (S.perks.assassin && sneak ? 1 : 0), noise: 0.9 + Math.random() * 0.2,
       });
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
@@ -217,6 +218,10 @@ export const combatMethods = {
     }
 
     if (S.mounted) this.scene.pony?.dismount();
+    if (S.perks.secondwind && S.hp > 0 && S.hp - taken <= S.maxHp * 0.25 && (S.playtime || 0) - (S.flags.windAt ?? -999) > 90) {
+      S.flags.windAt = S.playtime || 0; S.hp = Math.min(S.maxHp, S.hp + S.maxHp * 0.35); taken = 0; this.invuln = 1.5;
+      sc.fx.text(this.x, this.y - 16, 'SECOND WIND', 8, 1); sc.fx.ring(this.x, this.y + 4, 1.4, 0.6, 'ring', 0xf4d460); sfx.play('potion');
+    }
     S.hp -= taken;
     if (!blocked && opts.attacker && !opts.attacker.dead && runeThorns() > 0) opts.attacker.takeHit({ dmg: runeThorns(), kx: opts.attacker.x - this.x, ky: opts.attacker.y - this.y, kb: 30, src: 'thorns' });
     if (!blocked) wear(S.equip.armor, 1); else wear(S.equip.offhand, 1);

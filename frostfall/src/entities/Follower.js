@@ -32,9 +32,10 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
     const sc = this.scene, b = this.body;
     this.cd -= dt;
     const d = dist(this.x, this.y, player.x, player.y);
-    if (d > 150) { this.setPosition(player.x - 14, player.y); b.setVelocity(0, 0); }
+    const mode = S.followMode || 'follow';
+    if (d > 150 && mode !== 'wait') { this.setPosition(player.x - 14, player.y); b.setVelocity(0, 0); }
     // target: nearest alerted enemy we can see
-    let tgt = null, td = 120;
+    let tgt = null, td = mode === 'fight' ? 190 : 120;
     for (const e of sc.enemies.getChildren()) {
       if (e.dead || !e.alerted) continue;
       const ed = dist(this.x, this.y, e.x, e.y);
@@ -45,10 +46,11 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
       const to = norm(tgt.x - this.x, tgt.y - this.y);
       this.face = dir8(to.x, to.y);
       if (this.kind === 'pell') {                                  // the scout darts in and stabs
-        if (td > 16) { vx = to.x * 96; vy = to.y * 96; }
+        if (td > 16 && (mode !== 'wait' || td < 40)) { vx = to.x * 96; vy = to.y * 96; }
         if (td < 22 && this.cd <= 0) { this.cd = 0.8; tgt.takeHit({ dmg: 9, kx: to.x, ky: to.y, kb: 40, src: 'melee' }); sfx.play('hit'); }
       } else {
       if (td < 46) { vx = -to.x * 50; vy = -to.y * 50; }          // keep some distance
+      else if (mode === 'fight' && td > 90) { vx = to.x * 60; vy = to.y * 60; }   // hunt: close in to a good shooting range
       if (this.cd <= 0) {
         this.cd = 1.15;
         const pr = new Projectile(sc, this.x + to.x * 8, this.y + 3 + to.y * 8, 'arrow', to.x * 220, to.y * 220, { dmg: 8, life: 0.9, ally: true });
@@ -58,7 +60,7 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
         if (S.flags.ragnaVeteran) sc.time.delayedCall(140, () => { if (!this.active) return; const p2 = new Projectile(sc, this.x + to.x * 8, this.y + 3 + to.y * 8, 'arrow', to.x * 220, to.y * 220, { dmg: 8, life: 0.9, ally: true }); sc.shots.add(p2); p2.body.setVelocity(to.x * 220, to.y * 220); });
       }
       }
-    } else if (d > 30) {
+    } else if (d > 30 && mode !== 'wait') {
       let tx = player.x, ty = player.y;
       if (!sc.clearLine(this.x, this.y, player.x, player.y, 4)) {
         this.pathT -= dt;

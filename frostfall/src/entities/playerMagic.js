@@ -59,7 +59,9 @@ export const magicMethods = {
     const cost = this.spellCost(sp);
     if (S.mp < cost) { sfx.play('nostamina'); bus.emit('nomana'); return; }
     if (S.spell === 'heal' && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
-    S.mp -= cost; this.mpDelay = 1.2;
+    const freeCast = S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0);
+    if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);
+    S.mp -= freeCast ? 0 : cost; this.mpDelay = 1.2;
     this.heat = Math.min(TUNE.player.cast.heatMax, (this.heat || 0) + 1);
     const sc = this.scene, f = this.face;
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;

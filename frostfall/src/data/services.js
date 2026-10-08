@@ -204,6 +204,9 @@ export const RECIPES = [
   { id: 'nightsight_elixir', needs: { frost_lily: 2, bone_dust: 1 } },
   { id: 'ironhide_brew', needs: { iron_ingot: 1, snowberry: 2, hide: 1 } },
   { id: 'frostward_tonic', needs: { frost_lily: 2, bone_dust: 2 } },
+  { id: 'fen_tonic', needs: { marsh_orchid: 2, snowberry: 1 } },
+  { id: 'bogward_brew', needs: { marsh_orchid: 2, bone_dust: 1 } },
+  { id: 'storm_brew', needs: { storm_feather: 2, frost_lily: 1 } },
 ];
 const canBrew = (r) => Object.entries(r.needs).every(([k, n]) => count(k) >= n);
 export async function brewMenu(who = 'Alchemy') {
@@ -218,7 +221,7 @@ export async function brewMenu(who = 'Alchemy') {
     }),
     onSelect: (i, ui) => {
       const r = RECIPES[i];
-      if (!canBrew(r)) { sfx.play('nostamina'); ui.say('MISSING INGREDIENTS (FOREST HERBS)', 11); return; }
+      if (!canBrew(r)) { sfx.play('nostamina'); ui.say('MISSING INGREDIENTS (HERBS AND REGION FINDS)', 11); return; }
       for (const [k, n] of Object.entries(r.needs)) removeItem(k, n);
       addItem(r.id);
       ui.say('BREWED ' + ITEMS[r.id].name.toUpperCase(), 8);

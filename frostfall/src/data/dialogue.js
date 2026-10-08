@@ -287,10 +287,19 @@ export async function hilda() {
   }
 }
 
+// How a companion fights: stay close (default), hold the spot, or go after anything hostile.
+export const ORDERS = [['follow', 'Stay close', 'Staying close.'], ['wait', 'Hold this spot', 'I will hold here. Shout if you need me.'], ['fight', 'Hunt on your own', 'Aggressive it is. Do not complain if I get ahead of you.']];
+export async function giveOrders(who) {
+  const c = await choose(ORDERS.map((o) => o[1]).concat('Never mind'));
+  if (c >= ORDERS.length) return;
+  S.followMode = ORDERS[c][0];
+  await say(who, ORDERS[c][2]);
+}
 export async function ragna() {
   const R = 'Ragna';
   if (S.follower && S.companion !== 'pell') {
-    const c = await choose(['Stay in the village', 'Keep following', 'Chat']);
+    const c = await choose(['Stay in the village', 'Keep following', 'Chat', 'Orders']);
+    if (c === 3) { await giveOrders(R); return; }
     if (c === 0) { S.follower = false; bus.emit('follower', false); await say(R, 'I will be at the lodge. Whistle if you want me.'); }
     else if (c === 2) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.']));
     return;

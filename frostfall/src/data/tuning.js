@@ -3,6 +3,7 @@ export const TUNE = {
   follower: { reviveCooldown: 120, reviveHp: 0.4 },
   player: {
   speed: 72, sneakSpeed: 38, accel: 900,
+  buffer: 0.14,                                   // seconds a roll or sword press is remembered while you cannot act yet
   regen: 30, regenDelay: 0.75,
   mpRegen: 4.5, mpDelay: 1.2,
   roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },

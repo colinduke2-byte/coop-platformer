@@ -26,3 +26,6 @@ Shipped: see CHANGELOG round 32. The three remaining regions from the plan stay 
 
 ## Rounds 7 and 8: settlements/services and dungeons - DONE (scoped)
 Shipped: see CHANGELOG round 33. Round 7 deferred: guild rank-ups and faction gear beyond Emberhold, tailor, per-hamlet inns. Round 8 deferred: collapsing bridges, key puzzles, boss-variety pass (the two new bosses reuse the pattern kit). Tweak: spike timing `PHASE` and damage in world/setpieces.js and world/roomkinds.js; mire slow 0.55 in `mireMul`; room-kind odds in the `R() * 7` line of barrowgen/minesgen.
+
+## Round 9: builds, companions, crafting - DONE (scoped)
+Shipped: see CHANGELOG round 34. Deferred: smithing tiers beyond the existing upgrade/reforge, set-bonus pass, companion personal quests and reactions, recipes found as loot (the recipes are open from the start; the ingredients are the gate). Tweak: capstone numbers in playerCombat/playerBow/playerMagic, `ORDERS` in data/dialogue.js.

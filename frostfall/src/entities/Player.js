@@ -151,6 +151,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.riposteT = Math.max(0, (this.riposteT || 0) - dt);
     this.cryT = Math.max(0, (this.cryT || 0) - dt);
     this.spDelay -= dt; this.mpDelay -= dt; this.shoutCd -= dt; this.comboT -= dt;
+    // input buffer: a roll or a swing pressed a moment too early (mid-roll, mid-stun) still happens the instant you can act
+    this.bufRoll = keys.pressed('roll') ? P.buffer : Math.max(0, (this.bufRoll || 0) - dt);
+    this.bufSword = keys.pressed('sword') ? P.buffer : Math.max(0, (this.bufSword || 0) - dt);
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
     const iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
@@ -251,8 +254,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (['roll', 'sword', 'bow', 'spell', 'heavy', 'block', 'shout', 'sneak'].some((k) => keys.pressed(k))) this.scene.pony?.dismount();
       return;
     }
-    if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * P.weights[stats.weight()].roll)) {
-      this.mode = 'roll';
+    const wantRoll = keys.pressed('roll') || this.bufRoll > 0;
+    if (wantRoll && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * P.weights[stats.weight()].roll)) {
+      this.mode = 'roll'; this.bufRoll = 0;
       this.rollStart = this.scene.t;
       this.rollCount = (this.rollCount || 0) + 1;
       this.rollT = P.roll.time;
@@ -270,7 +274,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.bowInput();
     if (this.drawing) return;
     if (keys.pressed('heavy')) this.startHeavy();
-    else if (keys.pressed('sword') || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) this.startSwing();
+    else if (keys.pressed('sword') || (this.bufSword > 0 && !this.swing) || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) { this.bufSword = 0; this.startSwing(); }
     else if (keys.pressed('spell')) this.cast();
     else if (this.quickCast()) { /* cast chosen spell directly */ }
     else if (keys.pressed('shout')) this.shout();

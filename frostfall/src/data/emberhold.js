@@ -81,7 +81,8 @@ SCRIPTS.corvin = async function corvin() {
 SCRIPTS.pell = async function pell() {
   const N = 'Pell';
   if (S.follower && S.companion === 'pell') {
-    const c = await choose(['Wait here in Emberhold', 'Keep following', 'Chat']);
+    const c = await choose(['Wait here in Emberhold', 'Keep following', 'Chat', 'Orders']);
+    if (c === 3) { const { giveOrders } = await import('./dialogue.js'); await giveOrders(N); return; }
     if (c === 0) { setCompanion(null); await say(N, 'I will be at the Last Lantern. Whistle, and I will come running. Probably.'); }
     else if (c === 2) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a gentleman.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.']));
     return;
