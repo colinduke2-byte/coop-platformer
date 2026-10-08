@@ -61,7 +61,7 @@ const hubs = await G(async () => {
   out.caves = caves;
   return out;
 });
-check('Reedwick and Skarn Hold have ten named people each, a fire and a way out', hubs.reedwick.n === 10 && hubs.skarnhold.n === 10 && !hubs.reedwick.missing.length && !hubs.skarnhold.missing.length && hubs.reedwick.fire && hubs.skarnhold.fire && hubs.reedwick.exit === 'fens' && hubs.skarnhold.exit === 'highlands' && hubs.reedwick.spawn && hubs.skarnhold.spawn, JSON.stringify(hubs));
+check('Reedwick and Skarn Hold have eleven named people each, a fire and a way out', hubs.reedwick.n === 11 && hubs.skarnhold.n === 11 && !hubs.reedwick.missing.length && !hubs.skarnhold.missing.length && hubs.reedwick.fire && hubs.skarnhold.fire && hubs.reedwick.exit === 'fens' && hubs.skarnhold.exit === 'highlands' && hubs.reedwick.spawn && hubs.skarnhold.spawn, JSON.stringify(hubs));
 check('the Sunken Barrow ends in the Mire Mother, the Stormspire in the Storm Giant', hubs.mb.boss === 'miremother' && hubs.mb.exit === 'fens' && hubs.mb.room && hubs.mb.foes >= 8 && hubs.ss.boss === 'stormgiant' && hubs.ss.exit === 'highlands' && hubs.ss.room && hubs.ss.foes >= 8, JSON.stringify([hubs.mb, hubs.ss]));
 check('every cave in the two regions builds, has foes and leads home', hubs.caves.length >= 4 && hubs.caves.every((c) => c.ok && c.foes >= 4 && c.back), JSON.stringify(hubs.caves));
 

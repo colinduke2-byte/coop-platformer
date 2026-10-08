@@ -65,6 +65,33 @@ export async function cartographerMenu(who) {
 }
 
 // An inn: a bed for the night, a hot meal, and news.
+// Sleep through to morning: heals, saves, sets the respawn point. Returns false if you cannot pay.
+export async function restRoom(who, price) {
+  const g = gameScene();
+  if (!pay(price)) { await say(who, 'Beds are not free, even in winter.'); return false; }
+  if (!g) return true;
+  const cam = g.cameras.main;
+  await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); });
+  S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
+  advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
+  S.respawn = { map: g.mapId, x: Math.round(g.player.x), y: Math.round(g.player.y) };
+  saveGame(g);
+  await g.delay(700);
+  bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
+  await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); });
+  return true;
+}
+
+// A tailor: cloth and leather garments, plus selling.
+export async function tailorMenu(who, hello) {
+  await say(who, hello || 'Wool, oilcloth, and the occasional coat that is better than it looks.');
+  for (;;) {
+    const c = await choose(['Buy garments', 'Sell', 'Leave']);
+    if (c === 0) await buyMenu(who, [{ id: 'hunter_garb', price: 110, once: true }, { id: 'mage_robe', price: 150, once: true }, { id: 'sea_coat', price: 240, once: true }, { id: 'fur_tunic', price: 40, once: true }]);
+    else if (c === 1) await sellMenu(who); else return;
+  }
+}
+
 export async function innMenu(who, opt = {}) {
   const room = opt.room ?? 25, meal = opt.meal ?? 14, news = opt.news ?? 30;
   await say(who, opt.hello || 'Come in out of the weather. A bed, a bowl, or just the news?');
@@ -74,18 +101,8 @@ export async function innMenu(who, opt = {}) {
     const g = gameScene();
     if (c === 1) { if (pay(meal)) { addItem('hunters_stew'); await say(who, 'Hot and heavy. It will keep you warm in a snowstorm, or at least annoyed in one.'); } else await say(who, 'A meal costs coin, traveller.'); continue; }
     if (c === 2) { await rumour(who, news); continue; }
-    if (!pay(room)) { await say(who, 'Beds are not free, even in winter.'); continue; }
-    if (!g) continue;
-    const cam = g.cameras.main;
-    await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); });
-    S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
-    advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
-    S.respawn = { map: g.mapId, x: Math.round(g.player.x), y: Math.round(g.player.y) };
-    saveGame(g);
-    await g.delay(700);
-    bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
-    await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); });
-    return;
+    if (await restRoom(who, room)) return;
+    continue;
   }
 }
 

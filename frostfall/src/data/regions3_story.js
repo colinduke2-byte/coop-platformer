@@ -9,7 +9,7 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count, removeItem } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
-import { innMenu, cartographerMenu, smithMenu } from './services2.js';
+import { innMenu, cartographerMenu, smithMenu, tailorMenu } from './services2.js';
 import { addRep, rep, repTier, FACTIONS } from './factions.js';
 import { armouryMenu } from './emberhold.js';
 import { isNightHour, hourOf } from '../world/lighting.js';
@@ -292,15 +292,7 @@ SCRIPTS.salt_trader = () => trade('Rosalind', [{ id: 'hp_potion', price: 26 }, {
 SCRIPTS.salt_smith = () => smithMenu('Cormac', [{ id: 'steel_sword', price: 190, once: true }, { id: 'iron_greatsword', price: 230, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'harpoon', price: 280, once: true }, { id: 'iron_ingot', price: 28 }],
   cyc('cormacN', ['Ships, spears, anchors. If it floats or hurts, I made it.', 'Salt water eats steel. I coat mine in whale-oil and good wishes.', 'Bring me a broken hull and I will bring you a better one.']));
 // the tailor: light and medium cloth gear, plus the Guild and Smugglers' own garments at the right standing
-SCRIPTS.salt_tailor = async function tailor() {
-  const N = 'Perpetua';
-  await say(N, cyc('perpN', ['Wool, oilcloth, and the occasional coat that is better than it looks.', 'Heavy armour keeps you alive. Good tailoring keeps you from being noticed. Which do you need?']));
-  for (;;) {
-    const c = await choose(['Buy garments', 'Sell', 'Leave']);
-    if (c === 0) await buyMenu(N, [{ id: 'hunter_garb', price: 110, once: true }, { id: 'mage_robe', price: 150, once: true }, { id: 'sea_coat', price: 240, once: true }, { id: 'fur_tunic', price: 40, once: true }]);
-    else if (c === 1) await sellMenu(N); else return;
-  }
-};
+SCRIPTS.salt_tailor = () => tailorMenu('Perpetua', cyc('perpN', ['Wool, oilcloth, and the occasional coat that is better than it looks.', 'Heavy armour keeps you alive. Good tailoring keeps you from being noticed. Which do you need?']));
 // guild ranks: each faction awards a rank gift once per standing reached
 const RANK_GIFTS = {
   tide: [[20, 'KNOWN: Deckhand', { gold: 120 }], [45, 'TRUSTED: First Mate', { item: 'tide_charm' }], [75, 'HONOURED: Admiral\'s Hand', { gold: 500, item: 'gem_sapphire' }]],
@@ -375,3 +367,9 @@ SCRIPTS.salt_map = () => cartographerMenu('Isolde');
 SCRIPTS.salt_child = talk('Minnow', 'minnowN', ['I can tell what the tide will do by smelling it. It will do whatever it wants.', 'My dad says the smugglers are bad. My uncle is a smuggler. Dad and uncle do not talk at the holidays.', 'If you drop a coin off the quay, a seal catches it. I have counted.']);
 SCRIPTS.salt_watch = talk('Harbour Watch', 'swatchN', ['Papers? No, not really. Just do not start anything.', 'The east quay is closed. It is always closed. Do not ask what is on it.']);
 SCRIPTS.salt_bard = talk('Shanty-Man', 'shantyN', ['Haul away, my heart, haul away. The ice is thin and the debts are deep.', 'Seven bells, and the cargo is wrong. Seven bells, and the cargo is singing.', 'I know a song about a Hartking and a song about a lode. The one about Brinegut has fewer verses and a rude refrain.']);
+
+// ---- tailors for the older hubs
+for (const [id, name, tex] of [['ember_tailor', 'WREN THE SEAMSTRESS', 'spr_hilda'], ['wick_tailor', 'SEDGE THE NETTER', 'spr_hilda'], ['skarn_tailor', 'FRIDA FURRIER', 'spr_hilda'], ['glade_tailor', 'LUMEN THE WEAVER', 'spr_hilda'], ['fall_tailor', 'DARNING DOT', 'spr_hilda']]) {
+  NPC_DEFS[id] = { name, tex };
+  SCRIPTS[id] = () => tailorMenu(name.split(' ')[0].charAt(0) + name.split(' ')[0].slice(1).toLowerCase(), cyc(id + 'N', ['Cloth, thread and a good eye. What can I make you?', 'Armour keeps you alive. A coat that fits keeps you warm. Both matter.']));
+}

@@ -29,7 +29,7 @@ export function buildLanternGlade() {
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'glasswood', spawn: 'lanternglade', fx: 'door' });
   g.add({ t: 'sign', x: 8, y: 24, text: ['LANTERN GLADE.', 'THE TREES HERE SING IN THE WIND. DO NOT SING BACK; THEY ARE VERY SENSITIVE.'] });
-  people(g, [['glade_warden', 36, 19], ['glade_trader', 30, 28], ['glade_smith', 44, 28], ['glade_hunter', 24, 33], ['glade_herbalist', 48, 20], ['glade_child', 33, 31], ['glade_watch', 12, 26], ['glade_inn', 26, 13], ['glade_map', 46, 12], ['glade_sage', 40, 22]]);
+  people(g, [['glade_warden', 36, 19], ['glade_trader', 30, 28], ['glade_smith', 44, 28], ['glade_hunter', 24, 33], ['glade_herbalist', 48, 20], ['glade_child', 33, 31], ['glade_watch', 12, 26], ['glade_tailor', 40, 34], ['glade_inn', 26, 13], ['glade_map', 46, 12], ['glade_sage', 40, 22]]);
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 30, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 46, y: 31 });
   g.add({ t: 'lore', id: 'glade', tex: 'book', x: 34, y: 31 });
@@ -56,7 +56,7 @@ export function buildLanternfall() {
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'underdeep', spawn: 'lanternfall', fx: 'door' });
   g.add({ t: 'sign', x: 8, y: 24, text: ['LANTERNFALL.', 'THE LAST LANTERN OF THE DELVERS. IT HAS BURNED SINCE BEFORE THEY BUILT THE FIRST TUNNEL ABOVE.'] });
   g.add({ t: 'sign', x: 39, y: 29, text: ['THE UNDERGROUND FERRY.', 'ORM TAKES PASSENGERS ACROSS THE BLACK WATER AND UP THE LONG STAIR TO EMBERHOLD. TWENTY GOLD, OR A GOOD STORY.'] });
-  people(g, [['fall_foreman', 36, 20], ['fall_trader', 30, 28], ['fall_smith', 44, 28], ['fall_fungalist', 24, 33], ['fall_scout', 48, 20], ['fall_child', 32, 31], ['fall_watch', 12, 26], ['fall_inn', 26, 13], ['fall_map', 46, 12], ['fall_ferry', 39, 31]]);
+  people(g, [['fall_foreman', 36, 20], ['fall_trader', 30, 28], ['fall_smith', 44, 28], ['fall_fungalist', 24, 33], ['fall_scout', 48, 20], ['fall_child', 32, 31], ['fall_watch', 12, 26], ['fall_tailor', 30, 32], ['fall_inn', 26, 13], ['fall_map', 46, 12], ['fall_ferry', 39, 31]]);
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 28, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 46, y: 31 });
   g.add({ t: 'lore', id: 'lanternfall', tex: 'book', x: 34, y: 31 });

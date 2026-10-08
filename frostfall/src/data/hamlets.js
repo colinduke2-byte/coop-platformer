@@ -9,6 +9,7 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
+import { restRoom } from './services2.js';
 import { isBlood, isFull, isNew } from '../systems/moon.js';
 import { today } from '../systems/bless.js';
 
@@ -35,8 +36,8 @@ const trade = async (who, wares, hello) => {
   await say(who, hello);
   if (S.flags['news' + who] !== today()) { S.flags['news' + who] = today(); await say(who, newsLine()); }
   for (;;) {
-    const c = await choose(['Buy', 'Sell', 'Leave']);
-    if (c === 0) await buyMenu(who, wares); else if (c === 1) await sellMenu(who); else return;
+    const c = await choose(['Buy', 'Sell', 'Rent a bed (20g)', 'Leave']);
+    if (c === 0) await buyMenu(who, wares); else if (c === 1) await sellMenu(who); else if (c === 2) { if (await restRoom(who, 20)) return; } else return;
   }
 };
 

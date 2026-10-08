@@ -28,7 +28,7 @@ const maps = await G(async () => {
   return { n: npcs.size, problems };
 });
 check('Emberhold, its 7 halls and the mines all build, and every exit leads somewhere real', maps.problems.length === 0, JSON.stringify(maps));
-check('twenty named people live in the city', maps.n === 20, String(maps.n));
+check('twenty-one named people live in the city', maps.n === 21, String(maps.n));
 
 // ---- everything in the city is reachable on foot from the gate
 const reach = await G(async () => {

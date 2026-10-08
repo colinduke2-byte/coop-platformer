@@ -214,6 +214,22 @@ check('Guild ranks hand out one gift per standing, and the armoury is gated by s
 for (const n of ['glade_trader', 'glade_smith', 'glade_child', 'glade_watch', 'fall_trader', 'fall_smith', 'fall_child', 'fall_watch', 'salt_trader', 'salt_smith', 'salt_tailor', 'salt_child', 'salt_watch', 'salt_bard']) { await stub([]); await SCRIPT(n); await unstub(); }
 check('every villager has something to say', true);
 
+// ---- tailors in every hub, a bed in every hamlet
+const tl = await G(async () => {
+  const M = await import('/src/data/maps.js'), D = await import('/src/data/dialogue.js'), out = {};
+  for (const [map, id] of [['emberhold', 'ember_tailor'], ['reedwick', 'wick_tailor'], ['skarnhold', 'skarn_tailor'], ['lanternglade', 'glade_tailor'], ['lanternfall', 'fall_tailor'], ['saltmarket', 'salt_tailor']]) { const b = M.MAPS[map].build(); out[id] = b.entities.some((e) => e.t === 'npc' && e.id === id) && !!D.SCRIPTS[id]; }
+  return out;
+});
+check('every hub has a tailor', Object.values(tl).every(Boolean), JSON.stringify(tl));
+const bed = await G(async () => {
+  const S = window.__ff.S, D = await import('/src/data/dialogue.js'), dlg = await import('/src/systems/dialogue.js'), seen = [];
+  await import('/src/data/hamlets.js');
+  const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => { seen.push(o.join('|')); return o.length - 1; }, hideBox() {}, scene: real.scene };
+  await D.SCRIPTS.trapper(); dlg.dialogue.hud = real;
+  return seen[0];
+});
+check('hamlet stalls offer a bed for the night', /Rent a bed/.test(bed), bed);
+
 // ---- the ferry runs from Lanternfall up to the Ashen Peaks
 await h.sleep(300);
 await G(() => { window.gs().changeMap('lanternfall', 'entry', 'door'); });
