@@ -77,6 +77,16 @@ const sv = await G(async () => {
 });
 check('silver and daylight hurt the undead; the pale merchant comes and goes', sv.night > 1.3 && sv.nosilver === 1 && sv.day > 1.1 && sv.wolfDay === 1 && sv.spawned && sv.removed && sv.recipe, JSON.stringify(sv));
 
+const cold = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, { RestSpot } = await import('/src/entities/Props.js');
+  const out = {};
+  S.weather = 'blizzard'; S.equip.armor = 'bulwark_plate'; g.player.statuses = {}; g._cold = 100; g.stormCold(0.1); out.chilled = !!g.player.statuses.chill;
+  g.player.statuses = {}; S.equip.armor = 'hunter_garb'; g._cold = 100; g.stormCold(0.1); out.warm = !g.player.statuses.chill;
+  S.equip.armor = 'bulwark_plate'; const rs = new RestSpot(g, g.player.x + 20, g.player.y); g.interactables.push(rs); g._cold = 100; g.stormCold(0.1); out.fire = !g.player.statuses.chill;
+  g.interactables = g.interactables.filter((i) => i !== rs); S.weather = 'clear'; return out;
+});
+check('storms chill you unless you wear warm armour or stand by a fire', cold.chilled && cold.warm && cold.fire, JSON.stringify(cold));
+
 await G(() => { window.__ff.S.time = 22 * 60; window.__ff.S.days = 4; });
 await h.sleep(500);
 await h.shot('s57_night_hud');

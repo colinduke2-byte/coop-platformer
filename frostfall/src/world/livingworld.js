@@ -13,6 +13,9 @@ import { makeGenItem } from '../systems/genloot.js';
 import Npc from '../entities/Npc.js';
 import { isBlood } from '../systems/moon.js';
 import { completeContract } from '../data/contracts.js';
+import { applyStatus } from '../systems/status.js';
+import { ITEMS } from '../data/items.js';
+import { RestSpot } from '../entities/Props.js';
 import Pickup from '../entities/Pickup.js';
 
 NPC_DEFS.wounded = { name: 'WOUNDED TRAVELLER', tex: 'spr_trapper' };
@@ -135,7 +138,21 @@ export const livingMethods = {
     bus.emit('toast', 'RAIDERS ARE ATTACKING A HAMLET!', 11); sfx.play('alert'); music.stinger();
     return true;
   },
+  // Storms bite: in a blizzard or whiteout you slowly chill unless you wear warm armour or stand by a fire.
+  stormCold(dt) {
+    const w = S.weather;
+    if (w !== 'blizzard' && w !== 'whiteout') { this._cold = 0; return; }
+    if (!this.def.snow && !this.def.outdoors) return;
+    this._cold = (this._cold || 0) + dt;
+    if (this._cold < (w === 'whiteout' ? 5 : 9)) return;
+    this._cold = 0;
+    if (ITEMS[S.equip.armor]?.warm || this.nearFire(70)) return;
+    const c = this.player.statuses?.chill;
+    if (!c || c.stacks < 2) { applyStatus(this.player, 'chill', { t: 8 }); bus.emit('toast', 'THE STORM CHILLS YOU: WEAR WARM ARMOUR OR FIND A FIRE', 15); }
+  },
+  nearFire(r) { return this.interactables.some((i) => i instanceof RestSpot && Math.hypot(i.ix - this.player.x, i.iy - this.player.y) < r); },
   livingTick(dt) {
+    this.stormCold(dt);
     // radiant delivery jobs finish when you reach the hamlet
     const c = S.contracts;
     if (c?.active?.length) for (const id of c.active) { const o = c.offers.find((x) => x.id === id); if (o && o.kind === 'hamlet' && !c.done[id] && Math.hypot(o.x * T - this.player.x, o.y * T - this.player.y) < 56) completeContract(id, this); }
