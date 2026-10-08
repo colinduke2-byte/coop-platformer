@@ -8216,10 +8216,15 @@ func test_every_theme_has_a_painted_ground_texture_and_a_grade() -> void:
 
 
 func test_levels_get_foreground_and_colour_grade_layers() -> void:
-	var p: Player = await _load_demo("res://levels/w1_1_pillow_meadow.tscn")
+	var p: Player = await _load_demo("res://levels/w4_1_cogwheel_courtyard.tscn")
 	check(_demo.has_node(^"ColorGrade") and _demo.get_node(^"ColorGrade").layer == 2, "the level has a colour grade above the foreground")
 	check(_demo.has_node(^"Foreground"), "the level has a foreground layer")
-	check(_demo.get_node(^"Foreground").get_child_count() >= 1, "MEDIUM draws the foreground silhouettes")
+	check(_demo.get_node(^"Foreground").get_child_count() >= 1, "MEDIUM draws the factory's foreground silhouettes")
+	var leafy := Foreground.new()
+	_arena.add_child(leafy)
+	leafy.setup(load("res://world/themes/jungle.tres"), Backdrop.Scenery.JUNGLE)
+	check(leafy.get_child_count() == 0, "jungle (leafy) levels have no dark leaves on screen")
+	leafy.queue_free()
 	var old := Gfx.level
 	Gfx.level = Gfx.Level.LOW
 	var fg := Foreground.new()

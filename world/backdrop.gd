@@ -108,7 +108,7 @@ func _rebuild() -> void:
 		Scenery.NEBULA: _nebula_scene()
 	if critters:
 		_critters()
-	if Gfx.at_least(Gfx.Level.MEDIUM):
+	if Gfx.at_least(Gfx.Level.MEDIUM) and not scenery in [Scenery.JUNGLE, Scenery.RUINS]:
 		_mist()
 	if cloud_sea:
 		_build_cloud_sea()
@@ -422,16 +422,13 @@ func _jungle_scene(ruins: bool) -> void:
 	var mid := _layer(0.26, 2200.0)
 	_hill_band(mid, 2200.0, horizon_y - 150.0, 110.0, 3, _haze(_th.near_hills, 0.22))
 	var bark := _th.ledge_dark.lerp(_th.near_hills, 0.35)
-	var xs := _trunk_row(mid, 2200.0, 5, 120.0, _haze(bark, 0.35))
-	for x in xs:
-		_crown(mid, Vector2(x, horizon_y - _rng.randf_range(900, 1200)), _haze(_th.foliage_dark, 0.3))
+	_trunk_row(mid, 2200.0, 5, 120.0, _haze(bark, 0.35))
 	if ruins:
 		var tx := _rng.randf_range(300, 1900)
 		_temple(mid, Vector2(tx, _ground_at(mid, tx) + 20.0), 1.6, _haze(_th.ledge, 0.3))
 	for i in 6:
 		var x := _rng.randf_range(0, 2200)
 		_palm(mid, Vector2(x, _ground_at(mid, x) + 10.0), _rng.randf_range(0.9, 1.3), _haze(_th.foliage, 0.25), _haze(bark, 0.25))
-	_hanging_vines(mid, 2200.0, 16, horizon_y - 1250.0, _haze(_th.foliage_dark, 0.3))
 	_commit(mid)
 	# Big leaves and ferns up close.
 	var near := _layer(0.5, 1800.0)
@@ -444,8 +441,6 @@ func _jungle_scene(ruins: bool) -> void:
 			near.painter.draw_rect(Rect2(b + Vector2(-34, -h), Vector2(68, h)), _th.ledge.darkened(0.1))
 			near.painter.draw_rect(Rect2(b + Vector2(-46, -h - 20), Vector2(92, 22)), _th.ledge.darkened(0.2))
 			near.painter.draw_colored_polygon(Art.ellipse(b + Vector2(-10, -h - 18), 40, 12, 12), _th.top_dark)
-	_big_leaves(near, 1800.0, 14, _th.foliage_dark)
-	_ferns(near, 1800.0, 12, _th.foliage_dark.darkened(0.05))
 	_commit(near)
 
 
@@ -456,13 +451,6 @@ func _waterfall(l: Layer, x: float, top: float, bottom: float, w: float, alpha: 
 		var xx := x - w * 0.5 + (k + 0.5) * w / 4.0
 		l.painter.draw_line(Vector2(xx, top), Vector2(xx, bottom), Color(1, 1, 1, alpha * 0.8), 2.0)
 	l.painter.draw_colored_polygon(Art.ellipse(Vector2(x, bottom), w * 1.4, 18, 14), Color(1, 1, 1, alpha))
-
-
-## A rounded rainforest crown (cluster of leafy blobs) on top of a trunk.
-func _crown(l: Layer, c: Vector2, color: Color) -> void:
-	for k in 7:
-		var p := c + Vector2(_rng.randf_range(-170, 170), _rng.randf_range(-80, 60))
-		l.painter.draw_colored_polygon(Art.ellipse(p, _rng.randf_range(90, 140), _rng.randf_range(60, 90), 16), color.lightened(k * 0.02))
 
 
 func _palm(l: Layer, base: Vector2, s: float, leaf: Color, trunk: Color) -> void:

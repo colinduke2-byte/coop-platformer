@@ -24,6 +24,8 @@ func setup(theme: LevelTheme, scenery: int) -> void:
 	if not Gfx.at_least(Gfx.Level.MEDIUM):
 		return
 	var style := _style_for(scenery)
+	if style == Style.LEAVES:
+		return   # leafy worlds (meadow, forest, jungle...) keep the screen clear: no dark leaves
 	var base := theme.ground_dark.darkened(0.55)
 	base = base.lerp(theme.sky_top.darkened(0.8), 0.35)
 	_add_layer(style, base, 1.32, 0.94, 11)
