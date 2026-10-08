@@ -14,6 +14,7 @@ import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
+import { SETS, setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
 import { setCompanion } from '../systems/companion.js';
@@ -260,6 +261,52 @@ export async function emberforgeMenu(who) {
   });
 }
 
+// Faction armoury: gear sold only to those the faction trusts. Pieces form sets (see systems/sets.js).
+export const ARMOURY = [
+  { id: 'court_plate', need: ['anvil', 45], gold: 700 }, { id: 'court_hammer', need: ['anvil', 45], gold: 520 }, { id: 'court_signet', need: ['anvil', 75], gold: 480 },
+  { id: 'delver_hauberk', need: ['delvers', 45], gold: 620 }, { id: 'delver_pick', need: ['delvers', 45], gold: 500 }, { id: 'delver_charm', need: ['delvers', 75], gold: 460 },
+  { id: 'warden_cuirass', need: ['wardens', 45], gold: 660 }, { id: 'warden_shield', need: ['wardens', 45], gold: 480 }, { id: 'warden_badge', need: ['wardens', 75], gold: 440 },
+];
+export const canBuyArmoury = (r) => rep(r.need[0]) >= r.need[1];
+export function buyArmoury(id) {
+  const r = ARMOURY.find((x) => x.id === id);
+  if (!r || !canBuyArmoury(r)) return 'locked';
+  if (S.gold < r.gold) return 'short';
+  S.gold -= r.gold; addItem(id, 1, true); return 'ok';
+}
+export async function armouryMenu(who) {
+  await listScreen({
+    title: 'FACTION ARMOURY', hint: 'E BUY   ESC DONE',
+    rows: () => ARMOURY.map((r) => {
+      const open = canBuyArmoury(r), ok = open && S.gold >= r.gold;
+      return { id: r.id, name: ITEMS[r.id].name, tag: open ? `${r.gold}G` : `${FACTIONS[r.need[0]].short} ${r.need[1]}`, ok, sub: open ? (ok ? 'READY' : 'NEED GOLD') : 'NOT TRUSTED YET', lines: [...statLines(r.id), [setSummary().join(', ') || 'SETS GIVE BONUSES', 8]], desc: ITEMS[r.id].desc };
+    }),
+    onSelect: (i, ui) => {
+      const res = buyArmoury(ARMOURY[i].id);
+      if (res === 'locked') { sfx.play('nostamina'); ui.say('THEY DO NOT TRUST YOU ENOUGH', 11); }
+      else if (res === 'short') { sfx.play('nostamina'); ui.say('NEED MORE GOLD', 11); }
+      else { sfx.play('levelup'); ui.say('BOUGHT', 8); }
+    },
+  });
+}
+// Master tempering: past +3, only at the Great Anvil. +4 and +5, paid for with Emberheart Ore.
+export const MASTER_TEMPER = [{ gold: 400, ore: 2 }, { gold: 700, ore: 4 }];
+export function masterTemper(slot) {
+  const id = S.equip[slot]; if (!id) return 'none';
+  const lv = S.upgrades[id] || 0;
+  if (lv < 3) return 'early'; if (lv >= 5) return 'max';
+  const c = MASTER_TEMPER[lv - 3];
+  if (S.gold < c.gold || count('ember_ore') < c.ore) return 'short';
+  S.gold -= c.gold; removeItem('ember_ore', c.ore); S.upgrades[id] = lv + 1; return 'ok';
+}
+async function masterTemperMenu(who) {
+  if (!S.flags.emberforged) { await say(who, 'The Great Anvil is still asleep. Wake it first.'); return; }
+  const s = await choose(['Weapon', 'Armour', 'Back']); if (s > 1) return;
+  const r = masterTemper(s === 0 ? 'weapon' : 'armor');
+  const msg = { none: 'You have nothing equipped there.', early: 'Temper it to +3 at a normal forge first.', max: 'That is as far as steel goes.', short: 'That takes gold and Emberheart Ore: 400g and 2 for +4, 700g and 4 for +5.', ok: 'Stand back. The Anvil sings.' };
+  await say(who, msg[r]); if (r === 'ok') { sfx.play('levelup'); bus.emit('toast', 'MASTER TEMPERED', 13); }
+}
+
 SCRIPTS.brannoch = async function brannoch() {
   const N = 'Brannoch', q = S.quests.anvilcore;
   if (q.status === 'active' && count('kragnar_core') > 0) {
@@ -276,11 +323,12 @@ SCRIPTS.brannoch = async function brannoch() {
     return;
   }
   for (;;) {
-    const c = await choose(['Emberforge', 'Temper gear', 'Repair / reforge', 'Enchant', 'Leave']);
+    const c = await choose(['Emberforge', 'Temper gear', 'Repair / reforge', 'Enchant', 'Armoury and master temper', 'Leave']);
     if (c === 0) await emberforgeMenu(N);
     else if (c === 1) { const s = await choose(['Weapon', 'Armour', 'Back']); if (s < 2) await upgradeMenu(N, s === 0 ? 'weapon' : 'armor'); }
     else if (c === 2) { const s = await choose(['Repair', 'Reforge', 'Back']); if (s === 0) await repairMenu(N); else if (s === 1) await reforgeMenu(N); }
     else if (c === 3) await enchantMenu(N);
+    else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); }
     else return;
   }
 };

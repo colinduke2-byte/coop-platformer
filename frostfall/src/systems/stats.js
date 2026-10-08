@@ -7,6 +7,7 @@ import { relicBonus } from './relics.js';
 import { modMul, modSum } from '../data/mods.js';
 import { isBroken, BROKEN_MUL } from './durability.js';
 import { gemBonus, runeElem } from './sockets.js';
+import { setBonus } from './sets.js';
 const blessMul = (k) => blessing()?.[k] ?? 1;
 
 const eq = (slot) => ITEMS[S.equip[slot]] || null;
@@ -26,11 +27,11 @@ export const stats = {
   offhandDmg: () => { const o = eq('offhand'); return o && o.type === 'weapon' ? o.dmg + upg(S.equip.offhand) * 2 : 0; },
   shield: () => { const o = eq('offhand'); return o && o.type === 'shield' ? { id: S.equip.offhand, block: (o.block + upg(S.equip.offhand) * 0.02) * (isBroken(S.equip.offhand) ? BROKEN_MUL.shield : 1), cost: o.cost } : null; },
   bowDmg: () => { const b = eq('bow'); return b ? b.dmg + upg(S.equip.bow) * 1.5 : 4; },
-  armor: () => { const a = eq('armor'); return (a ? (a.armor + upg(S.equip.armor) * 0.02 + gemBonus('armor')) * (isBroken(S.equip.armor) ? BROKEN_MUL.armor : 1) : 0) + (S.hearts?.iron ? 0.08 : 0); },
+  armor: () => { const a = eq('armor'); return (a ? (a.armor + upg(S.equip.armor) * 0.02 + gemBonus('armor')) * (isBroken(S.equip.armor) ? BROKEN_MUL.armor : 1) : 0) + (S.hearts?.iron ? 0.08 : 0) + setBonus('armor'); },
   // armour-set traits: multipliers default to 1
   trait: (k) => (eq('armor')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) * elixirVal('moveMul', 1) * modMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)
-  sum: (k) => gemBonus(k) + modSum(k) + ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
+  sum: (k) => setBonus(k) + gemBonus(k) + modSum(k) + ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
   mul: (k) => ['weapon', 'offhand', 'bow', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (k === 'goldMul' && S.follower && S.companion === 'pell' ? 1.1 : 1) * (blessing()?.[k] ?? 1),
   enchant: () => S.enchants?.[S.equip.weapon] || eq('weapon')?.elem || runeElem(),
 };
@@ -40,10 +41,10 @@ export function recalc() {
   const ch = eq('charm') || {}, ar = eq('armor') || {};
   const bl = blessing() || {};
   const rested = S.flags && S.flags.restedUntil > (S.playtime || 0) ? 25 : 0;
-  S.maxHp = 100 + (bl.maxHp || 0) + rested + (ch.maxHp || 0) + (ar.maxHp || 0) + (S.bonusHp || 0) + foodVal('maxHp') + relicBonus().hp + trophyHp() + modSum('maxHp') + gemBonus('maxHp');
+  S.maxHp = 100 + (bl.maxHp || 0) + rested + (ch.maxHp || 0) + (ar.maxHp || 0) + (S.bonusHp || 0) + foodVal('maxHp') + relicBonus().hp + trophyHp() + modSum('maxHp') + gemBonus('maxHp') + setBonus('maxHp');
   S.maxHp = Math.round(S.maxHp * modMul('maxHpMul'));
-  S.maxMp = 100 + (bl.maxMp || 0) + (ch.maxMp || 0) + (ar.maxMp || 0) + (S.bonusMp || 0) + foodVal('maxMp') + relicBonus().mp + modSum('maxMp') + gemBonus('maxMp');
-  S.maxSp = 100 + (S.hearts?.rime ? 20 : 0) + (ch.maxSp || 0) + (ar.maxSp || 0) + (S.bonusSp || 0) + foodVal('maxSp') + modSum('maxSp') + gemBonus('maxSp');
+  S.maxMp = 100 + (bl.maxMp || 0) + (ch.maxMp || 0) + (ar.maxMp || 0) + (S.bonusMp || 0) + foodVal('maxMp') + relicBonus().mp + modSum('maxMp') + gemBonus('maxMp') + setBonus('maxMp');
+  S.maxSp = 100 + (S.hearts?.rime ? 20 : 0) + (ch.maxSp || 0) + (ar.maxSp || 0) + (S.bonusSp || 0) + foodVal('maxSp') + modSum('maxSp') + gemBonus('maxSp') + setBonus('maxSp');
   S.hp = Math.min(S.hp, S.maxHp);
   S.mp = Math.min(S.mp, S.maxMp);
   S.sp = Math.min(S.sp, S.maxSp);
