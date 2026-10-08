@@ -98,6 +98,8 @@ Three open as the story progresses (see section 6). **The Weeping Fens, the Stor
 
 Gear sets (two or three matching pieces) give a bonus: Emberforged, the Court, Delvers, Wardens, Prism, Deepforged, Tide-Guild. Storms chill you unless you wear warm armour or stand by a fire. Silver weapons and daylight both hurt the undead. Moonpetals only bloom at night.
 
+Every hub has a tailor; hamlet stalls rent a bed (20g). Torn maps, pilgrim letters and hunters' journals dropped by bandits and beasts each name a place near you. In Pause > System, Q jumps between pages.
+
 Each region has its own camps, caves, hamlets, loot and a boss. Check the **map tab** and press **R** to cycle regions.
 
 ## 6. The story (spoilers: structure only, not the ending)

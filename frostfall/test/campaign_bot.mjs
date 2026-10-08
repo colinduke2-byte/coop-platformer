@@ -102,7 +102,100 @@ console.log('  ... talking to Mirra');
 await talk('mirra', []);
 check('Mirra teaches brewing and pays', (await Q('herbs')) === 'done');
 
-// ---- 3. shopping with the gold the campaign paid
+
+// ---- 3. Preparation: the opening gear will not beat the crypt, so do what a player does: clear camps and dens near the village, loot, shop
+const tapKey = async (c, ms = 70) => { await G((k) => window.__ff.keys._press(k), c); await h.sleep(ms); await G((k) => window.__ff.keys._release(k), c); await h.sleep(60); };
+const buyAt = async (id, wares) => {                     // drive the real shop screen: move down to the row and press E
+  await G(async (w) => { const S = await import('/src/data/services.js'); window.__shopP = S.buyMenu('Hilda', w); }, wares);
+  await h.sleep(450);
+  const i = wares.findIndex((w) => w.id === id);
+  for (let k = 0; k < i; k++) await tapKey('KeyS');
+  await tapKey('KeyE'); await tapKey('Escape', 60); await h.sleep(250);
+  await G(async () => { await window.__shopP; });
+};
+const equipBest = () => G(async () => {
+  const S = window.__ff.S, { ITEMS } = await import('/src/data/items.js'), { recalc } = await import('/src/systems/stats.js');
+  const best = (slot, test, score) => { let b = S.equip[slot], bs = b ? score(ITEMS[b]) : -1; for (const id of Object.keys(S.inv)) { const it = ITEMS[id]; if (it && test(it) && score(it) > bs) { b = id; bs = score(it); } } S.equip[slot] = b; };
+  best('weapon', (i) => i.type === 'weapon', (i) => i.dmg); best('armor', (i) => i.type === 'armor', (i) => i.armor || 0); best('offhand', (i) => i.type === 'shield', (i) => i.block || 0);
+  recalc(); return { w: S.equip.weapon, a: S.equip.armor, o: S.equip.offhand };
+});
+await G(() => window.gs().changeMap('forest', 'west', 'door'));
+await h.sleep(2200);
+const pois = await G(async () => { const M = await import('/src/data/maps.js'), S = window.__ff.S; return M.getReach().pois.filter((p) => ['camp', 'den'].includes(p.kind) && p.tier === 0).sort((a, b) => Math.hypot(a.x - 30, a.y - 20) - Math.hypot(b.x - 30, b.y - 20)).slice(0, 6).map((p) => [p.x, p.y, p.kind]); });
+let farmed = 0, farmDeaths = 0;
+for (const [px, py] of pois) {
+  const gold0 = await G(() => window.__ff.S.gold);
+  if (gold0 >= 330 || farmDeaths > 2) break;
+  await G(([x, y]) => { const g = window.gs(), S = window.__ff.S; S.hp = S.maxHp; S.sp = S.maxSp; g.player.setPosition(x * 16, (y + 5) * 16); }, [px, py]);
+  await h.sleep(900);
+  for (let i = 0; i < 12; i++) {
+    const n = await G(() => { const g = window.gs(), p = g.player; const foes = g.enemies.getChildren().filter((e) => !e.dead && e.active && Math.hypot(e.x - p.x, e.y - p.y) < 220); if (foes.length) { const e = foes.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (Math.hypot(e.x - p.x, e.y - p.y) > 90) p.setPosition(e.x - 70, e.y); } return foes.length; });
+    if (!n) break;
+    const r = await G(() => window.__fight(() => { const g = window.gs(); return !g.enemies.getChildren().some((e) => !e.dead && e.active && Math.hypot(e.x - g.player.x, e.y - g.player.y) < 220); }, 35));
+    if (r.hp <= 0) { farmDeaths++; await G(() => { const S = window.__ff.S; S.hp = S.maxHp; window.gs().player.mode = 'free'; }); break; }
+    farmed++;
+  }
+  await G(() => { const g = window.gs(), p = g.player; for (const pk of g.pickups.slice()) if (pk.active !== false && pk.x) p.setPosition(pk.x, pk.y); });
+  await h.sleep(600);
+}
+const afterFarm = await G(() => { const S = window.__ff.S; return { gold: S.gold, kills: S.run.kills }; });
+check('the bot clears camps and dens near the village and loots them', farmed >= 3 && afterFarm.gold > 150, JSON.stringify([farmed, farmDeaths, afterFarm]));
+await G(() => window.gs().changeMap('village', 'start', 'door'));
+await h.sleep(1500);
+const wares = [{ id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'hp_potion', price: 26 }];
+for (const id of ['iron_cuirass', 'steel_sword', 'iron_shield']) { if ((await G(() => window.__ff.S.gold)) >= wares.find((w) => w.id === id).price) await buyAt(id, wares); }
+for (let k = 0; k < 6 && (await G(() => window.__ff.S.gold)) >= 26; k++) await buyAt('hp_potion', wares);
+const kit = await equipBest();
+check('the bot buys and wears better gear', !!kit.a && kit.a !== 'fur_tunic', JSON.stringify(kit));
+
+// ---- 3b. Chapter one: Sigrid's quest, the crypt, Jarl Valdrek, the Frostheart
+await talk('sigrid', [0]);
+check('Sigrid sends you to the crypt', (await Q('king')) === 'active');
+await G(() => { const S = window.__ff.S; S.hp = S.maxHp; S.sp = S.maxSp; for (const id of ['iron_sword', 'wooden_shield', 'fur_tunic']) if (S.inv[id]) { const slot = id === 'wooden_shield' ? 'offhand' : id === 'fur_tunic' ? 'armor' : 'weapon'; S.equip[slot] = id; } });
+await G(() => window.gs().changeMap('crypt', 'entry', 'door'));
+await h.sleep(2500);
+console.log('  ... in the crypt');
+let lost = false;
+for (let i = 0; i < 30 && !lost; i++) {
+  const next = await G(() => {
+    const g = window.gs(), p = g.player, S = window.__ff.S;
+    S.hp = Math.max(S.hp, S.maxHp * 0.6); S.sp = S.maxSp;
+    const foes = g.enemies.getChildren().filter((e) => !e.dead && !e.isBoss && e.active).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y));
+    if (!foes.length) return 0;
+    const e = foes[0]; p.setPosition(e.x - 60, e.y); return foes.length;
+  });
+  if (!next) break;
+  const r = await G(() => window.__fight(() => { const g = window.gs(); return !g.enemies.getChildren().some((e) => !e.dead && !e.isBoss && e.active && Math.hypot(e.x - g.player.x, e.y - g.player.y) < 170); }, 40));
+  console.log('  . crypt fight', next, JSON.stringify(r));
+  if (!r.ok) lost = true;
+}
+check('the bot clears the crypt\'s guards', !lost);
+const boss = await G(async () => {
+  const g = window.gs(), S = window.__ff.S;
+  S.hp = S.maxHp; S.sp = S.maxSp;
+  const b = g.boss; if (!b) return { none: true };
+  g.player.setPosition(b.x, b.y + 110);
+  return { ok: true };
+});
+check('Jarl Valdrek is waiting', !!boss.ok, JSON.stringify(boss));
+console.log('  . boss', JSON.stringify(await G(() => { const b = window.gs().boss; return b && { x: Math.round(b.x), y: Math.round(b.y), engaged: b.engaged, inv: b.invulnerable, hp: b.hp, px: Math.round(window.gs().player.x), py: Math.round(window.gs().player.y) }; })));
+const fought = await G(() => window.__fight(() => { const b = window.gs().boss; return !b || b.dead || b.yieldDone; }, 170));
+check('the bot beats Jarl Valdrek with what the first quests paid', fought.ok, JSON.stringify(fought));
+await h.sleep(3000);
+const loot = await G(() => {
+  const g = window.gs(), p = g.player; let n = 0;
+  for (const pk of g.pickups.slice()) { if (pk.active !== false && pk.x) { p.setPosition(pk.x, pk.y); n++; } }
+  return n;
+});
+await h.sleep(800);
+await G(() => window.__ff.S.quests.king.status);
+check('the Frostheart is in hand', (await Q('king')) === 'relic', await Q('king'));
+await G(() => window.gs().changeMap('village', 'start', 'door'));
+await h.sleep(1500);
+await talk('sigrid', [0]);
+check('Sigrid takes the Frostheart: chapter one ends and the winter eases', (await Q('king')) === 'done' && (await G(() => window.__ff.S.flags.ending === 'give')), await Q('king'));
+
+// ---- 4. what the campaign paid
 const shop = await G(async () => {
   const S = window.__ff.S;
   return { gold: S.gold, quests: Object.entries(S.quests).filter(([, q]) => q.status === 'done').map(([k]) => k) };
