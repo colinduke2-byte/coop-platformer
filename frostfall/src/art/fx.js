@@ -28,6 +28,16 @@ export class Fx {
     }
   }
 
+  // Hit sparks: a short fan of bright streaks thrown out along the blow's direction (kx, ky).
+  spark(x, y, kx, ky, big = false, col = 13) {
+    const l = Math.hypot(kx, ky) || 1, bx = kx / l, by = ky / l, n = big ? 9 : 5;
+    for (let i = 0; i < n; i++) {
+      const a = Math.atan2(by, bx) + (Math.random() - 0.5) * 1.6, v = (big ? 130 : 95) * (0.5 + Math.random() * 0.7);
+      const sp = this.acquire(i % 3 === 0 ? 15 : col, x, y);
+      this.parts.push({ sp, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0.14 + Math.random() * 0.1, life: 0.2, grav: 0 });
+    }
+  }
+
   trail(x, y, col, life = 0.25) {
     const sp = this.acquire(col, x, y);
     this.parts.push({ sp, vx: 0, vy: -4, t: life, life, grav: 0 });

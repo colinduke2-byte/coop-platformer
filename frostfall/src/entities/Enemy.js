@@ -639,6 +639,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (em >= 1.2) sc.fx.text(this.x, this.y - 21, 'WEAK', 12, 0.8); else if (em <= 0.7) sc.fx.text(this.x, this.y - 21, 'RESIST', 4, 0.8);
     if (info.src === 'arrow') this.stuck = (this.stuck || 0) + 1;
     if (this.staggerT > 0) dmg = Math.round(dmg * 1.35);
+    sc.fx.spark(this.x, this.y - 2, info.kx || 0, info.ky || 1, !!info.heavy || dmg > this.maxHp * 0.25, em >= 1.2 ? 12 : 13);
     this.hp -= dmg;
     this.flashT = 0.1;
     // poise: chip away enough and the enemy staggers, opening it (and armour) up for a burst
