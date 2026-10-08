@@ -2,17 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Frostfall: a top-down 8-bit action RPG of the frozen north. Play in the browser with a keyboard, a controller or touch." />
+  <meta name="theme-color" content="#0b0e1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta property="og:title" content="Frostfall" />
+  <meta property="og:description" content="A top-down 8-bit action RPG of the frozen north: an open world, a moon that changes who hunts, three difficulties, and a winter to break." />
   <title>Frostfall</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%231c2338%27/%3E%3Crect x=%273%27 y=%271%27 width=%272%27 height=%276%27 fill=%27%23eaf2f8%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%23eaf2f8%27/%3E%3C/svg%3E" />
   <style>
     html, body { margin: 0; height: 100%; background: #0b0e1a; overflow: hidden; }
     #game { width: 100vw; height: 100vh; }
+    #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #b4c7e0; font: 14px monospace; letter-spacing: 3px; background: #0b0e1a; z-index: 5; }
     canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   </style>
 </head>
 <body>
+  <div id="boot">LOADING FROSTFALL...</div>
   <div id="game"></div>
+  <script>new MutationObserver((m, o) => { if (document.querySelector("#game canvas")) { const b = document.getElementById("boot"); if (b) b.remove(); o.disconnect(); } }).observe(document.body, { childList: true, subtree: true });</script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

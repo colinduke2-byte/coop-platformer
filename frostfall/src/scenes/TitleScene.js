@@ -132,7 +132,7 @@ export default class TitleScene extends Phaser.Scene {
   openHowTo() {
     this.howMode = true; this.warm = 4;
     const rows = [['HOW TO PLAY', 13], ['', 4], ['MOVE  WASD / STICK / TOUCH PAD', 6], ['SWORD J   BOW K (HOLD)   SPELL L', 6], ['DODGE ROLL  SPACE  (SLIPS THROUGH BLOWS)', 6], ['BLOCK F (HOLD)   RAISE IT LATE TO PARRY', 6], ['SNEAK C   TALK / OPEN / REST  E', 6], ['PACK I   JOURNAL O   MAP M   PAUSE ESC', 6], ['', 4],
-      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['E OR ESC TO GO BACK', 4]];
+      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['EVERY PICTURE, SONG AND WORLD IS MADE IN CODE.', 3], ['E OR ESC TO GO BACK', 4]];
     this.howBox = this.add.rectangle(W / 2, 90, 300, 164, 0x0b0e1a, 0.94);
     this.howTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 14 + i * 10, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);

@@ -421,3 +421,9 @@ Both regions are reachable from the Hollow Reach from the start (roads leave the
 - **Idle life**: villagers breathe and glance around instead of standing perfectly still.
 - **Audio**: spike strikes, thunder (the Stormcrown has lightning in the distance, now and then close, with a gentle flash), and the werewolf's howl when it spots you.
 - Tests: `stage61_title`. Guide updated.
+
+## Round 36 - Overnight Rounds 14 to 17: story, replay, robustness, release (first pass)
+- **A quest that starts from something you find**: bandit chiefs sometimes carry a *Smuggler's Note*; read it (Pack > E) and the nearest hidden cache is named, marked and rewarded when you find it. Quest data audit test: every quest has text, state, step text and markers in every status.
+- **Two new challenge modifiers** (Moonbound: always a full-moon night; Pilgrim: no fast travel) and a **Challenge** row in the title Options that applies one modifier to your next new game. New trophies (Reedwick, Skarn Hold, both new bosses, Moon-Hunter, Hamlet Guardian) and epilogue lines for the two new bosses.
+- **Robustness**: random-input monkey test covers the two new regions, both hubs and both boss dungeons; fixed a HUD clock crash after a scene restart; save/load round-trip test for the calendar, camps, notes, discoveries, orders, modifiers and capstone perks; a stray runtime error now shows one short note (F4 copies a report) instead of failing silently.
+- **Release**: web meta tags for phones (theme colour, home-screen app mode, safe area), a loading line before the game appears, a credits line on the How to Play card, README refreshed. Measured on the built single file: title in 0.7 s and the open world in 1.4 s unthrottled (5.0 s and 5.7 s with the CPU slowed 6x); heap 152 MB; fens and highlands cost about 1.5 ms of update per frame with 30 night creatures.

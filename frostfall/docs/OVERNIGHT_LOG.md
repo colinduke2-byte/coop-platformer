@@ -29,3 +29,6 @@ Shipped: see CHANGELOG round 33. Round 7 deferred: guild rank-ups and faction ge
 
 ## Round 9: builds, companions, crafting - DONE (scoped)
 Shipped: see CHANGELOG round 34. Deferred: smithing tiers beyond the existing upgrade/reforge, set-bonus pass, companion personal quests and reactions, recipes found as loot (the recipes are open from the start; the ingredients are the gate). Tweak: capstone numbers in playerCombat/playerBow/playerMagic, `ORDERS` in data/dialogue.js.
+
+## Rounds 10-13 and 14-17: first passes - DONE (scoped)
+Shipped: see CHANGELOG rounds 35 and 36. Deliberately not done: splitting Pause > System into pages (rows have hints instead; reordering would break many tests), analogue stick walking, more animation frames and hit sparks, a new music track per region beyond the two new songs, companion personal quests, a quest-completion bot that plays the real campaign (the quest audit test and the per-quest unit flows stand in for it), service worker / offline mode.

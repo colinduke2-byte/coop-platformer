@@ -5,8 +5,11 @@ import { settings } from './settings.js';
 const errors = [];
 export function installErrorLog() {
   const push = (m) => { errors.push(`${new Date().toISOString().slice(11, 19)} ${String(m).slice(0, 300)}`); if (errors.length > 12) errors.shift(); };
-  window.addEventListener('error', (e) => push(e.message + (e.filename ? ` @${e.filename.split('/').pop()}:${e.lineno}` : '')));
-  window.addEventListener('unhandledrejection', (e) => push('promise: ' + (e.reason?.message || e.reason)));
+  let lastToast = -1e9;
+  // The game keeps going after a stray error; tell the player once a minute so a bug report can be sent.
+  const note = () => { const now = Date.now(); if (now - lastToast > 60000) { lastToast = now; import('./bus.js').then(({ bus }) => bus.emit('toast', 'SOMETHING WENT WRONG. THE GAME KEPT GOING. F4 COPIES A REPORT', 11)); } };
+  window.addEventListener('error', (e) => { push(e.message + (e.filename ? ` @${e.filename.split('/').pop()}:${e.lineno}` : '')); note(); });
+  window.addEventListener('unhandledrejection', (e) => { push('promise: ' + (e.reason?.message || e.reason)); note(); });
 }
 export const recentErrors = () => errors.slice();
 
