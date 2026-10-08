@@ -1,7 +1,7 @@
 # Overnight plan: finish Frostfall and make it full and complete
 
 Colin's direction (his words, summarised; the night-cycle and new-regions requests came later):
-1. **Levels must not make you overpowered.** The game should not be easy unless you grind gear and levels *beforehand*. Preparation is what makes fights easier; there is no "level 5 and one-shot everything".
+1. **Levels must not make you overpowered.** Preparation (gear, upgrades, consumables, some levels) is what makes fights easier; there is no "level 5 and one-shot everything". **Difficulty is a choice, not a fixed wall: three levels (Easy, Normal, Hard)** instead of making the game inherently hard. Everything is balanced at the end across all three.
 2. **Performance is fine** (iPhone 13). Phone speed work is dropped from the plan.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
@@ -16,7 +16,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Content complete**: every region has a hub, quests, dungeons, a boss, unique gear and a reason to visit; the main story (three chapters) plus a worthy finale for each region; every enemy has a bestiary page, a telegraphed attack set and a night or day variant where relevant; every item has an icon, a source and a use.
 - **Systems complete**: combat, magic, stealth, crafting, alchemy, cooking, enchanting, sockets, factions, companions, housing, fast travel, mounts, time and weather, discovery and the compass all work together, with no stub screens or "coming soon" text.
 - **Open world complete**: expansive spacing, discoverable places, a living world with routines and events, day and night that change the world, distinct regions that are full without being crowded.
-- **Difficulty complete**: hard by default, power from gear and preparation, not from level; verified by the power-curve bot.
+- **Difficulty complete**: three clear levels (Easy, Normal, Hard), each balanced and verified by the power-curve bot; power comes from gear and preparation, not from level, on all of them; the final balance pass (round 19) is green.
 - **Presentation complete**: higher-fidelity art, lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
 - **Quality complete**: no known stuck states or crashes; every quest finishable; every menu reachable and closable with every input; saves safe; fuzzed worlds clean; docs and the guide up to date.
 - **Replay complete**: New Game+, hardcore, daily, arena modes with records.
@@ -29,6 +29,7 @@ The game is done when every line below is true. The last round checks this list 
 - Morning report: one page listing what shipped per round, what was reverted, and the top things to playtest.
 
 ## Design rules that apply to every round
+- **Three difficulty levels, each with a clear promise.** *Easy* is for the story and exploration: forgiving, generous. *Normal* is the intended experience: fair, tense when unprepared, never a wall. *Hard* is for players who want the grind-your-gear game: punishing if under-prepared. No level is the "real" one; each is tuned on purpose and tested.
 - **Power comes from gear, preparation and skill, not from level.** Level and skill gains stay small and slow. A max-level character in weak gear still struggles; a well-geared lower-level character can win. Over-levelling never trivialises content.
 - **Danger is readable.** The player can tell what is too dangerous before walking in (region danger, creature rating, a warning when entering an area far above you).
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
@@ -38,9 +39,14 @@ The game is done when every line below is true. The last round checks this list 
 
 ---
 
-## Round 1: Power curve and danger (the core request)
-Goal: fights are hard at your level, and only grinding makes them easier. Measure it, do not guess.
-- **Power model**: write down the numbers in one table (`docs/POWER_CURVE.md`): player damage, health and armour by level and gear tier; enemy health, damage and armour by region tier. Targets: at the *expected* level and gear for a region, a regular fight costs about 25 to 40% of your health and a pack or champion nearly all of it. Five levels above that is comfortable but never trivial. Five below is dangerous.
+## Round 1: Power curve, difficulty levels and danger (the core request)
+Goal: levels never make you overpowered, and difficulty is a menu choice with three well-defined levels. Measure it, do not guess.
+- **Three difficulty levels** (chosen at New Game and changeable in the menu; Hard is locked for a hardcore character). Defined as numbers in one table in `tuning.js` so each can be tuned separately:
+  - **Easy (story)**: damage you take about 0.6x, enemy health about 0.75x, faster regeneration, kinder enemy timing (longer telegraphs, shorter chases), extra potion and food drops, forgiving stamina, no durability, optional auto-heal when resting. Danger warnings are gentle.
+  - **Normal (intended)**: the baseline numbers. A regular fight costs about a third of your health at the right gear, packs and champions are real threats, bosses are tense but beatable first or second try when prepared.
+  - **Hard (for the grind)**: damage taken about 1.35x, enemy health about 1.3x, more elites and champions, tighter enemy timing, fewer potion drops, slower regeneration, durability on, prices higher; clearly needs good gear and prepared consumables, and rewards it with better drops.
+  - Each level scales *enemy numbers and your recovery*, never skips the rules (no level makes bosses skip phases or removes telegraphs).
+- **Power model**: write down the numbers in one table (`docs/POWER_CURVE.md`): player damage, health and armour by level and gear tier; enemy health, damage and armour by region tier. Targets (on **Normal**; Easy and Hard shift them): at the *expected* level and gear for a region, a regular fight costs about 25 to 40% of your health and a pack or champion most of it. Five levels above that is comfortable but never trivial. Five below is dangerous.
 - **Flatten level power**: re-check every source of level-based growth (skill damage slope, character level health and stamina, perks) so they add up to a modest curve; move the real growth into gear tiers, upgrades, enchants, sockets and consumables.
 - **Enemy scaling**: tougher enemies by region (exists) plus *elite and champion affixes that scale with player gear*, so late content stays threatening for a strong player. No level scaling that makes grinding pointless.
 - **Armour and damage formula**: diminishing returns on armour so stacking cannot make you immune; stamina and poise remain the limiting factors.
@@ -195,11 +201,19 @@ The goal is that a stranger can be sent the link and have a great time.
 - **Playtest bots as stand-ins for new players**: bots that start a fresh game with no knowledge and try to reach the first dungeon; any place they get lost, stuck or killed repeatedly is a problem to fix.
 - **Final acceptance**: the "finished and complete" list is checked line by line and the result written into `docs/OVERNIGHT_LOG.md` along with anything still open.
 
+## Round 19: Final balance pass (last thing before release)
+Everything above changes the numbers, so balance is checked again at the very end, after all content, art and systems are in.
+- **Balance matrix** (bots, hundreds of trials): every difficulty x level/gear tier x region mobs, every boss, every arena hero and mode, Boss Rush, New Game+, daily modifiers, day versus night, each region's new creatures. Output: one table, pass/fail against the targets for each difficulty (win rate, health left, time, potions used).
+- **Targets**: Easy is clearable by a casual player without gear grinding; Normal needs sensible preparation and rewards gear upgrades; Hard needs a good build and consumables. No difficulty is trivialised or walled by over-levelling or under-levelling by more than a few levels; no single weapon, spell, hero or perk dominates (outliers are tuned, not left).
+- **Economy sanity**: gold income against prices and upgrades per difficulty; loot rates; XP and skill curve; a "full run" simulation that reports how long each stage takes.
+- **Spot checks by hand** (written for Colin): five short fights per difficulty to feel, with the numbers to tweak.
+- **Freeze**: after this round only bug fixes; the final republish and the "complete" checklist follow.
+
 ## Size and risk
-Eighteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16 and 18 first; round 15 and the last three regions of round 6 last. Rounds 2 (scale and spacing) and 12 (visual fidelity) are the riskiest because they touch everything; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
+Nineteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16, 18 and 19 first; round 15 and the last three regions of round 6 last. Rounds 2 (scale and spacing) and 12 (visual fidelity) are the riskiest because they touch everything; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
 
 ## Colin's morning checklist
-1. Play 20 minutes from a new game: is the early game properly hard? Does grinding clearly pay off? Walk out at dusk: is night a different world?
+1. Play 20 minutes from a new game on each difficulty: does Easy feel gentle, Normal fair and Hard demanding? Does grinding gear clearly pay off? Walk out at dusk: is night a different world?
 2. Wander without markers: can you walk for a while between places, and is there still something to see along the way? Do you find things, and does the compass help? Visit the new regions: do they look and feel different from each other and from the old ones?
 3. Try one dungeon, one boss and one arena run on the controller.
 4. Read `docs/OVERNIGHT_LOG.md` for reverted work and the numbers to tweak.
