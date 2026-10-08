@@ -84,8 +84,11 @@ pieces cost nothing. Check with `tools/bench.tscn -- --drawcalls`.
 7. Physics/state changes triggered inside physics callbacks (body_entered etc.)
    must be deferred (`set_deferred`, `call_deferred`).
 8. All characters, names, and art must be **original**; don't copy Rayman
-   assets, characters, or names. Art is procedural (vector shapes + LevelTheme
-   palettes), no image files needed.
+   assets, characters, or names. Art is procedural: shapes drawn in code + LevelTheme
+   palettes, plus painterly detail textures BAKED BY SCRIPT (`python3 tools/art/bake_textures.py`
+   -> `art/textures/*.png`). No hand-drawn image files; never edit the PNGs by hand.
+   Heavy effects must check `Gfx.at_least(Gfx.Level.MEDIUM/HIGH)` (quality presets).
+   Visual overhaul plan: `docs/VISUAL_OVERHAUL.md`; compare shots with `tools/art/compare.sh`.
 9. Small, playable steps. Prefer a working simple version Colin can try today
    over a big system he can't test for a week.
 

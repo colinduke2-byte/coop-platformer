@@ -8174,3 +8174,26 @@ func test_w6_every_snoozling_cage_and_chest() -> void:
 		release(0, "move_right")
 		check(gm().gems[2], "%s: punching the chest open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
 		await _finish_demo()
+
+
+# --- Visual overhaul: quality presets ----------------------------------------------------
+
+func test_graphics_preset_is_chosen_saved_and_cycled() -> void:
+	var old_level := Gfx.level
+	var old_pref := Settings.graphics
+	check(Gfx.at_least(Gfx.Level.LOW), "every device is at least LOW")
+	check(Gfx.auto_pick() == Gfx.Level.MEDIUM, "headless runs auto-pick MEDIUM")
+	Settings.graphics = Gfx.Level.LOW
+	Gfx.level = Gfx.Level.LOW
+	check(not Gfx.at_least(Gfx.Level.MEDIUM), "LOW skips MEDIUM effects")
+	Settings.nudge("graphics", 1)
+	check(Gfx.level == Gfx.Level.MEDIUM and Settings.graphics == Gfx.Level.MEDIUM, "nudging Graphics goes LOW -> MEDIUM")
+	Settings.nudge("graphics", 1)
+	Settings.nudge("graphics", 1)
+	check(Gfx.level == Gfx.Level.LOW, "and wraps HIGH -> LOW")
+	check(Settings.describe("graphics").contains("Low"), "the menu row shows the preset name")
+	var pm := load("res://ui/pause_menu.gd")
+	check("graphics" in pm.get("SETTING_ROWS"), "Graphics is a row in the settings menu")
+	Gfx.level = old_level
+	Settings.graphics = old_pref
+	Settings.save()

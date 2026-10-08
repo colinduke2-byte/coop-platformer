@@ -69,6 +69,13 @@ Deliverable: baseline gallery + texture sheet sent to Colin.
 
 ---
 
+**Phase 0 baseline numbers (llvmpipe, 1920x1080, `tools/art/bench.sh`; fps is meaningless on software GL):**
+draw calls avg: w3_2 376, w4_1 284, w5_5 258. Budget per phase: <= +25% draw calls, <= +30% process ms.
+Textures baked: 22 PNGs (ground_*, lip_*, bark, cloth, fur, shell, jelly, paper, brush_mask), 564 KB total,
+greyscale detail maps with mean 0.5 (shader: colour * (1 + (tex - 0.5) * strength)).
+
+---
+
 ## Phase 1 — Worlds & terrain (biggest win)
 
 ### 1.1 Painted terrain and blocks (`world/terrain.gd`, `world/block.gd`, `world/mesh_painter.gd`)

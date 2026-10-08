@@ -15,7 +15,7 @@ var _panel: Control
 var _controls: Control     ## the ControlsCard overlay (null = not showing)
 var _settings := false     ## showing the Settings rows instead of the main list
 var _main_items: Array[String] = []
-const SETTING_ROWS := ["music", "sfx", "fullscreen", "back"]
+const SETTING_ROWS := ["music", "sfx", "graphics", "fullscreen", "back"]
 
 
 func _ready() -> void:

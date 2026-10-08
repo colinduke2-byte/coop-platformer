@@ -10,6 +10,7 @@ const STEP := 0.1
 static var music := 1.0                 ## 0..1
 static var sfx := 1.0                   ## 0..1
 static var fullscreen := false
+static var graphics := -1               ## Gfx.Level; -1 = not chosen yet (auto-picked)
 
 
 static func load_and_apply() -> void:
@@ -20,13 +21,18 @@ static func load_and_apply() -> void:
 			music = clampf(float(d.get("music", music)), 0.0, 1.0)
 			sfx = clampf(float(d.get("sfx", sfx)), 0.0, 1.0)
 			fullscreen = bool(d.get("fullscreen", fullscreen))
+			graphics = int(d.get("graphics", graphics))
+	if graphics < 0:
+		Gfx.level = Gfx.auto_pick()
+	else:
+		Gfx.level = clampi(graphics, 0, 2)
 	apply()
 
 
 static func save() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"music": music, "sfx": sfx, "fullscreen": fullscreen}))
+		f.store_string(JSON.stringify({"music": music, "sfx": sfx, "fullscreen": fullscreen, "graphics": graphics}))
 
 
 static func apply() -> void:
@@ -49,6 +55,9 @@ static func nudge(key: String, dir: int) -> void:
 			sfx = clampf(snappedf(sfx + dir * STEP, STEP), 0.0, 1.0)
 		"fullscreen":
 			fullscreen = not fullscreen
+		"graphics":
+			graphics = wrapi(Gfx.level + (1 if dir >= 0 else -1), 0, 3)
+			Gfx.level = graphics
 	apply()
 	save()
 
@@ -62,6 +71,8 @@ static func describe(key: String) -> String:
 			return "Sound effects   %s" % _bar(sfx)
 		"fullscreen":
 			return "Fullscreen   %s" % ("ON" if fullscreen else "OFF")
+		"graphics":
+			return "Graphics   < %s >" % Gfx.name_of(Gfx.level)
 	return key
 
 
