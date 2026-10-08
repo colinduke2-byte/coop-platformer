@@ -5,7 +5,7 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 2. **Performance is fine** (iPhone 13). Phone speed work is dropped from the plan.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
-5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12).
+5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12), but **keep the current field of view**: more detail, not more screen.
 6. **This plan is meant to finish the game**: full and complete (see the definition below).
 7. **More time than one night**: the run can use the overnight stretch *and* all of the following day. So stretch goals are in scope, rounds can be done more thoroughly, and nothing is dropped for time unless a round fails twice.
 8. **Something Colin is proud to send to other people**: a stranger should be able to open the link, understand the game in a minute, enjoy the first hour, and never hit a rough edge (round 18).
@@ -17,7 +17,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Systems complete**: combat, magic, stealth, crafting, alchemy, cooking, enchanting, sockets, factions, companions, housing, fast travel, mounts, time and weather, discovery and the compass all work together, with no stub screens or "coming soon" text.
 - **Open world complete**: expansive spacing, discoverable places, a living world with routines and events, day and night that change the world, distinct regions that are full without being crowded.
 - **Difficulty complete**: three clear levels (Easy, Normal, Hard), each balanced and verified by the power-curve bot; power comes from gear and preparation, not from level, on all of them; the final balance pass (round 19) is green.
-- **Presentation complete**: higher-fidelity art, lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
+- **Presentation complete**: higher-fidelity art (about 4x the pixels in the same view), lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
 - **Quality complete**: no known stuck states or crashes; every quest finishable; every menu reachable and closable with every input; saves safe; fuzzed worlds clean; docs and the guide up to date.
 - **Replay complete**: New Game+, hardcore, daily, arena modes with records.
 
@@ -34,7 +34,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Danger is readable.** The player can tell what is too dangerous before walking in (region danger, creature rating, a warning when entering an area far above you).
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
 - Co-op stays parked. Original names and art only.
-- **Higher visual fidelity is welcome** (Colin is fine with changing the art pipeline), as long as the game stays readable and keeps its own look.
+- **Higher visual fidelity is welcome** (Colin is fine with changing the art pipeline), as long as the game stays readable and keeps its own look. **The field of view stays as it is now**; only the pixel density and detail go up.
 - **Big but not empty, and not crowded**: places are far enough apart to feel like a journey (spacing is a target in seconds of walking, round 2) and the space between them is worth crossing. Both are checked by tools, not by feel.
 
 ---
@@ -140,16 +140,17 @@ Order of building (stop when time runs out; the first two are the target for one
 - Accessibility pass on every screen: text size, contrast, colour-blind modes, input-device-aware prompts.
 - Arena Mode: hero preview, how-to-play card, stats page (records per hero and mode).
 
-## Round 12: Visual fidelity
-Colin is open to improving how the game looks. Plan: keep a clear pixel-art identity but raise the detail, depth and light a good deal. Each step is separate, tested with the art-baseline tool, and has its own revert point.
-1. **Render scale**: raise the internal resolution from 320x180 to **480x270** (a bigger view of the world, which helps the open-world feel and vistas; integer-scaling modes stay). The font, HUD layout and every screen are re-laid-out and re-checked on phone and desktop sizes. Fallback if it proves too disruptive: stay at 320x180 and spend the effort on steps 2 to 5.
-2. **Palette and shading**: widen the 16-colour palette to **32 or more colours** with proper shading ramps per material (snow, ice, stone, wood, fur, cloth, metal, fire, water), so surfaces have form instead of flat fills.
-3. **Sprite detail**: characters and creatures redrawn at a larger size (about 20 to 24 px instead of 16) with more frames: smoother walk cycles, attack, hurt, death and idle poses; bosses get unique multi-part art. Armour and weapons show on the character by tier.
-4. **Tiles and terrain**: richer ground tiles with smooth biome transitions (snow to rock to grass edges), cliff and water edges with foam and ice cracks, ground detail (pebbles, tufts, footprints), buildings and ruins with roofs, windows, signage and lived-in clutter.
-5. **Lighting and atmosphere**: soft dynamic lights and shadows from torches, fire and windows, time-of-day colour grading, fog banks, god rays, bloom on fire and magic, aurora, water shimmer and reflections, rain, snow and ash particles with depth layers.
-6. **Effects and UI**: element-specific hit sparks and trails, status effect visuals, boss phase transitions, smoother screen transitions; a consistent icon set with rarity frames, a new boss bar and banner design.
-7. **Procedural-art tooling**: a sprite viewer page, an art-regression baseline refreshed per step, screenshot sweeps of every region and screen at phone and desktop sizes (overflow and clipping detector).
-Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-art style with more detail rather than a painted look.
+## Round 12: Visual fidelity (more detail, same field of view)
+Colin likes the current field of view, so **the amount of world on screen stays exactly as it is**. What changes is how many pixels are used to draw each thing: the same view, drawn with about **4x the pixels** (2x per side), so characters, creatures, tiles, props, text and effects have real detail. The pixel-art identity stays; it just gets finer and richer. Each step is tested with the art-baseline tool and has its own revert point.
+1. **Resolution-density system**: the game canvas goes from 320x180 to **640x360** while the world, physics, camera view and gameplay stay in today's units (the camera zooms 2x, tiles and sprites are drawn at 2x texture size and shown at half size in world units). Nothing about movement, hitboxes, spacing or what you can see changes. Sub-pixel smooth movement replaces whole-pixel snapping. The font, HUD and menus are redrawn crisp at the new density. Fallback if a platform cannot hold the frame rate: a "graphics: standard / high" option that renders at 320x180 as today.
+2. **Procedural art at 2x**: the sprite, tile and icon generators get a density factor, first producing exactly today's art at 2x (nothing looks different yet, a safe checkpoint), then every category is given real detail: outlines and shading, material texture (fur, cloth, metal, bark, stone, snow, ice), faces and hands, armour and weapon pieces, proper highlights and shadows.
+3. **Palette**: widen the 16-colour palette to **32 or more** with shading ramps per material, so surfaces have form instead of flat fills.
+4. **Sprites**: characters and creatures with more frames (walk, attack, hurt, death, idle), bosses with unique multi-part art, armour and weapons visible by tier.
+5. **Tiles and terrain**: smooth biome transitions (snow to rock to grass), cliff and water edges with foam and ice cracks, ground detail (pebbles, tufts, footprints), buildings and ruins with roofs, windows, signage and clutter.
+6. **Lighting and atmosphere**: soft dynamic lights and shadows from torches, fire and windows, time-of-day colour grading, fog banks, god rays, bloom on fire and magic, aurora, water shimmer and reflections, layered rain, snow and ash.
+7. **Effects and UI**: element-specific hit sparks and trails, status visuals, boss phase transitions, smoother screen transitions; a consistent icon set with rarity frames, a new boss bar and banner design.
+8. **Tooling and checks**: a sprite viewer page, the art baseline refreshed per step, screenshot sweeps of every region and screen at phone and desktop sizes (overflow and clipping detector), and a frame-rate check on an emulated phone so the extra pixels do not cost smoothness.
+Order of work: step 1 and the "identical at 2x" checkpoint first; then characters and creatures, tiles, props, UI and effects in that order, so the game looks better early and every checkpoint is shippable.
 
 ## Round 13: Audio
 - **Music**: longer loops (several minutes per region), exploration vs combat layers, town themes, boss themes per boss, stingers for discovery and quest events.
