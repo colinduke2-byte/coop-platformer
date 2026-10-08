@@ -2,7 +2,7 @@
 
 Colin's direction (his words, summarised; the night-cycle and new-regions requests came later):
 1. **Levels must not make you overpowered.** Preparation (gear, upgrades, consumables, some levels) is what makes fights easier; there is no "level 5 and one-shot everything". **Difficulty is a choice, not a fixed wall: three levels (Easy, Normal, Hard)** instead of making the game inherently hard. Everything is balanced at the end across all three.
-2. **Performance is fine** (iPhone 13), and **the main machine is a fast M5 Mac**, so the plan spends the extra headroom on quality (detail, lighting, effects) instead of phone speed work. Phone must still run well, through a quality setting.
+2. **Playable on any phone.** The main machine is a fast M5 Mac, so the best looks are aimed there, but the whole game must run well on ordinary and older phones through automatic quality tiers (an iPhone 13 is fine today; low-end Androids and older iPhones are the test). Phone performance is a rule for every round, not a one-off.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
 5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12), but **keep the current field of view**: more detail, not more screen.
@@ -18,6 +18,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Open world complete**: expansive spacing, discoverable places, a living world with routines and events, day and night that change the world, distinct regions that are full without being crowded.
 - **Difficulty complete**: three clear levels (Easy, Normal, Hard), each balanced and verified by the power-curve bot; power comes from gear and preparation, not from level, on all of them; the final balance pass (round 19) is green.
 - **Presentation complete**: higher-fidelity art (about 4x the pixels in the same view), lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
+- **Phone complete**: the game is playable on any phone, old or new: Standard tier holds 30+ fps on a slow-phone emulation, adaptive quality lowers detail instead of stuttering, memory and load time stay within budget, touch and Bluetooth-pad play are both good.
 - **Quality complete**: no known stuck states or crashes; every quest finishable; every menu reachable and closable with every input; saves safe; fuzzed worlds clean; docs and the guide up to date.
 - **Replay complete**: New Game+, hardcore, daily, arena modes with records.
 
@@ -34,6 +35,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Danger is readable.** The player can tell what is too dangerous before walking in (region danger, creature rating, a warning when entering an area far above you).
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
 - Co-op stays parked. Original names and art only.
+- **Phone performance guard (every round)**: every round must keep the Standard tier smooth on a slow phone. Budgets, checked by tests on a CPU-throttled emulated phone (about 6x slower than the dev machine): at least **30 fps in the busiest normal scenes** (a full arena wave, a camp fight, a boss with adds, a town at night), memory under about **250 MB**, first load under about **5 seconds** on a decent connection, no stalls over 100 ms. A round that breaks a budget is fixed or reverted.
 - **Higher visual fidelity is welcome** (Colin is fine with changing the art pipeline), as long as the game stays readable and keeps its own look. **The field of view stays as it is now**; only the pixel density and detail go up.
 - **Big but not empty, and not crowded**: places are far enough apart to feel like a journey (spacing is a target in seconds of walking, round 2) and the space between them is worth crossing. Both are checked by tools, not by feel.
 
@@ -183,12 +185,14 @@ Order of work: step 1 and the "identical at 2x" checkpoint first; then character
 - **Soak tests**: long monkey runs per region and per arena.
 - Error log polish (F4 report), no console errors in any covered path.
 
-## Round 17: Release hardening and docs (the final regression and republish are repeated after round 19)
-- Firefox and Safari smoke tests where possible; audio autoplay and fullscreen behaviour; iPhone and Mac passes by Colin.
+## Round 17: Release hardening, phones and docs (the final regression and republish are repeated after round 19)
+- **Phone support for any phone**: automatic quality tiers with a quick speed test at first launch and a live frame-rate watcher that drops a tier (and offers to raise it) instead of stuttering; a **Low** tier below Standard for very weak phones (lighter effects, fewer lights and particles, cheaper far-away enemy updates, smaller texture sizes); lazy loading of region art and audio so memory stays small; the bigger world and 2x art checked for memory use; sleep and resume handling (the tab goes to the background mid-fight); battery and heat friendly frame pacing (a frame-rate cap option).
+- **Phone controls and layout**: touch controls tested on small screens and big phones, left- and right-handed layouts, adjustable button size, safe areas and notches, both orientations, a controller hot-plug that does not fight the touch layer (done), clear text at small sizes, no hover-only UI.
+- **Cross-browser**: iOS Safari, Android Chrome, Samsung Internet, Firefox and Safari on the Mac; audio unlock rules, fullscreen and wake-lock behaviour; fixes where they differ.
 - Run the GitHub Actions workflow for real and fix differences.
-- File size and load time budget.
+- File size and load time budgets (compression, lazy chunks).
 - Update README, `docs/GUIDE.md` and the Field Guide page, CHANGELOG, POWER_CURVE and a short "known issues" list.
-- Final regression, balance, monkey; final republish.
+- Final regression, balance, monkey, phone-budget tests; final republish.
 
 ---
 
@@ -215,6 +219,7 @@ Everything above changes the numbers, so balance is checked again at the very en
 Nineteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16, 18 and 19 first; round 15 and the last three regions of round 6 last. Rounds 2 (scale and spacing) and 12 (visual fidelity) are the riskiest because they touch everything; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
 
 ## Colin's morning checklist
+00. On a phone (any older one you can find): is it smooth on the Standard or Low tier, are the touch controls comfortable, does it recover when you switch apps?
 0. On the Mac: is the picture crisp (Retina), smooth (frame rate), and does fullscreen scale cleanly? Try the Standard, High and Ultra graphics options.
 1. Play 20 minutes from a new game on each difficulty: does Easy feel gentle, Normal fair and Hard demanding? Does grinding gear clearly pay off? Walk out at dusk: is night a different world?
 2. Wander without markers: can you walk for a while between places, and is there still something to see along the way? Do you find things, and does the compass help? Visit the new regions: do they look and feel different from each other and from the old ones?
