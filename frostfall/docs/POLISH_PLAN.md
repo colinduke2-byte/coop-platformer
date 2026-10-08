@@ -5,7 +5,9 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 2. **Performance is fine** (iPhone 13). Phone speed work is dropped from the plan.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
-5. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
+5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12).
+6. **This plan is meant to finish the game**: full and complete (see the definition below).
+7. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
 
 ## What "finished and complete" means (the target for this plan)
 The game is done when every line below is true. The last round checks this list and reports what is still open.
@@ -181,7 +183,7 @@ Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-ar
 ---
 
 ## Size and risk
-Seventeen rounds is a heavy night. Rounds 1 to 5 (with the first two regions of round 6), 10, 14 and 16 carry most of the value. Time-box: no round gets more than about an hour of attempts; if time runs short, drop round 15 and the secondary items in round 12 first, then regions 3 to 5 of round 6. Round 2 (scale and spacing) is the riskiest because it moves coordinates everywhere; it runs right after the power curve and gets the most tests. The riskiest changes (power curve, world events, quest bot) have tests written first.
+Seventeen rounds is a heavy night. Rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14 and 16 carry most of the value. Time-box: no round gets more than about an hour of attempts; if time runs short, drop round 15 and the secondary items in round 12 (effects, UI art) first, then regions 3 to 5 of round 6. Round 2 (scale and spacing) and round 12 (visual fidelity) are the riskiest because it moves coordinates everywhere; it runs right after the power curve and gets the most tests. The riskiest changes (power curve, world events, quest bot) have tests written first.
 
 ## Colin's morning checklist
 1. Play 20 minutes from a new game: is the early game properly hard? Does grinding clearly pay off? Walk out at dusk: is night a different world?
