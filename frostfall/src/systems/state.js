@@ -21,7 +21,7 @@ export function newState() {
       trail: { status: 'inactive' },
       toll: { status: 'inactive' },
       silence: { status: 'inactive' },
-      anvilcore: { status: 'inactive' },
+      anvilcore: { status: 'inactive' }, pelldebt: { status: 'inactive' }, ragnagrave: { status: 'inactive' },
       roadwatch: { status: 'inactive' },
       crown: { status: 'inactive' },
       admiral: { status: 'inactive' },

@@ -157,6 +157,8 @@ export const ITEMS = {
   warden_cuirass: { name: "Warden's Cuirass", type: 'armor', weight: 'heavy', icon: ['armor', 15], armor: 0.32, maxHp: 12, sockets: 1, value: 660, desc: 'Road-worn plate. Part of the Warden Panoply.' },
   warden_shield: { name: "Warden's Shield", type: 'shield', icon: ['shield', 15], block: 0.88, cost: 0.7, sockets: 1, value: 480, desc: 'Hold F to block. Absorbs 88%. Part of the Warden Panoply.' },
   warden_badge: { name: "Warden's Badge", type: 'charm', icon: ['charm', 15], maxHp: 20, maxMp: 10, value: 440, desc: '+20 health, +10 mana. Part of the Warden Panoply.' },
+  pell_charm: { name: "Pell's Lucky Charm", type: 'charm', icon: ['charm', 8], goldMul: 1.15, crit: 0.02, value: 300, desc: 'A pebble of Emberheart ore on a cord. +15% gold, +2% crit.' },
+  company_bow: { name: "Company Bow", type: 'bow', icon: ['bow', 15], dmg: 22, crit: 0.05, sockets: 1, value: 360, desc: 'Forged from the steel of Hrolf\'s Company. Ragna made it.' },
   ember_blade: { name: 'Emberforged Blade', type: 'weapon', icon: ['sword', 12], dmg: 29, crit: 0.05, elem: { type: 'fire', power: 6 }, sockets: 2, value: 520, desc: 'Brannoch\'s first Emberforged sword. Every cut sears.' },
   ember_axe: { name: 'Emberforged Axe', type: 'weapon', style: 'axe', icon: ['axe', 12], dmg: 31, swing: 1.05, costMul: 1.2, elem: { type: 'fire', power: 5 }, sockets: 2, value: 500, desc: 'A broad Emberforged axe. Heavy hits stagger and burn.' },
   ember_spear: { name: 'Emberforged Spear', type: 'weapon', style: 'spear', icon: ['spear', 12], dmg: 25, crit: 0.06, sockets: 2, value: 480, desc: 'Long reach, hot tip. The Wardens\' favourite.' },

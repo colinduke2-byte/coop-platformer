@@ -8,6 +8,7 @@ import { addItem, addGold, addArrows, removeItem, count } from '../systems/inven
 import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import { companionStory } from './companionquests.js';
 import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
@@ -301,7 +302,7 @@ export async function ragna() {
     const c = await choose(['Stay in the village', 'Keep following', 'Chat', 'Orders']);
     if (c === 3) { await giveOrders(R); return; }
     if (c === 0) { S.follower = false; bus.emit('follower', false); await say(R, 'I will be at the lodge. Whistle if you want me.'); }
-    else if (c === 2) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.']));
+    else if (c === 2) { if (!(await companionStory(R))) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.'])); }
     return;
   }
   if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {

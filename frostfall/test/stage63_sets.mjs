@@ -26,6 +26,19 @@ const r = await G(async () => {
   return out;
 });
 check('sets, faction armoury and master tempering work', Object.values(r).every(Boolean), JSON.stringify(r));
+const cq = await G(async () => {
+  const S = window.__ff.S, C = await import('/src/data/companionquests.js'), dlg = await import('/src/systems/dialogue.js'), { ITEMS } = await import('/src/data/items.js');
+  const real = dlg.dialogue.hud; let pick = 0; dlg.dialogue.hud = { say: async () => {}, choose: async () => pick, hideBox() {}, scene: real.scene };
+  const out = {};
+  out.start = (await C.companionStory('Pell')) && S.quests.pelldebt.status === 'active';
+  S.inv.ember_ore = 4; await C.companionStory('Pell'); out.done = S.quests.pelldebt.status; out.inv = [S.inv.pell_charm, S.equip.charm, S.inv.ember_ore];
+  out.ragnaLocked = (await C.companionStory('Ragna')) === false;
+  S.quests.company.status = 'done'; await C.companionStory('Ragna'); out.rstart = S.quests.ragnagrave.status === 'active';
+  S.inv.iron_ingot = 3; await C.companionStory('Ragna'); out.rdone = S.quests.ragnagrave.status === 'done' && S.inv.company_bow === 1;
+  out.items = !!ITEMS.pell_charm && !!ITEMS.company_bow;
+  dlg.dialogue.hud = real; return out;
+});
+check('companions have personal quests with keepsake rewards', Object.values(cq).every(Boolean) && cq.done === 'done' && (cq.inv[0] === 1 || cq.inv[1] === 'pell_charm'), JSON.stringify(cq));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'SETS FAILED' : 'SETS PASSED');

@@ -14,6 +14,7 @@ import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
+import { companionStory } from './companionquests.js';
 import { SETS, setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
@@ -85,7 +86,7 @@ SCRIPTS.pell = async function pell() {
     const c = await choose(['Wait here in Emberhold', 'Keep following', 'Chat', 'Orders']);
     if (c === 3) { const { giveOrders } = await import('./dialogue.js'); await giveOrders(N); return; }
     if (c === 0) { setCompanion(null); await say(N, 'I will be at the Last Lantern. Whistle, and I will come running. Probably.'); }
-    else if (c === 2) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a gentleman.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.']));
+    else if (c === 2) { if (!(await companionStory(N))) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a gentleman.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.'])); }
     return;
   }
   if (S.quests.silence.status === 'done' || rep('delvers') >= 20) {
