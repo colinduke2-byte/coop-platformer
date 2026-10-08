@@ -25,7 +25,7 @@ export function rng(seed) {
 }
 
 // Smooth value noise in 0..1.
-function vnoise(x, y, scale, seed) {
+export function vnoise(x, y, scale, seed) {
   const fx = x / scale, fy = y / scale, x0 = Math.floor(fx), y0 = Math.floor(fy);
   const tx = fx - x0, ty = fy - y0, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
   const h = (i, j) => hash(i, j, seed);
@@ -48,13 +48,15 @@ export const TIER_MOBS = [
 
 // Builds one overworld region from a definition (see REACH below for the fields). `region` is an optional hand-made
 // grid + entities stamped into the north-west corner (the old forest); new regions pass null.
-export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'forge', 'peakroad', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre']);
+export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'forge', 'peakroad', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire']);
+export const EXTRA_KIND_NAME = {};
 const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS', tower: 'A WATCHTOWER', grove: 'A QUIET GROVE', hamlet: 'A SMALL HAMLET', standing: 'A CIRCLE OF STANDING STONES', barrow: 'A BARROW', champion: 'A MONSTER\'S LAIR', beardn: 'A BEAR DEN',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
-  city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE' };
+  city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE',
+  fenroad: 'THE ROAD TO THE WEEPING FENS', stormroad: 'THE ROAD TO THE STORMCROWN', reedwick: 'A STILT VILLAGE', mirebarrow: 'A SUNKEN BARROW', skarnhold: 'A NOMAD HOLD', stormspire: 'A STORM-STRUCK SPIRE' };
 export const SMALL_GAP = { rest: 24, spring: 30, cache: 30, hermit: 36, ancient: 36 };
 export const HIDDEN_KINDS = new Set(['cache', 'hermit', 'ancient']);   // no road leads to these: you find them by looking
-const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall']);   // biomes nothing is placed in (solid or open water)
+const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall', 'pool', 'cliff']);   // biomes nothing is placed in (solid or open water)
 export function buildRegion(def, region, seed) {
   const W = def.w, H = def.h, START = def.start, tierAt = def.tierAt, TIER_MOBS = def.mobs, FL = def.flora, ORE = def.ores;
   const R = rng(seed ^ 0x9e3779b9);
@@ -115,7 +117,7 @@ export function buildRegion(def, region, seed) {
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const edges = [];
   const remaining = pois.filter((p) => !HIDDEN_KINDS.has(p.kind)).sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
-  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre']);   // a stone front sits north of the door: roads end below it
+  const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire']);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
     const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
     let best = nodes[0], bd = 1e9;
@@ -139,7 +141,7 @@ export function buildRegion(def, region, seed) {
     if (!spot) continue;
     const ang = Math.atan2(p.y - spot.y, p.x - spot.x), DIRS = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
     const dir = DIRS[(Math.round(ang / (Math.PI / 4)) + 8) % 8], paces = Math.round(Math.hypot(p.x - spot.x, p.y - spot.y) / 5) * 5;
-    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${KIND_NAME[p.kind] || 'A PLACE OF NOTE'}, ABOUT ${paces} PACES.`] });
+    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${KIND_NAME[p.kind] || EXTRA_KIND_NAME[p.kind] || 'A PLACE OF NOTE'}, ABOUT ${paces} PACES.`] });
   }
   // keep forest/lake/mountain from covering roads
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g.t[y][x] === TILE.PATH) g.res[y][x] = true;
@@ -215,7 +217,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: 15 }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: 15 }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: 15 });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: 'mawfire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: ['THE GLACIAL MAW.', 'HERE THE HOLLOW KINGS SEALED THE SECOND HEART UNDER THE ICE.', 'WHAT COILS BELOW HAS WAITED A VERY LONG TIME.'] });
-    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre'].includes(p.kind)) {
+    } else if (['fort', 'temple', 'rootvault', 'throne', 'nest', 'city', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire'].includes(p.kind)) {
       const D = {
         fort: { to: 'keep', col: 12, stone: TILE.STONE, text: ['IRONWATCH KEEP.', 'A GATEHOUSE OF BLACKENED STONE. THE BANNERS ARE STILL UP.'] },
         temple: { to: 'chapel', col: 15, stone: TILE.STONE, text: ['THE DROWNED CHAPEL.', 'A DOORWAY SINKS INTO THE ICE. SOMETHING BELOW IS SINGING.'] },
@@ -228,6 +230,12 @@ export function buildRegion(def, region, seed) {
         coastroad: { to: 'coast', col: 15, stone: TILE.STONE, text: ['THE COAST ROAD.', 'THE ICE-SHELF BEYOND THE PASS CREAKS LIKE A SHIP AT ANCHOR.'] },
         kingroad: { to: 'kingdom', col: 14, stone: TILE.RUINWALL, text: ['THE OLD ROAD.', 'THE HOLLOW KINGS\' HIGHWAY, BARRED BY FIRE UNTIL THE FIRE IS ANSWERED.'] },
         tidebreak: { to: 'tidebreak', col: 15, stone: TILE.PACKICE, text: ['TIDEBREAK CAVERN.', 'A SHIP\'S BELL RINGS UNDER THE ICE. NOBODY IS RINGING IT.'] },
+        fenroad: { to: 'fens', col: 8, stone: TILE.ROCK, text: ['THE FEN ROAD.', 'THE ROAD ENDS IN A BANK OF FOG. SOMETHING BEYOND IT IS RINGING A BELL.'] },
+        stormroad: { to: 'highlands', col: 15, stone: TILE.STONE, text: ['THE STORMCROWN PASS.', 'THE WIND HERE HAS A VOICE. THE CLOUDS ABOVE THE PASS NEVER LEAVE.'] },
+        reedwick: { to: 'reedwick', col: 12, stone: TILE.WOODWALL, text: ['REEDWICK, THE STILT VILLAGE.', 'LANTERNS ON LONG POLES. KEEP TO THE BOARDS AND DO NOT ANSWER ANYTHING THAT CALLS YOUR NAME.'] },
+        mirebarrow: { to: 'mirebarrow', col: 8, stone: TILE.ROCK, text: ['THE SUNKEN BARROW.', 'THE MOUND HAS SETTLED INTO THE PEAT. SOMETHING BELOW STILL BREATHES.'] },
+        skarnhold: { to: 'skarnhold', col: 12, stone: TILE.STONE, text: ['SKARN HOLD.', 'A RING OF HEARTH-FIRES AND WIND-BLEACHED TENTS. THE CLANS WILL HEAR YOU OUT.'] },
+        stormspire: { to: 'stormspire', col: 15, stone: TILE.STONE, text: ['THE STORMSPIRE.', 'LIGHTNING WALKS UP THIS TOWER, NOT DOWN. A GIANT SITS AT THE TOP, WAITING FOR THE CLOUDS.'] },
         sepulchre: { to: 'sepulchre', col: 14, stone: TILE.RUINWALL, text: ['THE HOLLOW SEPULCHRE.', 'THE LAST OF THE KINGS WAITS BELOW. HE HAS BEEN WAITING A LONG TIME TO BE REMEMBERED.'] },
       }[p.kind];
       clearing(p, 13, 8);
@@ -235,7 +243,7 @@ export function buildRegion(def, region, seed) {
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
       add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: { throne: 'hearts4', peakroad: 'chapter3', coastroad: 'chapter3', forge: 'forgeOpen', kingroad: 'sovereignDead' }[p.kind] || null });
-      add({ t: 'spawn', name: { fort: 'keep', temple: 'chapel', rootvault: 'rootvault', nest: 'nest', city: 'emberhold', peakroad: 'peakroad', forge: 'forge', coastroad: 'coastroad', kingroad: 'kingroad', tidebreak: 'tidebreak', sepulchre: 'sepulchre' }[p.kind] || 'throne', x: p.x, y: p.y });
+      add({ t: 'spawn', name: { fort: 'keep', temple: 'chapel', rootvault: 'rootvault', nest: 'nest', city: 'emberhold', peakroad: 'peakroad', forge: 'forge', coastroad: 'coastroad', kingroad: 'kingroad', tidebreak: 'tidebreak', sepulchre: 'sepulchre', fenroad: 'fenroad', stormroad: 'stormroad', reedwick: 'reedwick', mirebarrow: 'mirebarrow', skarnhold: 'skarnhold', stormspire: 'stormspire' }[p.kind] || 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
       add({ t: 'fire', x: p.x + 4, y: p.y + 3, rest: true, id: p.kind + 'fire' });
       add({ t: 'sign', x: p.x - 2, y: p.y + 1, text: D.text });
@@ -358,6 +366,8 @@ export function buildRegion(def, region, seed) {
       for (let i = 0; i < 2; i++) enemy(pickOf(m.melee), p.x + (i ? 3 : -3), p.y + 2, p.tier, { camp: p.id });
       chest(p, 0, -3, p.tier + 1, 'med');
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'champion' });
+    } else if (def.dressers?.[p.kind]) {
+      def.dressers[p.kind]({ p, g, add, enemy, chest, clearing, potsAround, pickOf, R, m, bio, FL, ORE });
     }
   }
 
@@ -395,6 +405,7 @@ export function buildRegion(def, region, seed) {
   // ---- scenery ---------------------------------------------------------------------------------
   def.scenery(g, bio, W, H);
   for (const d of def.dress) g.dress(d);
+  def.finish?.(g, bio, W, H);
 
   // ---- repair: every place must be walkable from the entrance. Carve a road through whatever sealed one in
   {
@@ -493,6 +504,8 @@ export const REACH = {
     mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);
     mustHave('peakroad', 10, 2, null, { x: 490, y: 76, r: 90 });     // the road to the Ashen Peaks (opens in Chapter 3)
     mustHave('coastroad', 10, 2, null, { x: 482, y: 320, r: 90 });   // the road to the Frozen Coast (opens in Chapter 3)
+    mustHave('fenroad', 10, 2, null, { x: 150, y: 330, r: 80 });     // the road into the Weeping Fens (open from the start: you can walk there, it is not wise)
+    mustHave('stormroad', 10, 2, null, { x: 250, y: 40, r: 80 });    // the pass up to the Stormcrown Highlands
     place('champion', 6, 8);                 // placed early: later it finds no room on a map crowded with dungeons
     place('ruin', 6, 10);
     place('beardn', 4, 9, null, 1);          // a mother bear and her cubs
@@ -565,7 +578,7 @@ export const buildReach = (region, seed) => buildRegion(REACH, region, seed);
 // ---------------------------------------------------------------------------------------- the regions beyond the Reach
 // Shared setup for a region's west entrance, its wild creatures and roaming bosses.
 //   o: { start, exitTo, exitSpawn, sign, fireId, mobs, tierAt, clear, nWild, roamers: [[id, kind, tier, minTier, stops]], fish }
-function regionExtras(o) {
+export function regionExtras(o) {
   return ({ g, R, W, H, START, add, pois, bio }) => {
     const C = o.clear;
     g.rect(START.x - 3, START.y - 5, 8, 11, C);
@@ -605,7 +618,7 @@ function regionExtras(o) {
     }
   };
 }
-const tierFrom = (st, a, b, c) => (x, y) => { const d = Math.hypot(x - st.x, (y - st.y) * 0.9); return d < a ? 0 : d < b ? 1 : d < c ? 2 : 3; };
+export const tierFrom = (st, a, b, c) => (x, y) => { const d = Math.hypot(x - st.x, (y - st.y) * 0.9); return d < a ? 0 : d < b ? 1 : d < c ? 2 : 3; };
 
 // The Ashen Peaks: volcanic uplands around the forge-city. Lava is solid and impassable; the roads thread between the pools.
 const ASH_START = { x: 6, y: 60 };

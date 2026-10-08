@@ -183,3 +183,34 @@ export class HollowKing extends PatternBoss {
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
 }
+
+// The Weeping Fens: the Mire Mother, who weeps for what the water took.
+export class MireMother extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'miremother', TUNE.miremother, { scale: 2.6, flag: 'mireMotherDead', heart: null, toast: 'THE MIRE MOTHER STOPS WEEPING', summon: ['leech', 'leech', 'bogwraith'], col: 8, tier: 3, phaseAt: [0.5], phaseText: { 2: 'THE FLOOD' } });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 50) o.push('sweep', 'slam', 'tail', 'sweep');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('spikes', 'nova', 'breath', 'spikes');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}
+
+// The Stormcrown Highlands: the Storm Giant, keeper of the storm that never leaves.
+export class StormGiant extends PatternBoss {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'stormgiant', TUNE.stormgiant, { scale: 2.8, flag: 'stormGiantDead', heart: null, toast: 'THE STORM GIANT FALLS SILENT', summon: ['nomad', 'nomadshaman', 'thunderbird'], col: 15, tier: 3, phaseAt: [0.66, 0.33], phaseText: { 2: 'THE STORM BREAKS', 3: 'THE EYE' } });
+  }
+  attackPool(d) {
+    const o = [];
+    if (d < 52) o.push('sweep', 'slam', 'tail', 'slam');
+    else o.push('volley', 'breath', 'leap', 'charge');
+    if (this.bphase >= 2) o.push('nova', 'spikes', 'volley', 'nova');
+    if (this.bphase >= 3) o.push('leap', 'nova', 'charge', 'spikes');
+    return o;
+  }
+  doSummon() { super.doSummon(); sfx.play('roar'); }
+}

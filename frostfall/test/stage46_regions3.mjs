@@ -21,7 +21,7 @@ const tiles = await G(async () => {
   const fresh = ['ASH', 'BASALT', 'LAVA', 'ICESHELF', 'PACKICE', 'SHINGLE', 'WRECK', 'MARBLE', 'RUINWALL', 'MOSS'].map((k) => CF.TILE[k]);
   return { n: CF.TILE_COUNT, distinct: new Set(sig).size, solid: ['BASALT', 'LAVA', 'PACKICE', 'WRECK', 'RUINWALL'].every((k) => CF.SOLID_TILES.includes(CF.TILE[k])), walk: ['ASH', 'ICESHELF', 'SHINGLE', 'MARBLE', 'MOSS'].every((k) => !CF.SOLID_TILES.includes(CF.TILE[k])), fresh: fresh.every((id) => id < CF.TILE_COUNT) };
 });
-check('ten new terrain tiles are drawn, distinct, and solid or walkable as intended', tiles.n === 41 && tiles.distinct === 41 && tiles.solid && tiles.walk && tiles.fresh, JSON.stringify(tiles));
+check('ten new terrain tiles are drawn, distinct, and solid or walkable as intended', tiles.n === 49 && tiles.distinct === 49 && tiles.solid && tiles.walk && tiles.fresh, JSON.stringify(tiles));
 
 // ---- each region builds, is reachable, and has what it promises
 const gen = await G(async () => {
@@ -55,8 +55,8 @@ const gates = await G(async () => {
   St.flags.chapter3 = true; C3.startChapter3 ? 0 : 0; R.unlockRegion('ashen'); R.unlockRegion('coast'); R.unlockRegion('kingdom');
   return { cr: cr?.needs, kr: kr?.needs, back, sp, locked, all: R.unlockedRegions().join(), g1: C3.GATES.sovereignDead.ok(), reachGate: reach.pois.some((p) => p.kind === 'coastroad' && p.x > 200 && p.y > 120) };
 });
-check('the Coast road opens with Chapter 3, the Old Road only once the First Fire is answered', gates.cr === 'chapter3' && gates.kr === 'sovereignDead' && !gates.g1 && gates.reachGate && gates.locked === 'reach', JSON.stringify(gates));
-check('each road home lands on a matching spawn', gates.back.coast === 'coastroad' && gates.back.king === 'kingroad' && gates.sp.coast && gates.sp.king && gates.all === 'reach,ashen,coast,kingdom', JSON.stringify(gates));
+check('the Coast road opens with Chapter 3, the Old Road only once the First Fire is answered', gates.cr === 'chapter3' && gates.kr === 'sovereignDead' && !gates.g1 && gates.reachGate && gates.locked === 'reach,fens,highlands', JSON.stringify(gates));
+check('each road home lands on a matching spawn', gates.back.coast === 'coastroad' && gates.back.king === 'kingroad' && gates.sp.coast && gates.sp.king && gates.all === 'reach,ashen,coast,kingdom,fens,highlands', JSON.stringify(gates));
 
 // ---- caves and boss dungeons
 const delves = await G(async () => {
@@ -126,8 +126,8 @@ await G(async () => { const R = await import('/src/data/regions.js'); ['ashen', 
 await h.sleep(2000);
 await G(() => window.gs().openMenu(-1, 'MAP')); await h.sleep(700);
 const views = [];
-for (let i = 0; i < 5; i++) { views.push(await G(() => window.__ff.game.scene.getScene('Menu').tabs.find((t) => t.name === 'MAP').viewId())); await G(() => window.__ff.keys._press('KeyR')); await h.sleep(110); await G(() => window.__ff.keys._release('KeyR')); await h.sleep(220); }
-check('R cycles the map through all four regions and back', JSON.stringify(views) === JSON.stringify(['forest', 'ashen', 'coast', 'kingdom', 'forest']), JSON.stringify(views));
+for (let i = 0; i < 7; i++) { views.push(await G(() => window.__ff.game.scene.getScene('Menu').tabs.find((t) => t.name === 'MAP').viewId())); await G(() => window.__ff.keys._press('KeyR')); await h.sleep(110); await G(() => window.__ff.keys._release('KeyR')); await h.sleep(220); }
+check('R cycles the map through all six regions and back', JSON.stringify(views) === JSON.stringify(['forest', 'ashen', 'coast', 'kingdom', 'fens', 'highlands', 'forest']), JSON.stringify(views));
 await h.shot('s46_map_regions');
 await G(() => window.__ff.game.scene.getScene('Menu').close?.()); await h.sleep(300);
 

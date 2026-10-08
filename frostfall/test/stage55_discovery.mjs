@@ -43,7 +43,7 @@ check('the compass can be turned off', await G(() => window.__ff.game.scene.getS
 await G(async () => { (await import('/src/systems/settings.js')).settings.compass = true; });
 
 // fast travel takes time
-const ft = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; const f = g.fires?.[0]; if (!f) return null; S.time = 600; g.enemies.getChildren().forEach((e) => e.destroy()); const t0 = S.time; g.player.setPosition(60, 60); g.fastTravel({ x: f.x, y: f.y, key: f.key }); return { dt: (S.time - t0 + 1440) % 1440, dist: Math.hypot(f.x - 60, f.y - 60) / 16 }; });
+const ft = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; const f = g.fires?.[0]; if (!f) return null; S.time = 600; g.enemies.getChildren().slice().forEach((e) => e.destroy()); const t0 = S.time; g.player.setPosition(60, 60); g.fastTravel({ x: f.x, y: f.y, key: f.key }); return { dt: (S.time - t0 + 1440) % 1440, dist: Math.hypot(f.x - 60, f.y - 60) / 16 }; });
 check('fast travel makes the clock move on by the walk skipped', ft && ft.dt > 0 && Math.abs(ft.dt - Math.round(ft.dist / 4.5 * 2)) <= 2, JSON.stringify(ft));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();

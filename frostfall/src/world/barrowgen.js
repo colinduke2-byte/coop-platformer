@@ -18,6 +18,8 @@ export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7
 export const EXTRA_THEMES = {
   cinder: { id: 'cinder', name: 'The Cinder Warren', mobs: ['imp', 'golem', 'conjurer', 'knight'] },
   sea: { id: 'sea', name: 'The Tidecaves', mobs: ['draugr', 'wight', 'frostworm', 'warden', 'reaver'] },
+  bog: { id: 'bog', name: 'The Sunken Hollow', mobs: ['leech', 'mudlurker', 'bogwraith', 'boghag', 'draugr'] },
+  storm: { id: 'storm', name: 'The Shepherd Caves', mobs: ['nomad', 'wolf', 'nomadshaman', 'thunderbird', 'stonegiant'] },
   royal: { id: 'royal', name: 'The Undercrypts', mobs: ['knight', 'warden', 'reaver', 'necro', 'conjurer', 'wight'] },
 };
 

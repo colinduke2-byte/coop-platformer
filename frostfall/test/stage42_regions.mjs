@@ -27,7 +27,7 @@ const reg = await G(async () => {
   R.unlockRegion('ashen');
   return { before, after: R.unlockedRegions().join(), ofForest: R.regionOfMap('forest'), ofVillage: R.regionOfMap('village'), ofAshen: R.regionOfMap('ashen') };
 });
-check('regions start locked and unlock by flag', reg.before === 'reach' && reg.after === 'reach,ashen' && reg.ofAshen === 'ashen' && reg.ofVillage === 'reach', JSON.stringify(reg));
+check('regions start locked and unlock by flag', reg.before === 'reach,fens,highlands' && reg.after === 'reach,ashen,fens,highlands' && reg.ofAshen === 'ashen' && reg.ofVillage === 'reach', JSON.stringify(reg));
 
 // ---- the map tab switches between regions
 await h.open('scene=game&map=forest&spawn=west&seed=424242');
@@ -41,7 +41,7 @@ const v1 = await G(() => window.__ff.game.scene.getScene('Menu').tabs.find((t) =
 await h.shot('s42_map_ashen');
 await tap('KeyR'); await h.sleep(200);
 const v2 = await G(() => window.__ff.game.scene.getScene('Menu').tabs.find((t) => t.name === 'MAP').viewId());
-check('R cycles the map between regions and back', v0 === 'forest' && v1 === 'ashen' && v2 === 'forest', `${v0} ${v1} ${v2}`);
+check('R cycles the map from region to region', v0 === 'forest' && v1 === 'ashen' && v2 === 'fens', `${v0} ${v1} ${v2}`);
 
 // ---- fast travel to a found campfire in another region
 await G(() => window.__ff.game.scene.getScene('Menu').close?.());

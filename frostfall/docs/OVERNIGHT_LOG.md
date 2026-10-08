@@ -20,3 +20,6 @@ Shipped: see CHANGELOG round 30. Tweak: `RESETTLE` in systems/bless.js, event od
 
 ## Round 5: day, night and the moon - DONE (core; herbs/ghost merchant/silver/night quest deferred)
 Shipped: see CHANGELOG round 31. Tweak: `wolfChance`/`ghostChance` and moon cycle in systems/moon.js, werewolf/ghost stats in data/enemies.js, lantern radius in world/lighting.js, 1.25 lantern detect in Player.detectMult. Playtest: use a fire to wait until dusk; at night look for werewolves around wolf dens; wait to day 4 (full moon).
+
+## Round 6: new regions - DONE for the first two (Weeping Fens, Stormcrown Highlands); Glasswood, Underdeep, Saltmarket NOT started
+Shipped: see CHANGELOG round 32. The three remaining regions from the plan stay as follow-ups: the framework (`world/regions2.js`, `data/hubs2.js`, `data/regions2_story.js`, `minesgen.js` boss delves) is now a copy-and-edit recipe. Tweak: region tier base in `base1()` (regions2.js), creature stats in data/enemies.js, boss numbers in data/tuning.js (miremother, stormgiant). Playtest: walk the south-west road from the Reach to the Fens at level 1 and read the warning; then go back after gearing up.

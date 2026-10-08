@@ -325,10 +325,77 @@ const INFLICTS = {
   tidehag: [{ type: 'slow', chance: 0.4, t: 3 }], phantom: [{ type: 'fear', chance: 0.25, t: 2.5 }], stalker: [{ type: 'poison', chance: 0.3, t: 6, dps: 2 }],
 };
 const IMMUNE = { ashhound: ['burn'], cindersmith: ['burn'], magmaslime: ['burn', 'bleed', 'poison'], slimeling: ['burn', 'bleed', 'poison'], lavawraith: ['burn', 'bleed', 'poison'], barnacle: ['chill', 'freeze'], phantom: ['bleed', 'poison', 'fear'], herald: ['fear'], sentinel: ['bleed', 'poison', 'fear'], tidehag: ['chill', 'freeze'], imp: ['burn'], dragon: ['burn'], golem: ['freeze', 'bleed', 'poison'], frostworm: ['chill', 'freeze'], wyrm: ['chill', 'freeze'], winter: ['chill', 'freeze'], wisp: ['bleed', 'poison'], draugr: ['fear'], wight: ['fear'] };
+// ---- Round 6: the Weeping Fens and the Stormcrown Highlands
+Object.assign(ENEMIES, {
+  bogwraith: {
+    name: 'Bog Wraith', tex: 'spr_bogwraith', fly: true, blink: 3.0, bark: 'undead', weak: { fire: 1.2, shock: 1.4, frost: 0.6 }, hp: 40, speed: 28, chase: 50, dmg: 14, detect: 120,
+    kind: 'shoot', proj: 'eshot', projSpeed: 92, range: 116, keep: 64, windup: 0.65, atkDur: 0.1, recover: 0.5, cooldown: 1.6, kbResist: 0.2,
+    body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.35], ['bone_dust', 0.4], ['marsh_orchid', 0.3]] },
+  },
+  boghag: {
+    name: 'Bog Hag', tex: 'spr_boghag', raise: 7, raiseKind: 'leech', bark: 'undead', weak: { fire: 1.5, shock: 1.3 }, hp: 58, speed: 24, chase: 32, dmg: 17, detect: 100,
+    kind: 'cast', range: 118, keep: 72, zoneR: 24, zoneDelay: 1.0, windup: 0.85, atkDur: 0.1, recover: 0.7, cooldown: 2.8, kbResist: 0.15,
+    body: [8, 7, 4, 9], loot: { gold: [14, 32], drops: [['mp_potion', 0.4], ['marsh_orchid', 0.6], ['bone_dust', 0.5], ['gem_emerald', 0.07]] },
+  },
+  leech: {
+    name: 'Fen Leech', tex: 'spr_leech', sideOnly: true, scale: 1.0, bark: 'wolf', weak: { fire: 1.5, shock: 0.8 }, hp: 14, speed: 48, chase: 104, dmg: 6, detect: 80,
+    kind: 'lunge', range: 30, windup: 0.3, atkDur: 0.2, recover: 0.6, cooldown: 0.7, kbResist: 0, lunge: 150,
+    body: [10, 5, 3, 9], loot: { gold: [1, 3], drops: [['marsh_orchid', 0.1]] },
+  },
+  mudlurker: {
+    name: 'Mud Lurker', tex: 'spr_stalker', tint: 0x7fb070, ambush: true, bark: 'human', weak: { fire: 1.6, shock: 1.1 }, hp: 66, speed: 32, chase: 84, dmg: 18, detect: 80,
+    kind: 'melee', range: 20, windup: 0.3, atkDur: 0.14, recover: 0.7, cooldown: 0.8, kbResist: 0.3,
+    body: [8, 7, 4, 9], loot: { gold: [10, 24], drops: [['hide', 0.4], ['marsh_orchid', 0.4], ['lockpick', 0.15]] },
+  },
+  miremother: {
+    name: 'The Mire Mother', title: 'THE MIRE MOTHER, WEEPER OF THE FENS', tex: 'spr_miremother', bark: 'undead', weak: { fire: 1.7, shock: 1.1, frost: 0.5 },
+    hp: 900, speed: 34, chase: 44, dmg: 26, detect: 9999,
+    kind: 'boss', range: 42, windup: 0.75, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.96,
+    body: [8, 7, 4, 9], loot: { gold: [320, 420], drops: [['mire_heart', 1], ['hp_potion_g', 2], ['marsh_orchid', 3]] },
+  },
+  thunderbird: {
+    name: 'Thunderbird', tex: 'spr_wyvern', tint: 0xa8d8ff, sideOnly: true, fly: true, orbit: true, scale: 1.3, bark: 'wolf', weak: { fire: 1.2, frost: 0.9, shock: 0.1 }, hp: 64, speed: 44, chase: 84, dmg: 18, detect: 140,
+    kind: 'lunge', range: 150, windup: 0.5, atkDur: 0.45, recover: 0.9, cooldown: 1.2, kbResist: 0.3, lunge: 260,
+    body: [12, 8, 2, 4], loot: { gold: [12, 28], drops: [['hide', 0.6], ['storm_feather', 0.5], ['hp_potion', 0.2]] },
+  },
+  mammoth: {
+    name: 'Wild Mammoth', tex: 'spr_bear', tint: 0xcdb08a, sideOnly: true, scale: 2.0, bark: 'wolf', weak: { fire: 1.3, shock: 1.0 }, hp: 300, speed: 30, chase: 82, dmg: 28, detect: 90,
+    kind: 'lunge', range: 74, windup: 0.8, atkDur: 0.4, recover: 1.0, cooldown: 1.2, kbResist: 0.85, lunge: 230,
+    body: [14, 8, 1, 7], loot: { gold: [60, 110], drops: [['hide', 1], ['venison', 1], ['hp_potion_g', 0.6], ['mammoth_tusk', 0.5]] },
+  },
+  nomad: {
+    name: 'Clan Raider', tex: 'spr_nomad', blade: 5, bark: 'human', flee: true, hp: 46, speed: 38, chase: 58, dmg: 15, detect: 80,
+    kind: 'melee', range: 20, windup: 0.38, atkDur: 0.14, recover: 0.5, cooldown: 0.35, kbResist: 0.15,
+    body: [8, 7, 4, 9], loot: { gold: [8, 20], drops: [['hp_potion', 0.22], ['arrows', 0.25, [2, 5]], ['hide', 0.3], ['iron_sword', 0.05]] },
+  },
+  nomadshaman: {
+    name: 'Storm Shaman', tex: 'spr_shaman', bark: 'human', weak: { fire: 1.2, frost: 1.1, shock: 0.1 }, hp: 44, speed: 28, chase: 36, dmg: 17, detect: 100,
+    kind: 'cast', range: 120, keep: 68, zoneR: 24, zoneDelay: 1.0, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.4, kbResist: 0.1,
+    body: [8, 7, 4, 9], loot: { gold: [14, 30], drops: [['mp_potion', 0.4], ['storm_feather', 0.3], ['gem_sapphire', 0.07]] },
+  },
+  stonegiant: {
+    name: 'Stone Giant', tex: 'spr_stonegiant', scale: 2.2, armored: true, bark: 'undead', weak: { shock: 1.4, frost: 0.8, fire: 0.6 }, hp: 420, speed: 24, chase: 40, dmg: 34, detect: 90,
+    kind: 'melee', range: 32, windup: 1.0, atkDur: 0.24, recover: 1.1, cooldown: 0.9, kbResist: 0.9,
+    body: [9, 8, 3, 8], loot: { gold: [120, 220], drops: [['hp_potion_g', 0.8], ['iron_ingot', 1], ['gem_onyx', 0.3]] },
+  },
+  stormgiant: {
+    name: 'The Storm Giant', title: 'THE STORM GIANT, KEEPER OF THE STORMCROWN', tex: 'spr_stormgiant', bark: 'undead', weak: { frost: 1.3, fire: 1.0, shock: 0.05 },
+    hp: 1150, speed: 34, chase: 44, dmg: 30, detect: 9999,
+    kind: 'boss', range: 44, windup: 0.7, atkDur: 0.2, recover: 0.7, cooldown: 0.85, kbResist: 0.97,
+    body: [8, 7, 4, 9], loot: { gold: [420, 560], drops: [['storm_heart', 1], ['hp_potion_g', 2], ['gem_sapphire', 1]] },
+  },
+});
+Object.assign(INFLICTS, {
+  werewolf: [{ type: 'bleed', chance: 0.35, t: 5, dps: 3 }], ghost: [{ type: 'fear', chance: 0.2, t: 2.5 }],
+  bogwraith: [{ type: 'poison', chance: 0.4, t: 5, dps: 2 }], boghag: [{ type: 'slow', chance: 0.4, t: 3 }], leech: [{ type: 'poison', chance: 0.6, t: 5, dps: 2 }], mudlurker: [{ type: 'poison', chance: 0.35, t: 6, dps: 2 }],
+  miremother: [{ type: 'poison', chance: 0.5, t: 6, dps: 3 }], thunderbird: [{ type: 'shock', chance: 0.4, t: 3 }], nomadshaman: [{ type: 'shock', chance: 0.5, t: 3 }],
+  mammoth: [{ type: 'bleed', chance: 0.3, t: 5, dps: 4 }], stormgiant: [{ type: 'shock', chance: 0.5, t: 3 }],
+});
+Object.assign(IMMUNE, { bogwraith: ['poison', 'bleed'], boghag: ['poison'], leech: ['poison'], mudlurker: ['poison'], miremother: ['poison'], thunderbird: ['shock'], nomadshaman: ['shock'], stonegiant: ['bleed', 'poison'], stormgiant: ['shock'] });
 // creatures whose blows smash through a raised shield (only a perfectly timed parry beats them)
-for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll', 'cindersmith', 'sentinel']) if (ENEMIES[k]) ENEMIES[k].crush = true;
+for (const k of ['bear', 'golem', 'boar', 'knight', 'reaver', 'warlord', 'elk', 'troll', 'cindersmith', 'sentinel', 'mammoth', 'stonegiant']) if (ENEMIES[k]) ENEMIES[k].crush = true;
 // pack hunters circle to opposite sides and pounce together; some humans slip away and drink a healing draught
-for (const k of ['wolf', 'alpha', 'lynx', 'fencer', 'ashhound']) if (ENEMIES[k]) ENEMIES[k].flank = true;
+for (const k of ['wolf', 'alpha', 'lynx', 'fencer', 'ashhound', 'werewolf', 'leech']) if (ENEMIES[k]) ENEMIES[k].flank = true;
 for (const k of ['bandit', 'fencer']) if (ENEMIES[k]) { ENEMIES[k].flee = true; ENEMIES[k].drinks = true; }
 for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
 for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;

@@ -6,7 +6,7 @@ import { getRegion } from '../../src/data/maps.js';
 import { MAJOR } from '../../src/world/worldgen.js';
 let n = 0, failed = 0;
 const t = (name, fn) => { try { fn(); n++; console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message.split('\n')[0]); } };
-const LIMITS = { reach: { min: 22, p10: 30, med: 40, maj: 50, size: [540, 378] }, ashen: { min: 20, p10: 24, med: 26, maj: 40 }, coast: { min: 20, p10: 24, med: 28, maj: 40 }, kingdom: { min: 20, p10: 24, med: 28, maj: 40 } };
+const LIMITS = { reach: { min: 22, p10: 30, med: 40, maj: 50, size: [540, 378] }, ashen: { min: 20, p10: 24, med: 26, maj: 40 }, coast: { min: 20, p10: 24, med: 28, maj: 40 }, kingdom: { min: 20, p10: 24, med: 28, maj: 40 }, fens: { min: 20, p10: 24, med: 28, maj: 40 }, highlands: { min: 20, p10: 24, med: 28, maj: 40 } };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 for (const [id, L] of Object.entries(LIMITS)) {
   t(`${id}: places keep their distance over many seeds (about ${Math.round(L.med / 4.5)} seconds apart)`, () => {

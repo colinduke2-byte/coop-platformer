@@ -169,6 +169,12 @@ SONGS.coast = { bpm: 72, lead: 'triangle', bass: 'sine', root: 36,
 SONGS.kingdom = { bpm: 84, lead: 'triangle', bass: 'triangle', root: 40,
   A: { chords: [[0, 3, 7], [-4, 0, 3], [-2, 1, 5], [-7, -3, 0]], melody: [15, null, null, 17, null, 19, null, null, 17, null, 15, null, 14, null, null, null] },
   B: { chords: [[-2, 1, 5], [-7, -3, 0], [0, 3, 7], [-5, -2, 2]], melody: [19, null, 17, null, null, 15, null, 14, null, 15, null, 17, 19, null, null, null] } };
+SONGS.fens = { bpm: 62, lead: 'sine', bass: 'triangle', root: 33,
+  A: { chords: [[0, 3, 7], [-2, 1, 5], [-4, 0, 3], [-5, -2, 2]], melody: [null, 15, null, null, 14, null, 12, null, null, 10, null, 12, null, null, 14, null] },
+  B: { chords: [[-4, 0, 3], [-5, -2, 2], [0, 3, 7], [-2, 1, 5]], melody: [12, null, null, 14, null, 15, null, null, 17, null, 15, null, 14, null, null, null] } };
+SONGS.highlands = { bpm: 100, lead: 'triangle', bass: 'sawtooth', root: 40,
+  A: { chords: [[0, 7, 12], [-2, 5, 10], [-5, 2, 7], [-3, 4, 9]], melody: [19, null, 17, null, 16, null, 14, null, 16, null, 17, 19, null, 21, null, null] },
+  B: { chords: [[-5, 2, 7], [-3, 4, 9], [0, 7, 12], [-2, 5, 10]], melody: [21, null, 19, null, 17, null, 16, 17, 19, null, null, 16, null, 14, null, null] } };
 let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0, bossPhase = 1;
 function schedule() {
   const a = ac(); if (!a || !song) return;

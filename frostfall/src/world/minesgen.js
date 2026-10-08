@@ -121,3 +121,22 @@ export function buildSepulchre(seed) {
     bossLoot: [{ gen: 3, rarity: 2 }, { item: 'kings_blade' }, { item: 'gem_bloodstone' }, { gold: 600 }],
   });
 }
+
+// The Weeping Fens' boss delve: the Sunken Barrow, ending in the Mire Mother.
+export function buildMireBarrow(seed) {
+  return buildMines(seed, 10, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'miremother', id: 'mb', mobs: ['leech', 'bogwraith', 'mudlurker', 'boghag', 'draugr'], exitTo: 'fens', exitSpawn: 'mirebarrow',
+    title: 'The Sunken Barrow', signLine: 'THE WATER HERE IS WARM AND IT IS LEANING TOWARD YOU. SOMETHING ABOVE YOU IS WEEPING.',
+    bossSign: ['THE MOTHER\'S CRADLE.', 'SHE LOST HER CHILDREN TO THE FEN. THE FEN HAS NEVER LET HER GO. SHE IS TIRED OF HOLDING ON.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'mire_heart' }, { item: 'gem_emerald' }, { gold: 420 }],
+  });
+}
+// The Stormcrown's boss delve: the Stormspire, ending in the Storm Giant.
+export function buildStormspire(seed) {
+  return buildMines(seed, 11, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'stormgiant', id: 'ss', mobs: ['nomad', 'nomadshaman', 'thunderbird', 'stonegiant', 'conjurer'], exitTo: 'highlands', exitSpawn: 'stormspire',
+    title: 'The Stormspire', signLine: 'THE AIR HAS AN EDGE. EVERY SO OFTEN THE WALLS FLASH WHITE.',
+    bossSign: ['THE GIANT\'S SEAT.', 'HE HAS SAT HERE SO LONG THE STORM HAS FORGOTTEN IT CAN LEAVE. SO HAS HE.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'storm_heart' }, { item: 'gem_sapphire' }, { gold: 520 }],
+  });
+}
