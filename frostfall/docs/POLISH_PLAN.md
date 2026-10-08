@@ -1,4 +1,4 @@
-# Overnight plan: make Frostfall better and more complete
+# Overnight plan: finish Frostfall and make it full and complete
 
 Colin's direction (his words, summarised; the night-cycle and new-regions requests came later):
 1. **Levels must not make you overpowered.** The game should not be easy unless you grind gear and levels *beforehand*. Preparation is what makes fights easier; there is no "level 5 and one-shot everything".
@@ -6,6 +6,16 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
 5. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
+
+## What "finished and complete" means (the target for this plan)
+The game is done when every line below is true. The last round checks this list and reports what is still open.
+- **Content complete**: every region has a hub, quests, dungeons, a boss, unique gear and a reason to visit; the main story (three chapters) plus a worthy finale for each region; every enemy has a bestiary page, a telegraphed attack set and a night or day variant where relevant; every item has an icon, a source and a use.
+- **Systems complete**: combat, magic, stealth, crafting, alchemy, cooking, enchanting, sockets, factions, companions, housing, fast travel, mounts, time and weather, discovery and the compass all work together, with no stub screens or "coming soon" text.
+- **Open world complete**: expansive spacing, discoverable places, a living world with routines and events, day and night that change the world, distinct regions that are full without being crowded.
+- **Difficulty complete**: hard by default, power from gear and preparation, not from level; verified by the power-curve bot.
+- **Presentation complete**: higher-fidelity art, lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
+- **Quality complete**: no known stuck states or crashes; every quest finishable; every menu reachable and closable with every input; saves safe; fuzzed worlds clean; docs and the guide up to date.
+- **Replay complete**: New Game+, hardcore, daily, arena modes with records.
 
 ## How the night runs
 - Rounds run in the order below. Each round: **audit, fix, add tests, run the full regression, commit and push, republish the game link, note the changes in CHANGELOG.md**.
@@ -19,6 +29,7 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 - **Danger is readable.** The player can tell what is too dangerous before walking in (region danger, creature rating, a warning when entering an area far above you).
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
 - Co-op stays parked. Original names and art only.
+- **Higher visual fidelity is welcome** (Colin is fine with changing the art pipeline), as long as the game stays readable and keeps its own look.
 - **Big but not empty, and not crowded**: places are far enough apart to feel like a journey (spacing is a target in seconds of walking, round 2) and the space between them is worth crossing. Both are checked by tools, not by feel.
 
 ---
@@ -119,13 +130,16 @@ Order of building (stop when time runs out; the first two are the target for one
 - Accessibility pass on every screen: text size, contrast, colour-blind modes, input-device-aware prompts.
 - Arena Mode: hero preview, how-to-play card, stats page (records per hero and mode).
 
-## Round 12: Visuals
-- **Animation**: more walk frames, attack/hurt/death for every creature, idle life (breathing, blinking, tails, sway), foot dust and snow prints in more terrains.
-- **Effects**: hit sparks per element, spell trails, status icons, phase transitions, better respawn and fast-travel transitions.
-- **World art**: biome transitions, interior detail, region identity for each region, distinct town silhouettes, props that tell small stories.
-- **Lighting and weather visuals**: day/night colour grading, torches and windows lit at night, fog, aurora, ash.
-- **UI art**: consistent icon set, item rarity frames, boss bar and banner art.
-- Art regression baseline refreshed.
+## Round 12: Visual fidelity
+Colin is open to improving how the game looks. Plan: keep a clear pixel-art identity but raise the detail, depth and light a good deal. Each step is separate, tested with the art-baseline tool, and has its own revert point.
+1. **Render scale**: raise the internal resolution from 320x180 to **480x270** (a bigger view of the world, which helps the open-world feel and vistas; integer-scaling modes stay). The font, HUD layout and every screen are re-laid-out and re-checked on phone and desktop sizes. Fallback if it proves too disruptive: stay at 320x180 and spend the effort on steps 2 to 5.
+2. **Palette and shading**: widen the 16-colour palette to **32 or more colours** with proper shading ramps per material (snow, ice, stone, wood, fur, cloth, metal, fire, water), so surfaces have form instead of flat fills.
+3. **Sprite detail**: characters and creatures redrawn at a larger size (about 20 to 24 px instead of 16) with more frames: smoother walk cycles, attack, hurt, death and idle poses; bosses get unique multi-part art. Armour and weapons show on the character by tier.
+4. **Tiles and terrain**: richer ground tiles with smooth biome transitions (snow to rock to grass edges), cliff and water edges with foam and ice cracks, ground detail (pebbles, tufts, footprints), buildings and ruins with roofs, windows, signage and lived-in clutter.
+5. **Lighting and atmosphere**: soft dynamic lights and shadows from torches, fire and windows, time-of-day colour grading, fog banks, god rays, bloom on fire and magic, aurora, water shimmer and reflections, rain, snow and ash particles with depth layers.
+6. **Effects and UI**: element-specific hit sparks and trails, status effect visuals, boss phase transitions, smoother screen transitions; a consistent icon set with rarity frames, a new boss bar and banner design.
+7. **Procedural-art tooling**: a sprite viewer page, an art-regression baseline refreshed per step, screenshot sweeps of every region and screen at phone and desktop sizes (overflow and clipping detector).
+Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-art style with more detail rather than a painted look.
 
 ## Round 13: Audio
 - **Music**: longer loops (several minutes per region), exploration vs combat layers, town themes, boss themes per boss, stingers for discovery and quest events.
