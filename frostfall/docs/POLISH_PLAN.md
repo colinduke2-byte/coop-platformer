@@ -1,10 +1,11 @@
 # Overnight plan: make Frostfall better and more complete
 
-Colin's direction (his words, summarised):
+Colin's direction (his words, summarised; the night-cycle and new-regions requests came later):
 1. **Levels must not make you overpowered.** The game should not be easy unless you grind gear and levels *beforehand*. Preparation is what makes fights easier; there is no "level 5 and one-shot everything".
 2. **Performance is fine** (iPhone 13). Phone speed work is dropped from the plan.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
-4. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
+4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
+5. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
 
 ## How the night runs
 - Rounds run in the order below. Each round: **audit, fix, add tests, run the full regression, commit and push, republish the game link, note the changes in CHANGELOG.md**.
@@ -18,6 +19,7 @@ Colin's direction (his words, summarised):
 - **Danger is readable.** The player can tell what is too dangerous before walking in (region danger, creature rating, a warning when entering an area far above you).
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
 - Co-op stays parked. Original names and art only.
+- **Big but not empty**: new space is only worth it if it is filled; density and distinctness are checked by tools, not by feel.
 
 ---
 
@@ -49,34 +51,58 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 - **Weather and seasons-lite**: region weather tables, snowstorm cold effect and shelter, fog, aurora, rain on the coast, ash fall on the Peaks.
 - **Hearth and home**: more to do with a house (storage, trophies, bed, cooking), a second purchasable home.
 
-## Round 4: Settlements, shops and services
+## Round 4: Day, night and the moon
+The game already has a 12-minute day/night cycle that affects stealth and sends villagers indoors. Now night changes *what lives in the world*, so day and night feel like two different places.
+- **Creature swaps at night** (spawns, not just tints): wolves become **werewolves** (bigger, hit harder, howl to call the pack, can be fought with fire or silver-edged weapons), packs hunt in the open; draugr and restless dead walk the roads; frost wights and grave callers haunt barrows and crossroads; **ghosts** drift in graveyards and ruins; shadow lynxes roam more; **night hags** and will-o-wisps in marshes; bats and owls in forests and caves.
+- **Day-only life**: deer, hares and birds are out by day; bears hibernate in dens until dusk; bandit camps have sentries by day and sleeping crews at night (a sneak-attack opportunity, and guards wake if you are loud); traders and travellers walk the roads by day only.
+- **Moon phases** (a visible moon and a calendar day count): *full moon* = werewolf hunts and rare spawns; *new moon* = the darkest night, shades and ghosts; *blood moon* (rare) = a world event with a roaming alpha and a big bounty.
+- **Dawn and dusk**: dawn bells in towns, undead weakened in sunlight, dusk ambushes on the road; shrine blessings that only work at dawn or at night.
+- **Night play tools**: a **torch/lantern** item (light radius vs stealth trade-off), campfires and town gates as safe zones, Nightsight elixir (exists), night-blooming herbs (moonpetal, nightshade), night-only dig spots and a ghost merchant.
+- **Time controls**: clock display, "wait or rest until..." in inns and at camps, sunrise and sunset grading, weather interacts with time (night fog, dusk storms).
+- **Quests with time**: a few quests only make sense at night (a ghost's request, a werewolf hunt, a smuggler's drop).
+- Danger ratings, bestiary pages and the guide all show night variants; balance bot runs night encounters too.
+
+## Round 5: New regions and a bigger, fuller world
+Goal: a world that feels big but never empty, with regions you could tell apart blindfolded. **Rule: density before size.** Every region must hit a minimum of points of interest per area, checked with the map-screenshot density tool; if it is empty, add content, not tiles.
+Each new region gets the full kit (the same recipe used for the Ashen Peaks, Frozen Coast and Old Kingdom): world definition and tiles, a hub settlement with 8 to 10 named people, 4 to 6 quests, 6 to 8 creatures (2 or 3 new sprites, the rest recoloured with their own tricks), 3 new kinds of points of interest, a dungeon, a boss and minions, region music and ambience, unique gear, weather, map and fast-travel integration, and a stage test. Regions open at different times: you *can* walk almost anywhere early (Skyrim style) but the danger tier tells you what you are doing.
+Order of building (stop when time runs out; the first two are the target for one night):
+1. **The Weeping Fens** (south-west bog): fog banks, lantern paths over black water, stilt village *Reedwick*, sunken barrows, bog wraiths, will-o-wisps, hags, leech swarms, peat fires. Boss: the **Mire Mother**. Poison and cold resist gear, rare alchemy plants. Deadly at night.
+2. **The Stormcrown Highlands** (north-west plateau): lightning storms, mammoths, thunderbirds, stone giants, nomad clans around hearth camps (*Skarn Hold*), stone-circle shrines, wind-scoured passes. Boss: the **Storm Giant**. Shock-themed gear and mounts-lite (a pack mammoth for carrying).
+3. **The Glasswood** (ancient crystal forest): ice-glazed trees, aurora light at night, glimmerkin (small tricksters), crystal golems, a druid circle hub (*Lantern Glade*), a winter-stag boss (**the Hartking**). Magic gear and unique spells.
+4. **The Underdeep** (under Emberhold's mines): a huge cavern region with glowing fungus lakes, cave weavers (spiders, original design), forgotten Delver ruins, an underground ferry, a lode-wyrm boss. Endgame ore and gems.
+5. **Saltmarket** (second city on the Frozen Coast): a busy harbour town with boats, a market, guild offices, smugglers and a law-and-order question, plus sea quests.
+- **Density upgrades for the old regions**: extra hamlets, camps, caves, shrines and wanderers where the screenshot check shows gaps; more distinct landmarks per region.
+- **Region identity checklist** per region: colour palette, tile set, weather, music, ambience, creatures, settlement style, gear look, signature mechanic (fog, thunder, lava, tide, ghosts).
+- Unlock design: roads and gates in the Reach and between regions; story hooks give reasons to go, but nothing is locked behind a cutscene.
+
+## Round 6: Settlements, shops and services
 - Fill every town and hamlet with shops, inns, a smith, a healer and at least one quest or story each; unique shop stock per region; item rarity matches region.
 - Inns: rooms (rest through the night), food and rumours that point at undiscovered places.
 - Services: fast repair, enchanting, identify/reforge, a tailor or cartographer who sells map pieces to reveal areas.
 - Guilds or houses (Emberhold's three factions exist): rank-ups with unique perks and a mid-game questline in each; faction gear.
 - Shop UX: buy/sell with comparisons, "sell all junk", sorting, stack handling, buyback.
 
-## Round 5: Dungeons and encounters
+## Round 7: Dungeons and encounters
 - **Dungeon variety**: set pieces (collapsing bridge, flooded hall, sealed vault puzzle, ambush rooms, trap corridors) per theme; a distinct entry vista and exit shortcut.
 - **Boss and mini-boss variety**: unique mechanics per fight, an arena identity, and a clear signature drop.
 - **Encounter fairness**: every attack is telegraphed; check groups (wolf packs, camps, wights) for unavoidable damage; add "pull and fight" choices (sneak, bow from range, ambush).
 - **Loot design**: unique named items with a story line per dungeon and region; tier gating so the best gear needs the hardest places.
 - **Traps and secrets**: hidden doors, pressure plates, key puzzles, a lockpicking mini-flow that works with the controller.
 
-## Round 6: Characters, build freedom and crafting
+## Round 8: Characters, build freedom and crafting
 - **Builds**: make each skill path viable (melee, archer, mage, sneak, healer/support), with perks that change how you play, not just numbers.
 - **Perks page 2** (the roadmap's second perk page): capstone perks per skill, gated high in the skill.
 - **Crafting depth**: smithing tiers, alchemy side effects, enchant combos, cooking buffs; recipes found in the world.
 - **Weight and gear identity**: light/medium/heavy armour trade-offs; weapon move styles matter; set bonuses.
 - **Companions**: Ragna and Pell get a short personal quest each, commands (wait, follow, aggressive), and reactions.
 
-## Round 7: Game feel pass
+## Round 9: Game feel pass
 - Per weapon and spell: wind-up, hit-stop, knockback, recovery, sound and shake. All numbers in `tuning.js`.
 - Dodge, block, parry windows; lock-on in crowds; camera framing for bosses and arenas.
 - Enemy hit reactions, death effects, status effect clarity, combat music layers.
 - Input polish: buffering of the next action, cancel rules, controller dead zones and pad-specific prompts, button-mash safety, hold-to-repeat in menus.
 
-## Round 8: Menus and screens
+## Round 10: Menus and screens
 - Pause menu: split the 26-row System tab into pages (Game, Display, Audio, Controls, Accessibility) with a one-line hint per row.
 - Title screen: settings entry, version stamp, "how to play" card, daily and arena entries kept.
 - Inventory, journal, map: filter and sort everywhere, compare with equipped, quest step detail, map legend and declutter, pad and touch parity.
@@ -84,7 +110,7 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 - Accessibility pass on every screen: text size, contrast, colour-blind modes, input-device-aware prompts.
 - Arena Mode: hero preview, how-to-play card, stats page (records per hero and mode).
 
-## Round 9: Visuals
+## Round 11: Visuals
 - **Animation**: more walk frames, attack/hurt/death for every creature, idle life (breathing, blinking, tails, sway), foot dust and snow prints in more terrains.
 - **Effects**: hit sparks per element, spell trails, status icons, phase transitions, better respawn and fast-travel transitions.
 - **World art**: biome transitions, interior detail, region identity for each region, distinct town silhouettes, props that tell small stories.
@@ -92,13 +118,13 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 - **UI art**: consistent icon set, item rarity frames, boss bar and banner art.
 - Art regression baseline refreshed.
 
-## Round 10: Audio
+## Round 12: Audio
 - **Music**: longer loops (several minutes per region), exploration vs combat layers, town themes, boss themes per boss, stingers for discovery and quest events.
 - **SFX**: variation (several samples per sound), per-surface footsteps, layered hits, spell sounds per element, UI sounds consistent.
 - **Ambience**: regional beds (wind, waves, forge, birds), time-of-day changes, interior reverb feel.
 - Mix pass: levels per channel, ducking under dialogue and boss intros.
 
-## Round 11: Story, writing and quests
+## Round 13: Story, writing and quests
 - **Writing pass**: one voice (epic, mythic, never padded); shorter lines; every important character with a distinct way of speaking.
 - **Quest clarity**: every quest step says what to do and where; the journal tracks it; the compass points to it.
 - **Quest bot**: a bot walks every quest line start to finish and fails on any blocked step, missing item, unmarked target or unreachable NPC.
@@ -107,14 +133,14 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 - **Endings and epilogue**: pacing of credits, world state after the end, a short "what happened next" per region.
 - Faction questlines for the three Emberhold houses reach a proper climax.
 
-## Round 12: Replay, modes and meta
+## Round 14: Replay, modes and meta
 - **New Game+**: scales by gear tier and adds new modifiers; carries trophies; new enemy affixes.
 - **Challenge modes** beyond the daily: hardcore (permadeath option), ironman (one save), no-level run.
 - **Arena Mode**: extra heroes, boss-rush variants, a horde mode, per-hero stats, unlockable cosmetics.
 - **Trophies**: more, with a tracker; cloak and outfit unlocks.
 - **Photo mode** (hide HUD, free camera) for screenshots.
 
-## Round 13: Robustness and testing
+## Round 15: Robustness and testing
 - **Stuck-state watchdog tests**: every menu/dialogue/transition combination against death, fast travel, saving.
 - **Input matrix tests**: keyboard, wired pad, Bluetooth pad, touch, plus mixes in every screen.
 - **World generation fuzzing**: hundreds of seeds checked for sealed areas, entities in walls, unreachable quests.
@@ -122,7 +148,7 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 - **Soak tests**: long monkey runs per region and per arena.
 - Error log polish (F4 report), no console errors in any covered path.
 
-## Round 14: Release hardening and docs
+## Round 16: Release hardening and docs
 - Firefox and Safari smoke tests where possible; audio autoplay and fullscreen behaviour; iPhone and Mac passes by Colin.
 - Run the GitHub Actions workflow for real and fix differences.
 - File size and load time budget.
@@ -132,10 +158,10 @@ Goal: fights are hard at your level, and only grinding makes them easier. Measur
 ---
 
 ## Size and risk
-Fourteen rounds is a heavy night. Rounds 1, 2, 3, 7, 11 and 13 carry most of the value; if time runs short, drop rounds 12 and 9's secondary items first. The riskiest changes (power curve, world events, quest bot) have tests written first.
+Sixteen rounds is a heavy night. Rounds 1, 2, 3, 4, 5 (the first two regions), 9, 13 and 15 carry most of the value. Time-box: no round gets more than about an hour of attempts; if time runs short, drop rounds 14 and the secondary items in 11 first, then regions 3 to 5 of round 5. The riskiest changes (power curve, world events, quest bot) have tests written first.
 
 ## Colin's morning checklist
-1. Play 20 minutes from a new game: is the early game properly hard? Does grinding clearly pay off?
-2. Wander without markers: do you find things, and does the compass help?
+1. Play 20 minutes from a new game: is the early game properly hard? Does grinding clearly pay off? Walk out at dusk: is night a different world?
+2. Wander without markers: do you find things, and does the compass help? Visit the new regions: do they look and feel different from each other and from the old ones?
 3. Try one dungeon, one boss and one arena run on the controller.
 4. Read `docs/OVERNIGHT_LOG.md` for reverted work and the numbers to tweak.
