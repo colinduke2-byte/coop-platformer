@@ -120,7 +120,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.mode === 'roll') m = 1.2;
     else if (this.sneaking) m = this.speedNow < 6 ? 0.3 : 0.5;
     else if (this.speedNow < 6) m = 0.85;
-    return m * (this.sneaking ? bonus.detect() : 1) * stats.trait('detectMul') * elixirVal('detectMul', 1) * this.scene.stealthEnv();
+    return m * (this.sneaking ? bonus.detect() : 1) * stats.trait('detectMul') * elixirVal('detectMul', 1) * this.scene.stealthEnv() * (S.inv.lantern > 0 && this.scene.isNight() ? 1.25 : 1);
   }
 
   spend(cost) {

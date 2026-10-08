@@ -17,3 +17,6 @@ Shipped: see CHANGELOG round 29. Tweak: reward formula in world/discovery.js (4+
 
 ## Round 4: a living world - DONE (partial: events, camps, delivery jobs)
 Shipped: see CHANGELOG round 30. Tweak: `RESETTLE` in systems/bless.js, event odds in `rollEvent` (world/livingworld.js), event timer 150-300 s in world/events.js. Deferred: storm cold, town children/animals, escort/lost-item jobs, second home.
+
+## Round 5: day, night and the moon - DONE (core; herbs/ghost merchant/silver/night quest deferred)
+Shipped: see CHANGELOG round 31. Tweak: `wolfChance`/`ghostChance` and moon cycle in systems/moon.js, werewolf/ghost stats in data/enemies.js, lantern radius in world/lighting.js, 1.25 lantern detect in Player.detectMult. Playtest: use a fire to wait until dusk; at night look for werewolves around wolf dens; wait to day 4 (full moon).

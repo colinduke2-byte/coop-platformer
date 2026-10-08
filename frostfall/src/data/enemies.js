@@ -71,6 +71,16 @@ export const ENEMIES = {
     kind: 'lunge', range: 46, windup: 0.42, atkDur: 0.3, recover: 0.8, cooldown: 0.9, kbResist: 0, lunge: 175,
     body: [12, 6, 2, 8], loot: { gold: [1, 4], drops: [['hp_potion', 0.1], ['arrows', 0.25, [2, 4]]] },
   },
+  werewolf: {
+    name: 'Werewolf', tex: 'spr_werewolf', scale: 1.25, bark: 'wolf', weak: { fire: 1.4, shock: 1.1 }, hp: 66, speed: 46, chase: 96, dmg: 19, detect: 120,
+    kind: 'lunge', range: 52, windup: 0.4, atkDur: 0.3, recover: 0.7, cooldown: 0.8, kbResist: 0.25, lunge: 200,
+    body: [12, 6, 2, 8], loot: { gold: [6, 16], drops: [['hp_potion', 0.2], ['wolf_fang', 0.5], ['pale_pelt', 0.15]] },
+  },
+  ghost: {
+    name: 'Restless Ghost', tex: 'spr_ghost', ghostly: true, bark: 'undead', weak: { shock: 1.4, fire: 0.7, frost: 0.2 }, hp: 28, speed: 26, chase: 40, dmg: 14, detect: 100,
+    kind: 'shoot', proj: 'eshot', projSpeed: 84, range: 108, keep: 56, windup: 0.75, atkDur: 0.1, recover: 0.6, cooldown: 1.9, kbResist: 0.3,
+    body: [8, 7, 4, 9], loot: { gold: [5, 14], drops: [['mp_potion', 0.3], ['bone_dust', 0.4]] },
+  },
   bandit: {
     name: 'Bandit', tex: 'spr_bandit', blade: 5, bark: 'human', flee: true, hp: 37, speed: 38, chase: 54, dmg: 13, detect: 74,
     kind: 'melee', range: 20, windup: 0.38, atkDur: 0.14, recover: 0.5, cooldown: 0.35, kbResist: 0.1,

@@ -20,7 +20,7 @@ import { routePos } from '../world/roamers.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
-const BEASTS_NOSE = new Set(['wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
+const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind, spec = {}) {
     const cfg = ENEMIES[kind];
@@ -578,7 +578,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
     if (this.cfg.fly) this.setOrigin(0.5, 0.5 + 9 / 16);
-    this.setAlpha(this.hidden ? 0 : this.cfg.ambush && !this.alerted ? 0.28 : 1);
+    this.setAlpha(this.hidden ? 0 : this.cfg.ambush && !this.alerted ? 0.28 : this.cfg.ghostly ? 0.62 : 1);
     this.shadow.setVisible(!this.hidden);
     this.updateBlade();
     if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 18 - (this.scaleX > 1 ? 10 : 0))).setDepth(99300);

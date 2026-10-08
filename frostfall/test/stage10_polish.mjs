@@ -67,6 +67,8 @@ check('enemies show a ? (or alert) as they notice you', q);
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const S = window.__ff.S; S.hp = 20; S.mp = 5; S.sp = 5; g.player.setPosition(19.5 * 16, 14.5 * 16 + 2); g.player.mode = 'free'; localStorage.removeItem('frostfall_save_v1'); });
 await h.sleep(250);
 await tap('KeyE');
+await h.sleep(500);
+await tap('KeyE');
 await h.sleep(2600);
 const rest = await G(() => ({ hp: window.__ff.S.hp, mp: window.__ff.S.mp, saved: !!localStorage.getItem('frostfall_save_v1'), modal: window.__ff.game.scene.getScene('Game').cameras.main.alpha }));
 check('resting at a fire restores everything and saves', rest.hp === 100 && rest.mp === 100 && rest.saved, JSON.stringify(rest));

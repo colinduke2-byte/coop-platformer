@@ -129,6 +129,7 @@ export const STYLES = {
   necro: { skin: 4, hair: 14, hood: 1, body: 1, trim: 14, legs: 0, boots: 0, glow: 14, chest: 14 },
   golem: { skin: 4, hair: 3, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, helm: 4, chest: 5 },
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
+  ghost:  { skin: 15, hair: 15, hood: 15, body: 15, trim: 14, legs: 14, boots: 14, glow: 14, chest: 14 },
   wight:  { skin: 5, hair: 14, hood: 14, body: 1, trim: 14, legs: 1, boots: 0, glow: 15, chest: 15 },
   troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
   trapper: { skin: 10, hair: 9, hood: 9, body: 9, trim: 7, legs: 2, boots: 1, chest: 7, cape: 7 },
@@ -473,6 +474,7 @@ function buildCharacters(scene) {
   animalSheet(scene, 'spr_elk', (c, x, f) => deerFrame(c, x, f, { body: 4, back: 3, belly: 6, leg: 3, ant: 6 }));
   animalSheet(scene, 'spr_fox', foxFrame);
   animalSheet(scene, 'spr_hare', hareFrame);
+  animalSheet(scene, 'spr_werewolf', (c, x, f) => wolfFrame(c, x, f, { fur: 9, dark: 7, light: 10, leg: 7 }));
   animalSheet(scene, 'spr_grimfang', (c, x, f) => wolfFrame(c, x, f, { fur: 5, dark: 4, light: 6, leg: 4 }));
   make('spr_wyrm', (ctx, x, d, f) => wyrmFrame(ctx, x, f), ['side']);
   make('spr_tide', (ctx, x, d, f) => tideFrame(ctx, x, f), ['side']);

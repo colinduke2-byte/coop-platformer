@@ -18,6 +18,7 @@ import { recalc as recalcStats } from '../systems/stats.js';
 import { maybeRelic } from '../systems/relics.js';
 import { COOKABLE } from '../systems/food.js';
 import { clearStatus } from '../systems/status.js';
+import { advanceTime } from '../systems/moon.js';
 
 // A readable wooden sign.
 export class Sign extends Phaser.GameObjects.Image {
@@ -51,12 +52,24 @@ export class RestSpot {
   async interact() {
     const sc = this.scene, cam = sc.cameras.main;
     await runScript(async () => {
-      if (COOKABLE().length) {
-        const c = await choose(['Rest by the fire', 'Cook a meal', 'Cancel']);
-        if (c === 1) { await cookMenu(); return; }
-        if (c !== 0) return;
-      }
+      const outdoors = sc.def.snow || sc.def.outdoors, h = (S.time % 1440) / 60, night = h >= 20.5 || h < 5.5;
+      const opts = ['Rest by the fire'], acts = ['rest'];
+      if (COOKABLE().length) { opts.push('Cook a meal'); acts.push('cook'); }
+      if (outdoors) { opts.push(night ? 'Wait until dawn' : 'Wait until dusk'); acts.push('wait'); }
+      opts.push('Cancel');
+      const act = opts.length === 2 ? 'rest' : acts[await choose(opts)];
+      if (!act) return;
+      if (act === 'cook') { await cookMenu(); return; }
       sfx.play('select');
+      if (act === 'wait') {
+        await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
+        const target = night ? 6 * 60 : 20.5 * 60;
+        advanceTime(((target - S.time) % 1440 + 1440) % 1440 || 1440);
+        await sc.delay(500);
+        bus.emit('toast', night ? 'DAWN BREAKS' : 'DUSK GATHERS', 13);
+        await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); });
+        return;
+      }
       await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       clearStatus(sc.player, 'rest');
@@ -190,7 +203,7 @@ export class Bed {
       if (c !== 0) return;
       await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
-      S.time = (S.time >= 7 * 60 ? S.time + (1440 - S.time) : 0) + 7 * 60; S.time %= 1440;
+      advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
       S.respawn = { map: sc.mapId, x: Math.round(sc.player.x), y: Math.round(sc.player.y) };
       saveGame(sc);
       await sc.delay(700);

@@ -23,6 +23,7 @@ export const killMethods = {
     if (sp.nemesis) this.onNemesisDown(en);
     if (sp.roamRoute) this.onWorldBossDown(en);
     if (sp.mother) this.onMotherDown(en);
+    if (sp.blood) { const g = 120 + 80 * (sp.tier || 0); S.gold += g; S.flags.bloodAlphas = (S.flags.bloodAlphas || 0) + 1; this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((sp.tier || 1) + 1, Math.random, 3) })); bus.emit('toast', `THE BLOOD MOON ALPHA FALLS  +${g} GOLD`, 13); sfx.play('quest'); }
     if (sp.camp && !S.bounty[sp.camp]) {
       const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
       if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));

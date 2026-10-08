@@ -19,6 +19,7 @@ import { addItem } from '../systems/inventory.js';
 import { submitScore } from '../systems/daily.js';
 import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
+import { advanceTime, isFull } from '../systems/moon.js';
 
 export const eventMethods = {
   // Companion and side-quest bookkeeping, twice a second at most.
@@ -67,7 +68,7 @@ export const eventMethods = {
   spawnAmbush() {
     const tier = tierAt(this.player.x / T, this.player.y / T);
     const night = this.nightness() > 0.5;
-    const kinds = night ? ['draugr', 'wight', 'draugr', 'reaver'] : ['wolf', 'bandit', 'wolf', 'fencer'];
+    const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : ['wolf', 'bandit', 'wolf', 'fencer'];
     const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
     let made = 0;
     for (let i = 0; i < n; i++) {
@@ -76,7 +77,7 @@ export const eventMethods = {
       const e = this.addEnemy(k, p.x, p.y, { tier, roam: true });
       e.alert(true); made++;
     }
-    if (made) { bus.emit('toast', night ? 'THE DEAD ARE RESTLESS!' : 'AMBUSH!', 11); sfx.play('alert'); music.stinger(); }
+    if (made) { bus.emit('toast', night ? (isFull() ? 'THE PACK HUNTS UNDER THE FULL MOON!' : 'THE DEAD ARE RESTLESS!') : 'AMBUSH!', 11); sfx.play('alert'); music.stinger(); }
   },
   spawnTrader() {
     const p = this.freeSpotNear(80, 130); if (!p) return;
@@ -153,7 +154,7 @@ export const eventMethods = {
     cam.fadeOut(350, 11, 14, 26);
     // the journey takes time: the walk you skipped, at the clock's pace (2 game minutes per second walked)
     const tiles = f.map && f.map !== this.mapId ? 160 : Math.hypot(f.x - this.player.x, f.y - this.player.y) / 16, mins = Math.round(tiles / 4.5 * 2);
-    S.time = ((S.time || 0) + mins) % 1440; this.travelMins = mins;
+    advanceTime(mins); this.travelMins = mins;
     if (f.map && f.map !== this.mapId) {          // another region: load its map and drop in at the fire
       cam.once('camerafadeoutcomplete', () => {
         S.map = f.map; S.spawn = 'entry'; S.x = f.x; S.y = f.y + 16;

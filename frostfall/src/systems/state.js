@@ -38,7 +38,7 @@ export function newState() {
     bonusHp: 0, bonusMp: 0, bonusSp: 0,
     upgrades: {}, enchants: {}, sockets: {}, rep: { anvil: 0, delvers: 0, wardens: 0 },
     lore: {}, kills: {}, seen: {}, found: {}, tips: {},
-    time: 9 * 60, weather: 'snow', respawn: { map: 'village', spawn: 'start' },
+    time: 9 * 60, days: 0, weather: 'snow', respawn: { map: 'village', spawn: 'start' },
     follower: false, bossState: null, tracked: null,
     playtime: 0,
     seed: Math.floor(Math.random() * 1e9),     // the run seed: lays out the open world and its dungeons

@@ -64,6 +64,7 @@ import { companionMethods } from '../world/companions.js';
 import { killMethods } from '../world/kills.js';
 import { eventMethods } from '../world/events.js';
 import { livingMethods } from '../world/livingworld.js';
+import { nightKind, sleepyCrew, isNightNow } from '../world/nightlife.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -412,8 +413,9 @@ export default class GameScene extends Phaser.Scene {
         if (p.live.dead || !p.live.active) { if (p.live.dead) this.pend.splice(i, 1); else p.live = null; continue; }
         if (Math.hypot(p.live.x - px, p.live.y - py) > 520 && !p.live.alerted) { p.live.despawn(); p.live = null; }
       } else if (Math.hypot(p.wx - px, p.wy - py) < 300) {
-        p.live = this.addEnemy(p.spec.kind || p.kind, p.wx, p.wy, p.spec, p.key);
+        p.live = this.addEnemy(nightKind(this, p.spec.kind || p.kind, p), p.wx, p.wy, p.spec, p.key);
         if (p.spec.kind === 'deer' || p.kind === 'deer') p.live.cfg = { ...p.live.cfg };
+        if (isNightNow(this)) sleepyCrew(p.live);
       }
     }
   }

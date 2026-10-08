@@ -16,6 +16,7 @@ import { MAPS } from '../data/maps.js';
 import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
+import { moonPhase, isBlood } from '../systems/moon.js';
 import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
@@ -329,6 +330,24 @@ export default class HudScene extends Phaser.Scene {
     if (it.t >= T) this.intro = null;
   }
 
+  // Time of day and the moon, top right under the purse (outdoors only, since time stands still inside).
+  drawClock(g) {
+    const gs = this.gs, out = gs.def && (gs.def.snow || gs.def.outdoors) && !gs.def.quick;
+    if (!this.clockTxt) this.clockTxt = txt(this, 0, 25, '', 5);
+    if (!out || ui.modal) { this.clockTxt.setVisible(false); return; }
+    const hh = Math.floor((S.time % 1440) / 60), mm = Math.floor(S.time % 60), ph = moonPhase(), night = hh >= 20 || hh < 6;
+    const label = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+    this.clockTxt.setVisible(true).setText(label); this.clockTxt.x = W - 4 - textW(label);
+    const mx = this.clockTxt.x - 9, my = 25;
+    g.fillStyle(C[0], 0.62); g.fillRect(mx - 2, my - 1, textW(label) + 15, 9);
+    // the moon: a disc, lit according to the phase (a dark disc on the new moon)
+    const col = isBlood() ? 8 : night ? 15 : 13;
+    g.fillStyle(C[1]); g.fillRect(mx, my, 6, 6);
+    const lit = [0, 1, 3, 5, 6, 5, 3, 1][ph];
+    if (night || ph) { g.fillStyle(C[col]); const w = Math.min(6, lit); if (ph <= 4) g.fillRect(mx + 6 - w, my, w, 6); else g.fillRect(mx, my, w, 6); }
+    if (!night) { g.fillStyle(C[13]); g.fillRect(mx + 1, my + 1, 4, 4); }
+  }
+
   drawCompass(g, pl) {
     const gs = this.gs, outdoors = gs.def && (gs.def.stream || gs.def.snow) && !gs.def.quick;
     if (!outdoors || settings.compass === false || ui.modal) { (this.compassTxt || []).forEach((t) => t.setVisible(false)); return false; }
@@ -405,6 +424,7 @@ export default class HudScene extends Phaser.Scene {
       this.ammoTxt.setText(lab).setFont(ak === 'fire_arrow' ? 'f12' : 'f11').setVisible(true);
       this.ammoTxt.x = W - 22 - Math.max(gw, aw) - 6 - this.ammoTxt.width; this.ammoTxt.y = 13; g.fillStyle(C[0], 0.62); g.fillRect(this.ammoTxt.x - 3, 12, this.ammoTxt.width + 6, 10);
     } else this.ammoTxt.setVisible(false);
+    this.drawClock(g);
     this.goldTxt.setText(gold).x = W - 4 - gw;
     this.arrowTxt.setText(ar).x = W - 4 - aw;
     this.coinImg.x = W - 13 - Math.max(gw, aw);

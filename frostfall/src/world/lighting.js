@@ -4,6 +4,7 @@ import { W, H, C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { tip } from '../systems/tips.js';
+import { advanceTime, isFull, isBlood, moonName } from '../systems/moon.js';
 
 const DAY_MIN = 1440;
 const lerpColor = (a, b, t) => {
@@ -72,7 +73,7 @@ export const lightingMethods = {
     }
     // the dreamer carries a little warmth of their own
     const p = this.player;
-    cut(p.x, p.y, 38 + 5 * Math.sin(this.t * 5), 0.85 * dark);
+    cut(p.x, p.y, 38 + (S.inv.lantern > 0 ? 28 : 0) + 5 * Math.sin(this.t * 5), 0.85 * dark);
     if (this.follower) cut(this.follower.x, this.follower.y, 22, 0.5 * dark);
   },
 
@@ -80,10 +81,10 @@ export const lightingMethods = {
   updateClock(dt) {
     if (!(this.def.snow || this.def.outdoors)) return;                           // time stands still indoors / underground
     const before = hourOf();
-    S.time = (S.time + dt * 2) % DAY_MIN;
+    advanceTime(dt * 2);
     const h = hourOf();
     if (Math.floor(before) !== Math.floor(h)) {
-      if (Math.floor(h) === 21) { bus.emit('toast', 'NIGHT FALLS', 4); tip('night'); }
+      if (Math.floor(h) === 21) { bus.emit('toast', isBlood() ? 'THE BLOOD MOON RISES' : isFull() ? 'NIGHT FALLS. THE FULL MOON RISES' : 'NIGHT FALLS', isFull() ? 8 : 4); tip('night'); }
       if (Math.floor(h) === 6) { bus.emit('toast', 'DAWN BREAKS', 13); if (S.weather === 'aurora') { S.weather = 'clear'; this.applyWeather(); } }
     }
     this.weatherT -= dt;

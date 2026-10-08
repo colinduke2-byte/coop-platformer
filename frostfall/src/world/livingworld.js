@@ -11,6 +11,7 @@ import { addItem } from '../systems/inventory.js';
 import { dialogue } from '../systems/dialogue.js';
 import { makeGenItem } from '../systems/genloot.js';
 import Npc from '../entities/Npc.js';
+import { isBlood } from '../systems/moon.js';
 import { completeContract } from '../data/contracts.js';
 import Pickup from '../entities/Pickup.js';
 
@@ -35,11 +36,21 @@ export const livingMethods = {
   // Called when the random-event timer fires (replaces the old two-way choice).
   rollEvent() {
     const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.nightness() > 0.5;
+    if (night && isBlood() && this.bloodDay !== Math.floor(S.days)) return this.spawnBloodAlpha(tier);
     if (r < 0.28) return this.spawnAmbush();
     if (r < 0.50 && !this.trader) return this.spawnTrader();
     if (r < 0.66 && !night) return this.spawnWounded(tier);
     if (r < 0.82 && !night) return this.spawnHunt(tier);
     if (!this.spawnRaid(tier)) this.spawnAmbush();
+  },
+  // The blood moon: a great wolf hunts the roads once per blood night. Big bounty.
+  spawnBloodAlpha(tier) {
+    const p = this.freeSpotNear(110, 160); if (!p) return this.spawnAmbush();
+    this.bloodDay = Math.floor(S.days);
+    const e = this.addEnemy('werewolf', p.x, p.y, { tier: tier + 1, champion: true, blood: true, roam: true });
+    e.displayName = 'The Blood Moon Alpha'; e.alert(true);
+    for (let i = 0; i < 2; i++) { const q = this.freeSpotNear(40, 80); if (q) this.addEnemy('werewolf', q.x, q.y, { tier, roam: true }).alert(true); }
+    bus.emit('toast', 'THE BLOOD MOON: A GREAT WOLF HUNTS YOU!', 8); sfx.play('alert'); music.stinger();
   },
   spawnWounded(tier) {
     const p = this.freeSpotNear(80, 130); if (!p) return;

@@ -382,3 +382,12 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Radiant delivery jobs** on the bounty board: carry a package to a hamlet.
 - Deferred: cold from storms, children and animals in towns, second home (see later rounds).
 - Test: `stage56_living`.
+
+## Round 31 - Overnight Round 5: day, night and the moon
+- **Calendar and moon**: the game counts days and runs an eight-phase moon (HUD clock and moon disc outdoors). Full moon every 8 days; every third full moon is a *blood moon*.
+- **Night changes who lives here**: wolves become **werewolves** (bigger, faster, hit harder; nine in ten on a full moon), the restless dead of old places turn to **ghosts** (translucent, ranged; more on a new moon), bandit crews are asleep (they notice you at half range), the full moon makes ambushes werewolf packs. Chosen once per spawn from the seed and day so it is stable.
+- **Blood moon**: once per blood night a great wolf (a champion werewolf with two packmates) hunts you; big gold and gear bounty.
+- **Wait at campfires**: wait until dusk or dawn (time passes, no healing, no save). Beds, fast travel and the clock all count days properly.
+- **Hooded Lantern** (smith, 150 gold): see much further at night, but creatures notice you 25% sooner.
+- Deferred: night herbs, ghost merchant, silver weapons, dawn weakening the undead, night-only quests (later rounds).
+- Test: `stage57_night`.
