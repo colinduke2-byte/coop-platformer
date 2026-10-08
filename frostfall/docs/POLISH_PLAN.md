@@ -5,11 +5,11 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 2. **Playable on any phone.** The main machine is a fast M5 Mac, so the best looks are aimed there, but the whole game must run well on ordinary and older phones through automatic quality tiers (an iPhone 13 is fine today; low-end Androids and older iPhones are the test). Phone performance is a rule for every round, not a one-off.
 3. **Skyrim open-world feel**: discovery, a living world, things to stumble on, a reason to wander.
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
-5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12), but **keep the current field of view**: more detail, not more screen.
+5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world**; the current resolution and field of view stay as they are for now (the higher-resolution idea is parked, see the deferred section).
 6. **This plan is meant to finish the game**: full and complete (see the definition below).
 7. **More time than one night**: the run can use the overnight stretch *and* all of the following day. So stretch goals are in scope, rounds can be done more thoroughly, and nothing is dropped for time unless a round fails twice.
 8. **Something Colin is proud to send to other people**: a stranger should be able to open the link, understand the game in a minute, enjoy the first hour, and never hit a rough edge (round 18).
-9. Nothing is cut. Make the list heavy but doable in about a day and a night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: **the M5 Mac is where it will be played most** (wired controller or keyboard, Retina display, fullscreen); phone (Bluetooth pad) and other desktops stay supported but come second.
+9. Nothing is cut. Make the list heavy but doable in about a day and a night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: **the M5 Mac is where it will be played most** (wired controller or keyboard, Retina display, fullscreen), so it must look and run crisply there; phone (Bluetooth pad) and other desktops stay supported but come second.
 
 ## What "finished and complete" means (the target for this plan)
 The game is done when every line below is true. The last round checks this list and reports what is still open.
@@ -17,7 +17,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Systems complete**: combat, magic, stealth, crafting, alchemy, cooking, enchanting, sockets, factions, companions, housing, fast travel, mounts, time and weather, discovery and the compass all work together, with no stub screens or "coming soon" text.
 - **Open world complete**: expansive spacing, discoverable places, a living world with routines and events, day and night that change the world, distinct regions that are full without being crowded.
 - **Difficulty complete**: three clear levels (Easy, Normal, Hard), each balanced and verified by the power-curve bot; power comes from gear and preparation, not from level, on all of them; the final balance pass (round 19) is green.
-- **Presentation complete**: higher-fidelity art (about 4x the pixels in the same view), lighting and effects; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
+- **Presentation complete**: richer art, animation, lighting and effects at the current resolution; music and sound for every region, fight and menu; consistent UI on every screen, pad, keyboard and touch.
 - **Phone complete**: the game is playable on any phone, old or new: Standard tier holds 30+ fps on a slow-phone emulation, adaptive quality lowers detail instead of stuttering, memory and load time stay within budget, touch and Bluetooth-pad play are both good.
 - **Quality complete**: no known stuck states or crashes; every quest finishable; every menu reachable and closable with every input; saves safe; fuzzed worlds clean; docs and the guide up to date.
 - **Replay complete**: New Game+, hardcore, daily, arena modes with records.
@@ -36,7 +36,7 @@ The game is done when every line below is true. The last round checks this list 
 - **Every place has a reason to exist**: a reward, a story piece, a threat, or a view. No empty rooms.
 - Co-op stays parked. Original names and art only.
 - **Phone performance guard (every round)**: every round must keep the Standard tier smooth on a slow phone. Budgets, checked by tests on a CPU-throttled emulated phone (about 6x slower than the dev machine): at least **30 fps in the busiest normal scenes** (a full arena wave, a camp fight, a boss with adds, a town at night), memory under about **250 MB**, first load under about **5 seconds** on a decent connection, no stalls over 100 ms. A round that breaks a budget is fixed or reverted.
-- **Higher visual fidelity is welcome** (Colin is fine with changing the art pipeline), as long as the game stays readable and keeps its own look. **The field of view stays as it is now**; only the pixel density and detail go up.
+- **Resolution and field of view stay as they are now.** Visual improvements work within the current look (a resolution upgrade is parked as a later idea).
 - **Big but not empty, and not crowded**: places are far enough apart to feel like a journey (spacing is a target in seconds of walking, round 2) and the space between them is worth crossing. Both are checked by tools, not by feel.
 
 ---
@@ -142,18 +142,14 @@ Order of building (stop when time runs out; the first two are the target for one
 - Accessibility pass on every screen: text size, contrast, colour-blind modes, input-device-aware prompts.
 - Arena Mode: hero preview, how-to-play card, stats page (records per hero and mode).
 
-## Round 12: Visual fidelity (more detail, same field of view)
-Colin likes the current field of view, so **the amount of world on screen stays exactly as it is**. What changes is how many pixels are used to draw each thing: the same view, drawn with about **4x the pixels** (2x per side), so characters, creatures, tiles, props, text and effects have real detail. The pixel-art identity stays; it just gets finer and richer. Each step is tested with the art-baseline tool and has its own revert point.
-1. **Resolution-density system**: the game canvas goes from 320x180 to **640x360** while the world, physics, camera view and gameplay stay in today's units (the camera zooms 2x, tiles and sprites are drawn at 2x texture size and shown at half size in world units). Nothing about movement, hitboxes, spacing or what you can see changes. Sub-pixel smooth movement replaces whole-pixel snapping. The font, HUD and menus are redrawn crisp at the new density. Quality tiers: **Standard** (320x180, as today, for weak devices), **High** (640x360, the default on a Mac or a modern phone) and **Ultra** (960x540, for fast Macs and Retina screens), chosen automatically from a quick speed test and changeable in the menu.
-2. **Procedural art at 2x**: the sprite, tile and icon generators get a density factor, first producing exactly today's art at 2x (nothing looks different yet, a safe checkpoint), then every category is given real detail: outlines and shading, material texture (fur, cloth, metal, bark, stone, snow, ice), faces and hands, armour and weapon pieces, proper highlights and shadows.
-3. **Palette**: widen the 16-colour palette to **32 or more** with shading ramps per material, so surfaces have form instead of flat fills.
-4. **Sprites**: characters and creatures with more frames (walk, attack, hurt, death, idle), bosses with unique multi-part art, armour and weapons visible by tier.
-5. **Tiles and terrain**: smooth biome transitions (snow to rock to grass), cliff and water edges with foam and ice cracks, ground detail (pebbles, tufts, footprints), buildings and ruins with roofs, windows, signage and clutter.
-6. **Lighting and atmosphere**: soft dynamic lights and shadows from torches, fire and windows, time-of-day colour grading, fog banks, god rays, bloom on fire and magic, aurora, water shimmer and reflections, layered rain, snow and ash.
-7. **Effects and UI**: element-specific hit sparks and trails, status visuals, boss phase transitions, smoother screen transitions; a consistent icon set with rarity frames, a new boss bar and banner design.
-8. **Tooling and checks**: a sprite viewer page, the art baseline refreshed per step, screenshot sweeps of every region and screen at phone and desktop sizes (overflow and clipping detector), and a frame-rate check on an emulated phone so the extra pixels do not cost smoothness.
-9. **Mac-first rendering**: Retina-aware (the canvas matches the display's real pixels so edges are razor sharp, not blurry), crisp integer scaling in fullscreen and windowed modes, a steady frame rate on 120 Hz screens (a fixed update step with smooth drawing in between), full-screen shader effects (bloom, soft lighting, colour grading) that a fast Mac can afford, and smooth window resizing. Tested in Chrome and Safari on the Mac, with the phone checked through the Standard tier.
-Order of work: step 1 and the "identical at 2x" checkpoint first; then characters and creatures, tiles, props, UI and effects in that order, so the game looks better early and every checkpoint is shippable.
+## Round 12: Visuals (same resolution, same field of view)
+The picture keeps its current size and field of view. This round makes the existing art richer and more alive. Each step is tested with the art-baseline tool and has its own revert point.
+- **Animation**: more walk frames, attack/hurt/death poses for every creature, idle life (breathing, blinking, tails, sway), foot dust and snow prints in more terrains.
+- **Effects**: hit sparks per element, spell trails, status icons, boss phase transitions, better respawn and fast-travel transitions.
+- **World art**: biome transitions, interior detail, region identity for each region, distinct town silhouettes, props that tell small stories, buildings with signs and lived-in clutter.
+- **Lighting and weather visuals**: day/night colour grading, torches and windows lit at night, fog, aurora, ash, rain and snow layers.
+- **UI art**: a consistent icon set with rarity frames, boss bar and banner art.
+- **Tooling**: a sprite viewer page, the art baseline refreshed, screenshot sweeps of every region and screen at phone and desktop sizes (overflow and clipping detector).
 
 ## Round 13: Audio
 - **Music**: longer loops (several minutes per region), exploration vs combat layers, town themes, boss themes per boss, stingers for discovery and quest events.
@@ -215,12 +211,15 @@ Everything above changes the numbers, so balance is checked again at the very en
 - **Spot checks by hand** (written for Colin): five short fights per difficulty to feel, with the numbers to tweak.
 - **Freeze**: after this round only bug fixes; the final republish and the "complete" checklist follow.
 
+## Deferred for later (not part of this run): resolution density upgrade
+Idea kept for a future pass, only if Colin asks for it: same field of view but about 4x the pixels per object (canvas 640x360 with the camera zoomed 2x, art regenerated at 2x with more detail, a wider palette, crisp HUD text, Retina-aware rendering on the Mac, Standard/High/Ultra graphics tiers). It is a large change that touches every sprite, tile and screen, so it is not in this plan. Nothing in the current rounds blocks it.
+
 ## Size and risk
-Nineteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16, 18 and 19 first; round 15 and the last three regions of round 6 last. Rounds 2 (scale and spacing) and 12 (visual fidelity) are the riskiest because they touch everything; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
+Nineteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16, 18 and 19 first; round 15 and the last three regions of round 6 last. Round 2 (scale and spacing) is the riskiest because it moves coordinates everywhere; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
 
 ## Colin's morning checklist
 00. On a phone (any older one you can find): is it smooth on the Standard or Low tier, are the touch controls comfortable, does it recover when you switch apps?
-0. On the Mac: is the picture crisp (Retina), smooth (frame rate), and does fullscreen scale cleanly? Try the Standard, High and Ultra graphics options.
+0. On the Mac: is the picture crisp (Retina), smooth, and does fullscreen scale cleanly?
 1. Play 20 minutes from a new game on each difficulty: does Easy feel gentle, Normal fair and Hard demanding? Does grinding gear clearly pay off? Walk out at dusk: is night a different world?
 2. Wander without markers: can you walk for a while between places, and is there still something to see along the way? Do you find things, and does the compass help? Visit the new regions: do they look and feel different from each other and from the old ones?
 3. Try one dungeon, one boss and one arena run on the controller.
