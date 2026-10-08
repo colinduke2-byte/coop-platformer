@@ -142,7 +142,7 @@ const nem = await G(async () => {
   return { made, dead: p.mode === 'dead' };
 });
 check('the creature that kills you becomes your nemesis', nem.dead && nem.made && nem.made.kind === 'bear' && nem.made.kills === 1, JSON.stringify(nem));
-await G(() => window.gs().scene.restart({ map: 'forest', spawn: 'west' }));
+await G(() => { window.__ff.S.hp = window.__ff.S.maxHp; window.gs().scene.restart({ map: 'forest', spawn: 'west' }); });
 await h.sleep(1400);
 const nem2 = await G(() => { const g = window.gs(), S = window.__ff.S; return { pend: g.pend.some((q) => q.spec && q.spec.nemesis), wp: !!S.flags.waypoint }; });
 check('the nemesis waits in the world and a waypoint marks it', nem2.pend && nem2.wp, JSON.stringify(nem2));
