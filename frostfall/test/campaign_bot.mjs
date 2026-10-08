@@ -155,8 +155,10 @@ await G(() => { const S = window.__ff.S; S.hp = S.maxHp; S.sp = S.maxSp; for (co
 await G(() => window.gs().changeMap('crypt', 'entry', 'door'));
 await h.sleep(2500);
 console.log('  ... in the crypt');
-let lost = false;
-for (let i = 0; i < 30 && !lost; i++) {
+let lost = false, deaths = 0;
+const backToCrypt = async () => { if (await G(() => window.gs().mapId !== 'crypt' || window.__ff.S.hp <= 0)) { deaths++; await h.sleep(2500); await G(() => { const S = window.__ff.S; S.hp = S.maxHp; S.sp = S.maxSp; window.gs().changeMap('crypt', 'entry', 'door'); }); await h.sleep(2500); } };
+for (let i = 0; i < 40 && !lost; i++) {
+  await backToCrypt();
   const next = await G(() => {
     const g = window.gs(), p = g.player, S = window.__ff.S;
     S.hp = Math.max(S.hp, S.maxHp * 0.6); S.sp = S.maxSp;
@@ -165,11 +167,18 @@ for (let i = 0; i < 30 && !lost; i++) {
     const e = foes[0]; p.setPosition(e.x - 60, e.y); return foes.length;
   });
   if (!next) break;
-  const r = await G(() => window.__fight(() => { const g = window.gs(); return !g.enemies.getChildren().some((e) => !e.dead && !e.isBoss && e.active && Math.hypot(e.x - g.player.x, e.y - g.player.y) < 170); }, 40));
-  console.log('  . crypt fight', next, JSON.stringify(r));
+  let r = null;
+  for (let attempt = 0; attempt < 3; attempt++) {        // like a player: if a fight goes badly, back off, heal and go again
+    r = await G(() => window.__fight(() => { const g = window.gs(); return !g.enemies.getChildren().some((e) => !e.dead && !e.isBoss && e.active && Math.hypot(e.x - g.player.x, e.y - g.player.y) < 170); }, 40));
+    console.log('  . crypt fight', next, attempt, JSON.stringify(r));
+    if (r.ok) break;
+    await G(() => { const S = window.__ff.S, p = window.gs().player; S.hp = S.maxHp; S.sp = S.maxSp; p.mode = 'free'; p.invuln = 1; });
+  }
   if (!r.ok) lost = true;
 }
+console.log('  . deaths so far', deaths);
 check('the bot clears the crypt\'s guards', !lost);
+await backToCrypt();
 const boss = await G(async () => {
   const g = window.gs(), S = window.__ff.S;
   S.hp = S.maxHp; S.sp = S.maxSp;

@@ -83,7 +83,7 @@ export function buildEmberhold() {
   for (const [x, y, r, col] of [[43, 30, 70, 12], [62, 12, 54, 12], [8, 30, 44, 12], [15, 9, 36, 12], [59, 41, 30, 13], [79, 41, 30, 13], [70, 48, 44, 12], [45, 5, 40, 13]]) g.add({ t: 'glow', x, y, r, col });
   for (const [x, y] of [[42, 26], [45, 26], [42, 34], [45, 34]]) g.add({ t: 'glow', x, y, r: 26, col: 12 });
   // the people of Emberhold (outdoors); the rest stand in their halls
-  for (const [id, x, y] of [['hesper', 9, 32], ['corvin', 11, 27], ['pell', 38, 29], ['rook', 55, 27], ['dunmar', 34, 26], ['hildsoot', 50, 26], ['nessa', 38, 32], ['varro', 52, 32], ['ketil', 41, 31], ['aurel', 62, 14], ['brisa', 28, 47], ['goran', 17, 20], ['garrow', 69, 52], ['ember_tailor', 45, 34]]) g.add({ t: 'npc', id, x, y });
+  for (const [id, x, y] of [['hesper', 9, 32], ['corvin', 11, 27], ['pell', 38, 29], ['rook', 55, 27], ['dunmar', 34, 26], ['hildsoot', 50, 26], ['nessa', 38, 32], ['varro', 52, 32], ['ketil', 41, 31], ['aurel', 62, 14], ['brisa', 28, 47], ['goran', 17, 20], ['garrow', 69, 52], ['ember_tailor', 44, 36]]) g.add({ t: 'npc', id, x, y });
   for (const [x, y, skin] of [[16, 14, 'barrel'], [12, 20, 'pot'], [47, 19, 'pot'], [53, 29, 'barrel'], [34, 36, 'pot'], [50, 36, 'barrel'], [66, 36, 'pot'], [60, 30, 'pot']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 17, y: 12 });
   for (let y = 4; y < H - 4; y++) for (let x = 4; x < W - 4; x++) g.res[y][x] = true;
