@@ -206,6 +206,7 @@ export const RECIPES = [
   { id: 'frostward_tonic', needs: { frost_lily: 2, bone_dust: 2 } },
   { id: 'fen_tonic', needs: { marsh_orchid: 2, snowberry: 1 } },
   { id: 'bogward_brew', needs: { marsh_orchid: 2, bone_dust: 1 } },
+  { id: 'moonlit_draught', needs: { moonpetal: 2, frost_lily: 1 } },
   { id: 'storm_brew', needs: { storm_feather: 2, frost_lily: 1 } },
 ];
 const canBrew = (r) => Object.entries(r.needs).every(([k, n]) => count(k) >= n);

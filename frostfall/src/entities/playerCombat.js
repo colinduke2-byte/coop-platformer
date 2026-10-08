@@ -2,7 +2,9 @@
 // Mixed into Player (see the bottom of Player.js).
 import Phaser from 'phaser';
 import { keys, rumble } from '../systems/keys.js';
+import { ITEMS } from '../data/items.js';
 import { S } from '../systems/state.js';
+import { curseMul } from '../world/nightlife.js';
 import { bus } from '../systems/bus.js';
 import { bonus } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
@@ -133,6 +135,7 @@ export const combatMethods = {
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
+      dmg *= curseMul(this.scene, e, S.equip.weapon, ITEMS);
       dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1) * elixirVal('dmgMul', 1) * foodVal('dmgMul', 1);
       const riposte = this.riposteT > 0;
       if (riposte) dmg *= P.riposte.mult;

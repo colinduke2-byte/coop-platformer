@@ -23,3 +23,12 @@ export function nightKind(scene, kind, p) {
 export function sleepyCrew(en) {
   if (en.kind === 'bandit' && en.spec?.camp) en.cfg = { ...en.cfg, detect: Math.round(en.cfg.detect * 0.5) };
 }
+
+const UNDEAD = new Set(['werewolf', 'ghost', 'draugr', 'wight', 'warden', 'necro', 'phantom', 'herald', 'sentinel', 'bogwraith']);
+// Silver bites the cursed; the dawn light weakens the dead.
+export function curseMul(scene, e, weaponId, ITEMS) {
+  let m = 1;
+  if (UNDEAD.has(e.kind) && ITEMS[weaponId]?.silver) m *= 1.4;
+  if (UNDEAD.has(e.kind) && (scene.def.snow || scene.def.outdoors) && !isNightHour(hourOf())) m *= 1.15;
+  return m;
+}

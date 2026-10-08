@@ -210,7 +210,7 @@ export const TUNE = {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
     // elite: how often elite and champion enemies appear; drops: food and potion drop chance; price: shop buy prices; durability: gear wear (null = the player's own setting)
     easy: { dmgTaken: 0.6, enemyHp: 0.75, regen: 1.8, windup: 1.25, chase: 0.92, elite: 0.6, drops: 1.5, price: 0.85, durability: false },
-    normal: { dmgTaken: 1, enemyHp: 1, regen: 1, windup: 1, chase: 1, elite: 1, drops: 1, price: 1, durability: null },
+    normal: { dmgTaken: 0.92, enemyHp: 1, regen: 1, windup: 1, chase: 1, elite: 1, drops: 1, price: 1, durability: null },
     hard: { dmgTaken: 1.35, enemyHp: 1.3, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: true },
   },
 };

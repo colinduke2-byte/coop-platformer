@@ -280,7 +280,7 @@ export async function hilda() {
       { id: 'hand_axe', price: 100, once: true }, { id: 'hunting_spear', price: 90, once: true }, { id: 'iron_mace', price: 140, once: true },
       { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'bulwark_plate', price: 340, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
       { id: 'pony_whistle', price: 420, once: true, name: 'Pony Whistle' },
-      { id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' },
+      { id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'silver_sword', price: 260, once: true },
     ]);
     else if (c === 4) await sellMenu(H);
     else { await say(H, 'Keep your edge sharp.'); return; }

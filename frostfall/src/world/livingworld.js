@@ -32,11 +32,31 @@ SCRIPTS.wounded = async function wounded() {
   bus.emit('toast', `HELPED A TRAVELLER  +${gold} GOLD`, 13); sfx.play('quest');
 };
 
+NPC_DEFS.ghost_merchant = { name: 'PALE MERCHANT', tex: 'spr_trapper' };
+SCRIPTS.ghost_merchant = async function ghostMerchant() {
+  const N = 'Pale Merchant', sc = dialogue.hud.scene.get('Game');
+  const g = sc.ghostEvt;
+  if (!g || g.done) { await say(N, 'Dawn comes. I was never here.'); return; }
+  await say(N, 'Cold hands, warm purse. I trade what the living forget. Bring me three moonpetals and I will give you something the dead kept.');
+  const have = S.inv.moonpetal || 0;
+  const c = await choose([have >= 3 ? 'Trade 3 moonpetals' : `Moonpetals: ${have}/3`, S.gold >= 80 ? 'Buy a moonlit draught (80g)' : 'Draught: 80g (too poor)', 'Leave']);
+  if (c === 0 && have >= 3) {
+    S.inv.moonpetal -= 3; g.done = true; g.life = Math.min(g.life, 20);
+    addItem(makeGenItem(g.tier + 1, Math.random, 1)); S.flags.paleTrades = (S.flags.paleTrades || 0) + 1;
+    await say(N, 'Pleasant. Wear it well. It remembers its last owner.');
+    bus.emit('toast', 'THE PALE MERCHANT TRADED YOU A RELIC', 13); sfx.play('quest');
+  } else if (c === 1 && S.gold >= 80) {
+    S.gold -= 80; S.inv.moonlit_draught = (S.inv.moonlit_draught || 0) + 1; sfx.play('pickup');
+    await say(N, 'Drink it and the dark will see you less.');
+  } else await say(N, 'Another night, then.');
+};
+
 export const livingMethods = {
   // Called when the random-event timer fires (replaces the old two-way choice).
   rollEvent() {
     const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.nightness() > 0.5;
     if (night && isBlood() && this.bloodDay !== Math.floor(S.days)) return this.spawnBloodAlpha(tier);
+    if (night && !this.ghostEvt && r < 0.2) return this.spawnGhostMerchant();
     if (r < 0.28) return this.spawnAmbush();
     if (r < 0.50 && !this.trader) return this.spawnTrader();
     if (r < 0.66 && !night) return this.spawnWounded(tier);
@@ -70,6 +90,21 @@ export const livingMethods = {
     this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
     npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
     if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
+  },
+  spawnGhostMerchant() {
+    const p = this.freeSpotNear(70, 120); if (!p) return;
+    const npc = new Npc(this, p.x, p.y, 'ghost_merchant'); npc.home = { x: p.x, y: p.y }; npc.setAlpha(0.6);
+    this.npcs.push(npc); this.interactables.push(npc);
+    if (!this.npcBodies) { this.npcBodies = this.physics.add.staticGroup(); this.physics.add.collider(this.player, this.npcBodies); }
+    this.npcBodies.add(npc);
+    this.ghostEvt = { npc, tier: tierAt(p.x / T, p.y / T), life: 200, done: false };
+    bus.emit('toast', 'A PALE LIGHT FLICKERS NEARBY...', 13); sfx.play('quest');
+  },
+  removeGhostMerchant() {
+    const w = this.ghostEvt; if (!w) return; this.ghostEvt = null;
+    const npc = w.npc;
+    this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
+    npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
   },
   spawnHunt(tier) {
     const p = this.freeSpotNear(100, 150); if (!p) return;
@@ -106,6 +141,8 @@ export const livingMethods = {
     if (c?.active?.length) for (const id of c.active) { const o = c.offers.find((x) => x.id === id); if (o && o.kind === 'hamlet' && !c.done[id] && Math.hypot(o.x * T - this.player.x, o.y * T - this.player.y) < 56) completeContract(id, this); }
     const w = this.woundedEvt;
     if (w) { w.life -= dt; if (w.done ? w.life < 160 : (w.life <= 0 || Math.hypot(w.npc.x - this.player.x, w.npc.y - this.player.y) > 520)) this.removeWounded(); }
+    const ge = this.ghostEvt;
+    if (ge) { ge.life -= dt; if (ge.life <= 0 || !this.isNight() || Math.hypot(ge.npc.x - this.player.x, ge.npc.y - this.player.y) > 520) this.removeGhostMerchant(); }
     const h = this.huntEvt;
     if (h) {
       h.life -= dt;

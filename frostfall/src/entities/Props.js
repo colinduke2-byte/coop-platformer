@@ -106,8 +106,10 @@ export class Herb extends Phaser.GameObjects.Image {
     this.item = item; this.ix = x; this.iy = y;
     this.setDepth(y + 4);
     this.gone = false;
+    if (item === 'moonpetal') { this.setTint(0xdde8ff); this.setVisible(false); }
   }
-  canInteract() { return !this.gone; }
+  tick() { if (this.item === 'moonpetal' && !this.gone) this.setVisible(this.scene.isNight()); }
+  canInteract() { return !this.gone && (this.item !== 'moonpetal' || this.scene.isNight()); }
   label() { return 'E: GATHER'; }
   interact() {
     this.gone = true;

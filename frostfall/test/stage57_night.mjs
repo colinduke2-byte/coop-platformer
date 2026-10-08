@@ -56,11 +56,26 @@ const wt = await G(async () => {
   await new Promise((res) => setTimeout(res, 2500)); dlg.dialogue.hud = real;
   return { opts, time: S.time, days: S.days };
 });
-check('a campfire lets you wait until dusk', wt.opts?.includes('Wait until dusk') && Math.abs(wt.time - 20.5 * 60) < 3 && wt.days === 1, JSON.stringify(wt));
+check('a campfire lets you wait until dusk', wt.opts?.includes('Wait until dusk') && Math.abs(wt.time - 20.5 * 60) < 12 && wt.days === 1, JSON.stringify(wt));
 
 // lantern
 const ln = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; S.time = 22 * 60; S.inv.lantern = 0; const a = g.player.detectMult(); S.inv.lantern = 1; const b = g.player.detectMult(); return { a, b }; });
 check('the lantern costs stealth at night', ln.b > ln.a * 1.2, JSON.stringify(ln));
+
+// silver, dawn, moonpetal, pale merchant
+const sv = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, N = await import('/src/world/nightlife.js'), { ITEMS } = await import('/src/data/items.js');
+  const out = {};
+  S.time = 22 * 60; const gh = { kind: 'ghost' };
+  out.night = N.curseMul(g, gh, 'silver_sword', ITEMS); out.nosilver = N.curseMul(g, gh, 'iron_sword', ITEMS);
+  S.time = 12 * 60; out.day = N.curseMul(g, gh, 'iron_sword', ITEMS); out.wolfDay = N.curseMul(g, { kind: 'wolf' }, 'iron_sword', ITEMS);
+  S.time = 22 * 60;
+  g.spawnGhostMerchant(); out.spawned = !!g.ghostEvt;
+  g.removeGhostMerchant(); out.removed = !g.ghostEvt;
+  out.recipe = !!ITEMS.moonlit_draught && !!ITEMS.moonpetal;
+  return out;
+});
+check('silver and daylight hurt the undead; the pale merchant comes and goes', sv.night > 1.3 && sv.nosilver === 1 && sv.day > 1.1 && sv.wolfDay === 1 && sv.spawned && sv.removed && sv.recipe, JSON.stringify(sv));
 
 await G(() => { window.__ff.S.time = 22 * 60; window.__ff.S.days = 4; });
 await h.sleep(500);

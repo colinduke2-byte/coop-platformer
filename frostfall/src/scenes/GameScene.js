@@ -319,7 +319,7 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(lb);
         break;
       }
-      case 'herb': { const h = new Herb(this, wx, wy, e.item); this.interactables.push(h); break; }
+      case 'herb': { const h = new Herb(this, wx, wy, (this.def.stream && this.mapId === 'forest' && e._i % 9 === 0) ? 'moonpetal' : e.item); this.interactables.push(h); break; }
       case 'prop': {
         const pr = new Prop(this, wx, wy, e.tex, e.body);
         if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
