@@ -310,6 +310,8 @@ func _on_enemy_defeated(enemy: Node2D, _by: Player) -> void:
 	if enemy == null or not is_instance_valid(enemy):
 		return
 	var at := enemy.global_position + Vector2(0, -24)
+	if "boss_name" in enemy:
+		_boss_defeat(enemy.global_position + Vector2(0, -80))
 	puff(at, 10, Color(1, 1, 1, 0.95), Vector2.UP, TAU, Vector2(20, 55), Vector2(8, 15), 0.45)
 	sparkle(at, 6, SPARK, 60.0)
 	impact(at, 1.1)
@@ -459,6 +461,19 @@ func _on_level_completed(_results: Dictionary) -> void:
 	if hit_stop_enabled and DisplayServer.get_name() != "headless":
 		Engine.time_scale = 0.4
 		get_tree().create_timer(0.35, true, false, true).timeout.connect(func() -> void: Engine.time_scale = 1.0)
+
+
+## A boss falls: shockwave rings, a firework volley, confetti and a long dramatic hit-stop.
+func _boss_defeat(at: Vector2) -> void:
+	for i in 4:
+		get_tree().create_timer(0.1 + i * 0.16, true, false, true).timeout.connect(func() -> void:
+			ring(at, 80.0 + i * 70.0, SPARK, 0.5, 8.0)
+			shake(0.5))
+	for i in 6:
+		get_tree().create_timer(0.2 + i * 0.14, true, false, true).timeout.connect(func() -> void:
+			firework(at + Vector2(randf_range(-340, 340), randf_range(-300, 60)), CONFETTI[i % CONFETTI.size()]))
+	confetti(at, 80)
+	hit_stop(0.07)
 
 
 func _on_gem_collected(index: int, _slot: int, pos: Vector2) -> void:

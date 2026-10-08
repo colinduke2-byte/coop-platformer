@@ -8273,3 +8273,32 @@ func test_character_rig_expressions_springs_and_paint() -> void:
 	check(low.material == null, "LOW skips the painted rig material")
 	low.queue_free()
 	Gfx.level = old
+
+
+func test_enemies_are_painted_and_grounded_by_kind() -> void:
+	var expect := {"grunt": "fur", "shellbert": "shell", "jellybob": "jelly", "windup": "ground_metal", "bonkhorn": "bark"}
+	for k: String in expect:
+		var e := _spawn_enemy("res://enemies/%s.tscn" % k, Vector2(0, 0), 1)
+		await frames(2)
+		check(e._paint_kind() == expect[k], "%s is painted with '%s'" % [k, expect[k]])
+		check(e.visual.material is ShaderMaterial, "%s has the creature material at MEDIUM" % k)
+		check(e.has_node(^"BlobShadow") == e.uses_gravity, "%s: contact shadow only when it walks on the ground" % k)
+		e.queue_free()
+	await frames(2)
+
+
+func test_boss_defeat_flourish_runs() -> void:
+	var b := _spawn_enemy("res://enemies/inkabella.tscn", Vector2(0, 0), 1)
+	var p := add_player(0, Vector2(-300, -2))
+	await settle(p)
+	b.set_active(true)
+	b.health = 1
+	b._slams_left = 1
+	b._start_aim()
+	for i in 300:
+		await get_tree().physics_frame
+		if b.st == Inkabella.St.STUCK:
+			break
+	b.hit_tentacle(p, Enemy.HitKind.STOMP)
+	await seconds(1.2)
+	check(not is_instance_valid(b) or b.dead, "Inkabella falls and the boss flourish plays without errors")

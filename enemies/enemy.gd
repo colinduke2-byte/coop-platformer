@@ -34,6 +34,14 @@ const STUN_STAR := Color("fff3a0")
 @export var lum_drop := 1                   ## Lums it spits out when defeated
 @export_enum("Left:-1", "Right:1") var start_facing := -1
 
+## Brushwork texture on the painted look (art/textures): by enemy kind unless overridden.
+const PAINT := {
+	"shell": ["shellbert", "crabbit", "shieldbug", "diggle", "chamelia", "bumblebonk"],
+	"jelly": ["jellybob", "boingo", "pufferfin", "puffcap", "nibblefin", "eelectra", "inkabella", "anglerling", "wispet", "chamelia"],
+	"ground_metal": ["windup", "sparkbot", "springbot", "cuckoolossus"],
+	"bark": ["bonkhorn", "ribbiton", "prickleroll", "cocobonk"],
+}
+
 var facing := -1
 var dead := false
 var stun_timer := 0.0
@@ -73,7 +81,23 @@ func _ready() -> void:
 	visual.name = "Visual"
 	add_child(visual)
 	visual.draw.connect(_on_visual_draw)
+	if Gfx.at_least(Gfx.Level.MEDIUM):
+		visual.material = PaintedSurface.creature_material(_paint_kind())
+	if uses_gravity:
+		var shadow := BlobShadow.new()
+		shadow.name = "BlobShadow"
+		shadow.half_width = maxf(body_size.x * 0.6, 18.0)
+		add_child(shadow)
 	_setup()
+
+
+## Which baked texture paints this enemy (by script file name; "fur" if unlisted).
+func _paint_kind() -> String:
+	var key := String(get_script().resource_path.get_file().get_basename())
+	for kind: String in PAINT:
+		if key in PAINT[kind]:
+			return kind
+	return "fur"
 
 
 # --- Overridables -------------------------------------------------------------------

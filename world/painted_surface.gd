@@ -19,6 +19,26 @@ static func texture(name: String) -> Texture2D:
 	return _tex[name]
 
 
+const CREATURE_SHADER := preload("res://world/shaders/creature.gdshader")
+static var _creature := {}
+
+
+## Shared material for an enemy / boss `visual`: texture `name` ("fur", "shell", "jelly", "bark",
+## "ground_metal", "cloth") as brushwork, plus a saturation pop and top light.
+static func creature_material(name: String) -> ShaderMaterial:
+	if _creature.has(name):
+		return _creature[name]
+	var tex := texture(name)
+	if tex == null:
+		return null
+	var m := ShaderMaterial.new()
+	m.shader = CREATURE_SHADER
+	m.set_shader_parameter(&"detail", tex)
+	m.set_shader_parameter(&"strength", 0.5 if name != "ground_metal" else 0.38)
+	_creature[name] = m
+	return m
+
+
 ## A shared material for texture `name` (e.g. "ground_earth"), or null if it's missing.
 static func material(name: String, strength := 0.9, tile := 384.0, drift := 0.35) -> ShaderMaterial:
 	if name == "":
