@@ -24,7 +24,7 @@ check('fighting dismounts you', await G(() => window.__ff.S.mounted === false));
 await free(); await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.pony.mount(); g.player.invuln = 0; g.player.iframes = 0; window.__ff.S.hp = 90; g.player.hurt(5, g.player.x + 10, g.player.y, {}); });
 check('being hit dismounts you', await G(() => window.__ff.S.mounted === false));
 // stamina drain off the roads, and a tired pony
-await free(); await G(() => { const g = window.__ff.game.scene.getScene('Game'); let best = null; for (let k = 0; k < 400 && !best; k++) { const x = 120 + Math.random() * 400, y = 120 + Math.random() * 300, t = g.tileIdAt(x, y + 7), t2 = g.tileIdAt(x + 70, y + 7); if (![5, 24, 9, 6].includes(t) && ![5, 24, 9, 6].includes(t2) && !g.solidAt(x, y) && !g.solidAt(x + 60, y)) best = { x, y }; } g.player.setPosition(best.x, best.y); g.pony.setPosition(best.x, best.y); g.pony.mount(); window.__ff.S.sp = 2; });
+await free(); await G(() => { const g = window.__ff.game.scene.getScene('Game'); let best = null; for (let k = 0; k < 400 && !best; k++) { const x = 120 + Math.random() * 400, y = 120 + Math.random() * 300, t = g.tileIdAt(x, y + 7), t2 = g.tileIdAt(x + 70, y + 7); if (![5, 24, 9, 6].includes(t) && ![5, 24, 9, 6].includes(t2) && [0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80].every((d) => !g.solidAt(x + d, y) && ![5, 24, 9, 6].includes(g.tileIdAt(x + d, y + 7)))) best = { x, y }; } g.player.setPosition(best.x, best.y); g.pony.setPosition(best.x, best.y); g.pony.mount(); window.__ff.S.sp = 2; });
 await press('KeyD'); await h.sleep(1500); await rel('KeyD');
 check('off the roads the ride drains stamina and a tired pony stops', await G(() => window.__ff.S.mounted === false));
 // no pony in a dungeon

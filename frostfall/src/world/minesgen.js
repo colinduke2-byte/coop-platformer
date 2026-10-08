@@ -3,6 +3,7 @@
 import { Grid } from '../data/mapkit.js';
 import { TILE } from '../config.js';
 import { rng } from './worldgen.js';
+import { dressSpecialRoom } from './roomkinds.js';
 
 export const MINE_FLOORS = 3;
 const MOBS = [['imp', 'golem', 'bandit', 'archer'], ['golem', 'necro', 'wight', 'imp', 'warden'], ['golem', 'knight', 'imp', 'conjurer']];
@@ -23,7 +24,7 @@ export function buildMines(seed, floor, o = {}) {
     const rx = Math.max(2, Math.min(W - rw - 2, Math.floor(prevX - rw / 2 + (R() - 0.5) * 10)));
     const ry = y - rh;
     g.rect(rx, ry, rw, rh, TILE.CFLOOR);
-    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : last ? (finalBoss ? 'boss' : 'stairs') : (o.kinds && o.kinds[i - 1]) || ['fight', 'fight', 'trap', 'treasure'][Math.floor(R() * 4)] };
+    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : last ? (finalBoss ? 'boss' : 'stairs') : (o.kinds && o.kinds[i - 1]) || ['fight', 'fight', 'trap', 'treasure', 'ambush', 'spikes', 'flood'][Math.floor(R() * 7)] };
     if (rooms.length) {
       const p = rooms[rooms.length - 1];
       const cx = Math.max(rx + 1, Math.min(rx + rw - 2, p.cx));
@@ -48,6 +49,7 @@ export function buildMines(seed, floor, o = {}) {
     if (i === 0) return;
     for (const [dx, dy] of [[1, 1], [r.w - 2, 1], [1, r.h - 2], [r.w - 2, r.h - 2]]) if (R() < 0.7) g.set(r.x + dx, r.y + dy, TILE.PILLAR);
     if (R() < 0.7) add({ t: 'glow', x: r.cx, y: r.cy, r: 36, col: R() < 0.6 ? 12 : 15 });
+    if (dressSpecialRoom(r, { g, add, foe, R, tier, mobs, pick, key: `mine${floor}r${i}` })) return;
     const ore = () => add({ t: 'node', x: r.x + 1 + Math.floor(R() * (r.w - 2)), y: r.y + 1 + Math.floor(R() * (r.h - 2)), ore: R() < 0.25 ? 'ember_ore' : 'ash_iron' });
     if (r.kind === 'fight') {
       const count = 3 + Math.floor(R() * 3) + Math.min(floor, 3);

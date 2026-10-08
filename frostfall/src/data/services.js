@@ -89,6 +89,13 @@ export function sellable() {
   const eq = equippedIds();
   return Object.keys(S.inv).filter((id) => ITEMS[id] && ITEMS[id].type !== 'quest' && (S.inv[id] > (eq.has(id) ? 1 : 0)));
 }
+// Junk: trade goods with no use (hides, tusks, oil...). One row at the top of the sell list sells all of it.
+export const junkItems = () => sellable().filter((id) => ITEMS[id].type === 'junk' || ITEMS[id].junk);
+export function sellJunk() {
+  let n = 0, gold = 0;
+  for (const id of junkItems()) { const k = S.inv[id] - (equippedIds().has(id) ? 1 : 0); S.inv[id] -= k; if (S.inv[id] <= 0) delete S.inv[id]; const g = sellPrice(id) * k; S.gold += g; noteSold(id, k, g); n += k; gold += g; }
+  return { n, gold };
+}
 export async function sellMenu(who) {
   if (!sellable().length) { await say(who, 'You have nothing I would buy.'); return; }
   const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
@@ -102,12 +109,20 @@ export async function sellMenu(who) {
     title: who.toUpperCase() + ': SELL',
     hint: 'E SELL ONE   Q SELL ALL   ESC DONE',
     empty: 'NOTHING LEFT TO SELL',
-    rows: () => sellable().map((id) => ({
-      id, name: ITEMS[id].name, tag: `x${avail(id)}  ${sellPrice(id)}G`, ok: true,
-      sub: `WORTH ${sellPrice(id)}G EACH`, lines: statLines(id),
-    })),
-    onSelect: (i, ui) => { const id = sellable()[i]; if (id) sellN(id, 1, ui); },
-    onAlt: (i, ui) => { const id = sellable()[i]; if (id) sellN(id, avail(id), ui); },
+    rows: () => {
+      const j = junkItems(), jg = j.reduce((a, id) => a + sellPrice(id) * avail(id), 0);
+      const top = j.length ? [{ id: null, name: 'SELL ALL JUNK', tag: `${jg}G`, ok: true, sub: `${j.length} KINDS OF TRADE GOODS`, lines: [['HIDES, TUSKS, OIL AND THE LIKE.', 4], ['GEAR, GEMS AND POTIONS ARE KEPT.', 4]] }] : [];
+      return [...top, ...sellable().map((id) => ({
+        id, name: ITEMS[id].name, tag: `x${avail(id)}  ${sellPrice(id)}G`, ok: true,
+        sub: `WORTH ${sellPrice(id)}G EACH`, lines: statLines(id),
+      }))];
+    },
+    onSelect: (i, ui) => {
+      const off = junkItems().length ? 1 : 0;
+      if (off && i === 0) { const r = sellJunk(); ui.say(`SOLD ${r.n} FOR ${r.gold}G`, 13); sfx.play('coin'); return; }
+      const id = sellable()[i - off]; if (id) sellN(id, 1, ui);
+    },
+    onAlt: (i, ui) => { const off = junkItems().length ? 1 : 0; if (off && i === 0) return; const id = sellable()[i - off]; if (id) sellN(id, avail(id), ui); },
   });
 }
 

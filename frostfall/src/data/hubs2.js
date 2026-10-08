@@ -32,7 +32,7 @@ export function buildReedwick() {
   g.add({ t: 'sign', x: 8, y: 25, text: ['REEDWICK.', 'KEEP TO THE BOARDS. WEAPONS SHEATHED AFTER DUSK. THE WATER LISTENS.'] });
   g.add({ t: 'sign', x: 64, y: 26, text: ['THE LONG JETTY.', 'THE FERRYMAN SAYS HE WILL TAKE YOU ACROSS THE FEN FOR A PRICE. HE HAS NOT BEEN SEEN SINCE THE FLOOD.'] });
   // the people of Reedwick
-  for (const [id, x, y] of [['wick_elder', 36, 20], ['wick_trader', 30, 28], ['wick_smith', 44, 28], ['wick_hunter', 24, 33], ['wick_herbalist', 48, 20], ['wick_fisher', 63, 25], ['wick_child', 32, 33], ['wick_watch', 12, 26]]) g.add({ t: 'npc', id, x, y });
+  for (const [id, x, y] of [['wick_elder', 36, 20], ['wick_trader', 30, 28], ['wick_smith', 44, 28], ['wick_hunter', 24, 33], ['wick_herbalist', 48, 20], ['wick_fisher', 63, 25], ['wick_child', 32, 33], ['wick_watch', 12, 26], ['wick_inn', 26, 13], ['wick_map', 46, 13]]) g.add({ t: 'npc', id, x, y });
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 25, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 46, y: 31 });
   g.add({ t: 'lore', id: 'reedwick', tex: 'book', x: 34, y: 30 });
@@ -58,7 +58,7 @@ export function buildSkarnhold() {
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'highlands', spawn: 'skarnhold', fx: 'door' });
   g.add({ t: 'sign', x: 8, y: 24, text: ['SKARN HOLD.', 'THE CLANS TAKE NO TOLL. THE CLANS ALSO TAKE NO NONSENSE.'] });
-  for (const [id, x, y] of [['skarn_chief', 36, 21], ['skarn_trader', 30, 29], ['skarn_smith', 44, 29], ['skarn_shaman', 30, 22], ['skarn_herder', 52, 28], ['skarn_scout', 12, 26], ['skarn_child', 33, 31], ['skarn_bard', 40, 22]]) g.add({ t: 'npc', id, x, y });
+  for (const [id, x, y] of [['skarn_chief', 36, 21], ['skarn_trader', 30, 29], ['skarn_smith', 44, 29], ['skarn_shaman', 30, 22], ['skarn_herder', 52, 28], ['skarn_scout', 12, 26], ['skarn_child', 33, 31], ['skarn_bard', 40, 22], ['skarn_inn', 26, 13], ['skarn_map', 46, 13]]) g.add({ t: 'npc', id, x, y });
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 30, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 46, y: 31 });
   g.add({ t: 'lore', id: 'skarnhold', tex: 'book', x: 34, y: 31 });

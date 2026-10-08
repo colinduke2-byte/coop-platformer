@@ -23,3 +23,6 @@ Shipped: see CHANGELOG round 31. Tweak: `wolfChance`/`ghostChance` and moon cycl
 
 ## Round 6: new regions - DONE for the first two (Weeping Fens, Stormcrown Highlands); Glasswood, Underdeep, Saltmarket NOT started
 Shipped: see CHANGELOG round 32. The three remaining regions from the plan stay as follow-ups: the framework (`world/regions2.js`, `data/hubs2.js`, `data/regions2_story.js`, `minesgen.js` boss delves) is now a copy-and-edit recipe. Tweak: region tier base in `base1()` (regions2.js), creature stats in data/enemies.js, boss numbers in data/tuning.js (miremother, stormgiant). Playtest: walk the south-west road from the Reach to the Fens at level 1 and read the warning; then go back after gearing up.
+
+## Rounds 7 and 8: settlements/services and dungeons - DONE (scoped)
+Shipped: see CHANGELOG round 33. Round 7 deferred: guild rank-ups and faction gear beyond Emberhold, tailor, per-hamlet inns. Round 8 deferred: collapsing bridges, key puzzles, boss-variety pass (the two new bosses reuse the pattern kit). Tweak: spike timing `PHASE` and damage in world/setpieces.js and world/roomkinds.js; mire slow 0.55 in `mireMul`; room-kind odds in the `R() * 7` line of barrowgen/minesgen.

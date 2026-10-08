@@ -61,7 +61,7 @@ const hubs = await G(async () => {
   out.caves = caves;
   return out;
 });
-check('Reedwick and Skarn Hold have eight named people each, a fire and a way out', hubs.reedwick.n === 8 && hubs.skarnhold.n === 8 && !hubs.reedwick.missing.length && !hubs.skarnhold.missing.length && hubs.reedwick.fire && hubs.skarnhold.fire && hubs.reedwick.exit === 'fens' && hubs.skarnhold.exit === 'highlands' && hubs.reedwick.spawn && hubs.skarnhold.spawn, JSON.stringify(hubs));
+check('Reedwick and Skarn Hold have ten named people each, a fire and a way out', hubs.reedwick.n === 10 && hubs.skarnhold.n === 10 && !hubs.reedwick.missing.length && !hubs.skarnhold.missing.length && hubs.reedwick.fire && hubs.skarnhold.fire && hubs.reedwick.exit === 'fens' && hubs.skarnhold.exit === 'highlands' && hubs.reedwick.spawn && hubs.skarnhold.spawn, JSON.stringify(hubs));
 check('the Sunken Barrow ends in the Mire Mother, the Stormspire in the Storm Giant', hubs.mb.boss === 'miremother' && hubs.mb.exit === 'fens' && hubs.mb.room && hubs.mb.foes >= 8 && hubs.ss.boss === 'stormgiant' && hubs.ss.exit === 'highlands' && hubs.ss.room && hubs.ss.foes >= 8, JSON.stringify([hubs.mb, hubs.ss]));
 check('every cave in the two regions builds, has foes and leads home', hubs.caves.length >= 4 && hubs.caves.every((c) => c.ok && c.foes >= 4 && c.back), JSON.stringify(hubs.caves));
 
@@ -127,6 +127,49 @@ check('Halldor thanks you for Old Greytusk', await G(() => window.__ff.S.quests.
 // all the other talkers run without errors
 for (const n of ['wick_trader', 'wick_smith', 'wick_fisher', 'wick_child', 'wick_watch', 'skarn_trader', 'skarn_smith', 'skarn_scout', 'skarn_child', 'skarn_bard', 'clantrader']) { await stub([]); await SCRIPT(n); await unstub(); }
 check('every villager has something to say', true);
+
+// ---- round 7: inn, cartographer, full-service smith, sell-all-junk
+const svc = await G(async () => {
+  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js');
+  await import('/src/data/regions2_story.js');
+  window.gs().changeMap('fens', 'entry', 'door');
+  return true;
+});
+await h.sleep(2200);
+const rum = await G(async () => {
+  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
+  const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene };
+  St.gold = 100; delete St.flags.waypoint; const before = Object.keys(St.discovered || {}).length;
+  const ok = await SV.rumour('Marit', 30);
+  const after = Object.keys(St.discovered || {}).length;
+  dlg.dialogue.hud = real;
+  return { ok, gained: after - before, gold: St.gold, wp: !!St.flags.waypoint };
+});
+check('an innkeeper sells a rumour: a place is marked, a waypoint set, 30 gold paid', rum.ok && rum.gained === 1 && rum.gold >= 70 && rum.gold <= 90 && rum.wp, JSON.stringify(rum));
+const chart = await G(async () => {
+  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js');
+  const fogBefore = (St.fog.fens || '').split('').filter((c) => c === '1').length, dBefore = Object.keys(St.discovered || {}).length;
+  const r = SV.revealChart(g, 60);
+  const fogAfter = (St.fog.fens || '').split('').filter((c) => c === '1').length;
+  return { fog: fogAfter - fogBefore, places: Object.keys(St.discovered || {}).length - dBefore, r };
+});
+check('a chart reveals the map and marks the places inside its radius', chart.fog > 100 && chart.places >= 2, JSON.stringify(chart));
+const inn = await G(async () => {
+  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
+  const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => (o.some((x) => /Room/.test(x)) ? 0 : 3), hideBox() {}, scene: real.scene };
+  St.gold = 100; St.hp = 5; St.time = 14 * 60; const day0 = St.days || 0;
+  await SV.innMenu('Marit', { room: 22 });
+  dlg.dialogue.hud = real;
+  return { hp: St.hp, max: St.maxHp, t: St.time, days: (St.days || 0) - day0, gold: St.gold, resp: St.respawn.map };
+});
+check('a room heals, saves, sets the respawn point and sleeps until morning', inn.hp === inn.max && Math.abs(inn.t - 420) < 10 && inn.days === 1 && inn.gold === 78 && inn.resp === 'fens', JSON.stringify(inn));
+const junk = await G(async () => {
+  const St = window.__ff.S, SV = await import('/src/data/services.js'), { ITEMS } = await import('/src/data/items.js');
+  St.inv = { hide: 3, mammoth_tusk: 2, hp_potion: 2 }; St.gold = 0;
+  const j = SV.junkItems(); const r = SV.sellJunk();
+  return { j, r, left: Object.keys(St.inv).sort().join(), gold: St.gold };
+});
+check('sell-all-junk sells hides and tusks and keeps potions', junk.j.length === 2 && junk.r.n === 5 && junk.gold >= 90 && junk.left === 'hp_potion', JSON.stringify(junk));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'REGIONS4 FAILED' : 'REGIONS4 PASSED');

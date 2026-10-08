@@ -3,6 +3,7 @@
 import { Grid } from '../data/mapkit.js';
 import { TILE } from '../config.js';
 import { rng } from './worldgen.js';
+import { dressSpecialRoom } from './roomkinds.js';
 
 const THEMES = [
   { id: 'draugr', name: 'Barrow of the Restless', mobs: ['draugr', 'warden', 'wight'] },
@@ -13,6 +14,7 @@ const THEMES = [
   { id: 'warren', name: 'The Beast Warren', mobs: ['bear', 'boar', 'lynx', 'alpha'] },
 ];
 
+export const THEME_UNIQUE = { draugr: 'grave_brand', wolf: 'packbreaker', bandit: 'smuggler_cloak', rime: 'rimebound_mail', mine: 'delvers_charm', warren: 'bearclaw_charm', cinder: 'cinder_brooch', sea: 'tide_talisman', royal: 'court_ring', bog: 'bogfire_ring', storm: 'stormglass_amulet' };
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }
 // Themes for the delves of the other regions (chosen by the region, not the seed).
 export const EXTRA_THEMES = {
@@ -38,7 +40,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     const rx = Math.max(2, Math.min(W - rw - 2, Math.floor(prevX - rw / 2 + (R() - 0.5) * 10)));
     const ry = y - rh;
     g.rect(rx, ry, rw, rh, TILE.CFLOOR);
-    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : i === n - 1 ? 'boss' : ['fight', 'fight', 'trap', 'treasure'][Math.floor(R() * 4)] };
+    const room = { x: rx, y: ry, w: rw, h: rh, cx: rx + (rw >> 1), cy: ry + (rh >> 1), kind: i === 0 ? 'entry' : i === n - 1 ? 'boss' : ['fight', 'fight', 'trap', 'treasure', 'ambush', 'spikes', 'flood'][Math.floor(R() * 7)] };
     if (rooms.length) {                               // corridor from the previous room up to this one
       const p = rooms[rooms.length - 1];
       const cx = Math.max(rx + 1, Math.min(rx + rw - 2, p.cx));
@@ -65,6 +67,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     if (i === 0) return;
     for (const [dx, dy] of [[1, 1], [r.w - 2, 1], [1, r.h - 2], [r.w - 2, r.h - 2]]) if (R() < 0.7) { g.set(r.x + dx, r.y + dy, TILE.PILLAR); }
     if (R() < 0.6) add({ t: 'glow', x: r.cx, y: r.cy, r: 36, col: R() < 0.5 ? 15 : 12 });
+    if (dressSpecialRoom(r, { g, add, foe, R, tier, mobs, pick, key: `${theme.id}${idx}r${i}` })) return;
     if (r.kind === 'fight') {
       const count = 3 + Math.floor(R() * 3) + (tier > 1 ? 1 : 0);
       for (let k = 0; k < count; k++) foe(pick(mobs), r.x + 2 + Math.floor(R() * (r.w - 4)), r.y + 2 + Math.floor(R() * (r.h - 4)), { camp: `${theme.id}${idx}r${i}` });
@@ -89,7 +92,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     } else if (r.kind === 'boss') {
       add({ t: 'enemy', kind: pick(mobs.filter((m) => m !== 'wolf' && m !== 'archer').concat(['warden'])), x: r.cx, y: r.cy, tier: tier + 1, elite: true, champion: true, camp: `${theme.id}${idx}boss` });
       foe(pick(mobs), r.x + 2, r.y + 2, { camp: `${theme.id}${idx}boss` }); foe(pick(mobs), r.x + r.w - 3, r.y + 2, { camp: `${theme.id}${idx}boss` });
-      add({ t: 'chest', id: `bt${idx}_boss`, x: r.cx, y: r.y + 1, loot: [{ gen: tier + 1, rarity: 2 }, { gen: tier + 1 }, { gold: 80 + tier * 50 }, { item: 'hp_potion_g', n: 2 }] });
+      add({ t: 'chest', id: `bt${idx}_boss`, x: r.cx, y: r.y + 1, loot: [{ gen: tier + 1, rarity: 2 }, { item: THEME_UNIQUE[theme.id] }, { gold: 80 + tier * 50 }, { item: 'hp_potion_g', n: 2 }] });
       add({ t: 'glow', x: r.cx, y: r.y + 1, r: 40, col: 13 });
     }
   });

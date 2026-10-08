@@ -9,6 +9,7 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
+import { innMenu, cartographerMenu, smithMenu } from './services2.js';
 
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
 const poiOf = (rid, kind) => getRegion(rid).pois.find((p) => p.kind === kind);
@@ -75,8 +76,8 @@ SCRIPTS.wick_elder = async function elder() {
 };
 SCRIPTS.wick_trader = () => trade('Pim', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'lantern_oil', price: 40, n: 1 }, { id: 'hp_potion', price: 26 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Pim', 2)],
   cyc('pimN', ['Lamps, oil, wicks and wisdom. The wisdom is free, the wicks are not.', 'Green flame for wraiths, white flame for wolves. Red flame is for people. Do not buy the red.', 'Everything in Reedwick floats, even the prices.']));
-SCRIPTS.wick_smith = () => trade('Odda', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Odda', 2)],
-  cyc('oddaN', ['Peat iron: dark, brittle, and it holds an edge like a grudge. Buy something.', 'My forge burns peat. The smoke smells of old summers.', 'Wet steel rusts. Wetter fighters rust faster. Buy a shield.']));
+SCRIPTS.wick_smith = () => smithMenu('Odda', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Odda', 2)],
+  cyc('oddaN', ['Peat iron: dark, brittle, and it holds an edge like a grudge. What do you need?', 'My forge burns peat. The smoke smells of old summers.', 'Wet steel rusts. Wetter fighters rust faster. Mind your shield.']));
 SCRIPTS.wick_hunter = async function hunter() {
   const N = 'Brann', q = S.quests.leeches;
   if (q.status === 'active' && killsSince(q, 'leech') >= 10) { await say(N, 'Ten! The pilings are clean. Here: coin, and something I took off a drowned man.'); addGold(220); addItem('hp_potion_g', 2, true); addItem('marsh_orchid', 2, true); finishQuest('leeches'); return; }
@@ -159,7 +160,7 @@ SCRIPTS.skarn_chief = async function chief() {
 };
 SCRIPTS.skarn_trader = () => trade('Rannveig', [{ id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'stormcaller_charm', price: 760, once: true, name: "Stormcaller's Charm" }, ...dailyWares('Rannveig', 2)],
   cyc('rannN', ['Furs, feathers and charms. The charms are real. The furs, doubly so.', 'Everything here is priced in what it costs to carry it up the pass.', 'The storm does me favours. Customers arrive wet and desperate.']));
-SCRIPTS.skarn_smith = () => trade('Grimhild', [{ id: 'steel_sword', price: 190, once: true }, { id: 'iron_greatsword', price: 230, once: true }, { id: 'hunting_spear', price: 90, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Grimhild', 2)],
+SCRIPTS.skarn_smith = () => smithMenu('Grimhild', [{ id: 'steel_sword', price: 190, once: true }, { id: 'iron_greatsword', price: 230, once: true }, { id: 'hunting_spear', price: 90, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Grimhild', 2)],
   cyc('grimN', ['Struck by lightning twice. The second time I asked it politely to stop.', 'Fulgurite: glass where lightning struck sand. My best hammerhead is made of it.']));
 SCRIPTS.skarn_shaman = async function shaman() {
   const N = 'Veda', q = S.quests.feathers;
@@ -188,3 +189,13 @@ SCRIPTS.skarn_child = async function child() { await say('Tyra', cyc('tyraN', ['
 SCRIPTS.skarn_bard = async function bard() { await say('Wind-Bard', cyc('bardN', ['Listen. Under the wind there is another sound. That is the giant, humming. He has hummed the same note for a hundred years.', 'I sing the clans their dead. It is a long song. It gets longer.', 'The hearths of the Hold burn old wood and older promises.'])); };
 SCRIPTS.clantrader = () => trade('Clan Trader', [{ id: 'hp_potion', price: 26 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'hide', price: 20 }, ...dailyWares('Clan Trader', 2)],
   cyc('clanN', ['Fires and furs. Take both.', 'The Hold is half a day north-east. Say Ulfar sent you, and watch him blush.']));
+
+// ---- inns and cartographers (round 7)
+NPC_DEFS.wick_inn = { name: 'MARIT, THE LANTERN INN', tex: 'spr_hilda' };
+NPC_DEFS.wick_map = { name: 'JOSS THE CHARTMAKER', tex: 'spr_scribe' };
+NPC_DEFS.skarn_inn = { name: 'GUDRUN OF THE LONGHOUSE', tex: 'spr_hilda' };
+NPC_DEFS.skarn_map = { name: 'KELDA THE WAYFINDER', tex: 'spr_scribe' };
+SCRIPTS.wick_inn = () => innMenu('Marit', { room: 22, meal: 12, news: 28, hello: cyc('maritN', ['The Lantern Inn: dry beds on stilts, soup that has never once been fish. Mostly.', 'No one has complained of the damp since we put the beds up a floor.']) });
+SCRIPTS.wick_map = () => cartographerMenu('Joss');
+SCRIPTS.skarn_inn = () => innMenu('Gudrun', { room: 25, meal: 14, news: 30, hello: cyc('gudrunN', ['The longhouse is warm and the mead is honest. The beds are for guests; the benches are for friends.', 'Sit. Eat. The storm has not stopped in a hundred years; it will not stop for you.']) });
+SCRIPTS.skarn_map = () => cartographerMenu('Kelda');

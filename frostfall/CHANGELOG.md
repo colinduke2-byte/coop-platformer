@@ -399,3 +399,10 @@ Both regions are reachable from the Hollow Reach from the start (roads leave the
 - Five new tiles (bog, black water, boardwalk, heath, slate) and three scenery tiles; two new songs; bestiary and lore entries; region tabs on the map (R cycles six regions); map, compass and discovery know the new kinds of place.
 - Generator hooks: regions can bring their own kinds of place (`def.dressers`) and a finishing pass (`def.finish`).
 - Tests: `stage58_regions4`; spacing covers all six regions; old tests updated for six regions and 49 tiles.
+
+## Round 33 - Overnight Rounds 7 and 8: services and dungeons
+- **Inns, chartmakers and smiths** in Reedwick and Skarn Hold: a room for the night (heals, saves, sets your respawn, sleeps until morning), a hot meal to carry, and news (a paid rumour names an undiscovered place nearby, marks it and sets a waypoint); chartmakers sell a local or a wide chart that reveals the map and marks every place of note inside it; the smiths now do everything (buy, sell, repair, reforge, upgrade weapon or armour, enchant, buyback).
+- **Sell all junk**: one row at the top of every sell list sells hides, tusks, oil and other trade goods in one go, and never touches gear, gems or potions.
+- **Dungeon set pieces** (barrows, mines and the new caves): *spike halls* (three lanes of floor that glow red for 0.7 s before they strike, so a roll or a sprint beats them), *flooded halls* (wading slows you to 55%, leeches in the water) and *ambush rooms* (a chest in an undisturbed room; step in and the room fills with foes, once).
+- **Named loot**: every dungeon theme now ends in its own named item with a line of story (Grave-Brand, Packbreaker, Smuggler's Cloak, Rimebound Mail, the Delver's Lantern-Charm, the Bear-Claw Charm, and one for each region's caves).
+- Tests: `stage59_setpieces`; `stage58_regions4` covers inns, charts, sell-all-junk.

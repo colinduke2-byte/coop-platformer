@@ -227,7 +227,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   move(ix, iy, dt) {
     const b = this.body;
-    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul') * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1);
+    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul') * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1) * (this.scene.mireMul ? this.scene.mireMul() : 1);
     if (S.mounted) sp *= PONY_SPEED;
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;

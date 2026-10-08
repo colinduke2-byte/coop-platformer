@@ -58,7 +58,7 @@ check('mining a node gives ore', (await G(() => (window.__ff.S.inv.iron_ingot ||
 const dig = await spot('dig');
 await tp(dig.x, dig.y + 1); await h.sleep(200);
 const gold0 = await G(() => window.__ff.S.gold);
-await G(([x, y]) => { const g = window.__ff.game.scene.getScene('Game'); const d = g.interactables.find((i) => i.key && i.key.includes(':d') && Math.abs(i.ix - (x * 16 + 8)) < 20); Math.random = () => 0.9; d.interact(); }, [dig.x, dig.y]);
+await G(([x, y]) => { const g = window.__ff.game.scene.getScene('Game'); const d = g.interactables.find((i) => i.key && i.key.includes(':d') && Math.abs(i.ix - (x * 16 + 8)) < 20); const realRandom = Math.random; Math.random = () => 0.9; d.interact(); setTimeout(() => { Math.random = realRandom; }, 400); }, [dig.x, dig.y]);
 await h.sleep(900);
 check('digging up treasure pays out', (await G(() => window.__ff.S.gold)) > gold0 || (await G(() => window.__ff.game.scene.getScene('Game').pickups.length)) > 0);
 await G(() => window.__ff.game.scene.getScene('Game').scene.restart({ map: 'forest', spawn: 'west' }));

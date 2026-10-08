@@ -51,13 +51,13 @@ const mines = await G(async () => {
       const b = M.getMines(f), sp = b.entities.find((e) => e.t === 'spawn' && e.name === 'entry'), seen = new Uint8Array(b.w * b.h), q = [[sp.x, sp.y]]; seen[sp.y * b.w + sp.x] = 1;
       for (let i = 0; i < q.length; i++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = q[i][0] + dx, y = q[i][1] + dy; if (x < 0 || y < 0 || x >= b.w || y >= b.h || seen[y * b.w + x] || solid.has(b.grid[y][x])) continue; seen[y * b.w + x] = 1; q.push([x, y]); }
       const ex = b.entities.filter((e) => e.t === 'exit'), boss = b.entities.find((e) => e.t === 'boss');
-      out.push({ seed, f, exits: ex.map((e) => e.to).join(), boss: boss?.kind || null, foes: b.entities.filter((e) => e.t === 'enemy').length, reach: b.entities.filter((e) => ['exit', 'boss'].includes(e.t)).every((e) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (seen[(e.y + dy) * b.w + e.x + dx]) return true; return false; }) });
+      out.push({ seed, f, exits: ex.map((e) => e.to).join(), boss: boss?.kind || null, foes: b.entities.filter((e) => e.t === 'enemy').length + b.entities.filter((e) => e.t === 'ambush').reduce((a, e) => a + e.n, 0), reach: b.entities.filter((e) => ['exit', 'boss'].includes(e.t)).every((e) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (seen[(e.y + dy) * b.w + e.x + dx]) return true; return false; }) });
     }
   }
   S0.seed = 424242;
   return out;
 });
-check('the mines have three linked floors with Kragnar at the bottom', mines.every((m) => m.reach && m.foes >= 6) && mines.filter((m) => m.f === 2).every((m) => m.boss === 'kragnar') && mines.filter((m) => m.f < 2).every((m) => m.boss === null) && mines.find((m) => m.f === 0).exits.includes('emberhold') && mines.find((m) => m.f === 1).exits.includes('mines0') && mines.find((m) => m.f === 1).exits.includes('mines2'), JSON.stringify(mines.slice(0, 3)));
+check('the mines have three linked floors with Kragnar at the bottom', mines.every((m) => m.reach && m.foes >= 3) && mines.filter((m) => m.f === 2).every((m) => m.boss === 'kragnar') && mines.filter((m) => m.f < 2).every((m) => m.boss === null) && mines.find((m) => m.f === 0).exits.includes('emberhold') && mines.find((m) => m.f === 1).exits.includes('mines0') && mines.find((m) => m.f === 1).exits.includes('mines2'), JSON.stringify(mines.slice(0, 3)));
 
 // ---- the road from the Ashen Peaks to the city
 const road = await G(async () => { const M = await import('/src/data/maps.js'), b = M.getRegion('ashen'); const city = b.pois.find((p) => p.kind === 'city'); const ex = b.entities.find((e) => e.t === 'exit' && e.to === 'emberhold'); const sp = b.entities.find((e) => e.t === 'spawn' && e.name === 'emberhold'); return { city: !!city, ex: !!ex, sp: !!sp, ids: b.pois.every((p) => p.id.startsWith('ashen_')) }; });

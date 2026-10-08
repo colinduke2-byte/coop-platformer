@@ -64,6 +64,7 @@ import { companionMethods } from '../world/companions.js';
 import { killMethods } from '../world/kills.js';
 import { eventMethods } from '../world/events.js';
 import { livingMethods } from '../world/livingworld.js';
+import { setPieceMethods } from '../world/setpieces.js';
 import { nightKind, sleepyCrew, isNightNow } from '../world/nightlife.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
@@ -130,6 +131,7 @@ export default class GameScene extends Phaser.Scene {
     this.breakBodies = null;
     this.boss = null;
     this.gate = null;
+    this.initSetPieces();
     this.plates = []; this.plateSeq = []; this.plateOrder = null; this.vault = null; this.vaultIsOpen = false; this.autoCheckpoints = [];
     this.exits = [];
     this.flames = [];
@@ -338,6 +340,7 @@ export default class GameScene extends Phaser.Scene {
         this.propBodies.add(sg);
         break;
       }
+      case 'spiketrap': case 'mire': case 'ambush': this.addSetPiece(e, wx, wy); break;
       case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags[this.vaultKey()]) pl.light(true); break; }
       case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags[this.vaultKey()]) this.openVault(true); break;
       case 'vaultorder': case 'plateorder': this.plateOrder = e.order; break;
@@ -627,6 +630,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); this.discoverTick(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
     if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
     for (const p of this.plates) p.update(this.player);
+    this.setPieceTick(dt);
     for (const c of this.autoCheckpoints) {
       if (!c.lit && Math.hypot(this.player.x - c.x, this.player.y - c.y) < 30) {
         c.lit = true;
@@ -747,4 +751,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods, livingMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods, livingMethods, setPieceMethods);

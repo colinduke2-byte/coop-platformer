@@ -22,7 +22,13 @@ export async function launch(opts = {}) {
   const shot = (name) => page.locator('canvas').screenshot({ path: new URL(`./out/${name}.png`, import.meta.url).pathname });
   const close = async () => { await browser.close(); await server.close(); };
   const sleep = (ms) => page.waitForTimeout(ms);
-  const ev = (fn, arg) => page.evaluate(fn, arg);
+  // Results are sanitised in the page: a test that accidentally returns a Phaser object (e.g. scene.restart() returns the scene plugin)
+  // would otherwise make Playwright serialise the whole game graph, which takes minutes.
+  const ev = (fn, arg) => page.evaluate(async ([src, a]) => {
+    const r = await (0, eval)('(' + src + ')')(a);
+    if (r === null || typeof r !== 'object') return r;
+    try { return JSON.parse(JSON.stringify(r)); } catch (e) { return null; }
+  }, [fn.toString(), arg]);
   return { page, errors, open, shot, close, sleep, ev };
 }
 
