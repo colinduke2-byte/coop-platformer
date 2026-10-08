@@ -41,6 +41,19 @@ const done = await G(async () => {
   return out;
 });
 check('lost-item and escort jobs complete and pay', Object.values(done).every(Boolean), JSON.stringify(done));
+// landmarks are sighted from afar
+await h.open('scene=game&map=forest&spawn=west&seed=424242'); await h.sleep(1500);
+const sg = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, D = await import('/src/world/discovery.js');
+  window.__ff.S.flags.introDone = true; S.sighted = {}; S.discovered = {};
+  const lm = g.built.pois.find((p) => D.LANDMARKS.has(p.kind));
+  if (!lm) return { none: true };
+  g.player.setPosition((lm.x - 30) * 16, lm.y * 16); g.discoverTick();
+  const sighted = !!S.sighted['forest:' + lm.id], found = !!S.discovered['forest:' + lm.id];
+  g.player.setPosition(lm.x * 16, lm.y * 16); g.discoverTick();
+  return { sighted, found, now: !!S.discovered['forest:' + lm.id] };
+});
+check('tall landmarks are sighted from afar, found up close', (sg.sighted && !sg.found && sg.now), JSON.stringify(sg));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'TOWN FAILED' : 'TOWN PASSED');

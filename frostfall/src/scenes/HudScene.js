@@ -366,6 +366,7 @@ export default class HudScene extends Phaser.Scene {
     // nearest discovered places on this map
     const pois = (gs.built.pois || []).filter((p) => S.discovered?.[gs.mapId + ':' + p.id] && Math.hypot(p.x - px, p.y - py) < 90).sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py)).slice(0, 8);
     for (const p of pois) mark(p.x, p.y, PLACE_COL[p.kind] ?? 6, false);
+    for (const p of gs.built.pois || []) if (S.sighted?.[gs.mapId + ':' + p.id] && !S.discovered?.[gs.mapId + ':' + p.id]) mark(p.x, p.y, 4, false);
     const wp = S.flags.waypoint; if (wp && wp.map === gs.mapId) mark(wp.x, wp.y, 8, true);
     const tid = trackedId(), tg = tid && TARGETS[tid]?.(S.quests[tid]);
     if (tg && tg.map === gs.mapId) mark(tg.x, tg.y, 15, true);

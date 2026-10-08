@@ -18,6 +18,10 @@ export const PLACE_NAME = {
 };
 // What a place looks like on the map: a colour index and whether it is hostile.
 export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6, tower: 6, grove: 8, hamlet: 13, standing: 14, barrow: 14, cave: 6, foundry: 11, wreck: 6, lighthouse: 13, courtyard: 6, spring: 15, rest: 12, cache: 13, hermit: 8, ancient: 14 };
+// Tall things you can see from a long way off: a place on this list is "sighted" (compass and map show a ? for it) from far away.
+export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest']);
+export const SIGHT_RANGE = 42;
+export const isSighted = (mapId, p) => !!S.sighted?.[mapId + ':' + p.id];
 export const placeName = (p) => PLACE_NAME[p.kind] || p.kind.toUpperCase();
 export const discoveredCount = () => Object.keys(S.discovered || {}).length;
 const rangeOf = (p) => (HIDDEN.has(p.kind) ? 7 : p.kind === 'rest' || p.kind === 'spring' ? 12 : Math.max(15, (p.r || 8) + 4));
@@ -30,7 +34,15 @@ export const discoveryMethods = {
     const px = this.player.x / 16, py = this.player.y / 16;
     for (const p of pois) {
       const id = this.mapId + ':' + p.id;
-      if (S.discovered[id] || Math.hypot(p.x - px, p.y - py) > rangeOf(p)) continue;
+      const d = Math.hypot(p.x - px, p.y - py);
+      if (S.discovered[id]) continue;
+      if (d > rangeOf(p)) {
+        if (LANDMARKS.has(p.kind) && d < SIGHT_RANGE && !S.sighted?.[id]) {
+          (S.sighted ||= {})[id] = 1;
+          bus.emit('toast', 'SOMETHING TALL ON THE HORIZON... (' + placeName(p) + '?)', 15);
+        }
+        continue;
+      }
       this.discover(p, id);
     }
   },

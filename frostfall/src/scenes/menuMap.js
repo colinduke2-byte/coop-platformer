@@ -158,6 +158,11 @@ export function mapTab(m) {
         if (!inView(px, py, size, size)) continue;
         go.fillStyle(C[0]); go.fillRect(px - 1, py - 1, size + 2, size + 2); go.fillStyle(C[PLACE_COL[q.kind] ?? 6]); go.fillRect(px, py, size, size);
       }
+      for (const q of (b.pois || []).filter((q) => S.sighted?.[vid + ':' + q.id] && !S.discovered?.[vid + ':' + q.id])) {
+        const size = sc + 2, [px, py] = spot(q.x, q.y, size);
+        if (!inView(px, py, size, size)) continue;
+        go.fillStyle(C[0]); go.fillRect(px - 1, py - 1, size + 2, size + 2); go.fillStyle(C[4]); go.fillRect(px + 1, py + 1, Math.max(1, size - 2), Math.max(1, size - 2));
+      }
       const nearPlace = curMode && cur ? found.find((q) => Math.abs(q.x - cur.x) <= 3 && Math.abs(q.y - cur.y) <= 3) : null;
       if (nearPlace) m.T(10, 127, placeName(nearPlace), PLACE_COL[nearPlace.kind] ?? 6);
       const marker = (tg, col) => {
