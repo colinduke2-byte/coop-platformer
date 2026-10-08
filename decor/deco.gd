@@ -47,13 +47,26 @@ func _invalidate() -> void:
 	queue_redraw()
 
 
+## Low plants that part around a dreamer walking through them (High preset).
+const BENDERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.FERN, Kind.BUSH, Kind.SEAWEED]
+
+var _bend := 0.0
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	if sway and kind in SWAYERS and View.sees(global_position, 300.0):
 		var amount := 0.05 if kind in [Kind.TREE, Kind.PINE, Kind.BUSH, Kind.PALM] else 0.12
 		if kind == Kind.HANGING_VINES:
 			amount = -0.08  # hangs down: shear the other way
-		skew = sin(_t * 1.7) * amount
+		var target := 0.0
+		if kind in BENDERS and Gfx.at_least(Gfx.Level.HIGH):
+			for p in get_tree().get_nodes_in_group(&"players"):
+				var d: Vector2 = (p as Node2D).global_position - global_position
+				if absf(d.x) < 130.0 and d.y > -120.0 and d.y < 60.0:
+					target -= signf(d.x) * (1.0 - absf(d.x) / 130.0) * 0.55  # tops lean away
+		_bend = lerpf(_bend, clampf(target, -0.6, 0.6), minf(delta * 9.0, 1.0))
+		skew = sin(_t * 1.7) * amount + _bend
 	if kind == Kind.GIANT_MUSHROOM:
 		View.redraw(self)
 

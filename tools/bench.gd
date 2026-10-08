@@ -12,6 +12,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		_args[kv[0]] = kv[1] if kv.size() > 1 else "true"
+	if _args.has("gfx"):
+		Gfx.level = int(_args["gfx"])  # 0 low, 1 medium, 2 high
 	Engine.max_fps = 0
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	_run.call_deferred()

@@ -29,6 +29,20 @@ func _ready() -> void:
 		var rs: Node = load("res://ui/results.tscn").instantiate()
 		rs.name = "Results"
 		add_child(rs)
+	if level_theme != null:
+		if not has_node(^"Foreground"):
+			var fg := Foreground.new()
+			add_child(fg)
+			var bd := find_children("*", "Backdrop", true, false)
+			fg.setup(level_theme, (bd[0] as Backdrop).scenery if not bd.is_empty() else Backdrop.Scenery.HILLS)
+		if not has_node(^"ColorGrade"):
+			var cg := ColorGrade.new()
+			add_child(cg)
+			cg.setup(level_theme)
+	if OS.has_feature("web") and Settings.graphics < 0 and not has_node(^"GfxWatchdog"):
+		var wd := GfxWatchdog.new()
+		wd.name = "GfxWatchdog"
+		add_child(wd)
 	var cam := get_viewport().get_camera_2d()
 	if cam is CoopCamera:
 		cam.snap()

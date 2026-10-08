@@ -20,6 +20,7 @@ var _boss_bar: BossBar
 
 
 func _ready() -> void:
+	layer = 3  # above the foreground (1) and colour grade (2)
 	# Build everything in code (old scenes had Margin/VBox children).
 	for c in get_children():
 		c.queue_free()

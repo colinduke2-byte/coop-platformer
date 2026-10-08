@@ -68,6 +68,8 @@ func _rebuild() -> void:
 func _draw() -> void:
 	if _mesh == null:
 		_mesh = _bake()
+		var th := _theme()
+		material = PaintedSurface.material(th.surface_texture(), th.surface_strength())
 	draw_mesh(_mesh, null)
 
 
@@ -158,9 +160,7 @@ func _bake() -> ArrayMesh:
 		rc.append(rim[0])
 		mp.draw_polyline(rc, th.ground.lightened(0.22), 3.0)
 	# Outline.
-	var closed := pts.duplicate()
-	closed.append(pts[0])
-	mp.draw_polyline(closed, th.outline, Block.OUTLINE_W)
+	mp.draw_ink(pts, th.outline, true, 2.4, 5.2, seed_value)
 	# Moss drips under ceilings and overhangs.
 	for i in pts.size():
 		var a := pts[i]

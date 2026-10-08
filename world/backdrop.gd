@@ -108,9 +108,11 @@ func _rebuild() -> void:
 		Scenery.NEBULA: _nebula_scene()
 	if critters:
 		_critters()
+	if Gfx.at_least(Gfx.Level.MEDIUM):
+		_mist()
 	if cloud_sea:
 		_build_cloud_sea()
-	if light_shafts:
+	if light_shafts or (Gfx.at_least(Gfx.Level.MEDIUM) and scenery in [Scenery.FOREST, Scenery.RUINS, Scenery.OCEAN]):
 		_build_shafts()
 
 
@@ -668,6 +670,32 @@ func _deep_scene() -> void:
 
 
 ## A school of little fish swimming across (one autoscrolled baked layer).
+## Atmospheric perspective: soft bands of mist hanging between the far scenery and the
+## play area (and, on High, a second slowly drifting band lower down).
+func _mist() -> void:
+	var col := _th.sky_bottom.lerp(Color.WHITE, 0.35)
+	var dark := scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA]
+	if dark:
+		col = _th.sky_bottom.lightened(0.1)
+	_mist_band(0.55, horizon_y - 120.0, 420.0, Color(col, 0.2 if not dark else 0.14), Vector2.ZERO)
+	if Gfx.at_least(Gfx.Level.HIGH):
+		_mist_band(0.82, horizon_y + 40.0, 300.0, Color(col, 0.12 if not dark else 0.09), Vector2(-9.0, 0))
+
+
+func _mist_band(scale: float, y: float, h: float, c: Color, drift: Vector2) -> void:
+	var p := _parallax(scale, 3000.0, drift)
+	var mp := MeshPainter.new()
+	var clear := Color(c, 0.0)
+	mp.draw_vgradient(Rect2(0, y - h * 0.5, 3000, h * 0.5), clear, c)
+	mp.draw_vgradient(Rect2(0, y, 3000, h * 0.5), c, clear)
+	var wisps := Color(c, c.a * 0.7)
+	for i in 8:  # a few soft lumps so the band isn't a ruler-straight stripe
+		var cx := _rng.randf_range(0, 3000)
+		mp.draw_colored_polygon(Art.ellipse(Vector2(cx, y + _rng.randf_range(-h * 0.2, h * 0.2)), _rng.randf_range(160, 380), _rng.randf_range(24, 52), 18), wisps)
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -99
+
+
 ## Little life in the sky: drifting layers of birds (parrots in the jungle,
 ## gulls at sea), smoke over the factory, shooting stars in the nebula.
 func _critters() -> void:
@@ -814,6 +842,8 @@ class MeshArt extends Node2D:
 
 	func _init(m: ArrayMesh) -> void:
 		mesh = m
+		if Gfx.at_least(Gfx.Level.MEDIUM):  # soft brushwork over the scenery
+			material = PaintedSurface.material("cloth", 0.16, 520.0, 0.0)
 
 	func _draw() -> void:
 		draw_mesh(mesh, null)

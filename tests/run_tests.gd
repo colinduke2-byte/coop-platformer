@@ -8197,3 +8197,50 @@ func test_graphics_preset_is_chosen_saved_and_cycled() -> void:
 	Gfx.level = old_level
 	Settings.graphics = old_pref
 	Settings.save()
+
+
+func test_every_theme_has_a_painted_ground_texture_and_a_grade() -> void:
+	var dir := DirAccess.open("res://world/themes")
+	var n := 0
+	for f in dir.get_files():
+		if not f.ends_with(".tres"):
+			continue
+		var th := load("res://world/themes/" + f) as LevelTheme
+		var tex := th.surface_texture()
+		check(PaintedSurface.texture(tex) != null, "%s: baked texture '%s' exists" % [f, tex])
+		check(PaintedSurface.material(tex, th.surface_strength()) is ShaderMaterial, "%s: painted material builds" % f)
+		var g := th.grade()
+		check(g.has("sat") and g.has("tint") and g.has("vig"), "%s: has a colour grade" % f)
+		n += 1
+	check(n >= 35, "all %d themes checked" % n)
+
+
+func test_levels_get_foreground_and_colour_grade_layers() -> void:
+	var p: Player = await _load_demo("res://levels/w1_1_pillow_meadow.tscn")
+	check(_demo.has_node(^"ColorGrade") and _demo.get_node(^"ColorGrade").layer == 2, "the level has a colour grade above the foreground")
+	check(_demo.has_node(^"Foreground"), "the level has a foreground layer")
+	check(_demo.get_node(^"Foreground").get_child_count() >= 1, "MEDIUM draws the foreground silhouettes")
+	var old := Gfx.level
+	Gfx.level = Gfx.Level.LOW
+	var fg := Foreground.new()
+	_arena.add_child(fg)
+	fg.setup(load("res://world/themes/meadow.tres"), Backdrop.Scenery.HILLS)
+	check(fg.get_child_count() == 0, "LOW skips the foreground")
+	fg.queue_free()
+	Gfx.level = old
+	await _finish_demo()
+
+
+func test_ink_outline_is_thicker_on_the_shadow_side() -> void:
+	var mp := MeshPainter.new()
+	mp.draw_ink(PackedVector2Array([Vector2(0, 0), Vector2(200, 0), Vector2(200, 200), Vector2(0, 200)]), Color.BLACK, true, 2.0, 6.0, 3)
+	check(not mp.is_empty(), "ink outline produces geometry")
+	var mesh := mp.build()
+	var v: PackedVector2Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var top := 0.0
+	var bottom := 0.0
+	for p in v:
+		if absf(p.x - 100.0) < 30.0:
+			if p.y < 20.0: top = maxf(top, absf(p.y))
+			if p.y > 180.0: bottom = maxf(bottom, p.y - 200.0)
+	check(bottom > top, "the bottom edge is heavier than the top (%.1f vs %.1f)" % [bottom, top])

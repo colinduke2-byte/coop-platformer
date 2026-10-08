@@ -84,6 +84,8 @@ func _draw() -> void:
 		else:
 			draw_ground(mp, size, th, lip, hash(Vector2i(global_position)) ^ hash(Vector2i(size)))
 		_mesh = mp.build()
+		if not one_way:
+			material = PaintedSurface.material(th.surface_texture(), th.surface_strength())
 	draw_mesh(_mesh, null)
 	if conveyor_speed != 0.0:
 		_draw_belt(th)
@@ -131,7 +133,12 @@ static func draw_ground(ci: Object, size: Vector2, th: LevelTheme, lip := true, 
 				for piece in Geometry2D.intersect_polygons(pts, clip):
 					ci.draw_colored_polygon(piece, th.ground_dark)
 				x += w
-	ci.draw_rect(r, th.outline, false, OUTLINE_W)
+	if ci is MeshPainter:
+		# Clockwise from the top-left (y down): outward normals, so the bottom edge is the heavy shadow side.
+		ci.draw_ink(PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]),
+				th.outline, true, 2.4, 5.2, seed_value)
+	else:
+		ci.draw_rect(r, th.outline, false, OUTLINE_W)
 	if lip:
 		_draw_lip_on(ci, size, th, rng)
 
