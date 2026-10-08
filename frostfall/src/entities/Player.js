@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { PONY_SPEED } from './Pony.js';
-import { keys, rumble } from '../systems/keys.js';
+import { keys, rumble, stickWalk } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { bonus, addXp, lvl } from '../systems/skills.js';
@@ -237,6 +237,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.blocking) sp *= P.block.move;
     const tileUnder = this.scene.tileIdAt(this.x, this.y + 7), skating = !!S.flags.skates && this.mode === 'free' && [TILE.ICE, TILE.ICE2, TILE.ICESHELF].includes(tileUnder);
     if (skating) sp *= 1.3;
+    sp *= stickWalk();
     const l = Math.hypot(ix, iy) || 1;
     const tx = (ix / l) * sp, ty = (iy / l) * sp;
     const onIce = this.mode === 'free' && [TILE.ICE, TILE.ICE2].includes(tileUnder);

@@ -54,6 +54,13 @@ const sg = await G(async () => {
   return { sighted, found, now: !!S.discovered['forest:' + lm.id] };
 });
 check('tall landmarks are sighted from afar, found up close', (sg.sighted && !sg.found && sg.now), JSON.stringify(sg));
+const sk = await G(async () => {
+  const K = await import('/src/systems/keys.js'); const o = {};
+  K.stick.kb = false; K.stick.mag = 0.6; o.gentle = K.stickWalk() < 0.7 && K.stickWalk() >= 0.5;
+  K.stick.mag = 1; o.full = K.stickWalk() === 1; K.stick.mag = 0.6; K.stick.kb = true; o.kb = K.stickWalk() === 1; K.stick.mag = 0; K.stick.kb = false;
+  return o;
+});
+check('a gentle stick push walks slower, a full push runs, the keyboard is unaffected', Object.values(sk).every(Boolean), JSON.stringify(sk));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'TOWN FAILED' : 'TOWN PASSED');

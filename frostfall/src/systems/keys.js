@@ -111,6 +111,10 @@ function activeInputs(pad) {
   return out;
 }
 
+// How far the left stick is pushed (0..1) and whether it alone is steering: lets the player walk slowly with a gentle push.
+export const stick = { mag: 0, kb: false };
+export function stickWalk() { return !stick.kb && stick.mag > 0.4 && stick.mag < 0.95 ? Math.max(0.5, stick.mag * 1.05) : 1; }
+
 export function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   const list = [...pads].filter((p) => p && p.connected);
@@ -124,6 +128,7 @@ export function pollPad() {
     if (act.size) usingPad = true;
     // left stick always moves / navigates
     const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+    stick.mag = Math.min(1, Math.hypot(ax, ay));
     if (ax < -0.45) want.add('KeyA'); if (ax > 0.45) want.add('KeyD');
     if (ay < -0.45) want.add('KeyW'); if (ay > 0.45) want.add('KeyS');
     // learn mode: the first newly pressed input (ignoring the left stick) is handed to the callback
@@ -134,7 +139,8 @@ export function pollPad() {
       padDown.clear(); act.forEach((x) => padDown.add(x));
       for (const id of act) { const c = map[id]; if (c) want.add(c); }
     }
-  } else padInfo = { id: '', mapping: '', live: [] };
+  } else { padInfo = { id: '', mapping: '', live: [] }; stick.mag = 0; }
+  stick.kb = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].some((c) => down.has(c) && !padHeld.has(c));
   for (const c of want) if (!padHeld.has(c)) { keys._press(c); padHeld.add(c); }
   for (const c of [...padHeld]) if (!want.has(c)) { keys._release(c); padHeld.delete(c); }
   // another source (the on-screen buttons, a stray key-up) may have released a key the controller is still holding: put it back
