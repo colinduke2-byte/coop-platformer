@@ -111,7 +111,7 @@ export const HIGHLANDS = {
   mobs: [
     { melee: ['nomad', 'bandit', 'wolf'], ranged: ['archer', 'nomadshaman'], wild: ['wolf', 'thunderbird', 'boar', 'mammoth'] },
     { melee: ['nomad', 'fencer', 'warden', 'wolf'], ranged: ['archer', 'nomadshaman', 'wight'], wild: ['thunderbird', 'mammoth', 'lynx', 'bear', 'alpha'] },
-    { melee: ['nomad', 'reaver', 'stonegiant', 'warden'], ranged: ['nomadshaman', 'conjurer', 'wisp'], wild: ['thunderbird', 'mammoth', 'bear', 'alpha', 'wyvern'] },
+    { melee: ['nomad', 'reaver', 'warden', 'fencer'], ranged: ['nomadshaman', 'conjurer', 'wisp'], wild: ['thunderbird', 'mammoth', 'bear', 'alpha', 'wyvern'] },
     { melee: ['stonegiant', 'reaver', 'knight', 'nomad'], ranged: ['nomadshaman', 'conjurer', 'wisp', 'necro'], wild: ['thunderbird', 'mammoth', 'alpha', 'wyvern'] },
   ],
   tierAt: base1(tierFrom(HIGH_START, 60, 105, 150)),

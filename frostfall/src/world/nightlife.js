@@ -13,7 +13,8 @@ export function isNightNow(scene) { return !!(scene.def.snow || scene.def.outdoo
 export function nightKind(scene, kind, p) {
   if (!scene.def.stream || !isNightNow(scene) || scene.def.quick) return kind;
   const r = hash(`${S.seed}:${Math.floor(S.days || 0)}:${p.key || p.wx + ',' + p.wy}`);
-  if (kind === 'wolf' && !p.spec.cub && r < wolfChance()) return 'werewolf';
+  const tierMul = [0.35, 0.7, 1, 1][Math.min(3, p.spec.tier || 0)];          // the gentle country keeps most of its wolves
+  if (kind === 'wolf' && !p.spec.cub && r < wolfChance() * tierMul) return 'werewolf';
   if ((kind === 'draugr' || kind === 'wight') && r < ghostChance()) return 'ghost';
   return kind;
 }

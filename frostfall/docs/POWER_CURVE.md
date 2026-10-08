@@ -54,3 +54,45 @@ No difficulty skips boss phases or removes telegraphs.
 
 ## Limits of this model
 It is a model: it assumes two ordinary enemies, typical gear per tier, and a fixed hit rate. Round 19 of the plan checks it against the real bots (hundreds of fights per difficulty, region, boss and arena hero).
+
+## Round 6 to 19 additions: creatures checked against the model
+
+Cost of two of each creature (tier-scaled) as a share of the expected player's health on Normal, with its danger letter (E easy, F fair, T tough, D deadly, H hopeless). Regenerate with `node tools/enemy_danger.mjs [kinds...]`.
+
+```
+creature                       tier0    tier1    tier2    tier3   (expected player of that tier, two of them)
+werewolf     hp   52 dmg 16       60% D    38% T    23% F    14% F
+ghost        hp   28 dmg 14       28% T    18% F    11% E     6% E
+bogwraith    hp   40 dmg 14       41% T    26% F    16% F     9% E
+boghag       hp   58 dmg 17       72% D    45% T    28% F    16% F
+leech        hp   14 dmg  6        6% E     4% E     2% E     1% E
+mudlurker    hp   56 dmg 17       69% D    43% T    27% F    16% F
+thunderbird  hp   64 dmg 18       84% D    53% D    32% T    19% F
+mammoth      hp  100 dmg 21      152% H    96% H    59% D    34% T
+nomad        hp   46 dmg 15       50% D    31% T    19% F    11% E
+nomadshaman  hp   44 dmg 17       54% D    34% T    21% F    12% F
+stonegiant   hp  200 dmg 26      377% H   237% H   146% H    85% D
+wolf         hp   28 dmg 10       20% F    13% F     8% E     5% E
+bear         hp   95 dmg 20      138% H    87% D    53% D    31% T
+knight       hp   70 dmg 19       96% H    61% D    37% T    22% F
+```
+
+Rules applied: night wolves become werewolves less often in the gentle country (35% of the moon's chance in tier 0, 70% in tier 1); the Fens and the Highlands start at tier 1 (there is no gentle end); mammoths and stone giants are world-boss-sized and only appear in the wild lists at the tiers where the expected player can survive them; Greytusk (the roaming mammoth) has 3.2x health. Difficulty and capstone perks: see CHANGELOG rounds 30 to 34.
+
+## Final balance pass (balance bot, 3 trials each)
+
+The bot is a *lower bound* on human skill: it never parries and does not flank. Read these as sanity checks.
+
+| Fight | Normal | Easy | Hard |
+|---|---|---|---|
+| Wolf pack, starter gear | 3/3 | | 3/3 |
+| Bandit camp, iron gear | 3/3 | | 3/3 |
+| Crypt hall, steel gear | 0/3 | 3/3 | |
+| Jarl Valdrek, iron gear | 3/3 | | |
+| Grimfang, iron gear | 3/3 | | |
+| Kragnar, ember mail | 1/3 | 3/3 | |
+| Ashen Sovereign | 1/3 | | |
+| Admiral Veyl | 2/3 | | |
+| Hollow King | 0/3 | 1/3 | |
+
+Run it yourself: `DIFF=easy|normal|hard node test/balance.mjs 3 [name]`. Reading: the first dungeon's big hall is tough for a bot on Normal even in steel gear (the plan wants preparation to matter) and comfortable on Easy; every boss has a 'ready' kit that wins on Easy; the last boss is hard on every setting for a bot. Tuning knobs: `TUNE.difficulty` (tuning.js), `GEAR`/`EXPECTED` (powercurve.js).

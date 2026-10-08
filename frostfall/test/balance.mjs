@@ -1,7 +1,7 @@
 // Balance bot: a crude auto-player (approach, swing, roll away from telegraphs, drink potions)
 // fights each encounter several times. It is a *lower bound* on human skill, so use the
 // numbers as a sanity check on difficulty, not as a target.
-//   node test/balance.mjs [trials=4] [only=substring]
+//   node test/balance.mjs [trials=4] [only=substring]      (DIFF=easy|normal|hard picks the difficulty)
 import { launch } from './harness.mjs';
 
 const trials = Number(process.argv[2] || 4);
@@ -45,6 +45,7 @@ for (const sc of SCENARIOS) {
   for (let t = 0; t < trials; t++) {
     await h.open(`scene=game&map=${sc.map}&spawn=${sc.spawn}`);
     await h.sleep(700);
+    await h.page.evaluate(async (d) => { (await import('/src/systems/settings.js')).settings.difficulty = d; }, process.env.DIFF || 'normal');
     const r = await h.page.evaluate(async ({ sc, trial }) => {
       const S = window.__ff.S;
       S.flags.introDone = true;

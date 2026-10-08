@@ -19,7 +19,7 @@ const sw = await G(async () => {
   const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, N = await import('/src/world/nightlife.js'), M = await import('/src/systems/moon.js');
   let wolves = 0, were = 0, ghosts = 0, deer = 0;
   S.time = 22 * 60; S.days = 4;                         // full moon, deep night
-  for (let i = 0; i < 100; i++) { const k = N.nightKind(g, 'wolf', { spec: {}, key: 'k' + i }); if (k === 'werewolf') were++; else wolves++; if (N.nightKind(g, 'deer', { spec: {}, key: 'd' + i }) === 'deer') deer++; if (N.nightKind(g, 'draugr', { spec: {}, key: 'g' + i }) === 'ghost') ghosts++; }
+  for (let i = 0; i < 100; i++) { const k = N.nightKind(g, 'wolf', { spec: { tier: 2 }, key: 'k' + i }); if (k === 'werewolf') were++; else wolves++; if (N.nightKind(g, 'deer', { spec: {}, key: 'd' + i }) === 'deer') deer++; if (N.nightKind(g, 'draugr', { spec: {}, key: 'g' + i }) === 'ghost') ghosts++; }
   S.time = 12 * 60; let dayWere = 0; for (let i = 0; i < 50; i++) if (N.nightKind(g, 'wolf', { spec: {}, key: 'k' + i }) !== 'wolf') dayWere++;
   const same = N.nightKind(g, 'wolf', { spec: {}, key: 'x' }) === N.nightKind(g, 'wolf', { spec: {}, key: 'x' });
   return { were, wolves, ghosts, deer, dayWere, same };
@@ -30,7 +30,7 @@ check('at night wolves become werewolves (mostly on a full moon), the dead becom
 const mk = await G(() => {
   const g = window.__ff.game.scene.getScene('Game'), p = g.player, out = {};
   const w = g.addEnemy('werewolf', p.x + 90, p.y, { tier: 0 }), gh = g.addEnemy('ghost', p.x - 90, p.y, { tier: 0 });
-  out.w = w.maxHp > 60 && w.scaleX > 1.2; out.g = gh.cfg.ghostly === true && gh.alpha < 1.01;
+  out.w = w.maxHp > 48 && w.scaleX > 1.2; out.g = gh.cfg.ghostly === true && gh.alpha < 1.01;
   return out;
 });
 check('werewolves are bigger and tougher; ghosts are translucent', mk.w && mk.g, JSON.stringify(mk));

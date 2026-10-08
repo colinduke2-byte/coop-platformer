@@ -72,7 +72,7 @@ export const ENEMIES = {
     body: [12, 6, 2, 8], loot: { gold: [1, 4], drops: [['hp_potion', 0.1], ['arrows', 0.25, [2, 4]]] },
   },
   werewolf: {
-    name: 'Werewolf', tex: 'spr_werewolf', scale: 1.25, bark: 'wolf', weak: { fire: 1.4, shock: 1.1 }, hp: 66, speed: 46, chase: 96, dmg: 19, detect: 120,
+    name: 'Werewolf', tex: 'spr_werewolf', scale: 1.25, bark: 'wolf', weak: { fire: 1.4, shock: 1.1 }, hp: 52, speed: 46, chase: 96, dmg: 16, detect: 120,
     kind: 'lunge', range: 52, windup: 0.4, atkDur: 0.3, recover: 0.7, cooldown: 0.8, kbResist: 0.25, lunge: 200,
     body: [12, 6, 2, 8], loot: { gold: [6, 16], drops: [['hp_potion', 0.2], ['wolf_fang', 0.5], ['pale_pelt', 0.15]] },
   },
@@ -343,7 +343,7 @@ Object.assign(ENEMIES, {
     body: [10, 5, 3, 9], loot: { gold: [1, 3], drops: [['marsh_orchid', 0.1]] },
   },
   mudlurker: {
-    name: 'Mud Lurker', tex: 'spr_stalker', tint: 0x7fb070, ambush: true, bark: 'human', weak: { fire: 1.6, shock: 1.1 }, hp: 66, speed: 32, chase: 84, dmg: 18, detect: 80,
+    name: 'Mud Lurker', tex: 'spr_stalker', tint: 0x7fb070, ambush: true, bark: 'human', weak: { fire: 1.6, shock: 1.1 }, hp: 56, speed: 32, chase: 84, dmg: 17, detect: 80,
     kind: 'melee', range: 20, windup: 0.3, atkDur: 0.14, recover: 0.7, cooldown: 0.8, kbResist: 0.3,
     body: [8, 7, 4, 9], loot: { gold: [10, 24], drops: [['hide', 0.4], ['marsh_orchid', 0.4], ['lockpick', 0.15]] },
   },
@@ -359,7 +359,7 @@ Object.assign(ENEMIES, {
     body: [12, 8, 2, 4], loot: { gold: [12, 28], drops: [['hide', 0.6], ['storm_feather', 0.5], ['hp_potion', 0.2]] },
   },
   mammoth: {
-    name: 'Wild Mammoth', tex: 'spr_bear', tint: 0xcdb08a, sideOnly: true, scale: 2.0, bark: 'wolf', weak: { fire: 1.3, shock: 1.0 }, hp: 300, speed: 30, chase: 82, dmg: 28, detect: 90,
+    name: 'Wild Mammoth', tex: 'spr_bear', tint: 0xcdb08a, sideOnly: true, scale: 2.0, bark: 'wolf', weak: { fire: 1.3, shock: 1.0 }, hp: 100, speed: 30, chase: 82, dmg: 21, detect: 90,
     kind: 'lunge', range: 74, windup: 0.8, atkDur: 0.4, recover: 1.0, cooldown: 1.2, kbResist: 0.85, lunge: 230,
     body: [14, 8, 1, 7], loot: { gold: [60, 110], drops: [['hide', 1], ['venison', 1], ['hp_potion_g', 0.6], ['mammoth_tusk', 0.5]] },
   },
@@ -374,7 +374,7 @@ Object.assign(ENEMIES, {
     body: [8, 7, 4, 9], loot: { gold: [14, 30], drops: [['mp_potion', 0.4], ['storm_feather', 0.3], ['gem_sapphire', 0.07]] },
   },
   stonegiant: {
-    name: 'Stone Giant', tex: 'spr_stonegiant', scale: 2.2, armored: true, bark: 'undead', weak: { shock: 1.4, frost: 0.8, fire: 0.6 }, hp: 420, speed: 24, chase: 40, dmg: 34, detect: 90,
+    name: 'Stone Giant', tex: 'spr_stonegiant', scale: 2.2, armored: true, bark: 'undead', weak: { shock: 1.4, frost: 0.8, fire: 0.6 }, hp: 200, speed: 24, chase: 40, dmg: 26, detect: 90,
     kind: 'melee', range: 32, windup: 1.0, atkDur: 0.24, recover: 1.1, cooldown: 0.9, kbResist: 0.9,
     body: [9, 8, 3, 8], loot: { gold: [120, 220], drops: [['hp_potion_g', 0.8], ['iron_ingot', 1], ['gem_onyx', 0.3]] },
   },
