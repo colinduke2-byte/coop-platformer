@@ -181,7 +181,7 @@ Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-ar
 - **Soak tests**: long monkey runs per region and per arena.
 - Error log polish (F4 report), no console errors in any covered path.
 
-## Round 17: Release hardening and docs
+## Round 17: Release hardening and docs (the final regression and republish are repeated after round 19)
 - Firefox and Safari smoke tests where possible; audio autoplay and fullscreen behaviour; iPhone and Mac passes by Colin.
 - Run the GitHub Actions workflow for real and fix differences.
 - File size and load time budget.
@@ -193,7 +193,7 @@ Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-ar
 ## Round 18: Share-ready (first-time player experience and presentation)
 The goal is that a stranger can be sent the link and have a great time.
 - **First minute**: a loading screen with a progress bar and tips, a title screen with a short attract sequence, a clear "how to play" on the first screen (touch, pad and keyboard shown by detected device), and no wall of text before the first fight.
-- **First hour**: a scripted but unobtrusive onboarding that teaches movement, roll, attack, block, potions, the map and quests in the first few places; the early game is hard (round 1) but readable; the first two quests give a sense of the world; a safe place to learn.
+- **First hour**: a scripted but unobtrusive onboarding that teaches movement, roll, attack, block, potions, the map and quests in the first few places; the early game is readable on every difficulty (round 1); the first two quests give a sense of the world; a safe place to learn.
 - **Never lost**: always-available "what do I do now" (journal, compass and a hint button), clear markers for the next step, optional hints for stuck puzzles.
 - **Settings for everyone**: a first-launch settings step (difficulty, text size, input device, colour-blind mode), remembered per device.
 - **Presentation**: a proper credits roll (original work, tools, thanks), a "new game / continue" flow that cannot lose progress, version and build stamp, a small in-game changelog, consistent game name and tagline.
