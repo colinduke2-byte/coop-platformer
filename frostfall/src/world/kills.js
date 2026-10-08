@@ -17,7 +17,7 @@ export const killMethods = {
   // Persist a world kill; clearing every enemy of a camp pays a bounty.
   markKilled(en) {
     const sp = en.spec || {};
-    if (en.spawnKey) markGone(en.spawnKey, !!(sp.camp || sp.champion || sp.elite));
+    if (en.spawnKey) markGone(en.spawnKey, sp.champion || sp.elite ? true : sp.camp ? 'camp' : false);
     S.run.kills++;
     if (en.champion) S.run.champions++;
     if (sp.nemesis) this.onNemesisDown(en);
@@ -26,6 +26,9 @@ export const killMethods = {
     if (sp.camp && !S.bounty[sp.camp]) {
       const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
       if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
+    } else if (sp.camp && S.bounty[sp.camp] && !this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i)) {
+      const g = 15 + 12 * (sp.tier || 0); S.gold += g;
+      this.time.delayedCall(700, () => bus.emit('toast', `CAMP RETAKEN  +${g} GOLD`, 13));
     }
   },
   // A world boss falls: a legendary item, gold and a trophy flag.

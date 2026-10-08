@@ -27,9 +27,13 @@ export function offersFor(shrineId, day) {
 
 // The in-game day number (a day is 12 real minutes of play).
 export const today = () => Math.floor((S.playtime || 0) / 720);
-// S.killed[key]: -1 = gone for good, otherwise the day it was taken (it comes back the next day).
+// S.killed[key]: -1 = gone for good, a day number = back tomorrow, <= -1000 = a camp's crew (back after RESETTLE days).
+export const RESETTLE = 6;
 export function isGone(key) {
   const v = S.killed?.[key];
-  return v === -1 || (v !== undefined && v === today());
+  if (v === undefined) return false;
+  if (v === -1) return true;
+  if (v <= -1000) { if (today() - (-1000 - v) >= RESETTLE) { delete S.killed[key]; return false; } return true; }
+  return v === today();
 }
-export function markGone(key, permanent) { S.killed = S.killed || {}; S.killed[key] = permanent ? -1 : today(); }
+export function markGone(key, permanent) { S.killed = S.killed || {}; S.killed[key] = permanent === 'camp' ? -1000 - today() : permanent ? -1 : today(); }

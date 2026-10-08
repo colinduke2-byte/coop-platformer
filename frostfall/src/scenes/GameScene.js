@@ -63,6 +63,7 @@ import { quickMethods } from '../arena/quickRun.js';
 import { companionMethods } from '../world/companions.js';
 import { killMethods } from '../world/kills.js';
 import { eventMethods } from '../world/events.js';
+import { livingMethods } from '../world/livingworld.js';
 import { randInt, rand, dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
@@ -157,6 +158,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     built.entities.forEach((e, i) => { e._i = i; });
+    this.trader = this.woundedEvt = this.huntEvt = this.raidEvt = null;
     this.pend = []; this.fires = []; this.campIds = new Set(); this.PickupClass = Pickup;
     for (const e of built.entities) this.spawnEntity(e);
     this.follower = null;
@@ -742,4 +744,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods);
+Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods, livingMethods);

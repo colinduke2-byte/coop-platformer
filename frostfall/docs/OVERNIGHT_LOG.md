@@ -14,3 +14,6 @@ To playtest: walk from the village to the Winter Throne: is there something to s
 
 ## Round 3: discovery and exploration - DONE (landmarks/vistas and unmarked quests deferred)
 Shipped: see CHANGELOG round 29. Tweak: reward formula in world/discovery.js (4+4*tier, hidden 20+12*tier), hidden-place gaps in worldgen.js. Playtest: wander off the road: do banners and the compass make you want to look further?
+
+## Round 4: a living world - DONE (partial: events, camps, delivery jobs)
+Shipped: see CHANGELOG round 30. Tweak: `RESETTLE` in systems/bless.js, event odds in `rollEvent` (world/livingworld.js), event timer 150-300 s in world/events.js. Deferred: storm cold, town children/animals, escort/lost-item jobs, second home.

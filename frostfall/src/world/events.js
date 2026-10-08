@@ -52,6 +52,7 @@ export const eventMethods = {
   // ---- random events while exploring the open world
   worldEvents(dt) {
     if (!this.def.stream || this.player.mode !== 'free' || ui.modal) return;
+    this.livingTick(dt);
     this.eventT = (this.eventT ?? 70 + Math.random() * 60) - dt;
     // the trader packs up after a while
     if (this.trader) {
@@ -61,9 +62,7 @@ export const eventMethods = {
     if (this.eventT > 0) return;
     this.eventT = 150 + Math.random() * 150;
     if (this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) return;
-    const r = Math.random();
-    if (r < 0.5 || this.trader) this.spawnAmbush();
-    else this.spawnTrader();
+    this.rollEvent();
   },
   spawnAmbush() {
     const tier = tierAt(this.player.x / T, this.player.y / T);

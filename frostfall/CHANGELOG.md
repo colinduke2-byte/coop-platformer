@@ -375,3 +375,10 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Compass strip** on the HUD (setting COMPASS), with quest and discovery markers; ROTATE VIEW setting.
 - **Fast travel costs time**: hours pass and the toast says so. Trophies for wandering and exploring.
 - Deferred: landmarks and vistas, unmarked quests (later rounds). Tests: `stage55_discovery`, spacing unit test extended.
+
+## Round 30 - Overnight Round 4: a living world
+- **New wandering events** (replace the old ambush/trader coin flip): a *wounded traveller* (give a health potion for gold and gear; the wolves that hurt him are still near), *wolves hunting a deer* (kill the wolves, save the deer, get venison and thanks), *raiders attacking a hamlet* (clear them for gold and loot; they find you if you get close), plus the existing ambushes and travelling trader.
+- **Camps are reoccupied** six in-game days (72 minutes of play) after you clear them; retaking one pays a little gold. Champions, elites and bosses stay dead.
+- **Radiant delivery jobs** on the bounty board: carry a package to a hamlet.
+- Deferred: cold from storms, children and animals in towns, second home (see later rounds).
+- Test: `stage56_living`.

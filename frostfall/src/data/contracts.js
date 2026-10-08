@@ -16,8 +16,9 @@ const KIND = {
   tower: { verb: 'Retake the watchtower', short: 'RETAKE TOWER' },
   beardn: { verb: 'Drive the bears from their den', short: 'CLEAR BEAR DEN' },
   barrow: { verb: 'Defeat the barrow guardian', short: 'BARROW BOSS' },
+  hamlet: { verb: 'Carry a sealed package to the hamlet (just walk up to it)', short: 'DELIVER PACKAGE' },
 };
-const ORDER = ['camp', 'den', 'ruin', 'champion', 'tower', 'barrow', 'beardn'];
+const ORDER = ['camp', 'den', 'ruin', 'champion', 'tower', 'barrow', 'beardn', 'hamlet'];
 
 function dirWord(dx, dy) {
   const v = Math.abs(dy) > Math.abs(dx) * 2 ? (dy < 0 ? 'NORTH' : 'SOUTH') : Math.abs(dx) > Math.abs(dy) * 2 ? (dx < 0 ? 'WEST' : 'EAST') : (dy < 0 ? 'NORTH' : 'SOUTH') + '-' + (dx < 0 ? 'WEST' : 'EAST');
