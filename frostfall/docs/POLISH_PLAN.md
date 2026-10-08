@@ -7,7 +7,9 @@ Colin's direction (his words, summarised; the night-cycle and new-regions reques
 4. **Day and night should change the world**: wolves become werewolves at night, and similar swaps. **Open to a bigger world and new regions**, as long as it feels big, not empty, with distinct areas.
 5. **Points of interest must not be on top of each other**: expansive like Skyrim, with real travel between places (round 2). **Fine with a bigger world and higher visual fidelity** (round 12).
 6. **This plan is meant to finish the game**: full and complete (see the definition below).
-7. Nothing is cut. Make the list heavy but doable in one night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
+7. **More time than one night**: the run can use the overnight stretch *and* all of the following day. So stretch goals are in scope, rounds can be done more thoroughly, and nothing is dropped for time unless a round fails twice.
+8. **Something Colin is proud to send to other people**: a stranger should be able to open the link, understand the game in a minute, enjoy the first hour, and never hit a rough edge (round 18).
+9. Nothing is cut. Make the list heavy but doable in about a day and a night. All four areas matter: game feel, menus and screens, visuals and audio, story and world. Platforms: Mac (wired pad), phone (Bluetooth pad), keyboard.
 
 ## What "finished and complete" means (the target for this plan)
 The game is done when every line below is true. The last round checks this list and reports what is still open.
@@ -182,8 +184,19 @@ Defaults if Colin does not say otherwise: move to 480x270, and keep the pixel-ar
 
 ---
 
+## Round 18: Share-ready (first-time player experience and presentation)
+The goal is that a stranger can be sent the link and have a great time.
+- **First minute**: a loading screen with a progress bar and tips, a title screen with a short attract sequence, a clear "how to play" on the first screen (touch, pad and keyboard shown by detected device), and no wall of text before the first fight.
+- **First hour**: a scripted but unobtrusive onboarding that teaches movement, roll, attack, block, potions, the map and quests in the first few places; the early game is hard (round 1) but readable; the first two quests give a sense of the world; a safe place to learn.
+- **Never lost**: always-available "what do I do now" (journal, compass and a hint button), clear markers for the next step, optional hints for stuck puzzles.
+- **Settings for everyone**: a first-launch settings step (difficulty, text size, input device, colour-blind mode), remembered per device.
+- **Presentation**: a proper credits roll (original work, tools, thanks), a "new game / continue" flow that cannot lose progress, version and build stamp, a small in-game changelog, consistent game name and tagline.
+- **Share kit**: a polished one-page landing/guide (the Field Guide, kept current), key screenshots of each region, a short feature list and "how to play" text ready to paste, and a published link that works on phone and desktop. No dev leftovers anywhere: no debug text, placeholder names, broken icons or console errors.
+- **Playtest bots as stand-ins for new players**: bots that start a fresh game with no knowledge and try to reach the first dungeon; any place they get lost, stuck or killed repeatedly is a problem to fix.
+- **Final acceptance**: the "finished and complete" list is checked line by line and the result written into `docs/OVERNIGHT_LOG.md` along with anything still open.
+
 ## Size and risk
-Seventeen rounds is a heavy night. Rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14 and 16 carry most of the value. Time-box: no round gets more than about an hour of attempts; if time runs short, drop round 15 and the secondary items in round 12 (effects, UI art) first, then regions 3 to 5 of round 6. Round 2 (scale and spacing) and round 12 (visual fidelity) are the riskiest because it moves coordinates everywhere; it runs right after the power curve and gets the most tests. The riskiest changes (power curve, world events, quest bot) have tests written first.
+Eighteen rounds across a night and a day. With the extra time, the stretch items are in scope: all five new regions of round 6, mounts, the second city, hardcore and horde modes, photo mode. Time-box: no round gets more than about two hours of attempts; a round that fails twice is reverted and logged. Order of value if something must give: rounds 1 to 5 (with the first two regions of round 6), 10, 12, 14, 16 and 18 first; round 15 and the last three regions of round 6 last. Rounds 2 (scale and spacing) and 12 (visual fidelity) are the riskiest because they touch everything; they run with extra tests and a revert point. After every four rounds the full regression, the balance bots and the fuzzing run, and the game is republished, so there is always a good build to fall back on.
 
 ## Colin's morning checklist
 1. Play 20 minutes from a new game: is the early game properly hard? Does grinding clearly pay off? Walk out at dusk: is night a different world?
