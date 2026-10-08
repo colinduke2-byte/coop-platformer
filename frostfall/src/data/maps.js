@@ -435,7 +435,7 @@ for (let i = 0; i < 8; i++) {
 }
 
 // Emberhold, the forge-city (reached from the Ashen Peaks), and its halls.
-MAPS.emberhold = { name: 'Emberhold', snow: false, outdoors: true, ambience: 'wind', build: buildEmberhold, music: 'village', dim: 0.12, flag: 'arrivedEmberhold' };
+MAPS.emberhold = { name: 'Emberhold', snow: false, outdoors: true, ambience: 'wind', build: buildEmberhold, music: 'emberhold', dim: 0.12, flag: 'arrivedEmberhold' };
 for (const [id, name] of Object.entries(EMBER_INTERIORS)) MAPS[id] = { name, snow: false, build: () => buildEmberInterior(id), music: 'village', dim: 0.12, interior: true };
 
 // The Deep Mines under Emberhold: three generated floors, cached per run seed.
@@ -457,8 +457,8 @@ MAPS.coast = { flag: 'arrivedCoast', name: 'The Frozen Coast', snow: true, ambie
 MAPS.kingdom = { flag: 'arrivedKingdom', name: 'The Old Kingdom', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('kingdom'), music: 'kingdom', dim: 0.2, stream: true, region: 'kingdom' };
 MAPS.fens = { flag: 'arrivedFens', name: 'The Weeping Fens', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('fens'), music: 'fens', dim: 0.22, stream: true, region: 'fens' };
 MAPS.highlands = { flag: 'arrivedHighlands', name: 'The Stormcrown Highlands', snow: true, ambience: 'wind', build: () => getRegion('highlands'), music: 'highlands', dim: 0.16, stream: true, region: 'highlands' };
-MAPS.reedwick = { flag: 'arrivedReedwick', name: 'Reedwick', snow: false, outdoors: true, ambience: 'wind', build: buildReedwick, music: 'village', dim: 0.2, region: 'fens' };
-MAPS.skarnhold = { flag: 'arrivedSkarn', name: 'Skarn Hold', snow: true, ambience: 'wind', build: buildSkarnhold, music: 'village', dim: 0.14, region: 'highlands' };
+MAPS.reedwick = { flag: 'arrivedReedwick', name: 'Reedwick', snow: false, outdoors: true, ambience: 'wind', build: buildReedwick, music: 'reedwick', dim: 0.2, region: 'fens' };
+MAPS.skarnhold = { flag: 'arrivedSkarn', name: 'Skarn Hold', snow: true, ambience: 'wind', build: buildSkarnhold, music: 'skarnhold', dim: 0.14, region: 'highlands' };
 MAPS.ashen.region = 'ashen'; MAPS.forest.region = 'reach';
 const delveCache = {};
 const CAVE_THEME = { ashen: 'cinder', coast: 'sea', kingdom: 'royal', fens: 'bog', highlands: 'storm' }, REGION_NO = { ashen: 1, coast: 2, kingdom: 3, fens: 4, highlands: 5 }, HOME_MAP = { ashen: 'ashen', coast: 'coast', kingdom: 'kingdom', fens: 'fens', highlands: 'highlands' };

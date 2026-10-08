@@ -178,6 +178,16 @@ SONGS.fens = { bpm: 62, lead: 'sine', bass: 'triangle', root: 33,
 SONGS.highlands = { bpm: 100, lead: 'triangle', bass: 'sawtooth', root: 40,
   A: { chords: [[0, 7, 12], [-2, 5, 10], [-5, 2, 7], [-3, 4, 9]], melody: [19, null, 17, null, 16, null, 14, null, 16, null, 17, 19, null, 21, null, null] },
   B: { chords: [[-5, 2, 7], [-3, 4, 9], [0, 7, 12], [-2, 5, 10]], melody: [21, null, 19, null, 17, null, 16, 17, 19, null, null, 16, null, 14, null, null] } };
+// hub songs: Emberhold rings with the forge, Reedwick sways, Skarn Hold stamps its feet
+SONGS.emberhold = { bpm: 92, lead: 'square', bass: 'sawtooth', root: 45,
+  A: { chords: [[0, 3, 7], [-2, 2, 5], [-4, 0, 3], [-7, -4, 0]], melody: [12, null, 12, 15, null, 17, null, 15, 14, null, 12, null, 10, null, 12, null] },
+  B: { chords: [[-4, 0, 3], [-7, -4, 0], [0, 3, 7], [-2, 2, 5]], melody: [15, null, 17, null, 19, null, 17, 15, 14, null, null, 12, 10, null, 12, null] } };
+SONGS.reedwick = { bpm: 66, lead: 'sine', bass: 'triangle', root: 52,
+  A: { chords: [[0, 4, 7], [-3, 0, 4], [-5, -1, 2], [-7, -3, 0]], melody: [null, 16, null, 14, null, 12, null, null, 11, null, 12, null, 14, null, null, null] },
+  B: { chords: [[-5, -1, 2], [-7, -3, 0], [0, 4, 7], [-3, 0, 4]], melody: [14, null, null, 16, null, 14, null, 12, null, null, 11, null, 12, null, null, null] } };
+SONGS.skarnhold = { bpm: 108, lead: 'triangle', bass: 'square', root: 50,
+  A: { chords: [[0, 7, 12], [-2, 5, 10], [-5, 2, 7], [-3, 4, 9]], melody: [19, null, 19, 17, null, 16, null, 14, 16, null, 17, null, 19, null, null, null] },
+  B: { chords: [[-5, 2, 7], [-3, 4, 9], [0, 7, 12], [-2, 5, 10]], melody: [16, null, 17, null, 19, 21, null, 19, 17, null, 16, null, 14, null, null, null] } };
 let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0, bossPhase = 1;
 function schedule() {
   const a = ac(); if (!a || !song) return;
