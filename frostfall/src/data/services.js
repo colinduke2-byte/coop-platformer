@@ -1,5 +1,6 @@
 // Shared NPC services: buying, selling, forging, enchanting, brewing. All dialogue-driven.
 import { S } from '../systems/state.js';
+import { diff } from '../systems/difficulty.js';
 import { say, choose } from '../systems/dialogue.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF } from './items.js';
@@ -30,6 +31,7 @@ export async function pick(options, back = 'Back') {
 }
 
 const price = (id) => ITEMS[id].value || 1;
+const bp = (w) => Math.max(1, Math.round(w.price * diff().price));   // shop buy price on the current difficulty
 export const sellPrice = (id) => Math.max(1, Math.floor(price(id) * 0.5));
 
 // Short stat lines for the detail pane of the list screens.
@@ -58,11 +60,11 @@ export async function buyMenu(who, wares) {
     title: who.toUpperCase() + ': BUY',
     hint: 'E BUY   ESC DONE   OR CLICK',
     rows: () => wares.map((w) => {
-      const have = w.once && count(w.id);
-      const ok = !have && S.gold >= w.price;
+      const have = w.once && count(w.id), pr = bp(w);
+      const ok = !have && S.gold >= pr;
       return {
-        id: w.id, name: w.name || ITEMS[w.id].name, tag: have ? 'OWNED' : w.price + 'G', ok, tagCol: have ? 4 : ok ? 13 : 11,
-        sub: have ? 'ALREADY OWNED' : ok ? 'CAN AFFORD' : `NEED ${w.price - S.gold} G`,
+        id: w.id, name: w.name || ITEMS[w.id].name, tag: have ? 'OWNED' : pr + 'G', ok, tagCol: have ? 4 : ok ? 13 : 11,
+        sub: have ? 'ALREADY OWNED' : ok ? 'CAN AFFORD' : `NEED ${pr - S.gold} G`,
         lines: [...statLines(w.id), w.id === 'arrows' ? [`YOU HAVE ${S.arrows}`, 4] : [`YOU HAVE ${count(w.id)}`, 4]],
         desc: w.id === 'arrows' ? 'Ten arrows for the bow. Missed shots can be picked up again.' : null,
       };
@@ -70,9 +72,9 @@ export async function buyMenu(who, wares) {
     onSelect: (i, ui) => {
       const w = wares[i];
       if (w.once && count(w.id)) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); return; }
-      if (S.gold < w.price) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); return; }
+      if (S.gold < bp(w)) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); return; }
       if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { ui.say('QUIVER IS FULL', 4); sfx.play('nostamina'); return; }
-      S.gold -= w.price;
+      S.gold -= bp(w);
       if (w.id === 'arrows') addArrows(w.n);
       else addItem(w.id, w.n || 1);
       ui.say('BOUGHT ' + (w.name || ITEMS[w.id].name).toUpperCase(), 8);

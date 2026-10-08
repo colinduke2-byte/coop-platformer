@@ -28,13 +28,13 @@ check('skill-ups raise the character level and grant perk points', lv.cl >= 2 &&
 await h.sleep(900);
 const asked = await G(() => !!window.__ff.game.scene.getScene('Hud').dlg);
 check('player is asked to pick an attribute when safe', asked);
-// answer: +10 magic, repeat for any extra pending
+// answer: +6 magic, repeat for any extra pending
 for (let i = 0; i < 40 && (await S('pendingStat')) > 0; i++) {
   const d = await G(() => { const d = window.__ff.game.scene.getScene('Hud').dlg; return d && !!d.choices; });
   if (d) { await tap('KeyS', 50); await tap('KeyE', 50); } else { await tap('KeyE', 40); await h.sleep(40); await tap('KeyE', 40); }
   await h.sleep(120);
 }
-check('attribute choice applied (+10 magic each)', (await S('bonusMp')) >= 10 && (await S('maxMp')) >= 110, `mp=${await S('maxMp')}`);
+check('attribute choice applied (+6 magic each)', (await S('bonusMp')) >= 6 && (await S('maxMp')) >= 106, `mp=${await S('maxMp')}`);
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); window.__ff.S.perkPoints = 3; });
 const before = await G(() => window.__ff.S.perks.keenedge || false);
 const bought = await G(() => window.__sk.buyPerk('keenedge'));

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { diff } from '../systems/difficulty.js';
 import { ENEMIES } from '../data/enemies.js';
 import { C } from '../config.js';
 import { dist, norm, rand, facingKind, dir8 } from '../util.js';
@@ -44,6 +45,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.13 * this.tier)) };
       if (this.cfg.loot) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * (1 + 0.5 * this.tier)), Math.round(this.cfg.loot.gold[1] * (1 + 0.5 * this.tier))] };
       this.maxHp = Math.round(this.maxHp * (1 + 0.28 * this.tier));
+    }
+    if (cfg.kind !== 'boss') {                  // the difficulty sets telegraph length and chase speed (bosses keep their own timing)
+      const D = diff();
+      if (D.windup !== 1 || D.chase !== 1) this.cfg = { ...this.cfg, windup: this.cfg.windup * D.windup, chase: (this.cfg.chase || 0) * D.chase };
     }
     this.hp = this.maxHp;
     if (this.cfg.regenRate) this.regen = this.cfg.regenRate;

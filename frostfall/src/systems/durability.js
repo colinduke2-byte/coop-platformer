@@ -1,10 +1,11 @@
 // Optional gear wear (Pause > System > DURABILITY). Off by default. Worn-out gear works at a fraction of its strength until repaired.
 import { S } from './state.js';
+import { TUNE } from '../data/tuning.js';
 import { ITEMS } from '../data/items.js';
 import { settings } from './settings.js';
 import { bus } from './bus.js';
 
-export const durOn = () => !!settings.durability;
+export const durOn = () => { const d = TUNE.difficulty[settings.difficulty]?.durability; return d == null ? !!settings.durability : d; };   // Easy: off, Hard: on, Normal: your option
 const BASE = { common: 60, uncommon: 80, rare: 100, legend: 140 };
 export const durMax = (id) => { const it = ITEMS[id]; return it ? (BASE[it.rarity] || 70) + (S.upgrades?.[id] || 0) * 12 : 0; };
 export const durOf = (id) => (S.dur && S.dur[id] != null ? S.dur[id] : durMax(id));

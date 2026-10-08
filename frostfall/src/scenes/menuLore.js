@@ -1,4 +1,8 @@
 import { C, W } from '../config.js';
+import { settings } from '../systems/settings.js';
+import { TUNE } from '../data/tuning.js';
+import { ENEMIES } from '../data/enemies.js';
+import { dangerOf, dangerName } from '../systems/danger.js';
 import { S } from '../systems/state.js';
 import { LORE, BEASTS } from '../data/lore.js';
 import { wrap } from '../art/font.js';
@@ -13,7 +17,8 @@ export function loreTab(m) {
     for (const [id, b] of Object.entries(BEASTS)) {
       if (!S.seen[id] && !(S.kills[id] > 0)) continue;
       const kills = S.kills[id] || 0;
-      const text = `${b.desc}\n\n${kills >= 3 ? 'WEAK TO: ' + b.weak : 'DEFEAT 3 TO LEARN ITS WEAKNESS.'}\n\nDEFEATED: ${kills}`;
+      const cfgE = ENEMIES[id], dg = cfgE && kills > 0 ? dangerName(dangerOf(cfgE.hp * TUNE.difficulty[settings.difficulty].enemyHp, cfgE.dmg)) : '';
+      const text = `${b.desc}\n\n${kills >= 3 ? 'WEAK TO: ' + b.weak : 'DEFEAT 3 TO LEARN ITS WEAKNESS.'}${dg ? '\n\nDANGER TO YOU NOW: ' + dg : ''}\n\nDEFEATED: ${kills}`;
       out.push({ k: 'beast', id, title: b.name, text });
     }
     for (const [id, it] of Object.entries(ITEMS)) {

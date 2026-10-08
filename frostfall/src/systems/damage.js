@@ -20,9 +20,11 @@ export function elementMult(cfg, element) {
   return cfg?.weak?.[element] ?? 1;
 }
 
+// Armour has diminishing returns: the first 40% counts in full, beyond that only half, and nothing passes 70%.
+export const armorEffect = (a) => Math.min(0.7, a <= 0.4 ? Math.max(0, a) : 0.4 + (a - 0.4) * 0.5);
 // Damage the player takes after armour and difficulty (always at least 1).
 export function damageTaken(dmg, armor = 0, difficultyMult = 1) {
-  return Math.max(1, Math.round(dmg * (1 - Math.min(0.85, armor)) * difficultyMult));
+  return Math.max(1, Math.round(dmg * (1 - armorEffect(armor)) * difficultyMult));
 }
 
 // Shield block: returns { taken, parried, blocked }.
@@ -36,7 +38,8 @@ export function blockResult({ dmg, blocking, blockT = 0, parryWindow = 0.18, fac
 }
 
 // Character level from total skill levels gained (each 2 skill-ups = 1 character level).
-export const charLevelFor = (skillUps) => 1 + Math.floor(skillUps / 2);
+export const MAX_CHAR_LEVEL = 25;
+export const charLevelFor = (skillUps) => Math.min(MAX_CHAR_LEVEL, 1 + Math.floor(skillUps / 3));   // slower: levels are a small part of your power, gear is the rest
 
 // Stamina needed to block a hit.
 export const blockStaminaCost = (dmg, shieldCost = 0.9) => Math.round(dmg * shieldCost);

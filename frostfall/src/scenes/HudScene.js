@@ -1,4 +1,5 @@
 import { ITEMS } from '../data/items.js';
+import { dangerOfEnemy, dangerName, DANGER_COL } from '../systems/danger.js';
 import { BOSS_TAUNTS } from '../data/story.js';
 import { statusList } from '../systems/status.js';
 import { copyDebugInfo } from '../systems/debug.js';
@@ -508,7 +509,8 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[11]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 5);
       g.fillStyle(C[12]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 1);
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
-      this.tgtTxt.setText((tg.displayName || tg.cfg.name).toUpperCase()).setVisible(true);
+      const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
+      this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg >= 4 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont('f' + (dg ? DANGER_COL[dg] : 6)).setVisible(true);
       this.tgtTxt.x = Math.round((W - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);
 

@@ -12,7 +12,7 @@ for (const [hero, mode, arena] of cases) {
     g.scene.start('Game', { map: A.arenaById(window.__ff.S.quick.arena).map, spawn: 'in' });
   }, [hero, mode, arena]);
   await h.sleep(1500);
-  await h.ev(async () => { const dlg = await import('/src/systems/dialogue.js'); const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene }; });
+  await h.ev(async () => { const dlg = await import('/src/systems/dialogue.js'); const real = dlg.dialogue.hud; if (!real) return; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene }; });
   const t0 = Date.now(); let pressed = new Set();
   while (Date.now() - t0 < 22000) {
     const k = KEYS[Math.floor(Math.random() * KEYS.length)];

@@ -1,5 +1,6 @@
 // Breakables and loot drops (mixed into GameScene).
 import Phaser from 'phaser';
+import { diff } from '../systems/difficulty.js';
 import Pickup from '../entities/Pickup.js';
 import { randInt, rand, dist } from '../util.js';
 import { makeGenItem } from '../systems/genloot.js';
@@ -29,7 +30,7 @@ export const lootMethods = {
     const at = (spec) => this.pickups.push(new Pickup(this, x + rand(-4, 4), y, spec));
     if (g && Math.random() < (g.chance ?? 1)) at({ type: 'gold', n: randInt(g.gold[0], g.gold[1]) });
     for (const [id, chance, range] of drops) {
-      if (Math.random() > chance) continue;
+      if (Math.random() > chance * (/potion|stew|meat|venison|pike|trout/.test(id) ? diff().drops : 1)) continue;
       if (id === 'arrows') at({ type: 'arrows', n: randInt(range[0], range[1]) });
       else at({ type: 'item', id, n: 1 });
     }

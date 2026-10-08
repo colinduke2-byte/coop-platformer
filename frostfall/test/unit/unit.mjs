@@ -34,10 +34,11 @@ t('elemental weakness / resistance', () => {
 t('armour reduces damage, never below 1', () => {
   assert.equal(damageTaken(100, 0.2), 80);
   assert.equal(damageTaken(1, 0.8), 1);
-  assert.equal(damageTaken(100, 5), 15); // armour capped at 85%
+  assert.equal(damageTaken(100, 5), 30); // armour effect is capped at 70%
+  assert.equal(damageTaken(100, 0.4), 60); assert.equal(damageTaken(100, 0.6), 50); // beyond 40% armour counts half
 });
 t('difficulty scales damage taken', () => {
-  assert.equal(damageTaken(100, 0, TUNE.difficulty.easy.dmgTaken), 70);
+  assert.equal(damageTaken(100, 0, TUNE.difficulty.easy.dmgTaken), 60);
   assert.equal(damageTaken(100, 0, TUNE.difficulty.hard.dmgTaken), 135);
 });
 t('block: frontal hit reduced, parry window negates, rear hit unaffected', () => {
@@ -49,7 +50,7 @@ t('block: frontal hit reduced, parry window negates, rear hit unaffected', () =>
   assert.equal(blockResult({ ...base, blocking: false }).taken, 20);
 });
 t('character level from skill ups', () => {
-  assert.equal(charLevelFor(0), 1); assert.equal(charLevelFor(1), 1); assert.equal(charLevelFor(2), 2); assert.equal(charLevelFor(9), 5);
+  assert.equal(charLevelFor(0), 1); assert.equal(charLevelFor(2), 1); assert.equal(charLevelFor(3), 2); assert.equal(charLevelFor(9), 4); assert.equal(charLevelFor(500), 25);
 });
 t('skills level up through xp and fire events', () => {
   resetState();
@@ -68,7 +69,7 @@ t('skill bonuses start neutral and grow', () => {
   resetState();
   assert.equal(bonus.melee(), 1); assert.equal(bonus.swingCost(), 1);
   S.skills.oneHanded.lvl = 6;
-  assert.ok(Math.abs(bonus.melee() - 1.35) < 1e-9);
+  assert.ok(Math.abs(bonus.melee() - 1.25) < 1e-9);
   assert.ok(bonus.swingCost() < 1 && bonus.swingCost() >= 0.5);
   S.skills.sneak.lvl = 20;
   assert.ok(bonus.detect() >= 0.35);

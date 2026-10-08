@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { dangerWarning } from '../systems/danger.js';
+import { diff } from '../systems/difficulty.js';
 import { TUNE } from '../data/tuning.js';
 import { updateTutorial } from '../systems/tutorial.js';
 import { isGone, markGone } from '../systems/bless.js';
@@ -212,6 +214,7 @@ export default class GameScene extends Phaser.Scene {
     this.on('ending', (kind) => { this.pendingEnding = kind; });
     this.events.on('ending-done', () => { this.applyEnding(); if (S.flags.finale && !S.flags.chapter3) startChapter3(); });
     this.applyEnding();
+    this.time.delayedCall(1800, () => { const w = !this.opts.intro && dangerWarning(this); if (w) bus.emit('toast', w, 12); });
     if (this.opts.intro) this.startIntro();
     this.on('levelup', (skill, lv) => {
       sfx.play('levelup');
@@ -236,7 +239,7 @@ export default class GameScene extends Phaser.Scene {
         const key = `${this.mapId}:${e._i}`;
         if (this.def.stream && isGone(key)) break;
         const spec = { ...e };
-        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * modMul('eliteMul')) spec.elite = true;
+        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * diff().elite * modMul('eliteMul')) spec.elite = true;
         if (this.def.stream) this.pend.push({ spec, key, wx, wy, live: null });
         else this.addEnemy(e.kind, wx, wy, spec);
         break;
@@ -552,12 +555,12 @@ export default class GameScene extends Phaser.Scene {
     this.askingStat = true;
     await runScript(async () => {
       while (S.pendingStat > 0) {
-        await say('LEVEL ' + S.charLevel, 'You feel stronger. Choose an attribute to improve.');
-        const c = await choose(['+10 HEALTH', '+10 MAGIC', '+10 STAMINA']);
-        if (c === 0) S.bonusHp += 10; else if (c === 1) S.bonusMp += 10; else S.bonusSp += 10;
+        await say('LEVEL ' + S.charLevel, 'You grow a little stronger. Gear and preparation will carry you further. Choose an attribute.');
+        const c = await choose(['+6 HEALTH', '+6 MAGIC', '+6 STAMINA']);
+        if (c === 0) S.bonusHp += 6; else if (c === 1) S.bonusMp += 6; else S.bonusSp += 6;
         S.pendingStat--;
         recalc();
-        S.hp = Math.min(S.maxHp, S.hp + 10);
+        S.hp = Math.min(S.maxHp, S.hp + 6);
         sfx.play('levelup');
       }
     });

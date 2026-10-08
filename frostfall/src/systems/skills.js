@@ -5,9 +5,9 @@ import { perkById } from '../data/perks.js';
 
 export const MAX_LVL = 20;
 export const SKILL_DEFS = {
-  oneHanded: { name: 'One-Handed', short: '1H', perk: 'Sword damage +7%, swings cost 3% less stamina' },
-  archery: { name: 'Archery', short: 'ARC', perk: 'Arrow damage +7%, bow draws 5% faster' },
-  destruction: { name: 'Destruction', short: 'DES', perk: 'Spell damage +7%, spells cost 3% less mana' },
+  oneHanded: { name: 'One-Handed', short: '1H', perk: 'Sword damage +5%, swings cost 3% less stamina' },
+  archery: { name: 'Archery', short: 'ARC', perk: 'Arrow damage +5%, bow draws 5% faster' },
+  destruction: { name: 'Destruction', short: 'DES', perk: 'Spell damage +5%, spells cost 3% less mana' },
   restoration: { name: 'Restoration', short: 'RES', perk: 'Healing +10%, wards absorb 12% more' },
   sneak: { name: 'Sneak', short: 'SNK', perk: 'Detection range -3%, sneak attacks hit 0.2x harder' },
 };
@@ -35,11 +35,11 @@ export function addXp(skill, amt) {
 
 // All gameplay bonuses derived from skill levels, in one place.
 export const bonus = {
-  melee: () => 1 + 0.07 * L('oneHanded'),
+  melee: () => 1 + 0.05 * L('oneHanded'),
   swingCost: () => Math.max(0.5, 1 - 0.03 * L('oneHanded')),
-  arrow: () => 1 + 0.07 * L('archery'),
+  arrow: () => 1 + 0.05 * L('archery'),
   drawTime: () => Math.max(0.4, (1 - 0.05 * L('archery')) * (S.perks.steadyhand ? 0.8 : 1)),
-  spell: () => 1 + 0.07 * L('destruction'),
+  spell: () => 1 + 0.05 * L('destruction'),
   manaCost: () => Math.max(0.5, 1 - 0.03 * L('destruction')),
   detect: () => Math.max(0.25, (1 - 0.03 * L('sneak')) * (S.perks.shadowstep ? 0.8 : 1)),
   sneakAttack: () => 0.2 * L('sneak'),
