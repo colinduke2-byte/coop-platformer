@@ -212,6 +212,14 @@ export class StormGiant extends PatternBoss {
     if (this.bphase >= 3) o.push('leap', 'nova', 'charge', 'spikes');
     return o;
   }
+  // Lightning: every few seconds a bolt is marked on the ground where you stand and strikes a moment later. Move.
+  special(dt, player) {
+    this.bolt = (this.bolt ?? 5) - dt;
+    if (this.bolt > 0 || this.invulnerable) return;
+    this.bolt = this.bphase >= 3 ? 2.6 : 4.2;
+    const pc = player.body.center;
+    this.scene.addZone(pc.x, pc.y, 16, 1.0, 18, this); this.scene.flashScreen?.(40, 220, 235, 255);
+  }
   doSummon() { super.doSummon(); sfx.play('roar'); }
 }
 
@@ -229,6 +237,35 @@ export class HartKing extends PatternBoss {
     return o;
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
+  // Glass armour: every so often the Hartking is wrapped in crystal (takes a quarter damage) and three prisms grow around the hall.
+  // Smash every prism to shatter the armour and leave him stunned and exposed.
+  special(dt) {
+    this.glassT = (this.glassT ?? 8) - dt;
+    if (!this.glass && this.glassT <= 0 && !this.invulnerable) {
+      this.glass = true; this.takenMul = 0.25; this.setTint(0xbff4ff);
+      this.prisms = [];
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 + Math.random(), x = this.x + Math.cos(a) * 62, y = this.y + Math.sin(a) * 50;
+        if (this.scene.solidAt(x, y)) continue;
+        const p = this.scene.addEnemy('prism', x, y, { tier: 2 }); p.alert(true); this.prisms.push(p);
+      }
+      if (!this.prisms.length) this.endGlass(false);
+      else { bus.emit('toast', 'GLASS ARMOUR! SHATTER THE PRISMS', 15); sfx.play('nova'); }
+    } else if (this.glass) {
+      this.prisms = this.prisms.filter((p) => p.active && !p.dead);
+      if (!this.prisms.length) this.endGlass(true);
+    }
+  }
+  endGlass(shattered) {
+    this.glass = false; this.takenMul = shattered ? 1.4 : 1; this.clearTint();
+    this.glassT = this.bphase >= 3 ? 9 : 13;
+    if (shattered) {
+      this.scene.fx.ring(this.x, this.y, 2, 0.5, 'ring', 0xbff4ff); this.scene.fx.text(this.x, this.y - 30, 'SHATTERED', 15, 1.0); sfx.play('guardbreak');
+      this.setState('roar', 1.8); this.body.setVelocity(0, 0);
+      this.scene.time.delayedCall(2500, () => { if (!this.dead) this.takenMul = 1; });
+    }
+  }
+  die(info) { for (const p of this.prisms || []) if (p.active && !p.dead) p.destroy(); return super.die(info); }
 }
 
 // The Underdeep: the Lode Colossus, a thing of living ore. Slow and enormous; every blow is a landslide.
@@ -245,6 +282,18 @@ export class LodeColossus extends PatternBoss {
     return o;
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
+  // Cave-in: rubble comes down in a ring around you every few seconds (faster as the vein opens). Keep moving, stay out of the rings.
+  special(dt, player) {
+    this.caveT = (this.caveT ?? 6) - dt;
+    if (this.caveT > 0 || this.invulnerable) return;
+    this.caveT = this.bphase >= 3 ? 4.2 : this.bphase >= 2 ? 5.5 : 7;
+    const pc = player.body.center, sc = this.scene, n = 3 + this.bphase;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + Math.random(), x = pc.x + Math.cos(a) * (28 + Math.random() * 26), y = pc.y + Math.sin(a) * (28 + Math.random() * 26);
+      if (!sc.solidAt(x, y)) sc.addZone(x, y, 18, 1.3 + i * 0.1, 14 + this.bphase * 2, this);
+    }
+    sc.shake(300, 0.006); sfx.play('boom'); bus.emit('toast', 'THE CEILING GROANS', 12);
+  }
 }
 
 // Saltmarket's Cove: Captain Brinegut, a smuggler lord with a crew. Fast, shoots, and shouts for help.
@@ -260,4 +309,19 @@ export class Brinegut extends PatternBoss {
     return o;
   }
   doSummon() { super.doSummon(); sfx.play('roar'); }
+  // Broadside: the Captain shouts FIRE and a wall of cannon blasts sweeps across the hall, row by row, with one safe lane. Find the gap.
+  special(dt, player) {
+    this.broadT = (this.broadT ?? 9) - dt;
+    if (this.broadT > 0 || this.invulnerable) return;
+    this.broadT = this.bphase >= 2 ? 8 : 11;
+    const pc = player.body.center, sc = this.scene, gap = Math.floor(Math.random() * 7), horiz = Math.random() < 0.5;
+    for (let i = 0; i < 9; i++) {
+      if (i === gap || i === gap + 1) continue;
+      for (let row = 0; row < 3; row++) {
+        const x = horiz ? pc.x - 100 + i * 25 : pc.x - 60 + row * 60, y = horiz ? pc.y - 60 + row * 60 : pc.y - 100 + i * 25;
+        if (!sc.solidAt(x, y)) sc.addZone(x, y, 14, 1.4 + (horiz ? i : row) * 0.05, 16, this);
+      }
+    }
+    sc.fx.text(this.x, this.y - 26, 'FIRE!', 11, 0.9); sfx.play('alert'); sc.shake(150, 0.005);
+  }
 }

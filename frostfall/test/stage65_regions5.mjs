@@ -120,6 +120,29 @@ const kp2 = await G((k) => {
 }, kp);
 check('the Hart Spire gate is barred until the key from the first hall opens it', kp.out.placed && kp2.exists && kp2.closed && kp2.stays && kp2.opens, JSON.stringify([kp, kp2]));
 
+// ---- one-off boss mechanics
+const mech = async (map, fn) => {
+  await G(() => { const f = window.__ff.S.flags; f.hartKingDead = f.lodeColossusDead = f.brinegutDead = f.stormGiantDead = false; });
+  await G((m) => { window.gs().changeMap(m, 'entry', 'door'); }, map); await h.sleep(2000);
+  await G(() => { const g = window.gs(); g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy()); g.player.invuln = 999; g.player.setPosition(g.boss.x, g.boss.y + 90); });
+  await h.sleep(1500);
+  return G(fn);
+};
+const m1 = await mech('hartspire', () => {
+  const g = window.gs(), b = g.boss, out = {}; b.invulnerable = false; b.glassT = 0; b.special(0.1, g.player);
+  out.armour = b.glass === true && b.takenMul === 0.25 && b.prisms.length >= 1;
+  b.prisms.forEach((p) => p.destroy()); b.special(0.1, g.player);
+  out.shatter = b.glass === false && b.takenMul > 1;
+  return out;
+});
+check('the Hartking grows glass armour and prisms; smashing them leaves him exposed', m1.armour && m1.shatter, JSON.stringify(m1));
+const m2 = await mech('lodenest', () => { const g = window.gs(), b = g.boss; b.invulnerable = false; const n0 = g.zones.length; b.caveT = 0; b.special(0.1, g.player); return g.zones.length - n0; });
+check('the Lode Colossus brings the ceiling down in rings around you', m2 >= 2, String(m2));
+const m3 = await mech('smugglercove', () => { const g = window.gs(), b = g.boss; b.invulnerable = false; const n0 = g.zones.length; b.broadT = 0; b.special(0.1, g.player); return g.zones.length - n0; });
+check('Captain Brinegut fires a broadside with a safe lane', m3 >= 12, String(m3));
+const m4 = await mech('stormspire', () => { const g = window.gs(), b = g.boss; b.invulnerable = false; const n0 = g.zones.length; b.bolt = 0; b.special(0.1, g.player); return g.zones.length - n0; });
+check('the Storm Giant marks lightning where you stand', m4 === 1, String(m4));
+
 // ---- creatures
 const mk = await G(async () => {
   const g = window.gs(), out = {};

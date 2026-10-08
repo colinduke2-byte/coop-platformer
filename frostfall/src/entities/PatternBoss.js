@@ -156,6 +156,7 @@ export default class PatternBoss extends Boss {
   // a leaping boss has no collision and cannot be hurt in mid-air
   update(dt, player) {
     if (this.leaping) { this.finishBoss(dt); return; }
+    if (this.engaged && !this.dead) this.special?.(dt, player);
     super.update(dt, player);
   }
 

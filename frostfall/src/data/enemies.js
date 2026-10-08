@@ -394,6 +394,11 @@ Object.assign(INFLICTS, {
 Object.assign(IMMUNE, { bogwraith: ['poison', 'bleed'], boghag: ['poison'], leech: ['poison'], mudlurker: ['poison'], miremother: ['poison'], thunderbird: ['shock'], nomadshaman: ['shock'], stonegiant: ['bleed', 'poison'], stormgiant: ['shock'] });
 // ---- Round 6 (leftovers): the Glasswood, the Underdeep, Saltmarket's Cove
 Object.assign(ENEMIES, {
+  prism: {
+    name: 'Glass Prism', tex: 'spr_wisp', tint: 0xffffff, sideOnly: true, stationary: true, scale: 1.2, bark: 'undead', weak: { shock: 0.5 }, hp: 24, speed: 0, chase: 0, dmg: 1, detect: 9999,
+    kind: 'melee', range: 0, windup: 9, atkDur: 0.1, recover: 9, cooldown: 99, kbResist: 1,
+    body: [8, 8, 4, 4], loot: { gold: [0, 0], drops: [] },
+  },
   glimmerkin: {
     name: 'Glimmerkin', tex: 'spr_wisp', tint: 0xc8fff0, sideOnly: true, fly: true, blink: 2.6, bark: 'undead', weak: { shock: 1.2, fire: 1.1, frost: 0.7 }, hp: 34, speed: 32, chase: 54, dmg: 12, detect: 116,
     kind: 'shoot', proj: 'eshot', projSpeed: 88, range: 116, keep: 62, windup: 0.6, atkDur: 0.1, recover: 0.5, cooldown: 1.5, kbResist: 0.2,
