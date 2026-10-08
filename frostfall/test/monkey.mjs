@@ -4,7 +4,7 @@ const KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyJ', 'KeyK', 'KeyL', '
 const seconds = Number(process.argv[2] || 30);
 const h = await launch();
 const ONLY = process.env.ONLY;
-for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['arena', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep'], ['maw', 'entry'], ['keep', 'entry'], ['chapel', 'entry'], ['rootvault', 'entry'], ['throne', 'entry'], ['nest', 'entry']]) {
+for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['arena', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep'], ['maw', 'entry'], ['keep', 'entry'], ['chapel', 'entry'], ['rootvault', 'entry'], ['throne', 'entry'], ['nest', 'entry'], ['fens', 'entry'], ['reedwick', 'entry'], ['highlands', 'entry'], ['skarnhold', 'entry'], ['mirebarrow', 'entry'], ['stormspire', 'entry']]) {
   if (ONLY && map !== ONLY) continue;
   await h.open(`scene=game&map=${map}&spawn=${spawn}&seed=7771`);
   await h.sleep(500);

@@ -16,8 +16,12 @@ await G(async () => { (await import('/src/systems/settings.js')).settings.diffic
 await tap('KeyD'); await h.sleep(200);
 const d1 = await G(async () => (await import('/src/systems/settings.js')).settings.difficulty);
 await h.shot('s61_options');
+await tap('KeyS'); await tap('KeyD'); await h.sleep(200);
+const ch1 = await G(async () => (await import('/src/systems/settings.js')).settings.challenge);
+await G(async () => { (await import('/src/systems/settings.js')).settings.challenge = null; });
 await tap('Escape'); await h.sleep(300);
 const o2 = await T();
+check('OPTIONS can pick a challenge modifier for the next new game', !!ch1, String(ch1));
 check('OPTIONS opens, changes the difficulty with D, and ESC returns', o1.opt && d1 === 'hard' && !o2.opt, JSON.stringify({ o1, d1, o2 }));
 // HOW TO PLAY
 await G(() => { const t = window.__ff.game.scene.getScene('Title'); t.sel = t.items.findIndex((i) => i.id === 'howto'); t.warm = 0; });

@@ -6,6 +6,7 @@ import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { modMul } from '../data/mods.js';
 import { addGold } from '../systems/inventory.js';
+import { noteDiscovered } from '../systems/notes.js';
 
 export const HIDDEN = new Set(['cache', 'hermit', 'ancient']);
 export const PLACE_NAME = {
@@ -41,6 +42,7 @@ export const discoveryMethods = {
     addGold(Math.round(reward * modMul('goldMul')));
     bus.emit('discover', { name: placeName(p), top: how, line: `+${Math.round(reward * modMul('goldMul'))} GOLD  ${discoveredCount()} PLACES FOUND` });
     sfx.play('quest');
+    noteDiscovered(this.mapId, p);
     return true;
   },
 };

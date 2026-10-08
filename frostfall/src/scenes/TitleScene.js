@@ -9,7 +9,7 @@ import { anySave, loadGame, listSaves, fmtTime, readSlot } from '../systems/save
 import { MAPS } from '../data/maps.js';
 import { music, sfx } from '../audio/sfx.js';
 import { dayStamp, dailySeed, dailyMods, startDaily, todaysBest, topBoard } from '../systems/daily.js';
-import { MODS } from '../data/mods.js';
+import { MODS, MOD_IDS } from '../data/mods.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { setVolume, setChannel } from '../audio/sfx.js';
 import { CVD_MODES, applyCvd } from '../systems/access.js';
@@ -86,12 +86,12 @@ export default class TitleScene extends Phaser.Scene {
   // Options: the settings a first-time player needs before they begin (the full list lives in Pause > System).
   openOptions() {
     this.optMode = true; this.optSel = 0; this.warm = 4;
-    this.optRows = ['DIFFICULTY', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE'];
-    this.optBox = this.add.rectangle(W / 2, 90, 250, 150, 0x0b0e1a, 0.94);
+    this.optRows = ['DIFFICULTY', 'CHALLENGE', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE'];
+    this.optBox = this.add.rectangle(W / 2, 90, 280, 150, 0x0b0e1a, 0.94);
     this.optHead = txt(this, 0, 22, 'OPTIONS', 13); this.optHead.x = Math.floor((W - this.optHead.width) / 2);
-    this.optTxt = this.optRows.map((r, i) => txt(this, 50, 42 + i * 14, r, 6));
-    this.optVal = this.optRows.map((r, i) => txt(this, 0, 42 + i * 14, '', 5));
-    this.optFoot = txt(this, 0, 148, 'W/S MOVE   A/D ADJUST   ESC BACK', 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
+    this.optTxt = this.optRows.map((r, i) => txt(this, 50, 34 + i * 12, r, 6));
+    this.optVal = this.optRows.map((r, i) => txt(this, 0, 34 + i * 12, '', 5));
+    this.optFoot = txt(this, 0, 150, 'W/S MOVE   A/D ADJUST   ESC BACK', 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
     this.refreshOptions();
   }
@@ -99,6 +99,7 @@ export default class TitleScene extends Phaser.Scene {
     const lvl = (k) => String(Math.round((settings[k] ?? 1) * 10));
     switch (r) {
       case 'DIFFICULTY': return [settings.difficulty.toUpperCase(), { easy: 8, normal: 5, hard: 11 }[settings.difficulty]];
+      case 'CHALLENGE': return [settings.challenge ? MODS[settings.challenge].name.toUpperCase() : 'NONE', settings.challenge ? 11 : 4];
       case 'VOLUME': return [lvl('volume') + '/10', 15]; case 'MUSIC LVL': return [lvl('musicVol') + '/10', 15]; case 'SFX LVL': return [lvl('sfxVol') + '/10', 15];
       case 'FULLSCREEN': return [document.fullscreenElement ? 'ON' : 'OFF', 4]; case 'LARGE UI': return [settings.largeUi ? 'ON' : 'OFF', settings.largeUi ? 8 : 4];
       default: return [String(settings.cvd).toUpperCase(), settings.cvd === 'off' ? 4 : 8];
@@ -113,6 +114,7 @@ export default class TitleScene extends Phaser.Scene {
   optAdjust(dir) {
     const r = this.optRows[this.optSel], DIFFS = ['easy', 'normal', 'hard'];
     if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
+    else if (r === 'CHALLENGE') { const l = [null, ...MOD_IDS], i = Math.max(0, l.indexOf(settings.challenge || null)); settings.challenge = l[(i + dir + l.length) % l.length]; }
     else if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
     else if (r === 'MUSIC LVL') setChannel('music', Math.round(((settings.musicVol ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'SFX LVL') setChannel('sfx', Math.round(((settings.sfxVol ?? 1) + dir * 0.1) * 10) / 10);
@@ -215,6 +217,7 @@ export default class TitleScene extends Phaser.Scene {
         if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else this.go = false;
       } else if (this.items[this.sel].id === 'new') {
         resetState();
+        if (settings.challenge && MODS[settings.challenge]) S.mods = { [settings.challenge]: true };
         this.scene.start('Intro');
       } else {
         const have = listSaves().filter((x) => x.info);

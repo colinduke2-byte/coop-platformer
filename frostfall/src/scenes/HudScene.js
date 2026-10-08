@@ -40,7 +40,7 @@ export default class HudScene extends Phaser.Scene {
 
   create() {
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
-    this.quickTxt = null; this.compassTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
+    this.quickTxt = null; this.compassTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
     this.g = this.add.graphics();
     this.flash = { hp: 0, mp: 0, sp: 0 };
     this.labels = BARS.map((b, i) => txt(this, 3, 3 + i * 8, b.label, 5));

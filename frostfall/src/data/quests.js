@@ -5,6 +5,12 @@ import { heartsHeld, HEART_COUNT, HEART_ORDER, HEARTS, HEART_SITE } from './hear
 import { getReach } from './maps.js';
 
 export const QUESTS = {
+  smugglers: {
+    title: 'The Smuggler\'s Note', giver: 'A note taken off a bandit chief',
+    desc: 'A scrawled page from a bandit chief\'s belt names a cache hidden in the wild: someone\'s savings, left under a rock. Whoever wrote it did not come back for it.',
+    short: () => 'Find the hidden cache the note names',
+    objectives: (q) => [{ t: 'Find the cache the note names (it is marked on your map)', done: q.status === 'done' }],
+  },
   hearts: {
     title: 'The Four Hearts',
     giver: 'Elder Sigrid',
@@ -111,6 +117,7 @@ export const QUESTS = {
 
 // Quest targets for the map markers / HUD arrow: { map, x, y } in tiles.
 export const TARGETS = {
+  smugglers: () => (S.flags.noteCache ? { map: S.flags.noteCache.map, x: S.flags.noteCache.x, y: S.flags.noteCache.y } : null),
   hearts: () => {
     const reach = getReach();
     const ARENA = { maw: [18, 4], keep: [20, 4], chapel: [18, 4], rootvault: [20, 4], throne: [20, 6] };

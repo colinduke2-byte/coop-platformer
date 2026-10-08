@@ -20,6 +20,7 @@ import { submitScore } from '../systems/daily.js';
 import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
+import { hasMod } from '../data/mods.js';
 
 export const eventMethods = {
   // Companion and side-quest bookkeeping, twice a second at most.
@@ -148,6 +149,7 @@ export const eventMethods = {
     }
   },
   fastTravel(f) {
+    if (hasMod('pilgrim')) { bus.emit('toast', 'A PILGRIM WALKS', 11); return false; }
     if (this.leaving || this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) { bus.emit('toast', 'NOT WITH ENEMIES NEAR', 11); return false; }
     this.leaving = true;
     const cam = this.cameras.main;

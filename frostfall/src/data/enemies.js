@@ -117,7 +117,7 @@ export const ENEMIES = {
     name: 'Bandit Chief', tex: 'spr_chief', blade: 5, bark: 'human', call: 120,
     hp: 95, speed: 36, chase: 56, dmg: 20, detect: 80,
     kind: 'melee', range: 22, windup: 0.42, atkDur: 0.16, recover: 0.55, cooldown: 0.3, kbResist: 0.4,
-    body: [8, 7, 4, 9], loot: { gold: [30, 60], drops: [['iron_shield', 0.5], ['steel_sword', 0.25], ['lockpick', 1], ['hp_potion', 0.6], ['iron_ingot', 0.7]] },
+    body: [8, 7, 4, 9], loot: { gold: [30, 60], drops: [['iron_shield', 0.5], ['steel_sword', 0.25], ['lockpick', 1], ['hp_potion', 0.6], ['iron_ingot', 0.7], ['smugglers_note', 0.3]] },
   },
   conjurer: {
     name: 'Hexcaster', tex: 'spr_conjurer', bark: 'undead', weak: { fire: 1.3, shock: 1.5 },

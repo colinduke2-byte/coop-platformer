@@ -19,14 +19,14 @@ Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|ha
 
 ## World
 
-Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (320x224 tiles: camps,
+Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (540x378 tiles: camps,
 dens, ruins, standing stones, hamlets, watchtowers, champions, procedural barrow dungeons, a travelling trader) with the
-Crypt of the Hollow King (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie three more seeded regions,
-each opened by story or travel: the **Ashen Peaks** (lava, foundries, the forge-city **Emberhold** with its three factions:
+Crypt of the Hollow King (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie five more seeded regions,
+three opened by the story and two you can walk to from the start (if you dare): the **Ashen Peaks** (lava, foundries, the forge-city **Emberhold** with its three factions:
 the Anvil Court, the Delvers' Guild and the Ember Wardens), the **Frozen Coast** (wrecks, lighthouses, the drowned Tidebreak Hall)
-and the **Old Kingdom** (courtyards, the Sepulchre). Chapter 3, "The Ember Crown", is needed for the full ending
-(36 ending variants). A 12-minute day/night cycle and changing weather affect stealth; villagers go indoors at night.
-Bosses: Valdrek, Grimfang, the Frost Wyrm, Kragnar, the Ashen Sovereign, Admiral Veyl, the Hollow King.
+the **Old Kingdom** (courtyards, the Sepulchre), the **Weeping Fens** (a drowned bog; the stilt village Reedwick; the Mire Mother) and the **Stormcrown Highlands** (storm, clans, giants; Skarn Hold; the Storm Giant). Chapter 3, "The Ember Crown", is needed for the full ending
+(36 ending variants). A 12-minute day/night cycle, an eight-phase moon and changing weather change who lives in the world: wolves become werewolves, the dead become ghosts, a blood moon brings a great wolf. Three difficulty levels (Easy, Normal, Hard) and optional challenge modifiers.
+Bosses: Valdrek, Grimfang, the Frost Wyrm, Kragnar, the Ashen Sovereign, Admiral Veyl, the Hollow King, the Mire Mother, the Storm Giant. See `docs/GUIDE.md` for the player's guide and `CHANGELOG.md` for everything added.
 See `docs/EMBERHOLD.md`, `docs/CHAPTER3.md`, `docs/world_map.png`, `docs/creatures.png`.
 
 ## Controls
@@ -57,7 +57,7 @@ All keyboard keys can be rebound in **Pause > System > Controls**.
 ## Systems at a glance
 
 * **Combat**: sword combo, shields (block / parry), two-handed and dual-wield, bow with charge and recoverable arrows,
-  spells (incl. Ember Nova, Glacier Spear, Cinderstep, Hearthcall), shouts, crossbows and warhammers, gem and rune sockets, enchantments, elemental weaknesses, enemy telegraphs, crowd tactics, 24 enemy types, 7 bosses.
+  spells (incl. Ember Nova, Glacier Spear, Cinderstep, Hearthcall), shouts, crossbows and warhammers, gem and rune sockets, enchantments, elemental weaknesses, enemy telegraphs, crowd tactics, 35 enemy types, 9 bosses.
 * **Progression**: 5 skills that level by use (Archery, One-Handed, Destruction, Restoration, Sneak), character level,
   15 perks, attribute choices, forge upgrades, alchemy, lockpicking, pickpocketing, shops, a hireable follower, Emberforged masterwork crafting.
 * **Story**: three chapters, dozens of quests with real choices (the Frostheart, Asta's locket, Grimfang, the Ember Crown), faction reputation, recruitable companions (Ragna, Pell), 36 endings.

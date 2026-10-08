@@ -31,6 +31,7 @@ export function newState() {
       denmother: { status: 'inactive' },
       towerwatch: { status: 'inactive' },
       hollowking: { status: 'inactive' },
+      smugglers: { status: 'inactive' },
       miremother: { status: 'inactive' }, leeches: { status: 'inactive' }, orchids: { status: 'inactive' },
       stormgiant: { status: 'inactive' }, feathers: { status: 'inactive' }, greytusk: { status: 'inactive' },
     },

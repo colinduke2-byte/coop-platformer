@@ -16,10 +16,11 @@ import { eatFood } from '../systems/food.js';
 import { readTome } from '../systems/tomes.js';
 import { drinkElixir } from '../systems/elixir.js';
 import { readMap } from '../systems/treasure.js';
+import { readNote } from '../systems/notes.js';
 
 const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'elixir', 'food', 'tome', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
-const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion', 'elixir', 'food', 'tome']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest']]];
+const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm']], ['POTION', ['potion', 'elixir', 'food', 'tome']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest', 'note']]];
 const SORTS = ['TYPE', 'NAME', 'VALUE'];
 const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
@@ -155,6 +156,8 @@ export default class MenuScene extends Phaser.Scene {
         drinkElixir(id, this.gs);
       } else if (it.type === 'whistle' && wantEquip) {
         this.gs.swapPet();
+      } else if (it.type === 'note' && wantEquip) {
+        readNote(id, this.gs);
       } else if (it.type === 'map' && wantEquip) {
         readMap(id, this.gs);
       } else sfx.play('nostamina');

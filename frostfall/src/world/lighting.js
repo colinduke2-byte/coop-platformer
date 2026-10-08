@@ -82,6 +82,7 @@ export const lightingMethods = {
     if (!(this.def.snow || this.def.outdoors)) return;                           // time stands still indoors / underground
     const before = hourOf();
     advanceTime(dt * 2);
+    if (hasMod('moonbound')) { S.time = 23 * 60; S.days = Math.floor((S.days || 0) / 8) * 8 + 4; }
     const h = hourOf();
     if (Math.floor(before) !== Math.floor(h)) {
       if (Math.floor(h) === 21) { bus.emit('toast', isBlood() ? 'THE BLOOD MOON RISES' : isFull() ? 'NIGHT FALLS. THE FULL MOON RISES' : 'NIGHT FALLS', isFull() ? 8 : 4); tip('night'); }

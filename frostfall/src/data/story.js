@@ -90,6 +90,8 @@ export function epilogueLines() {
   if (S.flags.dragonDead) out.push('Skaldrath\'s bones lie in the Ember Nest. The snow will not settle on them.');
   if (trophies >= 20) out.push('Bards across the Reach sing of you. They disagree about almost everything except the ending.');
   if (S.flags.admiralDead) out.push('The Last Light keeps burning on the Frozen Coast. The bell under the ice has not rung since.');
+  if (S.flags.mireMotherDead) out.push('The Fens are quiet. The boards at Reedwick have dried for the first time in anyone\'s memory, and the children are learning to swim.');
+  if (S.flags.stormGiantDead) out.push('The clouds over the Stormcrown have started to move. The clans do not know what to do with a sky that changes.');
   if (S.flags.kingRemembered) out.push('The Scribe of the Old Kingdom finished the last name in the Book of Chains. It is the shortest entry, and the only one with a smile in the margin.');
   if ((S.ngPlus || 0) >= 1) out.push('This is not the first winter you have broken. It may not be the last.');
   return out;

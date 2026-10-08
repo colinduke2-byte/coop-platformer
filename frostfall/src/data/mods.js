@@ -10,6 +10,8 @@ export const MODS = {
   ironhide: { name: 'Ironhide', desc: 'Foes take 20% less damage, but gold and drops flow 40% richer.', dealMul: 0.8, goldMul: 1.4 },
   cinder: { name: 'Cinder Skin', desc: 'You deal 15% more damage, but every hit that lands on you burns.', dealMul: 1.15, burnOnHit: true },
   brittle: { name: 'Brittle Bones', desc: 'You take 30% more damage, but foes have 25% less health.', takenMul: 1.3, foeHpMul: 0.75 },
+  moonbound: { name: 'Moonbound', desc: 'It is always a full-moon night. Gold flows 20% richer.', goldMul: 1.2 },
+  pilgrim: { name: 'Pilgrim', desc: 'No fast travel, ever. Gold flows 30% richer.', goldMul: 1.3 },
   frail: { name: 'Frail', desc: 'You have 30% less health, but your hits stagger much harder.', maxHpMul: 0.7, poiseMul: 1.6 },
 };
 export const MOD_IDS = Object.keys(MODS);
