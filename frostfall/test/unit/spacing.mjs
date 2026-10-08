@@ -14,7 +14,7 @@ for (const [id, L] of Object.entries(LIMITS)) {
       S.seed = 5000 + k * 104729;
       const reg = getRegion(id);
       if (L.size) assert.deepEqual([reg.w, reg.h], L.size);
-      const pois = reg.pois.filter((p) => p.kind !== 'rest' && p.kind !== 'spring');
+      const pois = reg.pois.filter((p) => !['rest', 'spring', 'cache', 'hermit', 'ancient'].includes(p.kind));
       const nn = pois.map((p, i) => Math.min(...pois.filter((_, j) => j !== i).map((q) => dist(p, q)))).sort((a, b) => a - b);
       assert.ok(nn[0] >= L.min, `seed ${S.seed}: closest pair ${Math.round(nn[0])} < ${L.min}`);
       assert.ok(nn[Math.floor(nn.length * 0.1)] >= L.p10, `seed ${S.seed}: 10th percentile ${Math.round(nn[Math.floor(nn.length * 0.1)])} < ${L.p10}`);
@@ -24,6 +24,12 @@ for (const [id, L] of Object.entries(LIMITS)) {
     }
   });
 }
+t('hidden places keep their own distance and have no road to them', () => {
+  S.seed = 424242; const reg = getRegion('reach');
+  const hid = reg.pois.filter((p) => ['cache', 'hermit', 'ancient'].includes(p.kind));
+  assert.ok(hid.length >= 12, `only ${hid.length} hidden places`);
+  for (const a of hid) for (const b of reg.pois) if (a !== b) assert.ok(dist(a, b) >= 18, `${a.id} is only ${Math.round(dist(a, b))} from ${b.id}`);
+});
 t('the wild is not empty: no 120x120 square of the Reach has neither a place nor a road tile', () => {
   S.seed = 424242; const reg = getRegion('reach');
   const hasRoad = (x0, y0) => { for (let y = y0; y < y0 + 120; y += 3) for (let x = x0; x < x0 + 120; x += 3) if (reg.grid[y]?.[x] === 5 || reg.grid[y]?.[x] === 24) return true; return false; };

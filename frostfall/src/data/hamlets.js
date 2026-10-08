@@ -99,3 +99,27 @@ SCRIPTS.scribe = async function scribe() {
   }
   await say(N, cyc('scribeN', ['A kingdom is a promise that outlasts the people who made it. Ours outlasted us by a long time.', 'The marble was white once. The moss is only the world, remembering how to grow.', 'There are three crowns in the stories: Frost, Ember and Memory. I only ever wrote about the third.']));
 };
+
+// ---- The hermits: people who have walked every road. Ask one for a rumour and a place you have not found yet is revealed, with a waypoint.
+NPC_DEFS.hermit = { name: 'HERMIT', tex: 'spr_prospector' };
+const DIRS8 = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
+SCRIPTS.hermit = async () => {
+  const g = window.__ff?.game?.scene?.getScene('Game');
+  const { regionOfMap } = await import('./regions.js'), { placeName, HIDDEN } = await import('../world/discovery.js');
+  await say('Hermit', cyc('hermitN', ['Sit. The fire is free. Everything else I know has a price: your attention.', 'You came a long way to find a man in a hole. Good. Most people never look.', 'The land is bigger than the maps say. It always has been.']));
+  for (;;) {
+    const c = await choose(['Ask for a rumour', 'Trade', 'Leave']);
+    if (c === 2) return;
+    if (c === 1) { await trade('Hermit', [{ id: 'hp_potion', price: 24 }, { id: 'sp_potion', price: 18 }, { id: 'frost_lily', price: 10, n: 2, name: 'Frost lily x2' }, ...dailyWares('Hermit', 2)], 'What I have, I have carried a long way.'); continue; }
+    const reg = getRegion(regionOfMap(S.map));
+    const left = (reg.pois || []).filter((p) => !HIDDEN.has(p.kind) && p.kind !== 'rest' && !S.discovered?.[S.map + ':' + p.id]);
+    if (!left.length || !g) { await say('Hermit', 'I have told you every place I know in these lands. The rest is for you to find.'); continue; }
+    const px = g.player.x / 16, py = g.player.y / 16;
+    left.sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py));
+    const p = left[Math.min(left.length - 1, Math.floor(Math.random() * 3))];
+    const ang = Math.atan2(p.y - py, p.x - px), dir = DIRS8[(Math.round(ang / (Math.PI / 4)) + 8) % 8], paces = Math.round(Math.hypot(p.x - px, p.y - py) / 5) * 5;
+    await say('Hermit', `${dir.charAt(0) + dir.slice(1).toLowerCase()}, about ${paces} paces from here: ${placeName(p).toLowerCase()}. I marked it for you.`);
+    g.discover(p, S.map + ':' + p.id, 'A RUMOUR');
+    S.flags.waypoint = { map: S.map, x: p.x, y: p.y };
+  }
+};

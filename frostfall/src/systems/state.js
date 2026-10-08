@@ -42,6 +42,7 @@ export function newState() {
     follower: false, bossState: null, tracked: null,
     playtime: 0,
     seed: Math.floor(Math.random() * 1e9),     // the run seed: lays out the open world and its dungeons
+    discovered: {},
     hearts: {}, gen: {}, killed: {}, bounty: {}, shrines: {}, run: { kills: 0, camps: 0, barrows: 0, champions: 0, chests: 0 }, ngPlus: 0,
   };
 }

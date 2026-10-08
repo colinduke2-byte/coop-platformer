@@ -1,4 +1,5 @@
 import { C, T, TILE } from '../config.js';
+import { PLACE_COL, placeName } from '../world/discovery.js';
 import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
 import { TARGETS, trackedId } from '../data/quests.js';
@@ -150,6 +151,15 @@ export function mapTab(m) {
         else if (e.t === 'bounty') { if (seen(Math.floor(e.x), Math.floor(e.y))) dot(e.x, e.y, S.bounty[e.id] ? 3 : 11, sc + 1); }
         else if (e.t === 'boss' && !S.flags.bossDead) dot(e.x, e.y, 11, sc + 2);
       }
+      // places you have discovered stay on the map, whatever the fog says
+      const found = (b.pois || []).filter((q) => S.discovered?.[vid + ':' + q.id]);
+      for (const q of found) {
+        const size = sc + 2, [px, py] = spot(q.x, q.y, size);
+        if (!inView(px, py, size, size)) continue;
+        go.fillStyle(C[0]); go.fillRect(px - 1, py - 1, size + 2, size + 2); go.fillStyle(C[PLACE_COL[q.kind] ?? 6]); go.fillRect(px, py, size, size);
+      }
+      const nearPlace = curMode && cur ? found.find((q) => Math.abs(q.x - cur.x) <= 3 && Math.abs(q.y - cur.y) <= 3) : null;
+      if (nearPlace) m.T(10, 127, placeName(nearPlace), PLACE_COL[nearPlace.kind] ?? 6);
       const marker = (tg, col) => {
         const qx = ox + Math.floor((tg.x + 0.5) * sc), qy = oy + Math.floor((tg.y + 0.5) * sc), pulse = Math.floor(m.time.now / 300) % 2;
         if (!inView(qx - 3, qy - 3, 7, 7)) return;
@@ -179,7 +189,7 @@ export function mapTab(m) {
         go.fillStyle(C[0], 0.7); go.fillRect(lx - 1, ly - 1, lw + 2, 9);
         m.T(lx, ly, text, 15);
       }
-      m.T(10, 26, MAPS[vid].name + (zoom ? '  ' + Math.round(sc * 10) / 10 + 'X' : SCS[0] < 1 ? '  OVERVIEW' : '') + (unlockedRegions().length > 1 ? '   R: NEXT REGION' : ''), 13);
+      m.T(10, 26, MAPS[vid].name + (zoom ? '  ' + Math.round(sc * 10) / 10 + 'X' : SCS[0] < 1 ? '  OVERVIEW' : '') + (unlockedRegions().length > 1 ? '   R: NEXT REGION' : '') + (MAPS[vid].stream ? '   FOUND ' + found.length + '/' + (b.pois || []).length : ''), 13);
       const ly = 143;
       let lx = 12;
       [[13, 'YOU'], [15, 'EXIT'], [12, 'FIRE'], [14, 'SHRINE'], [11, 'FOE SITE'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {

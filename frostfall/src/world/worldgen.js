@@ -52,7 +52,8 @@ export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', '
 const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS', tower: 'A WATCHTOWER', grove: 'A QUIET GROVE', hamlet: 'A SMALL HAMLET', standing: 'A CIRCLE OF STANDING STONES', barrow: 'A BARROW', champion: 'A MONSTER\'S LAIR', beardn: 'A BEAR DEN',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
   city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE' };
-export const SMALL_GAP = { rest: 24, spring: 30 };
+export const SMALL_GAP = { rest: 24, spring: 30, cache: 30, hermit: 36, ancient: 36 };
+export const HIDDEN_KINDS = new Set(['cache', 'hermit', 'ancient']);   // no road leads to these: you find them by looking
 const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall']);   // biomes nothing is placed in (solid or open water)
 export function buildRegion(def, region, seed) {
   const W = def.w, H = def.h, START = def.start, tierAt = def.tierAt, TIER_MOBS = def.mobs, FL = def.flora, ORE = def.ores;
@@ -113,7 +114,7 @@ export function buildRegion(def, region, seed) {
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const edges = [];
-  const remaining = [...pois].sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
+  const remaining = pois.filter((p) => !HIDDEN_KINDS.has(p.kind)).sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
   const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre']);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
     const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
@@ -325,6 +326,27 @@ export function buildRegion(def, region, seed) {
       add({ t: 'glow', x: p.x, y: p.y, r: 46, col: 14 });
       add({ t: 'lore', id: 'stone' + (p.id.slice(-1) % 3), tex: 'book', x: p.x + 2, y: p.y + 1 });
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A CIRCLE OF STANDING STONES.', 'THE AIR HUMS. SOMETHING OLD BLESSES THOSE WHO PAUSE HERE.'] });
+    } else if (p.kind === 'cache') {
+      // a hollow in the rock or a collapsed lean-to: a locked chest, a note, one or two sleepers
+      clearing(p, 7, 6, TILE.SNOW2);
+      g.set(p.x - 4, p.y - 1, TILE.ROCK); g.set(p.x + 4, p.y - 1, TILE.ROCK); g.set(p.x - 3, p.y - 2, TILE.ROCK); g.set(p.x + 3, p.y - 2, TILE.ROCK);
+      chest(p, 0, -1, p.tier + 1, 'hard');
+      add({ t: 'sign', x: p.x - 2, y: p.y + 2, text: ['A SCRAWLED NOTE.', pickOf(['SOMEONE HID THEIR SAVINGS HERE. THEY NEVER CAME BACK.', 'IF YOU FOUND THIS, IT IS YOURS. DO NOT WAKE THE WATCHMAN.', 'THE LAST OF THE WINTER STORES. TAKE ONE AND LEAVE THE REST.'])] });
+      for (let i = 0; i < 1 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(m.melee), p.x + (i ? 3 : -3), p.y + 2, p.tier, { camp: p.id });
+    } else if (p.kind === 'hermit') {
+      clearing(p, 9, 7, TILE.SNOW2);
+      g.set(p.x, p.y + 1, TILE.FIRE);
+      add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 50, col: 12 });
+      add({ t: 'npc', id: 'hermit', x: p.x + 2, y: p.y + 2 });
+      add({ t: 'sign', x: p.x - 3, y: p.y + 2, text: ['A HERMIT\'S HOLLOW.', 'HE HAS WALKED EVERY ROAD, AND REMEMBERS ALL OF THEM.'] });
+      potsAround(p, 3, 4, 'barrel');
+    } else if (p.kind === 'ancient') {
+      // a huge old tree ringed by smaller ones, with a blessing at its roots
+      clearing(p, 11, 9, TILE.SNOW2);
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), TILE.PINE); }
+      g.set(p.x, p.y - 1, TILE.DEADTREE);
+      add({ t: 'shrine', id: p.id, x: p.x, y: p.y + 1 }); add({ t: 'glow', x: p.x, y: p.y, r: 52, col: 14 });
+      add({ t: 'lore', id: 'stone' + ((p.id.length + p.x) % 3), tex: 'book', x: p.x + 2, y: p.y + 2 });
     } else if (p.kind === 'rest') {
       clearing(p, 5, 5);
       g.set(p.x, p.y, TILE.FIRE);
@@ -487,6 +509,7 @@ export const REACH = {
     place('den', 1, 9, { x: 105, y: 30, r: 32 });
     place('rest', 1, 4, { x: 105, y: 54, r: 27 });
     place('hamlet', 1, 9, { x: 80, y: 50, r: 34 });
+    place('cache', 8, 5); place('hermit', 4, 7); place('ancient', 5, 7);          // hidden places, found by looking
   },
   extras({ g, R, W, H, START, add, pois, bio, entities }) {
   add({ t: 'hound', x: START.x + 12, y: START.y + 4 });
@@ -617,6 +640,7 @@ export const ASHEN = {
     place('champion', 3, 8); place('ruin', 3, 10); place('camp', 5, 11); place('tower', 3, 7);
     place('spring', 2, 6); place('standing', 2, 8); place('hamlet', 2, 9); place('rest', 8, 4);
     place('rest', 1, 4, { x: ASH_START.x + 22, y: ASH_START.y, r: 14 });
+    place('cache', 3, 5); place('hermit', 1, 7); place('ancient', 1, 7);
   },
   extras: null,
   scenery(g, bio, W, H) {
@@ -664,6 +688,7 @@ export const COAST = {
     place('camp', 4, 11); place('hamlet', 3, 9); place('tower', 2, 7); place('champion', 3, 8);
     place('spring', 1, 6); place('standing', 2, 8); place('den', 2, 9); place('rest', 7, 4);
     place('rest', 1, 4, { x: COAST_START.x + 22, y: COAST_START.y, r: 14 });
+    place('cache', 3, 5); place('hermit', 1, 7); place('ancient', 1, 7);
   },
   extras: null,
   scenery(g, bio, W, H) {
@@ -710,6 +735,7 @@ export const KINGDOM = {
     place('courtyard', 5, 11); place('cave', 3, 7); place('ruin', 3, 10); place('tower', 2, 7);
     place('champion', 4, 8); place('camp', 3, 11); place('standing', 2, 8); place('hamlet', 1, 9); place('rest', 7, 4);
     place('rest', 1, 4, { x: KING_START.x + 22, y: KING_START.y, r: 14 });
+    place('cache', 3, 5); place('hermit', 1, 7); place('ancient', 1, 7);
   },
   extras: null,
   scenery(g, bio, W, H) {

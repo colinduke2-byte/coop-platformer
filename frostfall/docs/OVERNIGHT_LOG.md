@@ -11,3 +11,6 @@ Shipped: see CHANGELOG round 28. The plan's aspiration was a typical neighbour 1
 Numbers to tweak: `gap` and `majorGap` per region def in worldgen.js, REACH_W/H, tierAt bands, PONY_SPEED and PONY_DRAIN in entities/Pony.js, the pony price in data/dialogue.js.
 To playtest: walk from the village to the Winter Throne: is there something to see along the way? Do the waystone signs help? Is the pony worth 420 gold?
 
+
+## Round 3: discovery and exploration - DONE (landmarks/vistas and unmarked quests deferred)
+Shipped: see CHANGELOG round 29. Tweak: reward formula in world/discovery.js (4+4*tier, hidden 20+12*tier), hidden-place gaps in worldgen.js. Playtest: wander off the road: do banners and the compass make you want to look further?

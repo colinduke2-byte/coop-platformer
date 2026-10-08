@@ -368,3 +368,10 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Pony**: the smith sells a Pony Whistle (420 gold). The pony follows you outdoors; stand beside it and press E to ride (1.55x speed, free on roads, drains stamina off them). Fighting, rolling or being hit gets you off; no pony in dungeons or buildings.
 - Load time of the big Reach: about 0.4 s on this machine, 0.8 s with a CPU 6x slower; memory about 120 to 170 MB.
 - Tests: `unit/spacing`, `stage54_pony`; world snapshot re-recorded on purpose; older size expectations updated.
+
+## Round 29 - Overnight Round 3: discovery and exploration
+- **Discovery**: walking up to any place (camp, ruin, den, tower, hamlet, dungeon mouth...) names it with a banner and pays a small gold reward that grows with danger; the map marks discovered places and shows how many you have found.
+- **Hidden places**: caches, hermits, ancient sites and springs sit away from roads, have no waystone and keep their distance from other places. Hermits trade rumours that point you at them.
+- **Compass strip** on the HUD (setting COMPASS), with quest and discovery markers; ROTATE VIEW setting.
+- **Fast travel costs time**: hours pass and the toast says so. Trophies for wandering and exploring.
+- Deferred: landmarks and vistas, unmarked quests (later rounds). Tests: `stage55_discovery`, spacing unit test extended.

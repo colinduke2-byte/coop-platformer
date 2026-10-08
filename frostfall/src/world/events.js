@@ -152,6 +152,9 @@ export const eventMethods = {
     this.leaving = true;
     const cam = this.cameras.main;
     cam.fadeOut(350, 11, 14, 26);
+    // the journey takes time: the walk you skipped, at the clock's pace (2 game minutes per second walked)
+    const tiles = f.map && f.map !== this.mapId ? 160 : Math.hypot(f.x - this.player.x, f.y - this.player.y) / 16, mins = Math.round(tiles / 4.5 * 2);
+    S.time = ((S.time || 0) + mins) % 1440; this.travelMins = mins;
     if (f.map && f.map !== this.mapId) {          // another region: load its map and drop in at the fire
       cam.once('camerafadeoutcomplete', () => {
         S.map = f.map; S.spawn = 'entry'; S.x = f.x; S.y = f.y + 16;
@@ -165,7 +168,7 @@ export const eventMethods = {
       this.pend.forEach((p) => { if (p.live && !p.live.alerted) { p.live.despawn(); p.live = null; } });
       this.streamTick();
       cam.fadeIn(450, 11, 14, 26); this.leaving = false;
-      bus.emit('toast', 'FAST TRAVEL', 15);
+      bus.emit('toast', `FAST TRAVEL: ${Math.max(1, Math.round((this.travelMins || 0) / 60 * 10) / 10)} HOURS PASS`, 15);
     });
     return true;
   },

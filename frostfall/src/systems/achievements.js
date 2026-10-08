@@ -8,6 +8,8 @@ const total = () => Object.values(S.kills || {}).reduce((a, b) => a + b, 0);
 const hearts = () => Object.values(S.hearts || {}).filter(Boolean).length;
 
 export const TROPHIES = [
+  { id: 'wanderer', name: 'Wanderer', desc: 'Discover 25 places.', test: () => Object.keys(S.discovered || {}).length >= 25 },
+  { id: 'explorer', name: 'Explorer', desc: 'Discover 60 places.', test: () => Object.keys(S.discovered || {}).length >= 60 },
   { id: 'first_blood', name: 'First Blood', desc: 'Defeat your first foe.', test: () => total() >= 1 },
   { id: 'hundred', name: 'Hundred Fallen', desc: 'Defeat 100 foes.', test: () => total() >= 100 },
   { id: 'wolfbane', name: 'Wolfbane', desc: 'Defeat 20 wolves.', test: () => kills('wolf') >= 20 },
