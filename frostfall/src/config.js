@@ -2,6 +2,7 @@
 export const W = 320;
 export const H = 180;
 export const T = 16;
+export const VERSION = 'V1.0';
 
 // 16-colour palette. Every pixel in the game comes from here.
 export const PAL = [

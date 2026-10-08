@@ -49,7 +49,7 @@ export const setPieceMethods = {
           else { g.fillStyle(C[0]); g.fillRect(x, y + 14, T, 2); for (const sx of [2, 6, 10]) { g.fillStyle(C[5]); g.fillRect(x + sx, y + 3, 3, 11); g.fillStyle(C[6]); g.fillRect(x + sx + 1, y + 1, 1, 4); } }
         }
         if (ph === 'strike') {
-          sfx.play('hit'); this.shake(120, 0.004);
+          sfx.play('spike'); this.shake(120, 0.004);
           if (p.x > s.x0 - 2 && p.x < s.x0 + s.w + 2 && p.y + 4 > s.y0 && p.y + 4 < s.y0 + s.h && p.mode !== 'dead') p.hurt(s.dmg * (1 + 0.13 * s.tier), p.x, s.y0 + s.h / 2, { kb: 60 });
         }
       }

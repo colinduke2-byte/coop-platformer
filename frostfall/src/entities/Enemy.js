@@ -92,7 +92,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.alerted = true;
     S.seen[this.kind] = true;
     this.state = 'chase';
-    if (!silent) { this.mark('!', 13, 0.7); sfx.play('alert'); this.bark('alert'); this.scene.onFirstAlert?.(this); }
+    if (!silent) { this.mark('!', 13, 0.7); sfx.play(this.kind === 'werewolf' ? 'werehowl' : 'alert'); this.bark('alert'); this.scene.onFirstAlert?.(this); }
     // wake nearby friends (a howl / rally call reaches much further)
     const reach = this.cfg.call ? this.cfg.call : 60;
     if (this.cfg.call) { sfx.play(this.cfg.bark === 'wolf' ? 'howl' : 'alert'); this.scene.fx.ring(this.x, this.y + 4, reach / 32, 0.6, 'ring', 0xf4d460); }

@@ -1,0 +1,33 @@
+import { launch, check, failCount } from './harness.mjs';
+const h = await launch();
+await h.open('');
+await h.sleep(1500);
+const G = (fn, a) => h.ev(fn, a);
+const tap = async (c, ms = 80) => { await G((c) => window.__ff.keys._press(c), c); await h.sleep(ms); await G((c) => window.__ff.keys._release(c), c); await h.sleep(120); };
+const T = () => G(() => { const t = window.__ff.game.scene.getScene('Title'); return t && { items: t.items.map((i) => i.id), opt: !!t.optMode, how: !!t.howMode, sel: t.sel }; });
+const t0 = await T();
+check('the title offers OPTIONS and HOW TO PLAY', t0 && t0.items.includes('options') && t0.items.includes('howto'), JSON.stringify(t0));
+await h.shot('s61_title');
+// OPTIONS: difficulty can be chosen before the first game
+await G(() => { const t = window.__ff.game.scene.getScene('Title'); t.sel = t.items.findIndex((i) => i.id === 'options'); t.warm = 0; });
+await tap('KeyE'); await h.sleep(400);
+const o1 = await T();
+await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'normal'; });
+await tap('KeyD'); await h.sleep(200);
+const d1 = await G(async () => (await import('/src/systems/settings.js')).settings.difficulty);
+await h.shot('s61_options');
+await tap('Escape'); await h.sleep(300);
+const o2 = await T();
+check('OPTIONS opens, changes the difficulty with D, and ESC returns', o1.opt && d1 === 'hard' && !o2.opt, JSON.stringify({ o1, d1, o2 }));
+// HOW TO PLAY
+await G(() => { const t = window.__ff.game.scene.getScene('Title'); t.sel = t.items.findIndex((i) => i.id === 'howto'); t.warm = 0; });
+await tap('KeyE'); await h.sleep(400);
+const w1 = await T(); await h.shot('s61_howto');
+await tap('Escape'); await h.sleep(300);
+const w2 = await T();
+check('HOW TO PLAY opens a card and closes again', w1.how && !w2.how, JSON.stringify({ w1, w2 }));
+await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'normal'; });
+check('no page errors', h.errors.length === 0, h.errors.join('\n'));
+await h.close();
+console.log(failCount() ? 'TITLE FAILED' : 'TITLE PASSED');
+process.exit(failCount() ? 1 : 0);

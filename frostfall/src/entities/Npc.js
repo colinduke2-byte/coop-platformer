@@ -95,6 +95,11 @@ export default class Npc extends Phaser.GameObjects.Sprite {
     }
     const near = Math.hypot(player.x - this.x, player.y - this.y) < 44;
     if (near && !this.walking) this.lookAt(player.x, player.y);
+    else if (!this.walking) {                       // idle life: a slow breath, and now and then a glance around
+      this.glanceT = (this.glanceT ?? 3 + Math.random() * 6) - dt;
+      if (this.glanceT <= 0) { this.glanceT = 5 + Math.random() * 8; const d = [{ x: 0, y: 1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: -1 }][Math.floor(Math.random() * 4)]; this.face = d; }
+    }
+    this.setOrigin(0.5, 0.5 + ((!this.walking && Math.sin(this.t * 1.7) > 0.55) ? 1 / 16 : 0));
     const kind = facingKind(this.face.x, this.face.y);
     const fr = this.walking ? 1 + (Math.floor(this.t * 6) % 2) : 0;
     this.setFrame(kind + fr).setFlipX(kind === 'side' && this.face.x < 0);

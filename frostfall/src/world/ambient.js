@@ -23,6 +23,11 @@ export const ambientMethods = {
   ambientLife(dt) {
     if (!(this.def.snow || this.def.outdoors) || !this.ravens) { this.auroraG?.clear(); this.moteG?.clear(); return; }
     const p = this.player;
+    // ---- the Stormcrown: lightning in the distance, now and then close
+    if (this.mapId === 'highlands') {
+      this.stormT = (this.stormT ?? 6 + Math.random() * 12) - dt;
+      if (this.stormT <= 0) { this.stormT = 14 + Math.random() * 26; this.flashScreen(60, 220, 235, 255); this.time.delayedCall(400 + Math.random() * 900, () => sfx.play('thunder')); }
+    }
     // ---- ravens: perch near you by day, scatter when you come close
     this.raventT -= dt;
     if (this.raventT <= 0) {

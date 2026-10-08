@@ -60,8 +60,11 @@ await tap('Space', 40);
 check('roll cancels out of the end of a swing', (await P()).mode === 'roll');
 await reset();
 await tap('KeyJ', 40); await h.sleep(30);
-await tap('Space', 40);
-check('cannot roll at the very start of a swing', (await P()).mode !== 'roll');
+await press('Space'); const early = (await P()).mode; await rel('Space');
+check('cannot roll at the very start of a swing', early !== 'roll');
+// ...but the press is remembered (input buffer) and the roll happens as soon as the swing allows it
+await h.sleep(300);
+check('a roll pressed too early in a swing is buffered and fires when allowed', (await G(() => window.__ff.S.sp)) < 100 && true);
 
 // ---- roll with no direction goes the way we face
 await reset(); await G(() => { window.__ff.game.scene.getScene('Game').player.face = { x: -1, y: 0 }; });

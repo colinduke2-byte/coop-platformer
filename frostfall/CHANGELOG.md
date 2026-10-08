@@ -413,3 +413,11 @@ Both regions are reachable from the Hollow Reach from the start (roads leave the
 - **Region recipes**: Fen Tonic (marsh orchids, 85 health), Bogward Brew (take 20% less, 120 s) and Stormbrew (+12% damage and speed, take 10% more, 120 s), brewed from the new region ingredients.
 - Test: `stage60_builds`.
 - Test harness: `h.ev` now sanitises what the page returns (a test returning a Phaser object used to make Playwright serialise the whole game for minutes); the full regression runs much faster.
+
+## Round 35 - Overnight Rounds 10 to 13: feel, menus, visuals, audio (first pass)
+- **Input buffer**: a roll or a sword swing pressed up to 0.14 s before you can act (end of a roll, end of a stun) happens the instant you can. `TUNE.player.buffer`.
+- **Title screen**: OPTIONS (difficulty, volume, music and effects levels, fullscreen, large UI, colour mode) and HOW TO PLAY (one card of controls and survival advice), plus a version stamp. A first-time player can choose a difficulty before the first game.
+- **Pause > System**: every row now has a one-line hint in the help bar.
+- **Idle life**: villagers breathe and glance around instead of standing perfectly still.
+- **Audio**: spike strikes, thunder (the Stormcrown has lightning in the distance, now and then close, with a gentle flash), and the werewolf's howl when it spots you.
+- Tests: `stage61_title`. Guide updated.

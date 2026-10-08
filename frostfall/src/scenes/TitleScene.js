@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, BINDINGS } from '../config.js';
+import { W, H, BINDINGS, VERSION } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
@@ -10,6 +10,9 @@ import { MAPS } from '../data/maps.js';
 import { music, sfx } from '../audio/sfx.js';
 import { dayStamp, dailySeed, dailyMods, startDaily, todaysBest, topBoard } from '../systems/daily.js';
 import { MODS } from '../data/mods.js';
+import { settings, saveSettings } from '../systems/settings.js';
+import { setVolume, setChannel } from '../audio/sfx.js';
+import { CVD_MODES, applyCvd } from '../systems/access.js';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
@@ -29,19 +32,20 @@ export default class TitleScene extends Phaser.Scene {
     const t1 = txt(this, W / 2, 24, 'FROSTFALL', 6).setScale(4).setOrigin(0.5, 0);
     const t2 = txt(this, 0, 60, 'A TALE OF THE FROZEN NORTH', 4);
     t2.x = Math.floor((W - t2.width) / 2);
-    this.add.rectangle(W / 2, 121, 120, 58, 0x0b0e1a, 0.55);
+    this.add.rectangle(W / 2, 128, 120, 80, 0x0b0e1a, 0.55);
     const done = listSaves().find((x) => readSlot(x.slot)?.data.s.flags?.ending);
     this.ngSlot = done ? done.slot : null;
-    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }];
+    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }, { id: 'options', label: 'OPTIONS' }, { id: 'howto', label: 'HOW TO PLAY' }];
     this.sel = this.items[1].off ? 0 : 1;
     this.texts = this.items.map((it, i) => {
-      const t = txt(this, 0, 98 + i * 14, it.label, 6);
+      const t = txt(this, 0, 92 + i * 11, it.label, 6);
       t.x = Math.floor((W - t.width) / 2);
       return t;
     });
-    this.cursor = txt(this, 0, 98, '\u25B6', 13);
-    const hint = txt(this, 0, 168, 'W/S SELECT   E CONFIRM', 4);
+    this.cursor = txt(this, 0, 92, '\u25B6', 13);
+    const hint = txt(this, 0, 172, 'W/S SELECT   E CONFIRM', 4);
     hint.x = Math.floor((W - hint.width) / 2);
+    const ver = txt(this, 0, 172, VERSION, 3); ver.x = W - 4 - ver.width;
     // mouse: hover to pick, click to confirm
     const rowAt = (p) => this.texts.findIndex((t) => p.x >= t.x - 14 && p.x <= t.x + t.width + 6 && p.y >= t.y - 2 && p.y <= t.y + 11);
     this.input.on('pointermove', (p) => { if (this.slotMode || this.warm > 0) return; const i = rowAt(p); if (i >= 0 && !this.items[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
@@ -79,6 +83,63 @@ export default class TitleScene extends Phaser.Scene {
     this.texts.forEach((t) => t.setVisible(true)); this.cursor.setVisible(true);
   }
 
+  // Options: the settings a first-time player needs before they begin (the full list lives in Pause > System).
+  openOptions() {
+    this.optMode = true; this.optSel = 0; this.warm = 4;
+    this.optRows = ['DIFFICULTY', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE'];
+    this.optBox = this.add.rectangle(W / 2, 90, 250, 150, 0x0b0e1a, 0.94);
+    this.optHead = txt(this, 0, 22, 'OPTIONS', 13); this.optHead.x = Math.floor((W - this.optHead.width) / 2);
+    this.optTxt = this.optRows.map((r, i) => txt(this, 50, 42 + i * 14, r, 6));
+    this.optVal = this.optRows.map((r, i) => txt(this, 0, 42 + i * 14, '', 5));
+    this.optFoot = txt(this, 0, 148, 'W/S MOVE   A/D ADJUST   ESC BACK', 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
+    this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
+    this.refreshOptions();
+  }
+  optValue(r) {
+    const lvl = (k) => String(Math.round((settings[k] ?? 1) * 10));
+    switch (r) {
+      case 'DIFFICULTY': return [settings.difficulty.toUpperCase(), { easy: 8, normal: 5, hard: 11 }[settings.difficulty]];
+      case 'VOLUME': return [lvl('volume') + '/10', 15]; case 'MUSIC LVL': return [lvl('musicVol') + '/10', 15]; case 'SFX LVL': return [lvl('sfxVol') + '/10', 15];
+      case 'FULLSCREEN': return [document.fullscreenElement ? 'ON' : 'OFF', 4]; case 'LARGE UI': return [settings.largeUi ? 'ON' : 'OFF', settings.largeUi ? 8 : 4];
+      default: return [String(settings.cvd).toUpperCase(), settings.cvd === 'off' ? 4 : 8];
+    }
+  }
+  refreshOptions() {
+    this.optRows.forEach((r, i) => {
+      this.optTxt[i].setFont(i === this.optSel ? 'f13' : 'f6');
+      const [v, c] = this.optValue(r); this.optVal[i].setText(v).setFont('f' + c); this.optVal[i].x = W - 50 - this.optVal[i].width;
+    });
+  }
+  optAdjust(dir) {
+    const r = this.optRows[this.optSel], DIFFS = ['easy', 'normal', 'hard'];
+    if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
+    else if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
+    else if (r === 'MUSIC LVL') setChannel('music', Math.round(((settings.musicVol ?? 1) + dir * 0.1) * 10) / 10);
+    else if (r === 'SFX LVL') setChannel('sfx', Math.round(((settings.sfxVol ?? 1) + dir * 0.1) * 10) / 10);
+    else if (r === 'FULLSCREEN') { this.scale.toggleFullscreen(); }
+    else if (r === 'LARGE UI') settings.largeUi = !settings.largeUi;
+    else { settings.cvd = CVD_MODES[(CVD_MODES.indexOf(settings.cvd) + dir + CVD_MODES.length) % CVD_MODES.length]; applyCvd(); }
+    saveSettings(); sfx.play('select'); this.refreshOptions();
+  }
+  closeOptions() {
+    this.optMode = false; [this.optBox, this.optHead, this.optFoot, ...this.optTxt, ...this.optVal].forEach((o) => o.destroy());
+    this.texts.forEach((t) => t.setVisible(true)); this.cursor.setVisible(true);
+  }
+
+  // How to play: a one-page card for people who have never seen the game.
+  openHowTo() {
+    this.howMode = true; this.warm = 4;
+    const rows = [['HOW TO PLAY', 13], ['', 4], ['MOVE  WASD / STICK / TOUCH PAD', 6], ['SWORD J   BOW K (HOLD)   SPELL L', 6], ['DODGE ROLL  SPACE  (SLIPS THROUGH BLOWS)', 6], ['BLOCK F (HOLD)   RAISE IT LATE TO PARRY', 6], ['SNEAK C   TALK / OPEN / REST  E', 6], ['PACK I   JOURNAL O   MAP M   PAUSE ESC', 6], ['', 4],
+      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['E OR ESC TO GO BACK', 4]];
+    this.howBox = this.add.rectangle(W / 2, 90, 300, 164, 0x0b0e1a, 0.94);
+    this.howTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 14 + i * 10, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
+    this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
+  }
+  closeHowTo() {
+    this.howMode = false; this.howBox.destroy(); this.howTxt.forEach((t) => t.destroy());
+    this.texts.forEach((t) => t.setVisible(true)); this.cursor.setVisible(true);
+  }
+
   startSaved() {
     this.scene.start('Game', { map: S.map, spawn: S.spawn, pos: S.x != null ? { x: S.x, y: S.y } : null });
   }
@@ -110,6 +171,22 @@ export default class TitleScene extends Phaser.Scene {
     this.t += dt;
     this.snow.update(dt);
     if (this.slotMode) { this.updateSlots(); return; }
+    if (this.optMode) {
+      if (this.warm > 0) { this.warm--; return; }
+      if (keys.pressed('pause') || keys.pressed('roll')) { this.closeOptions(); sfx.play('back'); return; }
+      const n = this.optRows.length;
+      if (keys.pressed('down')) { this.optSel = (this.optSel + 1) % n; sfx.play('move'); }
+      if (keys.pressed('up')) { this.optSel = (this.optSel + n - 1) % n; sfx.play('move'); }
+      if (keys.pressed('left')) this.optAdjust(-1);
+      if (keys.pressed('right') || keys.pressed('interact')) this.optAdjust(1);
+      this.refreshOptions();
+      return;
+    }
+    if (this.howMode) {
+      if (this.warm > 0) { this.warm--; return; }
+      if (keys.pressed('pause') || keys.pressed('interact') || keys.pressed('roll')) { this.closeHowTo(); sfx.play('back'); }
+      return;
+    }
     if (this.dailyMode) {
       if (this.warm > 0) { this.warm--; return; }
       if (keys.pressed('pause')) { this.closeDaily(); sfx.play('back'); }
@@ -118,7 +195,7 @@ export default class TitleScene extends Phaser.Scene {
     }
     this.items.forEach((it, i) => this.texts[i].setFont(it.off ? 'f4' : i === this.sel ? 'f13' : 'f6'));
     const t = this.texts[this.sel];
-    this.cursor.setPosition(t.x - 12, t.y).setVisible(Math.floor(this.t * 3) % 3 !== 0 || true);
+    this.cursor.setPosition(t.x - 12, t.y).setVisible(true);
     if (this.warm > 0) { this.warm--; return; }
     if (this.go) return;
     if (keys.pressed('down') || keys.pressed('up')) {
@@ -132,6 +209,8 @@ export default class TitleScene extends Phaser.Scene {
       this.go = true;
       if (this.items[this.sel].id === 'arena') { music.stop(); this.scene.start('ArenaSetup'); return; }
       if (this.items[this.sel].id === 'daily') { this.go = false; this.openDaily(); return; }
+      if (this.items[this.sel].id === 'options') { this.go = false; this.openOptions(); return; }
+      if (this.items[this.sel].id === 'howto') { this.go = false; this.openHowTo(); return; }
       if (this.items[this.sel].id === 'ng') {
         if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else this.go = false;
       } else if (this.items[this.sel].id === 'new') {

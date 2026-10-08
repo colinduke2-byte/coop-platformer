@@ -45,7 +45,9 @@ Keys can be rebound in **Pause > System > Controls**. A gamepad and touch contro
 - **Use elements.** Many enemies are weak to something. Undead burn (fire); golems shatter under shock; frost-based foes shrug off frost. The bestiary (in the journal) lists weaknesses once you have met a creature.
 - **Sneak first.** Sneak attacks triple your damage. Camps are far easier if you thin them quietly.
 - **Crowds are dangerous.** Back into a doorway or a corridor so they come one at a time.
-- **Day and night matter.** Night and storms make stealth easier and the world more dangerous.
+- **Day and night matter.** Night and storms make stealth easier and the world more dangerous. After dark **wolves become werewolves** and the restless dead of old places turn to **ghosts**; bandit crews sleep (they notice you at half range). The **moon** runs an eight-phase cycle (the clock and moon are in the top right): a **full moon** brings the pack out in force and every third one is a **blood moon**, when a great wolf hunts you. At a campfire you can **wait until dusk or dawn**. A **Hooded Lantern** (the smith) lights up the dark but makes you easier to notice.
+- **Pick your difficulty** on the title screen (Options) or in Pause > System: Easy, Normal or Hard. Hard also turns gear wear on.
+- **Read the name colours.** An enemy's name is coloured by how dangerous it is *to you right now* (your gear and level), and arriving somewhere far beyond you gives a warning. If it says DEADLY, come back stronger.
 
 ## 4. Getting stronger
 
@@ -64,7 +66,10 @@ Skills level **by use** (five of them), so use what you want to improve:
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
 - **Sockets**: better weapons and armour have slots for **gems** and **runes**. Runes add effects (burn, chill, shock, life-drain, thorns, warding). Set them at the rune-cutter in Emberhold.
 - **Food and alchemy**: cook meals at campfires for buffs; brew potions. Always carry a few.
-- **Companions**: hire *Ragna* in Hollowfrost, or recruit *Pell* in Emberhold. One at a time.
+- **Companions**: hire *Ragna* in Hollowfrost, or recruit *Pell* in Emberhold. One at a time. Talk to them and choose *Orders*: stay close, hold the spot, or hunt on their own.
+- **Capstone perks** (page 2 of the perk list) unlock at skill level 12: Unbroken, Deadeye, Archmage, Second Wind and Assassin.
+- **Inns and chartmakers** (Reedwick, Skarn Hold): a room heals, saves and sleeps until morning; a rumour names a place you have not found; a chart reveals the map around you.
+- **Dungeon rooms to watch for**: spike halls (the floor glows red before it strikes), flooded halls (slow, with leeches) and ambush rooms (a chest in a suspiciously quiet room).
 
 ## 5. The world
 
@@ -77,14 +82,16 @@ A large open land of forest, ruins, camps, dens, standing stones, hamlets, watch
 - **Fishing, hunting and digging** (treasure maps lead you to dig spots) all give rewards.
 - **The Hollow Arena**: wave challenges for gold and trophies.
 
-### The three other regions
-They open as the story progresses (see section 6).
+### The five other regions
+Three open as the story progresses (see section 6). **The Weeping Fens and the Stormcrown Highlands can be walked to from the start**: the roads leave the Hollow Reach at its south-west and north-east. They are dangerous. Go when you are ready.
 
 | Region | What it is like |
 |---|---|
 | **The Ashen Peaks** | Lava, foundries, cinder enemies. Home of the forge-city **Emberhold**. |
 | **The Frozen Coast** | Wrecks, lighthouses, drowned things. Ends at **Tidebreak Hall**. |
 | **The Old Kingdom** | Courtyards, sentinels, ghosts of a lost court. Ends in **the Sepulchre**. |
+| **The Weeping Fens** | A drowned bog of black water and boardwalks. The stilt village **Reedwick** has an inn, a smith and a chartmaker; the **Sunken Barrow** ends in the **Mire Mother**. Poison everywhere; fire works well. |
+| **The Stormcrown Highlands** | Windswept heath under a storm that never leaves. **Skarn Hold** is a clan ring with an inn, a smith and a chartmaker; the **Stormspire** ends in the **Storm Giant**. Lightning everywhere; frost works well. |
 
 Each region has its own camps, caves, hamlets, loot and a boss. Check the **map tab** and press **R** to cycle regions.
 
