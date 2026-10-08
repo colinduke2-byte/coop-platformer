@@ -113,6 +113,9 @@ func _ready() -> void:
 	punch_col.shape = punch_col.shape.duplicate()
 	reset_punch_area()
 	_build_character()
+	var shadow := BlobShadow.new()
+	shadow.name = "BlobShadow"
+	add_child(shadow)
 	state_machine.setup(self)
 	state_machine.start(&"Fall")
 	if remote:

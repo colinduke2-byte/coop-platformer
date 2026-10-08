@@ -8244,3 +8244,32 @@ func test_ink_outline_is_thicker_on_the_shadow_side() -> void:
 			if p.y < 20.0: top = maxf(top, absf(p.y))
 			if p.y > 180.0: bottom = maxf(bottom, p.y - 200.0)
 	check(bottom > top, "the bottom edge is heavier than the top (%.1f vs %.1f)" % [bottom, top])
+
+
+func test_character_rig_expressions_springs_and_paint() -> void:
+	for def in GameManager.CHARACTERS:
+		var rig := CharacterRig.new()
+		_arena.add_child(rig)
+		rig.build(def)
+		check(rig.material is ShaderMaterial, "%s: the rig has the painted material at MEDIUM" % def.display_name)
+		for st: StringName in [&"Ground", &"Jump", &"Fall", &"Victory", &"Bubble", &"Punch", &"GroundPound", &"Swim", &"Glide"]:
+			for i in 40:
+				rig.update_pose(st, Vector2(500, -300 if st == &"Jump" else 900), st == &"Ground", 430.0, 1.0 / 60.0)
+		for i in 40:
+			rig.update_pose(&"Fall", Vector2(0, 900), false, 430.0, 1.0 / 60.0)
+		check(rig._mouth_open.visible, "%s: a falling dreamer opens their mouth" % def.display_name)
+		for key in rig._springs:
+			check(is_finite((rig._springs[key] as Vector2).x), "%s: spring '%s' stays finite" % [def.display_name, key])
+		var amt := rig._mouth_amt
+		for i in 60:
+			rig.update_pose(&"Victory", Vector2.ZERO, true, 430.0, 1.0 / 60.0)
+		check(rig._mouth_amt > 0.9 and rig._mouth_open.visible, "%s: cheering is a big open grin" % def.display_name)
+		rig.queue_free()
+	var old := Gfx.level
+	Gfx.level = Gfx.Level.LOW
+	var low := CharacterRig.new()
+	_arena.add_child(low)
+	low.build(GameManager.CHARACTERS[0])
+	check(low.material == null, "LOW skips the painted rig material")
+	low.queue_free()
+	Gfx.level = old

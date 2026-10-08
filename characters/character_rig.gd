@@ -6,6 +6,7 @@ extends Node2D
 ## so the gallery and select screens can drive it too. Placeholder until the
 ## real rig (Skeleton2D / Spine) lands; keep the update_pose() API when swapping.
 
+const RIG_SHADER := preload("res://world/shaders/rig.gdshader")
 const OUTLINE := Color("1d1726")
 const SHOE := Color("3b2b24")
 const EYE_WHITE := Color("fbfaf5")
@@ -87,6 +88,10 @@ var _blink_timer := 2.0
 var _idle_time := 0.0
 var _quirk_active := false
 var _particle_timer := 0.0
+var _springs := {}                ## key -> Vector2(angle, angular velocity): follow-through
+var _mouth: Line2D
+var _mouth_open: Polygon2D
+var _mouth_amt := 0.0             ## 0 smile .. 1 open
 
 
 func build(p_def: CharacterDef) -> void:
@@ -129,8 +134,9 @@ func build(p_def: CharacterDef) -> void:
 		Vector2(-wt * 0.25, -h), Vector2(wt * 0.25, -h), Vector2(wt * 0.5, -h * 0.85),
 		Vector2(wb * 0.53, -h * 0.35), Vector2(wb * 0.5, 2), Vector2(wb * 0.2, 6), Vector2(-wb * 0.2, 6),
 	]), def.main_color)
-	# Back half in shade (light comes from the front).
-	_add_shade(body, _rect(-wb, -h - 10, -wt * 0.05, 10), def.main_color.darkened(0.14))
+	# Back half in shade (light comes from the front), a rim of light down the front edge.
+	_add_shade(body, _rect(-wb, -h - 10, -wt * 0.05, 10), def.main_color.darkened(0.2))
+	_add_light(body, _rect(wt * 0.2, -h - 10, wb, 10), def.main_color.lightened(0.22))
 	var belt_y := -h * 0.35
 	_add_poly(_torso, _rect(-wb * 0.5, belt_y - 3.0, wb * 0.5, belt_y + 3.0), def.trim_color, Vector2.ZERO, false)
 	if def.has_scarf:
@@ -173,6 +179,24 @@ func build(p_def: CharacterDef) -> void:
 	_torso.position = Vector2(0, -def.leg_length)
 	_pose = _target_pose(&"Ground", Vector2.ZERO, true, 1.0)
 	_apply_pose()
+	_apply_paint()
+
+
+## Soft cloth detail over every part (Medium / High): one material on the root, shared by all parts.
+func _apply_paint() -> void:
+	material = null
+	if not Gfx.at_least(Gfx.Level.MEDIUM):
+		return
+	var m := PaintedSurface.material("cloth", 0.55, 46.0, 0.0)
+	if m == null:
+		return
+	var rig_mat := ShaderMaterial.new()
+	rig_mat.shader = RIG_SHADER
+	rig_mat.set_shader_parameter(&"detail", PaintedSurface.texture("cloth"))
+	rig_mat.set_shader_parameter(&"strength", 0.5)
+	material = rig_mat
+	for n in find_children("*", "CanvasItem", true, false):
+		(n as CanvasItem).use_parent_material = true
 
 
 ## Returns the headwear's top y relative to the head centre.
@@ -234,14 +258,17 @@ func _build_head(r: float) -> float:
 	var ns := def.nose_size
 	var nose := _add_blob(_face, r * 0.42 * ns, r * 0.3 * ns, def.skin_color.darkened(0.12), Vector2(r * (0.62 + 0.26 * ns), r * 0.18))
 	_add_blob(nose, r * 0.12, r * 0.08, Color(1, 1, 1, 0.45), Vector2(r * 0.08, -r * 0.1), false)
-	var mouth := Line2D.new()
-	mouth.width = 2.0
-	mouth.default_color = OUTLINE
-	mouth.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	mouth.end_cap_mode = Line2D.LINE_CAP_ROUND
-	mouth.points = PackedVector2Array([
-		Vector2(r * 0.2, r * 0.5), Vector2(r * 0.42, r * 0.62), Vector2(r * 0.62, r * 0.52)])
-	_face.add_child(mouth)
+	_add_blob(_head, r * 0.36, r * 0.2, Color(1, 1, 1, 0.22), Vector2(r * 0.3, -r * 0.62), false)  # soft specular
+	_mouth_open = _add_poly(_face, _ellipse(r * 0.2, r * 0.17, 12), Color("5a1f2e"), Vector2(r * 0.42, r * 0.56), false)
+	_mouth_open.visible = false
+	_mouth = Line2D.new()
+	_mouth.width = 2.0
+	_mouth.default_color = OUTLINE
+	_mouth.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	_mouth.end_cap_mode = Line2D.LINE_CAP_ROUND
+	_mouth.set_meta(&"r", r)
+	_face.add_child(_mouth)
+	_set_mouth(0.0)
 
 	_headwear = Node2D.new()
 	_head.add_child(_headwear)
@@ -338,6 +365,7 @@ func update_pose(state: StringName, vel: Vector2, on_floor: bool, max_speed: flo
 	for key: StringName in target:
 		_pose[key] = lerp(_pose[key], target[key], k)
 	_update_face(vel, delta)
+	_update_mouth(state, vel, delta)
 	_update_extras(vel, speed_t, delta)
 	_update_punch_fx(state)
 	_apply_pose()
@@ -553,12 +581,26 @@ func _target_pose(state: StringName, vel: Vector2, on_floor: bool, speed_t: floa
 			p[&"brow_raise"] = -1.0
 		&"Victory":
 			var w := sin(t * 10.0) * 6.0
+			var dance := get_instance_id() % 3    # each dreamer has their own victory dance
 			p[&"hand_f"] = Vector2(sx + 10 + w, -L - h - r * 2.0)
 			p[&"hand_b"] = Vector2(-sx - 10 - w, -L - h - r * 1.9)
 			p[&"foot_f"] = Vector2(8, -4 if not on_floor else 0)
 			p[&"foot_b"] = Vector2(-8, -6 if not on_floor else 0)
 			p[&"brow_raise"] = -3.0
 			p[&"head_tilt"] = sin(t * 5.0) * 0.1
+			if dance == 1:    # pumping fists and a little hop
+				var pump := sin(t * 9.0)
+				p[&"hand_f"] = Vector2(sx + 8, -L - h - r * (1.4 + 0.7 * pump))
+				p[&"hand_b"] = Vector2(-sx - 8, -L - h - r * (1.4 - 0.7 * pump))
+				p[&"bob"] = -absf(sin(t * 9.0)) * 5.0
+				p[&"foot_f"] = Vector2(8, -absf(sin(t * 9.0)) * 6.0)
+				p[&"foot_b"] = Vector2(-8, -absf(sin(t * 9.0 + 0.5)) * 6.0)
+			elif dance == 2:  # clapping overhead, swaying
+				var clap := 0.5 + 0.5 * sin(t * 12.0)
+				p[&"hand_f"] = Vector2(2 + 12.0 * clap, -L - h - r * 2.1)
+				p[&"hand_b"] = Vector2(-2 - 12.0 * clap + 14.0, -L - h - r * 2.1)
+				p[&"lean"] = sin(t * 4.0) * 0.12
+				p[&"head_tilt"] = sin(t * 4.0) * 0.16
 		&"Bubble":
 			p[&"foot_f"] = Vector2(5, -L - 2)
 			p[&"foot_b"] = Vector2(-5, -L)
@@ -647,13 +689,21 @@ func _update_extras(vel: Vector2, speed_t: float, delta: float) -> void:
 	else:
 		_headwear.scale.x = lerpf(_headwear.scale.x, 1.0, 0.3)
 	var flutter := speed_t * 0.5 + clampf(-vel.y / 1500.0, -0.4, 0.4) + sin(_time * 12.0) * 0.08 * (speed_t + 0.2)
+	# Follow-through: tails, plume and the hat chase their targets on springs, so they lag,
+	# overshoot and settle instead of snapping.
 	if _scarf_tail:
-		_scarf_tail.rotation = -flutter
+		_scarf_tail.rotation = _spring(&"scarf", -flutter, delta, 110.0, 7.0)
 	if _bandana_tails:
-		_bandana_tails.rotation = -flutter * 0.8
+		_bandana_tails.rotation = _spring(&"bandana", -flutter * 0.8, delta, 110.0, 7.0)
 	if _plume:
 		var wag := sin(_time * 9.0) * 0.35 if _quirk_active else flutter * 0.3
-		_plume.rotation = float(_plume.get_meta(&"rest")) + wag
+		_plume.rotation = float(_plume.get_meta(&"rest")) + _spring(&"plume", wag, delta, 90.0, 6.0)
+	if not gliding:
+		var hat_target := -speed_t * 0.16 + clampf(-vel.y / 2600.0, -0.22, 0.22)
+		_headwear.rotation = _spring(&"hat", hat_target, delta, 130.0, 9.0)
+	else:
+		_headwear.rotation = 0.0
+	_torso.scale.y = 1.0 + sin(_time * 2.3) * 0.012 * (1.0 - speed_t)  # breathing
 
 	if _quirk_active:
 		_particle_timer -= delta
@@ -666,6 +716,50 @@ func _update_extras(vel: Vector2, speed_t: float, delta: float) -> void:
 					_spawn_float_note()
 	else:
 		_particle_timer = 0.0
+
+
+## Critically-ish damped spring on one angle (key); returns the current value.
+func _spring(key: StringName, target: float, delta: float, k: float, d: float) -> float:
+	var s: Vector2 = _springs.get(key, Vector2(target, 0.0))
+	var dt := minf(delta, 0.033)
+	s.y += ((target - s.x) * k - s.y * d) * dt
+	s.x += s.y * dt
+	if not is_finite(s.x):
+		s = Vector2(target, 0.0)
+	_springs[key] = s
+	return s.x
+
+
+## Mouth shapes by what the dreamer is doing: smile, gaping when airborne, a wide grin
+## when sprinting or cheering, a worried line in a bubble.
+func _update_mouth(state: StringName, vel: Vector2, delta: float) -> void:
+	if _mouth == null:
+		return
+	var target := 0.0
+	match state:
+		&"Fall": target = 0.6 + clampf(vel.y / 1800.0, 0.0, 0.4)
+		&"Jump": target = 0.35
+		&"Victory": target = 1.0
+		&"Punch", &"GroundPound": target = 0.5 if punching or pound_phase >= 1 else 0.0
+		&"Bubble": target = -1.0
+		&"Ground": target = 0.0 if sprint <= 0.0 else 0.7
+		&"Swing", &"Zipline", &"Glide": target = 0.25
+	_mouth_amt = lerpf(_mouth_amt, target, minf(delta * 14.0, 1.0))
+	_set_mouth(_mouth_amt)
+
+
+func _set_mouth(amt: float) -> void:
+	var r: float = _mouth.get_meta(&"r")
+	var open := absf(amt) > 0.3 and amt > 0.0
+	_mouth_open.visible = open
+	if open:
+		_mouth_open.scale = Vector2(1.0, 0.5 + 0.9 * amt)
+		_mouth.points = PackedVector2Array()
+		return
+	var curve := r * (0.12 - 0.3 * minf(amt, 0.0)) if amt < 0.0 else r * (0.12 + 0.2 * amt)  # frown flips the curve
+	var dir := -1.0 if amt < 0.0 else 1.0
+	_mouth.points = PackedVector2Array([
+		Vector2(r * 0.2, r * 0.5), Vector2(r * 0.42, r * 0.5 + dir * curve), Vector2(r * 0.62, r * 0.52)])
 
 
 func _update_punch_fx(state: StringName) -> void:
@@ -755,6 +849,16 @@ func _add_limb(n: StringName, width: float, color: Color) -> void:
 		l.joint_mode = Line2D.LINE_JOINT_ROUND
 		add_child(l)
 		lines.append(l)
+	# A thin lighter stroke along the lit side gives the limb roundness.
+	var hl := Line2D.new()
+	hl.width = maxf(width * 0.32, 1.6)
+	hl.default_color = Color(color.lightened(0.28), 0.65)
+	hl.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	hl.end_cap_mode = Line2D.LINE_CAP_ROUND
+	hl.joint_mode = Line2D.LINE_JOINT_ROUND
+	hl.position = Vector2(-0.9, -1.3)
+	add_child(hl)
+	lines.append(hl)
 	_limbs[n] = lines
 
 
@@ -764,13 +868,18 @@ func _set_limb(n: StringName, a: Vector2, b: Vector2, bend: float) -> void:
 	var pts := PackedVector2Array([a, mid, b])
 	for l: Line2D in _limbs[n]:
 		l.points = pts
+	var lines: Array = _limbs[n]
+	if lines.size() > 2:  # the highlight stroke is thinner than the limb
+		(lines[2] as Line2D).width = maxf((lines[1] as Line2D).width * 0.32, 1.6)
 
 
 ## `inner` = which way the brow's inner end points (+1 toward +x).
 func _add_eye(pos: Vector2, size: float, inner: float) -> void:
 	var e := _add_blob(_face, 4.8 * size, 6.2 * size, EYE_WHITE, pos, true)
 	_eyes.append(e)
-	_pupils.append(_add_blob(e, 2.3 * size, 3.1 * size, PUPIL, Vector2.ZERO, false))
+	var pupil := _add_blob(e, 2.3 * size, 3.1 * size, PUPIL, Vector2.ZERO, false)
+	_pupils.append(pupil)
+	_add_blob(pupil, 0.9 * size, 0.9 * size, Color(1, 1, 1, 0.9), Vector2(0.8 * size, -1.2 * size), false)  # eye sparkle
 	if def.has_lashes:
 		# Three flicks off the outer top of the eye (children of it, so they blink too).
 		var outer := -inner
@@ -795,6 +904,11 @@ func _add_eye(pos: Vector2, size: float, inner: float) -> void:
 	brow.set_meta(&"inner", inner)
 	_face.add_child(brow)
 	_brows.append(brow)
+
+
+## Lighter copy of `poly` clipped to `region` (rim light), drawn under poly's outline.
+func _add_light(poly: Polygon2D, region: PackedVector2Array, color: Color) -> void:
+	_add_shade(poly, region, color)
 
 
 ## Darker copy of `poly` clipped to `region`, drawn under poly's outline.
