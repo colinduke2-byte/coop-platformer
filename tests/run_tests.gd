@@ -4075,7 +4075,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 
 
 func test_world_maps_build_for_every_world_with_gates() -> void:
-	for w in ["w1", "w2", "w3", "w4"]:
+	for w in ["w1", "w2", "w3", "w4", "w5"]:
 		WorldMap.world = w
 		var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 		_arena.add_child(m)
@@ -4616,7 +4616,7 @@ func _boss_arena_lets_you_back_in(path: String, cp: Vector2, inside_x: float) ->
 
 func _clear_enemies_except_bosses() -> void:
 	for e in get_tree().get_nodes_in_group(&"enemies"):
-		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo or e is Chamelia or e is Cuckoolossus):
+		if not (e is BaronBristleback or e is Grumblefrost or e is KingGrumblo or e is Chamelia or e is Cuckoolossus or e is Inkabella):
 			e.queue_free()
 
 
@@ -7107,6 +7107,11 @@ func _auto_run(p: Player, end_x: float, max_s := 20.0, sprint := false) -> bool:
 			if i % 16 == 0 and held == 0:
 				press(0, "jump")
 				held = 6
+		elif st == &"Climb":
+			release(0, "move_up")
+			if held == 0:
+				press(0, "jump")
+				held = 10
 		else:
 			release(0, "move_up")
 			if p.is_on_floor() and held == 0:
@@ -7118,6 +7123,8 @@ func _auto_run(p: Player, end_x: float, max_s := 20.0, sprint := false) -> bool:
 					press(0, "jump")
 					held = 40
 					stuck = 0
+		if DEBUG_AUTO and i % 30 == 0:
+			print("AR ", i, " ", p.global_position.round(), " ", st, " v", p.velocity.round())
 		if p.global_position.x >= end_x and p.is_on_floor():
 			break
 	release(0, "move_right")
@@ -7145,6 +7152,8 @@ func _swim_path(p: Player, pts: Array, max_s := 12.0) -> bool:
 			press(0, "jump")
 		elif i % 30 == 6:
 			release(0, "jump")
+		if DEBUG_AUTO and i % 20 == 0:
+			print("SW ", i, " k", k, " ", p.global_position.round(), " ", _state(p), " v", p.velocity.round())
 		if d.length() < 50.0:
 			k += 1
 	for a in ["move_left", "move_right", "move_up", "move_down", "jump"]:
@@ -7152,6 +7161,7 @@ func _swim_path(p: Player, pts: Array, max_s := 12.0) -> bool:
 	return k >= pts.size()
 
 
+const DEBUG_AUTO := false
 const W5_1 := "res://levels/w5_1_seashell_shore.tscn"
 
 
@@ -7237,3 +7247,525 @@ func test_w5_1_cliffs_and_dunes_to_the_gate() -> void:
 	ok = await _hop_run(p, [14900], 16100, false, 8.0)
 	check(gm().level_complete, "down the dunes and over the sandcastle to the gate (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+const W5_2 := "res://levels/w5_2_coral_kingdom.tscn"
+
+
+func test_w5_2_reef_towers_and_the_current() -> void:
+	var p: Player = await _load_demo(W5_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 5400, 30.0)
+	check(ok, "over the reef towers and swept along the current (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_2_gem_0_under_the_coral_arch() -> void:
+	var p: Player = await _load_demo(W5_2)
+	await _clear_enemies()
+	await _place(p, Vector2(3500, 200))
+	p.state_machine.transition_to(&"Fall")
+	var ok := await _swim_path(p, [Vector2(3700, 600), Vector2(4000, 620)], 8.0)
+	check(gm().gems[0], "gem 0 waits under the coral arch (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_2_clam_reaches_the_reef_shelf() -> void:
+	var p: Player = await _load_demo(W5_2)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(5700, 0), -580.0, 5950.0, 6.0)
+	check(p.global_position.y < -530.0 and p.is_on_floor(), "the clam throws you up onto the reef shelf (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_2_deep_tunnel_and_gem_1() -> void:
+	var p: Player = await _load_demo(W5_2)
+	await _clear_enemies()
+	await _place(p, Vector2(7400, -2))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(8300, 650), Vector2(9200, 640), Vector2(9200, 600), Vector2(10000, 650)], 20.0)
+	check(gm().gems[1], "gem 1 sits in the tunnel's side niche (at %s)" % p.global_position)
+	check(ok, "swimming the whole tunnel (at %s)" % p.global_position)
+	ok = await _auto_run(p, 11200, 10.0)
+	check(ok, "the bubble column helps you out the far side (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_2_jelly_up_the_coral_cliffs() -> void:
+	var p: Player = await _load_demo(W5_2)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Jellybob:
+			e.queue_free()
+		else:
+			e.bob = 0.0
+	await _place(p, Vector2(11660, -362))
+	press(0, "move_right")
+	var landed := false
+	var jumped := false
+	var bounced := false
+	for i in 300:
+		await get_tree().physics_frame
+		if not jumped and p.global_position.x >= 11730.0 and p.is_on_floor():
+			press(0, "jump")
+			jumped = true
+		if p.velocity.y < -1000.0:
+			bounced = true
+		if bounced:
+			press(0, "move_right")
+		elif jumped and p.global_position.x > 11850.0:
+			release(0, "move_right")
+		if i > 40:
+			release(0, "jump")
+		if p.global_position.x > 12200.0 and p.is_on_floor():
+			landed = true
+			break
+	release(0, "move_right")
+	check(landed and p.global_position.y < -610.0, "a jellybob bounce reaches the top of the cliffs (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_2_cliffs_to_the_palace_gate() -> void:
+	var p: Player = await _load_demo(W5_2)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(12200, -622))
+	var ok := await _auto_run(p, 14700, 12.0)
+	ok = await _hop_run(p, [14900], 16100, false, 8.0)
+	check(gm().level_complete, "down from the cliffs and over the shell to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W5_3 := "res://levels/w5_3_shipwreck_cove.tscn"
+
+
+func test_w5_3_bridge_and_galleon_deck() -> void:
+	var p: Player = await _load_demo(W5_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 5700, 40.0)
+	check(ok and p.global_position.y < -270.0, "over the broken bridge and onto the galleon's deck (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_3_climb_the_mast_to_gem_0() -> void:
+	var p: Player = await _load_demo(W5_3)
+	await _clear_enemies()
+	await _place(p, Vector2(5000, -282))
+	press(0, "move_up")
+	for i in 240:
+		await get_tree().physics_frame
+		if _state(p) == &"Climb" and p.global_position.y < -820.0 and absf(p.velocity.y) < 5.0:
+			break
+	release(0, "move_up")
+	check(_state(p) == &"Climb", "the rigging is climbable (at %s, %s)" % [p.global_position, _state(p)])
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 60:
+		await get_tree().physics_frame
+		if i == 14:
+			release(0, "jump")
+	release(0, "move_right")
+	check(gm().gems[0], "hop from the rigging into the crow's nest for gem 0 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_3_flooded_hold_and_gem_1() -> void:
+	var p: Player = await _load_demo(W5_3)
+	await _clear_enemies()
+	await _place(p, Vector2(5850, -282))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if p.global_position.x > 5960.0:
+			release(0, "move_right")
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(6400, 600), Vector2(7300, 620), Vector2(8300, 500), Vector2(8650, 60)], 16.0)
+	check(gm().gems[1], "gem 1 waits in the hold's treasure chest (at %s)" % p.global_position)
+	ok = await _auto_run(p, 9100, 8.0)
+	check(ok, "out of the hold through the far hatch (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_3_upper_deck_over_the_hold() -> void:
+	var p: Player = await _load_demo(W5_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(5600, -282))
+	var ok := await _auto_run(p, 9100, 30.0)
+	check(ok, "along the upper deck, over the hatch and the see-saw (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_3_cannon_battery() -> void:
+	var p: Player = await _load_demo(W5_3)
+	await _clear_enemies()
+	await _place(p, Vector2(9350, -2))
+	await _run_to(p, 9480)
+	release(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Cannon":
+			break
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	await seconds(3.0)
+	check(p.global_position.x > 10430 and not p.is_bubbled(), "the cannons fire you over the rocks (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_3_clam_to_the_rigging() -> void:
+	var p: Player = await _load_demo(W5_3)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(12750, 0), -580.0, 13000.0, 6.0)
+	check(p.global_position.y < -530.0 and p.is_on_floor(), "the clam throws you up to the rigging ledge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_3_stern_castle_to_the_gate() -> void:
+	var p: Player = await _load_demo(W5_3)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10500, -2))
+	var ok := await _auto_run(p, 13900, 30.0)
+	check(ok, "over the stern castle (at %s, %s)" % [p.global_position, _state(p)])
+	ok = await _hop_run(p, [14000], 15100, false, 8.0)
+	check(gm().level_complete, "over the treasure chest to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W5_4 := "res://levels/w5_4_kelp_forest_rapids.tscn"
+
+
+## Bot: climb the kelp/vine at x to its top, then jump off to the right.
+func _kelp_hop(p: Player, x: float, foot_y: float, max_s := 6.0) -> void:
+	await _place(p, Vector2(x, foot_y - 2))
+	press(0, "move_up")
+	var still := 0
+	for i in int(max_s * 60.0):
+		await get_tree().physics_frame
+		still = still + 1 if _state(p) == &"Climb" and absf(p.velocity.y) < 5.0 else 0
+		if still > 10:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	for i in 90:
+		await get_tree().physics_frame
+		if i == 14:
+			release(0, "jump")
+		if i > 20 and p.is_on_floor():
+			break
+	release(0, "move_right")
+	release(0, "jump")
+
+
+func test_w5_4_shore_and_kelp_up_the_cliff() -> void:
+	var p: Player = await _load_demo(W5_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 2200, 12.0)
+	check(ok, "along the kelp shore (at %s, %s)" % [p.global_position, _state(p)])
+	await _clear_enemies()
+	await _kelp_hop(p, 2300, 0.0)
+	check(p.is_on_floor() and p.global_position.y < -590.0, "climbing the giant kelp reaches the cliff top (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_4_pond_kelp_to_gem_0() -> void:
+	var p: Player = await _load_demo(W5_4)
+	await _clear_enemies()
+	await _place(p, Vector2(3300, -320))
+	p.state_machine.transition_to(&"Fall")
+	press(0, "move_up")
+	for i in 600:
+		await get_tree().physics_frame
+		if _state(p) == &"Climb" and p.global_position.y < -920.0:
+			break
+	release(0, "move_up")
+	press(0, "move_right")
+	press(0, "jump")
+	await frames(14)
+	release(0, "jump")
+	await seconds(1.0)
+	release(0, "move_right")
+	check(gm().gems[0], "the pond's kelp leads up to the shelf with gem 0 (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_4_cliff_top_and_the_rapids() -> void:
+	var p: Player = await _load_demo(W5_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(2550, -602))
+	var ok := await _auto_run(p, 9200, 40.0)
+	check(ok, "over the pond, down the slope and through the rapids (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_4_rapids_crevice_gem_1() -> void:
+	var p: Player = await _load_demo(W5_4)
+	await _clear_enemies()
+	await _place(p, Vector2(7900, 300))
+	p.state_machine.transition_to(&"Fall")
+	var ok := await _swim_path(p, [Vector2(8150, 380), Vector2(8450, 540), Vector2(8620, 560)], 8.0)
+	check(gm().gems[1], "gem 1 hides in the riverbed crevice (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_4_raft_channel() -> void:
+	var p: Player = await _load_demo(W5_4)
+	await _clear_enemies()
+	await _place(p, Vector2(9950, -2))
+	await _ride_raft(p, 10180.0, 12200.0, 20.0)
+	check(p.global_position.x > 12150.0, "a raft carries you down the channel (at %s)" % p.global_position)
+	var ok := await _auto_run(p, 12700, 6.0)
+	check(ok, "and onto the far bank (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_4_kelp_to_the_snoozling_rock() -> void:
+	var p: Player = await _load_demo(W5_4)
+	await _clear_enemies()
+	await _kelp_hop(p, 13300, 0.0)
+	check(p.is_on_floor() and p.global_position.y < -640.0, "the last kelp reaches the Snoozling's rock (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_4_meadow_to_the_gate() -> void:
+	var p: Player = await _load_demo(W5_4)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(12600, -2))
+	var ok := await _auto_run(p, 14000, 14.0)
+	ok = await _hop_run(p, [14100], 15100, false, 8.0)
+	check(gm().level_complete, "over the hollow log to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W5_5 := "res://levels/w5_5_midnight_trench.tscn"
+
+
+func test_w5_5_rim_to_the_first_trench() -> void:
+	var p: Player = await _load_demo(W5_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 2900, 14.0)
+	check(ok, "along the trench rim (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_5_under_the_curtain_to_the_rest_island() -> void:
+	var p: Player = await _load_demo(W5_5)
+	await _clear_enemies()
+	await _place(p, Vector2(3150, 200))
+	p.state_machine.transition_to(&"Fall")
+	var ok := await _swim_path(p, [Vector2(3450, 1050), Vector2(4150, 1050), Vector2(4600, 1450), Vector2(5500, 1300),
+			Vector2(5680, 900)], 24.0)
+	check(gm().gems[0], "gem 0 glows on the trench floor (at %s)" % p.global_position)
+	check(ok, "swimming under the rock curtain to the bubble column (at %s)" % p.global_position)
+	ok = await _auto_run(p, 6200, 10.0)
+	check(ok, "the bubbles carry you up to the rest island (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_5_caverns_and_gem_1() -> void:
+	var p: Player = await _load_demo(W5_5)
+	await _clear_enemies()
+	await _place(p, Vector2(6550, -42))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(6900, 1200), Vector2(7300, 1300), Vector2(8000, 1000), Vector2(8250, 1050),
+			Vector2(8260, 1250), Vector2(8380, 1400)], 24.0)
+	check(gm().gems[1], "gem 1 waits in the sealed grotto (at %s)" % p.global_position)
+	ok = await _swim_path(p, [Vector2(8260, 1250), Vector2(8250, 1000), Vector2(9300, 900)], 14.0)
+	check(ok, "back out of the grotto to the bubble column (at %s)" % p.global_position)
+	ok = await _auto_run(p, 9800, 10.0)
+	check(ok, "up and out of the caverns (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_5_clam_on_the_dark_rim() -> void:
+	var p: Player = await _load_demo(W5_5)
+	await _clear_enemies()
+	await _pad_hop(p, Vector2(11000, 0), -580.0, 11250.0, 6.0)
+	check(p.global_position.y < -530.0 and p.is_on_floor(), "the clam throws you up to the ledge (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_5_dark_rim_to_the_gate() -> void:
+	var p: Player = await _load_demo(W5_5)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(9750, -2))
+	var ok := await _auto_run(p, 12200, 16.0)
+	ok = await _hop_run(p, [12200], 13150, false, 8.0)
+	check(gm().level_complete, "past the anglerlings and over the crate to the gate (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W5_6 := "res://levels/w5_6_sunken_temple.tscn"
+
+
+func test_w5_6_temple_steps_and_the_colonnade() -> void:
+	var p: Player = await _load_demo(W5_6)
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(0, -2))
+	var ok := await _auto_run(p, 4700, 30.0)
+	check(ok, "up the temple steps and across the tide-flooded colonnade (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_6_jelly_bounce_onto_the_broken_arch() -> void:
+	var p: Player = await _load_demo(W5_6)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if not e is Jellybob:
+			e.queue_free()
+		else:
+			e.bob = 0.0
+	await _place(p, Vector2(3180, -42))
+	press(0, "move_right")
+	var jumped := false
+	var bounced := false
+	for i in 300:
+		await get_tree().physics_frame
+		if not jumped and p.global_position.x >= 3255.0 and p.is_on_floor():
+			press(0, "jump")
+			jumped = true
+		if p.velocity.y < -1000.0:
+			bounced = true
+		if bounced:
+			if p.global_position.x < 3700.0:
+				press(0, "move_right")
+			else:
+				release(0, "move_right")
+		elif jumped and p.global_position.x > 3420.0:
+			release(0, "move_right")
+		if i > 80:
+			release(0, "jump")
+		if gm().gems[0]:
+			break
+	release(0, "move_right")
+	check(gm().gems[0], "a jellybob bounce reaches gem 0 on the broken arch (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_6_drowned_nave_and_gem_1() -> void:
+	var p: Player = await _load_demo(W5_6)
+	await _clear_enemies()
+	await _place(p, Vector2(4850, -152))
+	press(0, "move_right")
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"Swim":
+			break
+	release(0, "move_right")
+	var ok := await _swim_path(p, [Vector2(5300, 700), Vector2(6000, 840), Vector2(6800, 800)], 20.0)
+	check(gm().gems[1], "gem 1 sits on the sunken shrine (at %s)" % p.global_position)
+	ok = await _auto_run(p, 7350, 12.0)
+	check(ok, "the bubble column lifts you up to the gallery (at %s, %s)" % [p.global_position, _state(p)])
+	await _finish_demo()
+
+
+func test_w5_6_inkabella_can_be_beaten_by_hitting_her_stuck_tentacle() -> void:
+	seed(20261008)
+	var p: Player = await _load_demo(W5_6)
+	var boss: Inkabella = null
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if e is Inkabella:
+			boss = e
+		else:
+			e.queue_free()
+	check(boss != null and boss.asleep, "Inkabella should be asleep in the great hall")
+	await _place(p, Vector2(9400, -2))
+	await frames(10)
+	check(not boss.asleep, "walking into the hall should wake her")
+	var flood: Water = boss.get_node_or_null(boss.flood)
+	check(flood != null, "her flood points at the hall's water")
+	var gates := _demo.find_children("*", "Gate", true, false)
+	for round in 24:
+		if not is_instance_valid(boss) or boss.dead:
+			break
+		p.invulnerable_timer = 100.0
+		var side := -1.0 if boss.global_position.x > 9674.0 else 1.0
+		p.global_position = Vector2(boss.global_position.x + side * 340.0, -2.0)
+		p.velocity = Vector2.ZERO
+		await frames(2)
+		for c in boss.get_parent().get_children():
+			if c is Inkabella.InkCloud or (c is Projectile and c.shooter == boss):
+				c.queue_free()
+		boss._slams_left = 1
+		boss._start_aim()
+		for i in 300:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.st == Inkabella.St.STUCK:
+				break
+		if not is_instance_valid(boss) or boss.st != Inkabella.St.STUCK:
+			continue
+		var hp := boss.health
+		p.global_position = boss.tip() + Vector2(-60, -10)
+		p.velocity = Vector2.ZERO
+		p.facing = 1
+		await frames(2)
+		press(0, "attack")
+		await frames(4)
+		release(0, "attack")
+		for i in 60:
+			await get_tree().physics_frame
+			if not is_instance_valid(boss) or boss.dead or boss.health < hp:
+				break
+		await seconds(0.6)
+	check(not is_instance_valid(boss) or boss.dead, "six hits on her stuck tentacle should beat Inkabella (hp %d)" % (boss.health if is_instance_valid(boss) else 0))
+	check(flood.global_position.y < -100.0, "the hall floods once she's angry (surface %.0f)" % flood.global_position.y)
+	await seconds(1.5)
+	var exit_open := false
+	for g in gates:
+		if g.global_position.x > 10200.0 and g.is_open():
+			exit_open = true
+	check(exit_open, "beating her should open the exit gate")
+	p.invulnerable_timer = 100.0
+	await _place(p, Vector2(10420, -2))
+	var ok: bool = await _hop_run(p, [10500], 11550, false, 6.0)
+	check(gm().level_complete, "over the treasure chest to the gate completes World 5 (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_w5_6_dying_in_the_great_hall_lets_you_back_in() -> void:
+	await _boss_arena_lets_you_back_in(W5_6, Vector2(8800, 0), 9400.0)
+
+
+func test_w5_every_snoozling_cage_can_be_punched_open() -> void:
+	for path in [W5_1, W5_2, W5_3, W5_4, W5_5, W5_6]:
+		var p: Player = await _load_demo(path)
+		await _clear_enemies()
+		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
+		await _place(p, cage.global_position + Vector2(-55, -4))
+		p.facing = 1
+		await _punch()
+		await frames(20)
+		check(cage._opened, "%s: the Snoozling's cage opens with a punch (player %s %s, cage %s)" % [path.get_file(), p.global_position, _state(p), cage.global_position])
+		await _finish_demo()
+
+
+func test_w5_secret_chests_hold_gem_2() -> void:
+	for spot: Array in [[W5_1, Vector2(14900, -2)], [W5_2, Vector2(14900, -2)], [W5_3, Vector2(14000, -2)],
+			[W5_4, Vector2(14100, -2)], [W5_5, Vector2(12200, -2)], [W5_6, Vector2(10500, -2)]]:
+		var p: Player = await _load_demo(spot[0])
+		await _clear_enemies_except_bosses()
+		await _place(p, spot[1])
+		p.facing = 1
+		await _run_to(p, spot[1].x + 50.0, "move_right", 1.0)
+		release(0, "move_right")
+		await _punch()
+		await frames(20)
+		press(0, "move_right")
+		await seconds(1.0)
+		release(0, "move_right")
+		check(gm().gems[2], "%s: punching the chest open reaches gem 2 (at %s)" % [String(spot[0]).get_file(), p.global_position])
+		await _finish_demo()

@@ -43,10 +43,10 @@ world/       Geometry (block, terrain, slope, back_wall), toys (bounce_pad, swin
              looks (backdrop, ambience, glow_light, waterfall, level_theme + themes/),
              mesh_painter.gd (bakes static art to one ArrayMesh = one draw call)
 decor/       deco.gd (baked scenery props, sway via skew), signpost
-enemies/     enemy.gd base + 23 enemies + 5 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus)
+enemies/     enemy.gd base + 28 enemies + 6 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella)
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
-             w1_*..w4_*.tscn (Worlds 1-4 - GENERATED, see below), bonus levels, demo_level
+             w1_*..w5_*.tscn (Worlds 1-5 - GENERATED, see below), bonus levels, demo_level
 ui/          title -> character_select -> world_map (one per world, gates between) -> level -> results;
              hud (boss bar, banners, F3 debug), pause_menu, level_select (bonus)
 tools/       check.sh, levelgen/ (Python level kit + level scripts), bench (draw

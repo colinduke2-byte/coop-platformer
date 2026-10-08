@@ -35,6 +35,9 @@ func exit() -> void:
 func physics_update(delta: float) -> void:
 	var t := player.tuning
 	_time += delta
+	if player.is_submerged():
+		machine.transition_to(&"Swim")
+		return
 	match _phase:
 		Phase.HANG:
 			player.velocity.x = move_toward(player.velocity.x, 0.0, 2000.0 * delta)

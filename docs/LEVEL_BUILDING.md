@@ -101,6 +101,13 @@ bots chain them up to ~480 px apart) · `waterfall(x, y, w, h)` (scenery curtain
 `beat(x, y, w, h, group, beat)` (tick-tock block: group 0 pink / 1 blue take turns being solid every
 `beat` s (1.6); they blink 0.4 s before a swap and never turn solid inside a player. Bots: 150 px up /
 200 px across per step, or a flat row 240 px apart).
+`bubbles(x, y, w, h, rise)` (bubble column: swimmers inside get lifted `rise` px/s - put one in a
+sea-well to carry players up to a ledge) · `clam(x, y, open_time, closed_time, phase, height)` (giant clam:
+a bounce pad that only launches while open; `height=640` reaches a ledge 540 up) ·
+`tide(x, y, w, h, amplitude, period)` (water whose surface rises and falls; `y` is high tide - keep low
+tide within ~70 px of anything swimmers must climb out onto) · `kelp(x, top, length)` (= `vine`; climb to
+the top, then jump: a ledge ~110 px below the kelp's top is reachable).
+Water rule: a swimmer can leap out onto a bank at most ~70 px above the surface.
 
 ### Hazards
 `spikes` · `pop_spikes` · `spikeball` · `saw` · `crusher` · `flame(steam=)` ·
@@ -127,11 +134,11 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | Call | What |
 |---|---|
 | `LevelKit(..., theme=, scenery=, horizon=, backdrop={})` | Palette (`world/themes/*.tres`) + parallax scenery. |
-| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice`, `jungle`, `ruins`, `factory` |
-| `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow`, `rain` |
+| scenery | `hills`, `forest`, `cave`, `canopy`, `river`, `castle`, `candy`, `ice`, `jungle`, `ruins`, `factory`, `ocean`, `deep`, `nebula` |
+| `ambience(kind, density, darkness, tint)` | `pollen`, `leaves`, `fireflies`, `spores`, `petals`, `embers`, `snow`, `rain`, `bubbles`, `stars` |
 | `glow(x, y, color, radius)` | Soft light (for dark levels). |
-| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis, palm, big_leaf, totem, bromeliad, gear, pipes, clock, toyblocks |
-| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave, jungle, ruins, swamp, factory |
+| `deco(kind, x, y, size, front)` | grass, flowers, bush, tree, pine, mushrooms, rock, fence, crystals, candy_cane, lollipop, reeds, fern, log, stump, giant_mushroom, hanging_vines, lilypads, big_flower, roots, hut, lantern, snowman, icicles (on a ceiling), igloo, skis, palm, big_leaf, totem, bromeliad, gear, pipes, clock, toyblocks, coral, seaweed, shell, anchor, starfish, chest |
+| `dress(x0, x1, style, spacing, seed, skip)` | Scatter deco along the ground tops. Styles: meadow, forest, cave, river, thorn, snow, icecave, jungle, ruins, swamp, factory, beach, reef, wreck, dream |
 | `extra(path, **props)` | Any other scene or script (e.g. `world/waterfall.gd`). |
 
 ## Enemy catalogue (`L.enemy(kind, x, y, facing=-1, **props)`)
@@ -164,6 +171,12 @@ opens the targets when its enemies die) · `spawner` · `key` + `key_door`.
 | `sparkbot` | Sparkbot | Electric drone flying along `travel` (`speed`, `phase`). Don't stomp it (zap!) - punch it. |
 | `springbot` | Springbot | Coiled robot: crouches (tell), then hops at you (`hop_height`). Stomp or punch. |
 | `cuckoolossus` | Cuckoolossus | World 4 boss: chime + pendulum sweep (jump), brass gears, cuckoo lunge (sticks in the floor = stomp/punch the bird; phase 3 twice + gear rain). |
+| `pufferfin` | Pufferfin | Fish swimming along `travel`; every `puff_every` s it puffs into a spiky ball (can't stomp, punches bounce off). Pop it while it's small. |
+| `crabbit` | Crabbit | Crab patrolling sideways; the claw blocks punches from the front. Stomp it or hit it from behind. |
+| `jellybob` | Jellybob | Bobbing jellyfish (`bob`, `phase`). Its top is a trampoline (bounce ~350 px); the tendrils sting from the side or below. |
+| `eelectra` | Eelectra | Eel in a hole: crackles (tell), lunges `reach` px out toward you, slides back. Only hittable while out. Place it at the hole's mouth facing the open side. |
+| `anglerling` | Anglerling | Deep-sea fish with a real light on its lure; drifts toward anyone within `sight`. Stomp or punch. Great in dark levels. |
+| `inkabella` | Inkabella | World 5 boss: tentacle slam (shadow tell; sticks in the floor = stomp/punch the tip), ink blobs (punch them back), phase 3 double slams and floods `flood` (a Water NodePath). |
 | `king_grumblo` | King Grumblo | Boss (bonus levels): slam shockwaves. |
 | `baron_bristleback` | Baron Bristleback | World 1 boss. Rolls (bounces off walls, count = phase), quill volley, leap slam, acorn rain. Stomp him while he's DAZED. |
 

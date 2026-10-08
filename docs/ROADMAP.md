@@ -21,7 +21,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Phase 3 — Game loop ✅
 - [x] Hit feedback: hit-stop, camera shake, dust/puff/star particles, stomp chains (x2 x3 pops)
-- [x] 23 enemies + 5 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
+- [x] 28 enemies + 6 bosses (see `docs/LEVEL_BUILDING.md` catalogue)
 - [x] Hazards and toys: spikes, saws, crushers, moving/crumbling platforms, bounce pads, and ~40 more
 - [x] Level goal + results screen (time, Lums, gems, Snoozling, records)
 - [x] Hidden collectibles: 3 gems + 1 caged Snoozling per level
@@ -89,7 +89,14 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] 4-1 Cogwheel Courtyard, 4-2 Conveyor Chaos, 4-3 Steam Pipes, 4-4 Tick-Tock Tower, 4-5 Night Shift, 4-6 Cuckoolossus Clocktower; bot tests for every section
 - [x] Factory world map + gate from the top of World 3's map
 - [ ] Playtest: is the beat (`BeatBlock.beat` 1.6 s) too fast with 4 players? Is Cuckoolossus fair solo (`stuck_time` 2.6)?
-- [ ] Ideas for World 5: Candy Clouds (expand the Candy Canopy bonus level)?
+
+## World 5 - Deep Sea Dream ✅ (needs Colin's playtest)
+- [x] New pieces: bubble columns (lift swimmers), giant clams (bounce pad that opens and shuts), tide water (rises and falls), kelp (climbable vine), ocean / deep-sea backdrops, bubble ambience, coral / seaweed / shell / anchor / starfish / chest deco, 8 themes + music
+- [x] New enemies: Pufferfin (puffs into a spiky ball), Crabbit (claw guards its front), Jellybob (living trampoline, stinging tendrils), Eelectra (lunges out of holes), Anglerling (glowing lure in the dark), boss Inkabella (tentacle slams stick in the floor - stomp/punch the tip; ink blobs; the hall floods in phase 3)
+- [x] 5-1 Seashell Shore, 5-2 Coral Kingdom, 5-3 Shipwreck Cove, 5-4 Kelp Forest Rapids, 5-5 Midnight Trench (dark), 5-6 The Drowned Palace; bot tests for every section
+- [x] Seaside world map + gate from the top of World 4's map
+- [x] Fixes found while building it: wall-slide / ground-pound into water now switch to swimming; swimmers can grab kelp / vines at the surface
+- [ ] Playtest: is the rapids current (240) too strong with 4 players? Is Inkabella fair solo (`stuck_time` 2.4)?
 
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)

@@ -37,6 +37,10 @@ func physics_update(delta: float) -> void:
 	var head_y := player.global_position.y - Player.BODY_SIZE.y
 	var at_surface := head_y < surface + 12.0
 
+	# Grab a vine / kelp poking out of the water and climb out.
+	if at_surface and inp.y < -0.5 and player.climbable != null and player.can_grab_climb():
+		machine.transition_to(&"Climb")
+		return
 	if player.wants_jump():
 		if at_surface and inp.y <= 0.3:
 			# Leap out of the water.

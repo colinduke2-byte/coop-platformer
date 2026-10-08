@@ -76,6 +76,13 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   jump its pendulum, stomp the cuckoo when it sticks in the floor). New:
   tick-tock blocks that swap on the beat, zap arcs, factory scenery, wind-up
   soldiers, sparkbots and springbots. Reached from the top of World 3's map.
+- **World 5 - Deep Sea Dream**: 5-1 Seashell Shore, 5-2 Coral Kingdom,
+  5-3 Shipwreck Cove, 5-4 Kelp Forest Rapids, 5-5 Midnight Trench (dark),
+  5-6 The Drowned Palace (boss: **Inkabella**, a giant octopus - when a
+  tentacle slams down and sticks, stomp or punch its tip; she floods the hall
+  when she's angry). Mixed land and swimming, no air meter. New: bubble
+  columns, giant clams, tides, kelp, pufferfins, crabbits, jellybobs, eels and
+  anglerlings. Reached from the top of World 4's map.
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.

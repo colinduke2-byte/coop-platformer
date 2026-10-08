@@ -18,6 +18,7 @@ const GATE_TEXT := {
 	"w2": ["Gondola to Frostwhistle Peaks", "Back to Frostwhistle Peaks", "World 2! Ride the gondola up into the snowy mountains."],
 	"w3": ["Down to the Rainbloom Jungle", "Back to the Rainbloom Jungle", "World 3! Follow the river down into the warm, rainy jungle."],
 	"w4": ["Up to the Clockwhirl Works", "Back to the Clockwhirl Works", "World 4! Climb past the temple to the clanking dream factory."],
+	"w5": ["Down to the Deep Sea Dream", "Back to the Deep Sea Dream", "World 5! Out of the factory's back door and down to the seaside."],
 }
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
@@ -54,6 +55,7 @@ func _ready() -> void:
 		"w2": art = _bake_w2()
 		"w3": art = _bake_w3()
 		"w4": art = _bake_w4()
+		"w5": art = _bake_w5()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
 	var live := LiveBits.new()
@@ -93,7 +95,7 @@ func _ready() -> void:
 			n["unlocked"] = n["unlocked"] or Net.is_client()
 		if Net.is_client():
 			_show_toast("The host picks the level - enjoy the ride!")
-	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass"}.get(world, "worldmap"))
+	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef"}.get(world, "worldmap"))
 
 
 func _build_nodes() -> void:
@@ -891,6 +893,130 @@ func _w4_clocktower(mp: MeshPainter, c: Vector2) -> void:
 	mp.draw_rect(Rect2(c + Vector2(-20, 130), Vector2(40, 60)), Color("3a2a1a"))
 
 
+func _bake_w5() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 51
+	var sand := Color("f3d7a0")
+	var sea := Color("3fa9e0")
+	_vgrad(mp, Rect2(0, 0, 1920, 600), Color("7fd0ff"), Color("d8f4ff"), 12)
+	# The sea, darker towards the trench on the right.
+	_vgrad(mp, Rect2(0, 440, 1920, 640), sea.lightened(0.15), sea.darkened(0.35), 10)
+	for i in 40:  # sparkles on the water
+		var p := Vector2(rng.randf_range(0, 1920), rng.randf_range(460, 560))
+		mp.draw_line(p, p + Vector2(rng.randf_range(14, 30), 0), Color(1, 1, 1, 0.5), 2.0)
+	# The temple rock (Inkabella's lair), top right, with tentacles curling out of the sea.
+	mp.draw_colored_polygon(PackedVector2Array([Vector2(1440, 620), Vector2(1500, 470), Vector2(1580, 420), Vector2(1730, 410),
+			Vector2(1820, 470), Vector2(1880, 620)]), Color("7a6a8a"))
+	_w5_temple(mp, Vector2(1650, 330))
+	for k in 3:
+		var base := Vector2(1470 + k * 180, 600)
+		var pts := PackedVector2Array()
+		for i in 12:
+			var f := i / 11.0
+			pts.append(base + Vector2(sin(f * 4.0 + k) * 30.0, -f * 150.0))
+		mp.draw_polyline(pts, Color("b05ad6"), 22.0 - k * 3.0)
+	# The sandy island chain the path winds over.
+	var land := PackedVector2Array([Vector2(0, 1080), Vector2(0, 700)])
+	for i in 25:
+		land.append(Vector2(i * 80.0, 700.0 + sin(i * 0.55) * 40.0 + (i * 4.0 if i > 14 else 0.0)))
+	land.append(Vector2(1920, 760))
+	land.append(Vector2(1920, 1080))
+	mp.draw_colored_polygon(land, sand.darkened(0.05))
+	for c: Vector2 in [Vector2(540, 660), Vector2(1130, 600)]:  # islets out in the lagoon
+		mp.draw_colored_polygon(Art.ellipse(c + Vector2(0, 20), 170, 60, 24), sand)
+	mp.draw_colored_polygon(Art.ellipse(Vector2(1420, 830), 170, 70, 24), Color("1d3a6a"))   # the trench
+	mp.draw_colored_polygon(Art.ellipse(Vector2(1420, 840), 120, 44, 24), Color("0e1c3a"))
+	# Regions.
+	_w5_shore(mp, Vector2(240, 850))
+	_w5_reef(mp, Vector2(540, 660))
+	_w5_wreck(mp, Vector2(850, 820))
+	_w5_kelp(mp, Vector2(1130, 600))
+	# Shells and starfish on the sand (not on the regions or the path).
+	for i in 60:
+		var p := Vector2(rng.randf_range(30, 1890), rng.randf_range(720, 1060))
+		var clear := true
+		for n in nodes:
+			if p.distance_to(n["pos"]) < 120.0:
+				clear = false
+		if clear and _path_dist(p) > 40.0 and p.distance_to(Vector2(1420, 830)) > 190.0:
+			if i % 2 == 0:
+				mp.draw_colored_polygon(Art.ellipse(p, 9, 7, 10), Color("ffc2d8"))
+			else:
+				var star := PackedVector2Array()
+				for k in 10:
+					star.append(p + Vector2.from_angle(TAU * k / 10.0 - PI * 0.5) * (11.0 if k % 2 == 0 else 5.0))
+				mp.draw_colored_polygon(star, Color("ff8a5b"))
+	# The path: a boardwalk of planks.
+	mp.draw_polyline(_path, Color("6a4a32"), 24.0)
+	mp.draw_polyline(_path, Color("c9a06a"), 16.0)
+	var d := 0.0
+	var total := _poly_len(_path)
+	while d < total:
+		var a := _sample(_path, d)
+		var b := _sample(_path, d + 4.0)
+		var n := (b - a).normalized().orthogonal() * 8.0
+		mp.draw_line(a - n, a + n, Color("8a6a42"), 2.0)
+		d += 18.0
+	return mp.build()
+
+
+func _w5_shore(mp: MeshPainter, c: Vector2) -> void:
+	for k in 2:  # palms
+		var base := c + Vector2(-110 + k * 200, 0)
+		mp.draw_line(base, base + Vector2(20, -110), Color("8a5a36"), 10.0)
+		for i in 5:
+			var a := -PI * 0.5 + (i - 2) * 0.6
+			mp.draw_colored_polygon(Art.ellipse(base + Vector2(20, -110) + Vector2.from_angle(a) * 30.0, 30, 9, 10), Color("4fb548"))
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(60, -10), 26, 18, 16), Color("ffc2d8"))   # a big shell
+	mp.draw_rect(Rect2(c + Vector2(-40, -40), Vector2(40, 40)), Color("e8c87a"))               # a sandcastle
+	mp.draw_rect(Rect2(c + Vector2(-46, -56), Vector2(14, 16)), Color("e8c87a"))
+	mp.draw_rect(Rect2(c + Vector2(-8, -56), Vector2(14, 16)), Color("e8c87a"))
+
+
+func _w5_reef(mp: MeshPainter, c: Vector2) -> void:
+	var cols := [Color("ff6fa8"), Color("ffb13f"), Color("b98aff"), Color("5bd6c8")]
+	for k in 6:
+		var p := c + Vector2(-120 + k * 48, -10 + (k % 2) * 14)
+		var col: Color = cols[k % cols.size()]
+		mp.draw_line(p, p + Vector2(0, -50), col, 10.0)
+		mp.draw_line(p + Vector2(0, -30), p + Vector2(-16, -52), col, 7.0)
+		mp.draw_line(p + Vector2(0, -24), p + Vector2(18, -46), col, 7.0)
+
+
+func _w5_wreck(mp: MeshPainter, c: Vector2) -> void:
+	# The galleon, tipped over on the sand.
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-150, -20), c + Vector2(130, -50), c + Vector2(110, 10),
+			c + Vector2(-120, 30)]), Color("7a4a2e"))
+	mp.draw_line(c + Vector2(-140, -10), c + Vector2(120, -40), Color("a8724a"), 4.0)
+	mp.draw_line(c + Vector2(-10, -30), c + Vector2(-40, -170), Color("5a3a22"), 8.0)   # the mast
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-34, -150), c + Vector2(40, -120), c + Vector2(-24, -80)]), Color("f4ecd8"))
+	mp.draw_circle(c + Vector2(60, -30), 8.0, Color("3a2a1a"))   # a porthole
+
+
+func _w5_kelp(mp: MeshPainter, c: Vector2) -> void:
+	for k in 7:
+		var base := c + Vector2(-130 + k * 42, 10)
+		var pts := PackedVector2Array()
+		for i in 10:
+			var f := i / 9.0
+			pts.append(base + Vector2(sin(f * 5.0 + k) * 8.0, -f * (110.0 + (k % 3) * 30.0)))
+		mp.draw_polyline(pts, Color("3f8a4a").lightened((k % 2) * 0.15), 8.0)
+
+
+func _w5_temple(mp: MeshPainter, c: Vector2) -> void:
+	# The sunken temple: columns and a domed roof, half under the waves.
+	mp.draw_rect(Rect2(c + Vector2(-110, 0), Vector2(220, 90)), Color("c9b8d8"))
+	for k in 5:
+		mp.draw_rect(Rect2(c + Vector2(-100 + k * 44, -100), Vector2(22, 100)), Color("e4d8ee"))
+	mp.draw_rect(Rect2(c + Vector2(-124, -118), Vector2(248, 22)), Color("b8a6cc"))
+	var dome := PackedVector2Array()
+	for k in 13:
+		dome.append(c + Vector2(0, -118) + Vector2(cos(PI + PI * k / 12.0) * 90.0, sin(PI + PI * k / 12.0) * 60.0))
+	mp.draw_colored_polygon(dome, Color("8a6ab0"))
+	mp.draw_rect(Rect2(c + Vector2(-20, 30), Vector2(40, 60)), Color("3a2a4a"))
+
+
 func _path_dist(p: Vector2) -> float:
 	var best := 1e9
 	for q in _path:
@@ -1051,6 +1177,9 @@ class LiveBits extends Node2D:
 		if map.world == "w4":
 			_draw_w4()
 			return
+		if map.world == "w5":
+			_draw_w5()
+			return
 		# Gondola bobbing up the cable to World 2.
 		if LevelCatalog.exists("w2_1"):
 			var a := WorldMap.GATE_W2_POS + Vector2(26, -50)
@@ -1182,6 +1311,38 @@ class LiveBits extends Node2D:
 			draw_line(Vector2(x, y), Vector2(x + 3, y + 16), Color(0.85, 0.95, 1.0, 0.35), 1.5)
 		_clouds()
 
+	func _draw_w5() -> void:
+		var o := Color("1d1726")
+		# Waves lapping along the shore line.
+		for k in 3:
+			var pts := PackedVector2Array()
+			for i in 49:
+				var x := i * 40.0
+				pts.append(Vector2(x, 470.0 + k * 34.0 + sin(x * 0.02 + t * (1.5 + k * 0.3)) * 5.0))
+			draw_polyline(pts, Color(1, 1, 1, 0.35 - k * 0.08), 3.0)
+		# Bubbles rising out of the trench.
+		for i in 10:
+			var ph := fposmod(t * 0.35 + i * 0.1, 1.0)
+			var p := Vector2(1420 + sin(i * 2.3) * 70.0, 830 - ph * 140.0) + Vector2(sin(t * 3.0 + i) * 6.0, 0)
+			draw_arc(p, 4.0 + ph * 4.0, 0, TAU, 12, Color(1, 1, 1, 0.8 * (1.0 - ph)), 1.5)
+		# Inkabella peeking over her temple: two big eyes that blink.
+		var blink := 1.0 if fposmod(t, 4.0) > 0.15 else 0.15
+		for side: float in [-1.0, 1.0]:
+			var e := Vector2(1650 + side * 26, 205)
+			draw_colored_polygon(Art.ellipse(e, 14, 14 * blink, 16), Color.WHITE)
+			draw_circle(e + Vector2(sin(t * 0.7) * 4.0, 2), 5.0 * blink, o)
+		# Fish darting about the reef.
+		for i in 5:
+			var f := fposmod(t * 0.18 + i * 0.2, 1.0)
+			var p := Vector2(420 + f * 260.0, 610 + sin(i * 1.7 + t * 2.0) * 14.0)
+			draw_colored_polygon(Art.ellipse(p, 9, 5, 10), Color.from_hsv(0.08 + i * 0.13, 0.7, 1.0))
+			draw_colored_polygon(PackedVector2Array([p + Vector2(-8, 0), p + Vector2(-15, -5), p + Vector2(-15, 5)]), Color.from_hsv(0.08 + i * 0.13, 0.7, 0.9))
+		# A gull wheeling over the beach.
+		var g := Vector2(300 + sin(t * 0.4) * 160.0, 300 + cos(t * 0.5) * 40.0)
+		var flap := sin(t * 8.0) * 6.0
+		draw_polyline(PackedVector2Array([g + Vector2(-16, flap), g, g + Vector2(16, flap)]), o, 2.5)
+		_clouds()
+
 	func _draw_w4() -> void:
 		var o := Color("1d1726")
 		# The clocktower's hands sweeping round (fast - it's a dream clock).
@@ -1232,7 +1393,10 @@ class Badges extends Node2D:
 		var to_snow: bool = n["gate"] == "w2"
 		var to_jungle: bool = n["gate"] == "w3"
 		var to_works: bool = n["gate"] == "w4"
+		var to_sea: bool = n["gate"] == "w5"
 		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
+		if to_sea:
+			fill = Color("a8e4ff")
 		if not n["unlocked"]:
 			fill = Color("9a93a8")
 		draw_circle(p + Vector2(0, 6), r, Color(0, 0, 0, 0.25))
@@ -1240,6 +1404,13 @@ class Badges extends Node2D:
 		if not n["unlocked"]:
 			draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), o)
 			draw_arc(p + Vector2(0, -3), 7.0, PI, TAU, 10, o, 3.0)
+		elif to_sea:
+			var shell := PackedVector2Array()
+			for k in 9:  # a scallop shell
+				shell.append(p + Vector2.from_angle(PI + PI * k / 8.0) * 16.0 + Vector2(0, 6))
+			Art.shape(self, shell, Color("ffc2d8"), o, 2.0)
+			for k in 4:
+				draw_line(p + Vector2(0, 8), p + Vector2.from_angle(PI + PI * (k + 0.5) / 4.0) * 14.0 + Vector2(0, 6), o, 1.5)
 		elif to_works:
 			var gear := PackedVector2Array()
 			for k in 24:  # a brass gear

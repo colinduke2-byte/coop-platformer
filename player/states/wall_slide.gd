@@ -14,6 +14,9 @@ func enter(_previous: StringName) -> void:
 
 func physics_update(delta: float) -> void:
 	var t := player.tuning
+	if player.is_submerged():
+		machine.transition_to(&"Swim")
+		return  # slid down into water: swim instead
 	if player.try_ledge_grab():
 		return  # the wall's top is right there: hang on it instead
 	player.velocity.y = minf(player.velocity.y + t.fall_gravity() * delta, t.wall_slide_speed)
