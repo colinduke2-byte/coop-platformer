@@ -111,6 +111,10 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Nightmare Nebula (secret World 6): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-5's gems (`LevelCatalog.SECRET_SHARE`)
 - [ ] Playtest: are shop prices right (250-2000 Lums)? Is 6-4's boss rush too hard solo?
 
+## Visual overhaul (next) - see docs/VISUAL_OVERHAUL.md
+- [ ] Phase 0 foundation (texture baker, quality presets, before/after harness)
+- [ ] Phase 1 worlds & terrain · [ ] Phase 2 characters · [ ] Phase 3 enemies & bosses · [ ] Phase 4 UI, menus & maps · [ ] Phase 5 final pass
+
 ## Phase 5 — Art & audio
 - [x] 4 original characters as vector cutout rigs (`characters/`: CharacterDef + CharacterRig, procedural animation per state)
 - [x] Character select screen + in-level wardrobe pedestals
