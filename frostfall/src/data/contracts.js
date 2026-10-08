@@ -16,6 +16,8 @@ const KIND = {
   tower: { verb: 'Retake the watchtower', short: 'RETAKE TOWER' },
   beardn: { verb: 'Drive the bears from their den', short: 'CLEAR BEAR DEN' },
   barrow: { verb: 'Defeat the barrow guardian', short: 'BARROW BOSS' },
+  lost: { verb: "Find a traveller's lost satchel (it lies at the marked spot)", short: 'LOST SATCHEL' },
+  escort: { verb: 'Walk a nervous pilgrim to the hamlet (keep close to them)', short: 'ESCORT PILGRIM' },
   hamlet: { verb: 'Carry a sealed package to the hamlet (just walk up to it)', short: 'DELIVER PACKAGE' },
 };
 const ORDER = ['camp', 'den', 'ruin', 'champion', 'tower', 'barrow', 'beardn', 'hamlet'];
@@ -29,7 +31,13 @@ export function ensureContracts() {
   const day = today();
   if (S.contracts && S.contracts.day === day) return S.contracts;
   const keepActive = (S.contracts?.active || []).filter((id) => !S.contracts.done?.[id]);
-  const pois = getReach().pois.filter((p) => ORDER.includes(p.kind) && !S.bounty[p.id]);
+  const base = getReach().pois.filter((p) => ORDER.includes(p.kind) && !S.bounty[p.id]);
+  // errands: a lost satchel at some of the ruins and dens, a pilgrim to walk to some hamlets
+  const pois = [...base];
+  for (const p of base) {
+    if ((p.kind === 'ruin' || p.kind === 'den') && (p.x * 7 + p.y * 3 + day) % 4 === 0) pois.push({ ...p, id: 'lost_' + p.id, kind: 'lost' });
+    if (p.kind === 'hamlet' && (p.x + p.y + day) % 3 === 0) pois.push({ ...p, id: 'escort_' + p.id, kind: 'escort' });
+  }
   const picked = [];
   let h = (S.seed ^ (day * 2654435761)) >>> 0;
   const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 3266489917) >>> 0; return h / 4294967296; };

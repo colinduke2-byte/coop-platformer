@@ -9,6 +9,7 @@ const WIND = { blizzard: 14, whiteout: 42 };
 
 export const ambientMethods = {
   initAmbient() {
+    this.critters = null; this.escortSprite = null;
     this.ravens = []; this.raventT = 4 + Math.random() * 6;
     this.prints = []; this.printT = 0; this.printSide = 1;
     this.motes = Array.from({ length: 16 }, () => ({ x: Math.random() * W, y: Math.random() * H, p: Math.random() * 6, s: 3 + Math.random() * 5 }));
@@ -20,7 +21,40 @@ export const ambientMethods = {
   // Sideways push on arrows and bolts: none in clear weather, strong in a whiteout.
   windX() { return (this.def.snow || this.def.outdoors) ? (WIND[S.weather] || 0) : 0; },
 
+  // Towns keep a few hens and a dog, wandering near the houses. They hop away when you run past.
+  initCritters() {
+    this.critters = [];
+    if (this.def.interior || this.def.arena || this.def.cave || !(this.def.snow || this.def.outdoors) || !(this.npcs?.length >= 3)) return;
+    const homes = this.npcs.slice(0, 5);
+    const kinds = ['hen', 'hen', 'dog', 'hen'];
+    for (let i = 0; i < Math.min(kinds.length, homes.length); i++) {
+      const n = homes[i], x = n.x + 16 + (i % 2) * -32, y = n.y + 14;
+      if (this.solidAt(x, y)) continue;
+      const kind = kinds[i];
+      this.critters.push({ kind, x, y, hx: x, hy: y, vx: 0, vy: 0, t: Math.random() * 3, fl: 0, img: this.add.image(x, y, kind + '0').setDepth(y + 4) });
+    }
+  },
+  critterTick(dt) {
+    if (!this.critters) this.initCritters();
+    const p = this.player;
+    for (const c of this.critters) {
+      c.t -= dt; c.fl += dt;
+      const dp = Math.hypot(c.x - p.x, c.y - p.y);
+      if (dp < 28 && p.speedNow > 60) { c.vx = (c.x - p.x) / (dp || 1) * 46; c.vy = (c.y - p.y) / (dp || 1) * 46; c.t = 0.6; }
+      else if (c.t <= 0) {
+        c.t = 1 + Math.random() * 3;
+        if (Math.random() < 0.5) { c.vx = c.vy = 0; } else { const a = Math.random() * 6.28, sp = c.kind === 'dog' ? 22 : 12; c.vx = Math.cos(a) * sp; c.vy = Math.sin(a) * sp; }
+        if (Math.hypot(c.x - c.hx, c.y - c.hy) > 48) { c.vx = (c.hx - c.x) * 0.3; c.vy = (c.hy - c.y) * 0.3; }
+      }
+      const nx = c.x + c.vx * dt, ny = c.y + c.vy * dt;
+      if (!this.solidAt(nx, ny)) { c.x = nx; c.y = ny; } else { c.vx = c.vy = 0; }
+      c.img.setPosition(Math.round(c.x), Math.round(c.y)).setDepth(c.y + 4);
+      if (c.vx || c.vy) { c.img.setTexture(c.kind + (Math.floor(c.fl * 6) % 2)).setFlipX(c.vx < 0); }
+    }
+  },
+
   ambientLife(dt) {
+    this.critterTick(dt);
     if (!(this.def.snow || this.def.outdoors) || !this.ravens) { this.auroraG?.clear(); this.moteG?.clear(); return; }
     const p = this.player;
     // ---- the Stormcrown: lightning in the distance, now and then close

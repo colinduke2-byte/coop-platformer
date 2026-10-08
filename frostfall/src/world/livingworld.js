@@ -150,12 +150,30 @@ export const livingMethods = {
     const c = this.player.statuses?.chill;
     if (!c || c.stacks < 2) { applyStatus(this.player, 'chill', { t: 8 }); bus.emit('toast', 'THE STORM CHILLS YOU: WEAR WARM ARMOUR OR FIND A FIRE', 15); }
   },
+  // Escort jobs: a pilgrim trails you across the Reach; deliver them to the hamlet.
+  escortTick(dt) {
+    const c = S.contracts, id = c?.active?.find((x) => x.startsWith('escort_') && !c.done[x]);
+    const e = this.escortSprite;
+    if (!id || this.mapId !== 'forest') { if (e) { e.img.destroy(); e.shadow.destroy(); this.escortSprite = null; } return; }
+    const o = c.offers.find((x) => x.id === id); if (!o) return;
+    const p = this.player;
+    if (!e) {
+      const img = this.add.sprite(p.x - 16, p.y, 'spr_child', 'down0'), shadow = this.add.image(p.x - 16, p.y + 7, 'shadow');
+      this.escortSprite = { img, shadow }; return;
+    }
+    const d = Math.hypot(e.img.x - p.x, e.img.y - p.y);
+    if (d > 30) { const sp = Math.min(d * 2.2, 105) * dt, nx = e.img.x + (p.x - e.img.x) / d * sp, ny = e.img.y + (p.y - e.img.y) / d * sp; if (!this.solidAt(nx, ny)) { e.img.x = nx; e.img.y = ny; } else if (!this.solidAt(nx, e.img.y)) e.img.x = nx; else if (!this.solidAt(e.img.x, ny)) e.img.y = ny; }
+    if (d > 260) { e.img.x = p.x - 20; e.img.y = p.y; }
+    e.img.setDepth(e.img.y + 8); e.shadow.setPosition(e.img.x, e.img.y + 7).setDepth(e.img.y + 6);
+    if (Math.hypot(o.x * T - e.img.x, o.y * T - e.img.y) < 56 && Math.hypot(o.x * T - p.x, o.y * T - p.y) < 90) completeContract(id, this);
+  },
   nearFire(r) { return this.interactables.some((i) => i instanceof RestSpot && Math.hypot(i.ix - this.player.x, i.iy - this.player.y) < r); },
   livingTick(dt) {
     this.stormCold(dt);
     // radiant delivery jobs finish when you reach the hamlet
     const c = S.contracts;
-    if (c?.active?.length) for (const id of c.active) { const o = c.offers.find((x) => x.id === id); if (o && o.kind === 'hamlet' && !c.done[id] && Math.hypot(o.x * T - this.player.x, o.y * T - this.player.y) < 56) completeContract(id, this); }
+    this.escortTick(dt);
+    if (c?.active?.length) for (const id of c.active) { const o = c.offers.find((x) => x.id === id); if (o && (o.kind === 'hamlet' || o.kind === 'lost') && !c.done[id] && Math.hypot(o.x * T - this.player.x, o.y * T - this.player.y) < 56) completeContract(id, this); }
     const w = this.woundedEvt;
     if (w) { w.life -= dt; if (w.done ? w.life < 160 : (w.life <= 0 || Math.hypot(w.npc.x - this.player.x, w.npc.y - this.player.y) > 520)) this.removeWounded(); }
     const ge = this.ghostEvt;
