@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import Pony from '../entities/Pony.js';
 import { dangerWarning } from '../systems/danger.js';
 import { diff } from '../systems/difficulty.js';
 import { TUNE } from '../data/tuning.js';
@@ -89,6 +90,7 @@ export default class GameScene extends Phaser.Scene {
     this.items = ITEMS;
     this.hitStopT = 0;
     this.deadT = 0;
+    S.mounted = false; this.pony = null;
     this.listeners = [];
     const def = this.def = MAPS[this.mapId];
     const built = this.built = def.build();
@@ -221,6 +223,7 @@ export default class GameScene extends Phaser.Scene {
       this.fx.ring(this.player.x, this.player.y + 4, 0.8, 0.6, 'ring', 0xf4d460);
       this.fx.puff(this.player.x, this.player.y, 13, 14, 55, 0.7, -20);
     });
+    if (S.inv.pony_whistle > 0 && (def.stream || def.snow) && !def.interior && !def.cave && !def.arena && !def.quick) { this.pony = new Pony(this, this.player.x - 16, this.player.y + 6); this.interactables.push(this.pony); }
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
     if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startQuick()); }
     this.events.once('shutdown', () => {
@@ -644,6 +647,7 @@ export default class GameScene extends Phaser.Scene {
     this.hound?.update(dt, this.player);
     this.arenaTick(dt);
     this.quickTick?.(dt);
+    this.pony?.update(dt, this.player);
     if (this.spirit && !this.spirit.dead) this.spirit.update(dt, this.player);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i];

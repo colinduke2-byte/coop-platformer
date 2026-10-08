@@ -53,6 +53,7 @@ export const ITEMS = {
   hide: { name: 'Deer Hide', type: 'misc', icon: ['dust', 9], value: 16, desc: 'Good leather. Sells well.' },
   fire_arrow: { name: 'Fire Arrow', type: 'ammo', icon: ['arrows', 12], value: 6, desc: 'Fletched by Hilda. Burns the target for a few seconds. Press V to switch ammo.' },
   bleed_arrow: { name: 'Barbed Arrow', type: 'ammo', icon: ['arrows', 11], value: 6, desc: 'Fletched by Hilda. Leaves a bleeding wound. Press V to switch ammo.' },
+  pony_whistle: { name: 'Pony Whistle', type: 'quest', icon: ['locket', 5], value: 0, desc: 'Your pony follows you outdoors. Stand beside it and press E to ride: much faster, free on roads, tiring off them. Fighting, rolling or being hit dismounts you.' },
   silver_locket: { name: 'Silver Locket', type: 'quest', icon: ['locket', 5], value: 120, desc: 'Engraved with a tiny wolf. Someone is missing this.' },
   asta_charm: { name: "Asta's Charm", type: 'charm', icon: ['charm', 11], maxHp: 15, maxMp: 15, value: 30, desc: '+15 health and mana. Smells of woodsmoke.' },
   pale_pelt: { name: 'Pale Pelt Mantle', type: 'armor', weight: 'medium', icon: ['armor', 6], armor: 0.24, value: 160, desc: 'Absorbs 24% damage. Still warm.' },

@@ -192,6 +192,16 @@ function wolfFrame(ctx, ox, fr, pal = { fur: 4, dark: 3, light: 5, leg: 3 }) {
 
 
 // Deer: long legs, arched neck, branching antlers (side view, facing right).
+// A sturdy pony with a saddle blanket (the mount you can buy from the smith).
+function ponyFrame(ctx, ox, fr) {
+  const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
+  const a = fr === 1, b = fr === 2;
+  r(9, 3, 11, 1, a ? 4 : 5); r(9, 5, 11, 1, b ? 4 : 5); r(9, 10, 11, 1, b ? 4 : 5); r(9, 12, 11, 1, a ? 4 : 5);
+  r(10, 2, 6, 12, 6); r(9, 2, 6, 12, 1); r(6, 4, 11, 8, 1);                      // body, dark back, pale belly
+  r(11, 5, 6, 5, 2); r(12, 5, 6, 5, 1);                                          // saddle blanket
+  r(10, 11, 3, 3, 4); r(10, 13, 2, 3, 3); r(10, 14, 4, 3, 2); r(9, 12, 1, 1, 2); // neck, head, muzzle, ear
+  r(0, 14, 3, 1, 1); r(9, 11, 2, 1, 4); r(9, 1, 6, 2, 5);                        // eye, mane, tail
+}
 function deerFrame(ctx, ox, fr, pal = { body: 10, back: 9, belly: 6, leg: 9, ant: 9 }) {
   const r = (c, x, y, w, h) => R(ctx, c, ox + x, y, w, h);
   const a = fr === 1, b = fr === 2;
@@ -459,6 +469,7 @@ function buildCharacters(scene) {
   for (const col of [15, 8, 13, 14, 6]) make('spr_cloak_' + col, (ctx, x, d, f) => humanoid(ctx, x, d, f, { ...STYLES.player, cape: col }));
   animalSheet(scene, 'spr_wolf', (c, x, f) => wolfFrame(c, x, f));
   animalSheet(scene, 'spr_deer', deerFrame);
+  animalSheet(scene, 'spr_pony', ponyFrame);
   animalSheet(scene, 'spr_elk', (c, x, f) => deerFrame(c, x, f, { body: 4, back: 3, belly: 6, leg: 3, ant: 6 }));
   animalSheet(scene, 'spr_fox', foxFrame);
   animalSheet(scene, 'spr_hare', hareFrame);

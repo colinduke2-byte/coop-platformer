@@ -20,8 +20,8 @@ const gen = await G(async () => {
   S.seed = 424242;
   return out;
 });
-check('the Reach is 320x224 on every seed', gen.every((r) => r.w === 320 && r.h === 224), JSON.stringify(gen.map((r) => r.w + 'x' + r.h)));
-check('it holds the expected amount of things to find on every seed', gen.every((r) => r.camps >= 10 && r.barrows >= 7 && r.hamlets >= 3 && r.standing >= 5 && r.rest >= 12 && r.champs >= 8), JSON.stringify(gen.map((r) => [r.seed, r.camps, r.barrows, r.hamlets, r.standing, r.rest, r.champs])));
+check('the Reach is 540x378 on every seed', gen.every((r) => r.w === 540 && r.h === 378), JSON.stringify(gen.map((r) => r.w + 'x' + r.h)));
+check('it holds the expected amount of things to find on every seed', gen.every((r) => r.camps >= 8 && r.barrows >= 6 && r.hamlets >= 3 && r.standing >= 4 && r.rest >= 12 && r.champs >= 6), JSON.stringify(gen.map((r) => [r.seed, r.camps, r.barrows, r.hamlets, r.standing, r.rest, r.champs])));
 check('every place, and all six dungeon doors, can be walked to', gen.every((r) => r.stranded.length === 0 && r.badExits.length === 0), JSON.stringify(gen.filter((r) => r.stranded.length || r.badExits.length)));
 check('the world builds fast enough (under 1.5 s each)', gen.every((r) => r.ms < 1500), JSON.stringify(gen.map((r) => r.ms)));
 

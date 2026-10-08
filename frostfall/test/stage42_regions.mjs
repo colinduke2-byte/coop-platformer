@@ -17,7 +17,7 @@ const gen = await G(async () => {
   }
   return out;
 });
-check('the Ashen Peaks builds for every seed with an entrance and exit', gen.every((r) => r.entry && r.exit && r.size === '160x120'), JSON.stringify(gen));
+check('the Ashen Peaks builds for every seed with an entrance and exit', gen.every((r) => r.entry && r.exit && r.size === '240x180'), JSON.stringify(gen));
 check('it has its camps, campfires and champions, all reachable on foot', gen.every((r) => r.camps >= 3 && r.rests >= 4 && r.champs >= 2 && r.reach), JSON.stringify(gen));
 
 // ---- the registry

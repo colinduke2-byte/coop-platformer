@@ -23,7 +23,7 @@ const w = await G(async () => {
     const fg = a.pois.find((p) => p.kind === 'forge'), fx = a.entities.find((e) => e.t === 'exit' && e.to === 'forge'), back = a.entities.find((e) => e.t === 'exit' && e.to === 'forest');
     const seen = new Uint8Array(r.w * r.h), q = [[4, 15]]; seen[15 * r.w + 4] = 1;
     for (let i = 0; i < q.length; i++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = q[i][0] + dx, y = q[i][1] + dy; if (x < 0 || y < 0 || x >= r.w || y >= r.h || seen[y * r.w + x] || solid.has(r.grid[y][x])) continue; seen[y * r.w + x] = 1; q.push([x, y]); }
-    out.push({ seed, pr: !!pr, ne: pr && pr.x > 160 && pr.y < 120, needs: ex?.needs, spawn: ex?.spawn, sp: !!sp, walk: !!ex && (seen[ex.y * r.w + ex.x] || seen[(ex.y + 1) * r.w + ex.x]), forge: !!fg, fneeds: fx?.needs, back: back?.spawn });
+    out.push({ seed, pr: !!pr, ne: pr && pr.x > 240 && pr.y < 180, needs: ex?.needs, spawn: ex?.spawn, sp: !!sp, walk: !!ex && (seen[ex.y * r.w + ex.x] || seen[(ex.y + 1) * r.w + ex.x]), forge: !!fg, fneeds: fx?.needs, back: back?.spawn });
   }
   St.seed = 424242;
   return out;

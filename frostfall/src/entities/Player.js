@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PONY_SPEED } from './Pony.js';
 import { keys, rumble } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
@@ -227,6 +228,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   move(ix, iy, dt) {
     const b = this.body;
     let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul') * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1);
+    if (S.mounted) sp *= PONY_SPEED;
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
     if (this.blocking) sp *= P.block.move;
@@ -245,6 +247,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   actions(ix, iy) {
+    if (S.mounted) {            // fighting means getting off first
+      if (['roll', 'sword', 'bow', 'spell', 'heavy', 'block', 'shout', 'sneak'].some((k) => keys.pressed(k))) this.scene.pony?.dismount();
+      return;
+    }
     if (keys.pressed('roll') && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * P.weights[stats.weight()].roll)) {
       this.mode = 'roll';
       this.rollStart = this.scene.t;

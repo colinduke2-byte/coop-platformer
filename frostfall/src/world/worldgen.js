@@ -8,8 +8,8 @@ const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 import { buildLoop, trackSpots } from './roamers.js';
 
-export const REACH_W = 320;
-export const REACH_H = 224;
+export const REACH_W = 540;
+export const REACH_H = 378;
 export const START = { x: 4, y: 15 };                 // where you enter from the village (west edge of the old forest)
 
 // Small seeded RNG (mulberry32).
@@ -37,7 +37,7 @@ function vnoise(x, y, scale, seed) {
 // Danger tier 0..3 grows with distance from the entrance.
 export function tierAt(x, y) {
   const d = Math.hypot(x - START.x, (y - START.y) * 0.9);
-  return d < 108 ? 0 : d < 162 ? 1 : d < 213 ? 2 : 3;
+  return d < 182 ? 0 : d < 273 ? 1 : d < 360 ? 2 : 3;      // 1.7x the old bands: the world is bigger, the tiers are as wide as before in walking time
 }
 export const TIER_MOBS = [
   { melee: ['bandit', 'draugr'], ranged: ['archer'], wild: ['wolf', 'boar', 'boar', 'imp'] },
@@ -48,6 +48,11 @@ export const TIER_MOBS = [
 
 // Builds one overworld region from a definition (see REACH below for the fields). `region` is an optional hand-made
 // grid + entities stamped into the north-west corner (the old forest); new regions pass null.
+export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'forge', 'peakroad', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre']);
+const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS', tower: 'A WATCHTOWER', grove: 'A QUIET GROVE', hamlet: 'A SMALL HAMLET', standing: 'A CIRCLE OF STANDING STONES', barrow: 'A BARROW', champion: 'A MONSTER\'S LAIR', beardn: 'A BEAR DEN',
+  cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
+  city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE' };
+export const SMALL_GAP = { rest: 24, spring: 30 };
 const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall']);   // biomes nothing is placed in (solid or open water)
 export function buildRegion(def, region, seed) {
   const W = def.w, H = def.h, START = def.start, tierAt = def.tierAt, TIER_MOBS = def.mobs, FL = def.flora, ORE = def.ores;
@@ -85,12 +90,19 @@ export function buildRegion(def, region, seed) {
     if (taken.some((t) => Math.hypot(t.x - x, t.y - y) < (t.r + r) * 0.8)) return false;
     return !BLOCKED.has(bio[y][x]);
   };
+  // Spacing is a promise about travel time (walk speed is 4.5 tiles a second): places keep at least `gap` tiles apart,
+  // major places (dungeon entrances, cities, region gates) keep `majorGap`. Small campfires and springs may sit closer.
+  // If the map is too full the gap relaxes in steps rather than dropping a place.
+  const gap = def.gap ?? 40, majorGap = def.majorGap ?? 90;
+  const gapOf = (a, b) => { const small = SMALL_GAP[a] ?? SMALL_GAP[b]; return small ?? (MAJOR.has(a) && MAJOR.has(b) ? majorGap : gap); };
+  const spaced = (x, y, kind, relax) => !pois.some((q) => Math.hypot(q.x - x, q.y - y) < gapOf(kind, q.kind) * relax);
   const place = (kind, count, r, near = null, minTier = 0, biomeWant = null) => {
     let made = 0;
-    for (let tries = 0; tries < 1800 && made < count; tries++) {
+    for (let tries = 0; tries < 2600 && made < count; tries++) {
       const x = 12 + Math.floor(R() * (W - 24)), y = 8 + Math.floor(R() * (H - 16));
       if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
       if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
+      if (!spaced(x, y, kind, tries < 1400 ? 1 : tries < 2000 ? 0.75 : 0.55)) continue;
       if (biomeWant && tries < 1200 && bio[y][x] !== biomeWant) continue;       // prefer the right biome, fall back to anywhere
       taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` }); made++;
     }
@@ -100,6 +112,7 @@ export function buildRegion(def, region, seed) {
 
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
+  const edges = [];
   const remaining = [...pois].sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
   const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre']);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
@@ -111,6 +124,21 @@ export function buildRegion(def, region, seed) {
       g.path([[best.x, best.y], [sx, best.y], [sx, tgt.y], [tgt.x, tgt.y]], 2, TILE.PATH);
     } else connect(best, tgt);
     nodes.push({ x: tgt.x, y: tgt.y });
+    if (Math.hypot(best.x - tgt.x, best.y - tgt.y) > 36 && !SMALL_GAP[p.kind]) edges.push({ a: best, p });
+  }
+  // waystones: a sign beside the long roads says what lies ahead and how far, so a journey always tells you something
+  for (const { a, p } of edges) {
+    const f = 0.35 + 0.3 * R(), cx = a.x + (p.x - a.x) * f, cy = a.y + (p.y - a.y) * f;
+    let spot = null;
+    for (let r = 0; r <= 10 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) {
+      const x = Math.round(cx) + dx, y = Math.round(cy) + dy;
+      if (x < 4 || y < 4 || x >= W - 4 || y >= H - 4 || g.t[y][x] !== TILE.PATH) continue;
+      for (const [ox, oy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const sx = x + ox, sy = y + oy; if (!SOLID_SET.has(g.t[sy][sx]) && g.t[sy][sx] !== TILE.PATH && !BLOCKED.has(bio[sy][sx])) { spot = { x: sx, y: sy }; break; } }
+    }
+    if (!spot) continue;
+    const ang = Math.atan2(p.y - spot.y, p.x - spot.x), DIRS = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
+    const dir = DIRS[(Math.round(ang / (Math.PI / 4)) + 8) % 8], paces = Math.round(Math.hypot(p.x - spot.x, p.y - spot.y) / 5) * 5;
+    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${KIND_NAME[p.kind] || 'A PLACE OF NOTE'}, ABOUT ${paces} PACES.`] });
   }
   // keep forest/lake/mountain from covering roads
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g.t[y][x] === TILE.PATH) g.res[y][x] = true;
@@ -416,7 +444,7 @@ export function buildRegion(def, region, seed) {
 //   biome(seed, w, h) -> (x, y) => name, paint(g, bio, w, h), nodes (road ends), taken (reserved discs),
 //   plan(place, mustHave) (which points of interest to scatter), extras(ctx), scenery(g, bio, w, h), dress (tile dressing passes).
 export const REACH = {
-  id: 'reach', w: REACH_W, h: REACH_H, start: START, wild: 300,
+  id: 'reach', w: REACH_W, h: REACH_H, start: START, wild: 600, gap: 44, majorGap: 100,
   ground: TILE.SNOW, ground2: TILE.SNOW2, flora: ['snowberry', 'frost_lily'], ores: ['iron_ingot', 'bone_dust'],
   mobs: TIER_MOBS, tierAt,
   biome(seed, W, H) {
@@ -441,20 +469,20 @@ export const REACH = {
   taken: [{ x: 28, y: 16, r: 34 }],                          // the old forest region
   plan(place, mustHave) {
     mustHave('fort', 11, 2); mustHave('temple', 10, 2); mustHave('rootvault', 10, 2, 'blight'); mustHave('throne', 12, 3); mustHave('maw', 10, 1); mustHave('nest', 12, 3);
-    mustHave('peakroad', 10, 2, null, { x: 290, y: 45, r: 55 });     // the road to the Ashen Peaks (opens in Chapter 3)
-    mustHave('coastroad', 10, 2, null, { x: 285, y: 190, r: 55 });   // the road to the Frozen Coast (opens in Chapter 3)
-    place('champion', 9, 8);                 // placed early: later it finds no room on a map crowded with dungeons
-    place('ruin', 9, 10);
-    place('beardn', 5, 9, null, 1);          // a mother bear and her cubs
-    place('spring', 5, 6);                   // hot springs: heal, cure, warm
-    place('camp', 12, 11);
-    place('den', 12, 9);
-    place('barrow', 8, 6);
-    place('tower', 7, 7);
-    place('grove', 7, 8);
+    mustHave('peakroad', 10, 2, null, { x: 490, y: 76, r: 90 });     // the road to the Ashen Peaks (opens in Chapter 3)
+    mustHave('coastroad', 10, 2, null, { x: 482, y: 320, r: 90 });   // the road to the Frozen Coast (opens in Chapter 3)
+    place('champion', 6, 8);                 // placed early: later it finds no room on a map crowded with dungeons
+    place('ruin', 6, 10);
+    place('beardn', 4, 9, null, 1);          // a mother bear and her cubs
+    place('spring', 4, 6);                   // hot springs: heal, cure, warm
+    place('camp', 8, 11);
+    place('den', 8, 9);
+    place('barrow', 6, 6);
+    place('tower', 4, 7);
+    place('grove', 4, 8);
     place('hamlet', 3, 9);                   // small settlements: a fire, a trader, a story
-    place('standing', 6, 8);                 // stone circles with a blessing
-    place('rest', 15, 4);
+    place('standing', 4, 8);                 // stone circles with a blessing
+    place('rest', 12, 4);
     // make sure there is something gentle near the entrance
     place('den', 1, 9, { x: 105, y: 30, r: 32 });
     place('rest', 1, 4, { x: 105, y: 54, r: 27 });
@@ -559,7 +587,7 @@ const tierFrom = (st, a, b, c) => (x, y) => { const d = Math.hypot(x - st.x, (y 
 // The Ashen Peaks: volcanic uplands around the forge-city. Lava is solid and impassable; the roads thread between the pools.
 const ASH_START = { x: 6, y: 60 };
 export const ASHEN = {
-  id: 'ashen', w: 160, h: 120, start: ASH_START, salt: 0x51ed,
+  id: 'ashen', w: 240, h: 180, start: ASH_START, salt: 0x51ed, gap: 34, majorGap: 70,
   ground: TILE.ASH, ground2: TILE.CFLOOR2, clear: TILE.CFLOOR2, caveSign: 'A CINDER WARREN. THE ROCK IS WARM TO THE TOUCH.', flora: ['snowberry', 'frost_lily'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
     { melee: ['bandit', 'imp', 'magmaslime'], ranged: ['archer'], wild: ['boar', 'imp', 'ashhound', 'ashhound'] },
@@ -567,7 +595,7 @@ export const ASHEN = {
     { melee: ['golem', 'cindersmith', 'knight', 'imp', 'magmaslime'], ranged: ['conjurer', 'necro', 'lavawraith', 'wisp'], wild: ['bear', 'wyvern', 'ashhound'] },
     { melee: ['golem', 'knight', 'cindersmith', 'reaver'], ranged: ['conjurer', 'necro', 'lavawraith', 'wisp'], wild: ['wyvern', 'bear', 'ashhound', 'alpha'] },
   ],
-  tierAt: tierFrom(ASH_START, 50, 80, 110),
+  tierAt: tierFrom(ASH_START, 75, 120, 165),
   biome(seed) {
     const crag = (seed >> 2) % 989, scorch = (seed >> 6) % 971, lava = (seed >> 9) % 967;
     return (x, y) => (vnoise(x, y, 14, lava) > 0.71 && x > 26 ? 'lava' : vnoise(x, y, 16, crag) > 0.67 && x > 22 ? 'crag' : vnoise(x, y, 13, scorch) > 0.56 ? 'scorch' : 'ash');
@@ -584,10 +612,10 @@ export const ASHEN = {
   plan(place, mustHave) {
     mustHave('city', 12, 1);
     mustHave('forge', 12, 3);
-    mustHave('kingroad', 10, 2, null, { x: 140, y: 60, r: 40 });      // the old road to the Hollow Kings' realm (opens when the First Fire is answered)
-    place('foundry', 4, 11); place('cave', 3, 7);
-    place('champion', 4, 8); place('ruin', 3, 10); place('camp', 6, 11); place('tower', 4, 7);
-    place('spring', 3, 6); place('standing', 2, 8); place('hamlet', 2, 9); place('rest', 9, 4);
+    mustHave('kingroad', 10, 2, null, { x: 210, y: 90, r: 60 });      // the old road to the Hollow Kings' realm (opens when the First Fire is answered)
+    place('foundry', 3, 11); place('cave', 3, 7);
+    place('champion', 3, 8); place('ruin', 3, 10); place('camp', 5, 11); place('tower', 3, 7);
+    place('spring', 2, 6); place('standing', 2, 8); place('hamlet', 2, 9); place('rest', 8, 4);
     place('rest', 1, 4, { x: ASH_START.x + 22, y: ASH_START.y, r: 14 });
   },
   extras: null,
@@ -602,13 +630,13 @@ export const ASHEN = {
   },
   dress: [],
 };
-ASHEN.extras = regionExtras({ start: ASH_START, exitTo: 'forest', exitSpawn: 'peakroad', fireId: 'ashenfire', clear: TILE.CFLOOR2, mobs: ASHEN.mobs, tierAt: ASHEN.tierAt, nWild: 46,
+ASHEN.extras = regionExtras({ start: ASH_START, exitTo: 'forest', exitSpawn: 'peakroad', fireId: 'ashenfire', clear: TILE.CFLOOR2, mobs: ASHEN.mobs, tierAt: ASHEN.tierAt, nWild: 62,
   sign: ['THE ASHEN PEAKS.', 'THE ROAD WEST RETURNS TO THE HOLLOW REACH. THE LAVA IS NOT A METAPHOR.'], roamers: [['cinder', 'golem', 3, 2, 5]] });
 
 // The Frozen Coast: an ice shelf and shingle strand east of the Reach, wrecks locked in the pack ice, a lamp that never went out.
 const COAST_START = { x: 6, y: 64 };
 export const COAST = {
-  id: 'coast', w: 180, h: 130, start: COAST_START, salt: 0xc0a5,
+  id: 'coast', w: 260, h: 190, start: COAST_START, salt: 0xc0a5, gap: 34, majorGap: 70,
   ground: TILE.ICESHELF, ground2: TILE.SHINGLE, clear: TILE.ICESHELF, caveSign: 'A SEA CAVE. THE TIDE COMES IN UNDER THE ICE.', flora: ['frost_lily', 'snowberry'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
     { melee: ['bandit', 'draugr', 'wreckcrab'], ranged: ['archer', 'harpooner'], wild: ['wolf', 'boar', 'wreckcrab'] },
@@ -616,7 +644,7 @@ export const COAST = {
     { melee: ['reaver', 'warden', 'draugr', 'knight', 'wreckcrab'], ranged: ['wight', 'conjurer', 'harpooner', 'tidehag', 'barnacle'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
     { melee: ['reaver', 'knight', 'warden', 'golem', 'wreckcrab'], ranged: ['conjurer', 'wight', 'tidehag', 'harpooner', 'barnacle'], wild: ['alpha', 'bear', 'frostworm', 'wyvern'] },
   ],
-  tierAt: tierFrom(COAST_START, 50, 80, 110),
+  tierAt: tierFrom(COAST_START, 75, 120, 165),
   biome(seed) {
     const pack = (seed >> 4) % 983, shore = (seed >> 8) % 977;
     return (x, y) => (x < 24 + vnoise(x, y, 9, shore) * 12 ? 'shingle' : vnoise(x, y, 15, pack) > 0.66 ? 'pack' : 'shelf');
@@ -631,10 +659,10 @@ export const COAST = {
   nodes: [{ x: COAST_START.x + 8, y: COAST_START.y }],
   taken: [{ x: COAST_START.x, y: COAST_START.y, r: 14 }],
   plan(place, mustHave) {
-    mustHave('tidebreak', 12, 3, null, { x: 150, y: 60, r: 45 });
-    place('lighthouse', 2, 9); place('wreck', 5, 9); place('cave', 3, 7);
-    place('camp', 5, 11); place('hamlet', 3, 9); place('tower', 2, 7); place('champion', 4, 8);
-    place('spring', 1, 6); place('standing', 2, 8); place('den', 2, 9); place('rest', 8, 4);
+    mustHave('tidebreak', 12, 3, null, { x: 225, y: 90, r: 65 });
+    place('lighthouse', 2, 9); place('wreck', 4, 9); place('cave', 3, 7);
+    place('camp', 4, 11); place('hamlet', 3, 9); place('tower', 2, 7); place('champion', 3, 8);
+    place('spring', 1, 6); place('standing', 2, 8); place('den', 2, 9); place('rest', 7, 4);
     place('rest', 1, 4, { x: COAST_START.x + 22, y: COAST_START.y, r: 14 });
   },
   extras: null,
@@ -649,13 +677,13 @@ export const COAST = {
   },
   dress: [],
 };
-COAST.extras = regionExtras({ start: COAST_START, exitTo: 'forest', exitSpawn: 'coastroad', fireId: 'coastfire', clear: TILE.ICESHELF, mobs: COAST.mobs, tierAt: COAST.tierAt, nWild: 40, fish: 24,
+COAST.extras = regionExtras({ start: COAST_START, exitTo: 'forest', exitSpawn: 'coastroad', fireId: 'coastfire', clear: TILE.ICESHELF, mobs: COAST.mobs, tierAt: COAST.tierAt, nWild: 54, fish: 32,
   sign: ['THE FROZEN COAST.', 'THE ROAD WEST RETURNS TO THE HOLLOW REACH. LISTEN FOR THE ICE.'], roamers: [['floe', 'troll', 3, 2, 5]] });
 
 // The Old Kingdom: the Hollow Kings' realm, overgrown marble and broken walls. Opens when the First Fire has been answered.
 const KING_START = { x: 6, y: 64 };
 export const KINGDOM = {
-  id: 'kingdom', w: 180, h: 130, start: KING_START, salt: 0x4b1d,
+  id: 'kingdom', w: 260, h: 190, start: KING_START, salt: 0x4b1d, gap: 34, majorGap: 70,
   ground: TILE.MOSS, ground2: TILE.MARBLE, clear: TILE.MARBLE, pillar: TILE.PILLAR, caveSign: 'A CRYPT STAIR. THE KINGS DID NOT TRUST THE SURFACE WITH THEIR DEAD.', flora: ['frost_lily', 'snowberry'], ores: ['iron_ingot', 'bone_dust'],
   mobs: [
     { melee: ['draugr', 'warden', 'phantom'], ranged: ['wight', 'archer'], wild: ['wolf', 'boar', 'stalker'] },
@@ -663,7 +691,7 @@ export const KINGDOM = {
     { melee: ['knight', 'reaver', 'warden', 'golem', 'phantom'], ranged: ['necro', 'conjurer', 'wisp', 'herald'], wild: ['alpha', 'wyvern', 'stalker'] },
     { melee: ['knight', 'reaver', 'warden', 'golem', 'phantom'], ranged: ['necro', 'conjurer', 'wisp', 'herald'], wild: ['alpha', 'wyvern', 'stalker'] },
   ],
-  tierAt: tierFrom(KING_START, 40, 70, 100),
+  tierAt: tierFrom(KING_START, 60, 105, 150),
   biome(seed) {
     const wall = (seed >> 3) % 991, plaza = (seed >> 7) % 977;
     return (x, y) => (vnoise(x, y, 13, wall) > 0.64 && x > 22 ? 'wall' : vnoise(x, y, 12, plaza) > 0.62 ? 'plaza' : 'moss');
@@ -678,9 +706,9 @@ export const KINGDOM = {
   nodes: [{ x: KING_START.x + 8, y: KING_START.y }],
   taken: [{ x: KING_START.x, y: KING_START.y, r: 14 }],
   plan(place, mustHave) {
-    mustHave('sepulchre', 12, 3, null, { x: 150, y: 60, r: 45 });
-    place('courtyard', 6, 11); place('cave', 3, 7); place('ruin', 4, 10); place('tower', 3, 7);
-    place('champion', 5, 8); place('camp', 3, 11); place('standing', 3, 8); place('hamlet', 1, 9); place('rest', 8, 4);
+    mustHave('sepulchre', 12, 3, null, { x: 225, y: 90, r: 65 });
+    place('courtyard', 5, 11); place('cave', 3, 7); place('ruin', 3, 10); place('tower', 2, 7);
+    place('champion', 4, 8); place('camp', 3, 11); place('standing', 2, 8); place('hamlet', 1, 9); place('rest', 7, 4);
     place('rest', 1, 4, { x: KING_START.x + 22, y: KING_START.y, r: 14 });
   },
   extras: null,
@@ -694,7 +722,7 @@ export const KINGDOM = {
   },
   dress: [],
 };
-KINGDOM.extras = regionExtras({ start: KING_START, exitTo: 'ashen', exitSpawn: 'kingroad', fireId: 'kingfire', clear: TILE.MARBLE, mobs: KINGDOM.mobs, tierAt: KINGDOM.tierAt, nWild: 44,
+KINGDOM.extras = regionExtras({ start: KING_START, exitTo: 'ashen', exitSpawn: 'kingroad', fireId: 'kingfire', clear: TILE.MARBLE, mobs: KINGDOM.mobs, tierAt: KINGDOM.tierAt, nWild: 58,
   sign: ['THE OLD KINGDOM.', 'THE ROAD WEST RETURNS TO THE ASHEN PEAKS. WHAT STANDS HERE WAS BUILT TO OUTLAST THE KINGS.'], roamers: [['lastknight', 'knight', 3, 2, 5]] });
 
 export const REGION_DEFS = { reach: REACH, ashen: ASHEN, coast: COAST, kingdom: KINGDOM };

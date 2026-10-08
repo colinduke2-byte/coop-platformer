@@ -360,3 +360,11 @@ skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list cover
 - **Power model** (`src/systems/powercurve.js`, `docs/POWER_CURVE.md`, `tools/power_table.mjs`, `test/unit/power.mjs`): on Normal the expected gear and level costs a third of your health in every region; +5 levels is comfortable but not trivial; one gear tier beats five levels; a maximum-level character in starter gear still struggles later.
 - **Danger readability**: target-bar names coloured by danger to you, DEADLY and HOPELESS labels, "danger to you now" in the bestiary, and a once-only warning when you arrive somewhere beyond your strength.
 - Tests: `unit/power`, `stage53_danger`; older tests updated to the new numbers.
+
+## Round 28 - Overnight Round 2: world scale and spacing
+- **Measured before**: the typical place was 16 tiles (about 3.5 seconds of walking) from its nearest neighbour. **Now**: the Hollow Reach is 540x378 (was 320x224) and the typical nearest neighbour is about 45 tiles (10 seconds); the closest pairs are 25+ tiles (6 seconds) instead of 10; major places (dungeon entrances, cities, region gates) are at least 75 tiles apart. Ashen Peaks 240x180, Frozen Coast and Old Kingdom 260x190, with spacing of 7 to 8 seconds typical.
+- The generator has a spacing rule per kind of place (`gap`, `majorGap`, small gaps for campfires and springs) that relaxes in steps instead of dropping a place; danger tiers widened to match (the same walk through each tier as before, scaled up), region gates moved, wildlife counts scaled.
+- **Waystones**: signs beside every long road say what lies ahead and how far ("NORTH-EAST: A BANDIT CAMP, ABOUT 45 PACES"): 38 in the Reach.
+- **Pony**: the smith sells a Pony Whistle (420 gold). The pony follows you outdoors; stand beside it and press E to ride (1.55x speed, free on roads, drains stamina off them). Fighting, rolling or being hit gets you off; no pony in dungeons or buildings.
+- Load time of the big Reach: about 0.4 s on this machine, 0.8 s with a CPU 6x slower; memory about 120 to 170 MB.
+- Tests: `unit/spacing`, `stage54_pony`; world snapshot re-recorded on purpose; older size expectations updated.

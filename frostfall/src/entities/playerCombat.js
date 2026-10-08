@@ -216,6 +216,7 @@ export const combatMethods = {
       if (taken <= 0) { sfx.play('block'); this.invuln = 0.25; return true; }
     }
 
+    if (S.mounted) this.scene.pony?.dismount();
     S.hp -= taken;
     if (!blocked && opts.attacker && !opts.attacker.dead && runeThorns() > 0) opts.attacker.takeHit({ dmg: runeThorns(), kx: opts.attacker.x - this.x, ky: opts.attacker.y - this.y, kb: 30, src: 'thorns' });
     if (!blocked) wear(S.equip.armor, 1); else wear(S.equip.offhand, 1);
