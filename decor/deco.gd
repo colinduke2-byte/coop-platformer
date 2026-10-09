@@ -9,10 +9,11 @@ extends Node2D
 enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, CANDY_CANE, LOLLIPOP, REEDS,
 		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
 		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD, GEAR, PIPES, CLOCK, TOYBLOCKS,
-		CORAL, SEAWEED, SHELL, ANCHOR, STARFISH, CHEST }
+		CORAL, SEAWEED, SHELL, ANCHOR, STARFISH, CHEST,
+		TENT, BUNTING, BALLOONS, POPCORN_CART, TICKET_BOOTH, LAMPPOST, DRUM }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
-		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD, Kind.SEAWEED]
+		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD, Kind.SEAWEED, Kind.BUNTING, Kind.BALLOONS]
 
 @export var kind := Kind.FLOWERS:
 	set(v):
@@ -534,6 +535,78 @@ func _paint(mp: MeshPainter) -> void:
 				mp.draw_line(v, v + Vector2(cos(a), sin(a)) * 13.0 * s, th.accent, 2.5)
 			Art.shape(mp, Art.ellipse(Vector2(14, -120) * s, 12 * s, 12 * s, 14), Color("fff8ec"), o, 2.0)
 			mp.draw_line(Vector2(14, -120) * s, Vector2(20, -127) * s, Color("e8452e"), 2.0)
+		Kind.TENT:
+			# A little striped sideshow tent with a dark doorway and a pennant.
+			var w := 64.0 * s
+			var h := 54.0 * s
+			Art.shape(mp, Art.rect(Vector2(-w, -h), Vector2(w, 0)), th.ledge, o, 3.0)
+			for i in 6:
+				if i % 2 == 0:
+					mp.draw_colored_polygon(Art.rect(Vector2(-w + i * w / 3.0, -h), Vector2(-w + (i + 1) * w / 3.0, 0)), th.ledge_dark)
+			for i in 6:
+				var x0 := -w - 8.0 * s + float(i) * (w * 2.0 + 16.0 * s) / 6.0
+				var x1 := x0 + (w * 2.0 + 16.0 * s) / 6.0
+				Art.shape(mp, PackedVector2Array([Vector2(x0, -h), Vector2(0, -h - 62.0 * s), Vector2(x1, -h)]), th.accent if i % 2 == 0 else Color("fff4e0"), o, 2.0)
+			Art.shape(mp, PackedVector2Array([Vector2(-18 * s, 0), Vector2(-18 * s, -26 * s), Vector2(0, -42 * s), Vector2(18 * s, -26 * s), Vector2(18 * s, 0)]), th.outline.lightened(0.05), o, 2.0)
+			mp.draw_line(Vector2(0, -h - 62.0 * s), Vector2(0, -h - 92.0 * s), o, 3.0)
+			mp.draw_colored_polygon(PackedVector2Array([Vector2(0, -h - 92.0 * s), Vector2(26 * s, -h - 84.0 * s), Vector2(0, -h - 76.0 * s)]), th.flower_colors[1])
+		Kind.BUNTING:
+			# A sagging string of triangular flags (hang it from poles or the ceiling).
+			var half := 150.0 * s
+			var pts := PackedVector2Array()
+			for k in 13:
+				var t := float(k) / 12.0
+				pts.append(Vector2(lerpf(-half, half, t), -150.0 * s + sin(t * PI) * 36.0 * s))
+			mp.draw_polyline(pts, o, 3.5)
+			for k in range(1, 12):
+				var c: Color = th.flower_colors[(k + seed_value) % th.flower_colors.size()]
+				Art.shape(mp, PackedVector2Array([pts[k] + Vector2(-10, 0) * s, pts[k] + Vector2(10, 0) * s, pts[k] + Vector2(0, 28) * s]), c, o, 2.0)
+		Kind.BALLOONS:
+			# A bunch of balloons tied to a weight.
+			var base := Vector2.ZERO
+			Art.shape(mp, Art.rounded_rect(Vector2(-12, -10) * s, Vector2(12, 0), 3.0), th.ledge_dark, o, 2.0)
+			for k in 5:
+				var tip := Vector2((float(k) - 2.0) * 26.0 + rng.randf_range(-6, 6), -150.0 - rng.randf_range(0, 70)) * s
+				var c: Color = th.flower_colors[(k + seed_value) % th.flower_colors.size()]
+				mp.draw_line(Vector2(0, -10) * s, tip + Vector2(0, 26) * s, Color(o, 0.7), 1.5)
+				Art.shape(mp, Art.ellipse(tip, 22 * s, 27 * s, 16), c, o, 2.5)
+				mp.draw_colored_polygon(Art.ellipse(tip + Vector2(-7, -9) * s, 6 * s, 9 * s, 8), Color(1, 1, 1, 0.45))
+				mp.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, 26) * s, tip + Vector2(4, 26) * s, tip + Vector2(0, 32) * s]), c.darkened(0.2))
+		Kind.POPCORN_CART:
+			Art.shape(mp, Art.rounded_rect(Vector2(-46, -66) * s, Vector2(46, -18) * s, 5.0 * s), th.ledge, o, 3.0)
+			Art.shape(mp, Art.rect(Vector2(-40, -112) * s, Vector2(40, -66) * s), Color(1, 1, 1, 0.16), o, 2.5)
+			for k in 7:
+				mp.draw_colored_polygon(Art.ellipse(Vector2(-30 + k * 10.0, -70.0 - (k % 3) * 5.0) * s, 9 * s, 8 * s, 8), Color("fff4d0"))
+			for k in 6:   # striped awning
+				Art.shape(mp, PackedVector2Array([Vector2(-52 + k * 17.0, -122) * s, Vector2(-35 + k * 17.0, -122) * s, Vector2(-33 + k * 17.0, -108) * s, Vector2(-50 + k * 17.0, -108) * s]), th.accent if k % 2 == 0 else Color("fff4e0"), o, 1.5)
+			for wx: float in [-26.0, 26.0]:
+				Art.shape(mp, Art.ellipse(Vector2(wx, -14) * s, 15 * s, 15 * s, 16), th.ledge_dark, o, 3.0)
+				mp.draw_circle(Vector2(wx, -14) * s, 4.0 * s, o)
+		Kind.TICKET_BOOTH:
+			Art.shape(mp, Art.rect(Vector2(-44, -96) * s, Vector2(44, 0)), th.ledge, o, 3.0)
+			Art.shape(mp, Art.rect(Vector2(-28, -80) * s, Vector2(28, -44) * s), Color(1.0, 0.88, 0.5), o, 2.5)
+			mp.draw_line(Vector2(-28, -44) * s, Vector2(28, -44) * s, o, 5.0)
+			Art.shape(mp, PackedVector2Array([Vector2(-54, -96) * s, Vector2(-40, -122) * s, Vector2(40, -122) * s, Vector2(54, -96) * s]), th.accent, o, 3.0)
+			Art.shape(mp, Art.rounded_rect(Vector2(-30, -148) * s, Vector2(30, -126) * s, 4.0), th.flower_colors[1], o, 2.5)
+			for k in 4:
+				mp.draw_circle(Vector2(-24 + k * 16.0, -137) * s, 3.0 * s, o)
+		Kind.LAMPPOST:
+			mp.draw_line(Vector2.ZERO, Vector2(0, -150) * s, o, 9.0 * s)
+			mp.draw_line(Vector2.ZERO, Vector2(0, -150) * s, th.ledge_dark, 5.0 * s)
+			Art.shape(mp, Art.rounded_rect(Vector2(-12, -6) * s, Vector2(12, 0), 3.0), th.ledge_dark, o, 2.0)
+			mp.draw_circle(Vector2(0, -164) * s, 40.0 * s, Color(1.0, 0.85, 0.5, 0.10))
+			mp.draw_circle(Vector2(0, -164) * s, 24.0 * s, Color(1.0, 0.85, 0.5, 0.18))
+			Art.shape(mp, Art.ellipse(Vector2(0, -164) * s, 13 * s, 15 * s, 14), Color("fff2b8"), o, 2.5)
+		Kind.DRUM:
+			# A circus podium: a striped drum with a lit rim.
+			var w := 46.0 * s
+			var h := 54.0 * s
+			Art.shape(mp, Art.rect(Vector2(-w, -h), Vector2(w, 0)), th.accent, o, 3.0)
+			for k in 4:
+				mp.draw_colored_polygon(Art.rect(Vector2(-w + k * w * 0.5, -h), Vector2(-w + k * w * 0.5 + w * 0.25, 0)), Color("fff4e0"))
+			Art.shape(mp, Art.ellipse(Vector2(0, -h), w, 11 * s, 18), th.top, o, 3.0)
+			for k in 7:
+				mp.draw_circle(Vector2(-w * 0.85 + k * w * 0.283, -h + 3.0), 2.5 * s, Color("fff2b8"))
 		Kind.CLOCK:
 			# A clock on a post (its hands are painted at ten to two).
 			mp.draw_line(Vector2.ZERO, Vector2(0, -90) * s, o, 6.0 * s)

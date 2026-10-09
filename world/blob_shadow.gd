@@ -29,8 +29,11 @@ func _physics_process(_delta: float) -> void:
 	if not View.sees(_owner_node.global_position, 260.0):
 		visible = false
 		return
-	var from := _owner_node.global_position + Vector2(0, -6)
-	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, reach), 1)
+	# Which way "down" is for the owner (World 6 flips it). Duck-typed: naming Player / Enemy here
+	# would make a script dependency cycle (they both create a BlobShadow).
+	var g := float(_owner_node.get("gdir")) if "gdir" in _owner_node else 1.0
+	var from := _owner_node.global_position + Vector2(0, -6 * g)
+	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, reach * g), 1)
 	var hit := _owner_node.get_world_2d().direct_space_state.intersect_ray(q)
 	if hit.is_empty():
 		visible = false
@@ -38,7 +41,7 @@ func _physics_process(_delta: float) -> void:
 	visible = true
 	var h := from.distance_to(hit.position as Vector2)
 	var k := clampf(h / 420.0, 0.0, 1.0)
-	global_position = (hit.position as Vector2) + Vector2(0, 1)
+	global_position = (hit.position as Vector2) + Vector2(0, g)
 	global_rotation = (hit.normal as Vector2).angle() + PI * 0.5
 	scale = Vector2.ONE * lerpf(1.0, 0.5, k)
 	modulate.a = lerpf(1.0, 0.0, clampf(h / reach, 0.0, 1.0))

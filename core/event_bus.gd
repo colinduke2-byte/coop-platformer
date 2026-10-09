@@ -37,6 +37,7 @@ signal boss_changed(boss_name: String, health: int, max_health: int, active: boo
 signal level_completed(results: Dictionary)
 signal pause_requested(slot: int, message: String)
 signal level_reset
+signal gravity_flipped(dir: int)   ## World 6: +1 = normal, -1 = upside-down (see GameManager.flip_gravity)
 signal device_lost(slot: int)
 signal player_head_bounced(top: Player, bottom: Player)
 signal pad_bounced(player: Player, pad: Node2D, pounding: bool)

@@ -21,7 +21,8 @@ const GATE_TEXT := {
 	"w3": ["Down to the Rainbloom Jungle", "Back to the Rainbloom Jungle", "World 3! Follow the river down into the warm, rainy jungle."],
 	"w4": ["Up to the Clockwhirl Works", "Back to the Clockwhirl Works", "World 4! Climb past the temple to the clanking dream factory."],
 	"w5": ["Down to the Deep Sea Dream", "Back to the Deep Sea Dream", "World 5! Out of the factory's back door and down to the seaside."],
-	"w6": ["The Nightmare Nebula", "Back to the Nightmare Nebula", "The secret world, up past Inkabella's palace. Only the bravest dreamers..."],
+	"w6": ["Over to the Midnight Carnival", "Back to the Midnight Carnival", "World 6! Follow the fairy lights out of the sea to the carnival that never closes. Gravity gets silly there."],
+	"w7": ["The Nightmare Nebula", "Back to the Nightmare Nebula", "The secret world, beyond the Big Top. Only the bravest dreamers..."],
 }
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
@@ -60,6 +61,7 @@ func _ready() -> void:
 		"w4": art = _bake_w4()
 		"w5": art = _bake_w5()
 		"w6": art = _bake_w6()
+		"w7": art = _bake_w7()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
 	if Gfx.at_least(Gfx.Level.MEDIUM):
@@ -101,7 +103,7 @@ func _ready() -> void:
 			n["unlocked"] = n["unlocked"] or Net.is_client()
 		if Net.is_client():
 			_show_toast("The host picks the level - enjoy the ride!")
-	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef", "w6": "nebula"}.get(world, "worldmap"))
+	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef", "w6": "midway", "w7": "nebula"}.get(world, "worldmap"))
 
 
 func _build_nodes() -> void:
@@ -986,6 +988,105 @@ func _bake_w5() -> ArrayMesh:
 func _bake_w6() -> ArrayMesh:
 	var mp := MeshPainter.new()
 	var rng := RandomNumberGenerator.new()
+	rng.seed = 66
+	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("120a30"), Color("7a2a78"), 16)
+	for i in 70:   # stars
+		var p := Vector2(rng.randf_range(0, 1920), rng.randf_range(0, 520))
+		mp.draw_circle(p, rng.randf_range(1.0, 2.4), Color(1, 1, 1, rng.randf_range(0.3, 0.9)))
+	mp.draw_circle(Vector2(300, 150), 70, Color(1, 0.95, 0.8, 0.12))   # the moon
+	mp.draw_circle(Vector2(300, 150), 44, Color("fff2cc"))
+	mp.draw_circle(Vector2(318, 140), 38, Color("231040"))
+	# Rolling hills of the fairground.
+	var land := PackedVector2Array([Vector2(0, 1080), Vector2(0, 640)])
+	for i in 25:
+		land.append(Vector2(i * 80.0, 650.0 + sin(i * 0.5) * 36.0 + cos(i * 0.23) * 30.0))
+	land.append(Vector2(1920, 700))
+	land.append(Vector2(1920, 1080))
+	mp.draw_colored_polygon(land, Color("2e1442"))
+	_vgrad(mp, Rect2(0, 860, 1920, 220), Color("2e1442"), Color("1c0c2e"), 6)
+	# The big top on its hill (top right) with a flag.
+	var bt := Vector2(1690, 520)
+	mp.draw_colored_polygon(Art.ellipse(bt + Vector2(0, 40), 260, 60, 24), Color("3a1a52"))
+	for i in 8:
+		var x0 := bt.x - 180.0 + i * 45.0
+		mp.draw_colored_polygon(PackedVector2Array([Vector2(x0, bt.y - 20), bt + Vector2(0, -230), Vector2(x0 + 45.0, bt.y - 20)]), Color("e84a6f") if i % 2 == 0 else Color("fff0dc"))
+	mp.draw_rect(Rect2(bt + Vector2(-180, -20), Vector2(360, 60)), Color("c43a5e"))
+	mp.draw_colored_polygon(PackedVector2Array([bt + Vector2(-44, 40), bt + Vector2(0, -50), bt + Vector2(44, 40)]), Color("ffd98a"))
+	mp.draw_line(bt + Vector2(0, -230), bt + Vector2(0, -290), Color("1d1726"), 4.0)
+	# A rollercoaster threading the middle of the map.
+	var track := PackedVector2Array()
+	for i in 41:
+		var f := i / 40.0
+		track.append(Vector2(980 + f * 340.0, 560 - 90.0 * absf(sin(f * PI * 2.0)) - 30.0 * sin(f * PI * 6.0)))
+	for i in range(0, track.size(), 2):
+		mp.draw_line(track[i], Vector2(track[i].x, 700), Color("5a3a78"), 4.0)
+	mp.draw_polyline(track, Color("1d1726"), 12.0)
+	mp.draw_polyline(track, Color("ff9fc0"), 6.0)
+	# Region dressing: the ticket booth gate, carousel, hall of mirrors, ferris wheel stand.
+	_w6_booth(mp, Vector2(230, 860))
+	_w6_carousel(mp, Vector2(520, 720))
+	_w6_mirrors(mp, Vector2(830, 860))
+	mp.draw_line(Vector2(1430, 810), Vector2(1380, 960), Color("5a3a78"), 10.0)
+	mp.draw_line(Vector2(1430, 810), Vector2(1480, 960), Color("5a3a78"), 10.0)
+	# Lamp posts and stray balloons across the grounds.
+	for i in 34:
+		var p := Vector2(rng.randf_range(30, 1890), rng.randf_range(700, 1060))
+		var clear := true
+		for n in nodes:
+			if p.distance_to(n["pos"]) < 130.0:
+				clear = false
+		if clear and _path_dist(p) > 46.0:
+			if i % 3 == 0:
+				mp.draw_line(p, p + Vector2(0, -40), Color("1d1726"), 4.0)
+				mp.draw_circle(p + Vector2(0, -44), 12.0, Color(1, 0.85, 0.5, 0.25))
+				mp.draw_circle(p + Vector2(0, -44), 5.0, Color("fff2b8"))
+			elif i % 3 == 1:
+				mp.draw_colored_polygon(Art.ellipse(p, 9, 7, 8), Color.from_hsv(rng.randf(), 0.5, 1.0))
+			else:
+				mp.draw_colored_polygon(PackedVector2Array([p + Vector2(-9, 0), p + Vector2(0, -24), p + Vector2(9, 0)]), Color("e84a6f") if i % 2 == 0 else Color("fff0dc"))
+	# The path: a midway of golden boards.
+	mp.draw_polyline(_path, Color("1d1726"), 26.0)
+	mp.draw_polyline(_path, Color("f2b84a"), 18.0)
+	var d := 0.0
+	var total := _poly_len(_path)
+	while d < total:
+		var a := _sample(_path, d)
+		var b := _sample(_path, d + 4.0)
+		var n := (b - a).normalized().orthogonal() * 9.0
+		mp.draw_line(a - n, a + n, Color("c98a2a"), 2.0)
+		d += 20.0
+	return mp.build()
+
+
+func _w6_booth(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_rect(Rect2(c + Vector2(-46, -86), Vector2(92, 86)), Color("c43a5e"))
+	mp.draw_rect(Rect2(c + Vector2(-28, -66), Vector2(56, 34)), Color("ffe08a"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-58, -86), c + Vector2(-42, -118), c + Vector2(42, -118), c + Vector2(58, -86)]), Color("fff0dc"))
+	for k in 4:
+		mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-58 + k * 29.0, -86), c + Vector2(-42 + k * 22.0, -118), c + Vector2(-28 + k * 22.0, -118), c + Vector2(-29 + k * 29.0, -86)]), Color("e84a6f"))
+
+
+func _w6_carousel(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(0, 0), 96, 24, 24), Color("5a3a78"))
+	mp.draw_rect(Rect2(c + Vector2(-5, -86), Vector2(10, 86)), Color("f2b84a"))
+	for k in 4:
+		var x := -78.0 + k * 52.0
+		mp.draw_line(c + Vector2(x, -4), c + Vector2(x, -66), Color("f2b84a"), 4.0)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-104, -66), c + Vector2(0, -126), c + Vector2(104, -66)]), Color("e84a6f"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-34, -78), c + Vector2(0, -126), c + Vector2(34, -78)]), Color("fff0dc"))
+
+
+func _w6_mirrors(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_rect(Rect2(c + Vector2(-70, -110), Vector2(140, 110)), Color("3a2a78"))
+	for k in 4:   # shiny mirror panels
+		var x := -60.0 + k * 31.0
+		mp.draw_colored_polygon(PackedVector2Array([c + Vector2(x, -96), c + Vector2(x + 26, -100), c + Vector2(x + 26, -20), c + Vector2(x, -16)]), Color("9be8ff").darkened(0.1 * k))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-82, -110), c + Vector2(0, -150), c + Vector2(82, -110)]), Color("6a4ab0"))
+
+
+func _bake_w7() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
 	rng.seed = 61
 	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("120a2a"), Color("4a2a7a"), 14)
 	# Nebula clouds.
@@ -1297,6 +1398,9 @@ class LiveBits extends Node2D:
 		if map.world == "w6":
 			_draw_w6()
 			return
+		if map.world == "w7":
+			_draw_w7()
+			return
 		# Gondola bobbing up the cable to World 2.
 		if LevelCatalog.exists("w2_1"):
 			var a := WorldMap.GATE_W2_POS + Vector2(26, -50)
@@ -1368,7 +1472,7 @@ class LiveBits extends Node2D:
 
 	## A little flock crossing the sky.
 	func _birds() -> void:
-		if map.world in ["w5", "w6"]:
+		if map.world in ["w5", "w6", "w7"]:
 			return
 		var o := Color(0.12, 0.09, 0.16, 0.7)
 		for k in 5:
@@ -1448,7 +1552,7 @@ class LiveBits extends Node2D:
 			draw_line(Vector2(x, y), Vector2(x + 3, y + 16), Color(0.85, 0.95, 1.0, 0.35), 1.5)
 		_clouds()
 
-	func _draw_w6() -> void:
+	func _draw_w7() -> void:
 		# Twinkling stars and a slow comet.
 		for i in 60:
 			var p := Vector2(fposmod(i * 211.0, 1920.0), fposmod(i * 97.0, 620.0))
@@ -1463,6 +1567,51 @@ class LiveBits extends Node2D:
 		var pulse := 0.5 + 0.5 * sin(t * 2.5)
 		draw_circle(core, 70 + pulse * 10, Color(1.0, 0.25, 0.45, 0.15))
 		draw_circle(core, 44 + pulse * 6, Color(1.0, 0.3, 0.5, 0.25))
+
+	func _draw_w6() -> void:
+		var o := Color("1d1726")
+		# Twinkling stars.
+		for i in 40:
+			var p := Vector2(fposmod(i * 197.0, 1920.0), fposmod(i * 83.0, 500.0))
+			draw_circle(p, 1.5 + (0.5 + 0.5 * sin(t * 2.0 + i)) * 1.2, Color(1, 1, 1, 0.5 + 0.5 * sin(t * 2.0 + i * 1.7)))
+		# The ferris wheel turning over its stand.
+		var fw := Vector2(1430, 810)
+		draw_arc(fw, 150.0, 0, TAU, 40, o, 7.0)
+		draw_arc(fw, 150.0, 0, TAU, 40, Color("ff9fc0"), 3.5)
+		for k in 10:
+			var a := t * 0.25 + k * TAU / 10.0
+			var d := Vector2.from_angle(a)
+			draw_line(fw, fw + d * 150.0, Color("ff9fc0"), 2.0)
+			var cab := fw + d * 150.0 + Vector2(0, 10)
+			Art.shape(self, Art.ellipse(cab, 11, 9, 10), Color.from_hsv(fposmod(k * 0.13, 1.0), 0.55, 1.0), o, 1.5)
+		draw_circle(fw, 9.0, o)
+		# The carousel's horses rising and falling.
+		var cc := Vector2(520, 720)
+		for k in 4:
+			var x := -66.0 + k * 44.0
+			var bob := sin(t * 3.0 + k * 1.6) * 7.0
+			Art.shape(self, Art.ellipse(cc + Vector2(x, -34 + bob), 9, 6, 8), Color("fff0dc"), o, 1.5)
+		# Fairy lights blinking along the path.
+		var total := WorldMap._poly_len(map._path)
+		var dd := 0.0
+		var i := 0
+		while dd < total:
+			var p := WorldMap._sample(map._path, dd)
+			var on := 0.5 + 0.5 * sin(t * 4.0 + i * 0.9)
+			var c := Color.from_hsv(fposmod(i * 0.17, 1.0), 0.6, 1.0, 0.35 + 0.65 * on)
+			draw_circle(p + Vector2(0, -22), 3.4, c)
+			dd += 64.0
+			i += 1
+		# A firework over the big top every few seconds.
+		var ph := fposmod(t, 5.0) / 5.0
+		if ph < 0.4:
+			var c2 := Vector2(1500, 230)
+			var r := ph / 0.4
+			for k in 12:
+				var a := TAU * k / 12.0
+				var e := c2 + Vector2.from_angle(a) * 20.0 * (1.0 + r * 4.0)
+				draw_circle(e, 3.0 * (1.0 - r * 0.6), Color.from_hsv(fposmod(k * 0.08 + t * 0.1, 1.0), 0.6, 1.0, 1.0 - r))
+		_clouds()
 
 	func _draw_w5() -> void:
 		var o := Color("1d1726")
@@ -1547,10 +1696,13 @@ class Badges extends Node2D:
 		var to_jungle: bool = n["gate"] == "w3"
 		var to_works: bool = n["gate"] == "w4"
 		var to_sea: bool = n["gate"] == "w5"
-		var to_nebula: bool = n["gate"] == "w6"
+		var to_carnival: bool = n["gate"] == "w6"
+		var to_nebula: bool = n["gate"] == "w7"
 		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
 		if to_sea:
 			fill = Color("a8e4ff")
+		if to_carnival:
+			fill = Color("ff7fb0")
 		if to_nebula:
 			fill = Color("6a4ab0")
 		if not n["unlocked"]:
@@ -1560,6 +1712,11 @@ class Badges extends Node2D:
 		if not n["unlocked"]:
 			draw_rect(Rect2(p + Vector2(-9, -2), Vector2(18, 14)), o)
 			draw_arc(p + Vector2(0, -3), 7.0, PI, TAU, 10, o, 3.0)
+		elif to_carnival:
+			Art.shape(self, Art.rounded_rect(p + Vector2(-17, -4), p + Vector2(17, 14), 3.0), Color("fff4e0"), o, 2.0)   # a ticket
+			for k in 4:
+				draw_line(p + Vector2(-17 + k * 11.0, -4), p + Vector2(-17 + k * 11.0, 14), Color("ff5d8f"), 3.0)
+			Art.shape(self, Art.star(p + Vector2(0, -9), 8.0), Color("ffd23f"), o, 1.5)
 		elif to_nebula:
 			Art.shape(self, Art.star(p, 17.0), Color("ffd23f"), o, 2.0)
 			draw_circle(p + Vector2(10, -10), 4.0, Color.WHITE)

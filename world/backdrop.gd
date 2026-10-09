@@ -25,6 +25,7 @@ enum Scenery {
 	OCEAN,      ## a bright seaside: the sea on the horizon, sea stacks, gulls, a reef below the waterline
 	DEEP,       ## deep under the sea: rock spires, kelp, glowing jellies and passing fish
 	NEBULA,     ## the dream's edge: planets, nebula swirls, floating islands and crystal spires
+	CARNIVAL,   ## a moonlit fairground: big tops, a turning ferris wheel, coaster tracks, fairy lights, fireworks
 }
 
 @export var horizon_y := 600.0:
@@ -89,7 +90,7 @@ func _rebuild() -> void:
 	_th = theme_override if theme_override else LevelTheme.find(self)
 	_rng.seed = seed_value
 	_build_sky()
-	if clouds and not scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA]:
+	if clouds and not scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL]:
 		_build_clouds()
 	match scenery:
 		Scenery.HILLS: _hills_scene()
@@ -106,6 +107,7 @@ func _rebuild() -> void:
 		Scenery.OCEAN: _ocean_scene()
 		Scenery.DEEP: _deep_scene()
 		Scenery.NEBULA: _nebula_scene()
+		Scenery.CARNIVAL: _carnival_scene()
 	if critters:
 		_critters()
 	if Gfx.at_least(Gfx.Level.MEDIUM) and not scenery in [Scenery.JUNGLE, Scenery.RUINS]:
@@ -139,7 +141,8 @@ func _build_sky() -> void:
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(sky)
 	var mp := MeshPainter.new()
-	if stars or scenery in [Scenery.CAVE, Scenery.NEBULA]:
+	var night := stars or scenery == Scenery.CARNIVAL
+	if night or scenery in [Scenery.CAVE, Scenery.NEBULA]:
 		for i in 90:
 			var p := Vector2(_rng.randf_range(0, 1920), _rng.randf_range(0, 700))
 			var r := _rng.randf_range(1.0, 2.6)
@@ -158,8 +161,11 @@ func _build_sky() -> void:
 			ring.append(pc + Vector2(cos(a) * 170.0, sin(a) * 34.0).rotated(-0.25))
 		mp.draw_polyline(ring, Color(_th.accent, 0.7), 8.0)
 	elif not scenery in [Scenery.CAVE, Scenery.DEEP]:
+		if scenery == Scenery.CARNIVAL:   # fireworks hanging in the night sky
+			for i in 5:
+				_firework(mp, Vector2(_rng.randf_range(160, 1500), _rng.randf_range(120, 420)), _rng.randf_range(46, 90), _th.flower_colors[i % _th.flower_colors.size()])
 		var sc := Vector2(1480, 190)
-		if stars:  # a moon
+		if night:  # a moon
 			mp.draw_circle(sc, 120, Color(_th.sun, 0.12))
 			mp.draw_circle(sc, 70, _th.sun.lightened(0.3))
 			mp.draw_circle(sc + Vector2(24, -12), 60, _th.sky_top.lerp(_th.sky_bottom, 0.3))
@@ -662,7 +668,7 @@ func _deep_scene() -> void:
 ## play area (and, on High, a second slowly drifting band lower down).
 func _mist() -> void:
 	var col := _th.sky_bottom.lerp(Color.WHITE, 0.35)
-	var dark := scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA]
+	var dark := scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL]
 	if dark:
 		col = _th.sky_bottom.lightened(0.1)
 	_mist_band(0.55, horizon_y - 120.0, 420.0, Color(col, 0.2 if not dark else 0.14), Vector2.ZERO)
@@ -702,6 +708,8 @@ func _critters() -> void:
 			_smoke(0.2)
 		Scenery.NEBULA:
 			_shooting_stars()
+		Scenery.CARNIVAL:
+			_drifting_balloons()
 
 
 ## A drifting layer of birds (little flapping V's; colourful parrots when `parrots`).
@@ -797,6 +805,162 @@ func _nebula_scene() -> void:
 		x += w * 0.8
 	near.painter.draw_rect(Rect2(0, horizon_y + 78, 2000, DEPTH), cry)
 	_commit(near)
+
+
+# --- Carnival --------------------------------------------------------------------------
+
+## A frozen firework burst: rays with glowing tips, in the sky layer.
+func _firework(mp: MeshPainter, c: Vector2, r: float, col: Color) -> void:
+	for k in 14:
+		var a := TAU * float(k) / 14.0
+		var d := Vector2.from_angle(a)
+		mp.draw_line(c + d * r * 0.35, c + d * r, Color(col, 0.5), 3.0)
+		mp.draw_circle(c + d * r, 4.0, Color(col, 0.8))
+		mp.draw_circle(c + d * r * 0.62, 2.4, Color(col, 0.5))
+	mp.draw_circle(c, r * 0.55, Color(col, 0.07))
+
+
+## A striped big-top tent (a silhouette that glows a little at the door).
+func _bigtop(l: Layer, b: Vector2, s: float, body: Color, stripe: Color, glow: Color) -> void:
+	var w := 150.0 * s
+	var h := 86.0 * s
+	var apex := Vector2(b.x, b.y - h - 84.0 * s)
+	l.painter.draw_rect(Rect2(b.x - w, b.y - h, w * 2.0, h), body)
+	for i in 8:
+		var x0 := b.x - w + float(i) * w * 0.25
+		l.painter.draw_colored_polygon(PackedVector2Array([Vector2(x0, b.y - h), apex, Vector2(x0 + w * 0.25, b.y - h)]), body if i % 2 == 0 else stripe)
+	for i in 8:   # scalloped eaves
+		l.painter.draw_colored_polygon(Art.ellipse(Vector2(b.x - w + (float(i) + 0.5) * w * 0.25, b.y - h), w * 0.125, 14.0 * s, 10), stripe if i % 2 == 0 else body)
+	l.painter.draw_line(apex, apex + Vector2(0, -44.0 * s), body.darkened(0.3), 4.0)
+	l.painter.draw_colored_polygon(PackedVector2Array([apex + Vector2(0, -44.0 * s), apex + Vector2(34.0 * s, -34.0 * s), apex + Vector2(0, -24.0 * s)]), stripe.lightened(0.15))
+	l.painter.draw_colored_polygon(PackedVector2Array([Vector2(b.x - 30.0 * s, b.y), Vector2(b.x, b.y - 62.0 * s), Vector2(b.x + 30.0 * s, b.y)]), Color(glow, 0.75))
+
+
+## Fairy lights: a sagging string between two points with coloured bulbs.
+func _string_lights(l: Layer, a: Vector2, b: Vector2, sag: float, line: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 13:
+		var t := float(i) / 12.0
+		pts.append(a.lerp(b, t) + Vector2(0, sin(t * PI) * sag))
+	l.painter.draw_polyline(pts, line, 2.0)
+	for i in 13:
+		var bulb: Color = _th.flower_colors[i % _th.flower_colors.size()]
+		l.painter.draw_circle(pts[i] + Vector2(0, 7), 11.0, Color(bulb, 0.18))
+		l.painter.draw_circle(pts[i] + Vector2(0, 7), 5.0, bulb.lightened(0.25))
+
+
+## A rollercoaster: a rolling track on thin supports, with a little train.
+func _coaster(l: Layer, x0: float, x1: float, base_y: float, color: Color) -> void:
+	var pts := PackedVector2Array()
+	var n := int((x1 - x0) / 24.0)
+	for i in n + 1:
+		var t := float(i) / n
+		pts.append(Vector2(lerpf(x0, x1, t), base_y - 140.0 - 120.0 * absf(sin(t * PI * 2.5)) - 40.0 * sin(t * PI * 7.0)))
+	for i in range(0, pts.size(), 2):
+		l.painter.draw_line(pts[i], Vector2(pts[i].x, base_y), color, 4.0)
+	for i in range(0, pts.size() - 2, 4):
+		l.painter.draw_line(pts[i], pts[i + 2] + Vector2(0, 40), color, 2.0)
+	l.painter.draw_polyline(pts, color.darkened(0.15), 9.0)
+	l.painter.draw_polyline(pts, color.lightened(0.12), 4.0)
+	for k in 3:
+		var p := pts[n / 3 + k]
+		l.painter.draw_colored_polygon(Art.ellipse(p + Vector2(0, -10), 14, 9, 10), _th.accent)
+
+
+## A rotating ferris wheel (its A-frame stays still; the wheel is a Spinner).
+class Spinner extends Node2D:
+	var speed := 0.05
+
+	func _process(delta: float) -> void:
+		rotation += speed * delta
+
+
+func _ferris(l: Layer, c: Vector2, r: float, color: Color, base_y: float) -> void:
+	l.painter.draw_line(c, Vector2(c.x - r * 0.55, base_y), color, 9.0)
+	l.painter.draw_line(c, Vector2(c.x + r * 0.55, base_y), color, 9.0)
+	var wheel := MeshPainter.new()
+	var rim := PackedVector2Array()
+	var inner := PackedVector2Array()
+	for i in 41:
+		rim.append(Vector2.from_angle(TAU * float(i) / 40.0) * r)
+		inner.append(Vector2.from_angle(TAU * float(i) / 40.0) * r * 0.6)
+	wheel.draw_polyline(rim, color, 8.0)
+	wheel.draw_polyline(inner, color.darkened(0.1), 4.0)
+	for k in 12:
+		var d := Vector2.from_angle(TAU * float(k) / 12.0)
+		wheel.draw_line(Vector2.ZERO, d * r, color.darkened(0.05), 3.0)
+		var cab: Color = _th.flower_colors[k % _th.flower_colors.size()]
+		wheel.draw_colored_polygon(Art.ellipse(d * r + Vector2(0, 16), 15, 12, 10), Color(cab, 0.9))
+		wheel.draw_circle(d * r, 9.0, Color(cab, 0.25))
+	wheel.draw_circle(Vector2.ZERO, 14.0, color.darkened(0.2))
+	var sp := Spinner.new()
+	sp.position = c
+	sp.add_child(MeshArt.new(wheel.build()))
+	l.parallax.add_child(sp)
+
+
+func _carnival_scene() -> void:
+	var sil := _haze(_th.far_hills, 0.25)
+	var tent := _th.accent.lerp(_th.sky_bottom, 0.55)
+	# Far: the fairground skyline - a ferris wheel, a coaster and tents over low hills.
+	var far := _layer(0.06, 3000.0)
+	_hill_band(far, 3000.0, horizon_y - 240.0, 120.0, 4, _haze(_th.far_hills, 0.4))
+	_coaster(far, 200.0, 1500.0, horizon_y - 160.0, _haze(_th.near_hills, 0.3))
+	_ferris(far, Vector2(2200.0, horizon_y - 560.0), 230.0, _haze(_th.foliage_dark, 0.3), horizon_y - 130.0)
+	for i in 3:
+		var x := 1700.0 + float(i) * 420.0
+		_bigtop(far, Vector2(x, _ground_at(far, x) + 14.0), 0.8, _haze(_th.foliage_dark, 0.35), _haze(tent, 0.4), Color(1.0, 0.85, 0.5, 0.35))
+	_commit(far)
+	# Mid: nearer tents, lit doors and strings of fairy lights between poles.
+	var mid := _layer(0.22, 2400.0)
+	_hill_band(mid, 2400.0, horizon_y - 120.0, 90.0, 3, _haze(_th.near_hills, 0.2))
+	for i in 4:
+		var x := (float(i) + _rng.randf_range(0.2, 0.8)) * 2400.0 / 4.0
+		_bigtop(mid, Vector2(x, _ground_at(mid, x) + 10.0), _rng.randf_range(1.0, 1.4), _haze(_th.ground_dark, 0.08), _haze(_th.accent.darkened(0.15), 0.12), Color(1.0, 0.82, 0.45, 0.5))
+	for i in 5:
+		var x := float(i) * 480.0 + _rng.randf_range(0.0, 120.0)
+		var base := horizon_y - _rng.randf_range(260.0, 420.0)
+		mid.painter.draw_line(Vector2(x, _ground_at(mid, x)), Vector2(x, base), _haze(_th.ledge_dark, 0.2), 6.0)
+		_string_lights(mid, Vector2(x, base), Vector2(x + 480.0, horizon_y - _rng.randf_range(260.0, 420.0)), 60.0, _haze(_th.ledge_dark, 0.2))
+	_commit(mid)
+	# Near: lamp posts, bunting and balloons along the front.
+	var near := _layer(0.5, 1800.0)
+	_hill_band(near, 1800.0, horizon_y - 50.0, 60.0, 3, _th.near_hills.darkened(0.08))
+	for i in 7:
+		var x := (float(i) + _rng.randf_range(0.1, 0.9)) * 1800.0 / 7.0
+		var gy := _ground_at(near, x) + 8.0
+		near.painter.draw_line(Vector2(x, gy), Vector2(x, gy - 170.0), _th.outline.lightened(0.1), 7.0)
+		near.painter.draw_circle(Vector2(x, gy - 178.0), 34.0, Color(1.0, 0.85, 0.5, 0.12))
+		near.painter.draw_circle(Vector2(x, gy - 178.0), 11.0, Color(1.0, 0.92, 0.65))
+	for i in 3:
+		var x := float(i) * 600.0 + _rng.randf_range(20, 180)
+		var a := Vector2(x, horizon_y - 330.0)
+		var b := Vector2(x + 420.0, horizon_y - 310.0)
+		var pts := PackedVector2Array()
+		for k in 11:
+			var t := float(k) / 10.0
+			pts.append(a.lerp(b, t) + Vector2(0, sin(t * PI) * 50.0))
+		near.painter.draw_polyline(pts, _th.outline.lightened(0.15), 2.0)
+		for k in range(1, 10):
+			var col: Color = _th.flower_colors[k % _th.flower_colors.size()]
+			near.painter.draw_colored_polygon(PackedVector2Array([pts[k] + Vector2(-9, 0), pts[k] + Vector2(9, 0), pts[k] + Vector2(0, 22)]), _haze(col, 0.1))
+	_commit(near)
+
+
+## Balloons drifting past in the dusk (a slowly scrolling layer of bobbing colours).
+func _drifting_balloons() -> void:
+	var p := _parallax(0.3, 3000.0, Vector2(-26, 0))
+	var mp := MeshPainter.new()
+	for g in 6:
+		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - _rng.randf_range(380, 1000))
+		for i in _rng.randi_range(2, 4):
+			var b := c + Vector2(_rng.randf_range(-40, 40), _rng.randf_range(-40, 40))
+			var col := _haze(_th.flower_colors[(g + i) % _th.flower_colors.size()], 0.35)
+			mp.draw_line(b, b + Vector2(_rng.randf_range(-10, 10), 70), Color(1, 1, 1, 0.3), 1.5)
+			mp.draw_colored_polygon(Art.ellipse(b, 20, 25, 14), col)
+			mp.draw_colored_polygon(Art.ellipse(b + Vector2(-6, -8), 6, 9, 8), Color(1, 1, 1, 0.3))
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -95
 
 
 func _gear_shape(l: Layer, c: Vector2, r: float, color: Color) -> void:

@@ -197,3 +197,13 @@ godot --path . res://tools/bench.tscn -- --level=res://levels/w1_3_mossy_hollow.
 Performance budget: keep the draw calls on screen under about 600. Static art
 bakes into one mesh through `MeshPainter`. Animated pieces call
 `View.redraw(self)`, so they only redraw while the camera can see them.
+
+
+## World 6 kit (gravity flips)
+Levels are a corridor: walkable floor (y = 0) and ceiling (underside y = -540, `carnival.H`). `from carnival import corridor`.
+- `L.ceiling_land(profile, top)` / `L.ceiling_block(x, y_under, w, h, conveyor=)`: ground hanging from above (mirrored, lip underneath)
+- Switches: `L.flip_lever(x, y, ceiling=)` (punch), `L.flip_pad(x, y, ceiling=)` (plate), `L.flip_bumper(x, y)`, `L.flip_gate(x, y, "up"|"down", height=)` (sets gravity)
+- `L.kill_top(x0, x1, y)` and `L.finish(..., top=, kill_top=)` for falling UP; `L.wheel(..., solid=True)` for standable-from-both-sides platforms
+- `L.deco(kind, x, y, mirror=True)`, `L.dress(x0, x1, "carnival", ceiling=True)`, `L.snoozling(..., ceiling=True)`, `L.switch(..., ceiling=True)`
+- Enemies start on the FLOOR (they fall with gravity); `balloonatic` / `marionette` don't care. Gems on the ceiling go at `y = -H + 45` (walk) or hang from `ceiling_block`s (land on them by flipping beside them)
+- Bots: `_pull(p, lever_x)`, `_walk_to(p, x)` in tests/run_tests.gd are flip-aware

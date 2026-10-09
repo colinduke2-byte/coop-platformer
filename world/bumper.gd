@@ -43,10 +43,16 @@ func _physics_process(delta: float) -> void:
 		if dir.y > -0.25:
 			dir.y -= 0.35  # always pop a little upward
 			dir = dir.normalized()
-		p.launch(dir * bounce_speed, 0.2)
+		p.launch_world(dir * bounce_speed, 0.2)
 		_cd[p] = 0.15
 		_hit = 1.0
 		EventBus.pad_bounced.emit(p, self, false)
+		_on_bounced(p)
+
+
+## Hook for subclasses (FlipBumper flips gravity here).
+func _on_bounced(_p: Player) -> void:
+	pass
 
 
 func _draw() -> void:

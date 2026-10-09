@@ -1,79 +1,91 @@
-"""World 6-3 (secret): ABYSSAL CANOPY - the Rainbloom Jungle hanging over the Deep Sea Dream.
-Short and hard: a liana ravine over the void, a starry pool full of eels (dive
-under the rock), a bubble column up to the canopy, jellybob trampolines over a
-second void, then the gate.
-Secrets: gem 0 on the pool floor under the rock, gem 1 high above the jellies,
-gem 2 in a hollow log at the finish; the Snoozling sits on top of the canopy.
+"""World 6-3: HALL OF MIRRORS - the funhouse. Floor pillars and hanging pillars wall the corridor in turn:
+when a pillar rises from the floor you walk the ceiling past it, and when one hangs from the ceiling you walk
+the floor. Levers sit just before every pillar (on whichever surface you're standing on). One timed gate
+asks you to punch a switch and race to it.
+Secrets: gem 0 over the first pillar, gem 1 on the ceiling after the third pillar, gem 2 behind the gate's switch pocket; the
+Snoozling stands on the ceiling near the end.
 Regenerate: python3 tools/levelgen/levels/w6_3.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 from tscn import C, V
+from carnival import H, corridor, ceil_lums, floor_lums
 
-TEAL, PINK = C(0.45, 1.0, 0.85), C(1.0, 0.5, 0.8)
-L = LevelKit("AbyssalCanopy", "Abyssal Canopy", theme="nebula", horizon=0, scenery="nebula")
-L.ambience("bubbles", 0.5)
-L.ambience("stars", 0.6)
+L = LevelKit("HallOfMirrors", "Hall of Mirrors", theme="funhouse", horizon=0, scenery="carnival")
+L.ambience("confetti", 0.4)
+L.ambience("stars", 0.4)
 
-L.wall(-360, -1600, 600)
-L.land([(-300, 0), (1150, 0)], bottom=1500)
-L.land([(2150, 0), (2700, 0), (2720, 600), (4180, 600), (4200, -800), (5000, -800)], bottom=1500)
-L.land([(5980, -800), (6300, -800), (6600, 0), (8000, 0)], bottom=1500)
+R = 7300
+corridor(L, -300, R)
+L.wall(-360, -H - 900, 900)
+L.wall(R, -H - 900, 900)
 
-# ---- S0 the canopy edge (x -300..1150) -----------------------------------------------------------
-L.sign(90, 0, "ABYSSAL CANOPY. Swing, swim,\nbounce - and don't look down.", 420)
-L.lums(300, -110, 1000, -110, 5, 40)
+PIL = 400   # pillar height
 
-# ---- S1 the liana ravine over the void (1150..2150) -------------------------------------------------
-L.checkpoint(900, 0)
-L.pit_kill(1150, 2150, 700)
-L.liana(1380, -500, 330, sway=0.15, phase=0.3)
-L.liana(1840, -500, 330, sway=0.2, phase=1.1)
-L.lums(1250, -300, 2050, -300, 7, 80)
-L.enemy("swoopbeak", 1650, -560)
 
-# ---- S2 the starry pool (2150..4200) ---------------------------------------------------------------
-L.checkpoint(2300, 0)
-L.water(2720, 20, 1460, 580)
-L.block(3200, -200, 400, 520)                      # the rock (dive under it)
-L.enemy("eelectra", 3190, 400, facing=-1)
-L.enemy("eelectra", 3610, 520, facing=1)
-L.enemy("pufferfin", 3900, 300, travel=V(0, 200), speed=80.0)
-L.gem(3400, 560)                                   # gem 0 under the rock
-L.lums(2800, 450, 4000, 450, 9, -40)
-L.glow(3400, 500, TEAL, radius=260, energy=0.8)
-# The sea-well: duck under its wall, and the bubbles carry you up to the canopy.
-L.block(3940, -800, 60, 690)
-L.water(4000, -800, 200, 820)
-L.bubbles(4010, -800, 180, 1400, rise=460)
-L.lums(4100, -700, 4100, 400, 8)
+def floor_pillar(x, w=90):
+    L.block(x, -PIL, w, PIL)
 
-# ---- S3 up to the canopy and the jellies over the void (4200..6100) ------------------------------------
-L.checkpoint(4300, -800)
-L.snoozling(4800, -800, fur=C(0.5, 1.0, 0.85))
-L.pit_kill(5000, 5980, 700)
-for i, x in enumerate([5260, 5620]):
-    L.enemy("jellybob", x, -760, bob=16.0, phase=i * 0.3)
-L.gem(5450, -1130)                                 # gem 1, on the arc between the jellies
-L.lums(5260, -980, 5900, -980, 6, 60)
 
-# ---- S4 down to the gate (6100..8000) ------------------------------------------------------------------
-L.checkpoint(6700, 0)
-L.enemy("cocobonk", 6900, 0)
-# Gem 2: a hollow log - punch its cracked end. The path climbs over it.
-L.breakable(7000, -140, 40, 140, lums=2)
-L.block(7000, -160, 300, 20)
-L.block(7280, -160, 20, 160)
-L.gem(7140, -60)
-L.secret(7040, -140, 240, 140)
-L.goal(7600, 0)
-L.lums(6050, -900, 6250, -900, 3)
-for x, c in [(1600, PINK), (4600, TEAL), (6250, PINK), (7600, TEAL)]:
-    L.glow(x, -300 if x != 4600 else -1000, c, radius=300, energy=0.6)
-L.wall(8000, -1200, 0)
+def hanging_pillar(x, w=90):
+    L.ceiling_block(x, -H + PIL, w, PIL)
 
-L.dress(-250, 1100, "dream", spacing=170, seed=231)
-L.dress(4220, 4980, "dream", spacing=170, seed=232, skip=[(4750, 4850)])
-L.dress(6650, 7950, "dream", spacing=170, seed=233, skip=[(6950, 7350), (7550, 7650)])
-L.finish(spawn=(0, -2), left=-360, right=8060, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_3_abyssal_canopy.tscn"))
+
+# ---- S0 the mirror door (-300..1400) ---------------------------------------------------------------------------------
+L.checkpoint(0, 0)
+L.sign(250, 0, "The Hall of Mirrors!\nA PILLAR from the floor? Walk the ceiling.\nA hanging one? Walk the floor.", 520)
+floor_pillar(860)                                   # P1
+L.flip_lever(690, 0)
+L.gem(905, -H + 70)                                 # gem 0, up on the ceiling over the pillar
+ceil_lums(L, 560, 800, 4)
+ceil_lums(L, 1000, 1400, 6)
+hanging_pillar(1700)                                # P2
+L.flip_lever(1510, -H, ceiling=True)
+L.enemy("unicyclops", 2000, 0)
+
+# ---- S1 (1400..2900) ---------------------------------------------------------------------------------------------------
+L.checkpoint(1560, 0)
+floor_lums(L, 1800, 2200, 6)
+floor_pillar(2560)                                  # P3
+L.flip_lever(2380, 0)
+L.gem(2860, -H + 45)                                # gem 1, on the ceiling after the third pillar
+L.enemy("jackbonk", 2300, 0)
+ceil_lums(L, 2700, 3000, 5)
+L.flip_lever(3140, -H, ceiling=True)                # back to the floor before the gate
+
+# ---- S2 the timed gate (3000..4400) -----------------------------------------------------------------------------------------
+L.checkpoint(3260, 0)
+g = L.gate(3950, -H - 20, w=60, h=H + 40, open_offset=(0, H + 80), stay_open=False)
+L.switch(3400, 0, [g], mode=2, duration=5.5)        # punch it, then RUN
+L.spikes(3640, 0, 160)
+L.enemy("popcorn_pufflet", 3760, 0)
+L.gem(3300, -H + 60) if False else None
+floor_lums(L, 3480, 3880, 5)
+L.snoozling(4180, 0, fur=C(0.6, 0.9, 1.0))
+
+# ---- S3 (4400..6000) --------------------------------------------------------------------------------------------------------------
+floor_pillar(4800)                                  # P4
+L.flip_lever(4620, 0)
+L.checkpoint(4440, 0)
+ceil_lums(L, 4660, 5000, 5)
+hanging_pillar(5640)                                # P5
+L.flip_lever(5460, -H, ceiling=True)
+L.enemy("grunt", 5900, 0)
+L.enemy("marionette", 5200, -H + 12, length=240.0, amplitude=0.5, period=3.4)
+
+# ---- S4 the last pillars (6000..R) ----------------------------------------------------------------------------------------------------
+L.checkpoint(6000, 0)
+floor_pillar(6500)                                  # P6
+L.flip_lever(6320, 0)
+ceil_lums(L, 6400, 6700, 4)
+L.flip_lever(6900, -H, ceiling=True)
+L.goal(7150, 0)
+L.gem(5000, -H + 70) if False else None
+L.gem(6780, -H + 70)                                # gem 2, on the last stretch of ceiling
+
+# ---- dressing ------------------------------------------------------------------------------------------------------------------------------------
+L.dress(-250, R - 100, "funhouse", spacing=210, seed=631, skip=[(640, 1000), (1440, 1560), (1650, 1800), (2300, 2420), (2500, 2640), (3340, 3460), (3900, 4010), (4580, 4900), (5400, 5520), (5600, 5740), (6280, 6360), (6460, 6600), (7080, 7220)])
+L.dress(-250, R - 100, "funhouse", spacing=260, seed=632, ceiling=True, skip=[(1450, 1570), (1650, 1800), (3080, 3200), (5400, 5520), (5600, 5740), (6860, 6960)])
+
+L.finish(spawn=(0, -2), left=-360, right=R + 60, bottom=H + 700, kill_y=H + 800, top=-H - 700, kill_top=-H - 800)
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_3_hall_of_mirrors.tscn"))

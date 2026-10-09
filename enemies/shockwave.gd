@@ -8,9 +8,12 @@ extends Area2D
 @export var lifetime := 1.8
 
 var _age := 0.0
+var _g := 1.0   ## which way 'down' is (World 6 flips it): the wave hugs the floor OR the ceiling
 
 
 func _ready() -> void:
+	_g = float(GameManager.gravity_dir)
+	scale.y = _g
 	collision_layer = 0
 	collision_mask = 2
 	monitorable = false
@@ -27,10 +30,10 @@ func _physics_process(delta: float) -> void:
 	var step := Vector2(dir * speed * delta, 0)
 	var space := get_world_2d().direct_space_state
 	var ahead := PhysicsPointQueryParameters2D.new()
-	ahead.position = global_position + step + Vector2(dir * 18.0, -12.0)
+	ahead.position = global_position + step + Vector2(dir * 18.0, -12.0 * _g)
 	ahead.collision_mask = 1
 	var below := PhysicsPointQueryParameters2D.new()
-	below.position = global_position + step + Vector2(0, 6)
+	below.position = global_position + step + Vector2(0, 6.0 * _g)
 	below.collision_mask = 1
 	if _age > lifetime or not space.intersect_point(ahead, 1).is_empty() or space.intersect_point(below, 1).is_empty():
 		queue_free()

@@ -65,7 +65,7 @@ func snap() -> void:
 	var rect := _bounds(targets)
 	_anchor_y = rect.get_center().y
 	_lead = 0.0
-	global_position = rect.get_center() + Vector2(0.0, vertical_bias)
+	global_position = rect.get_center() + Vector2(0.0, vertical_bias * float(GameManager.gravity_dir))
 	var z := _zoom_for(rect)
 	zoom = Vector2(z, z)
 	reset_smoothing()
@@ -87,7 +87,7 @@ func _framing(targets: Array, rect: Rect2, delta: float) -> Vector2:
 		_anchor_y = c.y if is_nan(_anchor_y) else lerpf(_anchor_y, c.y, clampf(8.0 * delta, 0.0, 1.0))
 	elif absf(c.y - _anchor_y) > vertical_deadzone:
 		_anchor_y = c.y - signf(c.y - _anchor_y) * vertical_deadzone
-	return Vector2(c.x + _lead, _anchor_y + vertical_bias)
+	return Vector2(c.x + _lead, _anchor_y + vertical_bias * float(GameManager.gravity_dir))
 
 
 func _targets() -> Array:

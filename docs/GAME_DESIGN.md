@@ -83,11 +83,21 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   when she's angry). Mixed land and swimming, no air meter. New: bubble
   columns, giant clams, tides, kelp, pufferfins, crabbits, jellybobs, eels and
   anglerlings. Reached from the top of World 4's map.
-- **World 6 - Nightmare Nebula (secret)**: 6-1 Starfall Gardens, 6-2 Comet
-  Clockworks, 6-3 Abyssal Canopy, 6-4 The Nightmare Core. Short, hard remix
+- **World 6 - Midnight Carnival**: 6-1 Ticket Booth Promenade, 6-2 Carousel
+  Crossing, 6-3 Hall of Mirrors, 6-4 Rollercoaster Ruckus, 6-5 Ferris Wheel
+  Heights, 6-6 The Big Top (boss: **Madame Topsy-Turvy**, a ringmaster who
+  whacks the arena's lever to flip gravity - and gets dizzy when she does). THE
+  SPIN: gravity flips, always by a PHYSICAL switch (never a controller button):
+  punchable **levers**, **pressure plates**, **bumpers** and **arches** (which SET
+  gravity). Every level is a corridor with a walkable floor AND ceiling; flipped,
+  the ceiling is the floor. New: Jack-in-the-bonk, Unicyclops, Popcorn Pufflet,
+  Balloonatic, Marionette. Reached from the top of World 5's map.
+- **World 7 - Nightmare Nebula (secret)**: 7-1 Starfall Gardens, 7-2 Comet
+  Clockworks, 7-3 Abyssal Canopy, 7-4 The Nightmare Core. Short, hard remix
   levels mixing every world's pieces over a starry void; the finale is a boss
-  rush (Cuckoolossus, then Inkabella). Opens from the top of World 5's map once
-  World 5 is beaten AND 75% of the Dream Gems in Worlds 1-5 are found (68 of 90).
+  rush (Cuckoolossus, then Inkabella). Opens from the top of World 6's map once
+  World 6 is beaten AND 75% of the Dream Gems in Worlds 1-6 are found (81 of 108).
+  (It used to be World 6; old saves move over automatically.)
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.

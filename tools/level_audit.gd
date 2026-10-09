@@ -120,7 +120,7 @@ static func audit(level: Node) -> Array[String]:
 	for cls: String in ["DreamGem", "SnoozlingCage", "DreamKey"]:
 		for n in level.find_children("*", cls, true, false):
 			var c := n as Node2D
-			var at := c.global_position + (Vector2(0, -30) if cls == "SnoozlingCage" else Vector2.ZERO)
+			var at := c.to_global(Vector2(0, -30)) if cls == "SnoozlingCage" else c.global_position   # (mirrored cages stand on ceilings)
 			if _solid_at(space, at):
 				issues.append("%s at %s is inside terrain" % [cls, _p(c.global_position)])
 	for n in level.find_children("*", "Enemy", true, false):

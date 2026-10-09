@@ -52,6 +52,7 @@ func _ready() -> void:
 	EventBus.stomp_chain.connect(_on_stomp_chain)
 	EventBus.level_completed.connect(_on_level_completed)
 	EventBus.gem_collected.connect(_on_gem_collected)
+	EventBus.gravity_flipped.connect(_on_gravity_flipped)
 
 
 # --- Public ----------------------------------------------------------------------
@@ -241,7 +242,7 @@ func _physics_process(delta: float) -> void:
 
 func _on_jumped(p: Player) -> void:
 	if p.is_on_floor() or p.can_coyote_jump():
-		puff(p.global_position + Vector2(0, -2), 5, DUST, Vector2.UP, PI * 0.9, Vector2(14, 30), Vector2(4, 7), 0.25)
+		puff(p.global_position + Vector2(0, -2 * p.gdir), 5, DUST, Vector2(0, -p.gdir), PI * 0.9, Vector2(14, 30), Vector2(4, 7), 0.25)
 
 
 func _on_wall_jumped(p: Player) -> void:
@@ -250,23 +251,24 @@ func _on_wall_jumped(p: Player) -> void:
 
 
 func _on_landed(p: Player) -> void:
-	var feet := p.global_position + Vector2(0, -3)
+	var feet := p.global_position + Vector2(0, -3 * p.gdir)
 	puff(feet, 3, DUST, Vector2.LEFT, 0.6, Vector2(12, 26), Vector2(4, 7), 0.25)
 	puff(feet, 3, DUST, Vector2.RIGHT, 0.6, Vector2(12, 26), Vector2(4, 7), 0.25)
 
 
 func _on_hard_landed(p: Player, speed: float) -> void:
 	var k := clampf(speed / 1500.0, 0.5, 1.0)
-	var feet := p.global_position + Vector2(0, -3)
+	var feet := p.global_position + Vector2(0, -3 * p.gdir)
 	puff(feet, 6, DUST, Vector2.LEFT, 0.8, Vector2(20, 55) * k, Vector2(5, 10), 0.35)
 	puff(feet, 6, DUST, Vector2.RIGHT, 0.8, Vector2(20, 55) * k, Vector2(5, 10), 0.35)
 	shake(0.18 * k)
 
 
 func _on_ground_pounded(_p: Player, pos: Vector2) -> void:
-	ring(pos + Vector2(0, -4), 95.0, DUST, 0.35, 7.0)
-	puff(pos + Vector2(0, -3), 9, DUST, Vector2.LEFT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
-	puff(pos + Vector2(0, -3), 9, DUST, Vector2.RIGHT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
+	var g := float(GameManager.gravity_dir)
+	ring(pos + Vector2(0, -4 * g), 95.0, DUST, 0.35, 7.0)
+	puff(pos + Vector2(0, -3 * g), 9, DUST, Vector2.LEFT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
+	puff(pos + Vector2(0, -3 * g), 9, DUST, Vector2.RIGHT, 1.0, Vector2(30, 80), Vector2(6, 12), 0.45)
 	shake(0.45)
 
 
@@ -475,6 +477,17 @@ func _boss_defeat(at: Vector2) -> void:
 			firework(at + Vector2(randf_range(-340, 340), randf_range(-300, 60)), CONFETTI[i % CONFETTI.size()]))
 	confetti(at, 80)
 	hit_stop(0.07)
+
+
+## A gravity flip: a pop of colour and a word above the first dreamer, so it's always clear what just happened.
+func _on_gravity_flipped(dir: int) -> void:
+	var col := Color("7fd8ff") if dir < 0 else Color("ffd24a")
+	for p: Player in GameManager.players.values():
+		if is_instance_valid(p):
+			text(p.global_position + Vector2(0, -120.0 * float(dir)), "UP!" if dir < 0 else "DOWN!", col, 40)
+			sparkle(p.global_position + Vector2(0, -40.0 * float(dir)), 8, col, 70.0)
+			break
+	EventBus.screen_shake.emit(0.15)
 
 
 func _on_gem_collected(index: int, _slot: int, pos: Vector2) -> void:

@@ -63,7 +63,7 @@ func _physics_process(delta: float) -> void:
 		var p := body as Player
 		if p == null or p.is_bubbled() or _cooldowns.has(p):
 			continue
-		if p.velocity.dot(up) > 60.0:
+		if p.world_velocity().dot(up) > 60.0:
 			continue  # already flying away from the pad
 		_bounce(p, up)
 
@@ -79,8 +79,8 @@ func _bounce(p: Player, up: Vector2) -> void:
 	var lock := sideways_lock if absf(up.x) > 0.3 else 0.0
 	var v := up * speed_for_height(p.tuning, h)
 	if absf(up.x) <= 0.3:
-		v.x = p.velocity.x  # vertical pads keep your run speed
-	p.launch(v, lock)
+		v.x = p.velocity.x  # vertical pads keep your run speed (x is the same in logical and world space)
+	p.launch_world(v, lock)
 	_cooldowns[p] = COOLDOWN
 	_squish = 1.0
 	EventBus.pad_bounced.emit(p, self, pounding)

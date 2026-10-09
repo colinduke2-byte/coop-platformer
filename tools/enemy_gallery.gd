@@ -8,7 +8,8 @@ const ENEMIES := ["grunt", "flapjack", "spikeroo", "shieldbug", "spitpod", "bonk
 		"slidgewick", "snowl", "yetling", "grumblefrost",
 		"cocobonk", "swoopbeak", "nibblefin", "chamelia",
 		"windup", "sparkbot", "springbot", "cuckoolossus",
-		"pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella"]
+		"pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella",
+		"jackbonk", "unicyclops", "popcorn_pufflet", "balloonatic", "marionette", "madame_topsy"]
 
 
 func _ready() -> void:

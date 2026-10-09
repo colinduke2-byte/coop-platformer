@@ -21,7 +21,7 @@ func enter(_previous: StringName) -> void:
 	player.velocity = Vector2.ZERO
 	player.sprint = 0.0
 	player.glide_armed = false
-	player.global_position.y = player.ledge_top + player.tuning.ledge_hang_offset
+	player.global_position.y = player.ledge_top + player.tuning.ledge_hang_offset * player.gdir
 	player.squash(Vector2(0.9, 1.12))
 	player.rig.ledge_lip = -player.tuning.ledge_hang_offset
 	_body = player.ledge_body as CollisionObject2D
@@ -84,7 +84,7 @@ func physics_update(delta: float) -> void:
 		_climbing = true
 		_climb_time = 0.0
 		_from = player.global_position
-		_to = Vector2(_from.x + _dir * (Player.BODY_SIZE.x * 0.5 + Player.CLIMB_FORWARD), player.ledge_top - 0.5)
+		_to = Vector2(_from.x + _dir * (Player.BODY_SIZE.x * 0.5 + Player.CLIMB_FORWARD), player.ledge_top - 0.5 * player.gdir)
 
 
 func _let_go() -> void:

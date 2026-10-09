@@ -44,7 +44,7 @@ func _cut_jump() -> void:
 	var vy := player.velocity.y * (player.cut_multiplier if custom else t.jump_cut_multiplier)
 	if not custom:
 		# Keep enough speed to still reach the minimum hop height.
-		var remaining := t.jump_min_height - (_start_y - player.global_position.y)
+		var remaining := t.jump_min_height - (_start_y - player.global_position.y) * player.gdir
 		if remaining > 0.0:
 			vy = minf(vy, -sqrt(2.0 * t.rise_gravity() * remaining))
 	player.velocity.y = maxf(vy, player.velocity.y)  # a cut never speeds you up

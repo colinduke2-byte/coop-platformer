@@ -8,7 +8,7 @@ class_name LevelCatalog
 
 ## The secret last world: it opens once World 5 is beaten AND you've found
 ## SECRET_SHARE of every Dream Gem in the worlds before it.
-const SECRET_WORLD := "w6"
+const SECRET_WORLD := "w7"
 const SECRET_SHARE := 0.75
 
 ## F9 on the world map (dev shortcut, this session only): everything is open.
@@ -20,7 +20,8 @@ const WORLDS: Array[Dictionary] = [
 	{"id": "w3", "name": "Rainbloom Jungle", "blurb": "Warm rain, swinging vines and a queen you can't always see."},
 	{"id": "w4", "name": "Clockwhirl Works", "blurb": "A dream factory of belts, gears and a clock that strikes thirteen."},
 	{"id": "w5", "name": "Deep Sea Dream", "blurb": "Sun, sand, coral and kelp - and something with eight arms in the temple."},
-	{"id": "w6", "name": "Nightmare Nebula", "blurb": "The secret world: every dream at once, and none of them friendly.", "secret": true},
+	{"id": "w6", "name": "Midnight Carnival", "blurb": "The carnival that never closes. Punch the levers - and watch which way is down."},
+	{"id": "w7", "name": "Nightmare Nebula", "blurb": "The secret world: every dream at once, and none of them friendly.", "secret": true},
 	{"id": "bonus", "name": "Bonus Dreams", "blurb": "Old favourites and tricky extras."},
 ]
 
@@ -115,16 +116,34 @@ const LEVELS: Array[Dictionary] = [
 	{"id": "w5_6", "world": "w5", "name": "The Drowned Palace", "scene": "res://levels/w5_6_sunken_temple.tscn",
 		"blurb": "INKABELLA waits in the great hall. Hit her tentacles when they stick!",
 		"theme": "res://world/themes/octopus.tres", "map": Vector2(1650, 330), "boss": true},
-	{"id": "w6_1", "world": "w6", "name": "Starfall Gardens", "scene": "res://levels/w6_1_starfall_gardens.tscn",
+	{"id": "w6_1", "world": "w6", "name": "Ticket Booth Promenade", "scene": "res://levels/w6_1_ticket_booth_promenade.tscn",
+		"blurb": "Punch the lever and gravity flips. The floor becomes the ceiling!",
+		"theme": "res://world/themes/carnival.tres", "map": Vector2(230, 840)},
+	{"id": "w6_2", "world": "w6", "name": "Carousel Crossing", "scene": "res://levels/w6_2_carousel_crossing.tscn",
+		"blurb": "The floor runs out, then the ceiling does. Step on the plates and keep running!",
+		"theme": "res://world/themes/carnival.tres", "map": Vector2(520, 700)},
+	{"id": "w6_3", "world": "w6", "name": "Hall of Mirrors", "scene": "res://levels/w6_3_hall_of_mirrors.tscn",
+		"blurb": "Pillars from the floor, pillars from the ceiling - and a gate on a timer.",
+		"theme": "res://world/themes/funhouse.tres", "map": Vector2(830, 850)},
+	{"id": "w6_4", "world": "w6", "name": "Rollercoaster Ruckus", "scene": "res://levels/w6_4_rollercoaster_ruckus.tscn",
+		"blurb": "Ride the rails past saws and sparks. Arches set gravity - mind the spikes!",
+		"theme": "res://world/themes/carnival.tres", "map": Vector2(1130, 640)},
+	{"id": "w6_5", "world": "w6", "name": "Ferris Wheel Heights", "scene": "res://levels/w6_5_ferris_wheel_heights.tscn",
+		"blurb": "Ride the lift to the top, then fall UP to the sky walk.",
+		"theme": "res://world/themes/carnival.tres", "map": Vector2(1430, 790)},
+	{"id": "w6_6", "world": "w6", "name": "The Big Top", "scene": "res://levels/w6_6_the_big_top.tscn",
+		"blurb": "Madame Topsy-Turvy whacks the lever - and gravity does the rest.",
+		"theme": "res://world/themes/bigtop.tres", "map": Vector2(1690, 400), "boss": true},
+	{"id": "w7_1", "world": "w7", "name": "Starfall Gardens", "scene": "res://levels/w7_1_starfall_gardens.tscn",
 		"blurb": "Thorns, crumbling stars and icy comets - the Lullaby Woods gone wrong.",
 		"theme": "res://world/themes/nebula.tres", "map": Vector2(300, 820)},
-	{"id": "w6_2", "world": "w6", "name": "Comet Clockworks", "scene": "res://levels/w6_2_comet_clockworks.tscn",
+	{"id": "w7_2", "world": "w7", "name": "Comet Clockworks", "scene": "res://levels/w7_2_comet_clockworks.tscn",
 		"blurb": "Tick-tock blocks over the void, zaps and saws. Keep the beat!",
 		"theme": "res://world/themes/nebula.tres", "map": Vector2(720, 600)},
-	{"id": "w6_3", "world": "w6", "name": "Abyssal Canopy", "scene": "res://levels/w6_3_abyssal_canopy.tscn",
+	{"id": "w7_3", "world": "w7", "name": "Abyssal Canopy", "scene": "res://levels/w7_3_abyssal_canopy.tscn",
 		"blurb": "Swinging vines over starry seas, eels and jellies. Hold on tight.",
 		"theme": "res://world/themes/nebula.tres", "map": Vector2(1160, 780)},
-	{"id": "w6_4", "world": "w6", "name": "The Nightmare Core", "scene": "res://levels/w6_4_nightmare_core.tscn",
+	{"id": "w7_4", "world": "w7", "name": "The Nightmare Core", "scene": "res://levels/w7_4_nightmare_core.tscn",
 		"blurb": "The heart of the bad dream. Two old foes wait at the end...",
 		"theme": "res://world/themes/nebula_boss.tres", "map": Vector2(1600, 380), "boss": true},
 	{"id": "demo", "world": "bonus", "name": "Dreamer's Playground", "scene": "res://levels/demo_level.tscn",

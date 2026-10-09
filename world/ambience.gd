@@ -7,7 +7,7 @@ extends Node2D
 ## Optional `darkness` dims the level for caves (a CanvasModulate) - glowing
 ## things (fireflies, crystals, GlowLight) then really pop.
 
-enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW, RAIN, BUBBLES, STARS }
+enum Kind { POLLEN, LEAVES, FIREFLIES, SPORES, PETALS, EMBERS, SNOW, RAIN, BUBBLES, STARS, CONFETTI }
 
 @export var kind := Kind.POLLEN:
 	set(v):
@@ -207,6 +207,23 @@ func _configure(p: CPUParticles2D) -> void:
 			if col.a == 0.0:
 				col = Color(0.85, 0.97, 1.0, 0.7)
 			p.color_ramp = _ramp([Color(col, 0.0), col, col, Color(col, 0.0)])
+		Kind.CONFETTI:
+			# Carnival confetti: bright flecks tumbling in every colour.
+			p.amount = int(70 * density)
+			p.lifetime = 10.0
+			p.texture = _dot(12, 1.0)
+			p.gravity = Vector2(6, 26)
+			p.initial_velocity_min = 4.0
+			p.initial_velocity_max = 24.0
+			p.spread = 180.0
+			p.angular_velocity_min = -180.0
+			p.angular_velocity_max = 180.0
+			p.hue_variation_min = -1.0
+			p.hue_variation_max = 1.0
+			p.scale_amount_min = 0.25
+			p.scale_amount_max = 0.6
+			if col.a == 0.0:
+				col = Color(1.0, 0.45, 0.65, 0.9)
 		Kind.STARS:
 			# Twinkling dream-stars that drift very slowly.
 			p.amount = int(80 * density)

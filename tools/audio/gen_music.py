@@ -177,3 +177,8 @@ track("octopus", "F", 150, [vi, IV, V, iii] * 2 + [vi, (5, "maj7"), V, iii, ii, 
 track("nebula", "B", 100, [vi, (5, "maj7"), IV, V] * 2 + [ii, vi, IV, V, vi, (2, "min7"), IV, (7, "sus")], lead="sine", seed=131, bright=0.7)
 track("nebula_boss", "C", 158, [vi, IV, V, V] * 2 + [vi, IV, (7, "sus"), V, ii, iii, IV, V], lead="saw", seed=133, drums="busy", bass_shape="square")
 track("shop", "F", 116, [I, vi, ii, V] * 2 + [I, iii, IV, V], lead="tri", seed=135, swing=0.2)
+# World 6 - Midnight Carnival (calliope-ish square leads, oom-pah bounce, a little swing).
+track("carnival", "F", 138, [I, V, IV, V] * 2 + [vi, IV, I, V, ii, V, I, (7, "sus")], lead="square", seed=141, swing=0.18, drums="busy", bright=1.15)
+track("funhouse", "D", 112, [vi, IV, V, iii] * 2 + [ii, vi, IV, V, vi, (2, "min7"), IV, (7, "sus")], lead="tri", seed=143, swing=0.1, bright=0.85)
+track("bigtop", "A", 160, [vi, IV, V, V] * 2 + [vi, (5, "maj7"), V, iii, ii, V, vi, V], lead="saw", seed=145, drums="busy", bass_shape="square")
+track("midway", "C", 118, [I, iii, IV, V] * 2 + [vi, IV, I, V], lead="square", seed=147, swing=0.14)

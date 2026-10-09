@@ -39,10 +39,12 @@ const PAINT := {
 	"shell": ["shellbert", "crabbit", "shieldbug", "diggle", "chamelia", "bumblebonk"],
 	"jelly": ["jellybob", "boingo", "pufferfin", "puffcap", "nibblefin", "eelectra", "inkabella", "anglerling", "wispet", "chamelia"],
 	"ground_metal": ["windup", "sparkbot", "springbot", "cuckoolossus"],
-	"bark": ["bonkhorn", "ribbiton", "prickleroll", "cocobonk"],
+	"bark": ["bonkhorn", "ribbiton", "prickleroll", "cocobonk", "marionette", "madame_topsy"],
 }
 
 var facing := -1
+## World 6: ground enemies (uses_gravity) turn over with the level's gravity, exactly like Player.gdir.
+var gdir := 1
 var dead := false
 var stun_timer := 0.0
 var anim_time := 0.0
@@ -142,14 +144,28 @@ func _physics_process(delta: float) -> void:
 	else:
 		_behave(delta)
 	if uses_gravity:
+		_sync_gravity()
 		velocity.y = minf(velocity.y + gravity * delta, 1400.0)
+	velocity.y *= gdir   # logical -> world (gdir is 1 unless a gravity-flipped walker)
 	move_and_slide()
+	velocity.y *= gdir
+	if absf(global_position.y) > 9000.0:
+		queue_free()   # fell (or was flung) out of the world, e.g. flipped over a pit: gone
 	_check_contacts(delta)
 	_squash = _squash.lerp(Vector2.ONE, clampf(12.0 * delta, 0.0, 1.0))
 	visual.scale = Vector2(_squash.x * facing, _squash.y)
 	var f := 1.0 + 2.5 * hit_flash
 	visual.modulate = Color(f, f, f)
 	View.redraw(visual)
+
+
+func _sync_gravity() -> void:
+	if GameManager.gravity_dir == gdir:
+		return
+	gdir = GameManager.gravity_dir
+	scale.y = float(gdir)
+	up_direction = Vector2(0.0, -float(gdir))
+	velocity.y = -velocity.y
 
 
 func _check_contacts(delta: float) -> void:
@@ -164,7 +180,7 @@ func _check_contacts(delta: float) -> void:
 		var state := p.state_machine.current_name()
 		if state == &"GroundPound":
 			continue  # the pound's own hitbox deals with us
-		var above := p.global_position.y <= global_position.y - body_size.y * 0.45
+		var above := (global_position.y - p.global_position.y) * p.gdir >= body_size.y * 0.45
 		if p.velocity.y > 20.0 and above:
 			_contact_cd[p] = CONTACT_COOLDOWN
 			if stompable:
@@ -212,7 +228,7 @@ func damage(by: Player, kind: HitKind, knockback: Vector2) -> void:
 		amount = 2  # fully charged punches hit twice as hard
 	health -= amount
 	hit_flash = 1.0
-	velocity = knockback * knockback_scale
+	velocity = Vector2(knockback.x, knockback.y * gdir) * knockback_scale   # knockback is in world space
 	_squash = Vector2(1.3, 0.75)
 	EventBus.enemy_hit.emit(self, by)
 	if health <= 0:
@@ -319,13 +335,13 @@ func nearest_player(max_dist := 99999.0, max_dy := 99999.0) -> Player:
 ## Is there floor just ahead of our front foot?
 func floor_ahead(dir := facing) -> bool:
 	var q := PhysicsPointQueryParameters2D.new()
-	q.position = global_position + Vector2(dir * (body_size.x * 0.5 + 6.0), 10.0)
+	q.position = global_position + Vector2(dir * (body_size.x * 0.5 + 6.0), 10.0 * gdir)
 	q.collision_mask = 1
 	return not get_world_2d().direct_space_state.intersect_point(q, 1).is_empty()
 
 
 func wall_ahead(dir := facing) -> bool:
-	return test_move(global_transform, Vector2(dir * 4.0, -2.0))
+	return test_move(global_transform, Vector2(dir * 4.0, -2.0 * gdir))
 
 
 ## Walk back and forth, turning at walls and ledges.
@@ -346,7 +362,7 @@ func shoot(offset: Vector2, dir: Vector2, speed := 380.0, gravity_scale := 0.0) 
 	p.velocity = dir.normalized() * speed
 	p.gravity_scale = gravity_scale
 	p.shooter = self
-	p.position = position + Vector2(offset.x * facing, offset.y)
+	p.position = position + Vector2(offset.x * facing, offset.y * gdir)
 	get_parent().add_child(p)
 	EventBus.enemy_shot.emit(self)
 	return p

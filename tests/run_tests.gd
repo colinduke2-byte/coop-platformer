@@ -122,6 +122,7 @@ func settle(p: Player) -> void:
 func _setup_arena() -> void:
 	await frames(1)  # let the previous arena finish freeing
 	gm().chosen_characters.clear()
+	gm().gravity_dir = 1
 	for s in router().get_bound_slots():
 		router().unbind_slot(s)
 	_arena = load(ARENA).instantiate()
@@ -4102,7 +4103,7 @@ func test_w2_6_grumblefrost_can_be_beaten_with_his_own_boulders() -> void:
 
 
 func test_world_maps_build_for_every_world_with_gates() -> void:
-	for w in ["w1", "w2", "w3", "w4", "w5"]:
+	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
 		WorldMap.world = w
 		var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 		_arena.add_child(m)
@@ -7871,41 +7872,41 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 	SaveData.load_records()
 	var saved: Dictionary = SaveData.records.duplicate(true)
 	var need := LevelCatalog.secret_gems_needed()
-	check(need == int(ceil(30 * 3 * 0.75)), "75%% of Worlds 1-5's gems are needed (%d)" % need)
-	# Finish every level of Worlds 1-5 with no gems: the gate stays shut.
-	for w in ["w1", "w2", "w3", "w4", "w5"]:
+	check(need == int(ceil(36 * 3 * 0.75)), "75%% of Worlds 1-6's gems are needed (%d)" % need)
+	# Finish every level of Worlds 1-6 with no gems: the gate stays shut.
+	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
 		for l in LevelCatalog.levels_in(w):
 			SaveData.records[l["id"]] = {"done": true, "gems": [false, false, false], "time": 1.0, "lums": 0}
 	if not (OS.has_feature("unlock_all") or LevelCatalog.dev_unlock):
-		check(not LevelCatalog.is_unlocked("w6_1"), "beating World 5 alone doesn't open the secret world")
+		check(not LevelCatalog.is_unlocked("w7_1"), "beating World 6 alone doesn't open the secret world")
 	# Now give them enough gems.
 	var given := 0
-	for w in ["w1", "w2", "w3", "w4", "w5"]:
+	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
 		for l in LevelCatalog.levels_in(w):
 			if given < need:
 				var g := mini(3, need - given)
 				SaveData.records[l["id"]]["gems"] = [g > 0, g > 1, g > 2]
 				given += g
-	check(LevelCatalog.is_unlocked("w6_1"), "with %d gems the Nightmare Nebula opens" % need)
-	WorldMap.world = "w5"
+	check(LevelCatalog.is_unlocked("w7_1"), "with %d gems the Nightmare Nebula opens" % need)
+	WorldMap.world = "w6"
 	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 	_arena.add_child(m)
 	await frames(3)
 	var gate_open := false
 	for n in m.nodes:
-		if n.get("gate", "") == "w6":
+		if n.get("gate", "") == "w7":
 			gate_open = n["unlocked"]
-	check(gate_open, "World 5's map shows the gate to the Nebula open")
+	check(gate_open, "World 6's map shows the gate to the Nebula open")
 	m.queue_free()
 	await frames(2)
-	WorldMap.world = "w6"
+	WorldMap.world = "w7"
 	m = load("res://ui/world_map.tscn").instantiate()
 	_arena.add_child(m)
 	await frames(3)
 	var ids: Array = []
 	for n in m.nodes:
 		ids.append(n["id"])
-	check(ids.has("w6_1") and ids.has("w6_4") and ids.has("gate_w5"), "the Nebula map has its four levels and a way back (%s)" % [ids])
+	check(ids.has("w7_1") and ids.has("w7_4") and ids.has("gate_w6"), "the Nebula map has its four levels and a way back (%s)" % [ids])
 	m.queue_free()
 	await frames(2)
 	WorldMap.world = "w1"
@@ -7920,14 +7921,14 @@ func test_screen_wipe_changes_scenes_instantly_when_headless() -> void:
 	w.free()
 
 
-const W6_1 := "res://levels/w6_1_starfall_gardens.tscn"
-const W6_2 := "res://levels/w6_2_comet_clockworks.tscn"
-const W6_3 := "res://levels/w6_3_abyssal_canopy.tscn"
-const W6_4 := "res://levels/w6_4_nightmare_core.tscn"
+const W7_1 := "res://levels/w7_1_starfall_gardens.tscn"
+const W7_2 := "res://levels/w7_2_comet_clockworks.tscn"
+const W7_3 := "res://levels/w7_3_abyssal_canopy.tscn"
+const W7_4 := "res://levels/w7_4_nightmare_core.tscn"
 
 
-func test_w6_1_crumbling_stars_over_the_void() -> void:
-	var p: Player = await _load_demo(W6_1)
+func test_w7_1_crumbling_stars_over_the_void() -> void:
+	var p: Player = await _load_demo(W7_1)
 	await _clear_enemies()
 	await _place(p, Vector2(780, -2))
 	var ok := await _hop_run(p, [860, 1204, 1504, 1804, 2104, 2404], 2700, false, 10.0)
@@ -7936,8 +7937,8 @@ func test_w6_1_crumbling_stars_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w6_1_bramble_garden_and_the_ice() -> void:
-	var p: Player = await _load_demo(W6_1)
+func test_w7_1_bramble_garden_and_the_ice() -> void:
+	var p: Player = await _load_demo(W7_1)
 	await _clear_enemies()
 	await _place(p, Vector2(2700, -2))
 	var ok := await _hop_run(p, [2850, 3350, 4660, 5310], 5800, false, 14.0)
@@ -7945,16 +7946,16 @@ func test_w6_1_bramble_garden_and_the_ice() -> void:
 	await _finish_demo()
 
 
-func test_w6_1_mushroom_bounces_you_to_gem_1() -> void:
-	var p: Player = await _load_demo(W6_1)
+func test_w7_1_mushroom_bounces_you_to_gem_1() -> void:
+	var p: Player = await _load_demo(W7_1)
 	await _clear_enemies()
 	await _pad_hop(p, Vector2(3780, 0), -560.0, 3700.0, 6.0)
 	check(gm().gems[1], "the mushroom bounces you up to gem 1 (at %s)" % p.global_position)
 	await _finish_demo()
 
 
-func test_w6_1_starlit_gate() -> void:
-	var p: Player = await _load_demo(W6_1)
+func test_w7_1_starlit_gate() -> void:
+	var p: Player = await _load_demo(W7_1)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(6100, -2))
 	await _hop_run(p, [7000], 7700, false, 8.0)
@@ -7962,8 +7963,8 @@ func test_w6_1_starlit_gate() -> void:
 	await _finish_demo()
 
 
-func test_w6_2_tick_tock_row_over_the_void() -> void:
-	var p: Player = await _load_demo(W6_2)
+func test_w7_2_tick_tock_row_over_the_void() -> void:
+	var p: Player = await _load_demo(W7_2)
 	await _clear_enemies()
 	await _place(p, Vector2(800, -2))
 	await _beat_hops(p, [[1060, 0], [1300, 1], [1540, 0], [1780, 1], [2100, -1]])
@@ -7971,8 +7972,8 @@ func test_w6_2_tick_tock_row_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w6_2_belt_between_the_zaps() -> void:
-	var p: Player = await _load_demo(W6_2)
+func test_w7_2_belt_between_the_zaps() -> void:
+	var p: Player = await _load_demo(W7_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(2100, -2))
 	var ok := await _auto_run(p, 4300, 16.0)
@@ -7980,8 +7981,8 @@ func test_w6_2_belt_between_the_zaps() -> void:
 	await _finish_demo()
 
 
-func test_w6_2_tick_tock_climb_to_gem_1() -> void:
-	var p: Player = await _load_demo(W6_2)
+func test_w7_2_tick_tock_climb_to_gem_1() -> void:
+	var p: Player = await _load_demo(W7_2)
 	await _clear_enemies()
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(4420, -2))
@@ -7991,8 +7992,8 @@ func test_w6_2_tick_tock_climb_to_gem_1() -> void:
 	await _finish_demo()
 
 
-func test_w6_2_down_to_the_gate() -> void:
-	var p: Player = await _load_demo(W6_2)
+func test_w7_2_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W7_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(5600, -602))
 	await _auto_run(p, 7000, 12.0)
@@ -8001,8 +8002,8 @@ func test_w6_2_down_to_the_gate() -> void:
 	await _finish_demo()
 
 
-func test_w6_3_liana_ravine() -> void:
-	var p: Player = await _load_demo(W6_3)
+func test_w7_3_liana_ravine() -> void:
+	var p: Player = await _load_demo(W7_3)
 	await _clear_enemies()
 	await _place(p, Vector2(950, -2))
 	var ok := await _liana_cross(p, 1090.0, 2300.0)
@@ -8010,8 +8011,8 @@ func test_w6_3_liana_ravine() -> void:
 	await _finish_demo()
 
 
-func test_w6_3_starry_pool_and_the_sea_well() -> void:
-	var p: Player = await _load_demo(W6_3)
+func test_w7_3_starry_pool_and_the_sea_well() -> void:
+	var p: Player = await _load_demo(W7_3)
 	await _clear_enemies()
 	await _place(p, Vector2(2600, -2))
 	press(0, "move_right")
@@ -8027,8 +8028,8 @@ func test_w6_3_starry_pool_and_the_sea_well() -> void:
 	await _finish_demo()
 
 
-func test_w6_3_jellies_over_the_void() -> void:
-	var p: Player = await _load_demo(W6_3)
+func test_w7_3_jellies_over_the_void() -> void:
+	var p: Player = await _load_demo(W7_3)
 	for e in get_tree().get_nodes_in_group(&"enemies"):
 		if not e is Jellybob:
 			e.queue_free()
@@ -8065,8 +8066,8 @@ func test_w6_3_jellies_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w6_3_down_to_the_gate() -> void:
-	var p: Player = await _load_demo(W6_3)
+func test_w7_3_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W7_3)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(6200, -802))
 	await _auto_run(p, 6850, 10.0)
@@ -8075,8 +8076,8 @@ func test_w6_3_down_to_the_gate() -> void:
 	await _finish_demo()
 
 
-func test_w6_4_the_gauntlet() -> void:
-	var p: Player = await _load_demo(W6_4)
+func test_w7_4_the_gauntlet() -> void:
+	var p: Player = await _load_demo(W7_4)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(950, -2))
 	var ok := await _hop_run(p, [1760, 2054, 2354], 2850, false, 10.0)
@@ -8084,9 +8085,9 @@ func test_w6_4_the_gauntlet() -> void:
 	await _finish_demo()
 
 
-func test_w6_4_both_bosses_can_be_beaten() -> void:
+func test_w7_4_both_bosses_can_be_beaten() -> void:
 	seed(20261009)
-	var p: Player = await _load_demo(W6_4)
+	var p: Player = await _load_demo(W7_4)
 	var cuckoo: Cuckoolossus = null
 	var ink: Inkabella = null
 	for e in get_tree().get_nodes_in_group(&"enemies"):
@@ -8180,8 +8181,8 @@ func test_w6_4_both_bosses_can_be_beaten() -> void:
 	await _finish_demo()
 
 
-func test_w6_every_snoozling_cage_and_chest() -> void:
-	for spot: Array in [[W6_1, Vector2(7000, -2)], [W6_2, Vector2(7100, -2)], [W6_3, Vector2(6900, -2)], [W6_4, Vector2(6900, -2)]]:
+func test_w7_every_snoozling_cage_and_chest() -> void:
+	for spot: Array in [[W7_1, Vector2(7000, -2)], [W7_2, Vector2(7100, -2)], [W7_3, Vector2(6900, -2)], [W7_4, Vector2(6900, -2)]]:
 		var p: Player = await _load_demo(spot[0])
 		await _clear_enemies_except_bosses()
 		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
@@ -8377,4 +8378,632 @@ func test_results_screen_builds_with_medals_and_counts_up() -> void:
 	check(medals.size() == 3, "three medal stars (%d)" % medals.size())
 	check(medals[0].earned and medals[1].earned and not medals[2].earned, "finishing and a gem earn medals, but not all three gems")
 	rs.queue_free()
+	await _finish_demo()
+
+
+# --- World 6: gravity flip ------------------------------------------------------
+
+## A ceiling whose underside is at `y` (flipped dreamers stand on it).
+func _flip_ceiling(y: float) -> void:
+	var b: Node2D = load("res://world/block.tscn").instantiate()
+	b.position = Vector2(-2000, y - 200.0)
+	b.size = Vector2(4000, 200)
+	_arena.add_child(b)
+
+
+func test_flip_player_falls_up_and_stands_on_the_ceiling() -> void:
+	_flip_ceiling(-400.0)
+	var p := add_player(0, Vector2(0, -200))
+	await frames(5)
+	gm().set_gravity_dir(-1, true)
+	await seconds(1.5)
+	check(p.gdir == -1 and p.scale.y < 0.0, "the body is mirrored when gravity flips")
+	check(p.is_on_floor(), "you should land on the ceiling (the new floor)")
+	check(absf(p.global_position.y - (-400.0)) < 6.0, "feet at the underside of the ceiling (y %.1f)" % p.global_position.y)
+	gm().set_gravity_dir(1, true)
+	await seconds(1.5)
+	check(p.is_on_floor() and absf(p.global_position.y) < 6.0, "flipping back drops you to the real floor (y %.1f)" % p.global_position.y)
+
+
+func test_flip_walk_jump_and_height_match_normal_gravity() -> void:
+	_flip_ceiling(-400.0)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	var y0 := p.global_position.y
+	press(0, "jump")
+	await seconds(0.5)
+	release(0, "jump")
+	var up_normal := y0 - p.global_position.y
+	await seconds(0.8)
+	# Flip and do the same jump from the ceiling.
+	p.global_position = Vector2(0, -200)
+	gm().set_gravity_dir(-1, true)
+	await seconds(1.2)
+	check(p.is_on_floor(), "standing on the ceiling before the jump")
+	var cy := p.global_position.y
+	var worst := 0.0
+	press(0, "jump")
+	for i in 60:
+		await get_tree().physics_frame
+		worst = maxf(worst, p.global_position.y - cy)
+	release(0, "jump")
+	check(worst > p.tuning.jump_height * 0.85 and worst < p.tuning.jump_height * 1.2, "flipped jump goes DOWN about a jump height (%.0f, normal %.0f)" % [worst, up_normal])
+	var x0 := p.global_position.x
+	await seconds(1.0)
+	press(0, "move_right")
+	await seconds(0.6)
+	release(0, "move_right")
+	check(p.global_position.x - x0 > 150.0, "walking right works upside-down (%.0f)" % (p.global_position.x - x0))
+
+
+func test_flip_ground_pound_and_stomp_work_upside_down() -> void:
+	_flip_ceiling(-500.0)
+	gm().set_gravity_dir(-1, true)
+	var grunt: Node2D = load("res://enemies/grunt.tscn").instantiate()
+	grunt.position = Vector2(0, -500)
+	_arena.add_child(grunt)
+	var p := add_player(0, Vector2(0, -250))
+	await seconds(0.3)
+	check(grunt.gdir == -1 and grunt.scale.y < 0.0, "ground enemies turn over too")
+	await seconds(0.5)
+	check(grunt.is_on_floor(), "the grunt walks on the ceiling")
+	# Drop onto it: "above" is world-down now.
+	p.global_position = Vector2(grunt.global_position.x, -330)
+	p.velocity = Vector2(0, 300)   # logical: towards the (new) floor
+	await seconds(0.6)
+	check(not is_instance_valid(grunt) or grunt.collision_layer == 0, "stomping a flipped grunt from 'above' defeats it")
+	check(not p.is_bubbled(), "and doesn't hurt you")
+
+
+func test_gravity_lever_flips_when_punched_and_has_a_cooldown() -> void:
+	var lever := GravityLever.new()
+	lever.position = Vector2(60, 0)
+	_arena.add_child(lever)
+	_flip_ceiling(-300.0)
+	var ceiling_lever := GravityLever.new()   # the same switch, hung from the ceiling
+	ceiling_lever.ceiling = true
+	ceiling_lever.position = Vector2(60, -300)
+	_arena.add_child(ceiling_lever)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	p.facing = 1
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await seconds(0.5)
+	check(gm().gravity_dir == -1, "punching the lever flips gravity")
+	await seconds(1.2)
+	check(p.is_on_floor() and p.gdir == -1, "you ride up to the ceiling")
+	p.global_position.x = 0.0
+	p.facing = 1
+	await frames(3)
+	press(0, "attack")
+	await frames(2)
+	release(0, "attack")
+	await seconds(0.4)
+	check(gm().gravity_dir == 1, "punching it again flips back")
+	await seconds(0.8)
+	check(gm().flip_gravity() and not gm().flip_gravity(), "a second flip inside the cooldown is ignored")
+	gm().set_gravity_dir(1, true)
+
+
+func test_flip_pad_toggles_once_per_step_and_rearms() -> void:
+	_flip_ceiling(-400.0)
+	var pad := FlipPad.new()
+	pad.position = Vector2(0, 0)
+	_arena.add_child(pad)
+	var p := add_player(0, Vector2(0, -120))
+	await seconds(0.4)
+	check(gm().gravity_dir == -1, "stepping on the pad flips gravity")
+	await seconds(1.2)
+	check(gm().gravity_dir == -1 and p.gdir == -1 and p.is_on_floor(), "one step = one flip; you ride up to the ceiling")
+	# Walk back down the pad's column: a second step flips it back (ceiling pad).
+	var cp := FlipPad.new()
+	cp.ceiling = true
+	cp.position = Vector2(300, -400)
+	_arena.add_child(cp)
+	p.global_position = Vector2(300, -400)
+	await seconds(0.6)
+	check(gm().gravity_dir == 1, "the ceiling pad flips it back")
+
+
+func test_gravity_gate_sets_direction_not_toggles() -> void:
+	_flip_ceiling(-400.0)
+	var up := GravityGate.new()
+	up.pull = GravityGate.Pull.UP
+	up.position = Vector2(100, 0)
+	_arena.add_child(up)
+	var down := GravityGate.new()
+	down.pull = GravityGate.Pull.DOWN
+	down.height = 440.0
+	down.position = Vector2(400, -2)
+	_arena.add_child(down)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	press(0, "move_right")
+	await seconds(0.6)
+	release(0, "move_right")
+	check(gm().gravity_dir == -1, "walking through an UP gate pulls everything up")
+	await seconds(0.8)
+	check(gm().gravity_dir == -1, "standing in / passing it again does not toggle it back")
+	p.global_position = Vector2(380, -330)
+	await seconds(0.3)
+	check(gm().gravity_dir == 1, "a DOWN gate sets gravity back down")
+
+
+func test_flip_bumper_bounces_and_flips() -> void:
+	_flip_ceiling(-600.0)
+	var b := FlipBumper.new()
+	b.position = Vector2(0, -80)
+	_arena.add_child(b)
+	var p := add_player(0, Vector2(0, -230))
+	await seconds(0.8)
+	check(gm().gravity_dir == -1, "bouncing off the flip bumper flips gravity")
+	check(p.global_position.y < -80.0 + 400.0, "and it still knocks you away")
+
+
+func test_bounce_pad_launches_the_right_way_in_flipped_gravity() -> void:
+	_flip_ceiling(-500.0)
+	gm().set_gravity_dir(-1, true)
+	var pad := BouncePad.new()
+	pad.position = Vector2(0, -500)
+	pad.rotation = PI   # a pad on the ceiling, pointing at the floor-that-is-the-ceiling's "up"
+	_arena.add_child(pad)
+	var p := add_player(0, Vector2(0, -470))
+	await frames(2)
+	var low := p.global_position.y
+	var far := low
+	for i in 90:
+		await get_tree().physics_frame
+		far = maxf(far, p.global_position.y)
+	check(far - low > 150.0, "the pad launches a flipped dreamer away from their floor (down the screen, %.0f px)" % (far - low))
+
+
+func test_flip_ledge_grab_hang_and_climb() -> void:
+	_flip_ceiling(-800.0)
+	gm().set_gravity_dir(-1, true)
+	_add_block(Vector2(100, -800), Vector2(300, 300))   # hangs lower than the ceiling: underside at y = -500
+	var p := add_player(0, Vector2(100 - 19, -560))
+	await frames(1)
+	p.velocity = Vector2.ZERO
+	await seconds(0.3)
+	check(_state(p) == &"LedgeHang", "should catch the ledge upside-down (got %s)" % _state(p))
+	press(0, "move_right")
+	await seconds(0.6)
+	release(0, "move_right")
+	check(p.global_position.x > 110.0 and absf(p.global_position.y + 500.0) < 3.0,
+			"holding toward the ledge climbs onto it (at %s)" % p.global_position)
+
+
+func test_flip_wall_slide_and_wall_jump() -> void:
+	gm().set_gravity_dir(-1, true)
+	_flip_ceiling(-1100.0)
+	var p := add_player(0, Vector2(560, -700))
+	press(0, "move_right")
+	var slid := false
+	for i in 120:
+		await get_tree().physics_frame
+		if _state(p) == &"WallSlide":
+			slid = true
+			break
+	check(slid, "should grab the wall upside-down (got %s)" % _state(p))
+	check(p.world_velocity().y <= 0.0, "wall-sliding 'down' is world-up when flipped (vy %.0f)" % p.world_velocity().y)
+	press(0, "jump")
+	await frames(3)
+	release(0, "jump")
+	release(0, "move_right")
+	check(p.velocity.x < -100.0 and p.velocity.y < -400.0, "a wall jump kicks away from the wall and 'up' (v %s)" % p.velocity)
+	check(p.world_velocity().y > 0.0, "which is world-down when flipped (world vy %.0f)" % p.world_velocity().y)
+
+
+func test_net_flip_sets_exact_direction_even_inside_the_cooldown() -> void:
+	var lever := GravityLever.new()
+	_arena.add_child(lever)
+	gm().flip_gravity()
+	lever.net_flip(1)
+	check(gm().gravity_dir == 1, "a friend's flip applies exactly, ignoring our local cooldown")
+	lever.net_flip(-1)
+	check(gm().gravity_dir == -1, "and again")
+	gm().set_gravity_dir(1, true)
+
+
+func test_save_migration_moves_secret_world_records_from_w6_to_w7() -> void:
+	var old := SaveData.records
+	SaveData.records = {"w6_1": {"time": 12.0, "lums": 3, "gems": [true, false, false], "done": true}, "w1_1": {"done": true}}
+	SaveData._migrate()
+	check(SaveData.records.has("w7_1") and not SaveData.records.has("w6_1"), "w6_* records become w7_*")
+	check(SaveData.records.has("w1_1"), "other records are untouched")
+	check(int(SaveData.records.get("_v", 0)) == 2, "and it only runs once")
+	SaveData.records = old
+	SaveData._write()
+
+
+# --- World 6: carnival enemies and the boss -------------------------------------------
+
+const CARNIVAL_ENEMIES := ["jackbonk", "unicyclops", "popcorn_pufflet", "balloonatic", "marionette", "madame_topsy"]
+
+
+func test_carnival_enemies_run_in_both_gravity_directions() -> void:
+	_flip_ceiling(-700.0)
+	for kind: String in CARNIVAL_ENEMIES:
+		var e: Enemy = load("res://enemies/%s.tscn" % kind).instantiate()
+		e.position = Vector2(-300 + CARNIVAL_ENEMIES.find(kind) * 120, -120 if kind == "marionette" else 0)
+		_arena.add_child(e)
+	var p := add_player(0, Vector2(0, -2))
+	await seconds(1.5)
+	gm().set_gravity_dir(-1, true)
+	await seconds(1.5)
+	gm().set_gravity_dir(1, true)
+	await seconds(1.0)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		check(is_instance_valid(e) and not e.dead, "%s survives the flips" % e.name)
+	check(is_instance_valid(p), "and so do we")
+
+
+func test_jackbonk_springs_when_a_dreamer_is_near() -> void:
+	var j: Enemy = load("res://enemies/jackbonk.tscn").instantiate()
+	j.position = Vector2(0, 0)
+	_arena.add_child(j)
+	var p := add_player(0, Vector2(500, -2))
+	await settle(p)
+	var high := 0.0
+	for i in 480:
+		await get_tree().physics_frame
+		high = maxf(high, -j.global_position.y)
+	check(high > 200.0, "the jack-in-the-bonk springs up (%.0f px)" % high)
+
+
+func test_balloonatic_floats_away_from_the_floor_and_follows_a_flip() -> void:
+	_flip_ceiling(-900.0)
+	var b: Enemy = load("res://enemies/balloonatic.tscn").instantiate()
+	b.position = Vector2(0, -400)
+	b.rise = 160.0
+	_arena.add_child(b)
+	await seconds(2.0)
+	check(b.global_position.y < -400.0 - 100.0, "normal gravity: it floats UP (y %.0f)" % b.global_position.y)
+	gm().set_gravity_dir(-1, true)
+	await seconds(3.0)
+	check(b.global_position.y > -400.0 + 100.0, "flipped: it floats DOWN to the new 'up' (y %.0f)" % b.global_position.y)
+
+
+func test_marionette_swings_like_a_pendulum() -> void:
+	var m: Enemy = load("res://enemies/marionette.tscn").instantiate()
+	m.position = Vector2(0, -500)
+	_arena.add_child(m)
+	var far := 0.0
+	for i in 240:
+		await get_tree().physics_frame
+		far = maxf(far, absf(m.global_position.x))
+	check(far > 100.0, "the puppet swings out to the side (%.0f px)" % far)
+	check(m.global_position.y > -500.0, "and hangs below its pivot")
+
+
+func test_popcorn_pufflet_pops_a_fan_of_kernels() -> void:
+	var pp: Enemy = load("res://enemies/popcorn_pufflet.tscn").instantiate()
+	pp.position = Vector2(0, 0)
+	_arena.add_child(pp)
+	add_player(0, Vector2(400, -2))
+	var seen := 0
+	for i in 400:
+		await get_tree().physics_frame
+		seen = maxi(seen, _arena.get_children().filter(func(n: Node) -> bool: return n is Projectile).size())
+	check(seen >= 3, "it lobs several kernels at once (%d)" % seen)
+
+
+func test_madame_topsy_whacks_the_lever_flipping_gravity_and_gets_dizzy() -> void:
+	_flip_ceiling(-800.0)
+	var lever := GravityLever.new()
+	lever.position = Vector2(300, 0)
+	_arena.add_child(lever)
+	var boss: MadameTopsy = load("res://enemies/madame_topsy.tscn").instantiate()
+	boss.position = Vector2(0, 0)
+	_arena.add_child(boss)
+	boss.levers = [boss.get_path_to(lever)]
+	add_player(0, Vector2(-500, -2))
+	await frames(5)
+	boss.set_active(true)
+	boss._since_flip = 3
+	boss._timer = 0.0
+	var dizzy := false
+	for i in 900:
+		await get_tree().physics_frame
+		if boss.st == MadameTopsy.St.DIZZY:
+			dizzy = true
+			break
+	check(gm().gravity_dir == -1, "Madame whacks the lever: gravity flips")
+	check(dizzy, "and the lurch leaves her dizzy")
+	check(boss.gdir == -1, "she's flipped with everyone else")
+
+
+# --- World 6 levels: flip-aware bot helpers -----------------------------------------------
+
+## Wait until the player stands on a surface again (after a gravity flip).
+func _land(p: Player, max_s := 3.0) -> void:
+	for i in int(max_s * 120):
+		await get_tree().physics_frame
+		if p.is_on_floor() and absf(p.velocity.y) < 1.0:
+			return
+
+
+## Walk to x (either direction), hopping obstacles and gaps like _auto_run, but flip-aware.
+## Stops when within 14 px of x on a surface. Returns whether it got there.
+func _walk_to(p: Player, x: float, max_s := 14.0) -> bool:
+	var space := p.get_world_2d().direct_space_state
+	var held := 0
+	var stuck := 0
+	var dir_name := ""
+	for i in int(max_s * 120.0):
+		await get_tree().physics_frame
+		var dx := x - p.global_position.x
+		if (absf(dx) < 14.0 and p.is_on_floor()) or gm().level_complete:
+			break
+		var want := "move_right" if dx > 0.0 else "move_left"
+		if want != dir_name:
+			if dir_name != "":
+				release(0, dir_name)
+			press(0, want)
+			dir_name = want
+		if held > 0:
+			held -= 1
+			if held == 0:
+				release(0, "jump")
+		elif p.is_on_floor():
+			stuck = stuck + 1 if absf(p.velocity.x) < 40.0 else 0
+			var s := signf(dx)
+			var ahead := p.global_position + Vector2(60.0 * s, -10.0 * p.gdir)
+			var q := PhysicsRayQueryParameters2D.create(ahead, ahead + Vector2(0, 90.0 * p.gdir), 1)
+			var edge := space.intersect_ray(q).is_empty()
+			if stuck > 10 or edge:
+				press(0, "jump")
+				held = 60
+				stuck = 0
+	if dir_name != "":
+		release(0, dir_name)
+	release(0, "jump")
+	return absf(p.global_position.x - x) < 30.0 and not p.is_bubbled()
+
+
+## Face `dx` direction and throw a punch (to hit a lever just ahead).
+func _throw_punch(p: Player, dir := 1) -> void:
+	p.facing = dir
+	press(0, "attack")
+	await frames(3)
+	release(0, "attack")
+	await frames(10)
+
+
+## Punch the lever at world x from a stand 50 px short of it, then wait to land. Returns the new gravity.
+func _pull(p: Player, lever_x: float, run := false) -> int:
+	var dir := 1 if lever_x > p.global_position.x else -1
+	await _walk_to(p, lever_x - 50.0 * dir)
+	await _throw_punch(p, dir)
+	if run:   # like a real dreamer: keep running while the world flips
+		press(0, "move_right" if dir > 0 else "move_left")
+	await _land(p)
+	release(0, "move_right")
+	release(0, "move_left")
+	return gm().gravity_dir
+
+
+const W6_1 := "res://levels/w6_1_ticket_booth_promenade.tscn"
+
+
+func test_w6_1_bot_plays_the_whole_level_flipping_gravity() -> void:
+	var p: Player = await _load_demo(W6_1)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var path: Array[String] = []
+	# S0: the lever, then the ceiling lever to come back.
+	check(await _pull(p, 760.0) == -1, "S0: the floor lever flips gravity up")
+	check(await _pull(p, 1280.0) == 1, "S0: the ceiling lever flips it back")
+	# S1: cross the pit on the ceiling.
+	check(await _pull(p, 1440.0) == -1, "S1: lever to the ceiling")
+	check(await _pull(p, 2250.0) == 1 and p.global_position.x > 2150.0, "S1: over the pit and back down on the far side (x %.0f)" % p.global_position.x)
+	# S2: spikes on the floor, then on the ceiling.
+	check(await _pull(p, 2500.0) == -1, "S2: up to avoid the floor spikes")
+	check(await _pull(p, 3040.0) == 1, "S2: back down before the ceiling spikes")
+	check(not p.is_bubbled(), "S2: not hurt (%s)" % p.global_position)
+	# S3: the arches.
+	await _walk_to(p, 3860.0)
+	await _walk_to(p, 4000.0)
+	await _land(p)
+	check(gm().gravity_dir == -1, "S3: the UP arch pulls gravity up")
+	await _walk_to(p, 4480.0)
+	await _land(p)
+	check(gm().gravity_dir == 1, "S3: the DOWN arch sets it back")
+	# S4: the pad finale.
+	await _walk_to(p, 4900.0)
+	await _land(p)
+	check(gm().gravity_dir == -1, "S4: stepping on the pad flips gravity")
+	await _walk_to(p, 5640.0)
+	await _land(p)
+	check(gm().gravity_dir == 1, "S4: the ceiling pad flips it back")
+	await _walk_to(p, 5990.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Ticket Booth Promenade (at %s)" % p.global_position)
+	check(gm().gems == [true, true, true], "the route passes all three Dream Gems (%s)" % [gm().gems])
+	await _finish_demo()
+
+
+const W6_2 := "res://levels/w6_2_carousel_crossing.tscn"
+
+
+func test_w6_2_bot_runs_the_carousel_rhythm() -> void:
+	var p: Player = await _load_demo(W6_2)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	# Hand-overs: floor -> ceiling -> floor ... each one a pressure plate you simply run over.
+	var stops := [[1700.0, -1], [2150.0, -1], [2800.0, 1], [3500.0, -1], [4000.0, -1], [4700.0, 1], [5300.0, -1], [5620.0, -1], [6200.0, 1]]
+	for s: Array in stops:
+		var ok := await _walk_to(p, float(s[0]), 16.0)
+		await _land(p)
+		check(ok and gm().gravity_dir == int(s[1]), "reached x=%d with gravity %d (at %s, gdir %d)" % [int(s[0]), int(s[1]), p.global_position.round(), gm().gravity_dir])
+		if not ok:
+			break
+	await _walk_to(p, 6330.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Carousel Crossing (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W6_3 := "res://levels/w6_3_hall_of_mirrors.tscn"
+
+
+func test_w6_3_bot_threads_the_pillars_and_the_timed_gate() -> void:
+	var p: Player = await _load_demo(W6_3)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	for step: Array in [[690.0, -1], [1510.0, 1], [2380.0, -1], [3140.0, 1]]:
+		check(await _pull(p, float(step[0]), step[0] == 2380.0) == int(step[1]), "lever at %d sets gravity %d (x %.0f)" % [int(step[0]), int(step[1]), p.global_position.x])
+	# The timed gate: punch the switch, then run.
+	await _walk_to(p, 3350.0)
+	await _throw_punch(p, 1)
+	var through := await _walk_to(p, 4120.0, 8.0)
+	check(through and p.global_position.x > 4100.0, "the gate opens long enough to run through (x %.0f)" % p.global_position.x)
+	for step: Array in [[4620.0, -1], [5460.0, 1], [6320.0, -1], [6900.0, 1]]:
+		check(await _pull(p, float(step[0])) == int(step[1]), "lever at %d sets gravity %d (x %.0f)" % [int(step[0]), int(step[1]), p.global_position.x])
+	await _walk_to(p, 7150.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Hall of Mirrors (at %s)" % p.global_position)
+	check(gm().gems == [true, true, true], "the route passes all three Dream Gems (%s)" % [gm().gems])
+	await _finish_demo()
+
+
+func test_w6_3_the_gate_closes_again_if_you_dawdle() -> void:
+	var p: Player = await _load_demo(W6_3)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(3350, -2))
+	await _throw_punch(p, 1)
+	await seconds(8.0)
+	await _walk_to(p, 3900.0, 6.0)
+	check(p.global_position.x < 3950.0, "late = the gate has shut (x %.0f)" % p.global_position.x)
+	await _finish_demo()
+
+
+func test_flip_conveyor_ceiling_belt_carries_a_flipped_dreamer() -> void:
+	var b: Node2D = load("res://world/block.tscn").instantiate()
+	b.position = Vector2(-2000, -500)
+	b.size = Vector2(4000, 200)
+	b.scale = Vector2(1, -1)       # mirrored: its lip/underside faces the corridor
+	b.conveyor_speed = 200.0
+	_arena.add_child(b)
+	gm().set_gravity_dir(-1, true)
+	var p := add_player(0, Vector2(0, -300))
+	await seconds(1.2)
+	var x0 := p.global_position.x
+	await seconds(1.0)
+	check(p.is_on_floor(), "standing on the ceiling belt")
+	check(p.global_position.x - x0 > 100.0, "the belt carries you right, same as a floor belt (%.0f px)" % (p.global_position.x - x0))
+
+
+const W6_4 := "res://levels/w6_4_rollercoaster_ruckus.tscn"
+
+
+func test_w6_4_bot_rides_the_coaster() -> void:
+	var p: Player = await _load_demo(W6_4)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	await _walk_to(p, 2700.0, 25.0)
+	check(p.global_position.x > 2600.0 and gm().gravity_dir == 1, "over the saw run on the belt (x %.0f)" % p.global_position.x)
+	await _walk_to(p, 2960.0)
+	await _land(p)
+	check(gm().gravity_dir == -1, "the UP arch lifts you over the floor spikes")
+	await _walk_to(p, 3700.0)
+	await _walk_to(p, 3900.0)
+	await _land(p)
+	check(gm().gravity_dir == 1, "the DOWN arch sets you back on the floor (x %.0f)" % p.global_position.x)
+	await _walk_to(p, 4900.0, 30.0)
+	check(await _pull(p, 5000.0) == -1, "lever: up for the zap tunnel's ceiling stretch")
+	check(await _pull(p, 5560.0) == 1, "ceiling lever: back down")
+	await _walk_to(p, 5900.0)
+	await _walk_to(p, 6000.0)
+	await _land(p)
+	check(gm().gravity_dir == -1, "the finale's first pad lifts you over the spikes")
+	await _walk_to(p, 6640.0)
+	await _land(p)
+	check(gm().gravity_dir == 1, "the ceiling pad drops you for the goal")
+	await _walk_to(p, 6980.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Rollercoaster Ruckus (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W6_5 := "res://levels/w6_5_ferris_wheel_heights.tscn"
+
+
+func test_w6_5_bot_rides_the_lift_falls_up_and_drops_to_the_deck() -> void:
+	var p: Player = await _load_demo(W6_5)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	await _walk_to(p, 1250.0)
+	await _walk_to(p, 1500.0, 6.0)   # hops across the gap onto the lift, which waits for a rider
+	check(p.is_on_floor() and p.global_position.y > -120.0, "standing on the lift at the bottom (%s)" % p.global_position)
+	for i in 2400:
+		await get_tree().physics_frame
+		if p.global_position.y < -1090.0 and p.is_on_floor():
+			break
+	check(p.global_position.y < -1050.0, "the lift carries you to the top deck (%s)" % p.global_position)
+	await _walk_to(p, 1990.0)
+	check(await _pull(p, 2080.0) == -1 and p.global_position.y < -1400.0, "the lever drops you UP to the sky walk (%s)" % p.global_position)
+	await _walk_to(p, 4100.0, 30.0)
+	await _land(p, 8.0)
+	check(gm().gravity_dir == 1 and absf(p.global_position.y + 400.0) < 8.0, "the arch drops you onto the landing deck (%s)" % p.global_position)
+	check(gm().gems[1], "the sky walk's gem is on the way")
+	await _walk_to(p, 4900.0, 12.0)
+	check(p.global_position.x > 4800.0 and p.global_position.y > -10.0, "down to the far platform (%s)" % p.global_position)
+	check(await _pull(p, 5330.0) == -1, "the funhouse pillars: lever up")
+	check(await _pull(p, 6130.0) == 1, "and the ceiling lever back down")
+	check(gm().gems[2], "the last ceiling stretch's gem")
+	await _walk_to(p, 7250.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Ferris Wheel Heights (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W6_6 := "res://levels/w6_6_the_big_top.tscn"
+
+
+func test_w6_6_madame_topsy_can_be_beaten_and_the_exit_opens() -> void:
+	var p: Player = await _load_demo(W6_6)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(1600, -2))
+	await seconds(1.0)
+	var boss: MadameTopsy = _demo.find_children("*", "MadameTopsy", true, false)[0]
+	check(not boss.asleep, "walking into the ring wakes her")
+	boss._since_flip = 3
+	var flipped := false
+	var hits := 0
+	for i in 14000:
+		await get_tree().physics_frame
+		if not is_instance_valid(boss) or boss.dead:
+			break
+		flipped = flipped or gm().gravity_dir == -1
+		if boss.st == MadameTopsy.St.DIZZY and boss.stun_timer > 0.4:
+			var dir := 1 if boss.global_position.x > p.global_position.x else -1
+			await _walk_to(p, boss.global_position.x - 66.0 * dir, 4.0)
+			await _throw_punch(p, dir)
+			hits += 1
+	check(flipped, "she flipped gravity with her lever")
+	check(not is_instance_valid(boss) or boss.dead, "the ringmaster can be beaten (%d punches, hp %d)" % [hits, boss.health if is_instance_valid(boss) else 0])
+	await seconds(2.5)
+	if gm().gravity_dir == -1:
+		gm().set_gravity_dir(1, true)
+		await _land(p)
+	await _walk_to(p, 5150.0, 30.0)
+	await frames(30)
+	check(gm().level_complete, "past the opened gate to the goal (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_respawning_at_a_checkpoint_restores_normal_gravity() -> void:
+	var p: Player = await _load_demo(W6_1)
+	await _place(p, Vector2(0, -2))
+	gm().checkpoint = Vector2(0, -2)
+	gm().set_gravity_dir(-1, true)
+	await seconds(1.5)
+	check(p.gdir == -1 and p.global_position.y < -400.0, "flipped up on the ceiling")
+	gm().respawn_all_at_checkpoint()
+	await seconds(1.0)
+	check(gm().gravity_dir == 1 and p.gdir == 1, "respawning resets gravity")
+	check(p.is_on_floor() and p.global_position.y > -10.0, "and puts you back on the floor (%s)" % p.global_position)
 	await _finish_demo()

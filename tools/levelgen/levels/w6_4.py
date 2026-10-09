@@ -1,94 +1,109 @@
-"""World 6-4 (secret): THE NIGHTMARE CORE - the heart of the bad dream, and the remix finale.
-A short gauntlet that borrows from every world (spike balls, flame jets,
-crumbling stars, zaps), then two old foes back to back in the Core: first
-CUCKOOLOSSUS (stomp the cuckoo when it sticks in the floor), then INKABELLA
-(stomp or punch her tentacle when it sticks). Beat both and the dream is over.
-Secrets: gem 0 above the spike-ball run, gem 1 between the two arenas, gem 2 in
-a dream-chest past the Core; the Snoozling sits in the gauntlet.
+"""World 6-4: ROLLERCOASTER RUCKUS - the fast one. Conveyor 'rails' carry you along the floor AND the
+ceiling; saws sweep the corridor, zap arcs crackle on one surface at a time, and gravity gates lift you
+over the spikes and set you down again. Keep your timing and keep moving.
+Secrets: gem 0 high over the saw run, gem 1 between the loop's gates, gem 2 in the zap tunnel's ceiling
+stretch; the Snoozling rides the ceiling rail before the finale.
 Regenerate: python3 tools/levelgen/levels/w6_4.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 from tscn import C, V
+from carnival import H, corridor, ceil_lums, floor_lums
 
-PINK, VIOLET, GOLD = C(1.0, 0.35, 0.55), C(0.65, 0.5, 1.0), C(1.0, 0.85, 0.45)
-L = LevelKit("NightmareCore", "The Nightmare Core", theme="nebula_boss", horizon=0, scenery="nebula")
-L.ambience("embers", 0.8, tint=C(1.0, 0.5, 0.7, 0.6))
-L.ambience("stars", 0.6)
+L = LevelKit("RollercoasterRuckus", "Rollercoaster Ruckus", theme="carnival", horizon=0, scenery="carnival")
+L.ambience("confetti", 0.8)
+L.ambience("embers", 0.5)
 
-L.wall(-360, -1600, 600)
-L.land([(-300, 0), (1800, 0)], bottom=1500)
-L.land([(2600, 0), (9600, 0)], bottom=1500)
+R = 7200
+L.wall(-360, -H - 900, 900)
+L.wall(R, -H - 900, 900)
 
-# ---- S0 the brink (x -300..1000) ------------------------------------------------------------------
-L.sign(90, 0, "THE NIGHTMARE CORE. Old foes\nwait at the heart of the dream...", 420)
-L.lums(300, -110, 900, -110, 5, 40)
 
-# ---- S1 the gauntlet (1000..2700) ----------------------------------------------------------------
-L.checkpoint(950, 0)
-L.spikeball(1350, -200, count=2, radius=150, speed=110)
-L.gem(1350, -420)                                  # gem 0 above the spike balls
-L.flame(1650, 0, length=200, on=1.0, off=1.4)
-L.snoozling(1750, 0, fur=C(1.0, 0.55, 0.7))
-L.pit_kill(1800, 2600, 700)
-for x in [1950, 2250]:
-    L.crumble(x, 0, 144, respawn=2.0)
-L.zap(2560, -10, 2560, -240, on=0.8, off=1.4)
-L.lums(1100, -110, 1250, -110, 2)
-L.lums(1980, -90, 2370, -90, 4, 30)
+def floor_belt(x0, x1, speed):
+    """A floor belt (several blocks so the belt animation tiles cleanly)."""
+    x = x0
+    while x < x1:
+        w = min(400, x1 - x)
+        L.block(x, 0, w, 600, conveyor=speed)
+        x += w
 
-# ---- S2 the Core, part one: CUCKOOLOSSUS (2700..4500) ------------------------------------------------
-L.checkpoint(2850, 0)
-L.sign(3050, 0, "Round one: CUCKOOLOSSUS!\nStomp the cuckoo when it sticks.", 300)
-entry1 = L.gate(3250, -360, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
-exit1 = L.gate(4500, -360, 48, 360)
-L.arena(3874, 0, [exit1], enemies=[("cuckoolossus", 3874, 0, {"asleep": True})])
-boss1 = L.arena_children[0]
-L.zone(3320, -500, 1110, 500, [entry1], everyone=True, send_on=False)
-L.zone(3320, -500, 1110, 500, [boss1], everyone=True)
-L.block(3250, -1000, 48, 640)
-L.block(4500, -1000, 48, 640)
-L.backwall(3298, -1000, 1202, 1000, shade=0.45)
-L.ledge(3360, -300, 160)
-L.ledge(4280, -300, 160)
 
-# ---- between the rounds (4550..5400) -----------------------------------------------------------------
-L.checkpoint(4700, 0)
-L.gem(5000, -60)                                   # gem 1: a breather between the rounds
-L.lums(4650, -110, 5300, -110, 6, 30)
-L.sign(5200, 0, "Round two: INKABELLA!\nHit her tentacle when it sticks.", 300)
+def ceiling_belt(x0, x1, speed):
+    x = x0
+    while x < x1:
+        w = min(400, x1 - x)
+        L.ceiling_block(x, -H, w, 600, conveyor=speed)
+        x += w
 
-# ---- S3 the Core, part two: INKABELLA (5400..6700) -----------------------------------------------------
-entry2 = L.gate(5400, -360, 48, 360, start_open=True, stay_open=False, open_offset=(0, -360))
-exit2 = L.gate(6700, -360, 48, 360)
-L.arena(6074, 0, [exit2], enemies=[("inkabella", 6074, 0, {"asleep": True})])
-boss2 = L.arena_children[0]
-L.zone(5470, -500, 1200, 500, [entry2], everyone=True, send_on=False)
-L.zone(5470, -500, 1200, 500, [boss2], everyone=True)
-L.block(5400, -1000, 48, 640)
-L.block(6700, -1000, 48, 640)
-L.backwall(5448, -1000, 1252, 1000, shade=0.45)
-L.ledge(5520, -300, 160)
-L.ledge(6510, -300, 160)
-for x, c in [(3500, GOLD), (4200, GOLD), (5650, VIOLET), (6500, VIOLET)]:
-    L.glow(x, -500, c, radius=320, energy=0.7)
 
-# ---- the dream's end (6750..9600) -------------------------------------------------------------------------
-# Gem 2: a dream-chest - punch its cracked side. The path climbs over it.
-L.breakable(7000, -140, 40, 140, lums=3)
-L.block(7000, -160, 300, 20)
-L.block(7280, -160, 20, 160)
-L.gem(7140, -60)
-L.secret(7040, -140, 240, 140)
-L.goal(7900, 0)
-L.lums(7350, -110, 7820, -110, 5, 30)
-for x in range(8100, 9500, 250):
-    L.lums(x, -200, x, -400, 3)
-L.sign(8300, 0, "You woke up from the Nightmare.\nSweet dreams, Dreamers!", 360)
-L.wall(9600, -1200, 0)
+# ---- S0 the platform (-300..900) ---------------------------------------------------------------------------------------
+L.land([(-300, 0), (900, 0)], bottom=900)
+L.ceiling_land([(-300, -H), (900, -H)], top=-H - 900)
+L.checkpoint(0, 0)
+L.sign(240, 0, "ALL ABOARD! Rails carry you along.\nSaws, sparks and spikes ahead -\nand arches that set gravity.", 480)
+L.flip_lever(620, 0)
+L.flip_lever(780, -H, ceiling=True)
 
-L.dress(-250, 950, "dream", spacing=170, seed=241)
-L.dress(4570, 5350, "dream", spacing=170, seed=242, skip=[(4950, 5050), (5150, 5250)])
-L.dress(6770, 9550, "dream", spacing=170, seed=243, skip=[(6950, 7350), (7850, 7950), (8250, 8350)])
-L.finish(spawn=(0, -2), left=-360, right=9660, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_4_nightmare_core.tscn"))
+# ---- S1 the saw run (900..2500): floor belt, saws sweeping floor-to-ceiling ----------------------------------------------------------
+floor_belt(900, 2500, 220)
+ceiling_belt(900, 2500, 220)
+L.checkpoint(940, 0)
+for i, (x, spd) in enumerate([(1300, 240), (1680, 300), (2050, 270)]):
+    L.saw(x, -50, waypoints=((0, -440),), speed=spd, radius=34.0)
+L.gem(1500, -H + 40)                         # gem 0: hanging over the saws (flip up to get it)
+L.flip_lever(1120, 0)
+L.flip_lever(2300, -H, ceiling=True)
+ceil_lums(L, 1180, 1600, 7)
+floor_lums(L, 1400, 1520, 3)
+
+# ---- S2 the loop (2500..4000): spikes on the floor belt; gates lift you over and set you down -----------------------------------
+L.land([(2500, 0), (4100, 0)], bottom=900)
+L.ceiling_land([(2500, -H), (4100, -H)], top=-H - 900)
+L.checkpoint(2560, 0)
+L.flip_gate(2800, 0, "up", height=H + 20)
+L.spikes(2920, 0, 420)
+L.spikes(3500, 0, 220)
+L.flip_gate(3820, 0, "down", height=H + 20)
+L.gem(3200, -H + 40)                         # gem 1, between the gates
+ceil_lums(L, 2900, 3700, 9)
+L.enemy("balloonatic", 3350, -300, rise=110.0)
+L.enemy("jackbonk", 3950, 0)
+
+# ---- S3 the zap tunnel (4100..5600): belts run AGAINST you; sparks on the floor, then on the ceiling ----------------------------------------------
+floor_belt(4100, 5700, -140)
+ceiling_belt(4100, 5700, -140)
+L.checkpoint(4180, 0)
+for x in (4450, 4650, 4850):
+    L.zap(x, -12, x, -250, on=0.9, off=1.3, phase=(x - 4450) / 600.0)
+L.flip_lever(5000, 0)
+for x in (5250, 5400):
+    L.zap(x, -H + 12, x, -H + 250, on=0.9, off=1.3, phase=(x - 5250) / 600.0)
+L.flip_lever(5560, -H, ceiling=True)
+L.gem(5320, -H + 40)                         # gem 2, in the ceiling stretch
+L.enemy("popcorn_pufflet", 4300, 0)
+
+# ---- S4 the finale (5700..R): two pads and a long ride ---------------------------------------------------------------------------------------------
+L.land([(5700, 0), (R, 0)], bottom=900)
+L.ceiling_land([(5700, -H), (R, -H)], top=-H - 900)
+L.checkpoint(5760, 0)
+L.snoozling(6100, -H, fur=C(0.7, 0.95, 0.7), ceiling=True)
+L.flip_pad(5950, 0)
+L.spikes(6120, 0, 380)
+L.flip_pad(6560, -H, ceiling=True)
+L.enemy("unicyclops", 6800, 0)
+L.goal(6980, 0)
+ceil_lums(L, 6050, 6500, 7)
+floor_lums(L, 6640, 6900, 4)
+
+# ---- dressing -----------------------------------------------------------------------------------------------------------------------------------------------
+L.dress(-250, 880, "carnival", spacing=190, seed=641, skip=[(560, 700)])
+L.dress(2520, 4080, "carnival", spacing=230, seed=642, skip=[(2760, 2860), (3780, 3880)])
+L.dress(5720, R - 100, "carnival", spacing=220, seed=643, skip=[(5900, 6000), (6900, 7080)])
+L.dress(-250, 880, "carnival", spacing=260, seed=644, ceiling=True, skip=[(740, 820)])
+L.dress(2520, 4080, "carnival", spacing=260, seed=645, ceiling=True)
+L.dress(5720, R - 100, "carnival", spacing=260, seed=646, ceiling=True, skip=[(6040, 6160), (6520, 6600)])
+for x in (500, 1800, 3000, 4700, 6300):
+    L.deco("bunting", x, -H + 190, 1.1, seed=x)
+
+L.finish(spawn=(0, -2), left=-360, right=R + 60, bottom=H + 700, kill_y=H + 800, top=-H - 700, kill_top=-H - 800)
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_4_rollercoaster_ruckus.tscn"))

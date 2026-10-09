@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 	if _age > lifetime:
 		queue_free()
 		return
-	velocity.y += 2400.0 * gravity_scale * delta
+	velocity.y += 2400.0 * gravity_scale * delta * float(GameManager.gravity_dir)
 	position += velocity * delta
 	rotation += delta * 8.0
 	for body in get_overlapping_bodies():

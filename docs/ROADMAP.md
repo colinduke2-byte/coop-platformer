@@ -108,8 +108,17 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Rewards ✅
 - [x] Lum Shop: every Lum from a finished run goes into a bank (`SaveData.lum_bank()`); 7 shop outfits in `Wardrobe.OUTFITS` with `"price"` (some with `"hat"`); stall on the World 1 map
-- [x] Nightmare Nebula (secret World 6): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-5's gems (`LevelCatalog.SECRET_SHARE`)
+- [x] Nightmare Nebula (secret World 7, was 6): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-6's gems (`LevelCatalog.SECRET_SHARE`)
 - [ ] Playtest: are shop prices right (250-2000 Lums)? Is 6-4's boss rush too hard solo?
+
+## World 6 - Midnight Carnival (gravity flips) ✅  - see docs/WORLD6_CARNIVAL.md
+- [x] Gravity foundation: `GameManager.gravity_dir`, mirrored bodies (`Player.gdir` / `Enemy.gdir`, scale.y + up_direction, logical velocity converted in `_slide()`), flip-aware camera, shadows, projectiles, shockwaves, lum blocks, pads (`launch_world`)
+- [x] Physical switches: `GravityLever` (punch), `FlipPad` (plate), `FlipBumper`, `GravityGate` (sets direction); online via `net_flip`
+- [x] Level kit: `ceiling_land`, `ceiling_block`, `flip_*`, `kill_top`, `deco(mirror=)`, `dress(ceiling=True)`, `snoozling(ceiling=True)`, `tools/levelgen/carnival.py`
+- [x] Carnival look: `Backdrop.Scenery.CARNIVAL` (big tops, turning ferris wheel, coaster, fairy lights, fireworks), themes carnival / funhouse / bigtop, confetti ambience, 7 new deco props, 4 new music tracks, world map
+- [x] 5 enemies + boss Madame Topsy-Turvy; levels 6-1..6-6 with bots (`test_w6_*`); secret Nebula moved to World 7 (save migration)
+- [ ] Playtest: is the 0.6 s switch cooldown / 0.2 s float right? Is 6-2's rhythm run too fast? Is Madame's dizzy window (2.8 s) fair?
+- [ ] Ideas: more gravity toys (a gravity-flipping barrel cannon, flip-on-timer clocks), W6 secret levels
 
 ## Visual overhaul (next) - see docs/VISUAL_OVERHAUL.md
 - [x] Phase 0 foundation (texture baker `tools/art/bake_textures.py`, quality presets `core/gfx.gd` + Settings -> Graphics, before/after harness `tools/art/compare.sh`, perf gate `tools/art/bench.sh`)

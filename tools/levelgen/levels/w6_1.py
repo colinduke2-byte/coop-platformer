@@ -1,87 +1,81 @@
-"""World 6-1 (secret): STARFALL GARDENS - the Lullaby Woods and Frostwhistle Peaks, remixed as a nightmare.
-Short and hard: crumbling stars over the void, a bramble garden with a living
-trampoline, icy comet slabs over pits with a penguin and an owl, then the gate.
-Secrets: gem 0 high on the arc between two crumbling stars, gem 1 on a shelf
-above the bramble garden (a mushroom bounce), gem 2 in a star-chest at the
-finish; the Snoozling sits on a ledge before the gate.
+"""World 6-1: TICKET BOOTH PROMENADE - the first night at the carnival.
+Teaches the gravity lever (punch it!), then the gates and pads. A walkable FLOOR (y=0) and CEILING
+(y=-540); flipping gravity makes the ceiling the floor.
+Secrets: gem 0 on the ceiling above the gates, gem 1 on a platform hanging off the ceiling, gem 2
+in the pit run; the Snoozling waits on the ceiling before the pad finale.
 Regenerate: python3 tools/levelgen/levels/w6_1.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
 from tscn import C, V
+from carnival import H, corridor, pit, ceil_lums, floor_lums
 
-PINK, VIOLET = C(1.0, 0.45, 0.7), C(0.65, 0.5, 1.0)
-L = LevelKit("StarfallGardens", "Starfall Gardens", theme="nebula", horizon=0, scenery="nebula")
-L.ambience("stars", 1.0)
+L = LevelKit("TicketBoothPromenade", "Ticket Booth Promenade", theme="carnival", horizon=0, scenery="carnival")
+L.ambience("confetti", 0.6)
+L.ambience("stars", 0.5)
 
-L.wall(-360, -1400, 600)
-L.land([(-300, 0), (900, 0)], bottom=1500)
-L.land([(2600, 0), (4200, 0)], bottom=1500)
-L.land([(4200, 0), (4700, 0)], bottom=1500, slippery=True)
-L.land([(4950, 0), (5350, 0)], bottom=1500, slippery=True)
-L.land([(5600, 0), (8000, 0)], bottom=1500)
+R = 6100
+corridor(L, -300, R, floor_gaps=[(1500, 2200)])
+L.wall(-360, -H - 900, 900)
+L.wall(R, -H - 900, 900)
 
-# ---- S0 the edge of the nebula (x -300..900) -------------------------------------------------------
-L.sign(90, 0, "NIGHTMARE NEBULA. Every dream\nat once - and none of them nice.", 420)
-L.lums(300, -110, 800, -110, 4, 40)
-L.glow(500, -200, VIOLET, radius=300, energy=0.6)
+# ---- S0 the front gate (-300..1400): meet the lever ------------------------------------------------
+L.checkpoint(0, 0)
+L.sign(260, 0, "WELCOME to the Midnight Carnival!\nPunch the LEVER and gravity flips.", 440)
+L.flip_lever(760, 0)
+ceil_lums(L, 520, 1180, 8)
+L.glow(760, -200, C(1.0, 0.8, 0.4), radius=300, energy=0.7)
+L.flip_lever(1280, -H, ceiling=True)         # up here, punch it to flip back down
+L.sign(1000, 0, "Now try it from the ceiling:\nthe lever hangs down there.", 420)
 
-# ---- S1 crumbling stars over the void (900..2600) ---------------------------------------------------
-L.checkpoint(780, 0)
-L.pit_kill(900, 2600, 700)
-for x, y in [(1100, 0), (1400, -40), (1700, -40), (2000, 0), (2300, 0)]:
-    L.crumble(x, y, 144, respawn=2.0)
-    L.lums(x + 30, y - 80, x + 114, y - 80, 2)
-L.gem(1650, -200)                                  # gem 0, on the arc of a full jump
-L.enemy("bumblebonk", 1850, -420)
+# ---- S1 the dark pit (1500..2200): cross it on the ceiling ---------------------------------------------
+L.checkpoint(1400, 0)
+pit(L, 1500, 2200)
+L.flip_lever(1440, 0)
+L.enemy("balloonatic", 1850, -270, rise=130.0)
+ceil_lums(L, 1560, 2140, 8, arc=30)
+L.flip_lever(2250, -H, ceiling=True)
+L.glow(1850, -300, C(0.5, 0.8, 1.0), radius=320, energy=0.6)
 
-# ---- S2 the bramble garden (2600..4200) ----------------------------------------------------------
-L.checkpoint(2700, 0)
-L.brambles(2950, -40, 160, 40)
-L.enemy("spikeroo", 3250, 0)
-L.brambles(3450, -40, 160, 40)
-L.pad(3780, 0, height=640)
-L.ledge(3680, -560, 200)                           # gem 1: the mushroom bounces you up here
-L.gem(3780, -620)
-L.enemy("ribbiton", 3980, 0)
-L.enemy("shieldbug", 4120, 0)
-L.lums(2700, -110, 2900, -110, 3)
-L.lums(3100, -150, 3400, -150, 3, 30)
-L.lums(3600, -150, 3950, -150, 4, 30)
+# ---- S2 the spike alley (2200..3600): spikes on the floor, then on the ceiling ----------------------------
+L.checkpoint(2300, 0)
+L.spikes(2640, 0, 320)                       # the floor is spiky here: walk the ceiling
+L.flip_lever(2500, 0)
+L.flip_lever(3040, -H, ceiling=True)
+L.spikes(3250, -H, 320, rotation=3.14159)    # ...and now the ceiling is: back on the floor
+L.enemy("grunt", 3420, 0)
+L.enemy("jackbonk", 3700, 0)
+ceil_lums(L, 2560, 2980, 6)
+floor_lums(L, 3120, 3580, 6)
 
-# ---- S3 icy comet slabs (4200..6000) --------------------------------------------------------------
-L.checkpoint(4300, 0)
-L.pit_kill(4700, 4950, 700)
-L.pit_kill(5350, 5600, 700)
-L.enemy("slidgewick", 5200, 0)
-L.enemy("snowl", 5000, -460)
-L.lums(4720, -130, 4930, -130, 3, 40)
-L.lums(5370, -130, 5580, -130, 3, 40)
-for x in [4400, 5100, 5750]:
-    L.deco("crystals", x, 0, 1.1)
+# ---- S3 the arches (3600..4700): a gate sets gravity, always the same way ----------------------------------
+L.checkpoint(3800, 0)
+L.flip_gate(3900, 0, "up", height=H + 20)
+L.flip_gate(4420, 0, "down", height=H + 20)
+L.gem(4160, -H + 70)                          # gem 0, on the ceiling between the arches
+ceil_lums(L, 3980, 4360, 6)
+L.enemy("unicyclops", 4600, 0)
+L.sign(3640, 0, "Arches SET gravity:\nUP arch, DOWN arch.", 400)
 
-# ---- S4 the starlit gate (6000..8000) ----------------------------------------------------------
-L.checkpoint(6100, 0)
-L.bell(6250, 0)
-L.enemy("grunt", 6450, 0)
-L.ledge(6650, -150, 200)
-L.snoozling(6750, -150, fur=C(0.8, 0.6, 1.0))
-L.enemy("bonkhorn", 6900, 0)
-# Gem 2: a star-chest - punch its cracked side. The path climbs over it.
-L.breakable(7100, -140, 40, 140, lums=2)
-L.block(7100, -160, 300, 20)
-L.block(7380, -160, 20, 160)
-L.gem(7240, -60)
-L.secret(7140, -140, 240, 140)
-L.goal(7650, 0)
-L.lums(6300, -110, 6600, -110, 3, 30)
-L.lums(7450, -110, 7600, -110, 2)
-for x, c in [(6300, PINK), (7240, VIOLET), (7650, PINK)]:
-    L.glow(x, -250, c, radius=300, energy=0.6)
-L.wall(8000, -1200, 0)
+# ---- S4 the pad finale (4700..6100): a pressure plate, a hanging platform, the booth ------------------------
+L.checkpoint(4720, 0)
+L.flip_pad(4900, 0)
+ceil_lums(L, 4980, 5360, 5)
+L.ceiling_block(4900, -H + 160, 600, 36)      # a platform hanging off the ceiling: reachable when flipped
+L.gem(5200, -H + 215)                         # gem 1, on its underside
+L.snoozling(5500, -H, fur=C(1.0, 0.7, 0.85), ceiling=True)   # stands on the ceiling: punch it while flipped
+L.flip_pad(5640, -H, ceiling=True)
+L.enemy("popcorn_pufflet", 5900, 0)
+L.goal(5980, 0)
+L.gem(2000, -H + 40)                          # gem 2, hanging over the middle of the pit
+floor_lums(L, 5700, 5900, 3)
 
-L.dress(-250, 850, "dream", spacing=170, seed=211)
-L.dress(2620, 4180, "dream", spacing=170, seed=212, skip=[(2900, 3150), (3400, 3650), (3750, 3850)])
-L.dress(6020, 7950, "dream", spacing=170, seed=213, skip=[(6200, 6300), (7050, 7450), (7600, 7700)])
-L.finish(spawn=(0, -2), left=-360, right=8060, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_1_starfall_gardens.tscn"))
+# ---- dressing ----------------------------------------------------------------------------------------------------
+L.dress(-250, 1450, "carnival", spacing=190, seed=611)
+L.dress(2220, 6050, "carnival", spacing=190, seed=612, skip=[(2600, 2980), (3200, 3600), (3860, 3940), (4380, 4460), (5860, 6040)])
+L.dress(-250, R - 100, "carnival", spacing=240, seed=613, ceiling=True)
+for x in (700, 2400, 4100, 5300):
+    L.deco("bunting", x, -H + 190, 1.1, seed=x)
+
+L.finish(spawn=(0, -2), left=-360, right=R + 60, bottom=H + 700, kill_y=H + 800, top=-H - 700, kill_top=-H - 800)
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w6_1_ticket_booth_promenade.tscn"))

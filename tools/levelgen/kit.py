@@ -20,13 +20,14 @@ ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
             "baron_bristleback", "slidgewick", "snowl", "yetling", "grumblefrost",
             "cocobonk", "swoopbeak", "nibblefin", "chamelia",
             "windup", "sparkbot", "springbot", "cuckoolossus",
-            "pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella"]}
+            "pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella",
+            "jackbonk", "unicyclops", "popcorn_pufflet", "balloonatic", "marionette", "madame_topsy"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
 class LevelKit:
     SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7,
-               "jungle": 8, "ruins": 9, "factory": 10, "ocean": 11, "deep": 12, "nebula": 13}
+               "jungle": 8, "ruins": 9, "factory": 10, "ocean": 11, "deep": 12, "nebula": 13, "carnival": 14}
 
     def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
                  scenery="hills", backdrop=None):
@@ -46,6 +47,7 @@ class LevelKit:
         self._gems = 0
         self._dressed = set()  # node paths of scattered (dress) decorations: moved out of signs' way
         self.terrain_tops = []  # top profiles of land() pieces (for the seam check)
+        self.csurfaces = []     # walkable UNDERSIDES (World 6 ceilings), for dress(ceiling=True)
 
     # --- helpers -------------------------------------------------------------
     def _n(self, group, base, ntype, script_path, props, x, y):
@@ -115,6 +117,59 @@ class LevelKit:
         pts = list(profile) + [(profile[-1][0], top), (profile[0][0], top)]
         return self.terrain(pts, lip=False, **kw)
 
+    # --- World 6 (gravity flips): ceilings you can walk on, and the physical switches ----------
+    def ceiling_block(self, x, y_under, w, h, group="Blocks", lip=None, conveyor=0.0):
+        """A block hanging from above whose UNDERSIDE (y_under) is walkable when gravity is flipped.
+        Mirrored with scale.y = -1 so the grass/lip is on the underside."""
+        props = {"size": V(w, h), "scale": V(1, -1)}
+        if lip is False:
+            props["lip"] = False
+        if conveyor:
+            props["conveyor_speed"] = float(conveyor)
+        self.max_y = max(self.max_y, y_under)
+        self.max_x = max(self.max_x, x + w)
+        self.min_x = min(self.min_x, x)
+        if w >= 120:
+            self.csurfaces.append([(x, y_under), (x + w, y_under)])
+        return self.s.node("Block", None, group, dict({"position": V(x, y_under)}, **props),
+                           instance=self.s.scene(BLOCK))
+
+    def ceiling_land(self, profile, top=-2600.0, group="Blocks", **kw):
+        """Freeform ground mirrored to hang from above: `profile` is the walkable UNDERSIDE
+        [(x, y), ...] left to right, filled up to `top`. Players stand on it when gravity flips."""
+        pts = list(profile) + [(profile[-1][0], top), (profile[0][0], top)]
+        local = [(px, -py) for px, py in pts]
+        xs = [p[0] for p in pts]
+        self.min_x, self.max_x = min(self.min_x, min(xs)), max(self.max_x, max(xs))
+        self.max_y = max(self.max_y, max(p[1] for p in profile))
+        self.csurfaces.append(list(profile))
+        keep_y = self.max_y   # terrain() records bounds in local (mirrored) space: undo that
+        node = self.terrain(local, group=group, **kw)
+        self.max_y = keep_y
+        self._set_last("scale", V(1, -1))
+        return node
+
+    def flip_lever(self, x, y, ceiling=False):
+        """Punch it: gravity flips. (y = the surface it stands on; ceiling=True hangs it from above.)"""
+        return self._tool("Toys", "GravityLever", "Area2D", "gravity_lever", x, y, ceiling=True if ceiling else None)
+
+    def flip_pad(self, x, y, ceiling=False, width=None):
+        """Pressure plate: stepping on it flips gravity (re-arms when you step off)."""
+        return self._tool("Toys", "FlipPad", "Area2D", "flip_pad", x, y, ceiling=True if ceiling else None, width=width)
+
+    def flip_bumper(self, x, y, radius=None):
+        """Pinball bumper that flips gravity each bounce."""
+        return self._tool("Toys", "FlipBumper", "Area2D", "flip_bumper", x, y, radius=radius)
+
+    def flip_gate(self, x, y, pull="up", height=None):
+        """Arch that SETS gravity to `pull` ("up" or "down") when you pass through. y = its base."""
+        return self._tool("Toys", "GravityGate", "Area2D", "gravity_gate", x, y, pull=1 if pull == "up" else 0,
+                          height=height)
+
+    def kill_top(self, x0, x1, y):
+        """Kill strip ABOVE the level (falling 'up' when gravity is flipped)."""
+        return self.pit_kill(x0, x1, y)
+
     def tree_platform(self, x0, x1, y, trunk_x, trunk_w=180, thick=60, bottom=1400):
         """A treetop deck on a big trunk (one seamless piece)."""
         tx, tw = trunk_x, trunk_w
@@ -152,6 +207,16 @@ class LevelKit:
                     best = y if best is None else min(best, y)
         return best
 
+    def csurface_y(self, x):
+        """Underside of the lowest walkable ceiling at x (None if none): where flipped dreamers stand."""
+        best = None
+        for poly in self.csurfaces:
+            for (ax, ay), (bx, by) in zip(poly, poly[1:]):
+                if ax <= x <= bx and bx > ax:
+                    y = ay + (by - ay) * (x - ax) / (bx - ax)
+                    best = y if best is None else max(best, y)
+        return best
+
     DRESS = {
         "meadow": [("grass", 4), ("flowers", 3), ("fern", 1), ("bush", 1.2), ("big_flower", 0.6), ("tree", 0.7),
                    ("rock", 0.5), ("stump", 0.3), ("mushrooms", 0.4)],
@@ -170,6 +235,9 @@ class LevelKit:
         "reef": [("coral", 3), ("seaweed", 2.5), ("shell", 1), ("starfish", 0.8), ("rock", 0.8)],
         "wreck": [("seaweed", 2), ("anchor", 0.4), ("chest", 0.3), ("rock", 1), ("coral", 1), ("shell", 0.6)],
         "dream": [("crystals", 2), ("mushrooms", 1.2), ("big_flower", 0.6), ("rock", 0.8), ("lantern", 0.3)],
+        "carnival": [("balloons", 1.4), ("lamppost", 1.2), ("tent", 0.9), ("drum", 1.0), ("popcorn_cart", 0.5),
+                     ("ticket_booth", 0.35), ("lantern", 0.4)],
+        "funhouse": [("crystals", 1.6), ("drum", 0.8), ("balloons", 0.8), ("lamppost", 0.8)],
     }
 
     # Small props drawn IN FRONT of the players every few dressed spots (low, so they never hide anything).
@@ -178,22 +246,26 @@ class LevelKit:
         "river": ["reeds", "grass"], "snow": ["rock"], "icecave": ["crystals"], "thorn": ["grass", "rock"],
         "jungle": ["fern", "grass", "big_leaf"], "ruins": ["fern", "grass"], "swamp": ["reeds", "fern"],
         "factory": ["grass"], "beach": ["shell", "grass"], "reef": ["seaweed", "coral"], "wreck": ["seaweed"],
-        "dream": ["crystals"],
+        "dream": ["crystals"], "carnival": ["drum"], "funhouse": ["crystals"],
     }
 
-    def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=4, skip=(), trees=True):
-        """Scatter decorations along the walkable tops between x0 and x1."""
+    def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=4, skip=(), trees=True, ceiling=False):
+        """Scatter decorations along the walkable tops between x0 and x1.
+        ceiling=True decorates the walkable UNDERSIDES instead (props hang down, mirrored)."""
         import random
+        if ceiling:
+            front_every = 0
         rnd = random.Random(seed)
         table = [k for k in self.DRESS[style] if trees or k[0] != "tree"]
         total = sum(w for _, w in table)
         x = x0 + rnd.uniform(0, spacing)
         n = 0
+        sy = self.csurface_y if ceiling else self.surface_y
         while x < x1:
-            y = self.surface_y(x)
+            y = sy(x)
             ok = y is not None and all(not (a <= x <= b) for a, b in skip)
             if ok:
-                yl, yr = self.surface_y(x - 24), self.surface_y(x + 24)
+                yl, yr = sy(x - 24), sy(x + 24)
                 ok = yl is not None and yr is not None and abs(yl - yr) < 20
             if ok:
                 r = rnd.uniform(0, total)
@@ -202,7 +274,7 @@ class LevelKit:
                     if r <= 0:
                         break
                 size = rnd.uniform(0.8, 1.25) if kind not in ("tree", "giant_mushroom") else rnd.uniform(0.9, 1.3)
-                self._dressed.add(self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999)))
+                self._dressed.add(self.deco(kind, round(x), round(y), round(size, 2), seed=rnd.randint(1, 999), mirror=ceiling))
                 n += 1
                 if front_every and n % front_every == 0:
                     fx = round(x + 40)
@@ -245,9 +317,10 @@ class LevelKit:
         return self._tool("Toys", "Crumble", "AnimatableBody2D", "crumble_platform", x, y,
                           size=V(w, 28), respawn_time=float(respawn))
 
-    def wheel(self, x, y, count=4, radius=220.0, speed=30.0):
+    def wheel(self, x, y, count=4, radius=220.0, speed=30.0, solid=False):
+        """Ring of turning platforms. solid=True: standable from BOTH sides (needed when gravity flips)."""
         return self._tool("Toys", "Wheel", "Node2D", "platform_wheel", x, y,
-                          count=count, radius=float(radius), speed=float(speed))
+                          count=count, radius=float(radius), speed=float(speed), one_way=False if solid else None)
 
     def water(self, x, y, w, h, current=None):
         return self._tool("Toys", "Water", "Area2D", "water", x, y, size=V(w, h),
@@ -397,7 +470,7 @@ class LevelKit:
         return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
 
     def ambience(self, kind="pollen", density=1.0, darkness=None, tint=None):
-        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain", "bubbles", "stars"]
+        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain", "bubbles", "stars", "confetti"]
         props = {"script": self.s.script(RES + "world/ambience.gd"), "kind": kinds.index(kind),
                  "density": float(density) if density != 1.0 else None, "darkness": darkness, "tint": tint}
         return self.s.node("Ambience", "Node2D", "Decor", {k: v for k, v in props.items() if v is not None})
@@ -482,8 +555,10 @@ class LevelKit:
         self.s.node("Shape", "CollisionShape2D", path, {"shape": shape})
         return path
 
-    def switch(self, x, y, targets, mode=1, duration=None):
+    def switch(self, x, y, targets, mode=1, duration=None, ceiling=False):
         path = self._tool("Logic", "Switch", "Area2D", "punch_switch", x, y, mode=mode, timed_duration=duration)
+        if ceiling:
+            self._set_last("scale", V(1, -1))
         self._set_last("targets", [self.rel(path, t) for t in targets])
         return path
 
@@ -535,8 +610,11 @@ class LevelKit:
             "script": self.s.script(RES + "collectibles/lum_line.gd"), "position": V(x, y),
             "count": count, "end": V(ex - x, ey - y), "arc_height": float(arc)})
 
-    def snoozling(self, x, y, hanging=False, fur=None):
+    def snoozling(self, x, y, hanging=False, fur=None, ceiling=False):
+        """ceiling=True: the cage stands on a ceiling underside (mirrored, for flipped gravity)."""
         props = {"script": self.s.script(RES + "collectibles/snoozling_cage.gd"), "position": V(x, y), "hanging": hanging}
+        if ceiling:
+            props["scale"] = V(1, -1)
         if fur:
             props["fur"] = fur
         return self.s.node("Snoozling", "Area2D", "Pickups", props)
@@ -552,16 +630,17 @@ class LevelKit:
             "script": self.s.script(RES + "decor/signpost.gd"), "position": V(x, y), "text": text,
             "width": float(width), "arrow": arrow or None})
 
-    def deco(self, kind, x, y, size=1.0, front=False, seed=0):
+    def deco(self, kind, x, y, size=1.0, front=False, seed=0, mirror=False):
         kinds = ["GRASS", "FLOWERS", "BUSH", "TREE", "PINE", "MUSHROOMS", "ROCK", "FENCE", "CRYSTALS",
                  "CANDY_CANE", "LOLLIPOP", "REEDS", "FERN", "LOG", "STUMP", "GIANT_MUSHROOM", "HANGING_VINES",
                  "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS",
                  "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD", "GEAR", "PIPES", "CLOCK", "TOYBLOCKS",
-                 "CORAL", "SEAWEED", "SHELL", "ANCHOR", "STARFISH", "CHEST"]
+                 "CORAL", "SEAWEED", "SHELL", "ANCHOR", "STARFISH", "CHEST",
+                 "TENT", "BUNTING", "BALLOONS", "POPCORN_CART", "TICKET_BOOTH", "LAMPPOST", "DRUM"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,
-            "front": front or None, "seed_value": seed or None})
+            "front": front or None, "seed_value": seed or None, "scale": V(1, -1) if mirror else None})
 
     def pedestal(self, x, y, character):
         return self.s.node("Pedestal", "Area2D", "Decor", {
@@ -644,7 +723,8 @@ class LevelKit:
         props = {"BouncePad": (-60, -40, 60, 0), "Cannon": (-60, -60, 60, 60), "Balloon": (-45, -200, 45, 0),
                  "DreamBell": (-60, -210, 60, 0), "Geyser": (-50, -50, 50, 0), "SnowPile": (-60, -70, 60, 0),
                  "Pedestal": (-50, -160, 50, 0), "LumBlock": (0, 0, 64, 64), "Snoozling": (-45, -110, 45, 0),
-                 "Crate": (-10, -140, 140, 10)}
+                 "Crate": (-10, -140, 140, 10), "GravityLever": (-40, -120, 40, 0), "FlipPad": (-56, -30, 56, 0),
+                 "GravityGate": (-60, -300, 60, 0), "FlipBumper": (-50, -50, 50, 50)}
         for name, ntype, parent, pr, inst in self.s.nodes:
             if (parent == "Blocks" or parent.startswith("Blocks/")) and "polygon" in pr:
                 off = pr.get("position")
@@ -691,6 +771,8 @@ class LevelKit:
             else:
                 for pre, (a, b, c, d) in props.items():
                     if name.startswith(pre) and parent in ("Toys", "Pickups", "Decor"):
+                        if pr.get("scale") is not None and pr["scale"].y < 0:   # mirrored (hangs from a ceiling)
+                            b, d = -d, -b
                         avoid.append((pos.x + a, pos.y + b, pos.x + c, pos.y + d))
                         break
         return solids, avoid
@@ -796,7 +878,7 @@ class LevelKit:
                 if i != j and abs(a1[0] - b0[0]) < 3 and abs(a1[1] - b0[1]) < 3:
                     print(f"  note: ground seam at {a1[0]:.0f},{a1[1]:.0f} - merge these into one land() / terrain")
 
-    def finish(self, spawn, left=None, right=None, bottom=None, kill_y=None, script_props=None):
+    def finish(self, spawn, left=None, right=None, bottom=None, kill_y=None, script_props=None, top=None, kill_top=None):
         s = self.s
         self._check_seams()
         self._place_signs()
@@ -809,11 +891,17 @@ class LevelKit:
                                                 "collision_mask": 2, "monitorable": False,
                                                 "script": s.script(RES + "world/kill_zone.gd")}, unique=False)
         s.node("CollisionShape2D", "CollisionShape2D", kz, {"shape": shape}, unique=False)
+        if kill_top is not None:   # flipped-gravity levels: a second kill zone above
+            kz2 = s.node("KillZoneTop", "Area2D", ".", {"position": V((left + right) / 2, kill_top), "collision_layer": 32,
+                                                        "collision_mask": 2, "monitorable": False,
+                                                        "script": s.script(RES + "world/kill_zone.gd")}, unique=False)
+            s.node("CollisionShape2D", "CollisionShape2D", kz2, {"shape": shape}, unique=False)
         s.node("SpawnPoint", "Marker2D", ".", {"position": V(*spawn)}, unique=False)
         s.node("Players", "Node2D", ".", unique=False)
         s.node("CoopCamera", "Camera2D", ".", {"position": V(spawn[0], spawn[1] - 150),
                                               "limit_left": int(left), "limit_right": int(right),
                                               "limit_bottom": int(bottom),
+                                              "limit_top": int(top) if top is not None else None,
                                               "script": s.script(RES + "camera/coop_camera.gd")}, unique=False)
         s.node("HUD", None, ".", {}, instance=s.scene(RES + "ui/hud.tscn"), unique=False)
         if script_props:

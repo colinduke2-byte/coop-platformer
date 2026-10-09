@@ -20,6 +20,20 @@ static func load_records() -> void:
 	var data: Variant = JSON.parse_string(f.get_as_text())
 	if data is Dictionary:
 		records = data
+		_migrate()
+
+
+## v2: the secret Nightmare Nebula moved from World 6 to World 7 (World 6 is now the Carnival),
+## so its records move from w6_* to w7_*. Runs once per save (marked by "_v").
+static func _migrate() -> void:
+	if int(records.get("_v", 1)) >= 2:
+		return
+	for key: String in records.keys():
+		if key.begins_with("w6_"):
+			records["w7_" + key.substr(3)] = records[key]
+			records.erase(key)
+	records["_v"] = 2
+	_write()
 
 
 static func get_record(id: String) -> Dictionary:

@@ -128,6 +128,25 @@ func scn_ledge() -> void:
 	await seconds(0.4)
 
 
+## World 6: walk up to the lever, punch it, ride up to the ceiling, jump, punch the ceiling lever.
+func scn_flip() -> void:
+	var p := add_player(0, Vector2(560, -2), 0)
+	await frames(30)
+	await start(p)
+	press(0, "move_right")
+	await seconds(0.25)
+	release(0, "move_right")
+	await tap(0, "attack", 3)
+	await seconds(1.6)          # the float, the fall up, the landing on the ceiling
+	press(0, "move_right")
+	await seconds(0.5)
+	press(0, "jump")
+	await seconds(0.4)
+	release(0, "jump")
+	release(0, "move_right")
+	await seconds(0.8)
+
+
 func scn_pound() -> void:
 	var crate := Crate.new()
 	crate.position = Vector2(0, 0)

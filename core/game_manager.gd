@@ -56,8 +56,35 @@ func _physics_process(delta: float) -> void:
 				EventBus.lum_rush_changed.emit(0.0)
 
 
+## World 6 gravity: +1 = normal, -1 = flipped (everything falls UP). Only physical switches in
+## the level change it (GravityLever & co call flip_gravity); every level starts at +1.
+var gravity_dir := 1
+const FLIP_COOLDOWN_MS := 600
+var _last_flip_ms := -100000
+
+
+## Toggle gravity (a switch was hit). Returns false while the switch cooldown is running.
+func flip_gravity() -> bool:
+	return set_gravity_dir(-gravity_dir)
+
+
+func set_gravity_dir(dir: int, force := false) -> bool:
+	dir = 1 if dir >= 0 else -1
+	if dir == gravity_dir:
+		return false
+	var now := Time.get_ticks_msec()
+	if not force and now - _last_flip_ms < FLIP_COOLDOWN_MS:
+		return false
+	_last_flip_ms = now
+	gravity_dir = dir
+	EventBus.gravity_flipped.emit(dir)
+	return true
+
+
 func register_level(new_level: Level) -> void:
 	level = new_level
+	gravity_dir = 1
+	_last_flip_ms = -100000
 	players.clear()
 	# Back on the map, show the world this level belongs to.
 	var i := LevelCatalog.index_of(level.scene_file_path)
@@ -154,6 +181,7 @@ func _on_player_died(_player: Player) -> void:
 
 
 func respawn_all_at_checkpoint() -> void:
+	set_gravity_dir(1, true)   # checkpoints stand on the floor: everyone comes back to normal gravity
 	var i := 0
 	for p: Player in players.values():
 		if not is_instance_valid(p):

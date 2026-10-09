@@ -20,7 +20,7 @@ SPOTS=(
  "w3_2_canopy_highway|1500,-300" "w3_4_rumbletide_rapids|3000,-300"
  "w4_1_cogwheel_courtyard|1500,-300" "w4_5_night_shift|2500,-300"
  "w5_1_seashell_shore|3800,200" "w5_5_midnight_trench|4300,800"
- "w6_1_starfall_gardens|1700,-200" "candy_canopy|3000,-300"
+ "w7_1_starfall_gardens|1700,-200" "candy_canopy|3000,-300"
 )
 i=0
 for s in "${SPOTS[@]}"; do
@@ -37,7 +37,7 @@ shot() { # name scene [extra args]
 }
 shot 20_title res://ui/title.tscn
 shot 21_charselect res://ui/character_select.tscn --players=2
-for w in w1 w2 w3 w4 w5 w6; do shot "22_map_$w" res://ui/world_map.tscn --map_world=$w; done
+for w in w1 w2 w3 w4 w5 w6 w7; do shot "22_map_$w" res://ui/world_map.tscn --map_world=$w; done
 shot 29_shop res://ui/lum_shop.tscn
 mkdir -p "$out/_g"
 timeout 120 "${runner[@]}" "$GODOT" --rendering-driver opengl3 --resolution 1920x1080 --path . res://tools/enemy_gallery.tscn -- --shots="$out/_g" 2>&1 | quiet >/dev/null

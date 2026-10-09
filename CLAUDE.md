@@ -43,10 +43,10 @@ world/       Geometry (block, terrain, slope, back_wall), toys (bounce_pad, swin
              looks (backdrop, ambience, glow_light, waterfall, level_theme + themes/),
              mesh_painter.gd (bakes static art to one ArrayMesh = one draw call)
 decor/       deco.gd (baked scenery props, sway via skew), signpost
-enemies/     enemy.gd base + 28 enemies + 6 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella)
+enemies/     enemy.gd base + 33 enemies + 7 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella, madame_topsy)
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
-             w1_*..w6_*.tscn (Worlds 1-5 + secret World 6 - GENERATED, see below), bonus levels, demo_level
+             w1_*..w7_*.tscn (Worlds 1-6 + secret World 7 - GENERATED, see below), bonus levels, demo_level
 art/         BAKED by tools/art/bake_textures.py: textures/*.png (greyscale detail maps), ui/panel_paper.png
 world/shaders/ painted (terrain/blocks/deco/backdrop brushwork), grade + vignette (per-world colour), rig + creature
              (characters / enemies); Gfx quality presets (core/gfx.gd) gate every heavy effect; BlobShadow, Foreground,
@@ -95,6 +95,15 @@ pieces cost nothing. Check with `tools/bench.tscn -- --drawcalls`.
    Visual overhaul plan: `docs/VISUAL_OVERHAUL.md`; compare shots with `tools/art/compare.sh`.
 9. Small, playable steps. Prefer a working simple version Colin can try today
    over a big system he can't test for a week.
+
+## Gravity flips (World 6)
+
+`GameManager.gravity_dir` (+1 / -1) is flipped ONLY by physical pieces (`world/gravity_lever.gd` etc. call
+`flip_gravity()` / `set_gravity_dir()`). Players and ground enemies mirror themselves (`gdir`, scale.y, up_direction);
+`velocity` stays LOGICAL (y+ = towards the floor you stand on) and only `Player._slide()` / the Enemy move convert to
+world space. Authoring rules: world pieces that push bodies use `launch_world()`; never compare `velocity.y` with world
+geometry without `* gdir`; mirrored scenery/ceilings use `scale.y = -1` (see kit `ceiling_land` / `ceiling_block`).
+Don't name `Player` / `Enemy` types inside scripts they create (BlobShadow) - it makes a script dependency cycle.
 
 ## Online play (Net)
 

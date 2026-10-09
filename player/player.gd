@@ -13,6 +13,8 @@ const BODY_SIZE := Vector2(36, 60)
 const LEDGE_PROBE := 6.0      ## px past our side where ledges are looked for
 const LEDGE_STEP := 2.0       ## px resolution of the ledge-top search
 const CLIMB_FORWARD := 28.0   ## px we end up past the ledge edge after climbing
+const FLIP_FLOAT := 0.2          ## s of weightlessness after a gravity flip
+const FLIP_TURN_TIME := 0.22   ## s for the body to turn over visually
 const PUPPET_SNAP := 96.0     ## px: an online puppet further than this from its owner's spot teleports
 
 @export var tuning: PlayerTuning = preload("res://player/tuning/player_default.tres")
@@ -25,6 +27,12 @@ var remote := false
 var character: CharacterDef = preload("res://characters/mumbleby.tres")
 var player_color := Color.WHITE  ## = character.main_color; for HUD / UI tinting
 var facing := 1
+## World 6 gravity flip: +1 normal, -1 upside-down. The body is mirrored (scale.y = gdir) and
+## up_direction flips, so is_on_floor()/is_on_ceiling() and every local offset keep their meaning;
+## `velocity` is LOGICAL (y+ = towards the floor you stand on) and only _slide() converts to world.
+var gdir := 1
+var flip_float_timer := 0.0   ## s of near-weightlessness right after a flip
+var _vis_dir := 1.0           ## visual y-direction: tweens through 0 on a flip (the body turns over)
 
 var coyote_timer := 0.0
 var jump_buffer_timer := 0.0
@@ -142,6 +150,7 @@ func _build_character() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_sync_gravity(delta)
 	if remote:
 		_puppet_step(delta)
 		return
@@ -157,23 +166,46 @@ func _physics_process(delta: float) -> void:
 	_update_visual(delta)
 
 
+## Follow GameManager.gravity_dir: mirror the body, flip up_direction, keep the WORLD velocity.
+func _sync_gravity(delta: float) -> void:
+	var want := GameManager.gravity_dir
+	if want != gdir:
+		gdir = want
+		scale.y = float(gdir)
+		up_direction = Vector2(0.0, -float(gdir))
+		velocity.y = -velocity.y          # logical -> keeps the same world velocity
+		flip_float_timer = FLIP_FLOAT
+		coyote_timer = 0.0
+		if state_machine and state_machine.current_name() in [&"LedgeHang", &"Swing", &"Zipline", &"Climb", &"WallRun", &"Swim"]:
+			state_machine.transition_to(&"Fall")
+	_vis_dir = move_toward(_vis_dir, float(gdir), delta / FLIP_TURN_TIME * 2.0)
+	flip_float_timer = maxf(flip_float_timer - delta, 0.0)
+
+
+## move_and_slide() in world space: `velocity` is logical (y+ = towards the floor), so mirror y around the call.
+func _slide() -> void:
+	velocity.y *= gdir
+	move_and_slide()
+	velocity.y *= gdir
+
+
 ## move_and_slide(), plus this frame's wind push (not kept as momentum).
 func _move_with_wind() -> void:
 	var push := wind_push
 	wind_push = Vector2.ZERO
 	if push == Vector2.ZERO or is_bubbled() or state_machine.current_name() in [&"LedgeHang", &"Cannon"]:
-		move_and_slide()
+		_slide()
 		return
 	if state_machine.current_name() == &"Glide":
 		push *= 1.6  # gliders catch the wind
 	elif parachute:
 		push *= tuning.parachute_wind_multiplier
-	velocity += push
-	move_and_slide()
+	velocity += Vector2(push.x, push.y * gdir)
+	_slide()
 	if not is_on_wall():
 		velocity.x -= push.x
 	if not (is_on_floor() or is_on_ceiling()):
-		velocity.y -= push.y
+		velocity.y -= push.y * gdir
 
 
 # --- Shared movement helpers (used by states) --------------------------------
@@ -188,6 +220,8 @@ func apply_gravity(delta: float) -> void:
 		velocity.y = move_toward(velocity.y, target, tuning.parachute_accel * delta)
 		return
 	var g := tuning.rise_gravity() if velocity.y < 0.0 else tuning.fall_gravity()
+	if flip_float_timer > 0.0:
+		g *= 0.12
 	var max_fall := tuning.max_fall_speed
 	if absf(velocity.y) < tuning.apex_speed_threshold and input.jump_held():
 		g *= tuning.apex_gravity_multiplier
@@ -227,7 +261,7 @@ func floor_friction() -> float:
 		return 1.0
 	for i in get_slide_collision_count():
 		var c := get_slide_collision(i)
-		if c.get_normal().y < -0.7:
+		if c.get_normal().y * gdir < -0.7:
 			var b := c.get_collider()
 			if (b is Block or b is Terrain) and b.slippery:
 				return tuning.ice_friction
@@ -282,6 +316,16 @@ func do_jump(multiplier := 1.0) -> void:
 
 ## Fling the player (bounce pads, swing release, cannons). Not cut short by
 ## releasing jump; `lock` seconds of ignored steering keep sideways launches true.
+## Velocity in WORLD space (y+ = down the screen), whatever way gravity points.
+func world_velocity() -> Vector2:
+	return Vector2(velocity.x, velocity.y * gdir)
+
+
+## launch() for pieces that think in world space (pads, bumpers, cannons): `vel` is a world vector.
+func launch_world(vel: Vector2, lock := 0.0) -> void:
+	launch(Vector2(vel.x, vel.y * gdir), lock)
+
+
 func launch(vel: Vector2, lock := 0.0) -> void:
 	velocity = vel
 	jump_cuttable = false
@@ -448,7 +492,7 @@ func _correct_corners(delta: float) -> void:
 	if state_machine.current_name() == &"LedgeHang":
 		return
 	if velocity.y < 0.0 and t.corner_correction > 0.0:
-		var up := Vector2(0.0, velocity.y * delta)
+		var up := Vector2(0.0, velocity.y * delta * gdir)
 		if test_move(global_transform, up):
 			var first := 1 if (velocity.x > 0.0 or (velocity.x == 0.0 and facing > 0)) else -1
 			for i in range(1, int(t.corner_correction) + 1):
@@ -462,7 +506,7 @@ func _correct_corners(delta: float) -> void:
 		if test_move(global_transform, side):
 			var i := 2.0
 			while i <= t.ledge_bump:
-				var off := Vector2(0.0, -i)
+				var off := Vector2(0.0, -i * gdir)
 				if not test_move(global_transform, off) and not test_move(global_transform.translated(off), side):
 					global_position += off
 					if velocity.y > 0.0:
@@ -493,23 +537,24 @@ func try_ledge_grab() -> bool:
 func find_ledge(dir: int) -> float:
 	var t := tuning
 	var x := global_position.x + dir * (BODY_SIZE.x * 0.5 + LEDGE_PROBE)
-	var y := global_position.y - t.ledge_grab_high
-	if _solid_at(Vector2(x, y)) != null:
+	var g := float(gdir)   # "up" in world y is -g
+	var h := t.ledge_grab_high   # how far above the feet we are probing (logical)
+	if _solid_at(Vector2(x, global_position.y - g * h)) != null:
 		return NAN  # wall continues above the window: that's a wall, not a ledge
 	var top := NAN
-	while y <= global_position.y - t.ledge_grab_low:
-		var body := _solid_at(Vector2(x, y))
+	while h >= t.ledge_grab_low:
+		var body := _solid_at(Vector2(x, global_position.y - g * h))
 		if body != null:
-			top = y
+			top = global_position.y - g * h
 			ledge_body = body
 			break
-		y += LEDGE_STEP
+		h -= LEDGE_STEP
 	if is_nan(top):
 		return NAN
 	# Refine to the exact surface.
-	while _solid_at(Vector2(x, top - 1.0)) != null:
-		top -= 1.0
-	var stand := Vector2(global_position.x + dir * (BODY_SIZE.x * 0.5 + CLIMB_FORWARD), top - 1.0)
+	while _solid_at(Vector2(x, top - g)) != null:
+		top -= g
+	var stand := Vector2(global_position.x + dir * (BODY_SIZE.x * 0.5 + CLIMB_FORWARD), top - g)
 	return top if body_fits_at(stand) else NAN
 
 
@@ -533,7 +578,7 @@ func body_fits_at(feet: Vector2, size := BODY_SIZE) -> bool:
 	shape.size = size - Vector2(2, 2)
 	var q := PhysicsShapeQueryParameters2D.new()
 	q.shape = shape
-	q.transform = Transform2D(0.0, feet + Vector2(0.0, -size.y * 0.5))
+	q.transform = Transform2D(0.0, feet + Vector2(0.0, -size.y * 0.5 * gdir))
 	q.collision_mask = LAYER_WORLD
 	q.exclude = [get_rid()]
 	for hit in get_world_2d().direct_space_state.intersect_shape(q, 8):
@@ -631,7 +676,7 @@ func try_drop_through() -> bool:
 	var ledge: PhysicsBody2D = null
 	for i in get_slide_collision_count():
 		var c := get_slide_collision(i)
-		if c.get_normal().y < -0.7 and c.get_collider() is Block and c.get_collider().one_way:
+		if c.get_normal().y * gdir < -0.7 and c.get_collider() is Block and c.get_collider().one_way:
 			ledge = c.get_collider()
 	if ledge == null:
 		return false
@@ -640,7 +685,7 @@ func try_drop_through() -> bool:
 	_dropped_through.append(ledge)
 	_drop_timer = tuning.drop_through_time
 	velocity.y = 120.0
-	global_position.y += 2.0
+	global_position.y += 2.0 * gdir
 	state_machine.transition_to(&"Fall")
 	return true
 
@@ -667,7 +712,7 @@ func register_stomp() -> void:
 	if stomp_chain >= t.stomp_chain_lum_from:
 		# load(), not preload(): lum.tscn refers back to Player (a cyclic preload breaks it).
 		var lum: Node2D = load("res://collectibles/lum.tscn").instantiate()
-		lum.position = global_position + Vector2(0, -90)
+		lum.position = global_position + Vector2(0, -90 * gdir)
 		get_parent().add_child.call_deferred(lum)
 
 
@@ -693,9 +738,10 @@ func _check_head_bounce() -> void:
 		var other := body as Player
 		if other == null or other == self or other.is_bubbled():
 			continue
-		var head_y := other.global_position.y - other.body_shape.shape.get_rect().size.y
+		var head_y := other.global_position.y - other.body_shape.shape.get_rect().size.y * gdir
+		var dy := (global_position.y - head_y) * gdir   # logical: >0 = our feet are below their head
 		if absf(global_position.x - other.global_position.x) < BODY_SIZE.x \
-				and global_position.y >= head_y - 6.0 and global_position.y <= head_y + 18.0:
+				and dy >= -6.0 and dy <= 18.0:
 			other.squash(tuning.hard_land_squash)
 			bounce(tuning.teammate_bounce_multiplier)
 			EventBus.player_head_bounced.emit(self, other)
@@ -707,7 +753,7 @@ func revive(pop := true) -> void:
 		return
 	glide_armed = false
 	invulnerable_timer = tuning.revive_invulnerability
-	velocity = Vector2(0.0, -tuning.revive_pop_speed) if pop else Vector2.ZERO
+	velocity = Vector2(0.0, -tuning.revive_pop_speed) if pop else Vector2.ZERO  # logical: away from the floor
 	state_machine.transition_to(&"Fall")
 	EventBus.player_revived.emit(self)
 
@@ -773,6 +819,7 @@ func hit_with_punch_area(knockback: Vector2, already: Array[Node]) -> Array[Node
 ## Hit something (punch, slide kick, pound). Online, a local dreamer's hits are
 ## sent to the friends' browsers so the same thing gets hit there too.
 func strike(target: Node, knockback: Vector2) -> void:
+	knockback.y *= gdir   # knockback is authored as 'up = negative'; flipped, up is world-down
 	target.take_hit(self, knockback)
 	if not remote and Net.is_online():
 		Net.relay_hit(self, target, knockback)
@@ -831,13 +878,15 @@ func apply_updraft(speed: float) -> void:
 func _update_visual(delta: float) -> void:
 	_squash = _squash.lerp(Vector2.ONE, clampf(tuning.squash_return_speed * delta, 0.0, 1.0))
 	var s := _squash * (tuning.crouch_squash if crouched else Vector2.ONE)
-	visual.scale = Vector2(s.x * facing, s.y)
+	visual.scale = Vector2(s.x * facing, s.y * _vis_dir * float(gdir))   # parent is mirrored by gdir; _vis_dir tweens the turn-over
 	var spin := rig.spin_angle() * facing + body_rotation
 	var pivot := body_pivot if body_rotation != 0.0 else Vector2(0.0, -BODY_SIZE.y * 0.5)
 	visual.rotation = spin
 	visual.position = pivot - pivot.rotated(spin)
 	$Visual/Tag.rotation = -spin * facing  # name tag stays upright while we flip
 	$Visual/Tag.scale.x = facing  # keep the label readable when flipped
+	$Visual/Tag.pivot_offset = ($Visual/Tag as Label).size * 0.5
+	$Visual/Tag.scale.y = signf(_vis_dir) if absf(_vis_dir) > 0.05 else 1.0   # ...and when the whole body is upside-down
 	rig.sprint = sprint
 	rig.skidding = is_skidding()
 	rig.update_pose(state_machine.current_name(), velocity, is_on_floor(), tuning.max_run_speed, delta)
@@ -965,10 +1014,10 @@ func _puppet_step(delta: float) -> void:
 		global_position = target
 	else:
 		# Move there as a body, so floors, crumbling platforms and seesaws feel them.
-		velocity = err / maxf(delta, 0.001)
+		velocity = Vector2(err.x, err.y * gdir) / maxf(delta, 0.001)
 		if flags & 1 and absf(err.y) < 12.0:
 			velocity.y = 60.0  # standing: settle onto our own floor so is_on_floor() holds
-		move_and_slide()
+		_slide()
 	velocity = Vector2(float(s[2]), float(s[3]))
 	sprint = float(s[7])
 	body_rotation = float(s[9])

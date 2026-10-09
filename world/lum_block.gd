@@ -44,18 +44,21 @@ func _physics_process(delta: float) -> void:
 	for n in get_tree().get_nodes_in_group(&"players"):
 		var p := n as Player
 		if p.is_on_ceiling() and p.speed_before_move.y < 0.0:
-			var head := p.global_position + Vector2(0, -Player.BODY_SIZE.y)
-			if absf(head.y - (global_position.y + SIZE)) < 20.0 and head.x > global_position.x - 24.0 and head.x < global_position.x + SIZE + 24.0:
+			var head := p.global_position + Vector2(0, -Player.BODY_SIZE.y * p.gdir)
+			var face_y := global_position.y + (SIZE if p.gdir == 1 else 0.0)   # flipped dreamers hit the TOP face
+			if absf(head.y - face_y) < 20.0 and head.x > global_position.x - 24.0 and head.x < global_position.x + SIZE + 24.0:
 				_pop(p)
 
 
 ## A ground pound onto the top empties the whole block in one burst.
-func _on_pounded(_by: Player, at: Vector2) -> void:
+func _on_pounded(by: Player, at: Vector2) -> void:
 	if lums <= 0 or _cd > 0.0:
 		return
+	var g := by.gdir if by != null else 1
+	var face_y := global_position.y + (0.0 if g == 1 else SIZE)   # the face a pound lands on
 	if at.x < global_position.x - 16.0 or at.x > global_position.x + SIZE + 16.0:
 		return
-	if at.y < global_position.y - 24.0 or at.y > global_position.y + 20.0:
+	if absf(at.y - face_y) > 24.0:
 		return
 	_cd = 0.15
 	_bump = 1.0
@@ -64,7 +67,8 @@ func _on_pounded(_by: Player, at: Vector2) -> void:
 	for i in n:
 		var lum: Node2D = preload("res://collectibles/lum.tscn").instantiate()
 		var a := lerpf(-2.5, -0.64, (float(i) + 0.5) / n)   # fan across the sky above the block
-		lum.position = position + Vector2(SIZE * 0.5, -10) + Vector2(cos(a), sin(a)) * (50.0 + 14.0 * (i % 3))
+		var base_y := -10.0 if g == 1 else SIZE + 10.0
+		lum.position = position + Vector2(SIZE * 0.5, base_y) + Vector2(cos(a), sin(a) * float(g)) * (50.0 + 14.0 * (i % 3))
 		get_parent().add_child(lum)
 	Audio.play("lum", -3.0, 1.0, 0.0)
 
@@ -79,7 +83,7 @@ func _pop(by: Player) -> void:
 		return
 	lums -= 1
 	var lum: Node2D = preload("res://collectibles/lum.tscn").instantiate()
-	lum.position = position + Vector2(SIZE * 0.5, -30)
+	lum.position = position + Vector2(SIZE * 0.5, -30 if by.gdir == 1 else SIZE + 30)
 	get_parent().add_child(lum)
 	Audio.play("lum", -6.0, 1.3, 0.0)
 
