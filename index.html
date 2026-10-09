@@ -1,0 +1,512 @@
+<title>Dreamers</title>
+<style>
+  :root { --bg: #1d1726; --ink: #fff8ec; --muted: #b9aecb; --accent: #ffd23f; --pink: #ff5d8f; color-scheme: dark; }
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Trebuchet MS", system-ui, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  #canvas { display: block; width: 100vw; height: 100vh; outline: none; background: #000; }
+  #cover { position: fixed; inset: 0; display: grid; place-items: safe center; overflow-y: auto; background: radial-gradient(circle at 50% 35%, #3b2f5a, var(--bg) 70%); padding: 16px; }
+  .card { max-width: 640px; width: 100%; text-align: center; display: grid; gap: 18px; }
+  h1 { margin: 0; font-size: clamp(48px, 11vw, 96px); letter-spacing: 0.04em; line-height: 1; }
+  h1 span:nth-child(6n+1) { color: #ff5d8f } h1 span:nth-child(6n+2) { color: #ffd23f } h1 span:nth-child(6n+3) { color: #5bc8ff }
+  h1 span:nth-child(6n+4) { color: #7ee05a } h1 span:nth-child(6n+5) { color: #c58bff } h1 span:nth-child(6n) { color: #ff9e3f }
+  .sub { color: var(--muted); font-size: 18px; margin: 0; }
+  button { font: inherit; font-size: 26px; font-weight: 700; padding: 16px 40px; border-radius: 999px; border: 4px solid var(--ink);
+    background: var(--pink); color: white; cursor: pointer; justify-self: center; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .bar { height: 12px; border-radius: 99px; background: #3a3050; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0%; background: var(--accent); transition: width 0.2s; }
+  .keys { font-size: 15px; color: var(--muted); line-height: 1.6; text-align: left; background: #2a2238; border-radius: 14px; padding: 14px 18px; }
+  .keys b { color: var(--ink); }
+  #status { min-height: 1.4em; color: var(--muted); margin: 0; }
+  .online { display: grid; gap: 12px; background: #2a2238; border-radius: 18px; padding: 16px; }
+  .online h2 { margin: 0; font-size: 20px; color: var(--accent); letter-spacing: 0.04em; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  button.alt { font-size: 20px; padding: 10px 24px; background: #5b3fa8; }
+  button.big { background: #2fa36b; }
+  #code { font: inherit; font-size: 28px; font-weight: 700; width: 5.2em; text-align: center; letter-spacing: 0.25em; text-transform: uppercase;
+    padding: 8px 10px; border-radius: 14px; border: 3px solid var(--ink); background: #1d1726; color: var(--ink); }
+  #netnote { margin: 0; font-size: 15px; color: var(--muted); min-height: 1.2em; }
+  #invite { display: grid; gap: 10px; }
+  #invite p { margin: 0; font-size: 20px; }
+  #pill { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; gap: 10px; align-items: center; max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center;
+    background: rgba(29, 23, 38, 0.82); border: 2px solid rgba(255, 248, 236, 0.5); border-radius: 999px; padding: 6px 8px 6px 16px; font-size: 15px; }
+  #pill b { color: var(--accent); letter-spacing: 0.12em; }
+  #pill button { font-size: 14px; padding: 6px 14px; border-width: 2px; }
+  #pill input { font: inherit; font-size: 13px; width: 22em; max-width: 60vw; border-radius: 8px; border: 1px solid var(--muted); background: #1d1726; color: var(--ink); padding: 4px 6px; }
+</style>
+
+<div id="stage"><canvas id="canvas" tabindex="0">Your browser doesn't support canvas.</canvas></div>
+<div id="pill" hidden><span id="pillText"></span><button id="copy" type="button">Copy invite link</button><input id="linkBox" readonly hidden></div>
+<div id="cover">
+  <div class="card">
+    <h1 aria-label="DREAMERS"><span>D</span><span>R</span><span>E</span><span>A</span><span>M</span><span>E</span><span>R</span><span>S</span></h1>
+    <p class="sub">a co-op dream adventure &middot; Worlds 1, 2 &amp; 3</p>
+    <div id="invite" hidden>
+      <p>You're invited to online game <b id="inviteCode"></b>!</p>
+      <button id="joinInvite" class="big" disabled>Join the game</button>
+    </div>
+    <button id="play" disabled>Loading&hellip;</button>
+    <div class="bar"><i id="bar"></i></div>
+    <p id="status">Downloading the game (about 17 MB)&hellip;</p>
+    <div class="online">
+      <h2>PLAY ONLINE WITH FRIENDS</h2>
+      <div class="row"><button id="host" class="alt" disabled>Host a game</button></div>
+      <div class="row">
+        <input id="code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" aria-label="Game code">
+        <button id="join" class="alt" disabled>Join</button>
+      </div>
+      <p id="netnote">Checking online play&hellip;</p>
+    </div>
+    <div class="keys">
+      <b>Player 1:</b> WASD move &middot; Space jump &middot; Left Shift punch &middot; Left Ctrl sprint<br>
+      <b>Player 2:</b> Arrows move &middot; Enter jump &middot; Right Shift punch &middot; Right Ctrl sprint<br>
+      <b>Gamepads</b> work too (A to join). <b>Esc</b> pauses &middot; <b>F9</b> on the map unlocks everything.<br>
+      <b>Online:</b> Host gives you a 4-letter code and an invite link for friends. Everyone plays with any keys or a gamepad.
+    </div>
+  </div>
+</div>
+
+<script>
+// ONLINE PLAY transport for the game (Godot reads it through JavaScriptBridge as
+// window.dreamNet; see core/net_transport.gd). Every browser publishes one small
+// "packet" (its latest state) ~20 times a second and reads everyone else's.
+//   room  - inside claude.ai: the page's live room (a named room per game code)
+//   peer  - anywhere else: PeerJS / WebRTC, the host relays packets between friends
+//   local - ?net=local: tabs of one browser talk over a BroadcastChannel (testing)
+window.dreamNet = (function () {
+  const PREFIX = "dreamers-";
+  const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  // PeerJS ships next to this page (peerjs.min.js); the CDNs are a fallback.
+  const PEERJS = ["peerjs.min.js", "https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js",
+                  "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
+  // ?peerhost=127.0.0.1&peerport=9000 points at a private PeerJS server (testing); default = the free PeerJS cloud.
+  const q = new URLSearchParams(location.search);
+  const PEER_OPTS = q.get("peerhost") ? { host: q.get("peerhost"), port: Number(q.get("peerport") || 9000), path: "/", secure: false, debug: 1 } : { debug: 1 };
+  let kind = "pending";
+  let why = "";   // when online play is unavailable: the reason (shown by the game's online menu)
+  let intent = "";  // what the start page asked for ({"a":"host"} / {"a":"join","c":"ABCD"}); the game takes it once
+  let st = "idle", err = "", code = "", me = "";
+  let inbox = new Map(), gone = new Set();
+  let impl = null, roomApi = null;
+
+  function randomCode() {
+    let c = "";
+    const r = new Uint32Array(4);
+    crypto.getRandomValues(r);
+    for (let i = 0; i < 4; i++) c += LETTERS[r[i] % LETTERS.length];
+    return c;
+  }
+  function fail(message) { st = "error"; err = message; if (impl) { try { impl.close(); } catch (e) {} impl = null; } }
+  function hostSeen() { return !!impl && impl.others().some(function (g) { return g && g.r === "h"; }); }
+  function loadScript(urls) {
+    return new Promise(function (ok, bad) {
+      const tryOne = function (i) {
+        if (i >= urls.length) return bad(new Error("couldn't load " + urls[0]));
+        const s = document.createElement("script");
+        s.src = urls[i];
+        s.onload = ok;
+        s.onerror = function () { tryOne(i + 1); };
+        document.head.appendChild(s);
+      };
+      tryOne(0);
+    });
+  }
+
+  // --- claude.ai room ---------------------------------------------------------------
+  function roomImpl() {
+    let r = null, unsub = null, all = new Map();
+    return {
+      async open(name) {
+        r = await roomApi.join(name);
+        unsub = r.onPeers(function (ch) {
+          for (const p of ch.joined.concat(ch.updated)) {
+            if (p.sameTab) { me = p.peer; continue; }
+            if (p.kind !== "viewer") continue;
+            const g = p.presence && p.presence.g;
+            if (g && all.get(p.peer) !== g) { all.set(p.peer, g); inbox.set(p.peer, g); }
+          }
+          for (const p of ch.left) { all.delete(p.peer); inbox.delete(p.peer); gone.add(p.peer); }
+        }, function (e) { fail("Online connection lost (" + e.code + ")."); });
+        for (const p of r.peers()) if (p.sameTab) me = p.peer;
+      },
+      others() { return [...all.values()]; },
+      send(obj) { if (r) r.presence({ g: obj }).catch(function () {}); },
+      close() { if (unsub) unsub(); if (r) r.leave().catch(function () {}); r = null; },
+    };
+  }
+
+  // --- PeerJS (WebRTC) ---------------------------------------------------------------
+  function peerImpl(asHost) {
+    let peer = null, conns = new Map(), toHost = null, all = new Map();
+    const relay = function (from, g, except) {
+      for (const [id, c] of conns) if (id !== except && c.open) c.send({ f: from, g: g });
+    };
+    return {
+      async open(name) {
+        if (!window.Peer) await loadScript(PEERJS);
+        await new Promise(function (ok, bad) {
+          peer = asHost ? new window.Peer(name, PEER_OPTS) : new window.Peer(PEER_OPTS);
+          // The signalling link can drop while playing; reconnect so more friends can still join.
+          peer.on("disconnected", function () { if (peer && !peer.destroyed) setTimeout(function () { try { peer.reconnect(); } catch (e) {} }, 1000); });
+          peer.on("open", function (id) { if (!asHost) me = id; ok(); });
+          peer.on("error", function (e) {
+            if (e.type === "unavailable-id") bad(new Error("taken"));
+            else if (e.type === "peer-unavailable") fail("No game with code " + code + " - check the code, and that the host still has the game open.");
+            else if (st === "connecting") bad(new Error(e.type === "browser-incompatible" ? "this browser can't do online play" : "the online server didn't answer (" + e.type + ")"));
+            // Once playing, a signalling hiccup doesn't matter: friends are connected directly (and it reconnects).
+          });
+          if (asHost) {
+            peer.on("connection", function (c) {
+              c.on("open", function () { conns.set(c.peer, c); });
+              c.on("data", function (g) { if (g && typeof g === "object") { all.set(c.peer, g); inbox.set(c.peer, g); relay(c.peer, g, c.peer); } });
+              c.on("error", function () {});
+              c.on("close", function () { conns.delete(c.peer); all.delete(c.peer); gone.add(c.peer); relay(c.peer, null, c.peer); for (const [, o] of conns) if (o.open) o.send({ f: c.peer, bye: true }); });
+            });
+          }
+        });
+        if (asHost) { me = name; return; }
+        await new Promise(function (ok) {
+          setTimeout(function () {
+            if (st === "connecting") fail("Found game " + code + " but couldn't connect to it. A strict network (school/work Wi-Fi) can block this - try another network or a phone hotspot.");
+          }, 15000);
+          // Unreliable: every packet is a full snapshot (events repeat until acknowledged),
+          // so a lost packet is simply replaced by the next one instead of holding the rest up.
+          toHost = peer.connect(name, { reliable: false });
+          toHost.on("open", ok);
+          toHost.on("error", function () { if (st === "connecting") fail("Couldn't connect to game " + code + ". Try again, or try another network."); });
+          toHost.on("data", function (m) {
+            if (!m || !m.f) return;
+            if (m.bye) { all.delete(m.f); gone.add(m.f); return; }
+            if (m.g) { all.set(m.f, m.g); inbox.set(m.f, m.g); }
+          });
+          toHost.on("close", function () { gone.add(name); if (st === "client") fail("The host left the game."); });
+        });
+      },
+      others() { return [...all.values()]; },
+      send(obj) {
+        if (asHost) relay(me, obj, null);
+        else if (toHost && toHost.open) toHost.send(obj);
+      },
+      close() { if (peer) peer.destroy(); peer = null; },
+    };
+  }
+
+  // --- BroadcastChannel (tabs of one browser: testing) -----------------------------------
+  function localImpl() {
+    let ch = null, all = new Map(), seen = new Map(), timer = 0;
+    me = "t" + Math.random().toString(36).slice(2, 10);
+    return {
+      async open(name) {
+        ch = new BroadcastChannel(name);
+        ch.onmessage = function (e) {
+          const m = e.data;
+          if (!m || m.f === me) return;
+          if (m.bye) { all.delete(m.f); gone.add(m.f); return; }
+          all.set(m.f, m.g); inbox.set(m.f, m.g); seen.set(m.f, Date.now());
+        };
+        timer = setInterval(function () {
+          for (const [id, t] of seen) if (Date.now() - t > 4000) { seen.delete(id); all.delete(id); gone.add(id); }
+        }, 1000);
+      },
+      others() { return [...all.values()]; },
+      send(obj) { if (ch) ch.postMessage({ f: me, g: obj }); },
+      close() { clearInterval(timer); if (ch) { ch.postMessage({ f: me, bye: true }); ch.close(); } ch = null; },
+    };
+  }
+
+  function make(asHost) {
+    if (kind === "room") return roomImpl();
+    if (kind === "local") return localImpl();
+    return peerImpl(asHost);
+  }
+
+  async function start(asHost, wanted) {
+    if (impl) api.leave();
+    st = "connecting"; err = ""; inbox = new Map(); gone = new Set();
+    for (let i = 0; i < 60 && kind === "pending"; i++) await new Promise(function (r) { setTimeout(r, 200); });
+    if (!kind || kind === "pending") { fail(why || "Online play isn't available on this page."); return; }
+    for (let attempt = 0; attempt < 4; attempt++) {
+      code = wanted || randomCode();
+      impl = make(asHost);
+      try {
+        await impl.open(PREFIX + code.toLowerCase());
+      } catch (e) {
+        if (impl) { try { impl.close(); } catch (x) {} impl = null; }
+        if (asHost && String(e && e.message) === "taken") continue;
+        if (st !== "error") fail("Couldn't go online: " + (e && e.message ? e.message : e));
+        return;
+      }
+      if (st === "error") return;
+      // Hosting: make sure nobody already hosts this code. Joining: wait for the host.
+      const deadline = Date.now() + (asHost ? (kind === "peer" ? 0 : 1500) : 10000);
+      while (Date.now() < deadline && st === "connecting") {
+        if (hostSeen()) break;
+        await new Promise(function (r) { setTimeout(r, 200); });
+      }
+      if (st !== "connecting") return;
+      if (asHost) {
+        if (hostSeen()) { impl.close(); impl = null; continue; }
+        st = "host";
+      } else if (hostSeen() || kind === "peer") {
+        st = "client";
+      } else {
+        fail("No game with code " + code + " - check the code, or ask the host to open theirs.");
+      }
+      return;
+    }
+    fail("Couldn't find a free game code - try again.");
+  }
+
+  const api = {
+    available: function () { return kind; },
+    why: function () { return why; },
+    setIntent: function (obj) { intent = JSON.stringify(obj); },
+    intent: function () { const i = intent; intent = ""; return i; },
+    players: function () { return impl && (st === "host" || st === "client") ? impl.others().length + 1 : 0; },
+    info: function () { return { kind: kind, st: st, code: code, me: me, err: err }; },  // for the page / tests (doesn't drain)
+    host: function () { start(true, ""); },
+    join: function (c) { start(false, String(c).toUpperCase()); },
+    leave: function () { if (impl) impl.close(); impl = null; st = "idle"; code = ""; inbox = new Map(); gone = new Set(); },
+    send: function (json) {
+      if (!impl || (st !== "host" && st !== "client" && st !== "connecting")) return;
+      try { impl.send(JSON.parse(json)); } catch (e) {}
+    },
+    poll: function () {
+      const out = { st: st, err: err, code: code, me: me, in: [...inbox.entries()], gone: [...gone] };
+      inbox = new Map(); gone = new Set();
+      return JSON.stringify(out);
+    },
+  };
+
+  // Which transport this page can use.
+  if (/[?&]net=local\b/.test(location.search)) kind = "local";
+  else if (window.claude && typeof window.claude.use === "function") {
+    const framed = window.top !== window.self;
+    window.claude.use("room").then(function (r) {
+      roomApi = r; kind = r ? "room" : "";
+      if (!r) why = framed ? "claude.ai didn't give this page its live room. Make sure you're signed in, then reload the page."
+                           : "This page was opened on its own. Open the game from its claude.ai link (inside claude.ai) to play online.";
+    }, function (e) { kind = ""; why = "claude.ai's live room didn't answer (" + (e && e.message ? e.message : e) + "). Reload and try again."; });
+  } else {
+    kind = (window.RTCPeerConnection && window.WebSocket) ? "peer" : "";
+    if (!kind) why = "This browser can't do online play (no WebRTC).";
+  }
+  return api;
+})();
+</script>
+
+<script>
+(function () {
+  const bar = document.getElementById("bar");
+  const status = document.getElementById("status");
+  const play = document.getElementById("play");
+  const hostBtn = document.getElementById("host");
+  const joinBtn = document.getElementById("join");
+  const codeBox = document.getElementById("code");
+  const note = document.getElementById("netnote");
+  const inviteBox = document.getElementById("invite");
+  const joinInvite = document.getElementById("joinInvite");
+  const canvas = document.getElementById("canvas");
+  const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  // The link friends open (claude.ai page, or wherever this page is hosted) + "#CODE".
+  const SHARE = /claudeusercontent|claude\.ai/.test(location.hostname) || window.claude
+    ? "https://claude.ai/artifact/ADX5rr3V6dWD2ooZ3emthA" : location.origin + location.pathname;
+  const invited = (location.hash.match(/^#([A-Za-z]{4})$/) || [])[1];
+  let loaded = false;
+  const files = {};  // what the engine asks for -> Blob
+  const realFetch = window.fetch.bind(window);
+
+  // Hand the engine its (pre-downloaded) files instead of fetching them.
+  window.fetch = function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    for (const name in files) {
+      if (url.split("?")[0].endsWith(name)) {
+        const type = name.endsWith(".wasm") ? "application/wasm" : "application/octet-stream";
+        return Promise.resolve(new Response(files[name], { headers: { "Content-Type": type, "Content-Length": String(files[name].size) } }));
+      }
+    }
+    return realFetch(input, init);
+  };
+
+  // The game ships as ~20 small files (pieces/<name>-NNN.webm, listed in pieces/parts.json):
+  // small plain downloads get through flaky networks and picky hosts that choke on one big
+  // file. Each piece is retried, and a piece that stops receiving data is re-requested.
+  const STALL_MS = 8000;
+
+  async function fetchPiece(url) {
+    for (let attempt = 1; ; attempt++) {
+      const ctrl = new AbortController();
+      let timer = 0;
+      const arm = function () { clearTimeout(timer); timer = setTimeout(function () { ctrl.abort(); }, STALL_MS); };
+      try {
+        arm();
+        const res = await realFetch(url, { cache: "no-store", signal: ctrl.signal });
+        if (!res.ok) throw new Error(url + ": " + res.status);
+        const reader = res.body.getReader();
+        const parts = [];
+        for (;;) {
+          arm();
+          const { done, value } = await reader.read();
+          if (done) break;
+          parts.push(value);
+        }
+        clearTimeout(timer);
+        return new Blob(parts);
+      } catch (err) {
+        clearTimeout(timer);
+        if (attempt >= 8) throw new Error((err && err.name === "AbortError" ? "download stalled" : (err && err.message) || err) + " (" + url + ")");
+        status.textContent = "Connection hiccup - retrying (" + attempt + "/7)...";
+        await new Promise(function (ok) { setTimeout(ok, 800 * attempt); });
+      }
+    }
+  }
+
+  // The pieces are scrambled (XOR with a repeating key, see tools/web/split_pieces.py) so filters
+  // that inspect downloads see noise; undo it here.
+  const KEY = new Uint8Array(4096);
+  for (let i = 0; i < KEY.length; i++) KEY[i] = (i * 131 + 71) % 251;
+  async function unscramble(blob) {
+    const b = new Uint8Array(await blob.arrayBuffer());
+    for (let i = 0; i < b.length; i++) b[i] ^= KEY[i & 4095];
+    return new Blob([b]);
+  }
+
+  let manifest = null;
+  let doneBytes = 0;
+
+  async function download(name) {
+    const info = manifest[name];
+    const blobs = [];
+    for (let i = 0; i < info.count; i++) {
+      const raw = await fetchPiece("pieces/" + name + "-" + String(i).padStart(3, "0") + ".webm");
+      const piece = manifest.xor ? await unscramble(raw) : raw;
+      blobs.push(piece);
+      doneBytes += piece.size;
+      bar.style.width = (100 * doneBytes / manifest.total) + "%";
+      status.textContent = "Downloading the game... " + (doneBytes / 1048576).toFixed(1) + " / " + (manifest.total / 1048576).toFixed(1) + " MB";
+    }
+    return new Blob(blobs);
+  }
+
+  async function prepare() {
+    manifest = JSON.parse(await (await fetchPiece("pieces/parts.json")).text());
+    doneBytes = 0;
+    const gz = await download("part1");
+    status.textContent = "Unpacking the engine...";
+    const wasm = await new Response(gz.stream().pipeThrough(new DecompressionStream("gzip"))).blob();
+    files["index.wasm"] = wasm;
+    files["index.pck"] = await download("part2");
+    bar.style.width = "100%";
+    await new Promise(function (ok, bad) {
+      const s = document.createElement("script");
+      s.src = "index.js";
+      s.onload = ok;
+      s.onerror = function () { bad(new Error("couldn't load index.js")); };
+      document.head.appendChild(s);
+    });
+    status.textContent = "Ready!";
+    play.disabled = false;
+    play.textContent = "Play (on this computer)";
+    loaded = true;
+    refreshOnline();
+  }
+
+  // --- Online buttons on the start page ----------------------------------------------
+  function cleanCode(v) { return String(v).toUpperCase().split("").filter(function (c) { return LETTERS.includes(c); }).join("").slice(0, 4); }
+  function refreshOnline() {
+    const k = dreamNet.available();
+    const ok = k !== "" && k !== "pending";
+    hostBtn.disabled = !(loaded && ok);
+    joinBtn.disabled = !(loaded && ok && cleanCode(codeBox.value).length === 4);
+    joinInvite.disabled = !(loaded && ok);
+    if (k === "pending") note.textContent = "Checking online play...";
+    else if (!ok) note.textContent = "Online play isn't available here: " + (dreamNet.why() || "unknown reason.");
+    else note.textContent = "Host: you get a code to send to friends. Join: type the code a friend sent you.";
+    if (k === "pending") setTimeout(refreshOnline, 300);
+  }
+  if (invited) {
+    const c = cleanCode(invited);
+    document.getElementById("inviteCode").textContent = c;
+    joinInvite.textContent = "Join game " + c;
+    codeBox.value = c;
+    inviteBox.hidden = false;
+  }
+  codeBox.addEventListener("input", function () { codeBox.value = cleanCode(codeBox.value); refreshOnline(); });
+  codeBox.addEventListener("keydown", function (e) { if (e.key === "Enter" && !joinBtn.disabled) joinBtn.click(); });
+  hostBtn.addEventListener("click", function () { dreamNet.setIntent({ a: "host" }); start(); });
+  joinBtn.addEventListener("click", function () { dreamNet.setIntent({ a: "join", c: cleanCode(codeBox.value) }); start(); });
+  joinInvite.addEventListener("click", function () { dreamNet.setIntent({ a: "join", c: cleanCode(invited) }); start(); });
+  refreshOnline();
+
+  // --- The room pill over the game: code, players, invite link --------------------------
+  const pill = document.getElementById("pill");
+  const pillText = document.getElementById("pillText");
+  const copyBtn = document.getElementById("copy");
+  const linkBox = document.getElementById("linkBox");
+  let copiedUntil = 0, lastPill = "";
+  setInterval(function () {
+    const i = dreamNet.info();
+    const on = i.st === "host" || i.st === "client" || i.st === "connecting";
+    pill.hidden = !on || !i.code;
+    if (pill.hidden) { linkBox.hidden = true; return; }
+    const n = dreamNet.players();
+    const text = i.st === "connecting" ? "Connecting to game " + i.code + "..." : "Game " + i.code + " \u00b7 " + n + " player" + (n === 1 ? "" : "s");
+    if (text !== lastPill) {  // touch the page only when something changed (no layout work over the game)
+      lastPill = text;
+      if (i.st === "connecting") pillText.innerHTML = "Connecting to game <b></b>...";
+      else pillText.innerHTML = "Game <b></b> &middot; " + n + " player" + (n === 1 ? "" : "s");
+      pillText.querySelector("b").textContent = i.code;
+    }
+    copyBtn.hidden = i.st === "connecting";
+    if (Date.now() > copiedUntil && copyBtn.textContent !== "Copy invite link") copyBtn.textContent = "Copy invite link";
+  }, 400);
+  copyBtn.addEventListener("click", function () {
+    const link = SHARE + "#" + dreamNet.info().code;
+    const done = function () { copyBtn.textContent = "Copied! Paste it to friends"; copiedUntil = Date.now() + 2500; canvas.focus(); };
+    const fallback = function () { linkBox.hidden = false; linkBox.value = link; linkBox.focus(); linkBox.select(); copyBtn.textContent = "Copy the link from the box"; copiedUntil = Date.now() + 6000; };
+    try { navigator.clipboard.writeText(link).then(done, fallback); } catch (e) { fallback(); }
+  });
+  linkBox.addEventListener("blur", function () { setTimeout(function () { linkBox.hidden = true; }, 3000); });
+
+  function start() {
+    if (!loaded) {  // the download failed earlier: this button is "Try again"
+      play.disabled = true;
+      play.textContent = "Loading...";
+      status.textContent = "Downloading...";
+      tryPrepare();
+      return;
+    }
+    play.disabled = true;
+    hostBtn.disabled = joinBtn.disabled = joinInvite.disabled = true;
+    status.textContent = "Starting...";
+    const config = {
+      args: [], canvasResizePolicy: 2, executable: "index", experimentalVK: false, focusCanvas: true,
+      fileSizes: { "index.pck": files["index.pck"].size, "index.wasm": files["index.wasm"].size },
+      gdextensionLibs: [], emscriptenPoolSize: 8, godotPoolSize: 4, ensureCrossOriginIsolationHeaders: false,
+    };
+    const engine = new Engine(config);
+    engine.startGame({
+      onProgress: function (cur, total) { if (total) bar.style.width = (100 * cur / total) + "%"; },
+    }).then(function () {
+      document.getElementById("cover").style.display = "none";
+      document.getElementById("canvas").focus();
+    }, function (err) {
+      status.textContent = "Couldn't start the game here: " + (err && err.message ? err.message : err);
+      play.disabled = false;
+    });
+  }
+
+  play.addEventListener("click", start);
+  function tryPrepare() {
+    prepare().catch(function (err) {
+      status.textContent = "Download failed (" + (err && err.message ? err.message : err) + "). Check your connection and press Try again.";
+      play.disabled = false;
+      play.textContent = "Try again";
+    });
+  }
+  tryPrepare();
+})();
+</script>
