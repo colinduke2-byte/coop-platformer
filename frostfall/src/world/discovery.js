@@ -1,5 +1,5 @@
 // Discovery: places on the overworld are unknown until you come close enough to see them. Finding one shows a banner, adds it to the map
-// and the compass, pays a small reward and counts toward the Wanderer trophies. Hidden places (caches, hermits, ancient trees) have a short range:
+// and the map, pays a small reward and counts toward the Wanderer trophies. Hidden places (caches, hermits, ancient trees) have a short range:
 // you only find them by looking.
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
@@ -20,7 +20,7 @@ export const PLACE_NAME = {
 };
 // What a place looks like on the map: a colour index and whether it is hostile.
 export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6, tower: 6, grove: 8, hamlet: 13, standing: 14, barrow: 14, cave: 6, foundry: 11, wreck: 6, lighthouse: 13, courtyard: 6, spring: 15, rest: 12, cache: 13, hermit: 8, ancient: 14 };
-// Tall things you can see from a long way off: a place on this list is "sighted" (compass and map show a ? for it) from far away.
+// Tall things you can see from a long way off: a place on this list is "sighted" (the map shows a ? for it) from far away.
 export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest', 'hartspire', 'saltgate']);
 export const SIGHT_RANGE = 42;
 export const isSighted = (mapId, p) => !!S.sighted?.[mapId + ':' + p.id];

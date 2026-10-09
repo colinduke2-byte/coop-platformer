@@ -1,5 +1,4 @@
 import { ITEMS } from '../data/items.js';
-import { PLACE_COL } from '../world/discovery.js';
 import { dangerOfEnemy, dangerName, DANGER_COL } from '../systems/danger.js';
 import { BOSS_TAUNTS } from '../data/story.js';
 import { statusList } from '../systems/status.js';
@@ -40,7 +39,7 @@ export default class HudScene extends Phaser.Scene {
 
   create() {
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
-    this.quickTxt = null; this.compassTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
+    this.quickTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
     this.g = this.add.graphics();
     this.flash = { hp: 0, mp: 0, sp: 0 };
     this.labels = BARS.map((b, i) => txt(this, 3, 3 + i * 8, b.label, 5));
@@ -358,32 +357,6 @@ export default class HudScene extends Phaser.Scene {
     if (!night) { g.fillStyle(C[13]); g.fillRect(mx + 1, my + 1, 4, 4); }
   }
 
-  drawCompass(g, pl) {
-    const gs = this.gs, outdoors = gs.def && (gs.def.stream || gs.def.snow) && !gs.def.quick;
-    if (!outdoors || settings.compass === false || ui.modal) { (this.compassTxt || []).forEach((t) => t.setVisible(false)); return false; }
-    const CW = 160, cx = W / 2, top = 1, half = Math.PI / 2;
-    if (!this.compassTxt) this.compassTxt = ['N', 'E', 'S', 'W'].map((l) => txt(this, 0, top + 1, l, 5));
-    g.fillStyle(C[0], 0.6); g.fillRect(cx - CW / 2, top, CW, 8);
-    g.fillStyle(C[4]); g.fillRect(cx - CW / 2, top + 8, CW, 1);
-    const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
-    const a0 = Math.atan2(pl.face.y || 0, pl.face.x || 1);
-    const xOf = (bearing) => { const rel = wrap(bearing - a0); return Math.abs(rel) > half ? null : Math.round(cx + (rel / half) * (CW / 2 - 4)); };
-    ['N', 'E', 'S', 'W'].forEach((l, i) => { const x = xOf([-Math.PI / 2, 0, Math.PI / 2, Math.PI][i]); const t = this.compassTxt[i]; if (x == null) t.setVisible(false); else t.setVisible(true).setPosition(x - 2, top + 1); });
-    const px = pl.x / 16, py = (pl.y + 3) / 16, mark = (tx, ty, col, big) => {
-      const x = xOf(Math.atan2(ty - py, tx - px)); if (x == null) return;
-      g.fillStyle(C[0]); g.fillRect(x - 2, top + 1, big ? 5 : 3, big ? 6 : 4); g.fillStyle(C[col]); g.fillRect(x - 1, top + 2, big ? 3 : 1, big ? 4 : 2);
-    };
-    // nearest discovered places on this map
-    const pois = (gs.built.pois || []).filter((p) => S.discovered?.[gs.mapId + ':' + p.id] && Math.hypot(p.x - px, p.y - py) < 90).sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py)).slice(0, 8);
-    for (const p of pois) mark(p.x, p.y, PLACE_COL[p.kind] ?? 6, false);
-    for (const p of gs.built.pois || []) if (S.sighted?.[gs.mapId + ':' + p.id] && !S.discovered?.[gs.mapId + ':' + p.id]) mark(p.x, p.y, 4, false);
-    const wp = S.flags.waypoint; if (wp && wp.map === gs.mapId) mark(wp.x, wp.y, 8, true);
-    const tid = trackedId(), tg = tid && TARGETS[tid]?.(S.quests[tid]);
-    if (tg && tg.map === gs.mapId) mark(tg.x, tg.y, 15, true);
-    g.fillStyle(C[6]); g.fillRect(cx, top + 7, 1, 2);
-    return true;
-  }
-
   update(_, ms) {
     const dt = ms / 1000;
     this.updateIntro(dt); this.updateSub(dt);
@@ -558,12 +531,10 @@ export default class HudScene extends Phaser.Scene {
       this.bossName.setVisible(true);
     } else this.bossName?.setVisible(false);
 
-    // compass: a strip at the top showing where quests, your waypoint and the places you have found lie, relative to the way you face
-    this.compassOn = this.drawCompass(g, pl);
     // target bar: lock-on target, or whoever the bow is aimed at
     const tg = !(bs && bs.engaged && !bs.dead) ? (pl.target || (pl.drawing ? pl.pickTarget(190) : null)) : null;
     if (tg && !tg.dead) {
-      const oy = (this.hint ? this.hintH + 2 : 0) + (this.compassOn ? 9 : 0), tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
+      const oy = (this.hint ? this.hintH + 2 : 0), tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
       g.fillStyle(C[0], 0.7); g.fillRect(tx - 4, 2 + oy, tw + 8, 17);
       g.fillStyle(C[0]); g.fillRect(tx - 1, 11 + oy, tw + 2, 7);
       g.fillStyle(C[1]); g.fillRect(tx, 12 + oy, tw, 5);

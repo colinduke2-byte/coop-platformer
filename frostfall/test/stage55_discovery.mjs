@@ -33,14 +33,8 @@ const rum = await G(async () => {
 });
 check('a hermit\'s rumour reveals a place and sets a waypoint', rum.gained === 1 && rum.wp, JSON.stringify(rum));
 
-// compass
-await h.sleep(600);
-check('the compass strip shows outdoors', await G(() => window.__ff.game.scene.getScene('Hud').compassOn === true));
-await G(() => { window.__ff.S.flags.waypoint = { map: 'forest', x: 100, y: 40 }; });
-await h.shot('s55_compass');
-await G(async () => { (await import('/src/systems/settings.js')).settings.compass = false; }); await h.sleep(300);
-check('the compass can be turned off', await G(() => window.__ff.game.scene.getScene('Hud').compassOn === false));
-await G(async () => { (await import('/src/systems/settings.js')).settings.compass = true; });
+// the compass strip is gone from the top of the screen
+check('there is no compass strip', await G(() => window.__ff.game.scene.getScene('Hud').compassOn === undefined));
 
 // fast travel takes time
 const ft = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; const f = g.fires?.[0]; if (!f) return null; S.time = 600; g.enemies.getChildren().slice().forEach((e) => e.destroy()); const t0 = S.time; g.player.setPosition(60, 60); g.fastTravel({ x: f.x, y: f.y, key: f.key }); return { dt: (S.time - t0 + 1440) % 1440, dist: Math.hypot(f.x - 60, f.y - 60) / 16 }; });

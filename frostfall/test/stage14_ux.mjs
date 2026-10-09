@@ -48,7 +48,7 @@ await tap('KeyE', 50);
 await tap('KeyS', 50);
 await h.shot('s14_options');
 // ---------------- rebinding
-for (let i = 0; i < 8; i++) await tap('KeyS', 50); await tap('KeyE', 80); await h.sleep(250);
+for (let i = 0; i < 7; i++) await tap('KeyS', 50); await tap('KeyE', 80); await h.sleep(250);
 // CONTROLS list: cursor on first action (MOVE UP). move to SWORD (index 5)
 for (let i = 0; i < 5; i++) await tap('KeyS', 50);
 await h.shot('s14_controls');

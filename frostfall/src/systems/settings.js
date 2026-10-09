@@ -16,7 +16,6 @@ export const settings = {
   sneakToggle: false,     // sneak key toggles instead of hold
   holdChain: true,        // holding the sword key keeps chaining the combo
   cvd: 'off',             // colour-blind assist: off | deutan | protan | tritan
-  compass: true,          // the compass strip at the top of the screen outdoors
   largeUi: false,         // bigger HUD bars and text
   autoRotate: true,       // phone held upright + controller in use: turn the picture sideways to fill the screen
   slot: 1,                // active save slot (1-3)

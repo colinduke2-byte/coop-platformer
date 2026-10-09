@@ -34,7 +34,7 @@ const HINTS = {
   'FULLSCREEN': 'FILL THE SCREEN. ALSO F11', 'SLOT': 'THREE SAVE SLOTS. A/D SWITCH', 'DIFFICULTY': 'EASY, NORMAL OR HARD. CHANGES ENEMIES, PRICES AND DROPS',
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'BRIGHT SCREEN FLASHES. TURN OFF IF THEY BOTHER YOU', 'PIXEL SCALE': 'INTEGER: CRISP. FIT: FILLS THE WINDOW',
   'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD THE SWORD KEY TO KEEP THE COMBO GOING',
-  'LARGE UI': 'BIGGER TEXT AND BARS', 'ROTATE VIEW': 'PHONE: TURN THE PICTURE TO FIT WHEN HELD UPRIGHT', 'COMPASS': 'THE STRIP AT THE TOP OF THE SCREEN OUTDOORS',
+  'LARGE UI': 'BIGGER TEXT AND BARS', 'ROTATE VIEW': 'PHONE: TURN THE PICTURE TO FIT WHEN HELD UPRIGHT', 
   'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
   'DURABILITY': 'GEAR WEARS OUT AND NEEDS REPAIR. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES. A/D CHANGE',
   'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD AND SEE WHAT IT SENDS', 'QUIT TO TITLE': 'BACK TO THE TITLE SCREEN. SAVE FIRST',
@@ -42,7 +42,7 @@ const HINTS = {
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
   if (S.quick) rows.splice(rows.indexOf('SAVE GAME'), 2);        // no saving or loading inside Arena Mode
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
@@ -70,7 +70,7 @@ export function systemTab(m) {
 
   // The list is long, so it is grouped into four pages. Q jumps to the first row of the next page; the page name shows under the list.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
-    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
+    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
   const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
   function nextPage() {
     const to = (pageOf(rows[m.cursor]) + 1) % PAGES.length;
@@ -108,7 +108,6 @@ export function systemTab(m) {
       case 'SNEAK MODE': toggle('sneakToggle'); break;
       case 'HOLD TO CHAIN': toggle('holdChain'); break;
       case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
-      case 'COMPASS': toggle('compass'); break;
       case 'ROTATE VIEW': settings.autoRotate = settings.autoRotate === false; saveSettings(); m.dirty = true; sfx.play('select'); break;
       case 'CONTROLLER': mode = 'pad'; pc.cursor = 0; pc.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'CONTROLS': mode = 'controls'; ctrl.cursor = 0; ctrl.scroll = 0; m.dirty = true; sfx.play('select'); break;
@@ -261,7 +260,6 @@ export function systemTab(m) {
         else if (r === 'SNEAK MODE') { v = settings.sneakToggle ? 'TOGGLE' : 'HOLD'; }
         else if (r === 'HOLD TO CHAIN') { v = settings.holdChain ? 'ON' : 'OFF'; vc = settings.holdChain ? 8 : 4; }
         else if (r === 'COLOUR MODE') { v = settings.cvd.toUpperCase(); vc = settings.cvd === 'off' ? 4 : 8; }
-        else if (r === 'COMPASS') { v = settings.compass === false ? 'OFF' : 'ON'; vc = settings.compass === false ? 4 : 8; }
         else if (r === 'ROTATE VIEW') { v = settings.autoRotate === false ? 'OFF' : 'AUTO'; vc = settings.autoRotate === false ? 4 : 8; }
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
         row(g, i, y, r, v, vc);
