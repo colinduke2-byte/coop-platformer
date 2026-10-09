@@ -380,13 +380,13 @@ export default class HudScene extends Phaser.Scene {
 
     // panels
     const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;
+    g.fillStyle(C[0], 0.62); g.fillRect(0, 1, 16, rs * BARS.length + 1);       // the same translucent grey as behind the gold and arrow counts
     BARS.forEach((b, i) => {
       this.flash[b.key] -= dt;
       const x = 17, y = 3 + i * rs;
       const w = Math.min(big ? 126 : 110, Math.round(S[b.max] * wk));
       const frac = Math.max(0, S[b.key] / S[b.max]);
       this.labels[i].y = y - (big ? 0 : 0);
-      g.fillStyle(C[0]); g.fillRect(0, y - 2, 16, rs); g.fillStyle(C[2]); g.fillRect(1, y - 1, 14, rs - 2);
       g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, bh + 2);
       g.fillStyle(C[1]); g.fillRect(x, y, w, bh);
       const fw = Math.round(w * frac);
