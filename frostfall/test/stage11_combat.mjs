@@ -18,7 +18,7 @@ const dummy = (kind, dx = 40, extra = {}) => G(([kind, dx, extra]) => {
   const g = window.__ff.game.scene.getScene('Game'); const e = g.addEnemy(kind, g.player.x + dx, g.player.y);
   e.cfg = { ...e.cfg, detect: 0, speed: 0, ...extra }; e.hp = e.maxHp; return e.maxHp;
 }, [kind, dx, extra]);
-const enemy = () => G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e && { hp: e.hp, dead: e.dead, stun: e.stun, x: e.x, slow: e.slowT, state: e.state, guard: e.guardBroken || 0 }; });
+const enemy = () => G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e && { hp: e.hp, max: e.maxHp, dead: e.dead, stun: e.stun, x: e.x, slow: e.slowT, state: e.state, guard: e.guardBroken || 0 }; });
 
 // ---- elemental weakness: fire hurts draugr more than frost
 await reset(); await dummy('draugr', 50);
@@ -85,12 +85,12 @@ await rel('KeyF');
 await reset(); await dummy('warden', 14);
 await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: -1, y: 0 }; });
 await tap('KeyJ', 60); await h.sleep(250);
-check('Draugr Warden blocks frontal sword hits', (await enemy()).hp === 60);
+check('Draugr Warden blocks frontal sword hits', (await enemy()).hp === (await enemy()).max);
 await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; e.guardBroken = 0; window.__ff.S.sp = 100; const p = window.__ff.game.scene.getScene('Game').player; p.lockT = 0; p.swing = null; });
 await h.sleep(500);
 await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; });
 await tap('KeyJ', 60); await h.sleep(250);
-check('...but takes damage from behind', (await enemy()).hp < 60);
+check('...but takes damage from behind', (await enemy()).hp < (await enemy()).max);
 
 // ---- two-handed weapon & dual wield
 await reset();

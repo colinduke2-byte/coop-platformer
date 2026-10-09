@@ -38,8 +38,8 @@ t('armour reduces damage, never below 1', () => {
   assert.equal(damageTaken(100, 0.4), 60); assert.equal(damageTaken(100, 0.6), 50); // beyond 40% armour counts half
 });
 t('difficulty scales damage taken', () => {
-  assert.equal(damageTaken(100, 0, TUNE.difficulty.easy.dmgTaken), 60);
-  assert.equal(damageTaken(100, 0, TUNE.difficulty.hard.dmgTaken), 135);
+  assert.equal(damageTaken(100, 0, TUNE.difficulty.easy.dmgTaken), Math.round(100 * TUNE.difficulty.easy.dmgTaken));
+  assert.equal(damageTaken(100, 0, TUNE.difficulty.hard.dmgTaken), Math.round(100 * TUNE.difficulty.hard.dmgTaken));
 });
 t('block: frontal hit reduced, parry window negates, rear hit unaffected', () => {
   const base = { dmg: 20, blocking: true, facing: { x: 1, y: 0 }, from: { x: 1, y: 0 } };

@@ -41,7 +41,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.body.setSize(bw * k, bh * k).setOffset((ox - (nat.cw || 16) / 2) * k + nat.w / 2, (oy - (nat.ch || 16) / 2) * k + nat.h / 2);
     } else this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
-    this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
+    const regular = !cfg.title && !cfg.passive && cfg.kind !== 'boss';
+    this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp * (regular ? TUNE.mobs.hp : 1));
+    if (regular) this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * TUNE.mobs.dmg) };
     this.tier = spec.tier || 0;
     this.poise = 0;
     if (cfg.scale && !nat) this.setScale(cfg.scale);
