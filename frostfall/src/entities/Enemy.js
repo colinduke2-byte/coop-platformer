@@ -18,24 +18,33 @@ import { walkFrame } from '../util.js';
 import { modMul } from '../data/mods.js';
 import { routePos } from '../world/roamers.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
+import { nativeSpec, ensureNative } from '../art/native_registry.js';
+import '../art/native/index.js';
 import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind, spec = {}) {
     const cfg = ENEMIES[kind];
-    super(scene, x, y, cfg.tex, 'down0');
+    const nat = nativeSpec(kind);                          // native-pixel art: drawn at its on-screen size and shown at scale 1
+    const texKey = nat ? ensureNative(scene, kind) : cfg.tex;
+    super(scene, x, y, texKey, 'down0');
+    this.native = nat;
+    this.texKey = texKey;
     this.kind = kind;
     this.cfg = (kind === 'wolf' && S.flags.alphaSpared) ? { ...cfg, detect: 0 } : cfg;   // the pack is calmer once its alpha was spared
     scene.add.existing(this);
     scene.physics.add.existing(this);
     const [bw, bh, ox, oy] = cfg.body;
-    this.body.setSize(bw, bh).setOffset(ox, oy);
+    if (nat) {      // the same world-space box the stretched 16px sprite had: size * scale, offset measured from the sprite centre
+      const k = nat.scale;
+      this.body.setSize(bw * k, bh * k).setOffset((ox - 8) * k + nat.w / 2, (oy - 8) * k + nat.h / 2);
+    } else this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
     this.tier = spec.tier || 0;
     this.poise = 0;
-    if (cfg.scale) this.setScale(cfg.scale);
+    if (cfg.scale && !nat) this.setScale(cfg.scale);
     const ng = S.ngPlus || 0;
     if (ng > 0 && !cfg.title) { this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.15 * ng)) }; this.maxHp = Math.round(this.maxHp * (1 + 0.4 * ng)); }
     this.camp = spec.camp || null;
@@ -76,6 +85,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.wp = null;
   }
 
+  // Native-pixel art is already at its on-screen size, so scale requests (bosses call setScale) are ignored.
+  setScale(x, y) { return this.native ? this : super.setScale(x, y); }
+  get vs() { return this.native ? this.native.scale : this.scaleX; }     // on-screen scale, whatever the art
   get rect() { const b = this.body; return new Phaser.Geom.Rectangle(b.x, b.y, b.width, b.height); }
   get cx() { return this.body.center.x; }
   get cy() { return this.body.center.y; }
@@ -560,7 +572,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     } else {
       const k = facingKind(this.face.x, this.face.y);
       let pf = null;
-      if (this.hasPoses === undefined) this.hasPoses = this.scene.textures.get(this.cfg.tex).has('atkdown0');
+      if (this.hasPoses === undefined) this.hasPoses = this.scene.textures.get(this.texKey).has('atkdown0');
       if (this.hasPoses && !this.dead) {
         if (this.flashT > 0 || (this.stun > 0.05 && this.state !== 'recover')) pf = 'hurt0';
         else if (this.state === 'windup') pf = 'atk' + k + '0';
@@ -581,7 +593,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setAlpha(this.hidden ? 0 : this.cfg.ambush && !this.alerted ? 0.28 : this.cfg.ghostly ? 0.62 : 1);
     this.shadow.setVisible(!this.hidden);
     this.updateBlade();
-    if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 18 - (this.scaleX > 1 ? 10 : 0))).setDepth(99300);
+    if (this.marker) this.marker.setPosition(Math.round(this.x - 2), Math.round(this.y - 18 - (this.vs > 1 ? 10 : 0))).setDepth(99300);
   }
 
   // Held weapon raised during the telegraph and swung during the attack.
@@ -713,7 +725,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shadow.destroy();
     this.weaponImg?.destroy(); this.weaponImg = null;
     const sc = this.scene, dir = this.flipX ? -1 : 1;
-    const dframe = hasClips(this.cfg.tex) ? clipFrame(this.cfg.tex, 'death') : (this.scene.textures.get(this.cfg.tex).has('dead0') ? 'dead0' : null);
+    const dframe = hasClips(this.cfg.tex) ? clipFrame(this.cfg.tex, 'death') : (this.scene.textures.get(this.texKey).has('dead0') ? 'dead0' : null);
     if (dframe) { this.setFrame(dframe); if (dframe === 'dead0') this.setFlipX(false); }
     // fall over, lie there a moment, then crumble away
     sc.tweens.add({
