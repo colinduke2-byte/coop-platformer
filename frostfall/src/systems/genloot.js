@@ -14,24 +14,24 @@ export const RARITY = [
 // slot -> base templates (stats at tier 0; they grow with tier)
 const BASES = {
   weapon: [
-    { name: 'Sword', type: 'weapon', icon: ['sword', 4], dmg: 12 },
-    { name: 'Axe', type: 'weapon', style: 'axe', icon: ['sword', 10], dmg: 14 },
+    { name: 'Sword', type: 'weapon', icon: ['sword_steel', 4], dmg: 12 },
+    { name: 'Axe', type: 'weapon', style: 'axe', icon: ['axe_bearded', 10], dmg: 14 },
     { name: 'Dagger', type: 'weapon', style: 'dagger', icon: ['dagger_dirk', 5], dmg: 8, swing: 0.8, costMul: 0.8 },
-    { name: 'Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 15], dmg: 20 },
+    { name: 'Greatsword', type: 'weapon2h', style: 'great', icon: ['sword_gs_iron', 15], dmg: 20 },
     { name: 'Staff', type: 'weapon', style: 'staff', icon: ['staff_hazel', 9], dmg: 5, swing: 0.9, spellMul: 1.1, bolt: 'frost' },
     { name: 'Halberd', type: 'weapon2h', style: 'halberd', icon: ['halberd_iron', 4], dmg: 18, swing: 1.25, costMul: 1.4, sizeAdd: 3 },
-    { name: 'Spear', type: 'weapon', style: 'spear', icon: ['spear', 9], dmg: 11 },
-    { name: 'Mace', type: 'weapon', style: 'mace', icon: ['mace', 4], dmg: 13 },
-    { name: 'Hand Axe', type: 'weapon', style: 'axe', icon: ['axe', 10], dmg: 13 },
+    { name: 'Spear', type: 'weapon', style: 'spear', icon: ['spear_hunting', 9], dmg: 11 },
+    { name: 'Mace', type: 'weapon', style: 'mace', icon: ['mace_war', 4], dmg: 13 },
+    { name: 'Hand Axe', type: 'weapon', style: 'axe', icon: ['axe_hand', 10], dmg: 13 },
   ],
-  bow: [{ name: 'Bow', type: 'bow', icon: ['bow', 10], dmg: 9 }, { name: 'Longbow', type: 'bow', icon: ['bow', 8], dmg: 12 }],
-  shield: [{ name: 'Buckler', type: 'shield', icon: ['shield', 9], block: 0.55, cost: 0.8 }, { name: 'Kite Shield', type: 'shield', icon: ['shield', 4], block: 0.68, cost: 0.9 }],
+  bow: [{ name: 'Bow', type: 'bow', icon: ['bow_hunting', 10], dmg: 9 }, { name: 'Longbow', type: 'bow', icon: ['bow_long', 8], dmg: 12 }],
+  shield: [{ name: 'Buckler', type: 'shield', icon: ['shield_wooden', 9], block: 0.55, cost: 0.8 }, { name: 'Kite Shield', type: 'shield', icon: ['shield_iron', 4], block: 0.68, cost: 0.9 }],
   armor: [
-    { name: 'Jerkin', type: 'armor', weight: 'light', icon: ['armor', 9], armor: 0.09 },
-    { name: 'Hauberk', type: 'armor', weight: 'medium', icon: ['armor', 4], armor: 0.18 },
-    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor', 3], armor: 0.28, moveMul: 0.94 },
+    { name: 'Jerkin', type: 'armor', weight: 'light', icon: ['armor_leathers', 9], armor: 0.09 },
+    { name: 'Hauberk', type: 'armor', weight: 'medium', icon: ['armor_hauberk', 4], armor: 0.18 },
+    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28, moveMul: 0.94 },
   ],
-  charm: [{ name: 'Charm', type: 'charm', icon: ['charm', 12] }, { name: 'Ring', type: 'charm', icon: ['charm', 14] }, { name: 'Amulet', type: 'charm', icon: ['charm', 10] }],
+  charm: [{ name: 'Charm', type: 'charm', icon: ['charm_bear', 12] }, { name: 'Ring', type: 'charm', icon: ['charm_manaring', 14] }, { name: 'Amulet', type: 'charm', icon: ['charm_sun', 10] }],
 };
 const SLOT_WEIGHT = [['weapon', 34], ['bow', 12], ['shield', 12], ['armor', 26], ['charm', 16]];
 

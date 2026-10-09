@@ -2,6 +2,8 @@
 // Nothing is loaded from disk. Every colour is an index into PAL.
 import { PAL, T, TILE, TILE_COUNT } from '../config.js';
 import { hash } from '../util.js';
+import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
+import { DAG_HI, DAG_LO, outlineCells, iconFromCells, heldFromCells, LET, Cb, col2 } from './cells.js';
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');
@@ -865,8 +867,6 @@ function buildFx(scene) {
 // Every dagger has its own silhouette. A shape is a blade profile (length, thickness along the blade, optional sideways wave,
 // optional edge notches), a guard, a grip and its own accent colours. The icon (diagonal) and the held sprite (horizontal) are
 // both drawn from the same profile, so what you pick up is what you swing.
-const DAG_HI = [1, 2, 3, 4, 5, 6, 6, 8, 10, 10, 13, 12, 13, 13, 4, 6];
-const DAG_LO = [0, 0, 1, 2, 3, 4, 5, 1, 7, 1, 9, 9, 11, 12, 1, 14];
 export const DAGGER_SHAPES = {
   knife:    { L: 7,  t: (i, L) => (i < L - 2 ? 2 : 1), guard: 'nub', grip: 3 },
   shiv:     { L: 7,  t: (i) => (i % 3 === 2 ? 1 : 2), guard: null, grip: 4, wrap: 6, gripCol: 10 },
@@ -900,42 +900,6 @@ function daggerCells(shape, col) {
   if (D.guard === 'hook') { cells.push([0, 1, gc], [0, 2, gc], [-1, 2, gc]); }
   return cells;
 }
-function outlineCells(map, w, h, put) {
-  const add = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (map.has(y * w + x)) continue;
-    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => map.has((y + dy) * w + (x + dx)) && x + dx >= 0 && x + dx < w)) add.push([x, y]);
-  }
-  for (const [x, y] of add) put(0, x, y);
-}
-// Draw any weapon from its cells ([u, v, colour], u along the weapon from the butt/hilt, v across) as a 16x16 icon rotated 45 degrees.
-function iconFromCells(g, cells) {
-  const src = new Map();
-  let u0 = 1e9, u1 = -1e9;
-  for (const [u, v, c] of cells) { src.set(u + ',' + v, c); u0 = Math.min(u0, u); u1 = Math.max(u1, u); }
-  const len = u1 - u0 + 1, sc = Math.min(1, 14 / (len * 0.7071 * 1.6)), uc = (u0 + u1) / 2, map = new Map();
-  const rr = Math.max(0, Math.round(0.5 / sc - 0.2));              // when shrinking, look around the sample point so thin shafts survive
-  for (let Y = 0; Y < 16; Y++) for (let X = 0; X < 16; X++) {
-    const dx = X - 7.5, dy = Y - 8, u = ((dx - dy) / 1.4142) / sc * 0.98 + uc, v = ((dx + dy) / 1.4142) / sc * 0.98;
-    let best, bd = 1e9;
-    for (let du = -rr; du <= rr; du++) for (let dv = -rr; dv <= rr; dv++) {
-      const c = src.get(Math.round(u) + du + ',' + (Math.round(v) + dv));
-      if (c === undefined) continue;
-      const d = du * du + dv * dv * 1.3 + (c === 0 ? 0.6 : 0);
-      if (d < bd) { bd = d; best = c; }
-    }
-    if (best !== undefined) map.set(Y * 16 + X, best);
-  }
-  for (const [k, c] of map) R(g, c, k % 16, Math.floor(k / 16));
-  outlineCells(map, 16, 16, (c, x, y) => R(g, c, x, y));
-}
-// ... and as a horizontal held sprite, hilt at the left, vertically centred at row `cy` of a W x H canvas.
-function heldFromCells(g, cells, W, H, cy, ox = 6) {
-  const map = new Map();
-  for (const [u, v, c] of cells) { const x = u + ox, y = v + cy; if (x >= 0 && x < W && y >= 0 && y < H) map.set(y * W + x, c); }
-  for (const [k, c] of map) R(g, c, k % W, Math.floor(k / W));
-  outlineCells(map, W, H, (c, x, y) => R(g, c, x, y));
-}
 export const drawDaggerIcon = (g, shape, col) => iconFromCells(g, daggerCells(shape, col));
 export const drawDaggerHeld = (g, shape, col) => heldFromCells(g, daggerCells(shape, col), 24, 9, 4);
 
@@ -943,20 +907,6 @@ export const drawDaggerHeld = (g, shape, col) => heldFromCells(g, daggerCells(sh
 // Built from a few shape primitives in blade-local cells: slab (a column band between two edge functions), orb, prong, spire.
 // colour letters: B/H/L = the item's colour (main/highlight/shadow), W wood, T tan, K dark, S snow, C cyan, c pale cyan, G gold,
 // O orange, R red, E green, M moss, P purple, D black, I iron grey, N pale iron.
-const LET = { W: 9, T: 10, K: 1, S: 6, C: 15, c: 5, G: 13, O: 12, R: 11, E: 8, M: 7, P: 14, D: 0, I: 3, N: 4 };
-function Cb() {
-  const m = new Map();
-  const put = (u, v, c) => { m.set(Math.round(u) + ',' + Math.round(v), c); };
-  return {
-    put,
-    cells: () => [...m.entries()].map(([k, c]) => { const [u, v] = k.split(',').map(Number); return [u, v, c]; }),
-    slab(u0, u1, top, bot, c) { for (let u = u0; u <= u1; u++) for (let v = Math.round(top(u)); v <= Math.round(bot(u)); v++) put(u, v, typeof c === 'function' ? c(u, v) : c); },
-    orb(cu, cv, r, c, c2) { for (let u = Math.floor(cu - r); u <= Math.ceil(cu + r); u++) for (let v = Math.floor(cv - r); v <= Math.ceil(cv + r); v++) if ((u - cu) ** 2 + (v - cv) ** 2 <= r * r + 0.3) put(u, v, c2 && (u + v) % 2 && u < cu ? c2 : c); },
-    ring(cu, cv, r, c) { for (let a = 0; a < 360; a += 8) put(cu + Math.cos((a * Math.PI) / 180) * r, cv + Math.sin((a * Math.PI) / 180) * r, c); },
-    line(u0, v0, u1, v1, c) { const n = Math.max(Math.abs(u1 - u0), Math.abs(v1 - v0), 1); for (let i = 0; i <= n; i++) put(u0 + ((u1 - u0) * i) / n, v0 + ((v1 - v0) * i) / n, c); },
-  };
-}
-const col2 = (L, col) => (L === 'B' ? col : L === 'H' ? (DAG_HI[col] ?? 6) : L === 'L' ? (DAG_LO[col] ?? 1) : LET[L] ?? col);
 
 // Staff: shaft of `len` cells ending at u = 0 (the tip side is positive u); each shape draws its head.
 export const STAFF_SHAPES = {
@@ -1002,6 +952,7 @@ export const drawHalberdHeld = (g, shape, col) => heldFromCells(g, longCells(HAL
 // Item icons (16x16). kind picks a drawing routine; col tints it.
 export function buildIcon(scene, key, kind, col = 6) {
   if (kind.startsWith('dagger_')) { tex(scene, key, 16, 16, (g) => drawDaggerIcon(g, kind.slice(7), col)); return; }
+  if (isGearKind(kind)) { tex(scene, key, 16, 16, (g) => drawGearIcon(g, kind, col)); return; }
   if (kind.startsWith('staff_')) { tex(scene, key, 16, 16, (g) => drawStaffIcon(g, kind.slice(6), col)); return; }
   if (kind.startsWith('halberd_')) { tex(scene, key, 16, 16, (g) => drawHalberdIcon(g, kind.slice(8), col)); return; }
   tex(scene, key, 16, 16, (g) => {
@@ -1088,6 +1039,7 @@ export function buildIcon(scene, key, kind, col = 6) {
 // Held weapon / shield sprites (drawn while swinging / blocking). `kind`: blade | greatblade | shield.
 export function buildHeld(scene, key, kind, col = 5) {
   if (kind.startsWith('dagger_')) { tex(scene, key, 24, 9, (g) => drawDaggerHeld(g, kind.slice(7), col)); return; }
+  if (isGearKind(kind)) { const z = gearHeldSize(kind); if (z) { tex(scene, key, z.W, z.H, (g) => drawGearHeld(g, kind, col)); return; } }
   if (kind.startsWith('staff_')) { tex(scene, key, 36, 11, (g) => drawStaffHeld(g, kind.slice(6), col)); return; }
   if (kind.startsWith('halberd_')) { tex(scene, key, 42, 19, (g) => drawHalberdHeld(g, kind.slice(8), col)); return; }
   if (kind === 'shield') {
@@ -1136,4 +1088,4 @@ export function generateArt(scene) {
 }
 
 // Which held-weapon sprite an item uses.
-export const heldKind = (it) => (it.type === 'shield' ? 'shield' : /^(dagger|staff|halberd)_/.test(it.icon?.[0] || '') ? it.icon[0] : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);
+export const heldKind = (it) => (it.type === 'shield' ? (it.icon?.[0]?.startsWith('shield_') ? it.icon[0] : 'shield') : /^(dagger|staff|halberd|sword|axe|spear|mace|hammer|bow|shield|armor|charm)_/.test(it.icon?.[0] || '') && it.type !== 'armor' && it.type !== 'charm' && it.type !== 'bow' ? it.icon[0] : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);

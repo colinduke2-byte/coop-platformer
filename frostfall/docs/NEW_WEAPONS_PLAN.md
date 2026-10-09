@@ -123,3 +123,12 @@ All live in `TUNE.player.styles` and the item rows, so a change is one number.
 ## Open questions
 - Should staves also work as the off-hand "tome" slot with a shield, or only as the main hand? (Plan: main hand only.)
 - One free dagger sneak-kill per fight on non-bosses (Nightshade) might be too strong in the arena; plan: arena heroes cannot use it.
+
+## Gear art pass (done)
+Every other weapon, shield, armour and charm now has its own hand-built shape instead of a recoloured template (`src/art/gear.js`, helpers in `src/art/cells.js`):
+- Swords 11 + greatswords 5: one blade profile each (rusty notches, fullered steel, winged Nordic, jagged Grave-Brand, flame blade, hooked Drowned Hook, basket-hilt cutlasses, crystal Shardblade, bone, wolf-pommel Packbreaker, crowned King's Blade).
+- Axes, picks, hammers, maces and spears 16: their own heads.
+- Bows 6 (including two crossbows) and shields 5, each with a held sprite for shields.
+- Armour 21: a different garment each. Charms 25: rings, pendants, brooches, crowns, a lamp, a banner, a collar.
+- Generated loot bases now use the same shapes, so random chest gear no longer looks like old templates.
+`test/stage69_gear_art.mjs` checks that all 124 pieces of gear have distinct icons and that weapons and shields have distinct held sprites.
