@@ -51,14 +51,11 @@ export default class HudScene extends Phaser.Scene {
     // bottom-left: spell + shout slots
     this.spellIcons = Object.fromEntries(SPELL_ORDER.map((k) => [k, this.add.image(4, H - 20, 'icon_' + k).setOrigin(0)]));
     this.shoutIcon = this.add.image(25, H - 20, 'icon_shout').setOrigin(0);
-    this.spellLbl = txt(this, 4, H - 28, 'Q', 4);
-    this.shoutLbl = txt(this, 25, H - 28, 'R', 4);
-    this.spellName = txt(this, 44, H - 12, '', 5);
     // potions
     this.potIcons = POTIONS.map(([id, k], i) => {
       const x = W - 3 * 21 + i * 20 - 2;
       const img = this.add.image(x + 1, H - 20, iconKey(id)).setOrigin(0);
-      return { id, img, key: txt(this, x + 1, H - 28, k, 4), cnt: txt(this, x + 10, H - 9, '', 6), x };
+      return { id, img, cnt: txt(this, x + 10, H - 9, '', 6), x };
     });
 
     this.toasts = [];
@@ -414,9 +411,6 @@ export default class HudScene extends Phaser.Scene {
     this.arrImg.x = W - 16 - Math.max(gw, aw);
 
     // spell + shout slots
-    g.fillStyle(C[0], 0.62);
-    g.fillRect(0, H - 31, 104, 31);
-    g.fillRect(W - 66, H - 31, 66, 31);
     const sp = SPELLS[S.spell];
     const box = (x, y) => { g.fillStyle(C[0], 0.7); g.fillRect(x - 1, y - 1, 18, 18); g.lineStyle(1, C[3]); g.strokeRect(x - 0.5, y - 0.5, 17, 17); };
     box(4, H - 20); box(25, H - 20);
@@ -424,10 +418,8 @@ export default class HudScene extends Phaser.Scene {
     const afford = S.mp >= pl.spellCost(sp);
     if (pl.heat > 0.05) { g.fillStyle(C[0]); g.fillRect(4, H - 3, 16, 2); g.fillStyle(pl.heat > 1.8 ? C[11] : C[12]); g.fillRect(4, H - 3, Math.round(16 * pl.heat / P.cast.heatMax), 2); }
     this.spellIcons[S.spell].setAlpha(afford ? 1 : 0.4);
-    this.spellName.setText(sp.name);
     const sid = currentShout(), SH = TUNE.player.shouts[sid];
     this.shoutIcon.setTint(sid === 'force' ? 0xffffff : C[SH.col]);
-    this.shoutLbl.setText(unlockedShouts().length > 1 ? 'R G' : 'R');
     const cdFrac = Math.max(0, pl.shoutCd / (pl.shoutCdMax || P.shout.cooldown));
     if (cdFrac > 0) { g.fillStyle(C[0], 0.75); g.fillRect(25, H - 20, 16, Math.ceil(16 * cdFrac)); }
     if (!this.cdTxt) this.cdTxt = txt(this, 0, H - 16, '', 6);
