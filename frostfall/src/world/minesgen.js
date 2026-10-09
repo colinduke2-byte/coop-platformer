@@ -109,7 +109,7 @@ export function buildForge(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'sovereign', id: 'fg', mobs: ['imp', 'golem', 'knight', 'conjurer', 'wisp', 'necro'], exitTo: 'ashen', exitSpawn: 'forge',
     title: 'The Forge of the First Fire', signLine: 'THE AIR SHIMMERS. THE ANVILS RING, AND NOTHING STRIKES THEM.',
     bossSign: ['THE SOVEREIGN\'S HALL.', 'THE FIRST FIRE WEARS A CROWN OF CINDERS. IT HAS WAITED A THOUSAND YEARS TO BE ASKED A QUESTION.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sovereign_heart' }, { item: 'gem_ruby' }, { item: 'gem_bloodstone' }, { gold: 400 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sovereign_heart' }, { item: 'sovereign_scepter' }, { item: 'gem_ruby' }, { item: 'gem_bloodstone' }, { gold: 400 }],
   });
 }
 
@@ -166,7 +166,7 @@ export function buildLodeNest(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'lodecolossus', id: 'ln', keyGate: true, mobs: ['lodeling', 'caveweaver', 'deepdelver', 'gloomcap', 'golem'], exitTo: 'underdeep', exitSpawn: 'lodenest',
     title: 'The Lode Chasm', signLine: 'THE ORE IS WARM. IT PULSES, VERY SLOWLY, LIKE A SLEEPER\'S CHEST.',
     bossSign: ['THE HEART OF THE LODE.', 'EVERY LANTERN DOWN HERE GOES OUT IN THIS ROOM. THE ORE GIVES ITS OWN LIGHT, AND IT IS WATCHING.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'deep_plate' }, { item: 'nightshade' }, { item: 'gem_amber' }, { gold: 560 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'deep_plate' }, { item: 'nightshade' }, { item: 'lode_glaive' }, { item: 'gem_amber' }, { gold: 560 }],
   });
 }
 // Saltmarket's Cove: Seaweed Cove, ending in Captain Brinegut.
@@ -175,6 +175,6 @@ export function buildSmugglerCove(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'brinegut', id: 'sc', keyGate: true, mobs: ['bandit', 'harpooner', 'reaver', 'wreckcrab', 'tidehag'], exitTo: 'coast', exitSpawn: 'smugglercove',
     title: 'Seaweed Cove', signLine: 'TAR, SALT AND THE ECHO OF A GOOD DEAL. SOMEONE IS ALWAYS WATCHING THE DOOR.',
     bossSign: ['THE CAPTAIN\'S CABIN.', 'A SHIP TOO BIG FOR THE COVE, BUILT INSIDE IT. THE CAPTAIN HAS NEVER ONCE SAILED IT. HE LIKES THE WAY IT LOOKS.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'brine_ledger' }, { item: 'gem_sapphire' }, { gold: 520 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'brine_ledger' }, { item: 'harbour_glaive' }, { item: 'gem_sapphire' }, { gold: 520 }],
   });
 }

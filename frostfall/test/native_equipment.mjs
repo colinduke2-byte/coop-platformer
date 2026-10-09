@@ -8,7 +8,7 @@ const out = await h.ev(async ([ONLY, ZZ]) => {
   const { ITEMS, iconKey } = await import('/src/data/items.js');
   const sc = window.__ff.game.scene.getScene('Game');
   const GROUPS = [['ONE-HANDED WEAPONS', ['weapon']], ['TWO-HANDED WEAPONS', ['weapon2h']], ['BOWS', ['bow']], ['SHIELDS', ['shield']], ['ARMOUR', ['armor']], ['CHARMS AND RINGS', ['charm']]];
-  const Z = ZZ || 4, CW = ZZ ? 300 : 150, PADX = 12, COLS = ZZ ? 5 : 11, RH = ZZ ? 16 * ZZ + 70 : 124;
+  const Z = ZZ || 4, CW = ZZ ? ZZ * 58 + 40 : 150, PADX = 12, COLS = ZZ ? Math.max(2, Math.floor(1600 / (ZZ * 58 + 40))) : 11, RH = ZZ ? 16 * ZZ + 70 : 124;
   const lists = GROUPS.map(([title, types]) => [title, Object.entries(ITEMS).filter(([id, it]) => types.includes(it.type) && (!ONLY || ONLY.includes(id))).map(([id, it]) => ({ id, it }))]);
   let H = 110; for (const [, l] of lists.filter(([, l]) => l.length)) H += 50 + Math.ceil(l.length / COLS) * RH;
   const cv = document.createElement('canvas'); cv.width = COLS * CW + 40; cv.height = H;

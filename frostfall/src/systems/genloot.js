@@ -18,6 +18,8 @@ const BASES = {
     { name: 'Axe', type: 'weapon', style: 'axe', icon: ['sword', 10], dmg: 14 },
     { name: 'Dagger', type: 'weapon', style: 'dagger', icon: ['dagger_dirk', 5], dmg: 8, swing: 0.8, costMul: 0.8 },
     { name: 'Greatsword', type: 'weapon2h', style: 'great', icon: ['sword', 15], dmg: 20 },
+    { name: 'Staff', type: 'weapon', style: 'staff', icon: ['staff_hazel', 9], dmg: 5, swing: 0.9, spellMul: 1.1, bolt: 'frost' },
+    { name: 'Halberd', type: 'weapon2h', style: 'halberd', icon: ['halberd_iron', 4], dmg: 18, swing: 1.25, costMul: 1.4, sizeAdd: 3 },
     { name: 'Spear', type: 'weapon', style: 'spear', icon: ['spear', 9], dmg: 11 },
     { name: 'Mace', type: 'weapon', style: 'mace', icon: ['mace', 4], dmg: 13 },
     { name: 'Hand Axe', type: 'weapon', style: 'axe', icon: ['axe', 10], dmg: 13 },

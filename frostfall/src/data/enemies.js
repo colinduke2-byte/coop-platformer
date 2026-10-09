@@ -11,13 +11,13 @@ export const ENEMIES = {
     name: 'Glacial Wyrm', title: 'THE RIME WYRM, SERPENT OF THE MAW', tex: 'spr_wyrm', sideOnly: true, bark: 'undead', weak: { fire: 1.5, shock: 1.2, frost: 0.1 },
     hp: 420, speed: 34, chase: 46, dmg: 22, detect: 9999,
     kind: 'boss', range: 44, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
-    body: [14, 8, 1, 7], loot: { gold: [140, 190], drops: [['hp_potion_g', 1], ['mp_potion_g', 0.6]] },
+    body: [14, 8, 1, 7], loot: { gold: [140, 190], drops: [['hp_potion_g', 1], ['mp_potion_g', 0.6], ['frostbirch_staff', 1]] },
   },
   warlord: {
     name: 'Hrolf Ironmarch', title: 'HROLF IRONMARCH, THE UNBURIED', tex: 'spr_warlord', bark: 'undead', weak: { fire: 1.2, shock: 1.3, frost: 0.6 },
     hp: 520, speed: 32, chase: 40, dmg: 26, detect: 9999,
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
-    body: [8, 7, 4, 9], loot: { gold: [150, 210], drops: [['hp_potion_g', 1], ['iron_ingot', 1], ['iron_ingot', 1]] },
+    body: [8, 7, 4, 9], loot: { gold: [150, 210], drops: [['hp_potion_g', 1], ['iron_ingot', 1], ['iron_ingot', 1], ['ironwatch_bardiche', 1]] },
   },
   admiral: {
     name: 'Admiral Veyl', title: 'ADMIRAL VEYL, THE DROWNED', tex: 'spr_admiral', bark: 'undead', weak: { shock: 1.5, fire: 1.1, frost: 0.3 },
@@ -59,7 +59,7 @@ export const ENEMIES = {
     name: 'The Long Winter', title: 'THE LONG WINTER, UNBOUND', tex: 'spr_winter', bark: 'undead', weak: { fire: 1.3, shock: 1.1, frost: 0.05 },
     hp: 1100, speed: 34, chase: 44, dmg: 28, detect: 9999,
     kind: 'boss', range: 42, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
-    body: [8, 7, 4, 9], loot: { gold: [300, 400], drops: [['hp_potion_g', 1], ['mp_potion_g', 1]] },
+    body: [8, 7, 4, 9], loot: { gold: [300, 400], drops: [['hp_potion_g', 1], ['mp_potion_g', 1], ['winter_staff', 1], ['reaper_halberd', 1]] },
   },
   draugr: {
     name: 'Draugr', tex: 'spr_draugr', blade: 3, bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 15, detect: 66,
@@ -94,7 +94,7 @@ export const ENEMIES = {
   wight: {
     name: 'Frost Wight', tex: 'spr_wight', bark: 'undead', weak: { fire: 1.3, shock: 1.4, frost: 0.2 }, hp: 30, speed: 30, chase: 38, dmg: 13, detect: 90,
     kind: 'shoot', proj: 'eshot', projSpeed: 92, range: 112, keep: 54, windup: 0.7, atkDur: 0.1, recover: 0.6, cooldown: 1.8, kbResist: 0.1,
-    body: [8, 7, 4, 9], loot: { gold: [6, 14], drops: [['mp_potion', 0.25], ['hp_potion', 0.12], ['sp_potion', 0.1]] },
+    body: [8, 7, 4, 9], loot: { gold: [6, 14], drops: [['mp_potion', 0.25], ['hp_potion', 0.12], ['sp_potion', 0.1], ['warden_glaive', 0.04]] },
   },
   boss: {
     name: 'Jarl Valdrek', title: 'JARL VALDREK THE HOLLOW KING', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
@@ -105,7 +105,7 @@ export const ENEMIES = {
     name: 'Draugr Warden', tex: 'spr_warden', blade: 4, bark: 'undead', weak: { fire: 1.4, shock: 1.3, frost: 0.6 }, shield: true,
     hp: 60, speed: 26, chase: 34, dmg: 17, detect: 62,
     kind: 'melee', range: 19, windup: 0.65, atkDur: 0.16, recover: 0.8, cooldown: 0.7, kbResist: 0.5,
-    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5], ['bone_shiv', 0.1]] },
+    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5], ['bone_shiv', 0.1], ['warden_glaive', 0.05]] },
   },
   alpha: {
     name: 'Wolf Alpha', tex: 'spr_alpha', sideOnly: true, bark: 'wolf', call: 150, weak: { fire: 1.3 },
@@ -123,7 +123,7 @@ export const ENEMIES = {
     name: 'Hexcaster', tex: 'spr_conjurer', bark: 'undead', weak: { fire: 1.3, shock: 1.5 },
     hp: 30, speed: 28, chase: 36, dmg: 17, detect: 96,
     kind: 'cast', range: 120, keep: 64, zoneR: 24, zoneDelay: 1.0, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1,
-    body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.4]] },
+    body: [8, 7, 4, 9], loot: { gold: [10, 22], drops: [['mp_potion', 0.4], ['frost_lily', 0.5], ['bone_dust', 0.4], ['cinder_staff', 0.06]] },
   },
   deer: {
     name: 'Deer', tex: 'spr_deer', sideOnly: true, passive: true, hp: 14, speed: 24, chase: 92, dmg: 0, detect: 70,
@@ -301,7 +301,7 @@ Object.assign(ENEMIES, {
   sentinel: {
     name: 'Bone Sentinel', tex: 'spr_sentinel', leash: 64, armored: true, bark: 'undead', weak: { fire: 1.3, shock: 1.1, frost: 0.3 }, hp: 120, speed: 22, chase: 40, dmg: 26, detect: 70,
     kind: 'melee', range: 24, windup: 0.85, atkDur: 0.18, recover: 0.9, cooldown: 0.9, kbResist: 0.8,
-    body: [8, 7, 4, 9], loot: { gold: [20, 40], drops: [['rune_thorns', 0.05], ['iron_ingot', 0.5], ['bone_dust', 0.8], ['gem_onyx', 0.06]] },
+    body: [8, 7, 4, 9], loot: { gold: [20, 40], drops: [['rune_thorns', 0.05], ['iron_ingot', 0.5], ['bone_dust', 0.8], ['gem_onyx', 0.06], ['court_halberd', 0.05]] },
   },
   stalker: {
     name: 'Moss Stalker', tex: 'spr_stalker', ambush: true, bark: 'human', weak: { fire: 1.6 }, hp: 52, speed: 34, chase: 80, dmg: 16, detect: 92,
@@ -335,7 +335,7 @@ Object.assign(ENEMIES, {
   boghag: {
     name: 'Bog Hag', tex: 'spr_boghag', raise: 7, raiseKind: 'leech', bark: 'undead', weak: { fire: 1.5, shock: 1.3 }, hp: 58, speed: 24, chase: 32, dmg: 17, detect: 100,
     kind: 'cast', range: 118, keep: 72, zoneR: 24, zoneDelay: 1.0, windup: 0.85, atkDur: 0.1, recover: 0.7, cooldown: 2.8, kbResist: 0.15,
-    body: [8, 7, 4, 9], loot: { gold: [14, 32], drops: [['mp_potion', 0.4], ['marsh_orchid', 0.6], ['bone_dust', 0.5], ['gem_emerald', 0.07]] },
+    body: [8, 7, 4, 9], loot: { gold: [14, 32], drops: [['mp_potion', 0.4], ['marsh_orchid', 0.6], ['bone_dust', 0.5], ['gem_emerald', 0.07], ['reed_staff', 0.1]] },
   },
   leech: {
     name: 'Fen Leech', tex: 'spr_leech', sideOnly: true, scale: 1.0, bark: 'wolf', weak: { fire: 1.5, shock: 0.8 }, hp: 14, speed: 48, chase: 104, dmg: 6, detect: 80,
@@ -366,12 +366,12 @@ Object.assign(ENEMIES, {
   nomad: {
     name: 'Clan Raider', tex: 'spr_nomad', blade: 5, bark: 'human', flee: true, hp: 46, speed: 38, chase: 58, dmg: 15, detect: 80,
     kind: 'melee', range: 20, windup: 0.38, atkDur: 0.14, recover: 0.5, cooldown: 0.35, kbResist: 0.15,
-    body: [8, 7, 4, 9], loot: { gold: [8, 20], drops: [['hp_potion', 0.22], ['arrows', 0.25, [2, 5]], ['hide', 0.3], ['iron_sword', 0.05]] },
+    body: [8, 7, 4, 9], loot: { gold: [8, 20], drops: [['hp_potion', 0.22], ['arrows', 0.25, [2, 5]], ['hide', 0.3], ['iron_sword', 0.05], ['clan_glaive', 0.05]] },
   },
   nomadshaman: {
     name: 'Storm Shaman', tex: 'spr_shaman', bark: 'human', weak: { fire: 1.2, frost: 1.1, shock: 0.1 }, hp: 44, speed: 28, chase: 36, dmg: 17, detect: 100,
     kind: 'cast', range: 120, keep: 68, zoneR: 24, zoneDelay: 1.0, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.4, kbResist: 0.1,
-    body: [8, 7, 4, 9], loot: { gold: [14, 30], drops: [['mp_potion', 0.4], ['storm_feather', 0.3], ['gem_sapphire', 0.07]] },
+    body: [8, 7, 4, 9], loot: { gold: [14, 30], drops: [['mp_potion', 0.4], ['storm_feather', 0.3], ['gem_sapphire', 0.07], ['stormcrown_rod', 0.1]] },
   },
   stonegiant: {
     name: 'Stone Giant', tex: 'spr_stonegiant', scale: 2.2, armored: true, bark: 'undead', weak: { shock: 1.4, frost: 0.8, fire: 0.6 }, hp: 200, speed: 24, chase: 40, dmg: 26, detect: 90,
@@ -402,12 +402,12 @@ Object.assign(ENEMIES, {
   glimmerkin: {
     name: 'Glimmerkin', tex: 'spr_wisp', tint: 0xc8fff0, sideOnly: true, fly: true, blink: 2.6, bark: 'undead', weak: { shock: 1.2, fire: 1.1, frost: 0.7 }, hp: 34, speed: 32, chase: 54, dmg: 12, detect: 116,
     kind: 'shoot', proj: 'eshot', projSpeed: 88, range: 116, keep: 62, windup: 0.6, atkDur: 0.1, recover: 0.5, cooldown: 1.5, kbResist: 0.2,
-    body: [8, 8, 4, 4], loot: { gold: [8, 18], drops: [['glimmer_dust', 0.5], ['mp_potion', 0.3]] },
+    body: [8, 8, 4, 4], loot: { gold: [8, 18], drops: [['glimmer_dust', 0.5], ['mp_potion', 0.3], ['prism_staff', 0.08]] },
   },
   crystalgolem: {
     name: 'Crystal Golem', tex: 'spr_golem', tint: 0xa8f0ff, scale: 1.6, armored: true, bark: 'undead', weak: { shock: 1.2, fire: 0.9, frost: 0.4 }, hp: 150, speed: 22, chase: 34, dmg: 26, detect: 72,
     kind: 'melee', range: 26, windup: 0.9, atkDur: 0.2, recover: 1.0, cooldown: 0.9, kbResist: 0.88,
-    body: [8, 7, 4, 9], loot: { gold: [18, 40], drops: [['glimmer_dust', 0.5], ['iron_ingot', 0.6], ['gem_topaz', 0.05]] },
+    body: [8, 7, 4, 9], loot: { gold: [18, 40], drops: [['glimmer_dust', 0.5], ['iron_ingot', 0.6], ['gem_topaz', 0.05], ['glass_voulge', 0.05]] },
   },
   glassstag: {
     name: 'Glass Stag', tex: 'spr_elk', tint: 0xbfe8ff, sideOnly: true, scale: 1.2, bark: 'wolf', weak: { fire: 1.2, shock: 1.0 }, hp: 90, speed: 42, chase: 96, dmg: 20, detect: 96,
@@ -444,7 +444,7 @@ Object.assign(ENEMIES, {
     name: 'The Lode Colossus', title: 'THE LODE COLOSSUS, EATER OF THE DEEP', tex: 'spr_lodecolossus', armored: false, bark: 'undead', weak: { shock: 1.3, frost: 1.1, fire: 0.5 },
     hp: 1300, speed: 30, chase: 40, dmg: 32, detect: 9999,
     kind: 'boss', range: 46, windup: 0.8, atkDur: 0.2, recover: 0.8, cooldown: 0.9, kbResist: 0.97,
-    body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['lode_heart', 1], ['hp_potion_g', 2], ['ember_ore', 3]] },
+    body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['lode_heart', 1], ['hp_potion_g', 2], ['ember_ore', 3], ['delver_lodestaff', 1]] },
   },
   brinegut: {
     name: 'Captain Brinegut', title: 'CAPTAIN BRINEGUT, LORD OF SEAWEED COVE', tex: 'spr_brinegut', bark: 'human', weak: { fire: 1.2, shock: 1.3, frost: 0.9 },

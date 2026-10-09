@@ -44,6 +44,30 @@ export function statLines(id) {
   if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
   if (it.style === 'dagger') { out.push(['FAST. SNEAK AND BACK HITS HURT', 15]); if (it.pierce) out.push([`4TH HIT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]); if (it.assassinate) out.push(['SNEAK KILLS ANY NON-BOSS', 14]); if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]); for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}${f.sneakOnly ? ' ON SNEAK ATTACK' : ''}`, 11]); }
+  if (it.style === 'staff') {
+    out.push(['WEAK IN MELEE. HEAVY ATTACK: FREE BOLT', 15]);
+    if (it.spellMul) out.push([`SPELLS +${Math.round((it.spellMul - 1) * 100)}%`, 8]);
+    for (const [k, v] of Object.entries(it.elemMul || {})) out.push([`${k.toUpperCase()} SPELLS +${Math.round((v - 1) * 100)}%`, 8]);
+    for (const [k, v] of Object.entries(it.spellCost || {})) out.push([`${k.toUpperCase()} COSTS ${v <= 0.5 ? 'HALF' : '-' + Math.round((1 - v) * 100) + '%'}`, 8]);
+    if (it.mpRegenMul) out.push([`MANA REGEN +${Math.round((it.mpRegenMul - 1) * 100)}%`, 8]);
+    if (it.freeEvery) out.push([`EVERY ${it.freeEvery}TH CAST IS FREE`, 13]);
+    if (it.spellCrit) out.push([`SPELL CRIT ${Math.round(it.spellCrit * 100)}%`, 13]);
+    if (it.chainAdd) out.push(['LIGHTNING CHAINS +1', 13]);
+    if (it.rootChance) out.push([`${Math.round(it.rootChance * 100)}% OF FROST BOLTS ROOT`, 15]);
+    if (it.wardMul || it.wardTime) out.push(['STRONGER, LONGER WARD', 15]);
+    if (it.slowAdd) out.push(['FROST SLOWS LONGER', 15]);
+  }
+  if (it.style === 'halberd') {
+    out.push(['WIDE SWEEPS. OVERHEAD PLANT STAGGERS', 15]);
+    if (it.pull) out.push(['HOOK PULLS SMALL FOES IN', 15]);
+    if (it.vsUndead) out.push([`UNDEAD +${Math.round((it.vsUndead - 1) * 100)}%`, 13]);
+    if (it.plantStun) out.push(['LONGER STAGGER', 15]);
+    if (it.swingGuard) out.push([`-${Math.round(it.swingGuard * 100)}% DAMAGE WHILE SWINGING`, 8]);
+    if (it.pierce) out.push([`PLANT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]);
+    if (it.killFreeze) out.push(['KILLS FREEZE NEARBY FOES', 15]);
+    if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]);
+    for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}`, 11]);
+  }
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
   if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()} ARMOUR`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);

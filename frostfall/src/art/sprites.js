@@ -908,30 +908,102 @@ function outlineCells(map, w, h, put) {
   }
   for (const [x, y] of add) put(0, x, y);
 }
-export function drawDaggerIcon(g, shape, col) {
-  // sample the horizontal dagger rotated 45 degrees (blade up and to the right), so diagonals have no gaps
-  const cells = daggerCells(shape, col), src = new Map();
+// Draw any weapon from its cells ([u, v, colour], u along the weapon from the butt/hilt, v across) as a 16x16 icon rotated 45 degrees.
+function iconFromCells(g, cells) {
+  const src = new Map();
   let u0 = 1e9, u1 = -1e9;
   for (const [u, v, c] of cells) { src.set(u + ',' + v, c); u0 = Math.min(u0, u); u1 = Math.max(u1, u); }
   const len = u1 - u0 + 1, sc = Math.min(1, 14 / (len * 0.7071 * 1.6)), uc = (u0 + u1) / 2, map = new Map();
+  const rr = Math.max(0, Math.round(0.5 / sc - 0.2));              // when shrinking, look around the sample point so thin shafts survive
   for (let Y = 0; Y < 16; Y++) for (let X = 0; X < 16; X++) {
     const dx = X - 7.5, dy = Y - 8, u = ((dx - dy) / 1.4142) / sc * 0.98 + uc, v = ((dx + dy) / 1.4142) / sc * 0.98;
-    const c = src.get(Math.round(u) + ',' + Math.round(v));
-    if (c !== undefined) map.set(Y * 16 + X, c);
+    let best, bd = 1e9;
+    for (let du = -rr; du <= rr; du++) for (let dv = -rr; dv <= rr; dv++) {
+      const c = src.get(Math.round(u) + du + ',' + (Math.round(v) + dv));
+      if (c === undefined) continue;
+      const d = du * du + dv * dv * 1.3 + (c === 0 ? 0.6 : 0);
+      if (d < bd) { bd = d; best = c; }
+    }
+    if (best !== undefined) map.set(Y * 16 + X, best);
   }
   for (const [k, c] of map) R(g, c, k % 16, Math.floor(k / 16));
   outlineCells(map, 16, 16, (c, x, y) => R(g, c, x, y));
 }
-export function drawDaggerHeld(g, shape, col) {
-  const cells = daggerCells(shape, col), map = new Map(), W = 24;
-  for (const [u, v, c] of cells) { const x = u + 6, y = v + 4; if (x >= 0 && x < W && y >= 0 && y < 9) map.set(y * W + x, c); }
+// ... and as a horizontal held sprite, hilt at the left, vertically centred at row `cy` of a W x H canvas.
+function heldFromCells(g, cells, W, H, cy, ox = 6) {
+  const map = new Map();
+  for (const [u, v, c] of cells) { const x = u + ox, y = v + cy; if (x >= 0 && x < W && y >= 0 && y < H) map.set(y * W + x, c); }
   for (const [k, c] of map) R(g, c, k % W, Math.floor(k / W));
-  outlineCells(map, W, 9, (c, x, y) => R(g, c, x, y));
+  outlineCells(map, W, H, (c, x, y) => R(g, c, x, y));
 }
+export const drawDaggerIcon = (g, shape, col) => iconFromCells(g, daggerCells(shape, col));
+export const drawDaggerHeld = (g, shape, col) => heldFromCells(g, daggerCells(shape, col), 24, 9, 4);
+
+// ---------------------------------------------------------------------------------------------- staves and halberds
+// Built from a few shape primitives in blade-local cells: slab (a column band between two edge functions), orb, prong, spire.
+// colour letters: B/H/L = the item's colour (main/highlight/shadow), W wood, T tan, K dark, S snow, C cyan, c pale cyan, G gold,
+// O orange, R red, E green, M moss, P purple, D black, I iron grey, N pale iron.
+const LET = { W: 9, T: 10, K: 1, S: 6, C: 15, c: 5, G: 13, O: 12, R: 11, E: 8, M: 7, P: 14, D: 0, I: 3, N: 4 };
+function Cb() {
+  const m = new Map();
+  const put = (u, v, c) => { m.set(Math.round(u) + ',' + Math.round(v), c); };
+  return {
+    put,
+    cells: () => [...m.entries()].map(([k, c]) => { const [u, v] = k.split(',').map(Number); return [u, v, c]; }),
+    slab(u0, u1, top, bot, c) { for (let u = u0; u <= u1; u++) for (let v = Math.round(top(u)); v <= Math.round(bot(u)); v++) put(u, v, typeof c === 'function' ? c(u, v) : c); },
+    orb(cu, cv, r, c, c2) { for (let u = Math.floor(cu - r); u <= Math.ceil(cu + r); u++) for (let v = Math.floor(cv - r); v <= Math.ceil(cv + r); v++) if ((u - cu) ** 2 + (v - cv) ** 2 <= r * r + 0.3) put(u, v, c2 && (u + v) % 2 && u < cu ? c2 : c); },
+    ring(cu, cv, r, c) { for (let a = 0; a < 360; a += 8) put(cu + Math.cos((a * Math.PI) / 180) * r, cv + Math.sin((a * Math.PI) / 180) * r, c); },
+    line(u0, v0, u1, v1, c) { const n = Math.max(Math.abs(u1 - u0), Math.abs(v1 - v0), 1); for (let i = 0; i <= n; i++) put(u0 + ((u1 - u0) * i) / n, v0 + ((v1 - v0) * i) / n, c); },
+  };
+}
+const col2 = (L, col) => (L === 'B' ? col : L === 'H' ? (DAG_HI[col] ?? 6) : L === 'L' ? (DAG_LO[col] ?? 1) : LET[L] ?? col);
+
+// Staff: shaft of `len` cells ending at u = 0 (the tip side is positive u); each shape draws its head.
+export const STAFF_SHAPES = {
+  walking: { len: 15, shaft: 'W', head(b, C) { b.orb(2, 0, 2.6, C('T'), C('W')); b.put(3, -1, C('W')); b.put(1, 1, C('W')); } },
+  hazel: { len: 15, shaft: 'W', head(b, C) { b.line(0, 0, 7, -4, C('W')); b.line(0, 0, 7, 4, C('W')); b.line(2, 0, 6, 0, C('T')); b.line(7, -4, 9, -5, C('E')); b.line(7, 4, 9, 5, C('E')); b.put(8, -4, C('E')); b.put(8, 4, C('E')); b.put(6, 0, C('E')); } },
+  frostbirch: { len: 15, shaft: 'S', head(b, C) { b.slab(0, 11, (u) => -2 + u * 0.18, (u) => 2 - u * 0.18, C('C')); b.slab(2, 6, (u) => -5 + (u - 2) * 0.8, () => -2, C('c')); b.slab(2, 6, () => 2, (u) => 5 - (u - 2) * 0.8, C('c')); b.slab(3, 8, () => 0, () => 0, C('S')); b.put(12, 0, C('S')); } },
+  reed: { len: 15, shaft: 'E', head(b, C) { for (const v of [-4, -3, -2, -1, 0, 1, 2, 3, 4]) b.line(1, 0, 8 - Math.abs(v) * 0.5, v * 1.2, C(v % 2 ? 'E' : 'M')); b.slab(-2, 1, () => -1, () => 1, C('T')); b.put(3, -2, C('G')); b.put(4, 2, C('G')); } },
+  rod: { len: 15, shaft: 'I', head(b, C) { b.slab(-1, 1, () => -1, () => 1, C('N')); b.line(1, -1, 9, -4, C('N')); b.line(1, 1, 9, 4, C('N')); b.line(9, -4, 10, -5, C('N')); b.line(9, 4, 10, 5, C('N')); b.orb(6, 0, 1.2, C('G')); b.put(6, 0, C('S')); b.line(8, -3, 7, -1, C('G')); b.line(8, 3, 7, 1, C('G')); b.put(9, 0, C('G')); b.put(10, 0, C('S')); } },
+  prism: { len: 15, shaft: 'T', head(b, C) { b.slab(0, 11, (u) => -1.4 + u * 0.12, (u) => 1.4 - u * 0.12, C('C')); b.line(1, -1, 8, -5, C('C')); b.line(1, -2, 7, -5, C('c')); b.line(1, 1, 8, 5, C('C')); b.line(1, 2, 7, 5, C('c')); b.slab(2, 7, () => 0, () => 0, C('S')); b.put(12, 0, C('S')); b.put(9, -5, C('S')); b.put(9, 5, C('S')); } },
+  cinder: { len: 15, shaft: 'K', head(b, C) { for (const v of [-3, -1, 1, 3]) b.line(0, 0, 4, v * 1.2, C('D')); b.orb(5, 0, 2.8, C('O'), C('R')); b.orb(5, 0, 1.2, C('G')); for (const [u, v] of [[8, -2], [8, 2], [9, 0], [7, -3], [7, 3]]) b.put(u, v, C(v % 2 ? 'O' : 'R')); } },
+  tide: { len: 15, shaft: 'N', head(b, C) { b.ring(4, 0, 4, C('C')); b.ring(4, 0, 3, C('c')); b.orb(4, 0, 1.3, C('S')); b.line(0, 0, 1, -3, C('N')); b.line(0, 0, 1, 3, C('N')); b.put(8, 0, C('C')); b.put(9, 0, C('c')); b.put(4, -5, C('C')); b.put(4, 5, C('C')); } },
+  scepter: { len: 14, shaft: 'G', head(b, C) { b.slab(0, 2, () => -2, () => 2, C('G')); for (const v of [-4, -2, 0, 2, 4]) b.line(2, v * 0.6, 7 - Math.abs(v) * 0.4, v, C('G')); b.orb(5, 0, 2.6, C('R'), C('O')); b.orb(5, 0, 1, C('S')); b.put(10, 0, C('G')); b.put(9, -1, C('G')); b.put(9, 1, C('G')); } },
+  lode: { len: 15, shaft: 'I', head(b, C) { b.orb(3, 0, 3.4, C('I'), C('K')); b.put(1, -2, C('N')); b.put(4, 2, C('N')); b.put(2, 1, C('K')); b.line(4, 0, 11, 0, C('G')); b.line(4, -1, 9, -4, C('G')); b.line(4, 1, 9, 4, C('G')); b.line(5, -1, 10, -1, C('O')); b.put(12, 0, C('S')); b.put(10, -4, C('O')); b.put(10, 4, C('O')); } },
+  winter: { len: 17, shaft: 'c', head(b, C) { b.slab(0, 15, (u) => -2.2 + u * 0.15, (u) => 2.2 - u * 0.15, C('C')); b.slab(3, 8, (u) => -6 + (u - 3) * 0.7, () => -2, C('S')); b.slab(3, 8, () => 2, (u) => 6 - (u - 3) * 0.7, C('S')); b.slab(6, 10, (u) => -4 + (u - 6) * 0.8, () => -1, C('c')); b.slab(6, 10, () => 1, (u) => 4 - (u - 6) * 0.8, C('c')); b.slab(2, 12, () => 0, () => 0, C('S')); b.put(16, 0, C('S')); } },
+  ember: { len: 15, shaft: 'W', head(b, C) { b.slab(0, 3, () => -1, () => 1, C('K')); b.slab(3, 11, (u) => -3.2 + (u - 3) * 0.4 + (u % 2 ? 0 : -1), (u) => 3.2 - (u - 3) * 0.4 + (u % 2 ? 0 : 1), (u, v) => (Math.abs(v) < 1.5 ? C('G') : u % 2 ? C('O') : C('R'))); b.put(12, 0, C('G')); b.put(7, -5, C('O')); b.put(8, 5, C('O')); b.put(10, -3, C('R')); } },
+};
+export const HALBERD_SHAPES = {
+  bill: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); b.line(2, 0, 7, 0, C('I')); b.line(2, 1, 5, 3, C('I')); b.line(5, 3, 6, 5, C('I')); b.line(2, -1, 2, -4, C('I')); b.put(8, 0, C('N')); } },
+  iron: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); b.slab(2, 7, (u) => -4 + (u - 2) * 0.1, (u) => -1, C('B')); b.slab(8, 11, (u) => -1 + (u - 8) * 0.2, (u) => 0, C('H')); b.slab(2, 5, () => 1, (u) => 2 + (u - 2) * 0.3, C('L')); } },
+  glaive: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); const w = (u) => 2.6 * (1 - ((u - 2) / 12) ** 2), c = (u) => -0.09 * (u - 2) ** 1.25; b.slab(2, 14, (u) => c(u) - w(u), (u) => c(u) + w(u), C('B')); b.slab(2, 13, (u) => c(u) - w(u), (u) => c(u) - w(u) + 0.6, C('H')); b.put(15, -3, C('N')); } },
+  clan: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('G')); b.slab(2, 11, (u) => (u < 3 ? -2 : u < 8 ? -4 : -3 + (u - 8) * 0.9), (u) => (u < 3 ? 2 : u < 8 ? 4 : 3 - (u - 8) * 0.9), C('B')); b.slab(5, 7, () => -1, () => 1, C('G')); b.line(3, 0, 10, 0, C('H')); } },
+  bardiche: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); b.slab(1, 10, (u) => -8 + (u - 1) * 0.55 - Math.sin((u - 1) * 0.33) * 1.2, (u) => -1, C('B')); b.slab(1, 12, () => 0, () => 0, C('I')); b.line(2, -7, 9, -2, C('H')); b.put(13, 0, C('N')); } },
+  harbour: { len: 22, shaft: 'N', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); b.slab(2, 12, (u) => -3 + (u - 2) * 0.2, (u) => 1 - (u - 2) * 0.25, C('B')); b.line(2, -3, 11, -1, C('S')); b.orb(2, 3, 1.2, C('C')); b.put(2, 3, C('S')); } },
+  voulge: { len: 22, shaft: 'T', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('c')); b.slab(2, 10, (u) => -5 + (u - 2) * 0.35, (u) => 4 - (u - 2) * 0.4, (u, v) => ((u + v) % 3 === 0 ? C('S') : C('B'))); b.put(11, 0, C('S')); b.put(12, 0, C('C')); b.line(3, -5, 4, -7, C('c')); b.line(6, 3, 7, 5, C('c')); } },
+  court: { len: 22, shaft: 'K', head(b, C, col) { b.slab(0, 2, () => -1, () => 1, C('G')); b.slab(3, 8, (u) => -5 + (u - 3) * 0.3, (u) => -1, C('B')); b.slab(3, 6, () => 1, (u) => 3 - (u - 3) * 0.2, C('B')); b.slab(9, 13, (u) => -1 + (u - 9) * 0.2, (u) => 0, C('H')); b.put(3, -3, C('G')); b.put(6, -3, C('G')); b.put(3, 5, C('R')); b.line(2, 1, 2, 5, C('R')); } },
+  ember: { len: 22, shaft: 'W', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('K')); b.slab(2, 9, (u) => -5 + (u - 2) * 0.4 + ((u % 2) ? 0 : -1), (u) => -1, (u, v) => (v > -3 ? C('G') : u % 2 ? C('O') : C('R'))); b.slab(10, 14, (u) => -1 + (u - 10) * 0.25, (u) => 0, C('O')); b.slab(2, 5, () => 1, (u) => 2, C('R')); } },
+  lode: { len: 22, shaft: 'I', head(b, C, col) { b.slab(0, 2, () => -1, () => 1, C('K')); b.slab(3, 10, (u) => -4 + (u - 3) * 0.3, (u) => 3 - (u - 3) * 0.2, (u, v) => ((u * 3 + v) % 4 === 0 ? C('N') : C('B'))); b.line(5, -4, 6, -7, C('G')); b.line(8, 2, 9, 5, C('G')); b.put(11, 0, C('G')); b.put(12, 0, C('O')); } },
+  reaper: { len: 24, shaft: 'K', head(b, C, col) { b.slab(0, 1, () => -1, () => 1, C('c')); b.slab(2, 13, (u) => -7 + Math.pow((u - 2) / 11, 2) * 5 + (u < 5 ? 0 : 0), (u) => -4 + Math.pow((u - 2) / 11, 2) * 4, C('B')); b.slab(2, 12, (u) => -7 + Math.pow((u - 2) / 11, 2) * 5, (u) => -6.4 + Math.pow((u - 2) / 11, 2) * 5, C('S')); b.put(14, -1, C('S')); b.put(12, 1, C('C')); b.put(5, 2, C('c')); b.put(8, 3, C('c')); } },
+};
+function longCells(set, shape, col) {
+  const D = set[shape] || Object.values(set)[0], b = Cb();
+  const C = (L) => col2(L, col);
+  for (let u = -D.len; u < 0; u++) b.put(u, 0, u % 5 === 0 && D.shaft === 'W' ? C('T') : C(D.shaft));
+  b.put(-D.len - 1, 0, C('G'));
+  D.head(b, C, col);
+  return b.cells();
+}
+export const drawStaffIcon = (g, shape, col) => iconFromCells(g, longCells(STAFF_SHAPES, shape, col));
+export const drawStaffHeld = (g, shape, col) => heldFromCells(g, longCells(STAFF_SHAPES, shape, col), 36, 11, 5, 22);
+export const drawHalberdIcon = (g, shape, col) => iconFromCells(g, longCells(HALBERD_SHAPES, shape, col));
+export const drawHalberdHeld = (g, shape, col) => heldFromCells(g, longCells(HALBERD_SHAPES, shape, col), 42, 19, 9, 26);
 
 // Item icons (16x16). kind picks a drawing routine; col tints it.
 export function buildIcon(scene, key, kind, col = 6) {
   if (kind.startsWith('dagger_')) { tex(scene, key, 16, 16, (g) => drawDaggerIcon(g, kind.slice(7), col)); return; }
+  if (kind.startsWith('staff_')) { tex(scene, key, 16, 16, (g) => drawStaffIcon(g, kind.slice(6), col)); return; }
+  if (kind.startsWith('halberd_')) { tex(scene, key, 16, 16, (g) => drawHalberdIcon(g, kind.slice(8), col)); return; }
   tex(scene, key, 16, 16, (g) => {
     const l = (c, x0, y0, x1, y1) => { // pixel line
       const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
@@ -1016,6 +1088,8 @@ export function buildIcon(scene, key, kind, col = 6) {
 // Held weapon / shield sprites (drawn while swinging / blocking). `kind`: blade | greatblade | shield.
 export function buildHeld(scene, key, kind, col = 5) {
   if (kind.startsWith('dagger_')) { tex(scene, key, 24, 9, (g) => drawDaggerHeld(g, kind.slice(7), col)); return; }
+  if (kind.startsWith('staff_')) { tex(scene, key, 36, 11, (g) => drawStaffHeld(g, kind.slice(6), col)); return; }
+  if (kind.startsWith('halberd_')) { tex(scene, key, 42, 19, (g) => drawHalberdHeld(g, kind.slice(8), col)); return; }
   if (kind === 'shield') {
     tex(scene, key, 10, 12, (g) => {
       R(g, 0, 1, 0, 8, 9); R(g, 0, 2, 9, 6, 2); R(g, 0, 3, 11, 4, 1);
@@ -1062,4 +1136,4 @@ export function generateArt(scene) {
 }
 
 // Which held-weapon sprite an item uses.
-export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.icon?.[0]?.startsWith('dagger_') ? it.icon[0] : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);
+export const heldKind = (it) => (it.type === 'shield' ? 'shield' : /^(dagger|staff|halberd)_/.test(it.icon?.[0] || '') ? it.icon[0] : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);

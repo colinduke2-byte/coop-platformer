@@ -227,6 +227,8 @@ export const EMBERFORGE = [
   { id: 'ember_axe', mats: { ash_iron: 6, ember_ore: 2 }, gold: 320, need: ['delvers', 20] },
   { id: 'ember_spear', mats: { ash_iron: 5, ember_ore: 2 }, gold: 300, need: ['wardens', 20] },
   { id: 'ember_dagger', mats: { ash_iron: 4, ember_ore: 2 }, gold: 280, need: ['smugglers', 20] },
+  { id: 'ember_staff', mats: { ash_iron: 4, ember_ore: 3 }, gold: 340, need: null },
+  { id: 'ember_halberd', mats: { ash_iron: 8, ember_ore: 3 }, gold: 400, need: ['anvil', 20] },
   { id: 'ember_mail', mats: { ash_iron: 10, ember_ore: 3 }, gold: 480, need: ['anvil', 20] },
   { id: 'ember_bulwark', mats: { ash_iron: 8, ember_ore: 2 }, gold: 340, need: ['anvil', 20] },
 ];
@@ -267,7 +269,7 @@ export async function emberforgeMenu(who) {
 export const ARMOURY = [
   { id: 'court_plate', need: ['anvil', 45], gold: 700 }, { id: 'court_hammer', need: ['anvil', 45], gold: 520 }, { id: 'court_signet', need: ['anvil', 75], gold: 480 },
   { id: 'delver_hauberk', need: ['delvers', 45], gold: 620 }, { id: 'delver_pick', need: ['delvers', 45], gold: 500 }, { id: 'delver_charm', need: ['delvers', 75], gold: 460 },
-  { id: 'tide_coat', need: ['tide', 45], gold: 480 }, { id: 'tide_blade', need: ['tide', 45], gold: 520 }, { id: 'tide_charm', need: ['tide', 75], gold: 440 },
+  { id: 'tidecaller_staff', need: ['tide', 75], gold: 540 }, { id: 'tide_coat', need: ['tide', 45], gold: 480 }, { id: 'tide_blade', need: ['tide', 45], gold: 520 }, { id: 'tide_charm', need: ['tide', 75], gold: 440 },
   { id: 'smuggler_cloak', need: ['smugglers', 45], gold: 460 }, { id: 'smuggler_knife', need: ['smugglers', 45], gold: 420 },
   { id: 'warden_cuirass', need: ['wardens', 45], gold: 660 }, { id: 'warden_shield', need: ['wardens', 45], gold: 480 }, { id: 'warden_badge', need: ['wardens', 75], gold: 440 },
 ];

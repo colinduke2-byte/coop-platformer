@@ -194,7 +194,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // regen
     if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * P.weights[stats.weight()].sp * (S.hearts?.tide ? 1.25 : 1) * dt);
-    if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * dt);
+    if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * (stats.weapon()?.mpRegenMul ?? 1) * dt);
 
     const moving = this.speedNow > 8;
     if (moving) {

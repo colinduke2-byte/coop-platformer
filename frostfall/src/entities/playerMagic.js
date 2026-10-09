@@ -32,8 +32,16 @@ export const spellUnlocked = (id) => !!S.tomes?.[id] || lvl(SPELLS[id].skill) >=
 
 export const magicMethods = {
   // Mana cost climbs while casts are chained (overcast), and cools off again.
+  // Spell strength: skill, the staff in hand (all spells, plus its favoured element) and its crit chance.
+  spellPow() {
+    const w = stats.weapon() || {};
+    let m = bonus.spell() * (w.spellMul ?? 1) * (w.elemMul?.[S.spell] ?? 1);
+    if (w.spellCrit && Math.random() < w.spellCrit) { m *= 1.6; this.scene.fx.text(this.x, this.y - 22, 'SPELL CRIT', 15, 0.7); }
+    return m;
+  },
   spellCost(sp) {
-    return sp.cost * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
+    const w = stats.weapon() || {};
+    return sp.cost * (w.manaCostMul ?? 1) * (w.spellCost?.[S.spell] ?? 1) * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
   },
 
   quickCast() {
@@ -59,7 +67,8 @@ export const magicMethods = {
     const cost = this.spellCost(sp);
     if (S.mp < cost) { sfx.play('nostamina'); bus.emit('nomana'); return; }
     if (S.spell === 'heal' && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
-    const freeCast = S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0);
+    const wpn = stats.weapon() || {};
+    const freeCast = (S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0)) || (wpn.freeEvery && ((this.castW = (this.castW || 0) + 1) % wpn.freeEvery === 0));
     if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);
     S.mp -= freeCast ? 0 : cost; this.mpDelay = 1.2;
     this.heat = Math.min(TUNE.player.cast.heatMax, (this.heat || 0) + 1);
@@ -68,7 +77,7 @@ export const magicMethods = {
     switch (S.spell) {
       case 'fire':
       case 'frost': {
-        const dmg = spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer && S.spell === 'fire' ? 1.15 : 1 });
+        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer && S.spell === 'fire' ? 1.15 : 1 });
         const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, S.spell, f.x * sp.speed, f.y * sp.speed, { dmg, life: S.spell === 'fire' ? 1.1 : 1.3 });
         sc.shots.add(pr);
         pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
@@ -88,7 +97,7 @@ export const magicMethods = {
         break;
       }
       case 'ward': {
-        this.ward = { hp: sp.absorb * bonus.ward() * (S.perks.warding ? 1.35 : 1), t: sp.time + (S.perks.warding ? 3 : 0) };
+        this.ward = { hp: sp.absorb * bonus.ward() * (S.perks.warding ? 1.35 : 1) * (wpn.wardMul ?? 1), t: (sp.time + (S.perks.warding ? 3 : 0)) * (wpn.wardTime ?? 1) };
         sfx.play('ward');
         sc.fx.ring(this.x, this.y + 4, 0.7, 0.5, 'ring', 0x5cc8d8);
         this.gainXp('restoration', 5);
@@ -112,7 +121,7 @@ export const magicMethods = {
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0x5cc8d8); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xeaf2f8);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4, stun: 0.6 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4, stun: 0.6 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15); sc.fx.puff(e.x, e.y, 15, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
@@ -125,7 +134,7 @@ export const magicMethods = {
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0xf08a30); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xf4d460);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer ? 1.15 : 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 110, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 4, dps: 5 } });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 110, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 4, dps: 5 } });
           sc.fx.text(e.x, e.y - 10, String(dealt), 12); sc.fx.puff(e.x, e.y, 12, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
@@ -139,7 +148,7 @@ export const magicMethods = {
         for (const e of sc.enemies.getChildren()) {
           const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
           if (e.dead || along < 0 || along > LEN || across > W2 / 2) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3, stun: 0.35 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3, stun: 0.35 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15);
         }
         for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < LEN) sh.finish(); }
@@ -148,7 +157,7 @@ export const magicMethods = {
       }
       case 'meteor': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 70, y: this.y + 3 + f.y * 70 };
-        const R = 38, dmg = spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: S.perks.pyromancer ? 1.15 : 1 });
+        const R = 38, dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
         sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, R / 32, 0.9, 'ring', 0xf08a30);
         sc.time.delayedCall(900, () => {
           if (!sc.scene.isActive('Game')) return;
@@ -279,9 +288,9 @@ export const magicMethods = {
     }
     const hitSet = new Set([first]);
     let cur = first, mult = 1;
-    for (let hop = 0; hop < 3 && cur; hop++) {
+    for (let hop = 0; hop < 3 + ((stats.weapon() || {}).chainAdd || 0) && cur; hop++) {
       pts.push({ x: cur.x, y: cur.y + 2 });
-      const base = spellDamage({ base: sp.dmg, skill: bonus.spell(), perk: mult });
+      const base = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: mult });
       const dealt = cur.takeHit({ dmg: base, kx: cur.x - ox, ky: cur.y - oy, kb: 30, src: 'shock', element: 'shock', stun: 0.35 });
       sc.fx.text(cur.x, cur.y - 10, String(dealt), 13);
       sc.fx.puff(cur.x, cur.y, 13, 6, 40, 0.3);
@@ -299,6 +308,20 @@ export const magicMethods = {
     sc.fx.bolt(pts, 13);
     sc.hitStop(0.04);
     sc.breakAt(first.x, first.y, 10);
+  },
+
+  // A staff's heavy attack: a weak bolt of its own element that costs stamina, not mana.
+  staffBolt() {
+    const w = stats.weapon() || {}, T = TUNE.player.staff, sc = this.scene, f = this.face;
+    if (!this.spend(T.boltCost)) return;
+    const kind = w.bolt === 'fire' ? 'fire' : 'frost', sp = SPELLS[kind];
+    const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * (w.spellMul ?? 1), perk: 1 });
+    this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
+    const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, kind, f.x * sp.speed, f.y * sp.speed, { dmg, life: 1 });
+    sc.shots.add(pr); pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
+    sfx.play(kind === 'fire' ? 'fire' : 'frost');
+    sc.fx.puff(this.x + f.x * 8, this.y + 3 + f.y * 8, sp.col, 5, 36, 0.25);
+    this.gainXp('destruction', 1);
   },
 
   tickWard(dt) {

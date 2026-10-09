@@ -11,7 +11,7 @@ import { foodVal } from '../systems/food.js';
 import { elixirVal } from '../systems/elixir.js';
 import { modMul, modSum } from '../data/mods.js';
 import { wear } from '../systems/durability.js';
-import { statusMods, inflictOn } from '../systems/status.js';
+import { statusMods, inflictOn, applyStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { norm } from '../util.js';
@@ -77,6 +77,7 @@ export const combatMethods = {
   // Heavy attack: a slow, telegraphed overhead blow that staggers and breaks guards.
   startHeavy() {
     const H = P.heavy, w = stats.weapon() || {};
+    if (w.style === 'staff') { this.staffBolt(); return; }
     if (!this.spend(H.cost * (w.costMul || 1) * bonus.swingCost())) return;
     const c = { dmg: H.dmg, kb: H.kb, size: H.size + (w.sizeAdd || 0), total: H.total * (w.swing || 1), cost: 1, flip: false, scale: 1.6, stun: H.stun, hs: H.windup * (w.swing || 1), he: H.windup * (w.swing || 1) + 0.16, poise: H.poise, heavyAtk: true };
     this.comboN = 0; this.comboT = 0;
@@ -95,7 +96,7 @@ export const combatMethods = {
       const key = 'held_' + S.equip.weapon;
       const sweep = 1.25 - 2.5 * k;
       const ang = Math.atan2(f.y, f.x) + (s.c.flip ? -sweep : sweep);
-      this.heldImg.setTexture(this.scene.textures.exists(key) ? key : 'blade_default').setOrigin(0.08, 0.5).setVisible(true)
+      this.heldImg.setTexture(this.scene.textures.exists(key) ? key : 'blade_default').setOrigin(['staff', 'halberd'].includes(stats.weapon()?.style) ? 0.34 : 0.08, 0.5).setVisible(true)
         .setPosition(this.x + Math.cos(ang) * 3, this.y + 3 + Math.sin(ang) * 3).setRotation(ang).setScale(s.c.scale > 1 ? 1.15 : 1)
         .setDepth(this.y + (f.y < 0 ? 4 : 12)).setAlpha(1);
     }
@@ -113,7 +114,7 @@ export const combatMethods = {
     const f = this.face;
     const reach = s.c.reach ?? P.sword.reach;
     const cx = this.x + f.x * reach, cy = this.y + 3 + f.y * reach;
-    const sz = s.c.size, nw = s.c.narrow ? sz * s.c.narrow : sz;           // spears: long and thin
+    const sz = s.c.size, nw = s.c.narrow ? sz * s.c.narrow : s.c.wide ? sz * s.c.wide : sz;           // spears: long and thin
     const horiz = Math.abs(f.x) >= Math.abs(f.y);
     const rw = horiz ? sz : nw, rh = horiz ? nw : sz;
     const r = new Phaser.Geom.Rectangle(cx - rw / 2, cy - rh / 2, rw, rh);
@@ -141,6 +142,7 @@ export const combatMethods = {
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
       dmg *= curseMul(this.scene, e, S.equip.weapon, ITEMS);
+      if (wp.vsUndead && e.cfg?.bark === 'undead') dmg *= wp.vsUndead;
       dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1) * elixirVal('dmgMul', 1) * foodVal('dmgMul', 1);
       const riposte = this.riposteT > 0;
       if (riposte) dmg *= P.riposte.mult;
@@ -148,11 +150,13 @@ export const combatMethods = {
       if (crit) dmg *= 1.8;
       if (exec || assassinate) dmg = e.hp + 999;
       const dealt = e.takeHit({
-        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: riposte ? Math.max(s.c.stun, 0.9) : s.c.stun, heavy: heavy || !!s.c.breaker, pierce: Math.max(s.c.pierce || 0, heavy ? wp.pierce || 0 : 0), poise: (s.c.poise || 1) * (riposte ? 2 : 1),
+        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: riposte ? Math.max(s.c.stun, 0.9) : s.c.stun + (heavy && wp.plantStun ? wp.plantStun : 0), heavy: heavy || !!s.c.breaker, pierce: Math.max(s.c.pierce || 0, heavy ? wp.pierce || 0 : 0), poise: (s.c.poise || 1) * (riposte ? 2 : 1),
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
       wear(S.equip.weapon, wp.wearMul || 1);
+      if (wp.pull && !e.isBoss && !e.dead) { const px = this.x - e.x, py = this.y - e.y, pd = Math.hypot(px, py) || 1; e.body.velocity.x += (px / pd) * wp.pull * 9; e.body.velocity.y += (py / pd) * wp.pull * 9; }
+      if (e.dead && wp.killFreeze) for (const o of this.scene.enemies.getChildren()) if (o !== e && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) < wp.killFreeze) applyStatus(o, 'freeze', {});
       if (wp.inflict) inflictOn(e, wp.inflict.filter((f) => !f.sneakOnly || sneak));
       if (backstab) this.scene.fx.text(e.x, e.y - 32, 'BACKSTAB', 12, 0.8);
       if (assassinate) this.scene.fx.text(e.x, e.y - 32, 'ASSASSINATED', 13, 1);
@@ -187,6 +191,7 @@ export const combatMethods = {
       return false;
     }
     const sc = this.scene;
+    if (this.swing && stats.weapon()?.swingGuard) dmg *= 1 - stats.weapon().swingGuard;
     let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * P.weights[stats.weight()].knock, blocked = false;
     const crush = !!(opts.crush || opts.attacker?.cfg?.crush);
 

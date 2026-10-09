@@ -1,6 +1,6 @@
 # New weapons: daggers, staves, halberds
 
-Status: daggers built; staves and halberds still to do. Written so each weapon family has a full ladder of versions, every version has its own look, and every region hands out something new.
+Status: daggers, staves and halberds built. The section "How each region hands them out" below is the original plan; the tables above are what is in the game. Written so each weapon family has a full ladder of versions, every version has its own look, and every region hands out something new.
 
 ## Where they fit
 - Today: swords (no style), axes, spears, maces, greatswords, hammers, bows, shields. `hunting_knife` already has `style: 'dagger'` and a four-hit combo in `TUNE.player.styles.dagger`, but no sneak bonus and only one design.
@@ -39,44 +39,49 @@ Rules in the game now (`TUNE.player.dagger`, `playerCombat.swordHit`):
 | 12 | Nightshade | 34 | sneak attack kills any non-boss; +1.0x sneak | Lode Chasm (Underdeep delve) boss chest |
 Dagger bases also roll in generated loot (`Dagger` in `genloot.js`).
 
-## Staves (one-handed, new `style: 'staff'`)
-Role: the mage's weapon. Today a caster has no weapon that suits them; the staff turns the spell loadout into a build.
-Feel: melee is a weak two-hit poke (dmg x0.5, short reach, quick recover) so it is a fallback, not an attack option. The value is on the stat line: **spell damage +8% to +35%, spell mana cost -5% to -25%, mana regen +10% to +60%**, one signature spell effect per staff. Heavy attack on a staff = a free, weak magic bolt (no mana) so a caster is never helpless.
-Skills: Destruction (spell power), plus the existing perks. Works with a shield or a tome off-hand; blocked by the two-hand rule only for halberds.
+## Staves (one-handed, `style: 'staff'`): BUILT
+Role: the mage's weapon. A weak two-hit poke in melee, and the stat line is the point.
+Rules in the game now:
+- Item fields: `spellMul` (all spells), `elemMul` (one element), `spellCost` (per-spell cost multipliers), `manaCostMul`, `mpRegenMul` (mana regeneration), `spellCrit`, `chainAdd` (lightning chains further), `slowAdd` and `rootChance` (frost bolts), `wardMul` and `wardTime`, `freeEvery` (every Nth cast is free), `bolt` (the element of the heavy attack).
+- **Heavy attack with a staff** fires a weak free bolt of the staff's element: it costs stamina (18), not mana.
+- `player.spellPow()` combines skill, the staff's multipliers and spell crit; spell costs and regeneration read the staff as well.
+- Twelve head shapes drawn in code, each unique: burl, fork, ice spire, reed tuft, iron fork with spark, crystal cluster, caged ember, shell ring, gold crown scepter, rock head with amber, tall winter spire, flame.
 
-| # | Staff | Tier | Spell bonus | Signature | Where it is found |
-|---|---|---|---|---|---|
-| 1 | Walking Staff | 0 | none | nothing, a stick | Starter chest; Mirra gives one |
-| 2 | Hazel Staff | 0 | +8% spells | none | Mirra's stock (daily) |
-| 3 | Frostbirch Staff | 0 | +12%, frost -15% mana | frost spells slow longer | Hollow Reach shrine chest |
-| 4 | Reed-Warden's Staff | 1 | +15%, mana regen +25% | bog spells root | Weeping Fens: Reedwick elder quest reward |
-| 5 | Stormcrown Rod | 1 | +18%, shock chains to 1 extra | shock arcs | Stormcrown Highlands: Skarn Hold shaman |
-| 6 | Prism Staff | 2 | +20%, +8% spell crit | Blink leaves a decoy | Glasswood: crystal vault; Hartking's drop |
-| 7 | Cinder Staff | 2 | +22%, fire -15% mana | burning ground | Ashen Peaks: Emberhold mage shop |
-| 8 | Tidecaller's Staff | 2 | +20%, Ward lasts +50% | Ward reflects 15% | Frozen Coast: Tidemother's cove chest |
-| 9 | Sovereign's Scepter | 3 | +28%, free meteor every 4th cast | meteor | Dropped by the Ashen Sovereign |
-| 10 | Delver's Lodestaff | 3 | +25%, mana regen +45% | mana from ore veins | Underdeep: Lode Colossus drop |
-| 11 | Staff of the Long Winter | 3 | +35%, frost nova costs half | freezing wake | Dropped by the Long Winter (final boss) |
-| 12 | Emberforged Staff | 3 | +30% fire | ember burst | Emberhold forge recipe |
+| # | Staff | Melee | Spell bonus and twist | Where it is found |
+|---|---|---|---|---|
+| 1 | Walking Staff | 5 | none | Mirra's stock |
+| 2 | Hazel Staff | 6 | spells +8% | Mirra's stock |
+| 3 | Frostbirch Staff | 6 | +12%, frost and Frost Nova cost 15% less, frost slows longer | Dropped by the Rime Wyrm |
+| 4 | Reed-Warden's Staff | 7 | +15%, mana regen +25%, 30% of frost bolts root | Bog Hags (10%) |
+| 5 | Stormcrown Rod | 7 | +18%, lightning costs 10% less and chains one further | Clan shamans (10%) |
+| 6 | Prism Staff | 7 | +20%, 8% spell crit (x1.6) | Glimmerkin (8%) |
+| 7 | Cinder Staff | 8 | +22%, fire, Ember Nova and Meteor cost less, fire +10% | Conjurers (6%) |
+| 8 | Tidecaller's Staff | 8 | +20%, Ward 20% stronger and 50% longer | Tide Guild armoury (75 rep) |
+| 9 | Sovereign's Scepter | 9 | +28%, every 4th cast free, fire +10% | The Forge boss chest (Ashen Sovereign) |
+| 10 | Delver's Lodestaff | 9 | +25%, mana regen +45% | Dropped by the Lode Colossus |
+| 11 | Staff of the Long Winter | 10 | +35%, Frost Nova half price, frost +10% | Dropped by the Long Winter |
+| 12 | Emberforged Staff | 8 | +30%, fire +30% | Emberforge (ash iron, ember ore) |
+Staves also roll in generated loot (`Staff` base).
 
-## Halberds (two-handed, new `style: 'halberd'`, type `weapon2h`)
+## Halberds (two-handed, `style: 'halberd'`): BUILT
 Role: a heavy polearm for crowds. Slow, long, wide.
-Feel: reach x1.45 of a sword, swing 1.25, stamina cost x1.4. Combo: a **wide sweeping cut** (hits a 150 degree arc), a **reverse sweep**, then an **overhead plant** that staggers and knocks back (finisher). Heavy attack = a thrust through the whole line. Slower than a spear, hits more than a greatsword, cannot be dual wielded. Sweeps count as shield-breaking against guarding enemies.
-Skills: Two-Handed. Optional perk "Reach": +10% reach.
+Rules in the game now: three-step combo: **sweep**, **reverse sweep** (hit boxes 1.8x wider than long, so they catch foes off to the side), then an **overhead plant** (guard breaker, stagger 0.8 s, pierces 40% armour). Item fields: `pull` (hook drags small foes in), `vsUndead`, `plantStun`, `swingGuard` (less damage taken while swinging), `pierce` (extra plant armour pierce), `killFreeze` (a killing blow freezes nearby foes), `inflict`, `elem`, `crit`.
+Eleven head shapes: bill hook, axe and spike, curved glaive, broad leaf, crescent bardiche, harbour glaive, faceted voulge, court halberd with tassel, flame blade, stone-and-amber glaive, the Reaper's scythe.
 
-| # | Halberd | Tier | Dmg | Twist | Where it is found |
-|---|---|---|---|---|---|
-| 1 | Woodsman's Bill | 0 | 16 | hooks, pulls small enemies 1 tile | Hilda's stock; woodcutter camps |
-| 2 | Iron Halberd | 0 | 22 | none | Hilda's stock (rarer) |
-| 3 | Warden's Glaive | 1 | 28 | +15% vs undead | Draugr crypt chest (Hollow Reach) |
-| 4 | Clan Glaive | 1 | 31 | sweep bleeds | Skarn Hold weaponsmith (Highlands) |
-| 5 | Ironwatch Bardiche | 2 | 36 | overhead plant stuns 0.5 s longer | Dropped by Hrolf Ironmarch (Ironwatch Keep) |
-| 6 | Harbour Glaive | 2 | 36 | frost, wide sweep | Frozen Coast: Brinegut's flagship chest |
-| 7 | Glass Voulge | 2 | 38 | crit sweeps | Glasswood crystal vault |
-| 8 | Court Halberd | 3 | 42 | blocks 30% while the sweep is out | Old Kingdom court guards (rare) |
-| 9 | Emberforged Halberd | 3 | 46 | fire sweep | Emberhold forge recipe |
-| 10 | Lode Glaive | 3 | 48 | smashes ore veins in one plant | Underdeep: Lode Colossus gate chest |
-| 11 | Reaper of the Long Winter | 3 | 56 | legendary: killing blows freeze nearby enemies | Dropped by the Long Winter, final boss, New Game+ |
+| # | Halberd | Dmg | Twist | Where it is found |
+|---|---|---|---|---|
+| 1 | Woodsman's Bill | 16 | hook pulls small foes in | Hilda's stock |
+| 2 | Iron Halberd | 22 | none | Hilda's stock |
+| 3 | Warden's Glaive | 28 | +15% vs undead | Draugr Wardens (5%) and wights (4%) |
+| 4 | Clan Glaive | 31 | bleeds (50%) | Clan raiders (5%) |
+| 5 | Ironwatch Bardiche | 36 | plant stuns 0.5 s longer | Dropped by Hrolf Ironmarch |
+| 6 | Harbour Glaive | 36 | frost | Seaweed Cove boss chest (Brinegut) |
+| 7 | Glass Voulge | 38 | 10% crit | Crystal golems (5%) |
+| 8 | Court Halberd | 42 | 30% less damage while swinging | Bone Sentinels (5%) |
+| 9 | Emberforged Halberd | 46 | fire | Emberforge (needs Anvil Court 20) |
+| 10 | Lode Glaive | 48 | plant pierces 50% armour | Lode Chasm boss chest |
+| 11 | Reaper of the Long Winter | 56 | frost, kills freeze nearby foes | Dropped by the Long Winter |
+Halberds also roll in generated loot (`Halberd` base).
 
 ## How each region hands them out
 | Region (tier) | Dagger | Staff | Halberd |

@@ -6,6 +6,7 @@ import { S } from '../systems/state.js';
 import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { bl } from '../systems/bless.js';
+import { applyStatus } from '../systems/status.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -102,7 +103,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       if (S.perks.piercing && !this.pierced) { this.pierced = true; this.dmg *= 0.7; return; }
       this.finish();
     } else if (this.kind === 'frost') {
-      const dealt = e.takeHit({ dmg: this.dmg, kx, ky, kb: 40, src: 'frost', element: 'frost', slow: 3.5 + (S.perks.frostbite ? 2 : 0), stun: 0.12 });
+      const dealt = e.takeHit({ dmg: this.dmg, kx, ky, kb: 40, src: 'frost', element: 'frost', slow: 3.5 + (S.perks.frostbite ? 2 : 0) + (stats.weapon()?.slowAdd || 0), stun: 0.12 });
+      if (dealt > 0 && Math.random() < (stats.weapon()?.rootChance || 0)) applyStatus(e, 'root', { t: 2 });
       sc.fx.text(e.x, e.y - 10, String(dealt), 15);
       sc.fx.puff(e.x, e.y, 15, 8, 40, 0.4);
       sfx.play('hit');
