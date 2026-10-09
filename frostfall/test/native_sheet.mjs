@@ -11,6 +11,7 @@ const data = await h.ev(async ([kinds, ZOOM, FRS]) => {
   await import('/src/art/native/creatures_humanoid.js');
   await import('/src/art/native/animals.js');
   try { await import('/src/art/native/special.js'); } catch (e) {}
+  for (const f of ['bosses_a', 'bosses_b', 'bosses_c']) { try { await import('/src/art/native/' + f + '.js'); } catch (e) { if (!/Failed to fetch|Failed to load|404/.test(String(e))) console.log(f, String(e)); } }
   const { ENEMIES } = await import('/src/data/enemies.js');
   const sc = window.__ff.game.scene.getScene('Game');
   const FR = ['down0', 'down1', 'side1', 'up0', 'atkdown0', 'atkside1', 'hurt0', 'dead0'];
