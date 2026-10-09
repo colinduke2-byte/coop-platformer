@@ -380,8 +380,6 @@ export default class HudScene extends Phaser.Scene {
 
     // panels
     const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;
-    g.fillStyle(C[0], 0.62);
-    g.fillRect(0, 0, big ? 150 : 134, big ? 36 : 28);
     BARS.forEach((b, i) => {
       this.flash[b.key] -= dt;
       const x = 17, y = 3 + i * rs;
