@@ -105,7 +105,7 @@ func _update_collision() -> void:
 			top.append(_pos[last] + Vector2(hw - 2.0, 0).rotated(_rot[last]))
 		var poly := top.duplicate()
 		for j in range(top.size() - 1, -1, -1):
-			poly.append(top[j] + Vector2(0, 12))
+			poly.append(top[j] + Vector2(0, 36))
 		_polys[k].polygon = poly
 
 
@@ -134,7 +134,7 @@ func _physics_process(delta: float) -> void:
 			continue
 		var local := p.global_position - global_position
 		var t := local.x / maxf(span.x, 1.0)
-		if t > -0.02 and t < 1.02 and absf(local.y - (span.y * t + sin(clampf(t, 0.0, 1.0) * PI) * slack + _dip_at(t))) < 20.0:
+		if t > -0.02 and t < 1.02 and absf(local.y - (span.y * t + sin(clampf(t, 0.0, 1.0) * PI) * slack + _dip_at(t))) < 48.0:
 			riders.append(clampf(t, 0.0, 1.0))
 	for i in plank_count:
 		var t := _t_of(i)

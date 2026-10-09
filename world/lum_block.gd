@@ -26,6 +26,8 @@ func _ready() -> void:
 	col.shape = shape
 	col.position = Vector2(SIZE, SIZE) * 0.5
 	add_child(col, false, Node.INTERNAL_MODE_FRONT)
+	if not Engine.is_editor_hint():
+		EventBus.player_ground_pounded.connect(_on_pounded)
 
 
 func take_hit(by: Player, _knockback: Vector2) -> void:
@@ -43,8 +45,28 @@ func _physics_process(delta: float) -> void:
 		var p := n as Player
 		if p.is_on_ceiling() and p.speed_before_move.y < 0.0:
 			var head := p.global_position + Vector2(0, -Player.BODY_SIZE.y)
-			if absf(head.y - (global_position.y + SIZE)) < 8.0 and head.x > global_position.x - 10.0 and head.x < global_position.x + SIZE + 10.0:
+			if absf(head.y - (global_position.y + SIZE)) < 20.0 and head.x > global_position.x - 24.0 and head.x < global_position.x + SIZE + 24.0:
 				_pop(p)
+
+
+## A ground pound onto the top empties the whole block in one burst.
+func _on_pounded(_by: Player, at: Vector2) -> void:
+	if lums <= 0 or _cd > 0.0:
+		return
+	if at.x < global_position.x - 16.0 or at.x > global_position.x + SIZE + 16.0:
+		return
+	if at.y < global_position.y - 24.0 or at.y > global_position.y + 20.0:
+		return
+	_cd = 0.15
+	_bump = 1.0
+	var n := lums
+	lums = 0
+	for i in n:
+		var lum: Node2D = preload("res://collectibles/lum.tscn").instantiate()
+		var a := lerpf(-2.5, -0.64, (float(i) + 0.5) / n)   # fan across the sky above the block
+		lum.position = position + Vector2(SIZE * 0.5, -10) + Vector2(cos(a), sin(a)) * (50.0 + 14.0 * (i % 3))
+		get_parent().add_child(lum)
+	Audio.play("lum", -3.0, 1.0, 0.0)
 
 
 func _pop(by: Player) -> void:

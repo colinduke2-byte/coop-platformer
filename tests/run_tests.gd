@@ -2585,6 +2585,33 @@ func test_rope_bridge_sags_under_a_rider() -> void:
 	check(r._pos[mid_i].y > rest_y + 15.0, "the middle should sag under you (%.0f -> %.0f)" % [rest_y, r._pos[mid_i].y])
 
 
+func test_two_players_stay_on_a_rope_bridge() -> void:
+	var r := RopeBridge.new()
+	r.position = Vector2(-300, -200)
+	r.span = Vector2(600, 0)
+	_arena.add_child(r)
+	await frames(2)
+	var a := add_player(0, Vector2(-100, -300))
+	await seconds(0.8)
+	var b := add_player(1, Vector2(80, -330))
+	var fell := false
+	for i in 150:
+		await get_tree().physics_frame
+		fell = fell or a.global_position.y > -100.0 or b.global_position.y > -100.0
+	check(not fell, "neither dreamer should fall through the bridge (a %.0f, b %.0f)" % [a.global_position.y, b.global_position.y])
+
+
+func test_ground_pound_empties_a_lum_block() -> void:
+	var blk := LumBlock.new()
+	blk.position = Vector2(-32, -200)
+	blk.lums = 5
+	_arena.add_child(blk)
+	var p := add_player(0, Vector2(0, -330))
+	await frames(2)
+	EventBus.player_ground_pounded.emit(p, Vector2(0, -200))
+	check(blk.lums == 0, "a pound on top should release every Lum (left %d)" % blk.lums)
+
+
 func test_pendulum_platform_carries_rider_and_spiked_one_hurts() -> void:
 	var pd := Pendulum.new()
 	pd.position = Vector2(0, -600)
