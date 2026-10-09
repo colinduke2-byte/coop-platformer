@@ -80,3 +80,12 @@ grimfang (x1), wyrm (x1), draugr (x1), wolf (x1), werewolf (x1.25), ghost (x1), 
 - **Scale below 1** (Bear Cub 0.65, Imp 0.85, Slimeling 0.7). These look smaller-pixeled than the hero. Options: leave as is, or draw natively at 10x10, 14x14 and 11x11. Recommend: leave as is for now.
 - **Scale 1.2-1.3** (Werewolf 1.25, Spore Mother 1.3, Caveweaver 1.2, Lodeling 1.2, Glass Stag 1.2, Prism 1.2, Gloomcap 1.3) is left at 16 to keep the cut-off simple. Say if you want the cut-off lowered.
 - Tinted variants (Mammoth, Crystal Golem, Thunderbird, Glass Stag) share art with a base kind. If they get their own native art they will no longer look related; recommend native art per base kind plus tint where the sizes match, and separate art where they do not (Mammoth should not be a recoloured bear).
+
+## Status (done)
+
+Native-pixel art is live for 25 creatures: all 14 bosses plus Bridge Troll, Rime and Crystal Golem, Stone Giant, Ash Wyvern, Thunderbird, Frost Worm, Snow Bear, Wild Mammoth, Winter Elk and Glass Stag.
+- Registry: `src/art/native_registry.js`; art in `src/art/native/` (bosses_a/b/c = hand-designed bosses on `boss_kit.js`, special.js = Tidemother, Ashen Root, Skaldrath, animals.js, creatures_humanoid.js).
+- `test/stage66_native.mjs` checks size, hitbox and frames for each against the stretched sprite.
+- Still on the old stretched art by choice: Bear Cub, Imp, Slimeling (scale below 1) and everything at scale 1.0-1.3.
+- Follow-up: Bridge Troll, both golems and Stone Giant still share one body shape.
+- Dev tools: `test/native_sheet.mjs` (preview), `test/native_compare.mjs` (old vs new image), `test/old_sheet.mjs`.
