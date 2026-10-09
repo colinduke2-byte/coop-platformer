@@ -1,3 +1,5 @@
+> **Status: dropped by Colin.** The painted look was rejected; a sharper-pixels build with smoother lighting was prototyped (branch deleted) and he preferred the original stepped, ringed lighting. The game stays at 320 x 180. The spike notes in `DENSITY_SPIKE.md` are kept in case the idea returns.
+
 # Plan: sharper pixels (2x density)
 
 Decided with Colin: same chunky Frostfall charm, richer; a palette per region (about 32 colours each); crisp HUD text redrawn at the new size; first slice = the Dreamer and the village, reviewed before the rest; Standard (today) and High (new) quality with auto-detect.
