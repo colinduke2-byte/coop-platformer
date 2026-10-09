@@ -13,6 +13,7 @@ import { textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
 import { CVD_MODES, applyCvd } from '../systems/access.js';
+import { durOn } from '../systems/durability.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
@@ -100,7 +101,7 @@ export function systemTab(m) {
       case 'FULLSCREEN': m.scale.toggleFullscreen(); break;
       case 'FLASHES': toggle('flashes'); break;
       case 'HIT STOP': toggle('hitStop'); break;
-      case 'DURABILITY': toggle('durability'); break;
+      case 'DURABILITY': if (settings.difficulty !== 'easy') toggle(settings.difficulty === 'hard' ? 'durabilityHard' : 'durability'); break;
       case 'DAMAGE NUMBERS': toggle('dmgNumbers'); break;
       case 'PIXEL SCALE': toggle('intScale'); window.__applyScaling?.(); break;
       case 'MOUSE': toggle('mouse'); break;
@@ -251,7 +252,7 @@ export function systemTab(m) {
         else if (r === 'DIFFICULTY') { v = settings.difficulty.toUpperCase(); vc = { easy: 8, normal: 5, hard: 11 }[settings.difficulty]; }
         else if (r === 'SCREEN SHAKE') v = settings.shake === 0 ? 'OFF' : settings.shake === 0.5 ? 'LOW' : 'FULL';
         else if (r === 'CLOAK') { v = currentCloak().name.toUpperCase(); vc = currentCloak().col; }
-        else if (r === 'DURABILITY') { v = settings.durability ? 'ON' : 'OFF'; vc = settings.durability ? 13 : 4; }
+        else if (r === 'DURABILITY') { const on = durOn(); v = settings.difficulty === 'easy' ? 'OFF (EASY)' : on ? 'ON' : 'OFF'; vc = on ? 13 : 4; }
         else if (r === 'HIT STOP') { v = settings.hitStop === false ? 'OFF' : 'ON'; vc = settings.hitStop === false ? 11 : 8; }
         else if (r === 'DAMAGE NUMBERS') { v = settings.dmgNumbers === false ? 'OFF' : 'ON'; vc = settings.dmgNumbers === false ? 11 : 8; }
         else if (r === 'FLASHES') { v = settings.flashes ? 'ON' : 'OFF'; vc = settings.flashes ? 8 : 11; }

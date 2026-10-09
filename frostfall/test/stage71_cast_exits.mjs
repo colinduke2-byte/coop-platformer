@@ -1,4 +1,4 @@
-// The cast button (whatever it is bound to) leaves menus, shops, lockpicking and conversations.
+// The cast button (whatever it is bound to) leaves menus, shops, lockpicking and conversations. Also: gear wear is a switch in Hard.
 import { launch, check } from './harness.mjs';
 const h = await launch();
 await h.open('scene=game&map=village&spawn=start&seed=424242');
@@ -20,6 +20,12 @@ await G(() => window.__ff.game.scene.getScene('Game').openMenu(-1, 'QUESTS'));
 await h.sleep(500);
 await tap('KeyL');
 check('...on any tab', !(await active('Menu')));
+
+// the controller's RB backs out even if it is not what casts spells (the virtual code the pad sends for it)
+await G(() => window.__ff.game.scene.getScene('Game').openMenu(0));
+await h.sleep(500);
+await tap('PadBack');
+check('RB (PadBack) closes the menu whatever it is mapped to', !(await active('Menu')));
 
 // shop / list menus
 await G(async () => { const { listScreen } = await import('/src/scenes/ShopScene.js'); window.__shopDone = false; listScreen({ title: 'TEST', rows: () => [{ name: 'Alpha', ok: true, tag: 1, lines: [] }, { name: 'Beta', ok: true, tag: 2, lines: [] }], onSelect: () => {} }).then(() => { window.__shopDone = true; }); });
@@ -45,5 +51,17 @@ await h.sleep(400);
 const t2 = await G(() => window.__talk);
 check('...and backs out of it with the Leave option', t2.pick === 2 && t2.end, JSON.stringify(t2));
 check('the game is free again (no dialogue stuck open)', await G(() => !window.__ff.game.scene.getScene('Hud').dlg));
+// gear wear is a switch on Hard too
+const dur = await G(async () => {
+  const { settings } = await import('/src/systems/settings.js'), { durOn } = await import('/src/systems/durability.js');
+  const old = { d: settings.difficulty, a: settings.durability, b: settings.durabilityHard }, out = {};
+  settings.difficulty = 'hard'; settings.durabilityHard = true; out.hardOn = durOn();
+  settings.durabilityHard = false; out.hardOff = durOn();
+  settings.difficulty = 'easy'; settings.durability = true; out.easy = durOn();
+  settings.difficulty = 'normal'; settings.durability = true; out.normalOn = durOn(); settings.durability = false; out.normalOff = durOn();
+  settings.difficulty = old.d; settings.durability = old.a; settings.durabilityHard = old.b;
+  return out;
+});
+check('gear wear: on by default in Hard, switchable off; Easy never; Normal follows the option', dur.hardOn === true && dur.hardOff === false && dur.easy === false && dur.normalOn === true && dur.normalOff === false, JSON.stringify(dur));
 check('no page errors', h.errors.length === 0, h.errors.join(' | '));
 await h.close();

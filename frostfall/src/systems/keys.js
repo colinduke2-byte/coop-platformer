@@ -44,6 +44,8 @@ const blockDefault = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft
 export const keys = {
   isDown(act) { return (BINDINGS[act] || []).some((c) => down.has(c)); },
   pressed(act) { return (BINDINGS[act] || []).some((c) => pressedSet.has(c)); },
+  // Menus: the cast button, or the controller's right bumper (RB) whatever it is mapped to, backs out of anything.
+  back() { return this.pressed('spell') || pressedSet.has('PadBack'); },
   released(act) { return (BINDINGS[act] || []).some((c) => releasedSet.has(c)); },
   // Raw access for text-less menus (e.g. any key to continue).
   anyPressed() { return pressedSet.size > 0; },
@@ -138,6 +140,7 @@ export function pollPad() {
     } else {
       padDown.clear(); act.forEach((x) => padDown.add(x));
       for (const id of act) { const c = map[id]; if (c) want.add(c); }
+      if (act.has('b5')) want.add('PadBack');
     }
   } else { padInfo = { id: '', mapping: '', live: [] }; stick.mag = 0; }
   stick.kb = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].some((c) => down.has(c) && !padHeld.has(c));

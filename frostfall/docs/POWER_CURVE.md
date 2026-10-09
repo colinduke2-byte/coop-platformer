@@ -43,7 +43,7 @@ How to read it:
 | Elite and champion frequency | 0.6x | 1x | 1.5x |
 | Food and potion drops | 1.5x | 1x | 0.7x |
 | Shop buy prices | 0.85x | 1x | 1.2x |
-| Gear durability | off | your option | on |
+| Gear durability | off | your option | on (can be switched off in Pause > System > DURABILITY) |
 
 No difficulty skips boss phases or removes telegraphs.
 

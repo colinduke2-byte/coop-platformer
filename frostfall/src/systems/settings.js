@@ -6,7 +6,8 @@ export const settings = {
   difficulty: 'normal',   // easy | normal | hard
   challenge: null,        // an optional modifier applied to the next NEW GAME (see data/mods.js)
   shake: 1,               // 0 | 0.5 | 1  (screen shake strength)
-  durability: false,      // gear wears out and needs repairs (optional)
+  durability: false,      // gear wears out and needs repairs (optional; Normal difficulty)
+  durabilityHard: true,   // the same switch for Hard, where gear wear starts on
   dmgNumbers: true,       // floating damage numbers
   hitStop: true,          // brief freeze on landed hits
   flashes: true,          // screen flashes

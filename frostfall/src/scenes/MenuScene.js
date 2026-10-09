@@ -106,7 +106,7 @@ export default class MenuScene extends Phaser.Scene {
   update() {
     if (this.warm > 0) { this.warm--; return; }
     if (this.tabs[this.tab].busy?.()) { this.tabs[this.tab].input(); if (this.dirty) { this.dirty = false; this.draw(); } return; }
-    if (keys.pressed('pause') || keys.pressed('spell') || keys.pressed('inventory') && this.tab === 0 || keys.pressed('journal') && this.tabs[this.tab].name === 'QUESTS') { this.close(); return; }
+    if (keys.pressed('pause') || keys.back() || keys.pressed('inventory') && this.tab === 0 || keys.pressed('journal') && this.tabs[this.tab].name === 'QUESTS') { this.close(); return; }
     if (keys.pressed('inventory') && this.tab !== 0) this.go(0);
     if (keys.pressed('map')) { const q = this.tabs.findIndex((t) => t.name === 'MAP'); if (q === this.tab) { this.close(); return; } if (q >= 0) this.go(q); }
     if (keys.pressed('journal')) { const q = this.tabs.findIndex((t) => t.name === 'QUESTS'); if (q >= 0 && q !== this.tab) this.go(q); }

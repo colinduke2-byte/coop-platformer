@@ -75,7 +75,7 @@ export default class ShopScene extends Phaser.Scene {
     if (this.msgT > 0) { this.msgT -= ms / 1000; if (this.msgT <= 0) { this.msg = ''; this.dirty = true; } }
     if (!this.busy) {
       const n = this.cfg.rows().length;
-      if (keys.pressed('pause') || keys.pressed('spell')) { this.leave(); return; }
+      if (keys.pressed('pause') || keys.back()) { this.leave(); return; }
       if (n && keys.pressed('down')) this.move(1, n);
       if (n && keys.pressed('up')) this.move(-1, n);
       if (keys.pressed('interact')) this.choose(false);
