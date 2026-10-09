@@ -52,42 +52,65 @@ function rootPix(N, f) {
 }
 
 // ------------------------------------------------------------------ Skaldrath, the ember dragon (cell 48 x 32 in the old art)
-// ids: 1 body, 2 belly, 3 wing, 4 rib, 5 spike, 6 horn/tooth, 7 head, 8 far leg, 9 membrane edge, 10 claw
-const DRAGON_R = { 1: [12, 11, 9], 2: [13, 12, 11], 3: [13, 12, 11], 4: [1, 1, 1], 5: [13, 13, 12], 6: [6, 6, 5], 7: [12, 11, 9], 8: [11, 1, 1], 9: [14, 14, 1], 10: [6, 6, 5] };
+// A lean, long-necked dragon in the manner of a black Nordic wyrm, but red: swept-back horn crown, bony ragged wings, spined back.
+// ids: 1 body, 2 belly, 3 wing membrane, 4 bone/rib lines, 5 spine, 6 horn/claw/tooth, 7 far limb, 8 far wing, 9 glow
+const DRAGON_R = { 1: [12, 11, 9], 2: [12, 12, 11], 3: [11, 9, 1], 4: [1, 1, 1], 5: [10, 9, 1], 6: [10, 9, 1], 7: [11, 9, 1], 8: [9, 1, 1], 9: [13, 13, 12], 10: [6, 6, 5] };
 function dragonPix(W, H, pose) {
   const k = W / 48, g = new Grid(W, H), { R, E, T, Q, P, Y } = shaper(g, k);
   const attack = pose === 'attack', hurt = pose === 'hurt', dead = pose === 'death';
-  const wingPose = pose === 'side1' ? 1 : pose === 'side2' ? 2 : 0;
-  // wing: three finger bones fanned from the shoulder; pose 2 folds it down and back
-  const root = [24, 14];
-  const tips = wingPose === 2 ? [[3, 24], [8, 28], [14, 30], [20, 28]] : wingPose === 1 ? [[2, 1], [9, -2], [16, -1], [22, 3]] : [[3, 7], [8, 3], [14, 2], [20, 5]];
-  Y([root, ...tips], 3);
-  T(root[0], root[1], tips[0][0], tips[0][1], 0.8, 9);
-  for (const t of tips) T(root[0], root[1], t[0], t[1], 0.55, 4);
-  for (let i = 0; i + 1 < tips.length; i++) T(tips[i][0], tips[i][1], tips[i + 1][0], tips[i + 1][1], 0.7, 9);
-  // far legs, then tail, body, neck, head
-  T(28, 21, 27.4, 29, 3.4, 8); R(25.6, 29, 4, 1.6, 10); T(38, 21, 38.6, 29, 3.4, 8); R(36.6, 29, 4, 1.6, 10);
-  T(14, 19, 6, 21.6, 5.4, 1); T(6, 21.6, 1, 25, 3.4, 1); T(1, 25, -1, 27.4, 1.8, 1);
-  for (let i = 0; i < 5; i++) Q(5.6 + i * 2.4, 16.2 + i * 0.4, 1.2, 1.8, 5, 0.3);
-  E(26, 19.6, 14.6, 5, 1);                                      // body
-  E(26, 22, 12.6, 2.1, 2);                                      // belly plates
-  for (let i = 0; i < 7; i++) T(16.6 + i * 2.5, 23.4, 16.6 + i * 2.5, 21.2, 0.45, 4);
-  for (let i = 0; i < 6; i++) Q(17.4 + i * 2.6, 13.2 + Math.abs(i - 2.5) * 0.35, 1.3, 1.8, 5, 0.3);
-  T(31.5, 18.6, 40, 11, 4.6, 1);                                   // neck
-  for (let i = 0; i < 4; i++) Q(31.4 + i * 2, 15 - i * 1.7, 1.3, 1.5, 5, 0.3);
-  const hx = hurt ? 37 : attack ? 45 : 42, hy = hurt ? 5 : attack ? 11.5 : 8.4;
-  E(hx, hy, 5.4, 3.8, 7);                                      // skull
-  if (attack) { T(hx + 2, hy + 1.6, hx + 7.6, hy + 4.2, 2.2, 7); T(hx + 3, hy - 0.6, hx + 8.4, hy - 1.2, 2.4, 7); for (let i = 0; i < 4; i++) T(hx + 3.4 + i * 1.5, hy + 0.9, hx + 3.4 + i * 1.5, hy + 2.3, 0.6, 6); }
-  else { E(hx + 4, hy + 0.9, 3.8, 2.2, 7); for (let i = 0; i < 4; i++) T(hx + 1.4 + i * 1.4, hy + 2.6, hx + 1.4 + i * 1.4, hy + 3.5, 0.5, 6); }
-  T(hx - 3.2, hy - 2.6, hx - 6.4, hy - 6, 1.7, 6); T(hx - 1, hy - 3, hx - 2.8, hy - 7.2, 1.4, 6);                 // horns
-  T(hx - 2.4, hy - 3.6, hx - 6, hy - 5, 0.9, 5);
-  const e = Math.max(1, Math.round(k * 0.9));
-  if (hurt || dead) for (const [dx, dy] of [[0, 0], [1, 1], [1, 0], [0, 1]]) g.detail([[Math.round((hx + 1.2) * k) + dx * 2, Math.round((hy - 1.4) * k) + dy * 2, 0]], true);
-  else P(hx + 1.2, hy - 1.4, 13, e + 1, e);
-  P(hx + 5.6, hy - 0.6, 0, e, e);
-  // near legs
-  T(23, 21, 22.4, 29, 4.2, 1); R(20.4, 29, 4.8, 1.8, 10); T(33.4, 21, 34, 29, 4.2, 1); R(31.8, 29, 4.8, 1.8, 10);
-  for (const [x, y] of [[22, 17.2], [28, 16.8]]) E(x, y, 1.3, 0.7, 2);           // scale highlights
+  const wing = pose === 'side1' ? 1 : pose === 'side2' ? 2 : 0;
+  // --- wings. The wing is an arm (shoulder, elbow, wrist) with fingers fanned from the wrist and a scalloped trailing edge.
+  const sh = [27, 15];
+  const W0 = { up: { el: [22, 7], wr: [12, 1.6], tips: [[0.5, 3], [1.5, 11], [6, 17.5], [13, 19.5]], notch: [[4.4, 6.6], [5.4, 14], [10.5, 15.6]] },
+    flap: { el: [23, 5], wr: [14, -1.5], tips: [[2, -0.5], [0, 8], [4, 15.5], [12, 18]], notch: [[6, 4], [4.6, 11.5], [9.5, 14.4]] },
+    down: { el: [20, 16], wr: [12, 21], tips: [[2.5, 22], [4, 28.5], [10, 31], [17, 30]], notch: [[7, 21.5], [8.4, 27], [13, 28]] } }[wing === 0 ? 'up' : wing === 1 ? 'flap' : 'down'];
+  const wingShape = (dx, dy, mem, bone) => {
+    const sp = (p) => [p[0] + dx, p[1] + dy];
+    const pts = [sp(sh), sp(W0.el), sp(W0.wr), sp(W0.tips[0]), sp(W0.notch[0]), sp(W0.tips[1]), sp(W0.notch[1]), sp(W0.tips[2]), sp(W0.notch[2]), sp(W0.tips[3]), sp([20, 17.6])];
+    Y(pts, mem);
+    T(sh[0] + dx, sh[1] + dy, W0.el[0] + dx, W0.el[1] + dy, 1.5, bone); T(W0.el[0] + dx, W0.el[1] + dy, W0.wr[0] + dx, W0.wr[1] + dy, 1.2, bone);
+    for (const t of W0.tips) T(W0.wr[0] + dx, W0.wr[1] + dy, t[0] + dx, t[1] + dy, 0.55, bone === 1 ? 4 : bone);
+    return pts;
+  };
+  wingShape(3.4, -1, 8, 8);                                   // far wing, shaded and offset for depth
+  // --- tail, far legs
+  T(15, 19.4, 9, 21.2, 4.4, 7); T(9, 21.2, 4, 23.4, 3, 7); T(4, 23.4, 0.6, 25.4, 1.7, 7); T(0.6, 25.4, -0.5, 26.6, 0.8, 6);
+  const leg = (hipx, hipy, kneex, kneey, footx, footy, w, id) => { T(hipx, hipy, kneex, kneey, w, id); T(kneex, kneey, footx - 1.2, footy - 2.2, w * 0.7, id); T(footx - 1.2, footy - 2.2, footx, footy, w * 0.6, id); R(footx - 1.2, footy, 4, 1, id); };
+  leg(20, 20.4, 22.6, 24.8, 20, 29.6, 4, 7); leg(30.6, 21, 29, 25, 31.4, 29.6, 3.4, 7);
+  // --- body: deep chest, tucked waist, thick tail root
+  E(29.6, 18.4, 6, 4.5, 1); E(23, 18.6, 6.4, 3.4, 1); E(17, 19, 4.6, 3, 1);
+  E(28.6, 21.6, 5, 1.4, 2);
+  for (let i = 0; i < 4; i++) T(24.6 + i * 2.2, 22.6, 24.6 + i * 2.2, 21.2, 0.4, 4);
+  T(15, 19.2, 9, 21, 4.4, 1); T(9, 21, 4, 23.2, 3, 1); T(4, 23.2, 0.6, 25.2, 1.6, 1);
+  for (let i = 0; i < 6; i++) Q(16.6 - i * 2.6, 16 + (i * 0.3), 1.1, 1.8 - i * 0.12, 5, 0.3);          // tail spines
+  // --- neck: an S-curve rising to the head; the attack stretches it forward, a hit snaps it back
+  const nx = attack ? 3.5 : hurt ? -2.5 : 0, ny = attack ? 4 : hurt ? -2 : 0;
+  const nk = [[32.5, 16.4], [35.4 + nx * 0.4, 12.2 + ny * 0.3], [36.6 + nx * 0.7, 8.8 + ny * 0.6], [39.6 + nx, 6.8 + ny]];
+  T(nk[0][0], nk[0][1], nk[1][0], nk[1][1], 5.2, 1); T(nk[1][0], nk[1][1], nk[2][0], nk[2][1], 4, 1); T(nk[2][0], nk[2][1], nk[3][0], nk[3][1], 3.2, 1);
+  for (let i = 0; i < 5; i++) { const t = i / 4, x = nk[0][0] + (nk[3][0] - nk[0][0]) * t, y = nk[0][1] + (nk[3][1] - nk[0][1]) * t; Q(x - 1.8 - (i === 2 ? 0.5 : 0), y - 2.5 - (i % 2) * 0.3, 1, 1.5, 5, 0.3); }
+  for (let i = 0; i < 4; i++) T(34.8 + i * 0.5 + nx * 0.3, 11.6 + i * 1.5 + ny * 0.3, 36 + i * 0.5 + nx * 0.4, 11.8 + i * 1.5 + ny * 0.3, 0.35, 4);   // throat plates
+  // --- head
+  const hx = 43 + nx, hy = 6.4 + ny;
+  E(hx, hy, 3.7, 2.5, 1);                                        // skull
+  T(hx + 1, hy + 0.2, hx + 5.2, hy + 1.2, 2.5, 1);              // snout
+  const jaw = attack ? 2.8 : hurt ? 1.8 : 0.5;
+  T(hx - 1, hy + 2.2, hx + 4.8, hy + 2.6 + jaw, 1.3, 7);        // lower jaw
+  E(hx + 3.2, hy + 1.2, 3.4, 0.6, 3);
+  if (attack) { T(hx + 1.2, hy + 1.8, hx + 4.4, hy + 3 + jaw * 0.4, 1.6, 9); P(hx + 2, hy + 1.8, 12, 3, 2); }       // fire in the throat
+  for (let i = 0; i < 4; i++) T(hx + 1.6 + i * 1.1, hy + 1.8, hx + 1.4 + i * 1.1, hy + 2.8, 0.35, 10);                // teeth
+  // horn crown: four long swept-back horns and a brow spike
+  T(hx - 1.6, hy - 1.8, hx - 6.2, hy - 4.4, 1.3, 6); T(hx - 0.6, hy - 2.2, hx - 4.6, hy - 6, 1.2, 6);
+  T(hx - 2.2, hy - 0.8, hx - 7.4, hy - 1.4, 1.1, 6); T(hx - 2.6, hy + 0.6, hx - 6.6, hy + 1.8, 0.9, 6);
+  T(hx + 1.8, hy - 2, hx + 3.2, hy - 3.8, 0.8, 6);
+  T(hx - 0.4, hy + 2.8, hx - 1.4, hy + 4.4, 0.6, 6);                                                                    // chin spike
+  const e = Math.max(1, Math.round(k * 0.8));
+  if (hurt || dead) for (const [dx, dy] of [[0, 0], [1, 1], [1, 0], [0, 1]]) g.detail([[Math.round((hx + 0.8) * k) + dx * 2, Math.round((hy - 1) * k) + dy * 2, 0]], true);
+  else P(hx + 0.8, hy - 1.1, 13, e + 2, e);
+  P(hx + 5.6, hy + 0.2, 0, e, e);
+  // --- near wing over the body, near legs
+  wingShape(0, 0, 3, 1);
+  E(18.8, 21.4, 3.6, 3.4, 1); leg(19, 20.8, 21.6, 25, 18.6, 29.9, 4.4, 1); leg(29.4, 21.4, 27.8, 25.4, 30, 29.9, 3.8, 1);
+  for (const [x, y] of [[20, 30.6], [18, 30.6], [31.4, 30.6], [29.6, 30.6]]) T(x, y, x + 0.8, y + 1, 0.5, 6);              // claws
   let pix = render(g, DRAGON_R, { dither: [1] });
   if (dead) pix = flippedV(pix, W, H);
   return pix;
