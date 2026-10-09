@@ -25,6 +25,21 @@ export class Grid {
     for (let i = 0; i <= n; i++) { const t = i / n; this.ell(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, w / 2, w / 2, id); }
     return this;
   }
+  // Filled polygon, points in pixel coordinates [[x, y], ...].
+  poly(pts, id) {
+    let y0 = Infinity, y1 = -Infinity;
+    for (const [, y] of pts) { y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    for (let y = Math.max(0, Math.floor(y0)); y <= Math.min(this.h - 1, Math.ceil(y1)); y++) {
+      const yy = y + 0.5, xs = [];
+      for (let i = 0; i < pts.length; i++) {
+        const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length];
+        if ((ay <= yy && by > yy) || (by <= yy && ay > yy)) xs.push(ax + ((yy - ay) / (by - ay)) * (bx - ax));
+      }
+      xs.sort((a, b) => a - b);
+      for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.round(xs[i]); x < Math.round(xs[i + 1]); x++) this.put(x, y, id);
+    }
+    return this;
+  }
   // Single pixels drawn after shading: [x, y, paletteIndex]. They only land on filled pixels unless force is set.
   detail(list, force = false) { for (const d of list) this.det.push([d[0], d[1], d[2], force || d[2] === 0]); return this; }
 }
@@ -45,10 +60,12 @@ export function render(grid, ramps, { outline = true, dither = true } = {}) {
     let dt = 0, db = 0;
     for (let k = y - 1; k >= 0 && same(x, k, id) && dt < 4; k--) dt++;
     for (let k = y + 1; k < h && same(x, k, id) && db < 4; k++) db++;
-    const chk = ((x + y) & 1) === 0;
+    const chk = ((x + y) & 1) === 0, run = dt + db + 1;
     let c = r[1];
-    if (dt === 0) c = r[0];
-    if (db === 0) c = r[2]; else if (dither && db === 1 && chk) c = r[2];
+    if (run > 2) {                                  // thin strokes (belts, trims, horn tips) stay one flat colour
+      if (dt === 0) c = r[0];
+      if (db === 0) c = r[2]; else if ((dither === true || (dither && dither.includes(id))) && db === 1 && chk) c = r[2];
+    }
     out[y * w + x] = c;
   }
   for (const [x, y, c, force] of grid.det) if (x >= 0 && y >= 0 && x < w && y < h && (force || grid.get(x, y))) out[y * w + x] = c;
@@ -85,4 +102,29 @@ export function makeNativeSheet(scene, key, w, h, frames) {
   const tex = scene.textures.addCanvas(key, cv);
   frames.forEach((f, i) => tex.add(f.name, 0, i * w, 0, w, h));
   return tex;
+}
+
+// Drawing helpers in design space: coordinates are in units of the old 16px cell (or any unit), scaled by k to pixels.
+export function shaper(g, k) {
+  const X = (v) => Math.round(v * k);
+  const R = (x, y, w, h, id) => g.rect(X(x), X(y), Math.max(1, X(x + w) - X(x)), Math.max(1, X(y + h) - X(y)), id);
+  const E = (cx, cy, rx, ry, id, keep) => g.ell(cx * k, cy * k, rx * k, ry * k, id, keep);
+  const T = (x0, y0, x1, y1, w, id) => g.thick(x0 * k, y0 * k, x1 * k, y1 * k, w * k, id);
+  const Q = (x, y, w, h, id, r = 0.9) => {
+    const x0 = X(x), y0 = X(y), x1 = Math.max(x0 + 1, X(x + w)), y1 = Math.max(y0 + 1, X(y + h)), rr = Math.max(0, Math.round(r * k));
+    for (let j = y0; j < y1; j++) for (let i = x0; i < x1; i++) {
+      const dx = i < x0 + rr ? x0 + rr - i : i >= x1 - rr ? i - (x1 - rr - 1) : 0, dy = j < y0 + rr ? y0 + rr - j : j >= y1 - rr ? j - (y1 - rr - 1) : 0;
+      if (dx * dx + dy * dy <= rr * rr + rr * 0.6) g.put(i, j, id);
+    }
+  };
+  const Y = (pts, id) => g.poly(pts.map(([x, y]) => [x * k, y * k]), id);
+  const P = (x, y, c, w = 1, h = 1) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g.detail([[X(x) + i, X(y) + j, c]], true); };
+  return { X, R, E, T, Q, P, Y };
+}
+
+// Flip a w x h pixel array upside down (death poses).
+export function flippedV(pix, w, h) {
+  const o = new Int16Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) o[y * w + x] = pix[(h - 1 - y) * w + x];
+  return o;
 }
