@@ -7,6 +7,8 @@ extends CanvasLayer
 ##   Low: none   Medium: one layer   High: two layers
 ## Added to every Level automatically (level.gd), below the colour grade.
 
+## Switched off on purpose: no dark silhouettes on the screen edges in any world.
+const ENABLED := false
 const TILE := 2400.0
 const VIEW := Vector2(1920, 1080)
 
@@ -23,9 +25,11 @@ func _init() -> void:
 func setup(theme: LevelTheme, scenery: int) -> void:
 	if not Gfx.at_least(Gfx.Level.MEDIUM):
 		return
+	if not ENABLED:
+		return   # Colin doesn't like edge silhouettes (leaves, icicles, pipes...): the screen stays clear
 	var style := _style_for(scenery)
 	if style == Style.LEAVES:
-		return   # leafy worlds (meadow, forest, jungle...) keep the screen clear: no dark leaves
+		return
 	var base := theme.ground_dark.darkened(0.55)
 	base = base.lerp(theme.sky_top.darkened(0.8), 0.35)
 	_add_layer(style, base, 1.32, 0.94, 11)
