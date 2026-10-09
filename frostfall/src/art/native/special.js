@@ -84,29 +84,33 @@ function dragonPix(W, H, pose) {
   T(15, 19.2, 9, 21, 4.4, 1); T(9, 21, 4, 23.2, 3, 1); T(4, 23.2, 0.6, 25.2, 1.6, 1);
   for (let i = 0; i < 6; i++) Q(16.6 - i * 2.6, 16 + (i * 0.3), 1.1, 1.8 - i * 0.12, 5, 0.3);          // tail spines
   // --- neck: an S-curve rising to the head; the attack stretches it forward, a hit snaps it back
-  const nx = attack ? 3.5 : hurt ? -2.5 : 0, ny = attack ? 4 : hurt ? -2 : 0;
-  const nk = [[32.5, 16.4], [35.4 + nx * 0.4, 12.2 + ny * 0.3], [36.6 + nx * 0.7, 8.8 + ny * 0.6], [39.6 + nx, 6.8 + ny]];
+  const nx = attack ? 0.8 : hurt ? -2.5 : 0, ny = attack ? 4.6 : hurt ? -2 : 0;
+  const nk = [[32.5, 16.4], [35.4 + nx * 0.4, 12.2 + ny * 0.3], [36.6 + nx * 0.7, 8.8 + ny * 0.6], [37 + nx, 7 + ny]];
   T(nk[0][0], nk[0][1], nk[1][0], nk[1][1], 5.2, 1); T(nk[1][0], nk[1][1], nk[2][0], nk[2][1], 4, 1); T(nk[2][0], nk[2][1], nk[3][0], nk[3][1], 3.2, 1);
   for (let i = 0; i < 5; i++) { const t = i / 4, x = nk[0][0] + (nk[3][0] - nk[0][0]) * t, y = nk[0][1] + (nk[3][1] - nk[0][1]) * t; Q(x - 1.8 - (i === 2 ? 0.5 : 0), y - 2.5 - (i % 2) * 0.3, 1, 1.5, 5, 0.3); }
   for (let i = 0; i < 4; i++) T(34.8 + i * 0.5 + nx * 0.3, 11.6 + i * 1.5 + ny * 0.3, 36 + i * 0.5 + nx * 0.4, 11.8 + i * 1.5 + ny * 0.3, 0.35, 4);   // throat plates
-  // --- head
-  const hx = 43 + nx, hy = 6.4 + ny;
-  E(hx, hy, 3.7, 2.5, 1);                                        // skull
-  T(hx + 1, hy + 0.2, hx + 5.2, hy + 1.2, 2.5, 1);              // snout
-  const jaw = attack ? 2.8 : hurt ? 1.8 : 0.5;
-  T(hx - 1, hy + 2.2, hx + 4.8, hy + 2.6 + jaw, 1.3, 7);        // lower jaw
-  E(hx + 3.2, hy + 1.2, 3.4, 0.6, 3);
-  if (attack) { T(hx + 1.2, hy + 1.8, hx + 4.4, hy + 3 + jaw * 0.4, 1.6, 9); P(hx + 2, hy + 1.8, 12, 3, 2); }       // fire in the throat
-  for (let i = 0; i < 4; i++) T(hx + 1.6 + i * 1.1, hy + 1.8, hx + 1.4 + i * 1.1, hy + 2.8, 0.35, 10);                // teeth
-  // horn crown: four long swept-back horns and a brow spike
-  T(hx - 1.6, hy - 1.8, hx - 6.2, hy - 4.4, 1.3, 6); T(hx - 0.6, hy - 2.2, hx - 4.6, hy - 6, 1.2, 6);
-  T(hx - 2.2, hy - 0.8, hx - 7.4, hy - 1.4, 1.1, 6); T(hx - 2.6, hy + 0.6, hx - 6.6, hy + 1.8, 0.9, 6);
-  T(hx + 1.8, hy - 2, hx + 3.2, hy - 3.8, 0.8, 6);
-  T(hx - 0.4, hy + 2.8, hx - 1.4, hy + 4.4, 0.6, 6);                                                                    // chin spike
+  // --- head: a long wedge-shaped skull, brow ridge over the eye, upturned nose, jaw full of teeth
+  const hx = 40 + nx, hy = 6.6 + ny;
+  const jaw = attack ? 3 : hurt ? 1.8 : 0.5;
+  E(hx, hy, 3.3, 2.4, 1);                                                                      // skull
+  Y([[hx + 0.5, hy - 1.7], [hx + 4.6, hy - 1.5], [hx + 7.6, hy - 0.6], [hx + 8.2, hy + 0.3], [hx + 7.9, hy + 1.3], [hx + 0.5, hy + 2.1]], 1);   // long snout
+  E(hx + 7.8, hy - 0.1, 0.9, 1, 1);                                                            // nose tip
+  T(hx - 0.8, hy + 2.2, hx + 7, hy + 1.9 + jaw, 1.5, 7);                                       // lower jaw
+  T(hx + 6.2, hy + 2.2 + jaw * 0.8, hx + 7.6, hy + 2 + jaw * 0.9, 0.9, 7);
+  T(hx + 1.6, hy + 1.4 + jaw * 0.35, hx + 7.6, hy + 1.2 + jaw * 0.5, 0.35, 4);                 // mouth line
+  T(hx - 0.2, hy - 1.9, hx + 3.6, hy - 1.5, 0.9, 5);                                           // brow ridge
+  for (let i = 0; i < 6; i++) T(hx + 2.4 + i * 0.95, hy + 1.4, hx + 2.3 + i * 0.95, hy + 2.5 + (i % 2) * 0.4, 0.32, 10);           // upper teeth
+  for (let i = 0; i < 4; i++) T(hx + 2.8 + i * 1.2, hy + 1.8 + jaw * 0.6, hx + 2.9 + i * 1.2, hy + 0.9 + jaw * 0.3, 0.3, 10);       // lower teeth
+  if (attack) { T(hx + 2.4, hy + 1.8, hx + 7, hy + 2.6 + jaw * 0.2, 1.4, 9); P(hx + 4, hy + 1.8, 12, 4, 2); }                            // fire in the throat
+  // horn crown: four long swept-back horns, a brow spike and a chin spike
+  T(hx - 1.4, hy - 1.8, hx - 6, hy - 4.4, 1.3, 6); T(hx - 0.4, hy - 2.2, hx - 4.4, hy - 6, 1.2, 6);
+  T(hx - 2, hy - 0.8, hx - 7.2, hy - 1.4, 1.1, 6); T(hx - 2.4, hy + 0.6, hx - 6.4, hy + 1.8, 0.9, 6);
+  T(hx + 1.6, hy - 2, hx + 2.8, hy - 3.8, 0.8, 6);
+  T(hx - 0.2, hy + 2.8, hx - 1.2, hy + 4.4, 0.6, 6);
   const e = Math.max(1, Math.round(k * 0.8));
-  if (hurt || dead) for (const [dx, dy] of [[0, 0], [1, 1], [1, 0], [0, 1]]) g.detail([[Math.round((hx + 0.8) * k) + dx * 2, Math.round((hy - 1) * k) + dy * 2, 0]], true);
-  else P(hx + 0.8, hy - 1.1, 13, e + 2, e);
-  P(hx + 5.6, hy + 0.2, 0, e, e);
+  if (hurt || dead) for (const [dx, dy] of [[0, 0], [1, 1], [1, 0], [0, 1]]) g.detail([[Math.round((hx + 1.2) * k) + dx * 2, Math.round((hy - 0.6) * k) + dy * 2, 0]], true);
+  else P(hx + 1.2, hy - 0.8, 13, e + 2, e);
+  P(hx + 7, hy - 0.5, 0, e, e);                                                                 // nostril
   // --- near wing over the body, near legs
   wingShape(0, 0, 3, 1);
   E(18.8, 21.4, 3.6, 3.4, 1); leg(19, 20.8, 21.6, 25, 18.6, 29.9, 4.4, 1); leg(29.4, 21.4, 27.8, 25.4, 30, 29.9, 3.8, 1);
