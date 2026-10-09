@@ -24,7 +24,7 @@ const url = await h.ev(async () => {
   }
   const hero = sc.textures.get('spr_player');
   // flow layout
-  const cells = items.map((it) => { const f = it.spec.w * Z; const fh = it.spec.h * Z; return { it, cw: f * 2 + PAD * 3, ch: LABEL + fh * 2 + PAD * 3 }; });
+  const cells = items.map((it) => { const f = it.spec.w * Z; const fh = it.spec.h * Z; return { it, cw: Math.max(f * 2 + PAD * 3, 200), ch: LABEL + fh * 2 + PAD * 3 }; });
   const rows = []; let row = [], used = 0;
   let curTitle = null;
   const out = [];
