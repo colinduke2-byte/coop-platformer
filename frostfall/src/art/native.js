@@ -51,9 +51,12 @@ export const RAMPS = {
 };
 
 // grid -> array of palette indices (-1 = empty). ramps: { id: [hi, mid, lo] }.
-export function render(grid, ramps, { outline = true, dither = true } = {}) {
+// groups: { id: groupId } makes parts that overlap one material (a muscle over a body, a rib line) shade as one piece, so overlays do
+// not chop the shading into short runs.
+export function render(grid, ramps, { outline = true, dither = true, groups = null } = {}) {
   const { w, h } = grid, out = new Int16Array(w * h).fill(-1);
-  const same = (x, y, id) => grid.get(x, y) === id;
+  const gid = (id) => (groups && groups[id]) || id;
+  const same = (x, y, id) => gid(grid.get(x, y)) === gid(id);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const id = grid.get(x, y); if (!id) continue;
     const r = ramps[id] || RAMPS.cloth;

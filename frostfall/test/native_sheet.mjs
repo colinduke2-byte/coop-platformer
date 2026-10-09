@@ -6,7 +6,7 @@ const [name, list] = [process.argv[2] || 'preview', (process.argv[3] || 'warlord
 const h = await launch();
 await h.open('scene=game&map=village&spawn=start&seed=424242');
 await h.sleep(600);
-const data = await h.ev(async (kinds) => {
+const data = await h.ev(async ([kinds, ZOOM, FRS]) => {
   const reg = await import('/src/art/native_registry.js');
   await import('/src/art/native/creatures_humanoid.js');
   await import('/src/art/native/animals.js');
@@ -21,8 +21,8 @@ const data = await h.ev(async (kinds) => {
     const key = reg.ensureNative(sc, kind), cfg = ENEMIES[kind];
     const oldT = sc.textures.get(cfg.tex), newT = sc.textures.get(key);
     const names = newT.getFrameNames();
-    const frames = names.includes('down0') ? FR : names;
-    const cell = spec.w, pad = 4, k = 5;
+    const frames = FRS ? FRS : names.includes('down0') ? FR : names;
+    const cell = spec.w, pad = 4, k = ZOOM;
     const cv = document.createElement('canvas'); cv.width = (cell * k + pad) * frames.length; cv.height = cell * k * 2 + pad * 3;
     const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.fillStyle = '#1c2338'; c.fillRect(0, 0, cv.width, cv.height);
     frames.forEach((f, i) => {
@@ -35,7 +35,7 @@ const data = await h.ev(async (kinds) => {
     out[kind] = cv.toDataURL('image/png');
   }
   return out;
-}, list);
+}, [list, process.env.Z ? +process.env.Z : 5, process.env.FR ? process.env.FR.split(',') : null]);
 await h.close();
 for (const [k, v] of Object.entries(data)) {
   if (!v) { console.log(k, 'not registered'); continue; }
