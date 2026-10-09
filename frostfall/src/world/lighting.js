@@ -1,6 +1,7 @@
 // Day/night clock, weather, and the darkness layer with light cut-outs (mixed into GameScene).
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
+import { Z, FIX } from '../systems/gfx.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { tip } from '../systems/tips.js';
@@ -19,7 +20,7 @@ export const isNightHour = (h) => h >= 20.5 || h < 5.5;
 
 export const lightingMethods = {
   initLighting() {
-    this.darkRT = this.add.renderTexture(0, 0, W, H).setOrigin(0).setScrollFactor(0).setDepth(99800);
+    this.darkRT = this.add.renderTexture(FIX.x, FIX.y, W * Z, H * Z).setOrigin(0).setScale(1 / Z).setScrollFactor(0).setDepth(99800);
     this.stamp = this.add.image(0, 0, 'lightmask').setVisible(false);
     this.ambientOverride = null;
     this.weatherT = 120 + Math.random() * 120;
@@ -62,9 +63,9 @@ export const lightingMethods = {
     const ox = cam.worldView.x, oy = cam.worldView.y;
     const dark = Math.min(1, amb.alpha / 0.35);          // stronger cut-outs when it is darker
     const cut = (x, y, r, a) => {
-      const sx = Math.round(x - ox), sy = Math.round(y - oy);
-      if (sx < -r || sy < -r || sx > W + r || sy > H + r) return;
-      this.stamp.setScale(r / 32).setAlpha(Math.min(1, a));
+      const sx = Math.round((x - ox) * Z), sy = Math.round((y - oy) * Z);
+      if (sx < -r * Z || sy < -r * Z || sx > (W + r) * Z || sy > (H + r) * Z) return;
+      this.stamp.setScale(Z * r / 32).setAlpha(Math.min(1, a));
       rt.erase(this.stamp, sx, sy);
     };
     for (const l of this.lights) {

@@ -1,9 +1,10 @@
 import { W, H, C } from '../config.js';
+import { FIX } from '../systems/gfx.js';
 
 // Cheap falling-snow overlay drawn in screen space with one Graphics object.
 export class SnowFx {
   constructor(scene, n = 60, color = 6) {
-    this.g = scene.add.graphics().setScrollFactor(0).setDepth(99990);
+    this.g = scene.add.graphics().setScrollFactor(0).setDepth(99990).setPosition(FIX.x, FIX.y);
     this.color = C[color];
     this.f = Array.from({ length: n }, () => ({
       x: Math.random() * W, y: Math.random() * H, s: 8 + Math.random() * 14, d: Math.random() < 0.3 ? 2 : 1, w: Math.random() * 6,

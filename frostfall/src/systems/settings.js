@@ -17,6 +17,7 @@ export const settings = {
   cvd: 'off',             // colour-blind assist: off | deutan | protan | tritan
   compass: true,          // the compass strip at the top of the screen outdoors
   largeUi: false,         // bigger HUD bars and text
+  graphics: 'auto',       // auto | standard | high  (high = the 640 x 360 picture with smooth lighting; applies at the next launch)
   autoRotate: true,       // phone held upright + controller in use: turn the picture sideways to fill the screen
   slot: 1,                // active save slot (1-3)
   padMap: null,           // learned controller map { inputId: keyCode } (null = defaults)

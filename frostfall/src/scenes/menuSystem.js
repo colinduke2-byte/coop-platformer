@@ -4,6 +4,7 @@ import { keys, capture, capturing, setBinding, resetBindings, codeName } from '.
 import { saveGame, loadGame, saveInfo, fmtTime, SLOTS } from '../systems/save.js';
 import { unlockedCloaks, currentCloak } from '../systems/achievements.js';
 import { runScore } from '../systems/daily.js';
+import { Z, zFor, GFX_MODES } from '../systems/gfx.js';
 import { sfx, setVolume, setMusic, setChannel, music } from '../audio/sfx.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { ui } from '../systems/ui.js';
@@ -36,12 +37,12 @@ const HINTS = {
   'LARGE UI': 'BIGGER TEXT AND BARS', 'ROTATE VIEW': 'PHONE: TURN THE PICTURE TO FIT WHEN HELD UPRIGHT', 'COMPASS': 'THE STRIP AT THE TOP OF THE SCREEN OUTDOORS',
   'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
   'DURABILITY': 'GEAR WEARS OUT AND NEEDS REPAIR. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES. A/D CHANGE',
-  'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD AND SEE WHAT IT SENDS', 'QUIT TO TITLE': 'BACK TO THE TITLE SCREEN. SAVE FIRST',
+  'GRAPHICS': 'AUTO PICKS HIGH ON A COMPUTER. HIGH: SMOOTH LIGHTING AND FINER MOTION. * TAKES EFFECT AT THE NEXT LAUNCH', 'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD AND SEE WHAT IT SENDS', 'QUIT TO TITLE': 'BACK TO THE TITLE SCREEN. SAVE FIRST',
 };
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'GRAPHICS', 'QUIT TO TITLE'];
   if (S.quick) rows.splice(rows.indexOf('SAVE GAME'), 2);        // no saving or loading inside Arena Mode
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
@@ -49,7 +50,7 @@ export function systemTab(m) {
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'GRAPHICS', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
   const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
@@ -58,6 +59,7 @@ export function systemTab(m) {
     else if (CHANNEL[r]) setChannel(CHANNEL[r][0], Math.round(((settings[CHANNEL[r][1]] ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'CLOAK') { const l = unlockedCloaks(), i = Math.max(0, l.indexOf(currentCloak())); S.cloak = l[(i + dir + l.length) % l.length].col; m.gs.player?.applyCloak?.(); }
     else if (r === 'COLOUR MODE') { settings.cvd = CVD_MODES[(CVD_MODES.indexOf(settings.cvd) + dir + CVD_MODES.length) % CVD_MODES.length]; applyCvd(); }
+    else if (r === 'GRAPHICS') { const l = GFX_MODES, i = Math.max(0, l.indexOf(settings.graphics || 'auto')); settings.graphics = l[(i + dir + l.length) % l.length]; }
     else if (r === 'SLOT') settings.slot = ((settings.slot - 1 + dir + SLOTS) % SLOTS) + 1;
     else if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
@@ -69,7 +71,7 @@ export function systemTab(m) {
 
   // The list is long, so it is grouped into four pages. Q jumps to the first row of the next page; the page name shows under the list.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
-    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
+    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COMPASS', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK', 'GRAPHICS']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
   const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
   function nextPage() {
     const to = (pageOf(rows[m.cursor]) + 1) % PAGES.length;
@@ -250,6 +252,7 @@ export function systemTab(m) {
         else if (r === 'SLOT') { v = `${settings.slot}/${SLOTS}${saveInfo() ? '' : ' EMPTY'}`; vc = 13; }
         else if (r === 'DIFFICULTY') { v = settings.difficulty.toUpperCase(); vc = { easy: 8, normal: 5, hard: 11 }[settings.difficulty]; }
         else if (r === 'SCREEN SHAKE') v = settings.shake === 0 ? 'OFF' : settings.shake === 0.5 ? 'LOW' : 'FULL';
+        else if (r === 'GRAPHICS') { const pend = zFor(settings.graphics || 'auto') !== Z; v = String(settings.graphics || 'auto').toUpperCase() + (pend ? ' *' : ''); vc = pend ? 13 : 5; }
         else if (r === 'CLOAK') { v = currentCloak().name.toUpperCase(); vc = currentCloak().col; }
         else if (r === 'DURABILITY') { v = settings.durability ? 'ON' : 'OFF'; vc = settings.durability ? 13 : 4; }
         else if (r === 'HIT STOP') { v = settings.hitStop === false ? 'OFF' : 'ON'; vc = settings.hitStop === false ? 11 : 8; }

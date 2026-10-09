@@ -17,6 +17,7 @@ import { readTome } from '../systems/tomes.js';
 import { drinkElixir } from '../systems/elixir.js';
 import { readMap } from '../systems/treasure.js';
 import { readNote } from '../systems/notes.js';
+import { fitCam } from '../systems/gfx.js';
 
 const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'armor', 'charm', 'potion', 'elixir', 'food', 'tome', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
@@ -46,6 +47,7 @@ export default class MenuScene extends Phaser.Scene {
   get gs() { return this.scene.get('Game'); }
 
   create() {
+    fitCam(this);
     ui.modal = true;
     this.tabs = [
       { name: 'ITEMS', render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },

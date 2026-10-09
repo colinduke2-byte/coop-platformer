@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { W, H } from './config.js';
+import { Z } from './systems/gfx.js';
 import { installKeys, keys } from './systems/keys.js';
 import { S, resetState, loadInto } from './systems/state.js';
 import BootScene from './scenes/BootScene.js';
@@ -14,7 +15,8 @@ import EndingScene from './scenes/EndingScene.js';
 import { wireQuests } from './systems/quests.js';
 import { unlock } from './audio/sfx.js';
 import { ui } from './systems/ui.js';
-import { settings } from './systems/settings.js';
+import { settings, saveSettings } from './systems/settings.js';
+import { bus } from './systems/bus.js';
 import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
@@ -27,8 +29,8 @@ const q = new URLSearchParams(location.search);
 
 const game = new Phaser.Game({
   type: q.get('renderer') === 'canvas' ? Phaser.CANVAS : Phaser.AUTO,
-  width: W,
-  height: H,
+  width: W * Z,
+  height: H * Z,
   parent: 'game',
   backgroundColor: '#0b0e1a',
   pixelArt: true,
@@ -39,6 +41,19 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, ArenaSetupScene, ArenaResultsScene, IntroScene, GameScene, HudScene, MenuScene, ShopScene, EndingScene],
 });
 
+// Speed safety net: if High cannot hold a steady frame rate, switch the setting to Standard (applies at the next launch) and say so.
+if (Z > 1) {
+  let slow = 0;
+  setInterval(() => {
+    if (document.hidden || !game.isBooted || !game.scene.isActive('Game')) { slow = 0; return; }
+    slow = game.loop.actualFps < 38 ? slow + 1 : 0;
+    if (slow >= 10 && (settings.graphics || 'auto') !== 'standard') {
+      settings.graphics = 'standard'; saveSettings();
+      bus.emit('toast', 'SLOW FRAME RATE: GRAPHICS SET TO STANDARD (NEXT LAUNCH)', 13);
+      slow = -1e9;
+    }
+  }, 1000);
+}
 installKeys(game);
 installTouch();
 
@@ -51,7 +66,7 @@ export function applyScaling() {
     sc.autoCenter = Phaser.Scale.NO_CENTER;
     sc.scaleMode = Phaser.Scale.NONE;
     const zz = settings.intScale ? Math.max(1, Math.floor(z)) : z;
-    sc.setZoom(zz);
+    sc.setZoom(zz / Z);
     sc.canvas.style.width = Math.round(W * zz) + 'px'; sc.canvas.style.height = Math.round(H * zz) + 'px';
     sc.canvas.style.marginLeft = sc.canvas.style.marginTop = '0px';
     return;
@@ -60,9 +75,9 @@ export function applyScaling() {
   if (settings.intScale) {
     const [vw, vh] = rotated() ? [window.innerHeight, window.innerWidth] : [window.innerWidth, window.innerHeight];
     const z = Math.max(1, Math.floor(Math.min(vw / W, vh / H)));
-    sc.setGameSize(W, H);
+    sc.setGameSize(W * Z, H * Z);
     sc.scaleMode = Phaser.Scale.NONE;
-    sc.setZoom(z);
+    sc.setZoom(z / Z);
   } else {
     sc.setZoom(1);
     sc.scaleMode = Phaser.Scale.FIT;

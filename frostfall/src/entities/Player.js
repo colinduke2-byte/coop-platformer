@@ -168,7 +168,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (settings.mouse && this.mode === 'free' && !this.swing && (keys.isDown('sword') || keys.pressed('sword') || keys.isDown('bow') || keys.pressed('bow') || keys.isDown('spell') || keys.pressed('spell') || this.drawing)) {
       const ptr = this.scene.input.activePointer;
       const cam = this.scene.cameras.main;           // pointer.worldX is shared with the HUD camera, so convert here
-      this.face = dir8(cam.scrollX + ptr.x - this.x, cam.scrollY + ptr.y - (this.y + 3));
+      const wp = cam.getWorldPoint(ptr.x, ptr.y);
+      this.face = dir8(wp.x - this.x, wp.y - (this.y + 3));
     }
 
     if (this.mode === 'hurt' && this.stunT <= 0) this.mode = 'free';

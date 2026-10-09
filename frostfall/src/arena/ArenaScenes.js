@@ -8,12 +8,14 @@ import { S } from '../systems/state.js';
 import { sfx, music } from '../audio/sfx.js';
 import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey, arenaUnlocked, nextRoomAt } from './heroes.js';
 import { ARENAS, arenaById } from './arenas.js';
+import { fitCam } from '../systems/gfx.js';
 
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 export class ArenaSetupScene extends Phaser.Scene {
   constructor() { super('ArenaSetup'); }
   create() {
+    fitCam(this);
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.add.rectangle(0, 0, W, H, 0x1c2338).setOrigin(0).setAlpha(0.6);
     this.snow = new SnowFx(this, 50);
@@ -70,6 +72,7 @@ export class ArenaResultsScene extends Phaser.Scene {
   constructor() { super('ArenaResults'); }
   init(data) { this.res = data; }
   create() {
+    fitCam(this);
     const r = this.res, rec = submitRecord(r.hero, r.score, r.waves, r.mode || 'survival');
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.add.rectangle(0, 0, W, H, 0x2a0f18).setOrigin(0).setAlpha(0.5);

@@ -1,0 +1,10 @@
+import { launch } from './harness.mjs';
+const h = await launch();
+const tag = process.argv[2] || 'high';
+const run = async (name, q, fn) => { await h.open(q + '&gfx=' + tag + (process.env.GL ? '&renderer=webgl' : '')); await h.sleep(1200); if (fn) await h.ev(fn); await h.sleep(500); await h.shot(`s6_${tag}_${name}`); };
+await run('title', 'x=1');
+await run('village', 'scene=game&map=village&spawn=start&seed=424242', () => { window.__ff.S.flags.introDone = true; });
+await run('night', 'scene=game&map=forest&spawn=west&seed=424242', () => { const S = window.__ff.S; S.flags.introDone = true; S.time = 22 * 60; });
+await run('menu', 'scene=game&map=village&spawn=start&seed=424242', () => { window.__ff.S.flags.introDone = true; window.__ff.game.scene.getScene('Game').openMenu(-1, 'ITEMS'); });
+console.log(h.errors.join('\n') || 'no errors', await h.ev(() => [window.__ff.game.canvas.width, window.__ff.game.canvas.height]));
+await h.close();

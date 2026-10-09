@@ -3,6 +3,7 @@
 import { W, H, C, TILE } from '../config.js';
 import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
+import { FIX } from '../systems/gfx.js';
 
 const SNOWY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT]);
 const WIND = { blizzard: 14, whiteout: 42 };
@@ -13,8 +14,8 @@ export const ambientMethods = {
     this.ravens = []; this.raventT = 4 + Math.random() * 6;
     this.prints = []; this.printT = 0; this.printSide = 1;
     this.motes = Array.from({ length: 16 }, () => ({ x: Math.random() * W, y: Math.random() * H, p: Math.random() * 6, s: 3 + Math.random() * 5 }));
-    this.moteG = this.add.graphics().setScrollFactor(0).setDepth(99700);
-    this.auroraG = this.add.graphics().setScrollFactor(0).setDepth(99780);
+    this.moteG = this.add.graphics().setScrollFactor(0).setDepth(99700).setPosition(FIX.x, FIX.y);
+    this.auroraG = this.add.graphics().setScrollFactor(0).setDepth(99780).setPosition(FIX.x, FIX.y);
     this.auroraT = 0;
   },
 

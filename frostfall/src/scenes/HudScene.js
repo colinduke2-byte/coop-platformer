@@ -25,6 +25,7 @@ import { currentShout, unlockedShouts } from '../systems/shouts.js';
 import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
+import { fitCam } from '../systems/gfx.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
@@ -39,6 +40,7 @@ export default class HudScene extends Phaser.Scene {
   get gs() { return this.scene.get('Game'); }
 
   create() {
+    fitCam(this);
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
     this.quickTxt = null; this.compassTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
     this.g = this.add.graphics();

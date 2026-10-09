@@ -2,6 +2,7 @@
 // Nothing is loaded from disk. Every colour is an index into PAL.
 import { PAL, T, TILE, TILE_COUNT } from '../config.js';
 import { hash } from '../util.js';
+import { Z } from '../systems/gfx.js';
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');
@@ -858,6 +859,19 @@ function buildFx(scene) {
     }
   });
   tex(scene, 'warn', 16, 16, (g) => { g.fillStyle = 'rgba(200,56,60,0.35)'; g.fillRect(0, 0, 16, 16); });
+  // High quality (WebGL only): the light textures are redrawn smooth at twice the size, with the engine told they are still 64 x 64,
+  // so every place that uses them keeps its scale. Standard keeps the stepped, dithered originals.
+  if (Z > 1 && scene.renderer && scene.renderer.gl) {
+    const soft = (key, w, h, fn) => {
+      scene.textures.remove(key);
+      const cv = canvas(w * 2, h * 2); fn(cv.getContext('2d'), w * 2, h * 2);
+      const t = scene.textures.addCanvas(key, cv); t.source[0].width = w; t.source[0].height = h; t.frames.__BASE.setSize(w, h, 0, 0);
+    };
+    const radial = (g, S, stops) => { const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); for (const [o, a] of stops) gr.addColorStop(o, `rgba(255,255,255,${a})`); g.fillStyle = gr; g.fillRect(0, 0, S, S); };
+    soft('glow', 64, 64, (g, S) => radial(g, S, [[0, 0.24], [0.25, 0.17], [0.55, 0.075], [0.8, 0.025], [1, 0]]));
+    soft('lightmask', 64, 64, (g, S) => radial(g, S, [[0, 0.9], [0.35, 0.78], [0.62, 0.45], [0.85, 0.14], [1, 0]]));
+    soft('shadow', 12, 5, (g, w, h) => { g.save(); g.scale(1, h / w); const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(11,14,26,0.55)'); gr.addColorStop(0.6, 'rgba(11,14,26,0.4)'); gr.addColorStop(1, 'rgba(11,14,26,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); g.restore(); });
+  }
 }
 
 // Item icons (16x16). kind picks a drawing routine; col tints it.

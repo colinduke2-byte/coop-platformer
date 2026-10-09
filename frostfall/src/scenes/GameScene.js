@@ -80,6 +80,7 @@ import '../data/regions3_story.js';
 import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
+import { fitCam } from '../systems/gfx.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -92,6 +93,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    fitCam(this, true);
     ui.modal = false;
     this.items = ITEMS;
     this.hitStopT = 0;

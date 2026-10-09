@@ -13,11 +13,13 @@ import { MODS, MOD_IDS } from '../data/mods.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { setVolume, setChannel } from '../audio/sfx.js';
 import { CVD_MODES, applyCvd } from '../systems/access.js';
+import { fitCam, Z, zFor, GFX_MODES } from '../systems/gfx.js';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
 
   create() {
+    fitCam(this);
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.add.rectangle(0, 0, W, H, 0x1c2338).setOrigin(0).setAlpha(0.6);
     // distant mountains, drawn in code
@@ -86,7 +88,7 @@ export default class TitleScene extends Phaser.Scene {
   // Options: the settings a first-time player needs before they begin (the full list lives in Pause > System).
   openOptions() {
     this.optMode = true; this.optSel = 0; this.warm = 4;
-    this.optRows = ['DIFFICULTY', 'CHALLENGE', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE'];
+    this.optRows = ['DIFFICULTY', 'CHALLENGE', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE', 'GRAPHICS'];
     this.optBox = this.add.rectangle(W / 2, 90, 280, 150, 0x0b0e1a, 0.94);
     this.optHead = txt(this, 0, 22, 'OPTIONS', 13); this.optHead.x = Math.floor((W - this.optHead.width) / 2);
     this.optTxt = this.optRows.map((r, i) => txt(this, 50, 34 + i * 12, r, 6));
@@ -102,6 +104,7 @@ export default class TitleScene extends Phaser.Scene {
       case 'CHALLENGE': return [settings.challenge ? MODS[settings.challenge].name.toUpperCase() : 'NONE', settings.challenge ? 11 : 4];
       case 'VOLUME': return [lvl('volume') + '/10', 15]; case 'MUSIC LVL': return [lvl('musicVol') + '/10', 15]; case 'SFX LVL': return [lvl('sfxVol') + '/10', 15];
       case 'FULLSCREEN': return [document.fullscreenElement ? 'ON' : 'OFF', 4]; case 'LARGE UI': return [settings.largeUi ? 'ON' : 'OFF', settings.largeUi ? 8 : 4];
+      case 'GRAPHICS': return [String(settings.graphics || 'auto').toUpperCase() + (zFor(settings.graphics || 'auto') !== Z ? ' (RESTART)' : ''), zFor(settings.graphics || 'auto') !== Z ? 13 : 5];
       default: return [String(settings.cvd).toUpperCase(), settings.cvd === 'off' ? 4 : 8];
     }
   }
@@ -120,6 +123,7 @@ export default class TitleScene extends Phaser.Scene {
     else if (r === 'SFX LVL') setChannel('sfx', Math.round(((settings.sfxVol ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'FULLSCREEN') { this.scale.toggleFullscreen(); }
     else if (r === 'LARGE UI') settings.largeUi = !settings.largeUi;
+    else if (r === 'GRAPHICS') { const l = GFX_MODES, i = Math.max(0, l.indexOf(settings.graphics || 'auto')); settings.graphics = l[(i + dir + l.length) % l.length]; }
     else { settings.cvd = CVD_MODES[(CVD_MODES.indexOf(settings.cvd) + dir + CVD_MODES.length) % CVD_MODES.length]; applyCvd(); }
     saveSettings(); sfx.play('select'); this.refreshOptions();
   }

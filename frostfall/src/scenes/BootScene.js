@@ -4,10 +4,12 @@ import { S } from '../systems/state.js';
 import { generateArt, buildIcon, buildHeld, heldKind } from '../art/sprites.js';
 import { buildFonts } from '../art/font.js';
 import { ITEMS, iconKey } from '../data/items.js';
+import { fitCam } from '../systems/gfx.js';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   create() {
+    fitCam(this);
     buildFonts(this);
     generateArt(this);
     for (const [id, it] of Object.entries(ITEMS)) buildIcon(this, iconKey(id), it.icon[0], it.icon[1]);

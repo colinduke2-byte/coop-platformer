@@ -10,6 +10,7 @@ import { sfx } from '../audio/sfx.js';
 import { iconKey, ITEMS } from '../data/items.js';
 import { dialogue } from '../systems/dialogue.js';
 import { panel } from './MenuScene.js';
+import { fitCam } from '../systems/gfx.js';
 
 const ROWS = 7, RH = 17, LX = 8, LW = 168, TOP = 30;
 
@@ -28,6 +29,7 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   create() {
+    fitCam(this);
     ui.modal = true;
     this.bg = this.add.graphics();
     this.dyn = this.add.container(0, 0);

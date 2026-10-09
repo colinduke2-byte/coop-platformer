@@ -3,6 +3,7 @@ import { W, H } from '../config.js';
 import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
+import { fitCam } from '../systems/gfx.js';
 
 const LINES = [
   'The cold took you first.',
@@ -13,6 +14,7 @@ const LINES = [
 export default class IntroScene extends Phaser.Scene {
   constructor() { super('Intro'); }
   create() {
+    fitCam(this);
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.i = 0; this.n = 0; this.t = 0; this.hold = 0;
     this.body = txt(this, 0, 70, '', 5);

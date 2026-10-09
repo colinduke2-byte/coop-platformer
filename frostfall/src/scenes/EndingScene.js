@@ -5,6 +5,7 @@ import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ui } from '../systems/ui.js';
 import { epilogueLines, chapter3Ending, CH2_TAIL } from '../data/story.js';
+import { fitCam } from '../systems/gfx.js';
 
 const ENDINGS = {
   give: {
@@ -38,6 +39,7 @@ export default class EndingScene extends Phaser.Scene {
   constructor() { super('Ending'); }
   init(data) { this.kind = data.kind; }
   create() {
+    fitCam(this);
     ui.modal = true;
     const ch2 = ['thaw', 'warden', 'crown'].includes(this.kind);
     const e = ENDINGS[this.kind] || chapter3Ending(this.kind);

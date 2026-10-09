@@ -1,6 +1,7 @@
 // Quest beats, wandering world events, travel and the finale.
 // Mixed into GameScene (see the bottom of scenes/GameScene.js).
 import Phaser from 'phaser';
+import { FIX } from '../systems/gfx.js';
 import { tierAt } from '../world/worldgen.js';
 import { ENEMIES } from '../data/enemies.js';
 import { makeGenItem } from '../systems/genloot.js';
@@ -133,9 +134,9 @@ export const eventMethods = {
     if (this.endOverlay) { this.endOverlay.destroy(); this.endOverlay = null; }
     if (!e || this.mapId !== 'village') return;
     if (e === 'give') {
-      this.endOverlay = this.add.rectangle(0, 0, 320, 180, 0xf4a040, 0.14).setOrigin(0).setScrollFactor(0).setDepth(99700).setBlendMode(Phaser.BlendModes.ADD);
+      this.endOverlay = this.add.rectangle(FIX.x, FIX.y, 320, 180, 0xf4a040, 0.14).setOrigin(0).setScrollFactor(0).setDepth(99700).setBlendMode(Phaser.BlendModes.ADD);
       this.snow?.destroy(); this.snow = null;
-    } else this.endOverlay = this.add.rectangle(0, 0, 320, 180, 0x0b0e1a, 0.34).setOrigin(0).setScrollFactor(0).setDepth(99700);
+    } else this.endOverlay = this.add.rectangle(FIX.x, FIX.y, 320, 180, 0x0b0e1a, 0.34).setOrigin(0).setScrollFactor(0).setDepth(99700);
   },
   // The Ashen Sovereign has fallen: the last choice.
   startFinale3() { finalChoice(); },
