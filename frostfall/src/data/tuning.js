@@ -25,13 +25,15 @@ export const TUNE = {
     dagger: { stop: 0.025, ms: 50, amt: 0.0025 }, sword: { stop: 0.05, ms: 80, amt: 0.004 },
     axe: { stop: 0.07, ms: 130, amt: 0.0065 }, spear: { stop: 0.03, ms: 60, amt: 0.003 }, mace: { stop: 0.085, ms: 150, amt: 0.0075 }, great: { stop: 0.09, ms: 170, amt: 0.009 }, hammer: { stop: 0.1, ms: 190, amt: 0.0105 },
   },
+  // daggers: sneak attacks and hits to an enemy's back hit much harder; the fourth hit slips past armour
+  dagger: { sneakBonus: 1.0, backMul: 1.4, backDot: 0.45 },
   // weapon styles: each type of weapon has its own combo (sword uses `combo` above)
   styles: {
     dagger: [
       { dmg: 0.7, kb: 70, size: 16, total: 0.2, cost: 0.6, flip: false, scale: 1, stun: 0.12 },
       { dmg: 0.7, kb: 70, size: 16, total: 0.2, cost: 0.6, flip: true, scale: 1, stun: 0.12 },
       { dmg: 0.8, kb: 80, size: 16, total: 0.2, cost: 0.6, flip: false, scale: 1, stun: 0.14 },
-      { dmg: 1.5, kb: 190, size: 20, total: 0.34, cost: 1.0, flip: true, scale: 1.25, stun: 0.4 },
+      { dmg: 1.5, kb: 190, size: 20, total: 0.34, cost: 1.0, flip: true, scale: 1.25, stun: 0.4, pierce: 0.35 },
     ],
     axe: [
       { dmg: 1.35, kb: 150, size: 20, total: 0.4, cost: 1.15, flip: false, scale: 1.2, stun: 0.3 },

@@ -119,7 +119,7 @@ export function buildTidebreak(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'admiral', id: 'tb', mobs: ['draugr', 'wight', 'frostworm', 'warden', 'reaver'], exitTo: 'coast', exitSpawn: 'tidebreak',
     title: 'Tidebreak Cavern', signLine: 'WATER DRIPS UP. A SHIP\'S BELL RINGS, SOMEWHERE BELOW THE ICE.',
     bossSign: ['THE ADMIRAL\'S HOLD.', 'HE NEVER GAVE THE ORDER TO ABANDON SHIP. HE IS STILL WAITING FOR THE CREW.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'admiral_cutlass' }, { item: 'gem_sapphire' }, { gold: 360 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'admiral_cutlass' }, { item: 'tide_kris' }, { item: 'gem_sapphire' }, { gold: 360 }],
   });
 }
 // The Old Kingdom's boss delve: the Hollow Sepulchre, ending in the last of the Hollow Kings.
@@ -128,7 +128,7 @@ export function buildSepulchre(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'hollowking', id: 'sp', mobs: ['knight', 'warden', 'reaver', 'necro', 'conjurer', 'wight'], exitTo: 'kingdom', exitSpawn: 'sepulchre',
     title: 'The Hollow Sepulchre', signLine: 'EVERY NICHE IS EMPTY. THE KINGS ARE NOT IN THEIR TOMBS.',
     bossSign: ['THE HOLLOW THRONE.', 'THE LAST KING SITS A THRONE OF HIS OWN ROOTS. HE WOULD LIKE YOU TO REMEMBER HIS NAME.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'kings_blade' }, { item: 'gem_bloodstone' }, { gold: 600 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'kings_blade' }, { item: 'court_misericorde' }, { item: 'gem_bloodstone' }, { gold: 600 }],
   });
 }
 
@@ -138,7 +138,7 @@ export function buildMireBarrow(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'miremother', id: 'mb', mobs: ['leech', 'bogwraith', 'mudlurker', 'boghag', 'draugr'], exitTo: 'fens', exitSpawn: 'mirebarrow',
     title: 'The Sunken Barrow', signLine: 'THE WATER HERE IS WARM AND IT IS LEANING TOWARD YOU. SOMETHING ABOVE YOU IS WEEPING.',
     bossSign: ['THE MOTHER\'S CRADLE.', 'SHE LOST HER CHILDREN TO THE FEN. THE FEN HAS NEVER LET HER GO. SHE IS TIRED OF HOLDING ON.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'mire_heart' }, { item: 'gem_emerald' }, { gold: 420 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'mire_heart' }, { item: 'reed_stiletto' }, { item: 'gem_emerald' }, { gold: 420 }],
   });
 }
 // The Stormcrown's boss delve: the Stormspire, ending in the Storm Giant.
@@ -147,7 +147,7 @@ export function buildStormspire(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'stormgiant', id: 'ss', mobs: ['nomad', 'nomadshaman', 'thunderbird', 'stonegiant', 'conjurer'], exitTo: 'highlands', exitSpawn: 'stormspire',
     title: 'The Stormspire', signLine: 'THE AIR HAS AN EDGE. EVERY SO OFTEN THE WALLS FLASH WHITE.',
     bossSign: ['THE GIANT\'S SEAT.', 'HE HAS SAT HERE SO LONG THE STORM HAS FORGOTTEN IT CAN LEAVE. SO HAS HE.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'storm_heart' }, { item: 'gem_sapphire' }, { gold: 520 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'storm_heart' }, { item: 'clan_dirk' }, { item: 'gem_sapphire' }, { gold: 520 }],
   });
 }
 
@@ -157,7 +157,7 @@ export function buildHartSpire(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'hartking', id: 'hs', keyGate: true, mobs: ['glimmerkin', 'crystalgolem', 'glassstag', 'wisp', 'warden'], exitTo: 'glasswood', exitSpawn: 'hartspire',
     title: 'The Hart Spire', signLine: 'THE WALLS ARE GLASS AND THEY ARE SINGING. THE SONG IS A WARNING.',
     bossSign: ['THE HARTKING\'S COURT.', 'HE WALKED THESE HALLS BEFORE THE GLASS. HE WALKS THEM STILL, BUT HE IS NO LONGER SURE WHICH WAY IS OUT.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'antler_crown' }, { item: 'gem_topaz' }, { gold: 460 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'antler_crown' }, { item: 'glass_dagger' }, { item: 'gem_topaz' }, { gold: 460 }],
   });
 }
 // The Underdeep's boss delve: the Lode Chasm, ending in the Lode Colossus.
@@ -166,7 +166,7 @@ export function buildLodeNest(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'lodecolossus', id: 'ln', keyGate: true, mobs: ['lodeling', 'caveweaver', 'deepdelver', 'gloomcap', 'golem'], exitTo: 'underdeep', exitSpawn: 'lodenest',
     title: 'The Lode Chasm', signLine: 'THE ORE IS WARM. IT PULSES, VERY SLOWLY, LIKE A SLEEPER\'S CHEST.',
     bossSign: ['THE HEART OF THE LODE.', 'EVERY LANTERN DOWN HERE GOES OUT IN THIS ROOM. THE ORE GIVES ITS OWN LIGHT, AND IT IS WATCHING.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'deep_plate' }, { item: 'gem_amber' }, { gold: 560 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'deep_plate' }, { item: 'nightshade' }, { item: 'gem_amber' }, { gold: 560 }],
   });
 }
 // Saltmarket's Cove: Seaweed Cove, ending in Captain Brinegut.

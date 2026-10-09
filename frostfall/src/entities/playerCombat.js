@@ -121,6 +121,7 @@ export const combatMethods = {
     const en = stats.enchant();
     const off = stats.offhandDmg();
     const heavy = s.c.scale > 1;
+    const wp = stats.weapon() || {}, isDagger = wp.style === 'dagger', DG = TUNE.player.dagger;
     for (const e of this.scene.enemies.getChildren()) {
       if (e.dead || s.hit.has(e)) continue;
       if (!Phaser.Geom.Intersects.RectangleToRectangle(r, e.rect)) continue;
@@ -130,8 +131,12 @@ export const combatMethods = {
       const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1);
       let dmg = meleeDamage({
         weapon: stats.weaponDmg() + off * 0.6, skill: bonus.melee(), combo: s.c.dmg, perk: perkMult,
-        sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0) + (S.perks.assassin && sneak ? 1 : 0), noise: 0.9 + Math.random() * 0.2,
+        sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0) + (S.perks.assassin && sneak ? 1 : 0) + (isDagger ? DG.sneakBonus : 0) + (wp.sneakBonus || 0), noise: 0.9 + Math.random() * 0.2,
       });
+      // a dagger in the back: the enemy is facing away from you
+      let backstab = false;
+      if (isDagger && !sneak && e.face) { const bx = e.x - this.x, by = e.y - this.y, bl2 = Math.hypot(bx, by) || 1; if ((e.face.x * bx + e.face.y * by) / bl2 > DG.backDot) { dmg *= DG.backMul; backstab = true; } }
+      const assassinate = wp.assassinate && sneak && !e.isBoss && !e.cfg?.title;
       // finishing blow: a staggered, nearly-dead foe is executed outright
       const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
       if (en) dmg += en.power;
@@ -141,13 +146,16 @@ export const combatMethods = {
       if (riposte) dmg *= P.riposte.mult;
       const crit = Math.random() < stats.sum('crit');
       if (crit) dmg *= 1.8;
-      if (exec) dmg = e.hp + 999;
+      if (exec || assassinate) dmg = e.hp + 999;
       const dealt = e.takeHit({
-        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: riposte ? Math.max(s.c.stun, 0.9) : s.c.stun, heavy: heavy || !!s.c.breaker, pierce: s.c.pierce || 0, poise: (s.c.poise || 1) * (riposte ? 2 : 1),
+        dmg, kx: e.x - this.x, ky: e.y - this.y, kb: s.c.kb, src: 'melee', stun: riposte ? Math.max(s.c.stun, 0.9) : s.c.stun, heavy: heavy || !!s.c.breaker, pierce: Math.max(s.c.pierce || 0, heavy ? wp.pierce || 0 : 0), poise: (s.c.poise || 1) * (riposte ? 2 : 1),
         element: en ? en.type : null, slow: en && en.type === 'frost' ? 2.5 : 0, fromX: this.x, fromY: this.y,
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
-      wear(S.equip.weapon, 1);
+      wear(S.equip.weapon, wp.wearMul || 1);
+      if (wp.inflict) inflictOn(e, wp.inflict.filter((f) => !f.sneakOnly || sneak));
+      if (backstab) this.scene.fx.text(e.x, e.y - 32, 'BACKSTAB', 12, 0.8);
+      if (assassinate) this.scene.fx.text(e.x, e.y - 32, 'ASSASSINATED', 13, 1);
       if (riposte) { this.riposteT = 0; this.scene.fx.text(e.x, e.y - 30, 'RIPOSTE', 13, 1); this.scene.fx.ring(e.x, e.y + 3, 0.5, 0.3, 'ring', 0xf4d460); }
       if (crit) this.scene.fx.text(e.x, e.y - 21, 'CRIT', 13, 0.8);
       this.leechHeal(dealt);

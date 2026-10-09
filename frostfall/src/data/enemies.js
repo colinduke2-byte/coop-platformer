@@ -5,7 +5,7 @@ export const ENEMIES = {
     name: 'Grimfang', title: 'GRIMFANG, THE PALE ALPHA', tex: 'spr_grimfang', sideOnly: true, bark: 'wolf', weak: { fire: 1.3 },
     hp: 290, speed: 40, chase: 74, dmg: 17, detect: 9999,
     kind: 'boss', range: 40, windup: 0.6, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.95,
-    body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
+    body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['grimfang_bite', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
   },
   wyrm: {
     name: 'Glacial Wyrm', title: 'THE RIME WYRM, SERPENT OF THE MAW', tex: 'spr_wyrm', sideOnly: true, bark: 'undead', weak: { fire: 1.5, shock: 1.2, frost: 0.1 },
@@ -64,7 +64,7 @@ export const ENEMIES = {
   draugr: {
     name: 'Draugr', tex: 'spr_draugr', blade: 3, bark: 'undead', weak: { fire: 1.5, frost: 0.6 }, hp: 40, speed: 30, chase: 40, dmg: 15, detect: 66,
     kind: 'melee', range: 19, windup: 0.55, atkDur: 0.16, recover: 0.65, cooldown: 0.5, kbResist: 0.15,
-    body: [8, 7, 4, 9], loot: { gold: [3, 9], drops: [['mp_potion', 0.1], ['arrows', 0.2, [2, 5]], ['hp_potion', 0.08], ['iron_sword', 0.04]] },
+    body: [8, 7, 4, 9], loot: { gold: [3, 9], drops: [['mp_potion', 0.1], ['arrows', 0.2, [2, 5]], ['hp_potion', 0.08], ['iron_sword', 0.04], ['bone_shiv', 0.04]] },
   },
   wolf: {
     name: 'Wolf', tex: 'spr_wolf', bark: 'wolf', weak: { fire: 1.2 }, hp: 28, speed: 38, chase: 78, dmg: 10, detect: 92,
@@ -105,7 +105,7 @@ export const ENEMIES = {
     name: 'Draugr Warden', tex: 'spr_warden', blade: 4, bark: 'undead', weak: { fire: 1.4, shock: 1.3, frost: 0.6 }, shield: true,
     hp: 60, speed: 26, chase: 34, dmg: 17, detect: 62,
     kind: 'melee', range: 19, windup: 0.65, atkDur: 0.16, recover: 0.8, cooldown: 0.7, kbResist: 0.5,
-    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5]] },
+    body: [8, 7, 4, 9], loot: { gold: [8, 18], drops: [['hp_potion', 0.18], ['wooden_shield', 0.12], ['iron_shield', 0.04], ['bone_dust', 0.5], ['bone_shiv', 0.1]] },
   },
   alpha: {
     name: 'Wolf Alpha', tex: 'spr_alpha', sideOnly: true, bark: 'wolf', call: 150, weak: { fire: 1.3 },

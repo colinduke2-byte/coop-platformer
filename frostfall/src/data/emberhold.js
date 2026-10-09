@@ -226,6 +226,7 @@ export const EMBERFORGE = [
   { id: 'ember_blade', mats: { ash_iron: 6, ember_ore: 2 }, gold: 300, need: null },
   { id: 'ember_axe', mats: { ash_iron: 6, ember_ore: 2 }, gold: 320, need: ['delvers', 20] },
   { id: 'ember_spear', mats: { ash_iron: 5, ember_ore: 2 }, gold: 300, need: ['wardens', 20] },
+  { id: 'ember_dagger', mats: { ash_iron: 4, ember_ore: 2 }, gold: 280, need: ['smugglers', 20] },
   { id: 'ember_mail', mats: { ash_iron: 10, ember_ore: 3 }, gold: 480, need: ['anvil', 20] },
   { id: 'ember_bulwark', mats: { ash_iron: 8, ember_ore: 2 }, gold: 340, need: ['anvil', 20] },
 ];

@@ -9,7 +9,7 @@ const rngFor = (who) => {
 };
 
 export const POOLS = {
-  Hilda: [['warhammer', 1.9], ['crossbow', 1.8], ['hand_axe', 1.9], ['hunting_spear', 1.9], ['iron_mace', 1.9], ['bearded_axe', 2.1], ['ash_spear', 2.1], ['war_mace', 2.1], ['steel_sword', 1.9], ['hunter_garb', 1.9], ['bulwark_plate', 1.7], ['iron_shield', 1.9], ['iron_greatsword', 1.8], ['fire_arrow', 2, 6]],
+  Hilda: [['warhammer', 1.9], ['crossbow', 1.8], ['hand_axe', 1.9], ['hunting_spear', 1.9], ['iron_mace', 1.9], ['bearded_axe', 2.1], ['ash_spear', 2.1], ['war_mace', 2.1], ['steel_sword', 1.9], ['hunter_garb', 1.9], ['bulwark_plate', 1.7], ['iron_shield', 1.9], ['iron_greatsword', 1.8], ['skinning_knife', 1.9], ['fire_arrow', 2, 6]],
   Mirra: [['tome_embernova', 1.5], ['tome_glacier', 1.5], ['tome_blink', 1.6], ['tome_shock', 1.6], ['tome_nova', 1.6], ['tome_wolf', 1.6], ['tome_meteor', 1.5], ['berserker_draught', 2], ['quicksilver_tonic', 2], ['nightsight_elixir', 2], ['ironhide_brew', 2], ['frostward_tonic', 2], ['mp_potion_g', 2], ['hp_potion_g', 2]],
 };
 

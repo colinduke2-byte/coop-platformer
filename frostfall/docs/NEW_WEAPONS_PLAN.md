@@ -1,6 +1,6 @@
 # New weapons: daggers, staves, halberds
 
-Status: plan only (nothing built yet). Written so each weapon family has a full ladder of versions, every version has its own look, and every region hands out something new.
+Status: daggers built; staves and halberds still to do. Written so each weapon family has a full ladder of versions, every version has its own look, and every region hands out something new.
 
 ## Where they fit
 - Today: swords (no style), axes, spears, maces, greatswords, hammers, bows, shields. `hunting_knife` already has `style: 'dagger'` and a four-hit combo in `TUNE.player.styles.dagger`, but no sneak bonus and only one design.
@@ -14,25 +14,30 @@ Status: plan only (nothing built yet). Written so each weapon family has a full 
 4. Procedural loot (`genloot.js` BASES) learns the three bases so rarity and affixes roll on them too.
 5. Forge: every family gets an Emberforged version at the Emberhold smith, and normal upgrades (+1 to +3), sockets and enchants work as for other weapons.
 
-## Daggers (one-handed, `style: 'dagger'`)
+## Daggers (one-handed, `style: 'dagger'`): BUILT
 Role: fast, cheap, quiet. A stealth and crit weapon, the natural off-hand for dual wield.
-Feel: swing 0.75-0.85, stamina cost x0.8, combo of four (already there). New: **sneak attacks and hits from behind deal +1.0x** with a dagger (stacks with the Backstab and Assassin perks), and the fourth hit **ignores 20% armour**. Knockback stays small.
-Skills: One-Handed for damage, Sneak for the bonus. Optional new perk "Cutpurse": +10% gold from pickpocket kills.
+Rules in the game now (`TUNE.player.dagger`, `playerCombat.swordHit`):
+- Sneak attacks with a dagger get **+1.0x** on top of the usual 3x (stacks with Sneak skill, Backstab and Assassin perks).
+- A hit on an enemy that is **facing away** (not sneaking needed) deals **x1.4** and shows BACKSTAB.
+- The fourth combo hit **pierces 35% of armour** (`styles.dagger[3].pierce`); the Court Misericorde pierces 50%.
+- Item fields: `inflict` (bleed or poison, optionally only on sneak attacks), `sneakBonus`, `pierce`, `assassinate` (sneak attack kills any non-boss), `wearMul` (wears out faster), plus the existing `crit`, `elem`, `sockets`.
+- Eleven blade shapes drawn in code from one profile each (icon and held sprite share it): knife, shiv, dirk, stiletto, clan, glass, kris, misericorde, ember, night, bite.
 
-| # | Dagger | Tier | Dmg | Twist | Where it is found |
-|---|---|---|---|---|---|
-| 1 | Hunting Knife (have) | 0 | 6 | none | Starter chest in the village |
-| 2 | Skinning Knife | 0 | 8 | +25% hide and pelt drops | Hilda's daily stock; hunting camps |
-| 3 | Bone Shiv | 0 | 9 | bleed 3 s | Dropped by draugr wardens and camp chiefs |
-| 4 | Grimfang's Fang | 0 | 13 | +10% crit, pale blade | Unique drop from Grimfang, the first boss |
-| 5 | Reedwick Stiletto | 1 | 12 | poison on sneak attack | Reedwick smuggler shop (Fens) |
-| 6 | Clan Dirk | 1 | 14 | bleed, +stagger | Skarn Hold weaponsmith (Highlands) |
-| 7 | Smuggler's Knife (have) | 1 | 12 | existing effect | stays: the smugglers' note reward |
-| 8 | Glass Dagger | 2 | 16 | very high crit, breaks 2x faster | Glasswood chests and the Hartking's glade |
-| 9 | Tide Kris | 2 | 17 | frost, slows | Frozen Coast harbour shop; Admiral Veyl's chest |
-| 10 | Court Misericorde | 3 | 21 | fourth hit pierces 40% armour | Old Kingdom court guards and the Hollow King's vault |
-| 11 | Emberforged Dagger | 3 | 22 | fire on crit | Emberhold forge (ember ore plus Kragnar's core) |
-| 12 | Nightshade | 3 | 26 | sneak attack is lethal to anything not a boss; legendary | Underdeep, behind the key gate (last of the delve chests) |
+| # | Dagger | Dmg | Twist | Where it is found |
+|---|---|---|---|---|
+| 1 | Hunting Knife | 6 | plain | Starter gear |
+| 2 | Skinning Knife | 10 | 5% crit | Hilda's daily stock |
+| 3 | Bone Shiv | 11 | bleeds | 10% from Draugr Wardens, 4% from draugr |
+| 4 | Grimfang's Bite | 17 | 10% crit, +0.5x sneak | Grimfang (first boss) |
+| 5 | Reedwick Stiletto | 19 | poison on sneak attack | Sunken Hollow (Fens delve) boss chest |
+| 6 | Clan Dirk | 21 | bleeds (60%) | Stormspire (Highlands delve) boss chest |
+| 7 | Smuggler's Knife | 22 | 14% crit | Smugglers' Guild armoury (existing; now a true dagger) |
+| 8 | Glass Dagger | 24 | 18% crit, wears out 2x faster | Hart Spire (Glasswood delve) boss chest |
+| 9 | Tide Kris | 26 | frost | Tidebreak Cavern (Frozen Coast delve) boss chest |
+| 10 | Court Misericorde | 29 | 4th hit pierces 50% armour | Hollow Sepulchre (Old Kingdom delve) boss chest |
+| 11 | Emberforged Dagger | 30 | fire, 8% crit | Emberforge (needs Smugglers 20 rep, ash iron and ember ore) |
+| 12 | Nightshade | 34 | sneak attack kills any non-boss; +1.0x sneak | Lode Chasm (Underdeep delve) boss chest |
+Dagger bases also roll in generated loot (`Dagger` in `genloot.js`).
 
 ## Staves (one-handed, new `style: 'staff'`)
 Role: the mage's weapon. Today a caster has no weapon that suits them; the staff turns the spell loadout into a build.

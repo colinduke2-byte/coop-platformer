@@ -860,8 +860,78 @@ function buildFx(scene) {
   tex(scene, 'warn', 16, 16, (g) => { g.fillStyle = 'rgba(200,56,60,0.35)'; g.fillRect(0, 0, 16, 16); });
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------- daggers
+// Every dagger has its own silhouette. A shape is a blade profile (length, thickness along the blade, optional sideways wave,
+// optional edge notches), a guard, a grip and its own accent colours. The icon (diagonal) and the held sprite (horizontal) are
+// both drawn from the same profile, so what you pick up is what you swing.
+const DAG_HI = [1, 2, 3, 4, 5, 6, 6, 8, 10, 10, 13, 12, 13, 13, 4, 6];
+const DAG_LO = [0, 0, 1, 2, 3, 4, 5, 1, 7, 1, 9, 9, 11, 12, 1, 14];
+export const DAGGER_SHAPES = {
+  knife:    { L: 7,  t: (i, L) => (i < L - 2 ? 2 : 1), guard: 'nub', grip: 3 },
+  shiv:     { L: 7,  t: (i) => (i % 3 === 2 ? 1 : 2), guard: null, grip: 4, wrap: 6, gripCol: 10 },
+  dirk:     { L: 8,  t: (i, L) => (i < L - 2 ? 2 : 1), guard: 'bar', grip: 3 },
+  stiletto: { L: 11, t: () => 1, guard: 'ring', grip: 3 },
+  clan:     { L: 8,  t: (i, L) => (i < 1 ? 2 : i < 5 ? 4 : i < 7 ? 3 : 1), guard: 'bar', grip: 3, guardCol: 10 },
+  glass:    { L: 8,  t: (i) => [2, 3, 2, 3, 2, 2, 1, 1][i] || 1, guard: 'nub', grip: 3, gripCol: 5, guardCol: 6 },
+  kris:     { L: 10, t: (i, L) => (i < 2 ? 3 : i < L - 2 ? 2 : 1), wave: (i) => Math.round(Math.sin(i * 1.15) * 1.05), guard: 'bar', grip: 3 },
+  miser:    { L: 11, t: (i, L) => (i < 3 ? 3 : i < L - 3 ? 2 : 1), guard: 'bar2', grip: 3 },
+  ember:    { L: 9,  t: (i, L) => (i % 2 ? 3 : 2), wave: (i) => (i > 3 ? (i % 2 ? 1 : 0) : 0), guard: 'bar', grip: 3, guardCol: 12, gripCol: 1 },
+  night:    { L: 9,  t: (i, L) => (i < 2 ? 2 : i < L - 2 ? 3 : 2), wave: (i) => -Math.round((i * i) / 30), guard: 'hook', grip: 3, gripCol: 0, guardCol: 14 },
+  bite:     { L: 8,  t: (i) => Math.max(1, 4 - Math.floor(i * 0.5)), wave: (i) => -Math.round((i * i) / 24), guard: null, grip: 4, wrap: 11, gripCol: 10 },
+};
+// pixel cells of a dagger as [x, y, colour] in blade-local coordinates: u along the blade from the hilt (grip at u < 0), v across it.
+function daggerCells(shape, col) {
+  const D = DAGGER_SHAPES[shape] || DAGGER_SHAPES.knife, cells = [];
+  const hi = DAG_HI[col] ?? 6, lo = DAG_LO[col] ?? 1;
+  for (let i = 0; i < D.L; i++) {
+    const t = D.t(i, D.L), w = D.wave ? D.wave(i) : 0, top = -Math.floor((t - 1) / 2) + w;
+    for (let j = 0; j < t; j++) cells.push([i, top + j, j === 0 ? hi : j === t - 1 && t > 1 ? lo : col]);
+    if (shape === 'glass' && i % 2 === 0 && t > 1) cells.push([i, top + 1, 6]);               // facet flashes
+    if (shape === 'ember' && i % 2 === 1) cells.push([i, top - 1, 13]);                       // little flames along the edge
+  }
+  for (let g = 1; g <= D.grip; g++) cells.push([-g, 0, D.wrap && g % 2 ? D.wrap : D.gripCol ?? 9]);
+  cells.push([-D.grip - 1, 0, 13]);                                                         // pommel
+  const gc = D.guardCol ?? 13;
+  if (D.guard === 'bar') for (const v of [-2, -1, 0, 1, 2]) cells.push([0, v, v === 0 ? 4 : gc]);
+  if (D.guard === 'bar2') for (const v of [-3, -2, -1, 0, 1, 2, 3]) cells.push([0, v, gc]);
+  if (D.guard === 'nub') { cells.push([0, -1, gc]); cells.push([0, 1, gc]); }
+  if (D.guard === 'ring') { cells.push([-1, -1, gc], [-1, 1, gc], [0, -2, gc], [0, 2, gc]); }
+  if (D.guard === 'hook') { cells.push([0, 1, gc], [0, 2, gc], [-1, 2, gc]); }
+  return cells;
+}
+function outlineCells(map, w, h, put) {
+  const add = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (map.has(y * w + x)) continue;
+    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => map.has((y + dy) * w + (x + dx)) && x + dx >= 0 && x + dx < w)) add.push([x, y]);
+  }
+  for (const [x, y] of add) put(0, x, y);
+}
+export function drawDaggerIcon(g, shape, col) {
+  // sample the horizontal dagger rotated 45 degrees (blade up and to the right), so diagonals have no gaps
+  const cells = daggerCells(shape, col), src = new Map();
+  let u0 = 1e9, u1 = -1e9;
+  for (const [u, v, c] of cells) { src.set(u + ',' + v, c); u0 = Math.min(u0, u); u1 = Math.max(u1, u); }
+  const len = u1 - u0 + 1, sc = Math.min(1, 14 / (len * 0.7071 * 1.6)), uc = (u0 + u1) / 2, map = new Map();
+  for (let Y = 0; Y < 16; Y++) for (let X = 0; X < 16; X++) {
+    const dx = X - 7.5, dy = Y - 8, u = ((dx - dy) / 1.4142) / sc * 0.98 + uc, v = ((dx + dy) / 1.4142) / sc * 0.98;
+    const c = src.get(Math.round(u) + ',' + Math.round(v));
+    if (c !== undefined) map.set(Y * 16 + X, c);
+  }
+  for (const [k, c] of map) R(g, c, k % 16, Math.floor(k / 16));
+  outlineCells(map, 16, 16, (c, x, y) => R(g, c, x, y));
+}
+export function drawDaggerHeld(g, shape, col) {
+  const cells = daggerCells(shape, col), map = new Map(), W = 24;
+  for (const [u, v, c] of cells) { const x = u + 6, y = v + 4; if (x >= 0 && x < W && y >= 0 && y < 9) map.set(y * W + x, c); }
+  for (const [k, c] of map) R(g, c, k % W, Math.floor(k / W));
+  outlineCells(map, W, 9, (c, x, y) => R(g, c, x, y));
+}
+
 // Item icons (16x16). kind picks a drawing routine; col tints it.
 export function buildIcon(scene, key, kind, col = 6) {
+  if (kind.startsWith('dagger_')) { tex(scene, key, 16, 16, (g) => drawDaggerIcon(g, kind.slice(7), col)); return; }
   tex(scene, key, 16, 16, (g) => {
     const l = (c, x0, y0, x1, y1) => { // pixel line
       const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
@@ -945,6 +1015,7 @@ export function buildIcon(scene, key, kind, col = 6) {
 
 // Held weapon / shield sprites (drawn while swinging / blocking). `kind`: blade | greatblade | shield.
 export function buildHeld(scene, key, kind, col = 5) {
+  if (kind.startsWith('dagger_')) { tex(scene, key, 24, 9, (g) => drawDaggerHeld(g, kind.slice(7), col)); return; }
   if (kind === 'shield') {
     tex(scene, key, 10, 12, (g) => {
       R(g, 0, 1, 0, 8, 9); R(g, 0, 2, 9, 6, 2); R(g, 0, 3, 11, 4, 1);
@@ -991,4 +1062,4 @@ export function generateArt(scene) {
 }
 
 // Which held-weapon sprite an item uses.
-export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);
+export const heldKind = (it) => (it.type === 'shield' ? 'shield' : it.icon?.[0]?.startsWith('dagger_') ? it.icon[0] : it.style === 'spear' ? 'spear' : it.style === 'mace' || it.style === 'hammer' ? 'mace' : it.style === 'axe' ? 'axe' : it.type === 'weapon2h' ? 'greatblade' : it.type === 'weapon' ? 'blade' : null);
