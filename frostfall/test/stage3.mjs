@@ -18,7 +18,7 @@ const snap = () => G(() => {
 const setup = (dist = 70) => G((d) => {
   const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0];
   g.player.setPosition(300, 250); g.player.face = { x: 1, y: 0 }; g.player.mode = 'free'; g.player.invuln = 99;
-  e.setPosition(300 + d, 250); e.home = { x: 300 + d, y: 250 }; e.hp = e.maxHp; e.cfg = { ...e.cfg, detect: 0, speed: 0 }; e.alerted = false; e.state = 'idle'; e.slowT = 0; e.stun = 0; e.statuses = {};
+  e.setPosition(300 + d, 250); e.home = { x: 300 + d, y: 250 }; e.maxHp = 40; e.hp = 40; e.cfg = { ...e.cfg, detect: 0, speed: 0 }; e.alerted = false; e.state = 'idle'; e.slowT = 0; e.stun = 0; e.statuses = {};
   const S = window.__ff.S; S.hp = 100; S.mp = 100; S.sp = 100; S.arrows = 15; g.player.shoutCd = 0;
 }, dist);
 

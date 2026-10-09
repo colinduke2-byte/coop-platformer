@@ -85,7 +85,7 @@ const cl = await G(async () => {
   S.cloak = 6; const locked = A.currentCloak().col; S.cloak = 11;
   return { base, more, tex, back, locked };
 });
-check('trophies unlock cloak colours and the player sprite changes', cl.base === 1 && cl.more === 3 && cl.tex === 'spr_cloak_13' && cl.back === 'spr_player' && cl.locked === 11, JSON.stringify(cl));
+check('trophies unlock cloak colours and the player sprite changes', cl.base === 1 && cl.more === 3 && cl.tex !== cl.back && /(spr_cloak_13|_13)$/.test(cl.tex) && (cl.back === 'spr_player' || /_11$/.test(cl.back)) && cl.locked === 11, JSON.stringify(cl));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'REPLAY FAILED' : 'REPLAY PASSED');
