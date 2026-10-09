@@ -25,6 +25,7 @@ var _layer: Node2D
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child.call_deferred(ShaderWarmup.new())
 	EventBus.player_jumped.connect(_on_jumped)
 	EventBus.player_wall_jumped.connect(_on_wall_jumped)
 	EventBus.player_landed.connect(_on_landed)

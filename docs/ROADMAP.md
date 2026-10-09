@@ -128,6 +128,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [ ] Hand-painted texture pass (if Colin wants to go beyond procedural art)
 
 ## Phase 6 — Polish & ship to yourself
+- [x] Performance round 2 (5800X + 4070 Ti target, 120 fps): F3 overlay shows frame median/p99/worst + hitch log, F4 saves `perf_report.txt` (user data dir); shaders + textures pre-warmed at boot (`world/shader_warmup.gd`); idle rope bridges skip all work. Still to do: pooling for Lums/VFX, off-screen script gating (lum/deco/glow), merged full-screen passes, physics interpolation for 144/240 Hz
 - [x] Performance: static art baked to meshes, on-screen-only redraws (draw calls 1200–2700 -> 280–530 on the busiest levels)
 - [x] Settings: music / SFX volume, fullscreen (Pause -> Settings, saved in user://settings.json)
 - [ ] Input rebinding

@@ -34,6 +34,7 @@ var _rot := PackedFloat32Array()
 var _dip: PackedFloat32Array = []       ## current extra sag per plank
 var _dip_vel: PackedFloat32Array = []
 var _t := 0.0
+var _at_rest := false                       ## settled and unridden: skip all per-frame work
 
 
 func _ready() -> void:
@@ -50,6 +51,7 @@ func _rebuild() -> void:
 	_dip_vel.resize(plank_count)
 	_dip.fill(0.0)
 	_dip_vel.fill(0.0)
+	_at_rest = false
 	_pos.resize(plank_count)
 	_rot.resize(plank_count)
 	for i in plank_count:
@@ -136,6 +138,9 @@ func _physics_process(delta: float) -> void:
 		var t := local.x / maxf(span.x, 1.0)
 		if t > -0.02 and t < 1.02 and absf(local.y - (span.y * t + sin(clampf(t, 0.0, 1.0) * PI) * slack + _dip_at(t))) < 48.0:
 			riders.append(clampf(t, 0.0, 1.0))
+	if riders.is_empty() and _at_rest:
+		return   # nobody on it and it has settled: no spring work, no collision rebuild, no redraw
+	var moving := 0.0
 	for i in plank_count:
 		var t := _t_of(i)
 		var target := 0.0
@@ -145,13 +150,22 @@ func _physics_process(delta: float) -> void:
 			target += max_dip * sin(r * PI) * (0.35 + 0.65 * near * near)
 		target = minf(target, max_dip * 1.6)
 		_dip_vel[i] += (target - _dip[i]) * 90.0 * delta
-		_dip_vel[i] *= exp(-7.0 * delta)
+		_dip_vel[i] *= exp(-17.0 * delta)   # ~critically damped: sags and settles without springing up through feet
+		_dip_vel[i] = clampf(_dip_vel[i], -260.0, 260.0)
 		_dip[i] += _dip_vel[i] * delta
+		moving = maxf(moving, absf(_dip_vel[i]) + absf(_dip[i] - target))
 		_pos[i] = _rest(i) + Vector2(0, _dip[i])
 		var ang := 0.0
 		if i > 0 and i < plank_count - 1:
 			ang = (_dip[i + 1] - _dip[i - 1]) / (_plank_width() * 2.0) * 0.8
 		_rot[i] = ang + atan2(span.y, span.x)
+	_at_rest = moving < 0.05 and riders.is_empty()
+	if _at_rest:   # snap the last fraction of a pixel so the resting shape is exact
+		for i in plank_count:
+			_dip[i] = 0.0
+			_dip_vel[i] = 0.0
+			_pos[i] = _rest(i)
+			_rot[i] = atan2(span.y, span.x)
 	_update_collision()
 	View.redraw_rect(self, Rect2(global_position - Vector2(0, 50), span.abs() + Vector2(0, 150)))
 

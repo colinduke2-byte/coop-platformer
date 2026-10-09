@@ -13,6 +13,8 @@ var _hint: Label
 var _banner: Label
 var _bump := 0.0
 var _debug: Label
+var _stats := FrameStats.new()
+var _report_note := ""
 var _snooze: SnoozeIcon
 var _boss_box: Control
 var _boss_name: Label
@@ -175,6 +177,7 @@ func _process(delta: float) -> void:
 	# Once someone's playing, the join reminder fades after a few seconds.
 	_hint.modulate.a = 1.0 if n == 0 else clampf(1.0 - (GameManager.level_time - 5.0) / 1.5, 0.0, 0.55)
 	if _debug.visible:
+		_stats.record(_where())
 		_debug.text = _debug_text()
 
 
@@ -182,6 +185,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
 	if k and k.pressed and not k.echo and k.physical_keycode == KEY_F3:
 		_debug.visible = not _debug.visible
+		_stats.reset()
+	elif k and k.pressed and not k.echo and k.physical_keycode == KEY_F4 and _debug.visible:
+		var path := _stats.save_report(_where())
+		_report_note = ("saved " + path) if path != "" else "could not save report"
 
 
 ## F3 overlay: numbers for tuning feel (see player/tuning/player_default.tres).
@@ -189,6 +196,9 @@ func _debug_text() -> String:
 	var lines := PackedStringArray()
 	lines.append("FPS %d   draw calls %d   nodes %d" % [Engine.get_frames_per_second(),
 			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.OBJECT_NODE_COUNT)])
+	lines.append(_stats.summary() + "   [F4 saves a report]")
+	if _report_note != "":
+		lines.append(_report_note)
 	for slot: int in GameManager.players:
 		var p: Player = GameManager.players[slot]
 		if not is_instance_valid(p):
@@ -197,6 +207,18 @@ func _debug_text() -> String:
 				slot + 1, p.state_machine.current_name(), p.velocity.x, p.velocity.y, "Y" if p.is_on_floor() else "n",
 				p.sprint, p.coyote_timer, p.jump_buffer_timer, p.stomp_chain, "  PARACHUTE" if p.parachute else ""])
 	return "\n".join(lines)
+
+
+## Level name + first player's x, for the hitch log.
+func _where() -> String:
+	var lvl := get_tree().current_scene
+	var x := 0.0
+	for slot: int in GameManager.players:
+		var p: Player = GameManager.players[slot]
+		if is_instance_valid(p):
+			x = p.global_position.x
+			break
+	return "%s x=%.0f" % [lvl.name if lvl else "?", x]
 
 
 func _refresh_players() -> void:
