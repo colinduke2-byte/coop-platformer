@@ -79,8 +79,8 @@ check('smith enchants the weapon (flame)', (await S('enchants.iron_sword.type'))
 // enchant applies in combat
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(300, 250); p.face = { x: 1, y: 0 }; p.mode = 'free'; p.lockT = 0; p.invuln = 99; window.__ff.S.sp = 100; const e = g.addEnemy('draugr', 314, 250); e.cfg = { ...e.cfg, detect: 0, speed: 0 }; });
 await tap('KeyJ', 60); await h.sleep(250);
-const eh = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e ? e.hp : 0; });
-check('enchanted hits deal elemental bonus', eh < 40 - (13 + 2 + 5) * 0.8, `hp=${eh}`);
+const eh = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e ? [e.hp, e.maxHp] : [0, 0]; });
+check('enchanted hits deal elemental bonus', eh[0] < eh[1] - (13 + 2 + 5) * 0.8, `hp=${eh}`);
 unstub();
 
 // ---------------- alchemy
@@ -178,8 +178,8 @@ unstub();
 check('Ragna can be hired', (await S('follower')) === true && await G(() => !!window.__ff.game.scene.getScene('Game').follower));
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; const p = g.player; p.setPosition(10.5 * 16, 10 * 16); p.invuln = 999; g.follower.setPosition(p.x - 16, p.y); const e = g.addEnemy('draugr', p.x + 70, p.y); e.cfg = { ...e.cfg, speed: 0, detect: 0 }; e.alerted = true; e.state = 'idle'; });
 await h.sleep(3500);
-const fh = await G(() => window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]?.hp ?? 0);
-check('the follower shoots enemies', fh < 40, `hp=${fh}`);
+const fh = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e ? e.maxHp - e.hp : 0; });
+check('the follower shoots enemies', fh > 0, `hp=${fh}`);
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'PROGRESS FAILED' : 'PROGRESS PASSED');

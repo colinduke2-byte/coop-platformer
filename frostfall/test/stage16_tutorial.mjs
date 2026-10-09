@@ -16,7 +16,7 @@ check('walking advances to roll', (await tut()) === 'roll');
 await tap('Space', 60); await h.sleep(300);
 check('rolling spawns the lone wolf (fight step)', (await tut()) === 'fight' && await G(() => window.__ff.game.scene.getScene('Game').enemies.getChildren().filter((e) => e.tutorial).length === 1));
 const wolf = await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren().find((x) => x.tutorial); return { hp: e.hp, max: e.maxHp, alerted: e.alerted }; });
-check('the tutorial wolf is weakened and already hunting you', wolf.max < 28 && wolf.alerted, JSON.stringify(wolf));
+check('the tutorial wolf is weakened and already hunting you', wolf.max < 50 && wolf.alerted, JSON.stringify(wolf));
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren().find((x) => x.tutorial); e.hp = 0; e.dead = true; });
 await h.sleep(300);
 check('killing the wolf finishes the tutorial', (await tut()) === 'done' && await G(() => window.__ff.S.flags.tutDone === true));

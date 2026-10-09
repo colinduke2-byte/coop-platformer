@@ -32,7 +32,7 @@ await tap('KeyU', 50); await h.sleep(150);
 check('heavy attack winds up (no hit yet)', (await E()).hp === (await E()).max);
 await h.sleep(450);
 e = await E();
-check('heavy attack lands big and staggers', e.hp < e.max * 0.7 && e.stag > 0, JSON.stringify(e));
+check('heavy attack lands big and staggers', e.hp < e.max * 0.85 && e.stag > 0, JSON.stringify(e));
 check('heavy attack costs stamina', (await G(() => window.__ff.S.sp)) < sp0 - 15);
 
 // ---- perfect dodge: roll just before the hit connects

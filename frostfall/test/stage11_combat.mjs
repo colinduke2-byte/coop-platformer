@@ -125,7 +125,7 @@ const hardHp = await dummy('draugr', 200);
 await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'easy'; });
 const easyHp = await dummy('draugr', 220);
 await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'normal'; });
-check('difficulty scales enemy health', hardHp > 40 && easyHp < 40, `hard=${hardHp} easy=${easyHp}`);
+check('difficulty scales enemy health', hardHp > easyHp * 1.4, `hard=${hardHp} easy=${easyHp}`);
 
 // ---- enemy tactics: only two attack at once
 await reset();
