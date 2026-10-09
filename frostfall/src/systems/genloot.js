@@ -31,9 +31,14 @@ const BASES = {
     { name: 'Hauberk', type: 'armor', weight: 'medium', icon: ['armor_hauberk', 4], armor: 0.18 },
     { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28, moveMul: 0.94 },
   ],
+  helmet: [
+    { name: 'Cap', type: 'helmet', weight: 'light', icon: ['helm_cap', 9], armor: 0.03 },
+    { name: 'Helm', type: 'helmet', weight: 'medium', icon: ['helm_nasal', 4], armor: 0.06 },
+    { name: 'Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.09, moveMul: 0.97 },
+  ],
   charm: [{ name: 'Charm', type: 'charm', icon: ['charm_bear', 12] }, { name: 'Ring', type: 'charm', icon: ['charm_manaring', 14] }, { name: 'Amulet', type: 'charm', icon: ['charm_sun', 10] }],
 };
-const SLOT_WEIGHT = [['weapon', 34], ['bow', 12], ['shield', 12], ['armor', 26], ['charm', 16]];
+const SLOT_WEIGHT = [['weapon', 34], ['bow', 12], ['shield', 12], ['armor', 22], ['helmet', 10], ['charm', 16]];
 
 // Affixes: where they may roll, how they change the item, and their name part.
 const AFFIXES = [
@@ -44,13 +49,13 @@ const AFFIXES = [
   { id: 'rime', slots: ['weapon'], suf: 'of Rime', apply: (it, k) => { it.elem = { type: 'frost', power: 3 + 2 * k }; }, line: (it) => `FROST +${it.elem.power}, SLOWS` },
   { id: 'storm', slots: ['weapon'], suf: 'of Storms', apply: (it, k) => { it.elem = { type: 'shock', power: 4 + 2 * k }; }, line: (it) => `SHOCK +${it.elem.power}` },
   { id: 'swift', slots: ['weapon'], pre: 'Swift', apply: (it) => { it.swing = +((it.swing || 1) * 0.88).toFixed(2); }, line: () => 'FASTER SWINGS' },
-  { id: 'light', slots: ['weapon', 'bow', 'armor'], pre: 'Light', apply: (it) => { it.costMul = +((it.costMul || 1) * 0.85).toFixed(2); it.moveMul = +((it.moveMul || 1) * 1.04).toFixed(2); }, line: () => 'CHEAPER, QUICKER' },
-  { id: 'hardy', slots: ['armor', 'charm', 'shield'], pre: 'Hardy', apply: (it, k) => { it.maxHp = (it.maxHp || 0) + 15 + 8 * k; }, line: (it) => `+${it.maxHp} HEALTH` },
-  { id: 'arcane', slots: ['armor', 'charm'], pre: 'Arcane', apply: (it, k) => { it.maxMp = (it.maxMp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxMp} MANA` },
-  { id: 'vigor', slots: ['armor', 'charm'], pre: 'Vigorous', apply: (it, k) => { it.maxSp = (it.maxSp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxSp} STAMINA` },
-  { id: 'ward', slots: ['armor', 'shield'], suf: 'of the Bear', apply: (it, k) => { if (it.armor != null) it.armor = +(it.armor + 0.04 + 0.02 * k).toFixed(2); else it.block = +Math.min(0.9, it.block + 0.06).toFixed(2); }, line: () => 'TOUGHER' },
-  { id: 'shadow', slots: ['armor', 'charm'], suf: 'of Shadows', apply: (it) => { it.detectMul = 0.8; }, line: () => 'HARDER TO SPOT' },
-  { id: 'greed', slots: ['charm', 'armor'], suf: 'of Plenty', apply: (it) => { it.goldMul = 1.25; }, line: () => '+25% GOLD FOUND' },
+  { id: 'light', slots: ['weapon', 'bow', 'armor', 'helmet'], pre: 'Light', apply: (it) => { it.costMul = +((it.costMul || 1) * 0.85).toFixed(2); it.moveMul = +((it.moveMul || 1) * 1.04).toFixed(2); }, line: () => 'CHEAPER, QUICKER' },
+  { id: 'hardy', slots: ['armor', 'charm', 'shield', 'helmet'], pre: 'Hardy', apply: (it, k) => { it.maxHp = (it.maxHp || 0) + 15 + 8 * k; }, line: (it) => `+${it.maxHp} HEALTH` },
+  { id: 'arcane', slots: ['armor', 'charm', 'helmet'], pre: 'Arcane', apply: (it, k) => { it.maxMp = (it.maxMp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxMp} MANA` },
+  { id: 'vigor', slots: ['armor', 'charm', 'helmet'], pre: 'Vigorous', apply: (it, k) => { it.maxSp = (it.maxSp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxSp} STAMINA` },
+  { id: 'ward', slots: ['armor', 'shield', 'helmet'], suf: 'of the Bear', apply: (it, k) => { if (it.armor != null) it.armor = +(it.armor + 0.04 + 0.02 * k).toFixed(2); else it.block = +Math.min(0.9, it.block + 0.06).toFixed(2); }, line: () => 'TOUGHER' },
+  { id: 'shadow', slots: ['armor', 'charm', 'helmet'], suf: 'of Shadows', apply: (it) => { it.detectMul = 0.8; }, line: () => 'HARDER TO SPOT' },
+  { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it) => { it.goldMul = 1.25; }, line: () => '+25% GOLD FOUND' },
 ];
 
 const pickW = (list, r) => { let t = list.reduce((a, [, w]) => a + w, 0) * r; for (const [v, w] of list) { t -= w; if (t <= 0) return v; } return list[0][0]; };
@@ -126,7 +131,7 @@ export function rehydrateGen() {
 }
 export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) || null;
 
-const SLOT_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', shield: 'shield', armor: 'armor', charm: 'charm' };
+const SLOT_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', shield: 'shield', helmet: 'helmet', armor: 'armor', charm: 'charm' };
 export const rarityIndex = (it) => Math.max(0, RARITY.findIndex((r) => r.id === it.rarity));
 // Re-roll a generated item's stats and affixes in place (same id, slot, base, tier and rarity, so equipment stays equipped).
 export function reforgeGen(id) {

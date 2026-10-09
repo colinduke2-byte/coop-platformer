@@ -9,6 +9,7 @@ import { elixirVal } from '../systems/elixir.js';
 import { modMul } from '../data/mods.js';
 import { currentCloak } from '../systems/achievements.js';
 import { wear } from '../systems/durability.js';
+import { wornHeroKey } from '../art/sprites.js';
 import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
@@ -215,7 +216,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Cloak colour (unlocked by trophies; see systems/achievements.js).
   applyCloak() {
-    const c = currentCloak(), key = c.col === 11 ? 'spr_player' : 'spr_cloak_' + c.col;
+    const c = currentCloak(), kind = (id) => (id && ITEMS[id]?.icon?.[0]) || null;
+    const E = S.equip || {};
+    this.lookSig = `${E.armor}|${E.head}|${E.charm}|${c.col}`;
+    let key = c.col === 11 ? 'spr_player' : 'spr_cloak_' + c.col;
+    if (this.scene.textures.exists('spr_player')) key = wornHeroKey(this.scene, kind(E.armor), kind(E.charm), c.col, kind(E.head)) || key;
     if (this.scene.textures.exists(key) && this.texture.key !== key) this.setTexture(key, 'down0');
   }
 
@@ -300,6 +305,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ------------------------------------------------------------------ anim
   animate(moving) {
+    if (this.lookSig !== `${S.equip.armor}|${S.equip.head}|${S.equip.charm}|${currentCloak().col}`) this.applyCloak();
     const kind = facingKind(this.face.x, this.face.y);
     const fr = moving && this.mode !== 'roll' ? walkFrame(this.phase) : 0;
     // attack / cast / hurt poses

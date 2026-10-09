@@ -147,7 +147,7 @@ SCRIPTS.skarn_chief = async function chief() {
   const N = 'Ulfar', q = S.quests.stormgiant;
   if (q.status === 'active' && S.flags.stormGiantDead) {
     await say(N, 'Look up. Look up! The clouds are moving. I have not seen a cloud move since I was a boy.');
-    addGold(640); addItem('clan_furs'); addItem('giants_maul'); addItem('gem_sapphire', 1, true); finishQuest('stormgiant'); return;
+    addGold(640); addItem('clan_furs'); addItem('clan_skull'); addItem('giants_maul'); addItem('gem_sapphire', 1, true); finishQuest('stormgiant'); return;
   }
   if (q.status === 'inactive') {
     await say(N, 'A stranger, walking in from the pass without lightning in her hair. Sit. Eat. Then listen.');

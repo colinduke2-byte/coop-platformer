@@ -3,11 +3,11 @@ import { S } from './state.js';
 
 export const SETS = {
   ember: {
-    name: 'Emberforged', items: ['ember_mail', 'ember_blade', 'ember_axe', 'ember_spear', 'ember_bulwark', 'ember_crown'],
+    name: 'Emberforged', items: ['ember_mail', 'ember_helm', 'ember_blade', 'ember_axe', 'ember_spear', 'ember_bulwark', 'ember_crown'],
     bonus: { 2: { crit: 0.04 }, 3: { armor: 0.05, maxHp: 25 } },
   },
   court: {
-    name: 'Anvil Court Regalia', items: ['court_plate', 'court_hammer', 'court_signet'],
+    name: 'Anvil Court Regalia', items: ['court_plate', 'court_helm', 'court_hammer', 'court_signet'],
     bonus: { 2: { armor: 0.04 }, 3: { armor: 0.04, goldMul: 0.15, maxHp: 20 } },
   },
   delver: {
@@ -15,19 +15,19 @@ export const SETS = {
     bonus: { 2: { crit: 0.05 }, 3: { crit: 0.05, maxSp: 25, lifesteal: 0.02 } },
   },
   prism: {
-    name: 'Prism Regalia', items: ['prism_mail', 'shardblade', 'antler_crown'],
+    name: 'Prism Regalia', items: ['prism_mail', 'prism_helm', 'shardblade', 'antler_crown'],
     bonus: { 2: { crit: 0.04 }, 3: { crit: 0.04, maxMp: 40, armor: 0.04 } },
   },
   deepforged: {
-    name: 'Deepforged', items: ['deep_plate', 'lode_pick', 'deep_lamp'],
+    name: 'Deepforged', items: ['deep_plate', 'deep_helm', 'lode_pick', 'deep_lamp'],
     bonus: { 2: { armor: 0.04 }, 3: { armor: 0.04, maxHp: 30, lifesteal: 0.02 } },
   },
   tide: {
-    name: 'Tide-Guild Kit', items: ['tide_coat', 'tide_blade', 'tide_charm'],
+    name: 'Tide-Guild Kit', items: ['tide_coat', 'tide_cap', 'tide_blade', 'tide_charm'],
     bonus: { 2: { maxSp: 15 }, 3: { maxSp: 15, crit: 0.05, armor: 0.04 } },
   },
   warden: {
-    name: 'Warden Panoply', items: ['warden_cuirass', 'warden_shield', 'warden_badge'],
+    name: 'Warden Panoply', items: ['warden_cuirass', 'warden_helm', 'warden_shield', 'warden_badge'],
     bonus: { 2: { armor: 0.04 }, 3: { armor: 0.04, maxHp: 30, maxMp: 20 } },
   },
 };
@@ -37,7 +37,7 @@ export const setOf = (id) => Object.keys(SETS).find((k) => SETS[k].items.include
 // How many pieces of each set are worn right now.
 export function wornSets() {
   const out = {};
-  for (const sl of ['weapon', 'offhand', 'bow', 'armor', 'charm']) {
+  for (const sl of ['weapon', 'offhand', 'bow', 'head', 'armor', 'charm']) {
     const k = setOf(S.equip?.[sl]);
     if (k) out[k] = (out[k] || 0) + 1;
   }

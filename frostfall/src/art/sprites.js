@@ -3,7 +3,7 @@
 import { PAL, T, TILE, TILE_COUNT } from '../config.js';
 import { hash } from '../util.js';
 import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
-import { wornStyle, wornExtra } from './worn.js';
+import { wornStyle, wornExtra, wornHelmet } from './worn.js';
 import { DAG_HI, DAG_LO, outlineCells, iconFromCells, heldFromCells, LET, Cb, col2 } from './cells.js';
 
 const canvas = (w, h) => {
@@ -110,6 +110,7 @@ function humanoid(ctx, ox, dir, frIn, s) {
     if (s.crown != null) { r(s.crown, 6, 1, 5, 1); r(s.crown, 7, 0, 1, 1); r(s.crown, 9, 0, 1, 1); }
   }
   if (s.worn) wornExtra(r, dir, s.worn, pose);
+  if (s.helmet) wornHelmet(r, dir, s.helmet);
 }
 
 export const STYLES = {
@@ -487,10 +488,10 @@ function animalSheet(scene, key, draw) {
 }
 
 // Hero sheet wearing the given armour and head charm (kinds like 'armor_plate'), cloak colour col. Built on demand and cached.
-export function wornHeroKey(scene, armorKind, charmKind, col) {
-  const st = wornStyle({ ...STYLES.player, cape: col }, armorKind, charmKind);
+export function wornHeroKey(scene, armorKind, charmKind, col, helmKind = null) {
+  const st = wornStyle({ ...STYLES.player, cape: col }, armorKind, charmKind, helmKind);
   if (!st) return null;
-  const key = `spr_worn_${armorKind || '-'}_${charmKind || '-'}_${col}`;
+  const key = `spr_worn_${armorKind || '-'}_${charmKind || '-'}_${helmKind || '-'}_${col}`;
   if (scene.textures.exists(key)) return key;
   const frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt', 'dead'];
   const cv = canvas(16 * frames.length * 3, 16), ctx = cv.getContext('2d');

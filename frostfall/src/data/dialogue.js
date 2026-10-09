@@ -196,7 +196,7 @@ const MIRRA_WARES = [
   { id: 'hp_potion', price: 25 }, { id: 'mp_potion', price: 25 }, { id: 'sp_potion', price: 20 },
   { id: 'arrows', price: 15, n: 10, name: 'Arrows x10' }, { id: 'lockpick', price: 8, n: 3, name: 'Lockpicks x3' },
   { id: 'wooden_shield', price: 40, once: true }, { id: 'hunting_knife', price: 28, once: true }, { id: 'long_bow', price: 150, once: true },
-  { id: 'mage_robe', price: 160, once: true }, { id: 'hunter_garb', price: 110, once: true },
+  { id: 'mage_robe', price: 160, once: true }, { id: 'hunter_garb', price: 110, once: true }, { id: 'leather_cap', price: 30, once: true }, { id: 'hunter_hood', price: 120, once: true },
 ];
 export async function mirra() {
   if (S.quests.king.status === 'relic' && !S.flags.ending) {
@@ -279,7 +279,7 @@ export async function hilda() {
     else if (c === 3) await buyMenu(H, [...dailyWares('Hilda', 3),
       { id: 'iron_sword', price: 80, once: true }, { id: 'steel_sword', price: 180, once: true }, { id: 'iron_greatsword', price: 220, once: true },
       { id: 'hand_axe', price: 100, once: true }, { id: 'hunting_spear', price: 90, once: true }, { id: 'iron_mace', price: 140, once: true },
-      { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'bulwark_plate', price: 340, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
+      { id: 'iron_cuirass', price: 130, once: true }, { id: 'iron_shield', price: 110, once: true }, { id: 'bulwark_plate', price: 340, once: true }, { id: 'iron_helm', price: 90, once: true }, { id: 'bulwark_helm', price: 300, once: true }, { id: 'iron_ingot', price: 30, n: 1 },
       { id: 'pony_whistle', price: 420, once: true, name: 'Pony Whistle' },
       { id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'silver_sword', price: 260, once: true },
     ]);

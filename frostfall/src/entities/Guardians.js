@@ -75,6 +75,7 @@ export class EmberDragon extends PatternBoss {
       phaseAt: [0.66, 0.33], phaseText: { 2: 'THE SKY BURNS', 3: 'EMBER FURY' },
       onVictory: (sc, b) => {
         sc.pickups.push(new Pickup(sc, b.x - 16, b.y + 8, { type: 'item', id: 'dragonscale_armor', big: true }));
+        sc.pickups.push(new Pickup(sc, b.x, b.y + 16, { type: 'item', id: 'scale_helm', big: true }));
         sc.pickups.push(new Pickup(sc, b.x + 16, b.y + 8, { type: 'item', id: 'dragonbone_blade', big: true }));
         bus.emit('toast', 'YOU LEARN DRAGONFIRE (G TO SWAP SHOUT)', 12);
       },

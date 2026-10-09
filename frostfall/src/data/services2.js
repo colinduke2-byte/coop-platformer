@@ -87,7 +87,7 @@ export async function tailorMenu(who, hello) {
   await say(who, hello || 'Wool, oilcloth, and the occasional coat that is better than it looks.');
   for (;;) {
     const c = await choose(['Buy garments', 'Sell', 'Leave']);
-    if (c === 0) await buyMenu(who, [{ id: 'hunter_garb', price: 110, once: true }, { id: 'mage_robe', price: 150, once: true }, { id: 'sea_coat', price: 240, once: true }, { id: 'fur_tunic', price: 40, once: true }]);
+    if (c === 0) await buyMenu(who, [{ id: 'hunter_garb', price: 110, once: true }, { id: 'mage_robe', price: 150, once: true }, { id: 'sea_coat', price: 240, once: true }, { id: 'fur_tunic', price: 40, once: true }, { id: 'frost_circlet', price: 160, once: true }, { id: 'pale_cowl', price: 140, once: true }]);
     else if (c === 1) await sellMenu(who); else return;
   }
 }

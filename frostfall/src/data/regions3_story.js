@@ -98,7 +98,7 @@ SCRIPTS.glade_warden = giver({
   yes: 'I will go.', go: 'Keep to the lantern roads. The wood hates the dark more than you do.',
   ready: () => !!S.flags.hartKingDead,
   thanks: ['The trees are quiet. I do not know the last time I heard them quiet.'],
-  pay() { addGold(660); addItem('prism_mail'); addItem('shardblade'); addItem('gem_topaz', 1, true); },
+  pay() { addGold(660); addItem('prism_mail'); addItem('prism_helm'); addItem('shardblade'); addItem('gem_topaz', 1, true); },
   idle: ['The glass remembers what it grew around. Mind what you leave lying.', 'The lanterns are lit by hand every dusk. We do not talk about the one at the end of the south road.', 'You are always welcome at the Glade. The trees may disagree.'],
 });
 SCRIPTS.glade_trader = () => trade('Fenn', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Fenn', 2)],
@@ -185,7 +185,7 @@ SCRIPTS.fall_foreman = giver({
   yes: 'I will go down.', go: 'Take torches. The glowcaps lie, a little, about where the ground is.',
   ready: () => !!S.flags.lodeColossusDead,
   thanks: ['The floor stopped humming. Do you hear that? That is silence. I had forgotten it.'],
-  pay() { addGold(780); addItem('deep_plate'); addItem('lode_pick'); addItem('deep_lamp'); addItem('gem_onyx', 1, true); addRep('delvers', 20); },
+  pay() { addGold(780); addItem('deep_plate'); addItem('deep_helm'); addItem('lode_pick'); addItem('deep_lamp'); addItem('gem_onyx', 1, true); addRep('delvers', 20); },
   idle: ['The Delvers do not retire. We go down until we are the tunnel.', 'The lamps burn glowcap oil now. It smells of old cellars and good decisions.', 'Lanternfall has never fallen. We are very careful with the word.'],
 });
 SCRIPTS.fall_trader = () => trade('Bollard', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'lantern_oil', price: 40, n: 1 }, { id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Bollard', 2)],

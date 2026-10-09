@@ -226,13 +226,29 @@ export const ITEMS = {
   ember_bulwark: { name: 'Emberforged Bulwark', type: 'shield', icon: ['shield_bulwark', 12], block: 0.9, cost: 0.65, sockets: 1, value: 480, desc: 'Hold F to block. Absorbs 90%.' },
   hound_collar: { name: "Pup's Collar", type: 'charm', icon: ['charm_collar', 15], maxSp: 20, crit: 0.04, value: 90, desc: 'Asta\'s hound wore it. +20 stamina, +4% crit.' },
   ironwatch_banner: { name: 'Ironwatch Banner', type: 'charm', icon: ['charm_banner', 12], maxHp: 25, maxSp: 15, value: 120, desc: 'Ragna\'s company banner, cut to a sash. +25 health, +15 stamina.' },
+  leather_cap: { name: 'Leather Cap', type: 'helmet', weight: 'light', icon: ['helm_cap', 9], armor: 0.03, value: 25, desc: 'Stitched hide with ear flaps. Absorbs 3% damage.' },
+  iron_helm: { name: 'Iron Helm', type: 'helmet', weight: 'medium', icon: ['helm_nasal', 4], armor: 0.06, value: 80, desc: 'A plain helm with a nose guard. Absorbs 6% damage.' },
+  nordic_helm: { name: 'Nordic Horned Helm', type: 'helmet', weight: 'medium', icon: ['helm_nordic', 4], armor: 0.08, value: 190, desc: 'Horns of white bone on a steel cap. Absorbs 8% damage.' },
+  hunter_hood: { name: "Hunter's Hood", type: 'helmet', weight: 'light', icon: ['helm_hood', 8], armor: 0.04, detectMul: 0.9, value: 110, desc: 'Pine-green wool. Absorbs 4% damage, a little harder to spot.' },
+  frost_circlet: { name: 'Frostweave Circlet', type: 'helmet', weight: 'light', icon: ['helm_circlet', 14], armor: 0.02, maxMp: 15, manaCostMul: 0.95, value: 150, desc: 'A thin band set with a violet stone. +15 mana, spells cost 5% less.' },
+  bulwark_helm: { name: 'Bulwark Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.1, moveMul: 0.97, value: 300, desc: 'A closed helm with one slit to see through. Absorbs 10%, -3% speed.' },
+  scale_helm: { name: 'Dragonscale Helm', type: 'helmet', weight: 'medium', icon: ['helm_scale', 12], armor: 0.08, maxHp: 15, value: 420, desc: 'Scales and fins from the Ember Wyrm. Absorbs 8%, +15 health.' },
+  warden_helm: { name: "Warden's Helm", type: 'helmet', warm: true, weight: 'heavy', icon: ['helm_warden', 15], armor: 0.08, maxHp: 8, value: 520, desc: 'Road-worn, with a pale plume. Absorbs 8%, +8 health. Warm. Part of the Warden Panoply.' },
+  clan_skull: { name: 'Bear-Skull Helm', type: 'helmet', weight: 'medium', icon: ['helm_skull', 10], armor: 0.06, maxSp: 15, value: 360, desc: 'The skull of something that should not fit a head. Absorbs 6%, +15 stamina.' },
+  court_helm: { name: 'Court Great Helm', type: 'helmet', weight: 'heavy', icon: ['helm_court', 12], armor: 0.09, maxHp: 10, value: 560, desc: 'A crowned great helm. Absorbs 9%, +10 health. Part of the Regalia set.' },
+  deep_helm: { name: 'Deeplamp Helm', type: 'helmet', weight: 'heavy', icon: ['helm_deep', 12], armor: 0.08, maxSp: 10, value: 600, desc: 'Cold iron with a lamp that does not need oil. Absorbs 8%, +10 stamina. Part of the Deepforged set.' },
+  tide_cap: { name: 'Tide-Guild Cap', type: 'helmet', warm: true, weight: 'light', icon: ['helm_tide', 15], armor: 0.03, maxSp: 10, moveMul: 1.03, value: 380, desc: 'Oiled wool with a brass anchor. Absorbs 3%, +10 stamina, a little faster. Part of the Tide-Guild Kit.' },
+  ember_helm: { name: 'Emberforged Helm', type: 'helmet', warm: true, weight: 'heavy', icon: ['helm_ember', 12], armor: 0.09, maxHp: 10, value: 520, desc: 'A flame-crested helm with eyes of coal. Absorbs 9%, +10 health. Warm.' },
+  rime_helm: { name: 'Rimebound Helm', type: 'helmet', weight: 'heavy', icon: ['helm_rime', 15], armor: 0.08, maxMp: 10, value: 460, desc: 'Frost-forged, crowned with ice that does not melt. Absorbs 8%, +10 mana.' },
+  prism_helm: { name: 'Prism Helm', type: 'helmet', weight: 'medium', icon: ['helm_prism', 15], armor: 0.07, maxMp: 10, crit: 0.02, value: 520, desc: 'Grown glass, cut by weather. Absorbs 7%, +10 mana, +2% crit.' },
+  pale_cowl: { name: 'Pale Wolf Cowl', type: 'helmet', warm: true, weight: 'light', icon: ['helm_pelt', 6], armor: 0.05, detectMul: 0.9, value: 130, desc: 'A white wolf, worn as a hood. Absorbs 5%, harder to spot. Warm.' },
   hollow_crown: { name: 'The Hollow Crown', type: 'charm', icon: ['charm_hollow', 13], maxHp: 30, maxMp: 30, maxSp: 20, crit: 0.05, value: 0, desc: 'All eight relics, joined. +30 health and mana, +20 stamina, +5% crit.' },
   frostheart: { name: 'Frostheart', type: 'quest', icon: ['relic', 15], value: 0, desc: 'A crystal that never stops being cold.' },
 };
 
 for (const r of RELICS) ITEMS[r.id] = { name: r.name, type: 'quest', icon: ['relic', r.col], value: 0, desc: r.text[0] };
 
-export const SLOT_OF = { weapon: 'weapon', weapon2h: 'weapon', shield: 'offhand', bow: 'bow', armor: 'armor', charm: 'charm' };
-export const SLOT_NAMES = { weapon: 'WEAPON', offhand: 'OFFHAND', bow: 'BOW', armor: 'ARMOR', charm: 'CHARM' };
+export const SLOT_OF = { weapon: 'weapon', weapon2h: 'weapon', shield: 'offhand', bow: 'bow', helmet: 'head', armor: 'armor', charm: 'charm' };
+export const SLOT_NAMES = { weapon: 'WEAPON', offhand: 'OFFHAND', bow: 'BOW', head: 'HELMET', armor: 'ARMOR', charm: 'CHARM' };
 export const isEquipable = (id) => !!SLOT_OF[ITEMS[id]?.type];
 export const iconKey = (id) => 'icon_' + id;

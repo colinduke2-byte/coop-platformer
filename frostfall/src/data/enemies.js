@@ -74,7 +74,7 @@ export const ENEMIES = {
   werewolf: {
     name: 'Werewolf', tex: 'spr_werewolf', scale: 1.25, bark: 'wolf', weak: { fire: 1.4, shock: 1.1 }, hp: 52, speed: 46, chase: 96, dmg: 16, detect: 120,
     kind: 'lunge', range: 52, windup: 0.4, atkDur: 0.3, recover: 0.7, cooldown: 0.8, kbResist: 0.25, lunge: 200,
-    body: [12, 6, 2, 8], loot: { gold: [6, 16], drops: [['hp_potion', 0.2], ['wolf_fang', 0.5], ['pale_pelt', 0.15]] },
+    body: [12, 6, 2, 8], loot: { gold: [6, 16], drops: [['hp_potion', 0.2], ['wolf_fang', 0.5], ['pale_pelt', 0.15], ['pale_cowl', 0.06]] },
   },
   ghost: {
     name: 'Restless Ghost', tex: 'spr_ghost', ghostly: true, bark: 'undead', weak: { shock: 1.4, fire: 0.7, frost: 0.2 }, hp: 28, speed: 26, chase: 40, dmg: 14, detect: 100,
@@ -99,7 +99,7 @@ export const ENEMIES = {
   boss: {
     name: 'Jarl Valdrek', title: 'JARL VALDREK THE HOLLOW KING', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.1, kbResist: 0.95,
-    body: [8, 7, 4, 9], loot: { gold: [90, 130], drops: [['nordic_blade', 1], ['hp_potion', 1], ['hp_potion', 1], ['nordic_plate', 0.0]] },
+    body: [8, 7, 4, 9], loot: { gold: [90, 130], drops: [['nordic_blade', 1], ['nordic_helm', 1], ['hp_potion', 1], ['hp_potion', 1], ['nordic_plate', 0.0]] },
   },
   warden: {
     name: 'Draugr Warden', tex: 'spr_warden', blade: 4, bark: 'undead', weak: { fire: 1.4, shock: 1.3, frost: 0.6 }, shield: true,

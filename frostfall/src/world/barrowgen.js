@@ -14,6 +14,7 @@ const THEMES = [
   { id: 'warren', name: 'The Beast Warren', mobs: ['bear', 'boar', 'lynx', 'alpha'] },
 ];
 
+export const THEME_HELM = { draugr: 'nordic_helm', rime: 'rime_helm', wolf: 'pale_cowl', bandit: 'hunter_hood', warren: 'clan_skull' };
 export const THEME_UNIQUE = { draugr: 'grave_brand', wolf: 'packbreaker', bandit: 'smuggler_cloak', rime: 'rimebound_mail', mine: 'delvers_charm', warren: 'bearclaw_charm', cinder: 'cinder_brooch', sea: 'tide_talisman', royal: 'court_ring', bog: 'bogfire_ring', storm: 'stormglass_amulet' };
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }
 // Themes for the delves of the other regions (chosen by the region, not the seed).
@@ -94,7 +95,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     } else if (r.kind === 'boss') {
       add({ t: 'enemy', kind: pick(mobs.filter((m) => m !== 'wolf' && m !== 'archer').concat(['warden'])), x: r.cx, y: r.cy, tier: tier + 1, elite: true, champion: true, camp: `${theme.id}${idx}boss` });
       foe(pick(mobs), r.x + 2, r.y + 2, { camp: `${theme.id}${idx}boss` }); foe(pick(mobs), r.x + r.w - 3, r.y + 2, { camp: `${theme.id}${idx}boss` });
-      add({ t: 'chest', id: `bt${idx}_boss`, x: r.cx, y: r.y + 1, loot: [{ gen: tier + 1, rarity: 2 }, { item: THEME_UNIQUE[theme.id] }, { gold: 80 + tier * 50 }, { item: 'hp_potion_g', n: 2 }] });
+      add({ t: 'chest', id: `bt${idx}_boss`, x: r.cx, y: r.y + 1, loot: [{ gen: tier + 1, rarity: 2 }, { item: THEME_UNIQUE[theme.id] }, ...(THEME_HELM[theme.id] ? [{ item: THEME_HELM[theme.id] }] : []), { gold: 80 + tier * 50 }, { item: 'hp_potion_g', n: 2 }] });
       add({ t: 'glow', x: r.cx, y: r.y + 1, r: 40, col: 13 });
     }
   });

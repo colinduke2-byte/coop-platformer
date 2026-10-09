@@ -69,7 +69,7 @@ export function statLines(id) {
     for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}`, 11]);
   }
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
-  if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
+  if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'helmet' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()} ARMOUR`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);

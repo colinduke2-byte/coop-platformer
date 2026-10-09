@@ -25,6 +25,27 @@ export const WORN_ARMOR = {
   armor_embermail: { body: 11, trim: 12, legs: 1, boots: 1, chest: 13, dots: 12, pads: 12, big: 1, emblem: 13 },
 };
 
+// Helmets as seen on the hero's head. top/band: dome rows 2-3, nasal, cheeks, full (closed helm, with a slit row), horns, spikes (a crest),
+// plume, gem (forehead), lamp (a lit lantern on the brow), ears, brim (a wide cap) and hood (cloth hood with a face opening).
+export const WORN_HELM = {
+  helm_cap:     { top: 9, band: 10, cheeks: 9 },
+  helm_nasal:   { top: 4, band: 3, nasal: 5, cheeks: 3 },
+  helm_nordic:  { top: 4, band: 13, nasal: 5, horns: 6, cheeks: 3 },
+  helm_hood:    { hood: 7, band: 8 },
+  helm_circlet: { band: 13, gem: 14 },
+  helm_great:   { full: 4, slit: 1, spikes: 3 },
+  helm_scale:   { top: 12, band: 11, spikes: 13, nasal: 11 },
+  helm_warden:  { top: 3, band: 5, cheeks: 3, plume: 15, nasal: 5 },
+  helm_skull:   { top: 6, band: 10, cheeks: 10, ears: 6, gem: 11 },
+  helm_court:   { full: 4, slit: 1, crown: 13, plume: 11 },
+  helm_deep:    { top: 1, band: 3, lamp: 13, cheeks: 1 },
+  helm_tide:    { top: 3, band: 1, brim: 3, gem: 13 },
+  helm_ember:   { top: 1, band: 11, spikes: 12, nasal: 1, gem: 12, cheeks: 1 },
+  helm_rime:    { top: 4, band: 6, spikes: 6, nasal: 6, cheeks: 4 },
+  helm_prism:   { top: 5, band: 15, spikes: 6, gem: 15, cheeks: 4 },
+  helm_pelt:    { top: 6, band: 5, ears: 5, cheeks: 5 },
+};
+
 // Charms that are worn on the head. Everything else is a pocket charm and shows nothing.
 export const WORN_HEAD = {
   charm_embercrown: { crown: 12 },
@@ -33,9 +54,9 @@ export const WORN_HEAD = {
 };
 
 // Style for the hero wearing these (either may be undefined). The rest of the style stays the hero's own.
-export function wornStyle(base, armorKind, charmKind) {
-  const a = WORN_ARMOR[armorKind], h = WORN_HEAD[charmKind];
-  if (!a && !h) return null;
+export function wornStyle(base, armorKind, charmKind, helmKind) {
+  const a = WORN_ARMOR[armorKind], h = WORN_HEAD[charmKind], m = WORN_HELM[helmKind];
+  if (!a && !h && !m) return null;
   const s = { ...base };
   if (a) {
     for (const k of ['body', 'trim', 'legs', 'boots', 'chest']) s[k] = a[k];
@@ -44,6 +65,7 @@ export function wornStyle(base, armorKind, charmKind) {
     s.worn = a;
   }
   if (h) Object.assign(s, h);
+  if (m) { s.helmet = m; if (m.hood != null) s.hood = m.hood; }
   return s;
 }
 
@@ -63,4 +85,29 @@ export function wornExtra(r, view, w, pose) {
   } else if (w.pads != null) {
     if (side) r(w.pads, 6, 6, 3, 2); else { r(w.pads, 3, 6, 2, 2); r(w.pads, 11, 6, 2, 2); }
   }
+}
+
+// A helmet over the hero's head. Front and back views share x 5..10, y 2..6; the side view faces right on x 6..11.
+export function wornHelmet(r, view, m) {
+  const front = view === 'down', back = view === 'up', side = view === 'side';
+  const x0 = side ? 6 : 5, x1 = side ? 11 : 10, W = x1 - x0 + 1;
+  if (m.hood != null) { if (m.band != null && front) r(m.band, 6, 6, 4, 1); return; }
+  if (m.full != null) {
+    r(m.full, x0, 2, W, 5);
+    if (!back) r(m.slit ?? 1, side ? 8 : x0, 4, side ? 4 : W, 1);
+    if (side) r(m.full, 6, 5, 1, 2);
+  } else {
+    if (m.top != null) r(m.top, x0, 2, W, back ? 3 : 1);
+    if (m.band != null) r(m.band, x0, 3, W, 1);
+    if (m.cheeks != null && !back) { if (side) r(m.cheeks, 6, 4, 1, 3); else { r(m.cheeks, 5, 4, 1, 3); r(m.cheeks, 10, 4, 1, 3); } }
+    if (m.nasal != null && !back) { if (side) r(m.nasal, 11, 4, 1, 2); else r(m.nasal, 8, 4, 1, 2); }
+  }
+  if (m.brim != null) r(m.brim, x0 - 1, 3, W + 2, 1);
+  if (m.gem != null && !back) r(m.gem, side ? 11 : 8, 3, 1, 1);
+  if (m.horns != null) { if (side) { r(m.horns, 6, 1, 1, 2); r(m.horns, 5, 0, 1, 2); } else { r(m.horns, 4, 1, 1, 2); r(m.horns, 11, 1, 1, 2); r(m.horns, 3, 0, 1, 2); r(m.horns, 12, 0, 1, 2); } }
+  if (m.spikes != null) { if (side) { r(m.spikes, 7, 1, 1, 1); r(m.spikes, 9, 0, 1, 2); } else { r(m.spikes, 6, 1, 1, 1); r(m.spikes, 8, 0, 1, 2); r(m.spikes, 10, 1, 1, 1); } }
+  if (m.crown != null) { if (side) { r(m.crown, 6, 1, 5, 1); r(m.crown, 7, 0, 1, 1); r(m.crown, 9, 0, 1, 1); } else { r(m.crown, 5, 1, 6, 1); r(m.crown, 5, 0, 1, 1); r(m.crown, 8, 0, 1, 1); r(m.crown, 10, 0, 1, 1); } }
+  if (m.plume != null) { if (side) { r(m.plume, 4, 1, 3, 1); r(m.plume, 3, 2, 3, 1); } else { r(m.plume, 10, 0, 2, 1); r(m.plume, 11, 1, 1, 2); } }
+  if (m.ears != null) { if (side) { r(m.ears, 7, 1, 1, 1); r(m.ears, 10, 1, 1, 1); } else { r(m.ears, 5, 1, 1, 1); r(m.ears, 10, 1, 1, 1); } }
+  if (m.lamp != null && !back) { r(m.lamp, side ? 11 : 8, 2, 1, 2); r(12, side ? 11 : 8, 1, 1, 1); }
 }

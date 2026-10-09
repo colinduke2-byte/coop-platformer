@@ -9,7 +9,7 @@ export function newState() {
     arrows: 15, gold: 0, spell: 'fire',
     skills: Object.fromEntries(SKILLS.map((k) => [k, { lvl: 1, xp: 0 }])),
     inv: { hp_potion: 2, mp_potion: 1, sp_potion: 1, rusty_sword: 1, hunting_bow: 1, fur_tunic: 1 },
-    equip: { weapon: 'rusty_sword', offhand: null, bow: 'hunting_bow', armor: 'fur_tunic', charm: null },
+    equip: { weapon: 'rusty_sword', offhand: null, bow: 'hunting_bow', head: null, armor: 'fur_tunic', charm: null },
     quests: {
       wolves: { status: 'inactive', kills: 0 },
       king: { status: 'inactive' },

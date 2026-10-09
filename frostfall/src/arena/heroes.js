@@ -47,7 +47,7 @@ export function beginQuickRun(heroId, opts = {}) {
     const inv = { ...POTS, ...(hero.extra || {}) };
     for (const id of Object.values(hero.equip)) inv[id] = (inv[id] || 0) + 1;
     if (hero.equip.offhand && hero.equip.offhand === hero.equip.weapon) inv[hero.equip.weapon] = 2;
-    S.inv = inv; S.equip = { weapon: 'rusty_sword', offhand: null, bow: 'hunting_bow', armor: null, charm: null, ...hero.equip };
+    S.inv = inv; S.equip = { weapon: 'rusty_sword', offhand: null, bow: 'hunting_bow', head: null, armor: null, charm: null, ...hero.equip };
     if (!S.equip.bow) S.equip.bow = 'hunting_bow';
     S.inv.hunting_bow = S.inv.hunting_bow || 1;
     for (const [k, v] of Object.entries(hero.skills)) S.skills[k].lvl = v;
