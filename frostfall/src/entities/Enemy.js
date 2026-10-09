@@ -38,7 +38,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const [bw, bh, ox, oy] = cfg.body;
     if (nat) {      // the same world-space box the stretched 16px sprite had: size * scale, offset measured from the sprite centre
       const k = nat.scale;
-      this.body.setSize(bw * k, bh * k).setOffset((ox - 8) * k + nat.w / 2, (oy - 8) * k + nat.h / 2);
+      this.body.setSize(bw * k, bh * k).setOffset((ox - (nat.cw || 16) / 2) * k + nat.w / 2, (oy - (nat.ch || 16) / 2) * k + nat.h / 2);
     } else this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
     this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp);
