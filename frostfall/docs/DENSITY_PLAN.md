@@ -11,6 +11,9 @@ The world code uses 16-unit tiles and 16-pixel sprites everywhere. To avoid touc
 2. **Scale patch**: a small patch so any object using a high-density texture is drawn at half its pixel size (also covers the canvas renderer the tests use).
 Phase 0 proves one of them on the Dreamer in both renderers, measures frame time on a phone-class budget, and only then do we commit. If neither is clean, we stop and report instead of rewriting the world.
 
+## Spike result (done)
+GO. See `docs/DENSITY_SPIKE.md`: the texture-density trick works for sprites in WebGL, tiles use a 32 px tileset on a half-scaled layer, cameras are straightforward, speed is fine. High requires WebGL; canvas stays Standard.
+
 ## Phases
 **0. Spike (small).** Prove the density mechanism (WebGL and canvas), 640 x 360 canvas with every camera zoomed 2x, Retina scaling on the Mac, and a first frame-time measurement. Output: a one-page result and a go / no-go.
 
