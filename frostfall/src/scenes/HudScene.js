@@ -117,6 +117,7 @@ export default class HudScene extends Phaser.Scene {
 
   // ------------------------------------------------------- dialogue API
   say(name, text) {
+    if (this.skipTalk) return Promise.resolve();        // the cast button was pressed: read nothing more until a choice or the end
     return new Promise((res) => {
       const lines = wrap(normText(text), 47).split('\n');
       const pages = [];
@@ -127,6 +128,7 @@ export default class HudScene extends Phaser.Scene {
   }
 
   choose(opts) {
+    this.skipTalk = false;
     return new Promise((res) => {
       this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, sel: 0, age: 0 };
     });
@@ -163,7 +165,7 @@ export default class HudScene extends Phaser.Scene {
     this.lockTxt[0].setText('PICKING THE LOCK').setPosition(Math.round(160 - 48), by - 20);
     this.lockTxt[1].setText(`E: PICK   ESC: STOP   LOCKPICKS ${count('lockpick')}`).setPosition(Math.round(160 - 78), by + 31);
     if (L.age < 4) return;
-    if (keys.pressed('pause')) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); return; }
+    if (keys.pressed('pause') || keys.pressed('spell')) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); return; }
     if (keys.pressed('interact')) {
       if (Math.abs(L.pos - L.c) <= L.w) {
         L.hits++; sfx.play('select');
@@ -244,6 +246,7 @@ export default class HudScene extends Phaser.Scene {
   }
 
   hideBox() {
+    this.skipTalk = false;
     this.dlg = null;
     this.dg.clear();
     this.dName.setText(''); this.dBody.setText(''); this.dMore.setVisible(false);
@@ -280,10 +283,17 @@ export default class HudScene extends Phaser.Scene {
       if (keys.pressed('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
       if (keys.pressed('up')) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.play('move'); }
       if (keys.pressed('interact')) { sfx.play('select'); const r = d.res, s = d.sel; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); r(s); }
+      else if (keys.pressed('spell')) {       // the cast button backs out: take the "leave" option if there is one
+        const out = d.choices.map((o, i) => [o, i]).reverse().find(([o]) => /^(leave|goodbye|bye|never ?mind|nothing|back|cancel|no thanks|not now|farewell|later|done)\b/i.test(String(o).trim()));
+        if (out) { sfx.play('back'); const r = d.res; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); r(out[1]); }
+      }
       return;
     }
     this.dChoice.forEach((c) => c.setText(''));
     const page = d.pages[d.p];
+    if (d.age > 2 && keys.pressed('spell')) {   // the cast button leaves the talk: this and every later line is skipped, choices still ask
+      this.skipTalk = true; const r = d.res; this.dlg = null; this.dMore.setVisible(false); sfx.play('back'); r(); return;
+    }
     if (d.n < page.length) {
       d.t += dt;
       while (d.t > 0.022 && d.n < page.length) { d.t -= 0.022; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play('blip'); }
