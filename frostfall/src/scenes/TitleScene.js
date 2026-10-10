@@ -48,9 +48,10 @@ export default class TitleScene extends Phaser.Scene {
     const ver = txt(this, 0, 172, VERSION, 3); ver.x = W - 4 - ver.width;
     // mouse: hover to pick, click to confirm
     const rowAt = (p) => this.texts.findIndex((t) => p.x >= t.x - 14 && p.x <= t.x + t.width + 6 && p.y >= t.y - 2 && p.y <= t.y + 11);
-    this.input.on('pointermove', (p) => { if (this.slotMode || this.warm > 0) return; const i = rowAt(p); if (i >= 0 && !this.items[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
+    this.input.on('pointermove', (p) => { if (this.slotMode || this.ngMode || this.warm > 0) return; const i = rowAt(p); if (i >= 0 && !this.items[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
     this.input.on('pointerdown', (p) => {
       if (this.warm > 0) return;
+      if (this.ngMode) { const i = this.ngRows.findIndex((t) => p.y >= t.y - 2 && p.y <= t.y + 10); if (i >= 0) { this.ngSel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); } return; }
       if (this.slotMode) { const i = this.slotTxt.findIndex((t) => p.y >= t.y - 2 && p.y <= t.y + 10); if (i >= 0) { this.slotSel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); } return; }
       const i = rowAt(p);
       if (i >= 0 && !this.items[i].off) { this.sel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); }
@@ -77,6 +78,23 @@ export default class TitleScene extends Phaser.Scene {
     this.dailyBox = this.add.rectangle(W / 2, 90, 280, 160, 0x0b0e1a, 0.92);
     this.dailyTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 16 + i * 11, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
+  }
+  // New Game+ asks first: it starts the story over with your character, so it should never happen by accident.
+  openNgConfirm() {
+    this.ngMode = true; this.ngSel = 0; this.warm = 4;
+    this.ngBox = this.add.rectangle(W / 2, 90, 280, 110, 0x0b0e1a, 0.94);
+    const lines = [['START NEW GAME+?', 13, 38], ['YOUR CHARACTER AND GEAR CARRY OVER.', 6, 54], ['THE WORLD AND QUESTS START AGAIN, AND', 6, 65], ['ENEMIES ARE TOUGHER.', 6, 76]];
+    this.ngTxt = lines.map(([t, c, y]) => { const o = txt(this, 0, y, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
+    this.ngRows = ['NO, GO BACK', 'YES, START NEW GAME+'].map((t, i) => { const o = txt(this, 0, 94 + i * 12, t, 6); o.x = Math.floor((W - o.width) / 2); return o; });
+    this.ngFoot = txt(this, 0, 126, 'W/S MOVE   E CHOOSE   ESC BACK', 4); this.ngFoot.x = Math.floor((W - this.ngFoot.width) / 2);
+    this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
+  }
+  closeNgConfirm() {
+    this.ngMode = false; this.ngBox?.destroy(); this.ngTxt?.forEach((t) => t.destroy()); this.ngRows?.forEach((t) => t.destroy()); this.ngFoot?.destroy(); this.ngCursor?.destroy(); this.ngCursor = null;
+    this.texts.forEach((t) => t.setVisible(true)); this.cursor.setVisible(true);
+  }
+  startNg() {
+    if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.go = true; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else { this.go = false; this.closeNgConfirm(); }
   }
   closeDaily() {
     this.dailyMode = false; this.dailyBox?.destroy(); this.dailyTxt?.forEach((t) => t.destroy());
@@ -189,6 +207,16 @@ export default class TitleScene extends Phaser.Scene {
       if (keys.pressed('pause') || keys.pressed('interact') || keys.pressed('roll')) { this.closeHowTo(); sfx.play('back'); }
       return;
     }
+    if (this.ngMode) {
+      if (this.warm > 0) { this.warm--; return; }
+      this.ngRows.forEach((o, i) => o.setFont(i === this.ngSel ? 'f13' : 'f6'));
+      this.ngCursor = this.ngCursor || txt(this, 0, 0, '\u25B6', 13);
+      this.ngCursor.setPosition(this.ngRows[this.ngSel].x - 12, this.ngRows[this.ngSel].y);
+      if (keys.pressed('down') || keys.pressed('up')) { this.ngSel = 1 - this.ngSel; sfx.play('move'); }
+      if (keys.pressed('pause') || keys.back()) { this.closeNgConfirm(); sfx.play('back'); }
+      else if (keys.pressed('interact')) { if (this.ngSel === 1) { sfx.play('select'); this.startNg(); } else { this.closeNgConfirm(); sfx.play('back'); } }
+      return;
+    }
     if (this.dailyMode) {
       if (this.warm > 0) { this.warm--; return; }
       if (keys.pressed('pause')) { this.closeDaily(); sfx.play('back'); }
@@ -214,7 +242,7 @@ export default class TitleScene extends Phaser.Scene {
       if (this.items[this.sel].id === 'options') { this.go = false; this.openOptions(); return; }
       if (this.items[this.sel].id === 'howto') { this.go = false; this.openHowTo(); return; }
       if (this.items[this.sel].id === 'ng') {
-        if (loadGame(this.ngSlot)) { startNgPlus(); recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; this.scene.start('Game', { map: 'village', spawn: 'start' }); } else this.go = false;
+        this.go = false; this.openNgConfirm(); return;
       } else if (this.items[this.sel].id === 'new') {
         resetState();
         if (settings.challenge && MODS[settings.challenge]) S.mods = { [settings.challenge]: true };
