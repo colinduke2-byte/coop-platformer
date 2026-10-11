@@ -254,8 +254,8 @@ export const TUNE = {
   // Difficulty multipliers (Settings > Difficulty).
   // Ordinary monsters (not bosses, not passive animals) are tougher than their table entry: wolves, bears, bandits and the like.
   mobs: { hp: 1.3, dmg: 1.15 },
-  // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x4, damage x2.5.
-  scaling: { regionW: 0.7, storyW: 0.3, hp: 3.0, dmg: 1.5, gold: 2.0, elite: 0.5 },
+  // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3, damage x2 (tuned so a full set of top gear still finds late fights fair).
+  scaling: { regionW: 0.7, storyW: 0.3, hp: 2.0, dmg: 1.0, gold: 2.0, elite: 0.5 },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
     // elite: how often elite and champion enemies appear; drops: food and potion drop chance; price: shop buy prices; durability: gear wear (null = the player's own setting, 'hard' = on unless switched off in the Hard setting)

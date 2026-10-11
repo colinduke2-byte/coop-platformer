@@ -1,6 +1,6 @@
 # Enemy scaling with progress: plan
 
-Status: PLAN ONLY. Nothing here is built yet.
+Status: BUILT (first version). After building, the power model showed that 4x health / 2.5x damage made the late game too punishing even with the best gear (an ordinary fight in the last region cost 73% of your health on Normal), so the slopes were eased to **3x health and 2x damage at full strength** (`TUNE.scaling.hp = 2.0`, `dmg = 1.0`). With that, an ordinary fight with the expected gear costs about 32% / 35% / 39% / 45% of your health in region tiers 0 to 3 on Normal, and one gear tier better still costs 19% to 26%. The tables below show the original 4x/2.5x numbers; the live numbers are in `src/data/tuning.js`.
 
 ## Why
 

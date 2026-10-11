@@ -1,6 +1,6 @@
 // Ordinary enemies get stronger the further you are into the game. Pure maths on top of the region tier and the story flags.
 //   r = region tier / 3        s = main-story milestones done / total        f = regionW * r + storyW * s
-//   health x (1 + hp * f)      damage x (1 + dmg * f)      gold x (1 + gold * f)
+//   health x (1 + hp * f)      damage x (1 + dmg * f)      gold x (1 + gold * f)      (x3 health, x2 damage at f = 1)
 // So the starting woods are weakest, the last region strongest, and going back to an early area late in the game finds it
 // somewhat tougher (never trivial) but still easier than new ground. Bosses and passive animals are not scaled. See docs/ENEMY_SCALING_PLAN.md.
 import { TUNE } from '../data/tuning.js';

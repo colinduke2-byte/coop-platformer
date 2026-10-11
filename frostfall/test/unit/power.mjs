@@ -5,7 +5,7 @@ let n = 0, failed = 0;
 const t = (name, fn) => { try { fn(); n++; console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message.split('\n')[0]); } };
 
 // Ordinary enemies grow with region and story (systems/enemyscale.js), so later regions demand more even from the gear the game expects there.
-const BAND = [[0.25, 0.42], [0.3, 0.55], [0.4, 0.68], [0.5, 0.8]];
+const BAND = [[0.25, 0.42], [0.28, 0.5], [0.3, 0.55], [0.35, 0.6]];
 t('on Normal, the expected gear and level costs a fair share of your health, more in later regions', () => {
   for (let tier = 0; tier <= 3; tier++) { const c = costFor(tier); assert.ok(c > BAND[tier][0] && c < BAND[tier][1], `tier ${tier}: ${c}`); }
 });
