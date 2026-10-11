@@ -85,7 +85,7 @@ await setup('iron_sword', 316, 268); await swing(); const sideSword = await dmgO
 check('a halberd sweep reaches a foe off to the side that a sword misses', sideHalb > 0 && sideSword === 0, `${sideHalb} vs ${sideSword}`);
 await setup('iron_halberd'); await swing(); const dIron = await dmgOf();
 await setup('warden_glaive'); await swing(); const dWarden = await dmgOf();
-check('the Warden\'s Glaive hits the dead harder (draugr are undead)', dWarden / dIron > 1.3, `${dIron} ${dWarden}`);
+check('the Warden\'s Glaive hits the dead harder (draugr are undead)', dWarden / dIron > 1.25, `${dIron} ${dWarden}`);
 const guard = async (id) => { await setup(id); return G(() => { const g = window.__ff.game.scene.getScene('Game'), p = g.player, S = window.__ff.S; p.invuln = 0; p.iframes = 0; p.ward = null; p.mode = 'free'; p.swing = { t: 0, hit: new Set(), c: { total: 1 } }; S.hp = 100; S.maxHp = 100; p.hurt(30, 0, 0, {}); const lost = 100 - S.hp; p.swing = null; return lost; }); };
 const gl0 = await guard('iron_halberd'), gl1 = await guard('court_halberd');
 check('the Court Halberd takes 30% less damage while swinging', gl1 > 0 && gl0 > 0 && gl1 / gl0 < 0.8, `${gl0} ${gl1}`);

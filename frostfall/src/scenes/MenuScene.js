@@ -6,6 +6,7 @@ import { S } from '../systems/state.js';
 import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF, SLOT_NAMES, iconKey } from '../data/items.js';
+import { upgraded, KIND_OF_TYPE } from '../systems/upgrades.js';
 import { equip, unequip } from '../systems/inventory.js';
 import { stats } from '../systems/stats.js';
 import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
@@ -253,9 +254,11 @@ export default class MenuScene extends Phaser.Scene {
       const slot = SLOT_OF[it.type];
       if (slot) {
         const cur = ITEMS[S.equip[slot]] || {};
-        const diff = (a, b, pct) => { const d = (a || 0) - (b || 0); const f = pct ? Math.round(d * 100) + '%' : d; return d === 0 ? '' : (d > 0 ? ' (+' : ' (') + f + ')'; };
-        if (it.dmg) line = `DMG ${it.dmg}${diff(it.dmg, cur.dmg)}. ` + line;
-        if (it.armor) line = `ARMOR ${Math.round(it.armor * 100)}%${diff(it.armor, cur.armor, true)}. ` + line;
+        const diff = (a, b, pct) => { const d = (a || 0) - (b || 0); const f = pct ? Math.round(d * 100) + '%' : Math.round(d * 10) / 10; return d === 0 ? '' : (d > 0 ? ' (+' : ' (') + f + ')'; };
+        const eff = (id2, o, key) => (o[key] ? upgraded(KIND_OF_TYPE[o.type], (S.upgrades && S.upgrades[id2]) || 0, o[key]) : 0);
+        const curId = S.equip[slot];
+        if (it.dmg) line = `DMG ${Math.round(eff(id, it, 'dmg') * 10) / 10}${diff(eff(id, it, 'dmg'), eff(curId, cur, 'dmg'))}. ` + line;
+        if (it.armor) line = `ARMOR ${Math.round(eff(id, it, 'armor') * 100)}%${diff(eff(id, it, 'armor'), eff(curId, cur, 'armor'), true)}. ` + line;
       }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
       this.T(rx + 6, 132, wrap(line, 24).split('\n').slice(0, 3).join('\n'), 5);

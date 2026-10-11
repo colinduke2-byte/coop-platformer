@@ -177,7 +177,7 @@ export function buyUpgrade(slot, cap = 3) {
   S.upgrades[id] = lv + 1; recalc();
   return 'ok';
 }
-const CAP_LINE = { 3: 'That is as far as I can take it. The Emberhold smiths know the deeper tempers.', 6: 'Past +6 only the Great Anvil can take it.' };
+const CAP_LINE = { 3: 'I can go no further. Emberhold smiths can.', 6: 'Only the Great Anvil goes past +6.' };
 export async function upgradeMenu(who, slot, cap = 3) {
   const id = S.equip[slot];
   if (!id || !slotKind(id)) { await say(who, 'You have nothing equipped there that I can improve.'); return; }
@@ -191,7 +191,7 @@ export async function upgradeMenu(who, slot, cap = 3) {
     rows: () => {
       const cur = S.upgrades[id] || 0;
       if (cur >= MAX_LEVEL) return [{ id, name: ITEMS[id].name + ` +${MAX_LEVEL}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
-      if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'THIS FORGE CANNOT GO FURTHER', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
+      if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'FORGE LIMIT REACHED', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
         id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
