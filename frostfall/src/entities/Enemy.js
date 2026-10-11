@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { progress, hpMul, dmgMul, goldMul } from '../systems/enemyscale.js';
 import { diff } from '../systems/difficulty.js';
 import { ENEMIES } from '../data/enemies.js';
 import { C } from '../config.js';
@@ -51,11 +52,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (ng > 0 && !cfg.title) { this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.15 * ng)) }; this.maxHp = Math.round(this.maxHp * (1 + 0.4 * ng)); }
     this.camp = spec.camp || null;
     this.takenMul = 1;
-    // regions further from the start hit harder and last longer
-    if (this.tier > 0 && !cfg.title) {
-      this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.13 * this.tier)) };
-      if (this.cfg.loot) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * (1 + 0.5 * this.tier)), Math.round(this.cfg.loot.gold[1] * (1 + 0.5 * this.tier))] };
-      this.maxHp = Math.round(this.maxHp * (1 + 0.28 * this.tier));
+    // the further you are into the game (region and story), the harder and sturdier ordinary enemies are
+    if (!cfg.title && !cfg.passive) {
+      const f = progress(this.tier);
+      this.progressF = f;
+      this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * dmgMul(f)) };
+      if (this.cfg.loot?.gold) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * goldMul(f)), Math.round(this.cfg.loot.gold[1] * goldMul(f))] };
+      this.maxHp = Math.round(this.maxHp * hpMul(f));
     }
     if (cfg.kind !== 'boss') {                  // the difficulty sets telegraph length and chase speed (bosses keep their own timing)
       const D = diff();

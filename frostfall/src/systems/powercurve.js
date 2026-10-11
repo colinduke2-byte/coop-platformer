@@ -3,6 +3,7 @@
 // Design rule: power comes mostly from GEAR; levels add a modest amount. See docs/POLISH_PLAN.md round 1.
 import { TUNE } from '../data/tuning.js';
 import { armorEffect } from './damage.js';
+import { progress, hpMul, dmgMul } from './enemyscale.js';
 
 // Typical gear for each tier of progress (weapon damage, armour, extra health) with its upgrade steps (+2 damage / +2% armour each).
 export const GEAR = [
@@ -15,14 +16,17 @@ export const GEAR = [
 ];
 // A typical ordinary enemy of each region tier before the tier scaling the game applies (health, damage).
 const MOB = [[35, 13], [50, 16], [70, 20], [80, 24]];
+// How far through the story a player typically is when they reach each region tier (feeds the enemy scaling curve).
+export const STORY_AT = [0.05, 0.3, 0.55, 0.8];
 export const mobOf = (tier, diff = 'normal') => {
   const D = TUNE.difficulty[diff];
   const [hp, dmg] = MOB[Math.min(3, tier)];
-  return { hp: hp * D.enemyHp * (1 + 0.28 * tier), dmg: dmg * (1 + 0.13 * tier) };
+  const f = progress(tier, STORY_AT[Math.min(3, tier)]);
+  return { hp: hp * D.enemyHp * TUNE.mobs.hp * hpMul(f), dmg: dmg * TUNE.mobs.dmg * dmgMul(f) };
 };
 // What the game expects a player to have when they reach a region tier.
 export const EXPECTED = [
-  { gear: 1, upg: 0, level: 3 }, { gear: 2, upg: 1, level: 7 }, { gear: 3, upg: 2, level: 12 }, { gear: 4, upg: 3, level: 15 },
+  { gear: 1, upg: 0, level: 3 }, { gear: 3, upg: 1, level: 7 }, { gear: 4, upg: 2, level: 12 }, { gear: 5, upg: 3, level: 15 },
 ];
 
 // Player strength: level L is the level of the main weapon skill; the character level and attribute points follow from the sum of skills.
@@ -63,9 +67,9 @@ export const costFor = (tier, { dLevel = 0, dGear = 0, diff = 'normal', upg } = 
 // ---- danger: a number for "how hard is this for me right now" (1 = easy ... 5 = deadly) from a fight cost
 export const dangerFromCost = (c) => (c < 0.12 ? 1 : c < 0.28 ? 2 : c < 0.5 ? 3 : c < 0.9 ? 4 : 5);
 export const DANGER_NAMES = ['', 'EASY', 'FAIR', 'TOUGH', 'DEADLY', 'HOPELESS'];
-// Which region tier is the player ready for? The tier whose ordinary fight costs them closest to a third of their health.
+// Which region tier is the player ready for? The hardest tier whose ordinary fight still costs them under four fifths of their health.
 export function readyTier(player, diff = 'normal') {
-  let best = 0, bd = 9;
-  for (let t = 0; t <= 3; t++) { const d = Math.abs(fightCost(player, t, diff) - 0.33); if (d < bd) { bd = d; best = t; } }
+  let best = 0;
+  for (let t = 0; t <= 3; t++) if (fightCost(player, t, diff) <= 0.8) best = t;
   return best;
 }

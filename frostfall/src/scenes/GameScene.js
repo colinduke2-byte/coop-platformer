@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { progress, eliteMul } from '../systems/enemyscale.js';
 import { discoveryMethods } from '../world/discovery.js';
 import Pony from '../entities/Pony.js';
 import { dangerWarning } from '../systems/danger.js';
@@ -250,7 +251,7 @@ export default class GameScene extends Phaser.Scene {
         const key = `${this.mapId}:${e._i}`;
         if (this.def.stream && isGone(key)) break;
         const spec = { ...e };
-        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * diff().elite * modMul('eliteMul')) spec.elite = true;
+        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * diff().elite * eliteMul(progress(e.tier)) * modMul('eliteMul')) spec.elite = true;
         if (this.def.stream) this.pend.push({ spec, key, wx, wy, live: null });
         else this.addEnemy(e.kind, wx, wy, spec);
         break;
