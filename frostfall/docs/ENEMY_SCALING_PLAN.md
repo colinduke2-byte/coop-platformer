@@ -1,6 +1,8 @@
 # Enemy scaling with progress: plan
 
-Status: BUILT (first version). After building, the power model showed that 4x health / 2.5x damage made the late game too punishing even with the best gear (an ordinary fight in the last region cost 73% of your health on Normal), so the slopes were eased to **3x health and 2x damage at full strength** (`TUNE.scaling.hp = 2.0`, `dmg = 1.0`). With that, an ordinary fight with the expected gear costs about 32% / 35% / 39% / 45% of your health in region tiers 0 to 3 on Normal, and one gear tier better still costs 19% to 26%. The tables below show the original 4x/2.5x numbers; the live numbers are in `src/data/tuning.js`.
+Status: BUILT. **Current live numbers (balance-bot tuned against the gear and upgrades a player has at each stage):** the curve is convex (`TUNE.scaling.curve = 1.6`, `hp = 5.2`, `dmg = 2.9`), so the first regions stay gentle and the last are steep; ordinary-patrol fights with the expected kit cost about 4-5 potions at tier 1, and real health plus a potion or two at tiers 2-3. Bosses have per-boss multipliers in `TUNE.bosses`. The paragraph below is the history of the first version.
+
+History: After building, the power model showed that 4x health / 2.5x damage made the late game too punishing even with the best gear (an ordinary fight in the last region cost 73% of your health on Normal), so the slopes were eased to **3x health and 2x damage at full strength** (`TUNE.scaling.hp = 2.0`, `dmg = 1.0`). With that, an ordinary fight with the expected gear costs about 32% / 35% / 39% / 45% of your health in region tiers 0 to 3 on Normal, and one gear tier better still costs 19% to 26%. The tables below show the original 4x/2.5x numbers; the live numbers are in `src/data/tuning.js`.
 
 ## Why
 

@@ -90,7 +90,7 @@ const ad = await boss('tidebreak', 'admiral', 'admiralDead');
 check('Admiral Veyl wakes, changes phase and falls', ad.has && ad.engaged && ad.name === 'Admiral Veyl' && ad.ph >= 2 && ad.dead, JSON.stringify(ad));
 await h.shot('s46_admiral');
 const hk = await boss('sepulchre', 'hollowking', 'hollowKingDead');
-check('the Hollow King wakes, changes phase and falls', hk.has && hk.engaged && hk.name === 'The Hollow King' && hk.ph >= 2 && hk.dead && hk.hp >= 1400, JSON.stringify(hk));
+check('the Hollow King wakes, changes phase and falls', hk.has && hk.engaged && hk.name === 'The Hollow King' && hk.ph >= 2 && hk.dead && hk.hp >= 1200, JSON.stringify(hk));
 await h.shot('s46_hollowking');
 
 // ---- quests

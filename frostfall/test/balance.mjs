@@ -35,6 +35,16 @@ const SCENARIOS = [
   { name: 'Hollow King (ember mail)', map: 'sepulchre', spawn: 'in', nearBoss: true, limit: 170, boss: true,
     setup: `S.inv.steel_sword=1; S.equip.weapon='steel_sword'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.hp_potion=8; S.bonusHp=80; S.skills.oneHanded.lvl=12; S.inv.ember_helm=1; S.equip.head='ember_helm'; S.upgrades={steel_sword:6,ember_mail:6,ember_bulwark:6,ember_helm:6};`,
     enemies: [] },
+  // ordinary patrols deeper in the game, with the gear and upgrades a player is expected to have there (region tier 1, 2, 3 at about 30%, 55%, 80% through the story)
+  { name: 'tier 1 patrol (nordic +3)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 90, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: `S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+    enemies: [['knight', 5, -2, 1], ['reaver', 6, 2, 1], ['wight', 8, 0, 1]] },
+  { name: 'tier 2 patrol (forged +6)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 110, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead', 'kragnarDead', 'sovereignDead'],
+    setup: `S.inv.ember_blade=1; S.equip.weapon='ember_blade'; S.inv.ember_mail=1; S.equip.armor='ember_mail'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.ember_helm=1; S.equip.head='ember_helm'; S.inv.hp_potion=6; S.bonusHp=60; S.skills.oneHanded.lvl=12; S.upgrades={ember_blade:6,ember_mail:6,ember_bulwark:6,ember_helm:6};`,
+    enemies: [['knight', 5, -2, 2], ['reaver', 6, 2, 2], ['conjurer', 9, 0, 2], ['fencer', 7, 3, 2]] },
+  { name: 'tier 3 patrol (legendary +9)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 120, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead', 'rootDead', 'kragnarDead', 'sovereignDead', 'admiralDead', 'hollowKingDead', 'mireMotherDead'],
+    setup: `S.inv.dragonbone_blade=1; S.equip.weapon='dragonbone_blade'; S.inv.dragonscale_armor=1; S.equip.armor='dragonscale_armor'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.scale_helm=1; S.equip.head='scale_helm'; S.inv.hp_potion=8; S.bonusHp=100; S.skills.oneHanded.lvl=15; S.upgrades={dragonbone_blade:9,dragonscale_armor:9,ember_bulwark:9,scale_helm:9};`,
+    enemies: [['knight', 5, -2, 3], ['reaver', 6, 2, 3], ['conjurer', 9, 0, 3], ['wight', 7, 3, 3], ['fencer', 8, -3, 3]] },
 ];
 
 const h = await launch();
@@ -49,7 +59,7 @@ for (const sc of SCENARIOS) {
     const r = await h.page.evaluate(async ({ sc, trial }) => {
       const S = window.__ff.S;
       S.flags.introDone = true;
-      new Function('S', sc.setup)(S);
+      new Function('S', sc.setup)(S); for (const f of sc.story || []) S.flags[f] = true;
       const g = window.__ff.game.scene.getScene('Game');
       const { recalc } = await import('/src/systems/stats.js');
       recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
@@ -57,7 +67,7 @@ for (const sc of SCENARIOS) {
       if (sc.nearBoss) { const b = g.enemies.getChildren().find((e) => e.isBoss); if (b) { let best = null; for (let r = 6; r <= 10 && !best; r++) for (let a = 0; a < 16 && !best; a++) { const x = b.x + Math.cos(a * Math.PI / 8) * r * 16, y = b.y + Math.sin(a * Math.PI / 8) * r * 16; if (!g.solidAt(x, y) && !g.solidAt(x + 8, y) && !g.solidAt(x - 8, y) && !g.solidAt(x, y + 8) && !g.solidAt(x, y - 8)) best = { x, y }; } if (best) p.setPosition(best.x, best.y); } } else p.setPosition(sc.pos[0] * 16, sc.pos[1] * 16);
       if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; }
       else g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy());
-      for (const [k, dx, dy] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16); e.alerted = true; e.state = 'chase'; e.cd = 0.5; }
+      for (const [k, dx, dy, tr] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16, { tier: tr || 0 }); e.alerted = true; (window.__dbg = window.__dbg || []).push([k, tr, e.maxHp, e.cfg.dmg]); (window.__en = window.__en || []).push(e); if (!window.__wrapped) { window.__wrapped = 1; const P = e.constructor.prototype, o = P.takeHit; window.__hits = []; P.takeHit = function (i) { const d = o.call(this, i); if (window.__hits.length < 12) window.__hits.push([this.cfg.name || "", i.src, Math.round(i.dmg), d]); return d; }; } e.state = 'chase'; e.cd = 0.5; }
       const keys = window.__ff.keys;
       const tapK = (c, ms = 70) => { keys._press(c); setTimeout(() => keys._release(c), ms); };
       let bossEngaged = false, t0 = performance.now(), potions = 0, lastPot = 0;
@@ -68,7 +78,7 @@ for (const sc of SCENARIOS) {
           const elapsed = (performance.now() - t0) / 1000;
           if (!hpOK || (!foes.length && elapsed > 2) || elapsed > sc.limit || (sc.boss && g.boss && (g.boss.dead || g.boss.yieldDone))) {
             clearInterval(iv); ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((c) => keys._release(c));
-            res({ won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, left: foes.length, bossLeft: g.boss ? Math.round(100 * Math.max(0, g.boss.hp) / g.boss.maxHp) : null });
+            res({ hits: window.__hits, dbg: window.__dbg, fin: (window.__en||[]).map((e)=>[e.dead, Math.round(e.hp), e.active, Math.round(e.x), Math.round(e.y)]), px: [Math.round(p.x), Math.round(p.y)], maxHp: Math.round(S.maxHp), won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, left: foes.length, bossLeft: g.boss ? Math.round(100 * Math.max(0, g.boss.hp) / g.boss.maxHp) : null });
             return;
           }
           if (p.mode === 'dead' || ['lying'].includes(p.mode)) return;
@@ -103,7 +113,7 @@ for (const sc of SCENARIOS) {
         }, 60);
       });
     }, { sc, trial: t }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
-    results.push(r);
+    results.push(r); if (process.env.BALDBG) console.log("  dbg", JSON.stringify(r.dbg), "maxHp", r.maxHp, "fin", JSON.stringify(r.fin), r.px, "hits", JSON.stringify(r.hits));
   }
   const wins = results.filter((r) => r.won).length;
   const avgHp = Math.round(results.filter((r) => r.won).reduce((a, r) => a + r.hp, 0) / Math.max(1, wins));

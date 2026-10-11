@@ -20,7 +20,8 @@ export const progress = (tier, story = storyFraction()) => {
   const C = TUNE.scaling;
   return Math.max(0, Math.min(1, C.regionW * regionFraction(tier) + C.storyW * story));
 };
-export const hpMul = (f) => 1 + TUNE.scaling.hp * f;
-export const dmgMul = (f) => 1 + TUNE.scaling.dmg * f;
+const shaped = (f) => Math.pow(Math.max(0, f), TUNE.scaling.curve || 1);   // curve > 1 keeps the first regions gentle and the last ones steep
+export const hpMul = (f) => 1 + TUNE.scaling.hp * shaped(f);
+export const dmgMul = (f) => 1 + TUNE.scaling.dmg * shaped(f);
 export const goldMul = (f) => 1 + TUNE.scaling.gold * f;
 export const eliteMul = (f) => 1 + TUNE.scaling.elite * f;
