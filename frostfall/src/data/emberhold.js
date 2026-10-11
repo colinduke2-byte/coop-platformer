@@ -9,7 +9,7 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { ITEMS } from './items.js';
 import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
-import { buyMenu, sellMenu, repairMenu, reforgeMenu, upgradeMenu, enchantMenu, pick, statLines } from './services.js';
+import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
@@ -216,7 +216,7 @@ SCRIPTS.orrin = async function orrin() {
   }
   const c = await choose(['Guild goods', 'Standing', 'Leave']);
   if (c === 0) {
-    const wares = [{ id: 'ash_iron', price: 36, n: 3, name: 'Ash Iron x3' }, { id: 'hp_potion_g', price: 85 }, ...(rep('delvers') >= 45 ? [{ id: 'gem_ruby', price: 150 }, { id: 'gem_onyx', price: 160 }] : [])];
+    const wares = [{ id: 'ash_iron', price: 36, n: 3, name: 'Ash Iron x3' }, ...(rep('delvers') >= 20 ? [{ id: 'ember_ore', price: 130, n: 2, name: 'Ember Ore x2' }] : []), { id: 'hp_potion_g', price: 85 }, ...(rep('delvers') >= 45 ? [{ id: 'gem_ruby', price: 150 }, { id: 'gem_onyx', price: 160 }] : [])];
     await buyMenu(N, wares);
   } else if (c === 1) await say(N, `${FACTIONS.delvers.name}: ${repTier('delvers')} (${rep('delvers')}). Trust runs deeper than gold, but only by a little.`);
 };
@@ -297,22 +297,20 @@ export async function armouryMenu(who, only = null) {
     },
   });
 }
-// Master tempering: past +3, only at the Great Anvil. +4 and +5, paid for with Emberheart Ore.
-export const MASTER_TEMPER = [{ gold: 400, ore: 2 }, { gold: 700, ore: 4 }];
+// Master tempering at the Great Anvil: +7 to +10, with Ember Ore and Heart Shards (the Emberhold smith does +4 to +6). Needs the Anvil Court's trust.
 export function masterTemper(slot) {
   const id = S.equip[slot]; if (!id) return 'none';
   const lv = S.upgrades[id] || 0;
-  if (lv < 3) return 'early'; if (lv >= 5) return 'max';
-  const c = MASTER_TEMPER[lv - 3];
-  if (S.gold < c.gold || count('ember_ore') < c.ore) return 'short';
-  S.gold -= c.gold; removeItem('ember_ore', c.ore); S.upgrades[id] = lv + 1; return 'ok';
+  if (lv < 6) return 'early';
+  if (lv >= 10) return 'max';
+  if (rep('anvil') < 45) return 'locked';
+  return buyUpgrade(slot, 10);
 }
 async function masterTemperMenu(who) {
   if (!S.flags.emberforged) { await say(who, 'The Great Anvil is still asleep. Wake it first.'); return; }
-  const s = await choose(['Weapon', 'Armour', 'Back']); if (s > 1) return;
-  const r = masterTemper(s === 0 ? 'weapon' : 'armor');
-  const msg = { none: 'You have nothing equipped there.', early: 'Temper it to +3 at a normal forge first.', max: 'That is as far as steel goes.', short: 'That takes gold and Emberheart Ore: 400g and 2 for +4, 700g and 4 for +5.', ok: 'Stand back. The Anvil sings.' };
-  await say(who, msg[r]); if (r === 'ok') { sfx.play('levelup'); bus.emit('toast', 'MASTER TEMPERED', 13); }
+  if (rep('anvil') < 45) { await say(who, 'The Anvil Court does not trust you with the Great Anvil yet. Earn their trust first.'); return; }
+  await say(who, 'Past +6 the metal needs the Anvil\'s own fire: Ember Ore, and a Heart Shard for the last two. Bring me what is worth tempering.');
+  await gearUpgradeMenu(who, 10);
 }
 
 SCRIPTS.brannoch = async function brannoch() {
@@ -333,7 +331,7 @@ SCRIPTS.brannoch = async function brannoch() {
   for (;;) {
     const c = await choose(['Emberforge', 'Temper gear', 'Repair / reforge', 'Enchant', 'Armoury and master temper', 'Leave']);
     if (c === 0) await emberforgeMenu(N);
-    else if (c === 1) { const s = await choose(['Weapon', 'Armour', 'Back']); if (s < 2) await upgradeMenu(N, s === 0 ? 'weapon' : 'armor'); }
+    else if (c === 1) await gearUpgradeMenu(N, 6);
     else if (c === 2) { const s = await choose(['Repair', 'Reforge', 'Back']); if (s === 0) await repairMenu(N); else if (s === 1) await reforgeMenu(N); }
     else if (c === 3) await enchantMenu(N);
     else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); }

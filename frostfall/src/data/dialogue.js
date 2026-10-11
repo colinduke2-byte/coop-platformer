@@ -9,7 +9,7 @@ import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { companionStory } from './companionquests.js';
-import { buyMenu, sellMenu, brewMenu, upgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
+import { buyMenu, sellMenu, brewMenu, gearUpgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
 import { stats as pstats } from '../systems/stats.js';
 import { setCompanion } from '../systems/companion.js';
@@ -269,8 +269,8 @@ export async function hilda() {
   for (;;) {
     const c = await choose(['Forge (upgrade, enchant)', 'Repair, reforge, buy back', 'Fletch arrows', 'Buy gear', 'Sell', 'Leave']);
     if (c === 0) {
-      const f = await choose(['Upgrade weapon', 'Upgrade armor', 'Enchant weapon', 'Back']);
-      if (f === 0) await upgradeMenu(H, 'weapon'); else if (f === 1) await upgradeMenu(H, 'armor'); else if (f === 2) await enchantMenu(H);
+      const f = await choose(['Upgrade gear', 'Enchant weapon', 'Back']);
+      if (f === 0) await gearUpgradeMenu(H, 3); else if (f === 1) await enchantMenu(H);
     } else if (c === 1) {
       const f = await choose(['Repair gear', 'Reforge a found item', 'Buy back what you sold', 'Back']);
       if (f === 0) await repairMenu(H); else if (f === 1) await reforgeMenu(H); else if (f === 2) await buybackMenu(H);

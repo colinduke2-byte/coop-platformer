@@ -19,10 +19,12 @@ const r = await G(async () => {
   S.rep.anvil = 50; out.bought = E.buyArmoury('court_plate') === 'ok' && S.gold === 4300;
   out.stillLockedTop = E.buyArmoury('court_signet') === 'locked';
   // master temper
-  S.flags.emberforged = true; S.equip.weapon = 'iron_sword'; S.upgrades.iron_sword = 2; out.early = E.masterTemper('weapon') === 'early';
-  S.upgrades.iron_sword = 3; S.inv.ember_ore = 0; out.short = E.masterTemper('weapon') === 'short';
-  S.inv.ember_ore = 10; const d0 = St.stats.weaponDmg(); out.t4 = E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 4 && St.stats.weaponDmg() > d0;
-  out.t5 = E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 5 && E.masterTemper('weapon') === 'max';
+  S.flags.emberforged = true; S.equip.weapon = 'iron_sword'; S.upgrades.iron_sword = 5; out.early = E.masterTemper('weapon') === 'early';
+  S.upgrades.iron_sword = 6; S.inv.ember_ore = 0; out.short = E.masterTemper('weapon') === 'short';
+  S.inv.ember_ore = 20; const d0 = St.stats.weaponDmg(); out.t7 = E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 7 && St.stats.weaponDmg() > d0;
+  out.t8 = E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 8;
+  S.inv.heart_shard = 0; out.noShard = E.masterTemper('weapon') === 'short' && S.upgrades.iron_sword === 8;
+  S.inv.heart_shard = 2; out.t9 = E.masterTemper('weapon') === 'ok' && E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 10 && E.masterTemper('weapon') === 'max';
   return out;
 });
 check('sets, faction armoury and master tempering work', Object.values(r).every(Boolean), JSON.stringify(r));

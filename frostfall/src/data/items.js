@@ -159,6 +159,7 @@ export const ITEMS = {
   trollbone_mace: { name: 'Trollbone Mace', type: 'weapon', style: 'mace', icon: ['mace_trollbone', 8], dmg: 27, costMul: 1.25, lifesteal: 0.05, value: 420, desc: 'Hilda\'s masterwork. Breaks guards, and drinks a little of what it spills.' },
   // Emberhold: ores, gems and Emberforged gear
   ash_iron: { name: 'Ash Iron', type: 'misc', icon: ['ingot', 3], value: 30, desc: 'Dark iron smelted from the Deep Mines. Emberforged gear starts here.' },
+  heart_shard: { name: 'Heart Shard', type: 'misc', icon: ['ore', 15], value: 150, desc: 'A sliver of a fallen guardian\'s heart, still cold. The Great Anvil needs one for each of the last two tempers.' },
   ember_ore: { name: 'Emberheart Ore', type: 'misc', icon: ['ore', 12], value: 80, desc: 'Ore that still holds a little of the first fire. Warm to the touch.' },
   kragnar_core: { name: "Kragnar's Core", type: 'misc', icon: ['ore', 13], value: 200, desc: 'The heart of the miner-king, still glowing. Master smiths pay dearly for it.' },
   cinder_maul: { name: 'Cinderjaw Maul', type: 'weapon', style: 'mace', icon: ['mace_cinder', 12], dmg: 38, costMul: 1.35, elem: { type: 'fire', power: 7 }, sockets: 2, value: 650, desc: 'Torn from the Magma Golem. Heavy, hot, and it breaks guards.' },

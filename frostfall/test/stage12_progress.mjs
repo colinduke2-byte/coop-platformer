@@ -72,7 +72,7 @@ await G(() => { const S = window.__ff.S; S.gold = 500; S.inv.iron_ingot = 5; S.i
 const d0 = await G(() => window.__stats.weaponDmg());
 await openShop('upgradeMenu', ['H', 'weapon']);
 await tap('KeyE', 60); await h.sleep(150); await closeShop();
-check('smith upgrades the weapon (+2 damage per level)', (await G(() => window.__stats.weaponDmg())) === d0 + 2 && (await S('upgrades.iron_sword')) === 1);
+check('smith upgrades the weapon (+5% damage at the first level)', Math.abs((await G(() => window.__stats.weaponDmg())) - d0 * 1.05) < 0.01 && (await S('upgrades.iron_sword')) === 1);
 await openShop('enchantMenu', ['H']);
 await tap('KeyE', 60); await h.sleep(150); await closeShop();
 check('smith enchants the weapon (flame)', (await S('enchants.iron_sword.type')) === 'fire' && (await S('inv.bone_dust')) === undefined);

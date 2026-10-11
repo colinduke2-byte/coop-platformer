@@ -8,6 +8,7 @@ import { modMul, modSum } from '../data/mods.js';
 import { isBroken, BROKEN_MUL } from './durability.js';
 import { gemBonus, runeElem } from './sockets.js';
 import { setBonus } from './sets.js';
+import { upgraded } from './upgrades.js';
 const blessMul = (k) => blessing()?.[k] ?? 1;
 
 const eq = (slot) => ITEMS[S.equip[slot]] || null;
@@ -20,14 +21,14 @@ export const stats = {
   weapon: () => eq('weapon'),
   bow: () => eq('bow'),
   weight: () => eq('armor')?.weight || 'medium',
-  weaponDmg: () => { const w = eq('weapon'); return (w ? w.dmg + upg(S.equip.weapon) * 2 + gemBonus('dmg') : 3) * (isBroken(S.equip.weapon) ? BROKEN_MUL.weapon : 1); },
+  weaponDmg: () => { const w = eq('weapon'); return (w ? upgraded('weapon', upg(S.equip.weapon), w.dmg) + gemBonus('dmg') : 3) * (isBroken(S.equip.weapon) ? BROKEN_MUL.weapon : 1); },
   is2H: () => eq('weapon')?.type === 'weapon2h',
   offhand: () => eq('offhand'),
   // off-hand 1H weapon (dual wield) damage, or 0
-  offhandDmg: () => { const o = eq('offhand'); return o && o.type === 'weapon' ? o.dmg + upg(S.equip.offhand) * 2 : 0; },
-  shield: () => { const o = eq('offhand'); return o && o.type === 'shield' ? { id: S.equip.offhand, block: (o.block + upg(S.equip.offhand) * 0.02) * (isBroken(S.equip.offhand) ? BROKEN_MUL.shield : 1), cost: o.cost } : null; },
-  bowDmg: () => { const b = eq('bow'); return b ? b.dmg + upg(S.equip.bow) * 1.5 : 4; },
-  armor: () => { const a = eq('armor'), h = eq('head'); return (a ? (a.armor + upg(S.equip.armor) * 0.02 + gemBonus('armor')) * (isBroken(S.equip.armor) ? BROKEN_MUL.armor : 1) : 0) + (h ? h.armor * (isBroken(S.equip.head) ? BROKEN_MUL.armor : 1) : 0) + (S.hearts?.iron ? 0.08 : 0) + setBonus('armor'); },
+  offhandDmg: () => { const o = eq('offhand'); return o && o.type === 'weapon' ? upgraded('weapon', upg(S.equip.offhand), o.dmg) : 0; },
+  shield: () => { const o = eq('offhand'); return o && o.type === 'shield' ? { id: S.equip.offhand, block: upgraded('shield', upg(S.equip.offhand), o.block) * (isBroken(S.equip.offhand) ? BROKEN_MUL.shield : 1), cost: o.cost } : null; },
+  bowDmg: () => { const b = eq('bow'); return b ? upgraded('bow', upg(S.equip.bow), b.dmg) : 4; },
+  armor: () => { const a = eq('armor'), h = eq('head'); return (a ? (upgraded('armor', upg(S.equip.armor), a.armor) + gemBonus('armor')) * (isBroken(S.equip.armor) ? BROKEN_MUL.armor : 1) : 0) + (h ? upgraded('helm', upg(S.equip.head), h.armor) * (isBroken(S.equip.head) ? BROKEN_MUL.armor : 1) : 0) + (S.hearts?.iron ? 0.08 : 0) + setBonus('armor'); },
   // armour-set traits: multipliers default to 1
   trait: (k) => (eq('armor')?.[k] ?? 1) * (eq('head')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) * elixirVal('moveMul', 1) * modMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)

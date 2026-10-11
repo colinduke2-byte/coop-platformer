@@ -9,7 +9,7 @@ import { addItem } from '../systems/inventory.js';
 import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
-import { brewMenu, upgradeMenu, furnishMenu, cookMenu, stashMenu } from '../data/services.js';
+import { brewMenu, gearUpgradeMenu, furnishMenu, cookMenu, stashMenu } from '../data/services.js';
 import { C } from '../config.js';
 import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
@@ -177,8 +177,8 @@ export class HomeAnvil {
   async interact() {
     await runScript(async () => {
       for (;;) {
-        const c = await choose(['Upgrade weapon', 'Upgrade armor', 'Done']);
-        if (c === 0) await upgradeMenu('Anvil', 'weapon'); else if (c === 1) await upgradeMenu('Anvil', 'armor'); else return;
+        const c = await choose(['Upgrade gear', 'Done']);
+        if (c === 0) await gearUpgradeMenu('Anvil', 3); else return;
       }
     });
   }

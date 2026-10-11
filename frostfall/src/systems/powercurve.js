@@ -4,8 +4,9 @@
 import { TUNE } from '../data/tuning.js';
 import { armorEffect } from './damage.js';
 import { progress, hpMul, dmgMul } from './enemyscale.js';
+import { totalGain } from './upgrades.js';
 
-// Typical gear for each tier of progress (weapon damage, armour, extra health) with its upgrade steps (+2 damage / +2% armour each).
+// Typical gear for each tier of progress (weapon damage, armour, extra health) with its upgrade steps (see systems/upgrades.js: percent damage, points of armour).
 export const GEAR = [
   { name: 'Starter', weapon: 9, armor: 0.08, hp: 0, shield: 0 },
   { name: 'Iron', weapon: 13, armor: 0.18, hp: 0, shield: 0.6 },
@@ -26,7 +27,7 @@ export const mobOf = (tier, diff = 'normal') => {
 };
 // What the game expects a player to have when they reach a region tier.
 export const EXPECTED = [
-  { gear: 1, upg: 0, level: 3 }, { gear: 3, upg: 1, level: 7 }, { gear: 4, upg: 2, level: 12 }, { gear: 5, upg: 3, level: 15 },
+  { gear: 1, upg: 1, level: 3 }, { gear: 3, upg: 3, level: 7 }, { gear: 4, upg: 6, level: 12 }, { gear: 5, upg: 9, level: 15 },
 ];
 
 // Player strength: level L is the level of the main weapon skill; the character level and attribute points follow from the sum of skills.
@@ -34,10 +35,10 @@ export function playerOf({ level = 1, gear = 0, upg = 0, shield = true }) {
   const g = GEAR[gear];
   const cl = Math.min(25, 1 + Math.floor((3 * (level - 1)) / 3));            // about one character level per skill level for a focused player
   const hp = 100 + g.hp + 3 * (cl - 1);                                          // half the attribute points go to health
-  const armor = armorEffect(g.armor + 0.02 * upg);
+  const armor = armorEffect(g.armor + totalGain('armor', upg) + totalGain('helm', upg));
   const skill = 1 + 0.05 * (level - 1);
   const perk = level >= 2 ? 1.15 : 1;                                            // Keen Edge
-  const dmg = (g.weapon + 2 * upg) * skill * perk;
+  const dmg = g.weapon * (1 + totalGain('weapon', upg)) * skill * perk;
   const block = shield && g.shield ? 0.45 * g.shield : 0;                       // a shield soaks part of the hits you cannot dodge
   return { hp, armor, dmg, block, level };
 }

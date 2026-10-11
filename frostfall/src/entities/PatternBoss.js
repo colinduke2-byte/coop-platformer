@@ -179,6 +179,7 @@ export default class PatternBoss extends Boss {
       sfx.play('levelup');
       sc.fx.ring(this.x, this.y + 4, 2.5, 0.8, 'ring', 0x5cc8d8);
       if (this.info.heart) sc.pickups.push(new Pickup(sc, this.x, this.y + 6, { type: 'heart', id: this.info.heart, big: true }));
+      sc.pickups.push(new Pickup(sc, this.x + 12, this.y + 10, { type: 'item', id: 'heart_shard' }));     // one for the Great Anvil's last tempers
       if (this.info.onVictory) this.info.onVictory(sc, this);
     });
   }

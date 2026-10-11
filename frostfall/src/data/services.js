@@ -14,6 +14,7 @@ import { noteSold } from './stock.js';
 import { rarityIndex, reforgeGen } from '../systems/genloot.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen } from '../scenes/ShopScene.js';
+import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText } from '../systems/upgrades.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -39,9 +40,10 @@ export function statLines(id) {
   const it = ITEMS[id];
   if (!it) return [];
   const out = [];
-  if (it.dmg) out.push([`DAMAGE ${it.dmg}`, 6]);
-  if (it.armor) out.push([`ARMOR ${Math.round(it.armor * 100)}%`, 6]);
-  if (it.block) out.push([`BLOCKS ${Math.round(it.block * 100)}%`, 6]);
+  const lv = S.upgrades?.[id] || 0, kd = KIND_OF_TYPE[it.type];
+  if (it.dmg) out.push([`DAMAGE ${Math.round(upgraded(kd, lv, it.dmg) * 10) / 10}${lv ? ' (+' + lv + ')' : ''}`, 6]);
+  if (it.armor) out.push([`ARMOR ${Math.round(upgraded(kd, lv, it.armor) * 1000) / 10}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
+  if (it.block) out.push([`BLOCKS ${Math.round(upgraded(kd, lv, it.block) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
   if (it.style === 'dagger') { out.push(['FAST. SNEAK AND BACK HITS HURT', 15]); if (it.pierce) out.push([`4TH HIT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]); if (it.assassinate) out.push(['SNEAK KILLS ANY NON-BOSS', 14]); if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]); for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}${f.sneakOnly ? ' ON SNEAK ATTACK' : ''}`, 11]); }
   if (it.style === 'staff') {
@@ -152,38 +154,70 @@ export async function sellMenu(who) {
 }
 
 // -------------------------------------------------------------------- forge
-export const UPGRADE_GOLD = [50, 90, 140];
-export const UPGRADE_INGOT = [1, 2, 3];
-export async function upgradeMenu(who, slot) {
+// ---- gear upgrades, +1 to +10 (tables and maths in systems/upgrades.js)
+const slotKind = (id) => KIND_OF_TYPE[ITEMS[id]?.type] || null;
+const costReady = (c) => S.gold >= c.gold && count(c.mat) >= c.n && (!c.mat2 || count(c.mat2) >= c.n2);
+const costLines = (c) => [
+  [`GOLD ${S.gold}/${c.gold}`, S.gold >= c.gold ? 8 : 11],
+  [`${ITEMS[c.mat].name.toUpperCase()} ${count(c.mat)}/${c.n}`, count(c.mat) >= c.n ? 8 : 11],
+  ...(c.mat2 ? [[`${ITEMS[c.mat2].name.toUpperCase()} ${count(c.mat2)}/${c.n2}`, count(c.mat2) >= c.n2 ? 8 : 11]] : []),
+];
+const costTag = (c) => `${c.gold}G`;
+// Buy the next level for what is equipped in `slot`, if this smith can (cap) and you can afford it. Returns 'ok', 'short', 'cap', 'max' or 'none'.
+export function buyUpgrade(slot, cap = 3) {
   const id = S.equip[slot];
-  if (!id) { await say(who, 'You have nothing equipped there.'); return; }
-  const lv = (S.upgrades[id] || 0);
-  if (lv >= 3) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
+  if (!id || !slotKind(id)) return 'none';
+  S.upgrades = S.upgrades || {};
+  const lv = S.upgrades[id] || 0;
+  if (lv >= MAX_LEVEL) return 'max';
+  if (lv >= cap) return 'cap';
+  const c = UPGRADE_COST[lv + 1];
+  if (!costReady(c)) return 'short';
+  S.gold -= c.gold; removeItem(c.mat, c.n); if (c.mat2) removeItem(c.mat2, c.n2);
+  S.upgrades[id] = lv + 1; recalc();
+  return 'ok';
+}
+const CAP_LINE = { 3: 'That is as far as I can take it. The Emberhold smiths know the deeper tempers.', 6: 'Past +6 only the Great Anvil can take it.' };
+export async function upgradeMenu(who, slot, cap = 3) {
+  const id = S.equip[slot];
+  if (!id || !slotKind(id)) { await say(who, 'You have nothing equipped there that I can improve.'); return; }
+  S.upgrades = S.upgrades || {};
+  const kind = slotKind(id);
+  if ((S.upgrades[id] || 0) >= MAX_LEVEL) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
+  if ((S.upgrades[id] || 0) >= cap) { await say(who, CAP_LINE[cap] || 'I cannot take it further.'); return; }
   await listScreen({
-    title: 'FORGE: ' + (slot === 'armor' ? 'ARMOUR' : 'WEAPON'),
+    title: 'FORGE: ' + (UPGRADE_SLOTS.find(([k]) => k === slot)?.[1] || 'GEAR'),
     hint: 'E UPGRADE   ESC DONE',
     rows: () => {
       const cur = S.upgrades[id] || 0;
-      if (cur >= 3) return [{ id, name: ITEMS[id].name + ' +3', tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
-      const g = UPGRADE_GOLD[cur], ing = UPGRADE_INGOT[cur], have = count('iron_ingot');
-      const ok = S.gold >= g && have >= ing;
+      if (cur >= MAX_LEVEL) return [{ id, name: ITEMS[id].name + ` +${MAX_LEVEL}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
+      if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'THIS FORGE CANNOT GO FURTHER', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
+      const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
-        id, name: `${ITEMS[id].name} +${cur + 1}`, tag: `${g}G ${ing}I`, ok, sub: ok ? 'READY' : 'NEED MATERIALS',
-        lines: [...statLines(id), [slot === 'armor' ? 'GAIN +2% ARMOR' : 'GAIN +2 DAMAGE', 8], [`GOLD ${S.gold}/${g}`, S.gold >= g ? 8 : 11], [`INGOTS ${have}/${ing}`, have >= ing ? 8 : 11]],
-        desc: 'Bandits carry iron ingots.',
+        id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
+        lines: [...statLines(id), [gainText(kind, cur), 8], ...costLines(c)],
+        desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
       }];
     },
     onSelect: (i, ui) => {
+      const r = buyUpgrade(slot, cap);
       const cur = S.upgrades[id] || 0;
-      if (cur >= 3) return;
-      const g = UPGRADE_GOLD[cur], ing = UPGRADE_INGOT[cur];
-      if (S.gold < g || count('iron_ingot') < ing) { sfx.play('nostamina'); ui.say(`NEED ${g} GOLD AND ${ing} INGOT${ing > 1 ? 'S' : ''}`, 11); return; }
-      S.gold -= g; removeItem('iron_ingot', ing);
-      S.upgrades[id] = cur + 1;
-      sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur + 1}`, 13);
-      ui.say('UPGRADED TO +' + (cur + 1), 8);
+      if (r === 'short') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
+      if (r !== 'ok') return;
+      sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur}`, 13);
+      ui.say('UPGRADED TO +' + cur, 8);
     },
   });
+}
+// Pick which equipped piece to improve, then the forge screen. `cap` is the highest level this smith can do.
+export async function gearUpgradeMenu(who, cap = 3) {
+  for (;;) {
+    const have = UPGRADE_SLOTS.filter(([slot]) => S.equip[slot] && slotKind(S.equip[slot]));
+    if (!have.length) { await say(who, 'You carry nothing I can improve.'); return; }
+    const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), 'Back']);
+    if (c >= have.length) return;
+    await upgradeMenu(who, have[c][0], cap);
+  }
 }
 
 export const ENCHANTS = [

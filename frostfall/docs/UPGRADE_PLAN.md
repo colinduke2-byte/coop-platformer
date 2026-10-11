@@ -1,6 +1,6 @@
 # Gear upgrades to +10: plan
 
-Status: PLAN ONLY. Nothing here is built yet.
+Status: BUILT (first version). Numbers as below; the power model is calibrated to them: with the expected gear and upgrade level, ordinary fights cost about 33% / 40% / 41% / 38% of your health on Normal in region tiers 0 to 3, and without upgrades 36% / 50% / 62% / 70%+. Enemy scaling end point is 3.5x health / 2.2x damage (`TUNE.scaling.hp = 2.5`, `dmg = 1.2`).
 
 ## Why
 
@@ -32,11 +32,11 @@ Percent of the item's own base, so a cheap sword and a legendary one both get be
 | Slot | Tier I per level | Tier II per level | Tier III per level | Total at +10 |
 |---|---|---|---|---|
 | Weapons and bows (damage) | +5% | +6% | +8% | +65% |
-| Body armour (armour value) | +1.5% points | +2% | +2.5% | +20% points |
+| Body armour (armour value) | +1.5% points | +2% | +2.5% | +20.5% points |
 | Helmets (armour value) | +0.5% points | +0.7% | +1% | +7.6% points |
 | Shields (block) | +1.5% points | +1.5% | +1.5% | +15% points (capped at 90%) |
 
-Armour has diminishing returns above 40% already (it counts half), so +20% points of armour is about +10% effective. Today's flat +2 damage / +2% armour per level goes away; old saves keep their level and simply use the new formula.
+Armour has diminishing returns above 40% already (it counts half), so +20.5% points of armour is about +10% effective. Today's flat +2 damage / +2% armour per level goes away; old saves keep their level and simply use the new formula.
 
 ## Where it plugs in
 

@@ -3,7 +3,7 @@ import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
-import { buyMenu, sellMenu, upgradeMenu, enchantMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
+import { buyMenu, sellMenu, gearUpgradeMenu, enchantMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { addItem } from '../systems/inventory.js';
 import { saveGame } from '../systems/save.js';
 import { advanceTime } from '../systems/moon.js';
@@ -110,14 +110,13 @@ export async function innMenu(who, opt = {}) {
 export async function smithMenu(who, wares, hello) {
   await say(who, hello);
   for (;;) {
-    const c = await choose(['Buy', 'Sell', 'Repair or reforge', 'Upgrade weapon', 'Upgrade armour', 'Enchant', 'Buyback', 'Leave']);
+    const c = await choose(['Buy', 'Sell', 'Repair or reforge', 'Upgrade gear', 'Enchant', 'Buyback', 'Leave']);
     if (c === 0) await buyMenu(who, wares);
     else if (c === 1) await sellMenu(who);
     else if (c === 2) { const f = await choose(['Repair', 'Reforge', 'Back']); if (f === 0) await repairMenu(who); else if (f === 1) await reforgeMenu(who); }
-    else if (c === 3) await upgradeMenu(who, 'weapon');
-    else if (c === 4) await upgradeMenu(who, 'armor');
-    else if (c === 5) await enchantMenu(who);
-    else if (c === 6) await buybackMenu(who);
+    else if (c === 3) await gearUpgradeMenu(who, 3);
+    else if (c === 4) await enchantMenu(who);
+    else if (c === 5) await buybackMenu(who);
     else return;
   }
 }
