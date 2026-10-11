@@ -64,6 +64,20 @@ const buy = await G(async () => {
 check('smiths: +1 costs 50 gold and 1 ingot; the village stops at +3, Emberhold at +6, the Great Anvil goes to +10', buy.l1 && buy.l3 && buy.villageCap && buy.l6 && buy.embCap && buy.l8, JSON.stringify(buy));
 check('+9 and +10 need a Heart Shard each; at +10 it is done; no gold means no upgrade; charms cannot be upgraded', buy.noShard && buy.l10 && buy.poor && buy.charm, JSON.stringify(buy));
 
+// the Great Anvil needs the Anvil Court's trust; the Emberhold smith stops at +6; old saves with +3 keep working
+const gate = await G(async () => {
+  const S = window.__ff.S, E = await import('/src/data/emberhold.js'), { stats, recalc } = await import('/src/systems/stats.js');
+  S.equip.weapon = 'iron_sword'; S.inv.iron_sword = 1; S.upgrades = { iron_sword: 6 }; S.gold = 5000; S.inv.ember_ore = 10; S.flags.emberforged = true;
+  const out = {};
+  S.rep = { anvil: 0 }; out.locked = E.masterTemper('weapon') === 'locked' && S.upgrades.iron_sword === 6;
+  S.rep = { anvil: 50 }; out.ok = E.masterTemper('weapon') === 'ok' && S.upgrades.iron_sword === 7;
+  S.upgrades = { iron_sword: 3 }; recalc(); out.old = Math.abs(stats.weaponDmg() - 13 * 1.15) < 1e-6;
+  S.upgrades = {}; recalc();
+  return out;
+});
+check('the Great Anvil is locked until the Anvil Court trusts you, then works', gate.locked && gate.ok, JSON.stringify(gate));
+check('an old +3 weapon uses the new bonus (+15%)', gate.old, JSON.stringify(gate));
+
 // heart shard exists and the region bosses drop it
 const hs = await G(async () => {
   const { ITEMS } = await import('/src/data/items.js'), PB = (await import('/src/entities/PatternBoss.js')).default;
