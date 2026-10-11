@@ -10,6 +10,7 @@ import { modMul } from '../data/mods.js';
 import { currentCloak } from '../systems/achievements.js';
 import { wear } from '../systems/durability.js';
 import { wornHeroKey } from '../art/sprites.js';
+import { watchStuck } from '../systems/unstick.js';
 import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
@@ -159,6 +160,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
     const iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
     const b = this.body;
+    watchStuck(this.scene, this, dt, ix, iy);
     if (settings.sneakToggle) { if (keys.pressed('sneak')) this.sneakOn = !this.sneakOn; } else this.sneakOn = keys.isDown('sneak');
     this.sneaking = this.sneakOn && this.mode === 'free';
     this.updateLock();

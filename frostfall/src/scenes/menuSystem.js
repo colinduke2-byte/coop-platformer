@@ -14,6 +14,7 @@ import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
 import { CVD_MODES, applyCvd } from '../systems/access.js';
 import { durOn } from '../systems/durability.js';
+import { unstick } from '../systems/unstick.js';
 
 const ACTION_NAMES = [
   ['up', 'MOVE UP'], ['down', 'MOVE DOWN'], ['left', 'MOVE LEFT'], ['right', 'MOVE RIGHT'], ['roll', 'DODGE ROLL'], ['sword', 'SWORD'], ['bow', 'BOW'],
@@ -29,7 +30,7 @@ const CONTROLS = [
 const DIFFS = ['easy', 'normal', 'hard'];
 // One line about each row, shown in the help bar while it is selected.
 const HINTS = {
-  'RESUME': 'BACK TO THE GAME', 'SAVE GAME': 'WRITE THE CURRENT SLOT. FIRES AND BEDS SAVE TOO', 'LOAD GAME': 'RELOAD THE SLOT. UNSAVED PROGRESS IS LOST',
+  'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK BETWEEN THINGS? THIS MOVES YOU TO THE NEAREST OPEN SPOT', 'SAVE GAME': 'WRITE THE CURRENT SLOT. FIRES AND BEDS SAVE TOO', 'LOAD GAME': 'RELOAD THE SLOT. UNSAVED PROGRESS IS LOST',
   'VOLUME': 'MASTER VOLUME. A/D ADJUST', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS',
   'FULLSCREEN': 'FILL THE SCREEN. ALSO F11', 'SLOT': 'THREE SAVE SLOTS. A/D SWITCH', 'DIFFICULTY': 'EASY, NORMAL OR HARD. CHANGES ENEMIES, PRICES AND DROPS',
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'BRIGHT SCREEN FLASHES. TURN OFF IF THEY BOTHER YOU', 'PIXEL SCALE': 'INTEGER: CRISP. FIT: FILLS THE WINDOW',
@@ -42,7 +43,7 @@ const HINTS = {
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'QUIT TO TITLE'];
+  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'UNSTUCK', 'QUIT TO TITLE'];
   if (S.quick) rows.splice(rows.indexOf('SAVE GAME'), 2);        // no saving or loading inside Arena Mode
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
@@ -69,7 +70,7 @@ export function systemTab(m) {
   const toggle = (key) => { settings[key] = !settings[key]; saveSettings(); sfx.play('select'); m.dirty = true; };
 
   // The list is long, so it is grouped into four pages. Q jumps to the first row of the next page; the page name shows under the list.
-  const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
+  const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'UNSTUCK', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
     ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
   const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
   function nextPage() {
@@ -89,6 +90,7 @@ export function systemTab(m) {
     const gs = m.gs;
     switch (rows[m.cursor]) {
       case 'RESUME': m.close(); break;
+      case 'UNSTUCK': { const moved = unstick(gs, gs.player, 'manual'); if (!moved) bus.emit('toast', 'YOU ARE NOT STUCK', 4); m.close(); break; }
       case 'SAVE GAME': saveGame(gs); m.dirty = true; break;
       case 'LOAD GAME':
         if (!loadGame()) { bus.emit('toast', 'NO SAVE IN THIS SLOT', 11); sfx.play('nostamina'); break; }
