@@ -60,6 +60,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (this.cfg.loot?.gold) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * goldMul(f)), Math.round(this.cfg.loot.gold[1] * goldMul(f))] };
       this.maxHp = Math.round(this.maxHp * hpMul(f));
     }
+    if (cfg.title) {                             // bosses: their own health and damage tuning (TUNE.bosses)
+      const bt = { ...TUNE.bosses.default, ...(TUNE.bosses[kind] || {}) };
+      this.maxHp = Math.round(this.maxHp * bt.hp);
+      if (bt.dmg !== 1) this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * bt.dmg) };
+    }
     if (cfg.kind !== 'boss') {                  // the difficulty sets telegraph length and chase speed (bosses keep their own timing)
       const D = diff();
       if (D.windup !== 1 || D.chase !== 1) this.cfg = { ...this.cfg, windup: this.cfg.windup * D.windup, chase: (this.cfg.chase || 0) * D.chase };
