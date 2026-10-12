@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { burden, itemWeight } from '../systems/burden.js';
 import { W, H, C, BINDINGS } from '../config.js';
 import { txt, wrap, textW } from '../art/font.js';
 import { keys } from '../systems/keys.js';
@@ -22,7 +23,7 @@ import { readNote } from '../systems/notes.js';
 const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'helmet', 'armor', 'charm', 'potion', 'elixir', 'food', 'tome', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
 const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow', 'helmet', 'armor', 'charm']], ['POTION', ['potion', 'elixir', 'food', 'tome']], ['MISC', ['ammo', 'ingredient', 'misc', 'quest', 'note']]];
-const SORTS = ['TYPE', 'NAME', 'VALUE'];
+const SORTS = ['TYPE', 'NAME', 'VALUE', 'WEIGHT'];
 const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
 export function panel(g, x, y, w, h, fill = 1) {
@@ -98,6 +99,7 @@ export default class MenuScene extends Phaser.Scene {
       0: (a, b) => TYPE_ORDER.indexOf(ITEMS[a].type) - TYPE_ORDER.indexOf(ITEMS[b].type) || ITEMS[a].name.localeCompare(ITEMS[b].name),
       1: (a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name),
       2: (a, b) => (ITEMS[b].value || 0) - (ITEMS[a].value || 0) || ITEMS[a].name.localeCompare(ITEMS[b].name),
+      3: (a, b) => itemWeight(b) * S.inv[b] - itemWeight(a) * S.inv[a] || ITEMS[a].name.localeCompare(ITEMS[b].name),
     }[this.sort];
     return Object.keys(S.inv).filter((id) => ITEMS[id] && (!f || f.includes(ITEMS[id].type))).sort(by);
   }
@@ -242,7 +244,10 @@ export default class MenuScene extends Phaser.Scene {
     const dmg = (stats.weaponDmg() + stats.offhandDmg() * 0.6) * bonus.melee(), bdmg = stats.bowDmg() * bonus.arrow();
     this.T(rx + 6, 90, `MELEE ${dmg.toFixed(1)}  BOW ${bdmg.toFixed(1)}  ARM ${Math.round(stats.armor() * 100)}%`, 5);
     this.T(rx + 6, 99, `HP ${S.maxHp}  MP ${S.maxMp}  SP ${S.maxSp}`, 5);
-    this.T(rx + 6, 108, `LV ${S.charLevel || 1}  GOLD ${S.gold}`, 13);
+    const lv = burden.level();
+    this.T(rx + 6, 108, `LV ${S.charLevel || 1} GOLD ${S.gold}`, 13);
+    const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`;
+    this.T(rx + 146 - textW(wt), 108, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11);
 
     // description
     panel(g, rx, 120, 152, 36, 2);

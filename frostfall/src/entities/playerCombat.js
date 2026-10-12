@@ -22,6 +22,7 @@ import { MODS } from '../data/mods.js';
 import { damageTaken, meleeDamage, blockResult, blockStaminaCost } from '../systems/damage.js';
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
+import { burden, classMix } from '../systems/burden.js';
 const P = TUNE.player;
 
 export const combatMethods = {
@@ -192,7 +193,7 @@ export const combatMethods = {
     }
     const sc = this.scene;
     if (this.swing && stats.weapon()?.swingGuard) dmg *= 1 - stats.weapon().swingGuard;
-    let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * P.weights[stats.weight()].knock, blocked = false;
+    let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * classMix().knock, blocked = false;
     const crush = !!(opts.crush || opts.attacker?.cfg?.crush);
 
     // ---- shield block / parry

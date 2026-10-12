@@ -26,6 +26,7 @@ import { combatMethods } from './playerCombat.js';
 import { bowMethods } from './playerBow.js';
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
+import { burden, classMix } from '../systems/burden.js';
 import { currentShout } from '../systems/shouts.js';
 
 // Feel numbers live in data/tuning.js
@@ -196,7 +197,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.tickRegen(dt);
 
     // regen
-    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * P.weights[stats.weight()].sp * (S.hearts?.tide ? 1.25 : 1) * dt);
+    if (this.spDelay <= 0 && !this.drawing) S.sp = Math.min(S.maxSp, S.sp + P.regen * stats.trait('spRegenMul') * classMix().sp * burden.regenMul() * (S.hearts?.tide ? 1.25 : 1) * dt);
     if (this.mpDelay <= 0) S.mp = Math.min(S.maxMp, S.mp + P.mpRegen * (stats.weapon()?.mpRegenMul ?? 1) * dt);
 
     const moving = this.speedNow > 8;
@@ -237,7 +238,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   move(ix, iy, dt) {
     const b = this.body;
-    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * stats.trait('moveMul') * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1) * (this.scene.mireMul ? this.scene.mireMul() : 1);
+    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * Math.max(TUNE.burden.floor, stats.trait('moveMul') * burden.moveMul()) * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1) * (this.scene.mireMul ? this.scene.mireMul() : 1);
     if (S.mounted) sp *= PONY_SPEED;
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
@@ -263,7 +264,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     const wantRoll = keys.pressed('roll') || this.bufRoll > 0;
-    if (wantRoll && this.rollCd <= 0 && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * P.weights[stats.weight()].roll)) {
+    if (wantRoll && this.rollCd <= 0 && burden.canRoll() && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * classMix().roll)) {
       this.mode = 'roll'; this.bufRoll = 0;
       this.rollStart = this.scene.t;
       this.rollCount = (this.rollCount || 0) + 1;

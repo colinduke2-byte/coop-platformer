@@ -1,4 +1,5 @@
 import { ITEMS } from '../data/items.js';
+import { burden } from '../systems/burden.js';
 import { dangerOfEnemy, dangerName, DANGER_COL } from '../systems/danger.js';
 import { BOSS_TAUNTS } from '../data/story.js';
 import { statusList } from '../systems/status.js';
@@ -191,6 +192,7 @@ export default class HudScene extends Phaser.Scene {
     if (S.flags.elixir && S.flags.elixirUntil > S.playtime) list.push([ITEMS[S.flags.elixir].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil(S.flags.elixirUntil - S.playtime) + 'S', 14]);
     if (S.flags.food && S.flags.foodUntil > S.playtime) list.push([ITEMS[S.flags.food].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
     for (const sl of statusList(pl)) list.push(sl);
+    { const bl2 = burden.level(); if (bl2 !== 'ok') list.push([bl2 === 'over' ? 'OVERLOADED' : 'BURDENED', bl2 === 'over' ? 11 : 12]); }
     if (pl.sneaking) list.push(['SNEAK', 4]);
     if (pl.blocking) list.push(['GUARD', 7]);
     let x = 3;

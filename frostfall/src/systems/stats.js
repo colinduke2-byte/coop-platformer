@@ -1,4 +1,5 @@
 import { S } from './state.js';
+import { classMix } from './burden.js';
 import { ITEMS } from '../data/items.js';
 import { blessing } from './bless.js';
 import { foodVal } from './food.js';
@@ -17,6 +18,7 @@ const upg = (id) => (S.upgrades && S.upgrades[id]) || 0;
 // The trophy wall at home (once bought) grants +5 health for every 3 trophies.
 const trophyHp = () => (S.flags?.furn?.trophywall ? Math.floor(Object.keys(S.trophies || {}).length / 3) * 5 : 0);
 
+const CLASS_TRAIT = { moveMul: 'move', detectMul: 'detect', manaCostMul: 'spell' };   // armour class effects folded into the set traits
 export const stats = {
   weapon: () => eq('weapon'),
   bow: () => eq('bow'),
@@ -30,7 +32,7 @@ export const stats = {
   bowDmg: () => { const b = eq('bow'); return b ? upgraded('bow', upg(S.equip.bow), b.dmg) : 4; },
   armor: () => { const a = eq('armor'), h = eq('head'); return (a ? (upgraded('armor', upg(S.equip.armor), a.armor) + gemBonus('armor')) * (isBroken(S.equip.armor) ? BROKEN_MUL.armor : 1) : 0) + (h ? upgraded('helm', upg(S.equip.head), h.armor) * (isBroken(S.equip.head) ? BROKEN_MUL.armor : 1) : 0) + (S.hearts?.iron ? 0.08 : 0) + setBonus('armor'); },
   // armour-set traits: multipliers default to 1
-  trait: (k) => (eq('armor')?.[k] ?? 1) * (eq('head')?.[k] ?? 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) * elixirVal('moveMul', 1) * modMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
+  trait: (k) => (eq('armor')?.[k] ?? 1) * (eq('head')?.[k] ?? 1) * (CLASS_TRAIT[k] ? classMix()[CLASS_TRAIT[k]] : 1) * (k === 'moveMul' ? blessMul('moveMul') * foodVal('moveMul', 1) * elixirVal('moveMul', 1) * modMul('moveMul') : k === 'manaCostMul' ? blessMul('manaCostMul') * (S.weather === 'aurora' ? 0.8 : 1) : 1),
   // sum of a numeric property over everything equipped (crit, lifesteal, goldMul...)
   sum: (k) => setBonus(k) + gemBonus(k) + modSum(k) + ['weapon', 'offhand', 'bow', 'head', 'armor', 'charm'].reduce((a, sl) => a + (eq(sl)?.[k] || 0), 0) + (blessing()?.[k] && k !== 'goldMul' ? blessing()[k] : 0),
   mul: (k) => ['weapon', 'offhand', 'bow', 'head', 'armor', 'charm'].reduce((a, sl) => a * (eq(sl)?.[k] ?? 1), 1) * (k === 'goldMul' && S.follower && S.companion === 'pell' ? 1.1 : 1) * (blessing()?.[k] ?? 1),

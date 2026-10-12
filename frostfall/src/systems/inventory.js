@@ -6,14 +6,24 @@ import { ITEMS, SLOT_OF } from '../data/items.js';
 import { recalc, stats } from './stats.js';
 import { sfx } from '../audio/sfx.js';
 import { tip } from './tips.js';
+import { burden } from './burden.js';
 
 export const count = (id) => S.inv[id] || 0;
+
+let lastLevel = 'ok';
+// A short warning the moment you tip over the carry limit (nothing is ever refused).
+function warnWeight() {
+  const l = burden.level();
+  if (l !== lastLevel && l !== 'ok') bus.emit('toast', l === 'over' ? 'OVERLOADED: SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12);
+  lastLevel = l;
+}
 
 export function addItem(id, n = 1, quiet = false) {
   S.inv[id] = (S.inv[id] || 0) + n;
   (S.found ||= {})[id] = true;
   if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}`, 6);
   bus.emit('item:added', id, n);
+  warnWeight();
 }
 
 export function removeItem(id, n = 1) {
@@ -25,6 +35,7 @@ export function removeItem(id, n = 1) {
     if (slot && S.equip[slot] === id) S.equip[slot] = null;
   }
   recalc();
+  warnWeight();
   return true;
 }
 

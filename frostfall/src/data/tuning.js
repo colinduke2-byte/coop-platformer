@@ -18,7 +18,12 @@ export const TUNE = {
     { dmg: 1.7, kb: 240, size: 24, total: 0.42, cost: 1.35, flip: false, scale: 1.4, stun: 0.5 },
   ],
   // armour weight classes: roll stamina, knockback taken, stamina regen
-  weights: { light: { roll: 0.8, knock: 1.25, sp: 1.1 }, medium: { roll: 1, knock: 1, sp: 1 }, heavy: { roll: 1.3, knock: 0.55, sp: 0.85 } },
+  // (a helmet adds half of its own class's effect on top of the body armour's; carry is added to the carry capacity)
+  weights: {
+    light: { roll: 0.8, knock: 1.25, sp: 1.1, move: 1.06, detect: 0.9, spell: 0.95, carry: -10 },
+    medium: { roll: 1, knock: 1, sp: 1, move: 1, detect: 1, spell: 1, carry: 0 },
+    heavy: { roll: 1.3, knock: 0.55, sp: 0.85, move: 0.92, detect: 1.15, spell: 1.1, carry: 20 },
+  },
   riposte: { window: 1.1, mult: 1.8 },        // after a parry, the next sword blow
   // how a landed hit feels, per weapon style: hit-stop seconds, shake duration (ms) and strength
   hitFeel: {
@@ -253,6 +258,8 @@ export const TUNE = {
   },
   // Difficulty multipliers (Settings > Difficulty).
   // Ordinary monsters (not bosses, not passive animals) are tougher than their table entry: wolves, bears, bandits and the like.
+  // carry weight: capacity = base + perSp per stamina above 100 + armour class + pony; equipped gear counts at equipHalf
+  burden: { base: 120, perSp: 0.5, pony: 60, equipHalf: 0.5, burdened: { move: 0.85, regen: 0.8 }, over: 1.25, overMove: 0.65, floor: 0.7 },
   mobs: { hp: 1.3, dmg: 1.15 },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.

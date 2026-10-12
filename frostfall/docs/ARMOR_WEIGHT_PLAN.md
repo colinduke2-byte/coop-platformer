@@ -1,6 +1,6 @@
 # Armour classes, carry weight and enemy health: plan
 
-Status: PLAN ONLY. Nothing here is built yet. Decisions Colin should make are marked **DECIDE**.
+Status: armour classes (section 2) and soft carry weight (section 3) are BUILT (src/systems/burden.js, TUNE.player.weights + TUNE.burden, test/stage76_burden.mjs); decisions taken: soft limit only, stamina adds carry, arrows/potions near-weightless, heavy -8% speed. Enemy health (section 4) was handled by enemy scaling. No drop action was added (sell or stash instead).
 
 ## 1. Where we are today
 

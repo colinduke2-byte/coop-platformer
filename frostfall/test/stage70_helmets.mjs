@@ -31,7 +31,7 @@ const eqr = await G(async () => {
   return { a0, a1, slot, hp0, hp1, mp0, mp1, mul, after: S.equip.head, a2: st.armor() };
 });
 check('a helmet adds armour and unequips cleanly', eqr.slot === 'bulwark_helm' && eqr.a1 > eqr.a0 && eqr.after == null && Math.abs(eqr.a2 - eqr.a0) < 1e-9, JSON.stringify(eqr));
-check('helmet health and mana bonuses count', eqr.hp1 === eqr.hp0 + 15 && eqr.mp1 === eqr.mp0 + 15 && Math.abs(eqr.mul - 0.95) < 1e-9, JSON.stringify(eqr));
+check('helmet health and mana bonuses count (the light helm also trims spell cost by half its class effect)', eqr.hp1 === eqr.hp0 + 15 && eqr.mp1 === eqr.mp0 + 15 && Math.abs(eqr.mul - 0.95 * 0.975) < 1e-9, JSON.stringify(eqr));
 
 // ---- sets and places
 const where = await G(async () => {
