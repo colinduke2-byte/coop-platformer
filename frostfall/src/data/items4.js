@@ -35,6 +35,7 @@ Object.assign(ITEMS, {
   // ---- the ending choice: the weapon in the vault
   sunbreaker: { name: 'Sunbreaker', type: 'weapon2h', style: 'great', icon: ['sword_gs_king', 13], dmg: 58, elem: { type: 'fire', power: 12 }, sockets: 3, value: 1800, desc: 'Two-handed. The desert kings\' answer to the cold: a sword that burns as it falls. It will melt the Winter, and the ice with it.' },
   winterward: { name: 'Winterward', type: 'charm', icon: ['charm_wave', 15], maxHp: 40, maxMp: 40, value: 1500, desc: '+40 health and mana. The vault\'s second gift: a quiet ward that lets the Winter pass through you instead of over you.' },
+  tome_sunbeam: { name: 'Tome of the Sunbeam', type: 'tome', teach: 'sunbeam', icon: ['scroll', 13], value: 420, desc: 'Read (E): learn Sunbeam, a column of light that falls where you aim.' },
   // ---- mini-boss prizes (one each)
   thorn_crown: { name: 'Thorncrown', type: 'helmet', weight: 'medium', icon: ['helm_circlet', 8], armor: 0.07, crit: 0.04, maxHp: 10, value: 520, desc: 'Absorbs 7%, +10 health, +4% crit. Taken from the Elder Thornwood; it still tries to take root.' },
   queens_sting: { name: "Vespera's Sting", type: 'weapon', style: 'dagger', icon: ['dagger_stiletto', 13], dmg: 22, swing: 0.7, costMul: 0.75, crit: 0.2, inflict: [{ type: 'poison', chance: 0.4, t: 5, dps: 3 }], value: 560, desc: 'A hornet queen\'s barb on a handle of wax. Fast, and the poison lingers.' },

@@ -93,6 +93,10 @@ export function epilogueLines() {
   if (S.flags.mireMotherDead) out.push('The Fens are quiet. The boards at Reedwick have dried for the first time in anyone\'s memory, and the children are learning to swim.');
   if (S.flags.stormGiantDead) out.push('The clouds over the Stormcrown have started to move. The clans do not know what to do with a sky that changes.');
   if (S.flags.kingRemembered) out.push('The Scribe of the Old Kingdom finished the last name in the Book of Chains. It is the shortest entry, and the only one with a smile in the margin.');
+  if (S.flags.blightMotherDead) out.push(S.flags.choiceGrove === 'keep' ? 'The Heart of the Grove beats in your pack. The Vale is greener when you are near it, and browner when you are not, and Greenhollow pretends not to notice.' : 'The grove tree put out a new leaf in the dead of winter. Greenhollow pretended not to notice, and then threw a feast.');
+  if (S.flags.vaultSovereignDead) out.push(S.flags.choiceVault === 'sunbreaker' ? 'Sunbreaker hangs where the light finds it. Far to the north the ice has started to weep, and nobody is sure whether to cheer.' : S.flags.choiceVault === 'winterward' ? 'The Winterward hums against the cold. The Winter, passing through you, learned something it did not expect: manners.' : 'The Sealed Vault is sealed again. Amberwell sleeps better, and nobody asks why.');
+  if (S.flags.choiceSula === 'turnin') out.push('Red Sula serves her sentence mending Amberwell\'s water-skins. She still sends you a postcard, unsigned.');
+  else if (S.flags.choiceSula === 'freed') out.push('Red Sula was last seen riding east with a full purse and a short list of people she trusts. You are on it.');
   if ((S.ngPlus || 0) >= 1) out.push('This is not the first winter you have broken. It may not be the last.');
   return out;
 }

@@ -70,7 +70,7 @@ function chain(c) {
     const q = S.quests[cur.qid], prevDone = cur === c.steps[0] ? (!c.gate || c.gate()) : true;
     if (q.status === 'active' && goalDone(cur.goal, q)) {
       for (const l of cur.thanks) await say(c.who, l);
-      if (cur.goal.have) removeItem(cur.goal.have[0], cur.goal.have[1]);
+      if (cur.goal.have && cur.goal.have[1] > 0) removeItem(cur.goal.have[0], cur.goal.have[1]);
       if (cur.after) await cur.after();
       cur.pay(); finishQuest(cur.qid); return;
     }
@@ -188,7 +188,7 @@ SCRIPTS.dune_sheikh = async function () {
     const c = await choose(['Sunbreaker: the sword', 'Winterward: the ward', 'Neither. Seal it again']);
     if (c === 0) { S.flags.choiceVault = 'sunbreaker'; addItem('sunbreaker'); await say('Rashid', 'It is a weapon that will melt the Winter and the ice with it. The kings feared it. Perhaps they were right to.'); addGold(700); }
     else if (c === 1) { S.flags.choiceVault = 'winterward'; addItem('winterward'); await say('Rashid', 'It lets the cold pass through you instead of over you. A gentler answer. Let us hope the Winter agrees.'); addGold(700); }
-    else { S.flags.choiceVault = 'seal'; await say('Rashid', 'Seal it. A wise man leaves a power in the dark and sleeps better for it. Take this for your trouble.'); addGold(1100); addItem('vault_seal', 0, true); }
+    else { S.flags.choiceVault = 'seal'; await say('Rashid', 'Seal it. A wise man leaves a power in the dark and sleeps better for it. Take this for your trouble.'); addGold(1100); }
     finishQuest('sunvault'); return;
   }
   if (q.status === 'inactive') {
@@ -200,7 +200,7 @@ SCRIPTS.dune_sheikh = async function () {
   const ch = S.flags.choiceVault;
   await say('Rashid', ch === 'sunbreaker' ? cyc('rashidN', ['The sword is in your hand and the desert is a little warmer. I do not know if that is the sword or the weather.']) : ch === 'winterward' ? cyc('rashidN', ['The ward hums when the wind turns. I sleep better. So does the well.']) : cyc('rashidN', ['The vault is sealed. I think of it often. I do not think of it at night.']));
 };
-SCRIPTS.dune_trader = () => trade('Jamila', [{ id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'veil_helm', price: 400, once: true }, { id: 'dune_bow', price: 560, once: true }, ...dailyWares('Jamila', 2)],
+SCRIPTS.dune_trader = () => trade('Jamila', [{ id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'veil_helm', price: 400, once: true }, { id: 'tome_sunbeam', price: 640, once: true }, { id: 'dune_bow', price: 560, once: true }, ...dailyWares('Jamila', 2)],
   cyc('jamilaN', ['Water costs nothing here. Carrying it costs a great deal.', 'Spice, silk, scorpion antidote. Do you want to haggle, or shall we pretend?', 'I sell to everyone. Even the people who say they will not buy.']));
 SCRIPTS.dune_smith = () => smithMenu('Khalid', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }],
   cyc('khalidN', ['Gold is soft. Iron is honest. I use both, according to the customer.', 'The sun does half my smithing for me. I charge for the other half.']));

@@ -102,5 +102,80 @@ const vs = await boss('sealedvault', 'vaultSovereignDead');
 check('the Vault Sovereign wakes, calls sunbeams, changes phase and falls', vs.has && vs.engaged && vs.name === 'The Vault Sovereign' && vs.ph >= 2 && vs.sp.beam !== undefined && vs.dead, JSON.stringify(vs));
 await h.shot('s77_vaultsovereign');
 
+
+// ---- quests: the two main quests and their choices, a chain step, the epilogue
+const stub = (answers) => G(async (a) => {
+  const dlg = await import('/src/systems/dialogue.js'); window.__dlg = dlg.dialogue;
+  if (!window.__realHud) window.__realHud = dlg.dialogue.hud;
+  window.__answers = [...a]; window.__said = [];
+  dlg.dialogue.hud = { say: async (n, t) => { window.__said.push(t); }, choose: async (o) => (window.__answers.length ? window.__answers.shift() : o.length - 1), hideBox() {}, scene: window.__realHud.scene };
+}, answers);
+const unstub = () => G(() => { window.__dlg.hud = window.__realHud; });
+const SCRIPT = (name) => G(async (n) => { await import('/src/data/hamlets.js'); const d = await import('/src/data/dialogue.js'); await d.SCRIPTS[n](); }, name);
+await G(() => { const S = window.__ff.S; S.gold = 0; S.inv = {}; S.flags.blightMotherDead = false; S.flags.vaultSovereignDead = false; });
+await stub([0]); await SCRIPT('vale_elder'); await unstub();
+check('Elder Maeve sends you into the Thornroot Hollow', await G(() => window.__ff.S.quests.blightmother.status === 'active'));
+await G(() => { const S = window.__ff.S; S.flags.blightMotherDead = true; S.inv.blight_heart = 1; });
+await stub([0]); await SCRIPT('vale_elder'); await unstub();
+const g1 = await G(() => { const s = window.__ff.S; return { q: s.quests.blightmother.status, c: s.flags.choiceGrove, gold: s.gold, charm: !!s.inv.bloom_charm, heart: s.inv.blight_heart || 0 }; });
+check('replanting the heart finishes the quest, pays gold and a charm, and sets the grove choice', g1.q === 'done' && g1.c === 'replant' && g1.gold === 650 && g1.charm && g1.heart === 0, JSON.stringify(g1));
+await G(() => { const S = window.__ff.S; S.quests.blightmother.status = 'active'; S.inv.blight_heart = 1; S.bonusHp = 0; S.gold = 0; });
+await stub([1]); await SCRIPT('vale_elder'); await unstub();
+const g2 = await G(() => { const s = window.__ff.S; return { c: s.flags.choiceGrove, hp: s.bonusHp, gold: s.gold }; });
+check('keeping the heart gives permanent health and more gold instead', g2.c === 'keep' && g2.hp === 20 && g2.gold === 1000, JSON.stringify(g2));
+await G(() => { const S = window.__ff.S; S.gold = 0; });
+await stub([0]); await SCRIPT('dune_sheikh'); await unstub();
+check('Sheikh Rashid sends you to the Sealed Vault', await G(() => window.__ff.S.quests.sunvault.status === 'active'));
+for (const [ans, choice, item] of [[0, 'sunbreaker', 'sunbreaker'], [1, 'winterward', 'winterward'], [2, 'seal', null]]) {
+  await G(() => { const S = window.__ff.S; S.quests.sunvault.status = 'active'; S.flags.vaultSovereignDead = true; S.inv = {}; S.gold = 0; });
+  await stub([ans]); await SCRIPT('dune_sheikh'); await unstub();
+  const v = await G(() => { const s = window.__ff.S; return { c: s.flags.choiceVault, q: s.quests.sunvault.status, items: [!!s.inv.sunbreaker, !!s.inv.winterward], gold: s.gold }; });
+  check(`the vault choice "${choice}" is recorded, pays out and finishes the quest`, v.c === choice && v.q === 'done' && (item === 'sunbreaker' ? v.items[0] : item === 'winterward' ? v.items[1] : !v.items[0] && !v.items[1]) && v.gold >= 700, JSON.stringify(v));
+}
+// a chain: three linked steps from one giver
+await G(() => { const S = window.__ff.S; for (const k of ['hornets1', 'hornets2', 'hornets3']) S.quests[k].status = 'inactive'; S.kills.hornet = 0; S.gold = 0; });
+await stub([0]); await SCRIPT('vale_beekeeper'); await unstub();
+check('the beekeeper offers the first step of the hornet chain', await G(() => window.__ff.S.quests.hornets1.status === 'active'));
+await G(() => { window.__ff.S.kills.hornet = 6; });
+await stub([]); await SCRIPT('vale_beekeeper'); await unstub();
+check('hand it in and the first step pays and finishes', await G(() => window.__ff.S.quests.hornets1.status === 'done' && window.__ff.S.gold >= 180));
+await stub([0]); await SCRIPT('vale_beekeeper'); await unstub();
+check('the second step opens straight after', await G(() => window.__ff.S.quests.hornets2.status === 'active'));
+// every new person can be spoken to without an error
+const talkers = await G(async () => {
+  await import('/src/data/hamlets.js'); const d = await import('/src/data/dialogue.js'); const bad = [];
+  const ids = Object.keys(d.NPC_DEFS).filter((k) => /^(vale|dune)_/.test(k));
+  for (const id of ids) { if (!d.SCRIPTS[id]) bad.push(id + ':script'); }
+  return { n: ids.length, bad };
+});
+check('every Vale and Amberwell villager has a script', talkers.n >= 24 && talkers.bad.length === 0, JSON.stringify(talkers));
+const epi = await G(async () => { const S = window.__ff.S; S.flags.blightMotherDead = true; S.flags.vaultSovereignDead = true; S.flags.choiceGrove = 'keep'; S.flags.choiceVault = 'winterward'; S.flags.choiceSula = 'freed'; return (await import('/src/data/story.js')).epilogueLines().join(' '); });
+check('the epilogue remembers the grove, the vault and Red Sula', /Heart of the Grove/.test(epi) && /Winterward/.test(epi) && /Red Sula/.test(epi), epi.slice(0, 200));
+
+// ---- four new spells
+const sp = await G(async () => {
+  const sc = window.gs(), S = window.__ff.S, p = sc.player, P = await import('/src/entities/playerMagic.js'), out = {};
+  sc.enemies.getChildren().forEach((e) => e.destroy());
+  S.skills.restoration.lvl = 10; S.skills.sneak.lvl = 10; S.tomes = { ...(S.tomes || {}), sunbeam: true };
+  out.list = ['regrow', 'thorns', 'sandstorm', 'sunbeam'].every((k) => P.SPELL_ORDER.includes(k) && P.spellUnlocked(k));
+  const cast = async (id, setup) => { S.spell = id; S.mp = S.maxMp; p.invuln = 999; p.face = { x: 1, y: 0 }; p.lockT = 0; p.mode = 'free'; p.heat = 0; p.target = null; if (setup) setup(); p.cast(); };
+  const mk = (kind, dx, dy) => { const e = sc.addEnemy(kind, p.x + dx, p.y + dy, { tier: 1 }); e.alerted = true; e.hitDone = true; return e; };
+  // regrowth: heals over time, not all at once
+  S.hp = 40; const h0 = S.hp; await cast('regrow'); const h1 = S.hp; await new Promise((r) => setTimeout(r, 3300)); const h2 = S.hp; await new Promise((r) => setTimeout(r, 3300));
+  out.regrow = h1 === h0 && h2 > h0 && S.hp > h2;
+  // thorn snare: roots and cuts a foe in front
+  S.hp = S.maxHp; let e = mk('bandit', 34, 0); const hp0 = e.hp; await cast('thorns'); await new Promise((r) => setTimeout(r, 150));
+  out.thorns = e.hp < hp0 && !!e.statuses?.root; e.destroy();
+  // sandstorm: scatters the foes around you
+  e = mk('bandit', 20, 0); const e2 = mk('wolf', -24, 10); await cast('sandstorm'); await new Promise((r) => setTimeout(r, 150));
+  out.sand = !!e.statuses?.fear && !!e2.statuses?.slow; e.destroy(); e2.destroy();
+  // sunbeam: a column of light where you aim, after a beat
+  e = mk('blightbloom', 60, 0); const hb = e.hp; await cast('sunbeam'); await new Promise((r) => setTimeout(r, 900));
+  out.sun = e.hp < hb; e.destroy();
+  return out;
+});
+check('Regrowth, Thorn Snare, Sandstorm and Sunbeam join the spell list and unlock by skill or tome', sp.list, JSON.stringify(sp));
+check('Regrowth heals over several seconds; Thorn Snare roots and cuts; Sandstorm blinds and scatters; Sunbeam lands after a beat', sp.regrow && sp.thorns && sp.sand && sp.sun, JSON.stringify(sp));
+
 check('no page errors', h.errors.length === 0, h.errors.join(' | '));
 await h.close();

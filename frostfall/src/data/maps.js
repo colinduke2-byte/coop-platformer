@@ -9,6 +9,7 @@ import { buildMines, buildForge, buildTidebreak, buildSepulchre, buildMireBarrow
 import '../world/regions2.js';
 import '../world/regions3.js';
 import '../world/regions4.js';
+import '../world/landmarks.js';
 import { buildGreenhollow, buildAmberwell } from './hubs4.js';
 import { buildLanternGlade, buildLanternfall, buildSaltmarket } from './hubs3.js';
 import { buildReedwick, buildSkarnhold } from './hubs2.js';

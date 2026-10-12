@@ -194,6 +194,6 @@ export function buildSealedVault(seed) {
     tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'vaultsovereign', id: 'sv', keyGate: true, mobs: ['sunsentinel', 'wrapped', 'sandwight', 'scorpion', 'warchanter'], exitTo: 'sunscorch', exitSpawn: 'sealedvault',
     title: 'The Sealed Vault', signLine: 'GOLD GLYPHS RUN ALONG EVERY WALL. THE AIR IS COLD HERE, AND VERY OLD.',
     bossSign: ['THE SUN THRONE.', 'THE LAST KING SEALED HIMSELF IN WITH THE ANSWER TO THE WINTER, AND THEN FORGOT WHY HE WAS GUARDING IT.'],
-    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sun_scimitar' }, { item: 'sunplate' }, { item: 'dune_bow' }, { item: 'gem_topaz' }, { gold: 520 }],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sun_scimitar' }, { item: 'tome_sunbeam' }, { item: 'sunplate' }, { item: 'dune_bow' }, { item: 'gem_topaz' }, { gold: 520 }],
   });
 }

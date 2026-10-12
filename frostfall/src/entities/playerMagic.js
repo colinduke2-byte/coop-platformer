@@ -25,9 +25,13 @@ export const SPELLS = {
   embernova: { name: 'Ember Nova', cost: 36, dmg: 18, icon: 'icon_embernova', col: 12, skill: 'destruction', lvl: 99, tome: true, desc: 'A ring of fire that burns' },
   glacier: { name: 'Glacier Spear', cost: 28, dmg: 20, icon: 'icon_glacier', col: 15, skill: 'destruction', lvl: 99, tome: true, desc: 'A lance of ice through a whole line' },
   meteor: { name: 'Meteor', cost: 48, dmg: 38, icon: 'icon_meteor', col: 12, skill: 'destruction', lvl: 99, tome: true, desc: 'A star falls where you aim' },
+  regrow: { name: 'Regrowth', cost: 30, amount: 54, time: 6, icon: 'icon_regrow', col: 8, skill: 'restoration', lvl: 6, desc: 'Heals over six seconds' },
+  thorns: { name: 'Thorn Snare', cost: 28, dmg: 9, r: 40, icon: 'icon_thorns', col: 8, skill: 'restoration', lvl: 9, desc: 'Briars root foes ahead of you' },
+  sandstorm: { name: 'Sandstorm', cost: 32, dmg: 8, r: 62, icon: 'icon_sandstorm', col: 10, skill: 'sneak', lvl: 9, desc: 'Blinds and scatters foes around you' },
+  sunbeam: { name: 'Sunbeam', cost: 34, dmg: 26, r: 22, icon: 'icon_sunbeam', col: 13, skill: 'destruction', lvl: 99, tome: true, desc: 'A column of light falls where you aim' },
   ward: { name: 'Ward', cost: 30, absorb: 30, time: 8, icon: 'icon_ward', col: 15, skill: 'restoration', lvl: 3, desc: 'Absorbs damage' },
 };
-export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'embernova', 'glacier', 'wolf', 'meteor'];
+export const SPELL_ORDER = ['fire', 'frost', 'shock', 'heal', 'ward', 'blink', 'nova', 'embernova', 'glacier', 'wolf', 'meteor', 'regrow', 'thorns', 'sandstorm', 'sunbeam'];
 export const spellUnlocked = (id) => !!S.tomes?.[id] || lvl(SPELLS[id].skill) >= SPELLS[id].lvl;
 
 export const magicMethods = {
@@ -66,7 +70,7 @@ export const magicMethods = {
     const sp = SPELLS[S.spell];
     const cost = this.spellCost(sp);
     if (S.mp < cost) { sfx.play('nostamina'); bus.emit('nomana'); return; }
-    if (S.spell === 'heal' && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
+    if ((S.spell === 'heal' || S.spell === 'regrow') && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
     const wpn = stats.weapon() || {};
     const freeCast = (S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0)) || (wpn.freeEvery && ((this.castW = (this.castW || 0) + 1) % wpn.freeEvery === 0));
     if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);
@@ -170,6 +174,60 @@ export const magicMethods = {
           this.gainXp('destruction', 10);
         });
         this.gainXp('destruction', 4);
+        break;
+      }
+      case 'regrow': {
+        const total = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), ticks = sp.time, per = Math.max(1, Math.round(total / ticks));
+        sfx.play('heal'); sc.fx.ring(this.x, this.y + 4, 0.5, 0.6, 'ring', 0x3f7050); sc.fx.text(this.x, this.y - 12, 'REGROWTH', 8, 0.8);
+        for (let i = 1; i <= ticks; i++) sc.time.delayedCall(i * 1000, () => {
+          if (!sc.scene.isActive('Game') || S.hp <= 0 || this.mode === 'dead') return;
+          S.hp = Math.min(S.maxHp, S.hp + per); sc.fx.text(this.x, this.y - 12, '+' + per, 8, 0.5); sc.fx.puff(this.x, this.y, 8, 5, 20, 0.5, -20);
+        });
+        this.gainXp('restoration', 8);
+        break;
+      }
+      case 'thorns': {
+        const cx = this.x + f.x * 34, cy = this.y + 3 + f.y * 34;
+        sfx.play('frost'); sc.shake(120, 0.004);
+        for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; sc.fx.puff(cx + Math.cos(a) * sp.r * 0.6, cy + Math.sin(a) * sp.r * 0.6, 8, 5, 20, 0.7); }
+        sc.fx.ring(cx, cy + 4, sp.r / 32, 0.6, 'ring', 0x3f7050);
+        for (const e of sc.enemies.getChildren()) {
+          if (e.dead || Math.hypot(e.x - cx, e.y - cy) > sp.r) continue;
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: 0, ky: 0, kb: 0, src: 'poison', stun: 0.3, status: [{ type: 'root', t: 3 }, { type: 'bleed', t: 4, dps: 3 }] });
+          sc.fx.text(e.x, e.y - 10, String(dealt), 8);
+        }
+        this.gainXp('restoration', 7);
+        break;
+      }
+      case 'sandstorm': {
+        sfx.play('howl'); sc.shake(160, 0.005);
+        sc.fx.ring(this.x, this.y + 4, sp.r / 32, 0.6, 'ring', 0xa07850); sc.fx.ring(this.x, this.y + 4, sp.r / 46, 0.4, 'ring', 0xf4d460);
+        for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; sc.fx.puff(this.x + Math.cos(a) * sp.r * 0.7, this.y + 3 + Math.sin(a) * sp.r * 0.7, i % 2 ? 10 : 13, 6, 50, 0.5); }
+        for (const e of sc.enemies.getChildren()) {
+          if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > sp.r) continue;
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 120, src: 'shout', stun: 0.5, forceStun: !e.isBoss, status: [{ type: 'fear', t: 2.2 }, { type: 'slow', t: 3 }] });
+          sc.fx.text(e.x, e.y - 10, String(dealt), 10);
+        }
+        this.gainXp('sneak', 8);
+        break;
+      }
+      case 'sunbeam': {
+        const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 60, y: this.y + 3 + f.y * 60 };
+        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
+        sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, sp.r / 32, 0.5, 'ring', 0xf4d460);
+        sc.time.delayedCall(500, () => {
+          if (!sc.scene.isActive('Game')) return;
+          sc.shake(220, 0.009); sfx.play('fire'); sc.flashScreen?.(40, 244, 212, 96);
+          for (let k = 0; k < 8; k++) sc.fx.puff(tg.x, tg.y - k * 9, k % 2 ? 13 : 12, 5, 30, 0.45);
+          sc.fx.ring(tg.x, tg.y + 4, sp.r / 24, 0.4, 'ring', 0xf4d460);
+          for (const e of sc.enemies.getChildren()) {
+            if (e.dead || Math.hypot(e.x - tg.x, e.y - tg.y) > sp.r) continue;
+            const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 100, src: 'fire', element: 'fire', stun: 0.5, status: { type: 'burn', t: 3, dps: 5 } });
+            sc.fx.text(e.x, e.y - 10, String(dealt), 13);
+          }
+          this.gainXp('destruction', 7);
+        });
+        this.gainXp('destruction', 3);
         break;
       }
       case 'wolf': {
