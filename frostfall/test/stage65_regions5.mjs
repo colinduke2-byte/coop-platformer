@@ -243,7 +243,7 @@ check('the ferry carries you up to the Ashen Peaks', await G(() => window.gs().m
 // ---- new tiles draw and the gear sets
 const misc = await G(async () => {
   const CF = await import('/src/config.js'), Se = await import('/src/systems/sets.js'), { ITEMS } = await import('/src/data/items.js'), out = {};
-  out.tiles = CF.TILE_COUNT === 55 && ['GLASSMOSS', 'CRYSTAL', 'GLADEPATH', 'DEEPSTONE', 'GLOWCAP', 'CAVERNPOOL'].every((k) => CF.TILE[k] < CF.TILE_COUNT);
+  out.tiles = CF.TILE_COUNT >= 55 && ['GLASSMOSS', 'CRYSTAL', 'GLADEPATH', 'DEEPSTONE', 'GLOWCAP', 'CAVERNPOOL'].every((k) => CF.TILE[k] < CF.TILE_COUNT);
   out.solid = [CF.TILE.CRYSTAL, CF.TILE.GLOWCAP, CF.TILE.CAVERNPOOL].every((t) => CF.SOLID_TILES.includes(t));
   out.sets = Object.values(Se.SETS).every((s) => s.items.every((i) => ITEMS[i]));
   return out;

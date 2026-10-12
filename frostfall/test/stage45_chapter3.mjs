@@ -116,8 +116,8 @@ check('the Wardens restore stamina at every phase change', fw.help === 'wardens'
 // ---- the last choice
 await S(() => { const St = window.__ff.S; St.rep = { anvil: 0, delvers: 0, wardens: 0 }; St.flags.finale = 'crown'; St.flags.finalChoice = null; St.quests.crown.status = 'active'; St.inv = {}; });
 await stub([2, 1]);                      // bind (refused: no house trusts you), then wear the crown
-await G(async () => { const C3 = await import('/src/data/chapter3.js'); await C3.finalChoice(); });
-const fin = await S(() => { const St = window.__ff.S; return { choice: St.flags.finalChoice, crown: !!St.inv.ember_crown, q: St.quests.crown.status, said: window.__said.join(' ').includes('A binding needs hands'), ending: window.gs().pendingEnding }; });
+await G(async () => { const { bus } = await import('/src/systems/bus.js'); window.__endings = []; bus.on('ending', (k) => window.__endings.push(k)); const C3 = await import('/src/data/chapter3.js'); await C3.finalChoice(); });
+const fin = await S(() => { const St = window.__ff.S; return { choice: St.flags.finalChoice, crown: !!St.inv.ember_crown, q: St.quests.crown.status, said: window.__said.join(' ').includes('A binding needs hands'), ending: window.__endings[0] ?? window.gs().pendingEnding }; });
 check('binding is refused without a house behind you; wearing the crown grants the Ember Crown', fin.said && fin.choice === 'crown' && fin.crown && fin.q === 'done' && fin.ending === 'c3_crown', JSON.stringify(fin));
 await unstub();
 await h.sleep(1500);

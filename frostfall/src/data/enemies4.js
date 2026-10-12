@@ -11,12 +11,12 @@ const loot = (gold, drops) => ({ gold, drops });
 Object.assign(ENEMIES, {
   // ======================================================================= the Embergreen Vale
   thornling: {
-    name: 'Thornling', tex: 'spr_spider', sideOnly: true, ambush: true, bark: 'wolf', weak: { fire: 1.8, frost: 0.9 }, hp: 52, speed: 34, chase: 80, dmg: 15, detect: 70,
+    name: 'Thornling', tex: 'spr_spider', sideOnly: true, ambush: true, bark: 'wolf', weak: { fire: 1.8, frost: 0.9 }, hp: 50, speed: 34, chase: 80, dmg: 13, detect: 70,
     kind: 'lunge', range: 40, windup: 0.42, atkDur: 0.25, recover: 0.7, cooldown: 0.9, kbResist: 0.2, lunge: 165,
     body: [10, 8, 3, 7], loot: loot([8, 20], [['thornvine', 0.6], ['hide', 0.1], ['hp_potion', 0.1]]),
   },
   hornet: {
-    name: 'Meadow Hornet', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'wolf', weak: { fire: 1.5, frost: 1.2 }, hp: 14, speed: 58, chase: 118, dmg: 8, detect: 110,
+    name: 'Meadow Hornet', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'wolf', weak: { fire: 1.5, frost: 1.2 }, hp: 14, speed: 58, chase: 118, dmg: 7, detect: 110,
     kind: 'lunge', range: 54, windup: 0.3, atkDur: 0.2, recover: 0.5, cooldown: 0.7, kbResist: 0, lunge: 230,
     body: [8, 6, 4, 6], loot: loot([1, 5], [['honeycomb', 0.2], ['stinger', 0.1]]),
   },
@@ -27,11 +27,11 @@ Object.assign(ENEMIES, {
   },
   dewsprite: {
     name: 'Dew Sprite', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'undead', weak: { shock: 1.4, fire: 1.2 }, hp: 24, speed: 30, chase: 52, dmg: 8, detect: 108,
-    kind: 'cast', range: 104, keep: 72, zoneR: 14, zoneN: 1, zoneDelay: 0.8, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1, heals: { every: 2.4, range: 100, pct: 0.14 },
+    kind: 'cast', range: 104, keep: 72, zoneR: 14, zoneN: 1, zoneDelay: 0.8, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1, heals: { every: 3, range: 100, pct: 0.1 },
     body: [8, 7, 4, 7], loot: loot([8, 18], [['dew_essence', 0.5], ['mp_potion', 0.2]]),
   },
   hedgeknight: {
-    name: 'Hedge Knight', tex: 'spr_hedgeknight', shield: true, bark: 'human', weak: { fire: 1.5, shock: 1.1 }, hp: 92, speed: 26, chase: 40, dmg: 20, detect: 70,
+    name: 'Hedge Knight', tex: 'spr_hedgeknight', shield: true, bark: 'human', weak: { fire: 1.5, shock: 1.1 }, hp: 80, speed: 26, chase: 40, dmg: 19, detect: 70,
     kind: 'melee', range: 21, windup: 0.62, atkDur: 0.16, recover: 0.65, cooldown: 0.75, kbResist: 0.5,
     body: [8, 7, 4, 9], loot: loot([14, 30], [['thornvine', 0.3], ['iron_ingot', 0.3], ['hp_potion', 0.25]]),
   },

@@ -52,6 +52,7 @@ export const MAJOR = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', '
 export const EXTRA_KIND_NAME = {};
 export const EXTRA_GATES = {};             // extra door kinds: { to, col, stone, text, spawn } (filled in by regions3.js)
 export const FACADE_EXTRA = new Set();
+export const STRICT = new Set();           // kinds that never relax the spacing rule (landmarks): if they do not fit they are left out
 const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS', tower: 'A WATCHTOWER', grove: 'A QUIET GROVE', hamlet: 'A SMALL HAMLET', standing: 'A CIRCLE OF STANDING STONES', barrow: 'A BARROW', champion: 'A MONSTER\'S LAIR', beardn: 'A BEAR DEN',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
   city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE',
@@ -107,13 +108,27 @@ export function buildRegion(def, region, seed) {
       const x = 12 + Math.floor(R() * (W - 24)), y = 8 + Math.floor(R() * (H - 16));
       if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
       if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
-      if (!spaced(x, y, kind, tries < 1400 ? 1 : tries < 2000 ? 0.75 : 0.55)) continue;
+      if (!spaced(x, y, kind, STRICT.has(kind) ? 1 : tries < 1400 ? 1 : tries < 2000 ? 0.75 : 0.55)) continue;
       if (biomeWant && tries < 1200 && bio[y][x] !== biomeWant) continue;       // prefer the right biome, fall back to anywhere
       taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` }); made++;
     }
   };
   const mustHave = (kind, r, tier, biome = null, near = null) => { place(kind, 1, r, near, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
-  def.plan(place, mustHave);
+  // placeBest: for a crowded map. Puts one place at the open spot furthest from everything else (so the spacing promise holds as well as it can)
+  const placeBest = (kind, r, minTier = 0, near = null) => {
+    let best = null, bd = -1;
+    for (let y = 12; y < H - 12; y += 3) for (let x = 14; x < W - 14; x += 3) {
+      if (near && Math.hypot(x - near.x, y - near.y) > near.r) continue;
+      if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
+      const d = pois.reduce((m, q) => Math.min(m, Math.hypot(q.x - x, q.y - y) / gapOf(kind, q.kind)), 1e9);      // distance as a share of the gap this pair needs
+      if (d > bd) { bd = d; best = { x, y }; }
+    }
+    if (!best) return false;
+    const made = pois.filter((q) => q.kind === kind).length;
+    taken.push({ x: best.x, y: best.y, r }); pois.push({ kind, x: best.x, y: best.y, r, tier: tierAt(best.x, best.y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` });
+    return true;
+  };
+  def.plan(place, mustHave, placeBest);
 
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);

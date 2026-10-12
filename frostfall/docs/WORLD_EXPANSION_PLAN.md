@@ -1,6 +1,6 @@
 # World expansion: plan
 
-Status: PLAN ONLY. Nothing here is built. It follows Colin's answers: fresh monsters, new tricks, region variants and roaming mini-bosses; terrain variety and landmarks; two new regions that look different from the snowy ones but make sense with the story; side quest chains and a branching ending; a few new spells; armour classes and carry weight (recommended set); build it to completion, test it and publish this week.
+Status: BUILT (see "What was built" at the end). The plan below is what Colin approved. It follows Colin's answers: fresh monsters, new tricks, region variants and roaming mini-bosses; terrain variety and landmarks; two new regions that look different from the snowy ones but make sense with the story; side quest chains and a branching ending; a few new spells; armour classes and carry weight (recommended set); build it to completion, test it and publish this week.
 
 ## Principles
 
@@ -64,3 +64,18 @@ Phases 1, 2 and 3 are the heaviest. Suggested order: 1 (small) -> 2 and 3 togeth
 - Region names and themes above: confirm or swap.
 - How hard should the new regions be relative to the endgame: slot them in the middle of the progression (recommended) or after the Long Winter as post-game?
 - Should the branching ending change the final boss fight itself, or only the epilogue (recommended: only the epilogue and one boss variant)?
+
+
+## What was built
+
+- **Armour classes and carry weight** (`src/systems/burden.js`, `TUNE.player.weights`, `TUNE.burden`): light armour is +6% speed, -10% detection, 5% cheaper spells, +10% stamina regen, easier to knock back and -10 carry; heavy armour is -8% speed, +15% detection, +10% spell cost, -15% stamina regen, much harder to knock back and +20 carry; helmets add half of their own class. Carry capacity is 120 plus half a point per stamina above 100, the armour class and the pony. Equipped gear counts at half weight; potions, arrows and quest items weigh almost nothing. Soft limits only: Burdened (over capacity: -15% speed, -20% stamina regen) and Overloaded (over 125%: -35% speed, no rolling). The pack screen shows `WT carried/capacity` and sorts by weight; the HUD shows a status when burdened. Test: `test/stage76_burden.mjs`.
+- **The Embergreen Vale** (`src/world/regions4.js`, `src/data/hubs4.js` Greenhollow, `src/data/regions4_story.js`): a green valley, tier 1-2, gate in the Hollow Reach. Meadows, flower fields, birch woods, ponds. Places: hornet hives (Queen Vespera), sacred groves (Grove Warden Moss), thorn patches (Elder Thornwood), flower fields. Boss: **the Blight Mother** in the Thornroot Hollow (roots in behind blight pods, tier 2). Roaming boss: the Mossking.
+- **The Sunscorch Reach**: dunes and oases, tier 2-3, gate in the Hollow Reach. Places: oases, raider camps (Captain Karrow), sand pits (the Sandmaw), tomb mouths (Ankhet the Tomb Scorpion), dust spires (Kharn the Dust Lord), thieves' dens (Red Sula). Hub: Amberwell. Boss: **the Vault Sovereign** in the Sealed Vault (sunbeams). Roaming boss: the Sunwyrm.
+- **32 new creatures**: 14 fresh monsters with new art (thornling, hornet, blightbloom, dewsprite, hedge knight, mosshulk, sand burrower, scorpion, dust devil, sun sentinel, cutpurse, warchanter, tomb wrapped, dune raider), 10 region variants (ash wolf, bog wolf, dune jackal, thornboar, marsh draugr, sand wight, ember knight, frost bear, mire lynx, sun fencer) and 8 named mini-bosses with a unique prize each. New tricks: dew sprites **heal** allies (`cfg.heals`), cutpurses **steal gold and run** (`cfg.steals`; kill them to get it back), warchanters use the existing **aura** to rally allies.
+- **New terrain**: 5 Vale tiles, 7 Sunscorch tiles, 8 scatter tiles for the older regions (snowdrift, frostbloom, boulders, ember blooms, lily pads, mossy marble, glass flowers, spores), placed from hash noise so nothing else moves.
+- **25 landmarks** (`src/world/landmarks.js`): frozen waterfall, mammoth bones, the lone giant, a lavafall, a bone hall, a sphinx and so on; each is "sighted" from further away than ordinary places and has a guard, a chest, a lore page and a sign.
+- **Quests**: two main quests with a choice (the grove's heart: replant or keep; the vault: Sunbreaker, Winterward, or seal it) and eight chains of three linked quests (hornets, dew, thorns, grove song, water, tombs, raiders, the red purse; the last one asks you to turn Red Sula in or let her go). The choices change the epilogue, and the Long Winter fight (Sunbreaker: fire hurts it 35% more and it strikes faster; Winterward: it hits 15% softer).
+- **Four new spells**: Regrowth (heal over six seconds, Restoration 6), Thorn Snare (roots and cuts, Restoration 9), Sandstorm (blinds and scatters, Sneak 9), Sunbeam (a column of light after a beat, tome from the Sealed Vault and Amberwell).
+- Tests: `test/stage77_expansion.mjs`.
+
+Where to tune: enemy stat blocks in `src/data/enemies4.js`, boss moves in `TUNE.blightmother` / `TUNE.vaultsovereign`, per-boss health in `TUNE.bosses`, the tier curve in `TUNE.scaling`.

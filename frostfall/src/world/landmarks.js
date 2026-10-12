@@ -3,7 +3,7 @@
 // never moves anything else: patches of snowdrift, frostbloom, ember blooms, lily pads, glass flowers and spores, and lone boulders.
 import { TILE } from '../config.js';
 import { hash } from '../util.js';
-import { vnoise, REACH, ASHEN, COAST, KINGDOM, EXTRA_KIND_NAME, MAJOR } from './worldgen.js';
+import { vnoise, REACH, ASHEN, COAST, KINGDOM, EXTRA_KIND_NAME, STRICT } from './worldgen.js';
 import { FENS, HIGHLANDS } from './regions2.js';
 import { GLASSWOOD, UNDERDEEP } from './regions3.js';
 import { VALE, SUNSCORCH } from './regions4.js';
@@ -59,7 +59,7 @@ const WHERE = {
 };
 
 for (const [id, [name, title, text, col, r, shape]] of Object.entries(DEFS)) {
-  EXTRA_KIND_NAME[id] = name; PLACE_NAME[id] = name.replace(/^(A|AN|THE) /, ''); PLACE_COL[id] = col; LANDMARKS.add(id);
+  EXTRA_KIND_NAME[id] = name; PLACE_NAME[id] = name.replace(/^(A|AN|THE) /, ''); PLACE_COL[id] = col; LANDMARKS.add(id); STRICT.add(id);
   LORE['lm_' + id] = { title, text: [text] };
 }
 // each landmark: a clearing, the structure, a glow, a guard, a chest, a lore page and a sign
@@ -81,7 +81,7 @@ for (const [, [def, list]] of Object.entries(WHERE)) {
   def.dressers = def.dressers || {};
   const old = def.plan;
   for (const [id] of list) def.dressers[id] = dresser(id);
-  def.plan = (place, mustHave) => { old(place, mustHave); for (const [id, n] of list) place(id, n, 8); };
+  def.plan = (place, mustHave, placeBest) => { old(place, mustHave, placeBest); for (const [id, n] of list) place(id, n, 8); };
 }
 
 // ---------------------------------------------------------------------------------------------- scatter terrain (tile-only: uses hash noise, not the world's RNG)

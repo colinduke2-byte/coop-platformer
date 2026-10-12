@@ -76,7 +76,7 @@ export const VALE = {
       enemy('hornetqueen', p.x, p.y, p.tier + 1, { camp: p.id });
       for (let i = 0; i < 3 + p.tier; i++) enemy('hornet', p.x + Math.round((i % 3 - 1) * 4), p.y + 3 + Math.floor(i / 3) * 2, p.tier, { camp: p.id });
       chest(p, 0, -3, p.tier + 1, 'hard');
-      add({ t: 'pickup', x: p.x - 2, y: p.y + 5, spec: { type: 'item', id: 'honeycomb' } });
+      add({ t: 'herb', item: 'honeycomb', x: p.x - 2, y: p.y + 5 });
       add({ t: 'sign', x: p.x - 7, y: p.y + 1, text: ['A HORNET HIVE.', 'THE HUM CARRIES. SO DOES THE QUEEN\'S TEMPER.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'champion' });
     },
@@ -232,5 +232,5 @@ REGION_DEFS.vale = VALE;
 REGION_DEFS.sunscorch = SUNSCORCH;
 
 // the gates, appended to the end of each plan so the existing regions place everything else exactly as before
-const wrapPlan = (def, fn) => { const old = def.plan; def.plan = (place, mustHave) => { old(place, mustHave); fn(place, mustHave); }; };
-wrapPlan(REACH, (place, mustHave) => { mustHave('valegate', 10, 1, null, { x: 180, y: 230, r: 60 }); mustHave('dunegate', 10, 2, null, { x: 400, y: 200, r: 60 }); });
+const wrapPlan = (def, fn) => { const old = def.plan; def.plan = (place, mustHave, placeBest) => { old(place, mustHave, placeBest); fn(place, mustHave, placeBest); }; };
+wrapPlan(REACH, (place, mustHave, placeBest) => { placeBest('valegate', 10, 1, { x: 180, y: 230, r: 170 }) || mustHave('valegate', 10, 1); placeBest('dunegate', 10, 2, { x: 400, y: 200, r: 170 }) || mustHave('dunegate', 10, 2); });

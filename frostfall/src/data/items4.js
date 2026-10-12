@@ -19,10 +19,10 @@ Object.assign(ITEMS, {
   // ---- the Blight Mother
   blight_heart: { name: 'Heart of the Grove', type: 'quest', icon: ['gem', 8], value: 0, desc: 'A green seed the size of a fist, beating very slowly. The Blight Mother kept it the way a mother keeps a child.' },
   bramble_blade: { name: 'Bramble Blade', type: 'weapon', icon: ['sword_nordic', 8], dmg: 33, crit: 0.06, inflict: [{ type: 'bleed', chance: 0.3, t: 4, dps: 3 }], sockets: 2, value: 640, desc: 'A sword grown, not forged. Thorns along the spine make wounds that keep bleeding.' },
-  heartwood_bow: { name: 'Heartwood Bow', type: 'bow', icon: ['bow_antler', 8], dmg: 22, value: 600, desc: 'Cut from the grove tree. It wants to be drawn, and it wants to be released.' },
-  verdant_mail: { name: 'Verdant Mail', type: 'armor', weight: 'light', icon: ['armor_peat', 8], armor: 0.2, maxHp: 25, moveMul: 1.05, sockets: 2, value: 620, desc: 'Light. Absorbs 20%, +25 health, +5% speed. Overlapping leaves that harden when struck.' },
+  heartwood_bow: { name: 'Heartwood Bow', type: 'bow', icon: ['bow_hunting', 8], dmg: 22, value: 600, desc: 'Cut from the grove tree. It wants to be drawn, and it wants to be released.' },
+  verdant_mail: { name: 'Verdant Mail', type: 'armor', weight: 'light', icon: ['armor_wardencuir', 8], armor: 0.2, maxHp: 25, moveMul: 1.05, sockets: 2, value: 620, desc: 'Light. Absorbs 20%, +25 health, +5% speed. Overlapping leaves that harden when struck.' },
   leaf_cowl: { name: 'Leaf Cowl', type: 'helmet', weight: 'light', icon: ['helm_hood', 8], armor: 0.05, maxHp: 10, detectMul: 0.9, value: 420, desc: 'A hood of living leaves. Absorbs 5%, +10 health, harder to spot.' },
-  moss_shield: { name: 'Mossback Shield', type: 'shield', icon: ['shield_wooden', 8], block: 0.78, cost: 0.7, value: 560, desc: 'A shield of bark and moss. Blocks 78% and costs little stamina to hold.' },
+  moss_shield: { name: 'Mossback Shield', type: 'shield', icon: ['shield_bulwark', 8], block: 0.78, cost: 0.7, value: 560, desc: 'A shield of bark and moss. Blocks 78% and costs little stamina to hold.' },
   bloom_charm: { name: 'Everbloom Charm', type: 'charm', icon: ['charm_clover', 14], maxHp: 20, maxMp: 20, value: 520, desc: '+20 health and mana. The flower inside has never wilted.' },
   // ---- the Vault Sovereign
   vault_seal: { name: 'Seal of the Vault', type: 'quest', icon: ['gem', 13], value: 0, desc: 'A gold disc worn smooth by a thousand hands. It opens what the desert kings closed.' },
@@ -34,7 +34,7 @@ Object.assign(ITEMS, {
   scarab_charm: { name: 'Golden Scarab', type: 'charm', icon: ['charm_sun', 13], goldMul: 1.15, crit: 0.04, value: 560, desc: '+15% gold found, +4% crit. Fortune favours the shiny.' },
   // ---- the ending choice: the weapon in the vault
   sunbreaker: { name: 'Sunbreaker', type: 'weapon2h', style: 'great', icon: ['sword_gs_king', 13], dmg: 58, elem: { type: 'fire', power: 12 }, sockets: 3, value: 1800, desc: 'Two-handed. The desert kings\' answer to the cold: a sword that burns as it falls. It will melt the Winter, and the ice with it.' },
-  winterward: { name: 'Winterward', type: 'charm', icon: ['charm_wave', 15], maxHp: 40, maxMp: 40, value: 1500, desc: '+40 health and mana. The vault\'s second gift: a quiet ward that lets the Winter pass through you instead of over you.' },
+  winterward: { name: 'Winterward', type: 'charm', icon: ['charm_manaring', 15], maxHp: 40, maxMp: 40, value: 1500, desc: '+40 health and mana. The vault\'s second gift: a quiet ward that lets the Winter pass through you instead of over you.' },
   tome_sunbeam: { name: 'Tome of the Sunbeam', type: 'tome', teach: 'sunbeam', icon: ['scroll', 13], value: 420, desc: 'Read (E): learn Sunbeam, a column of light that falls where you aim.' },
   // ---- mini-boss prizes (one each)
   thorn_crown: { name: 'Thorncrown', type: 'helmet', weight: 'medium', icon: ['helm_circlet', 8], armor: 0.07, crit: 0.04, maxHp: 10, value: 520, desc: 'Absorbs 7%, +10 health, +4% crit. Taken from the Elder Thornwood; it still tries to take root.' },

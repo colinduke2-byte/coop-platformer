@@ -57,7 +57,7 @@ function chain(c) {
   c.steps.forEach((st, i) => {
     const id = `${c.id}${i + 1}`; reg(id); st.qid = id;
     QUESTS[id] = {
-      title: st.title, giver: c.who, desc: st.desc,
+      title: st.title, giver: c.giver || c.who, desc: st.desc,
       short: (q) => (q.status === 'ready' || goalDone(st.goal, q) ? `Tell ${c.who}` : goalText(st.goal, q)),
       objectives: (q) => [{ t: `${st.label} (${goalText(st.goal, q)})`, done: goalDone(st.goal, q) || q.status === 'done' }, { t: `Tell ${c.who}`, done: q.status === 'done' }],
     };
@@ -134,7 +134,7 @@ SCRIPTS.vale_watch = talk('Greenhollow Watch', 'vwatchN', ['Hedges are in good o
 SCRIPTS.vale_hunter = talk('Fern', 'fernN', ['Boar with briars in the hide: aim for the eyes. The briars do not scare me. The boar does.', 'The hornets nest in the birch rings. Take fire, or take stairs.']);
 SCRIPTS.vale_bard = talk('Lark', 'larkN', ['I am working on a song about the grove tree. It has eleven verses and one very long rest.', 'The best songs are the ones that make you want to put your sword down. The second best are the ones that make you pick it up.']);
 
-chain({ id: 'hornets', npc: 'vale_beekeeper', who: 'Orla', key: 'orlaN', idle: ['The hum is back to normal. Thank you. I could weep.', 'My bees named a flower after you. I will not tell you which one.'], steps: [
+chain({ id: 'hornets', npc: 'vale_beekeeper', who: 'Orla', giver: 'Beekeeper Orla', key: 'orlaN', idle: ['The hum is back to normal. Thank you. I could weep.', 'My bees named a flower after you. I will not tell you which one.'], steps: [
   { title: 'Too Many Wings', label: 'Swat meadow hornets', goal: { kills: ['hornet', 6, 'hornets'] }, desc: 'The hornets of the Vale have grown bold. Orla needs six of them swatted before they reach the hives.',
     intro: ['The hornets have been through the apiary again. They do not eat the honey; they just break it.', 'Six should teach the rest. Please.'], go: 'Fire is best. Do not run; they like it when you run.', progress: 'Six hornets. Keep your back to a wall.', thanks: ['That is the sound I like: quiet.'], pay() { addGold(180); addItem('honeycomb', 2, true); } },
   { title: 'The Queen\'s Court', label: 'Clear a hornet hive', goal: { cleared: [/^vale_hive\d+$/, 1, 'hives'], poi: ['vale', 'hive'] }, desc: 'The hornets follow a queen. If she falls, the wasps scatter. Find a hornet hive and clear it.',
@@ -142,7 +142,7 @@ chain({ id: 'hornets', npc: 'vale_beekeeper', who: 'Orla', key: 'orlaN', idle: [
   { title: 'Honey for the Winter', label: 'Bring wild honeycomb', goal: { have: ['honeycomb', 4, 'honeycomb'] }, desc: 'The honey stores are low for the cold months. Orla needs four fresh combs, from the hornets\' own stores.',
     intro: ['One more thing, if you are willing. The winter is coming and my stores are low.', 'Four combs. Hornets keep their honey in the most inconvenient places.'], go: 'The queen\'s hive, the flower fields. They carry some. I will not ask where.', progress: 'Four combs. The hornets are not generous.', thanks: ['Gold from the flowers. Thank you, dreamer.'], pay() { addGold(260); addItem('elixir_speed', 1, true); } },
 ] });
-chain({ id: 'dew', npc: 'vale_herbalist', who: 'Dahlia', key: 'dahliaN', idle: ['The garden is happier. So am I.', 'Your dew potion helped the Warden\'s knee. He has not forgiven me for noticing.'], steps: [
+chain({ id: 'dew', npc: 'vale_herbalist', who: 'Dahlia', giver: 'Dahlia the herbalist', key: 'dahliaN', idle: ['The garden is happier. So am I.', 'Your dew potion helped the Warden\'s knee. He has not forgiven me for noticing.'], steps: [
   { title: 'Roots for the Dew', label: 'Gather valeroot', goal: { have: ['valeroot', 5, 'valeroot'] }, desc: 'Dahlia brews a draught from valeroot that keeps the Winter out of the lungs. She needs five roots from the meadows.',
     intro: ['I brew a dew that keeps the cold out of the bones. I am out of valeroot.', 'Five, from the meadows. They look like weeds. They are, but sweet ones.'], go: 'Look in the flower fields, at the edge of the paths.', progress: 'Five valeroot.', thanks: ['Fresh! You have the eye.'], pay() { addGold(120); addItem('hp_potion', 3, true); } },
   { title: 'Sunpetals at Noon', label: 'Gather sunpetals', goal: { have: ['sunpetal', 5, 'sunpetal'] }, desc: 'Sunpetals follow the light and make the draught sing. Five are needed.',
@@ -150,7 +150,7 @@ chain({ id: 'dew', npc: 'vale_herbalist', who: 'Dahlia', key: 'dahliaN', idle: [
   { title: 'The Thieving Sprites', label: 'Catch dew sprites', goal: { kills: ['dewsprite', 6, 'dew sprites'] }, desc: 'Dew sprites steal the morning dew from the garden to mend their wounded. Dahlia wants six of them gone.',
     intro: ['Something has been drinking the garden\'s dew. It is the sprites. Healing each other with my dew!', 'Six should do. Kill them first when you see them in a group.'], go: 'They keep their distance. Corner them.', progress: 'Six dew sprites.', thanks: ['The dew will gather again. You are kind to those who need it.'], pay() { addGold(240); addItem('dew_essence', 3, true); addItem('mp_potion_g', 2, true); } },
 ] });
-chain({ id: 'thorns', npc: 'vale_gardener', who: 'Ash', key: 'ashN', idle: ['The hedges are my business again. A beautiful feeling.', 'The thorns grow back. So do I.'], steps: [
+chain({ id: 'thorns', npc: 'vale_gardener', who: 'Ash', giver: 'Gardener Ash', key: 'ashN', idle: ['The hedges are my business again. A beautiful feeling.', 'The thorns grow back. So do I.'], steps: [
   { title: 'Thorns in the Hedge', label: 'Cut thornlings', goal: { kills: ['thornling', 8, 'thornlings'] }, desc: 'Thornlings have been waking in the hedges. Ash wants eight cut down before they reach the village.',
     intro: ['The hedges walk. Not all of them, but enough to be worrying.', 'Eight thornlings. Cut them at the knee; fire if you have it.'], go: 'They lie still in the bushes until you are close. Watch the hedges.', progress: 'Eight thornlings.', thanks: ['The hedge is just a hedge again. For now.'], pay() { addGold(200); addItem('hp_potion', 3, true); } },
   { title: 'The Thorn Patch', label: 'Clear a thorn patch', goal: { cleared: [/^vale_thornpatch\d+$/, 1, 'thorn patches'], poi: ['vale', 'thornpatch'] }, desc: 'The oldest briar in the Vale has woken. Ash asks you to clear a thorn patch and its elder.',
@@ -158,7 +158,7 @@ chain({ id: 'thorns', npc: 'vale_gardener', who: 'Ash', key: 'ashN', idle: ['The
   { title: 'Cuttings', label: 'Bring thornvine', goal: { have: ['thornvine', 6, 'thornvine'] }, desc: 'Ash makes a rope of thornvine that nothing can chew. Six lengths, please.',
     intro: ['The rope I make from thornvine is the best you can buy. I need six lengths.', 'They drop from thornlings, thornboar and the elders.'], go: 'Gloves help.', progress: 'Six lengths of thornvine.', thanks: ['Strong as anything. You have my thanks and my best rope.'], pay() { addGold(260); addItem('leaf_cowl'); } },
 ] });
-chain({ id: 'grovesong', npc: 'vale_bard', who: 'Lark', key: 'larkN2', gate: () => S.quests.blightmother.status !== 'inactive', idle: ['The song is finished. I will sing it for you at the next feast.'], steps: [
+chain({ id: 'grovesong', npc: 'vale_bard', who: 'Lark', giver: 'Lark the bard', key: 'larkN2', gate: () => S.quests.blightmother.status !== 'inactive', idle: ['The song is finished. I will sing it for you at the next feast.'], steps: [
   { title: 'Verses of the Grove', label: 'Visit a sacred grove', goal: { cleared: [/^vale_heartgrove\d+$/, 1, 'groves'], poi: ['vale', 'heartgrove'] }, desc: 'Lark is writing a song about the grove tree and needs to hear the sacred groves for himself.',
     intro: ['I need a verse about the heart of the Vale, and I cannot write about a place I have not stood in.', 'There is a sacred grove, with a warden. Go, listen, and tell me what he sounds like.'], go: 'Do not sing there. He is a critic.', progress: 'A sacred grove, with a moss-green warden.', thanks: ['A hum? A very low hum? Marvellous.'], pay() { addGold(240); addItem('mp_potion_g', 2, true); } },
   { title: 'A Moss Heart', label: 'Bring a moss heart', goal: { have: ['moss_heart', 1, 'moss heart'] }, desc: 'The warden\'s kin carry moss hearts. Lark wants one for the chorus.',
@@ -211,7 +211,7 @@ SCRIPTS.dune_bard = talk('Songstress', 'songN', ['I sing the old songs of the su
 SCRIPTS.dune_caravan = talk('Basil', 'basilN', ['I have crossed this desert two hundred times. I could not tell you what is in the middle. Nobody ever stays.', 'Caravans never stop at the sand pits. The sand is not hungry. It just remembers.']);
 SCRIPTS.dune_guard = talk('Amberwell Guard', 'dguardN', ['Gates are open, walls are manned, the well is full. A good day.', 'Raiders, cutpurses, burrowers. Pick a thing to fear and you will be right.']);
 
-chain({ id: 'water', npc: 'dune_trader', who: 'Jamila', key: 'jamilaN2', idle: ['The oasis is clear and the caravans are happy. I could sing.'], steps: [
+chain({ id: 'water', npc: 'dune_trader', who: 'Jamila', giver: 'Jamila of the Well', key: 'jamilaN2', idle: ['The oasis is clear and the caravans are happy. I could sing.'], steps: [
   { title: 'The Oasis Road', label: 'Clear an oasis', goal: { cleared: [/^sunscorch_oasis\d+$/, 1, 'oases'], poi: ['sunscorch', 'oasis'] }, desc: 'Jackals and scorpions have taken the nearest oasis. Jamila needs the caravan road open again.',
     intro: ['Caravans need water, water needs oases, and the oases have teeth.', 'Clear one of them, will you?'], go: 'Shade, water, and a great many things that want both.', progress: 'An oasis. Look for palms and water.', thanks: ['The road is open. I will fill your pouch.'], pay() { addGold(260); addItem('hp_potion_g', 2, true); } },
   { title: 'Venom for the Healers', label: 'Bring scorpion stingers', goal: { have: ['stinger', 4, 'stingers'] }, desc: 'Scorpion stingers make antivenom. Jamila needs four.',
@@ -219,7 +219,7 @@ chain({ id: 'water', npc: 'dune_trader', who: 'Jamila', key: 'jamilaN2', idle: [
   { title: 'The Scorpion Plague', label: 'Cull scorpions', goal: { kills: ['scorpion', 6, 'scorpions'] }, desc: 'The scorpions are breeding. Six must go before the caravan season.',
     intro: ['Last one. The scorpions are breeding in the shade of the old walls.', 'Six should do. Then the road is safe.'], go: 'They lunge. Dodge to the side.', progress: 'Six scorpions.', thanks: ['The road is safe. You have done Amberwell a great service.'], pay() { addGold(380); addItem('scarab_charm'); } },
 ] });
-chain({ id: 'tombs', npc: 'dune_scholar', who: 'Nefer', key: 'neferN', idle: ['The tombs are catalogued. The kings will be remembered, for better or worse.'], steps: [
+chain({ id: 'tombs', npc: 'dune_scholar', who: 'Nefer', giver: 'Scholar Nefer', key: 'neferN', idle: ['The tombs are catalogued. The kings will be remembered, for better or worse.'], steps: [
   { title: 'The Lost Tomb', label: 'Clear a tomb mouth', goal: { cleared: [/^sunscorch_tombmouth\d+$/, 1, 'tombs'], poi: ['sunscorch', 'tombmouth'] }, desc: 'Nefer wants a tomb entrance cleared so she can read what is written inside.',
     intro: ['There are tombs under the dunes, and nobody has read them since the kings fell.', 'Clear a tomb mouth, and I will do the reading.'], go: 'Fire for the wrapped. Frost for the scorpions.', progress: 'A tomb mouth. Look for glyphs and statues.', thanks: ['The inscriptions! The beautiful, terrible inscriptions.'], pay() { addGold(280); addItem('mp_potion_g', 2, true); } },
   { title: 'Tomb Linen', label: 'Bring tomb linen', goal: { have: ['linen_wrap', 5, 'tomb linen'] }, desc: 'The wrapped dead keep linen bound with gold thread. Nefer needs five strips to date the burials.',
@@ -227,7 +227,7 @@ chain({ id: 'tombs', npc: 'dune_scholar', who: 'Nefer', key: 'neferN', idle: ['T
   { title: 'Sunglass Lens', label: 'Bring sunglass', goal: { have: ['sand_glass', 4, 'sunglass'] }, desc: 'Nefer needs four lumps of sunglass to read the vault glyphs by sunlight.',
     intro: ['One more. Sunglass focuses the glyphs so they can be read. Four lumps.', 'It is in the sand where the old fires burned.'], go: 'Sentinels and burrowers carry it.', progress: 'Four lumps of sunglass.', thanks: ['Clear! The glyphs are as clear as day. They say: do not open this door.'], pay() { addGold(380); addItem('ankhet_ring'); } },
 ] });
-chain({ id: 'raiders', npc: 'dune_guard2', who: 'Captain Nadir', key: 'nadirN', idle: ['The roads are quiet. I hear you did that.'], steps: [
+chain({ id: 'raiders', npc: 'dune_guard2', who: 'Captain Nadir', giver: 'Captain Nadir', key: 'nadirN', idle: ['The roads are quiet. I hear you did that.'], steps: [
   { title: 'Raiders on the Road', label: 'Defeat dune raiders', goal: { kills: ['duneraider', 6, 'raiders'] }, desc: 'Dune raiders have been taking caravans. Captain Nadir wants six of them dealt with.',
     intro: ['Raiders on the road. Sand-coloured, fast, and they run when hurt. Six, if you can.', 'The captain pays by the head.'], go: 'Do not chase the ones who flee. They come back.', progress: 'Six raiders.', thanks: ['Six! The caravan master sends his thanks and a bottle.'], pay() { addGold(240); addItem('hp_potion_g', 2, true); } },
   { title: 'The Raider Camp', label: 'Clear a raider camp', goal: { cleared: [/^sunscorch_raidercamp\d+$/, 1, 'camps'], poi: ['sunscorch', 'raidercamp'] }, desc: 'The raiders have a camp under a captain\'s banner. Clear it.',
@@ -236,7 +236,7 @@ chain({ id: 'raiders', npc: 'dune_guard2', who: 'Captain Nadir', key: 'nadirN', 
     intro: ['Three more drummers remain. They bring the others back.', 'Cut them down and the desert is quiet.'], go: 'They keep their distance. Use arrows.', progress: 'Three warchanters.', thanks: ['Silence. At last.'], pay() { addGold(460); addItem('karrow_blade'); } },
 ] });
 SCRIPTS.dune_guard2 = SCRIPTS.dune_guard;
-chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', key: 'quietN', idle: ['I see nothing, hear nothing, and keep my hand on my purse. Wise, yes?'], steps: [
+chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', giver: 'The quiet man of Amberwell', key: 'quietN', idle: ['I see nothing, hear nothing, and keep my hand on my purse. Wise, yes?'], steps: [
   { title: 'The Red Purse', label: 'Catch cutpurses', goal: { kills: ['cutpurse', 4, 'cutpurses'] }, desc: 'A quiet man in Amberwell says Red Sula\'s cutpurses took his savings. He wants four of them caught.',
     intro: ['I was robbed. I do not like to say by whom. Red Sula\'s children.', 'Catch four of them. Make them drop what they hold.'], go: 'They run. Stun them. Hit hard.', progress: 'Four cutpurses.', thanks: ['That is a start. I hear they are not happy.'], pay() { addGold(220); addItem('lockpick', 3, true); } },
   { title: 'The Thieves\' Den', label: 'Clear Sula\'s den', goal: { cleared: [/^sunscorch_thiefden\d+$/, 1, 'dens'], poi: ['sunscorch', 'thiefden'] }, desc: 'Red Sula\'s den holds what the cutpurses took. Clear it.',
@@ -248,7 +248,7 @@ chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', key: 'quietN', idl
       else { S.flags.choiceSula = 'freed'; addItem('sula_dagger'); await say('The quiet man', 'She will remember it. That is either very good or very bad.'); }
     }, pay() { addGold(200); } },
 ] });
-chain({ id: 'burrowers', npc: 'dune_hunter', who: 'Tariq', key: 'tariqN', idle: ['The sand is quieter. I owe you a drink and a story.'], steps: [
+chain({ id: 'burrowers', npc: 'dune_hunter', who: 'Tariq', giver: 'Tariq Sandwalker', key: 'tariqN', idle: ['The sand is quieter. I owe you a drink and a story.'], steps: [
   { title: 'The Shifting Sand', label: 'Slay sand burrowers', goal: { kills: ['sandburrower', 5, 'burrowers'] }, desc: 'Sand burrowers have been dragging camels down. Tariq needs five of them dead.',
     intro: ['The sand moves against the wind. That is a burrower. Five, if you can.', 'They dig in, mark the spot, and bite. Move when the sand swells.'], go: 'When you see the ring, roll out of it.', progress: 'Five burrowers.', thanks: ['Five! My camels will live.'], pay() { addGold(280); addItem('hp_potion_g', 2, true); } },
   { title: 'The Sand Pit', label: 'Clear a sand pit', goal: { cleared: [/^sunscorch_burrowpit\d+$/, 1, 'sand pits'], poi: ['sunscorch', 'burrowpit'] }, desc: 'The Sandmaw hunts in a sand pit. Clear one and end it.',

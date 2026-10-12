@@ -20,14 +20,14 @@ export class BlightMother extends PatternBoss {
   // Rootbound: now and then she sinks her roots into the hall (takes a quarter damage and mends) and pods bloom around her.
   // Kill every pod to tear her loose, stunned and exposed.
   special(dt, player) {
-    this.rootT = (this.rootT ?? 9) - dt;
+    this.rootT = (this.rootT ?? 12) - dt;
     if (!this.rooted && this.rootT <= 0 && !this.invulnerable) {
       this.rooted = true; this.takenMul = 0.25; this.setTint(0x9ad890);
       this.pods = [];
       for (let i = 0; i < 3; i++) {
         const a = (i / 3) * Math.PI * 2 + Math.random(), x = this.x + Math.cos(a) * 64, y = this.y + Math.sin(a) * 52;
         if (this.scene.solidAt(x, y)) continue;
-        const p = this.scene.addEnemy('blightbloom', x, y, { tier: 2 }); p.alert(true); this.pods.push(p);
+        const p = this.scene.addEnemy('blightbloom', x, y, { tier: 0 }); p.alert(true); this.pods.push(p);
       }
       if (!this.pods.length) this.endRoot(false);
       else { bus.emit('toast', 'ROOTBOUND! DESTROY THE PODS', 8); sfx.play('nova'); }
