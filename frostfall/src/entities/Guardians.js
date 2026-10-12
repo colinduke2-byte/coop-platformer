@@ -55,6 +55,19 @@ export class LongWinter extends PatternBoss {
       phaseAt: [0.66, 0.33], phaseText: { 2: 'THE STORM', 3: 'THE HUNGER' },
       onVictory: (sc) => sc.startFinale(),
     });
+    // the choices you made in the Sunscorch Reach change the last fight: the burning sword makes it flinch (fire hurts more, it strikes faster),
+    // the ward lets the cold pass through you (its blows hurt less)
+    const cv = S.flags.choiceVault;
+    if (cv === 'sunbreaker') { this.fireMul = 1.35; this.cdMul = 0.9; scene.time.delayedCall(1800, () => bus.emit('toast', 'THE WINTER FLINCHES FROM THE SUNBREAKER', 12)); }
+    else if (cv === 'winterward') {
+      this.B = JSON.parse(JSON.stringify(TUNE.winter));
+      for (const mv of Object.values(this.B)) if (mv && typeof mv === 'object' && mv.dmg) mv.dmg = Math.round(mv.dmg * 0.85);
+      scene.time.delayedCall(1800, () => bus.emit('toast', 'THE WINTERWARD HUMS', 15));
+    }
+  }
+  takeHit(info) {
+    if (this.fireMul && info.element === 'fire') info = { ...info, dmg: info.dmg * this.fireMul };
+    return super.takeHit(info);
   }
   attackPool(d) {
     const o = [];

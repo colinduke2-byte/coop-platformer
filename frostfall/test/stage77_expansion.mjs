@@ -177,5 +177,19 @@ const sp = await G(async () => {
 check('Regrowth, Thorn Snare, Sandstorm and Sunbeam join the spell list and unlock by skill or tome', sp.list, JSON.stringify(sp));
 check('Regrowth heals over several seconds; Thorn Snare roots and cuts; Sandstorm blinds and scatters; Sunbeam lands after a beat', sp.regrow && sp.thorns && sp.sand && sp.sun, JSON.stringify(sp));
 
+// ---- the vault choice changes the final fight
+const fin = await G(async () => {
+  const sc = window.gs(), S = window.__ff.S, p = sc.player, { BOSS_CLASS } = await import('/src/world/sceneConsts.js'), { TUNE } = await import('/src/data/tuning.js');
+  const out = {};
+  for (const c of ['seal', 'sunbreaker', 'winterward']) {
+    S.flags.choiceVault = c;
+    const b = new BOSS_CLASS.winter(sc, p.x + 200, p.y + 200);
+    out[c] = { fire: b.fireMul || 1, slam: b.B.slam.dmg, base: TUNE.winter.slam.dmg };
+    b.destroy();
+  }
+  return out;
+});
+check('the Long Winter takes more from fire if you took the Sunbreaker, and hits softer if you took the Winterward', fin.seal.fire === 1 && fin.seal.slam === fin.seal.base && fin.sunbreaker.fire > 1 && fin.winterward.slam < fin.winterward.base, JSON.stringify(fin));
+
 check('no page errors', h.errors.length === 0, h.errors.join(' | '));
 await h.close();
