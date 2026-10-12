@@ -1,8 +1,10 @@
 // The one mutable game-state object: this is exactly what gets saved.
 export const SKILLS = ['oneHanded', 'archery', 'destruction', 'restoration', 'sneak'];
 
+// ids of quests registered by data modules (data/regions4_story.js); newState gives each a default state
+export const EXTRA_QUEST_IDS = [];
 export function newState() {
-  return {
+  return withExtras({
     map: 'village', spawn: 'start', x: null, y: null,
     maxHp: 100, maxMp: 100, maxSp: 100,
     hp: 100, mp: 100, sp: 100,
@@ -50,8 +52,9 @@ export function newState() {
     seed: Math.floor(Math.random() * 1e9),     // the run seed: lays out the open world and its dungeons
     discovered: {}, sighted: {},
     hearts: {}, gen: {}, killed: {}, bounty: {}, shrines: {}, run: { kills: 0, camps: 0, barrows: 0, champions: 0, chests: 0 }, ngPlus: 0,
-  };
+  });
 }
+function withExtras(st) { for (const id of EXTRA_QUEST_IDS) st.quests[id] ||= { status: 'inactive' }; return st; }
 
 // Singleton: mutate in place so every module sees the same object.
 export const S = newState();

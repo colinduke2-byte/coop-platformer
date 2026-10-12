@@ -4,7 +4,7 @@ import { S } from '../systems/state.js';
 
 import { MAPS } from './maps.js';
 
-export const REGION_ORDER = ['reach', 'ashen', 'coast', 'kingdom', 'fens', 'highlands', 'glasswood', 'underdeep'];
+export const REGION_ORDER = ['reach', 'ashen', 'coast', 'kingdom', 'fens', 'highlands', 'glasswood', 'underdeep', 'vale', 'sunscorch'];
 export const REGIONS = {
   reach: { id: 'reach', map: 'forest', name: 'The Hollow Reach', locked: () => false },
   ashen: { id: 'ashen', map: 'ashen', name: 'The Ashen Peaks', locked: () => !S.flags.regions?.ashen },
@@ -13,6 +13,8 @@ export const REGIONS = {
   fens: { id: 'fens', map: 'fens', name: 'The Weeping Fens', locked: () => false },
   highlands: { id: 'highlands', map: 'highlands', name: 'The Stormcrown Highlands', locked: () => false },
   glasswood: { id: 'glasswood', map: 'glasswood', name: 'The Glasswood', locked: () => false },
+  vale: { id: 'vale', map: 'vale', name: 'The Embergreen Vale', locked: () => false },
+  sunscorch: { id: 'sunscorch', map: 'sunscorch', name: 'The Sunscorch Reach', locked: () => false },
   underdeep: { id: 'underdeep', map: 'underdeep', name: 'The Underdeep', locked: () => !S.flags.regions?.ashen },
 };
 export const unlockRegion = (id) => { S.flags.regions = S.flags.regions || {}; S.flags.regions[id] = true; };

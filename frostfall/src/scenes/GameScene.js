@@ -78,6 +78,7 @@ import '../data/emberhold.js';
 import '../data/hamlets.js';
 import '../data/regions2_story.js';
 import '../data/regions3_story.js';
+import '../data/regions4_story.js';
 import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';

@@ -16,6 +16,8 @@ export const PLACE_NAME = {
   sepulchre: 'THE HOLLOW SEPULCHRE', fenroad: 'THE FEN ROAD', stormroad: 'THE STORMCROWN PASS', reedwick: 'REEDWICK', mirebarrow: 'THE SUNKEN BARROW', skarnhold: 'SKARN HOLD', stormspire: 'THE STORMSPIRE',
   glassroad: 'THE GLASSWOOD ROAD', lanternglade: 'LANTERN GLADE', hartspire: 'THE HART SPIRE', deepdoor: 'THE DEEP STAIR', lanternfall: 'LANTERNFALL', lodenest: 'THE LODE CHASM', saltgate: 'SALTMARKET', smugglercove: 'SEAWEED COVE',
   crystalgrove: 'CRYSTAL GROVE', glimmerpool: 'GLIMMERING POOL', antlerstone: 'ANTLER STONE', glowcapgrove: 'GLOWCAP GROVE', weavernest: 'WEAVER NEST', lodevein: 'RICH VEIN',
+  valegate: 'THE VALE ROAD', greenhollow: 'GREENHOLLOW', thornroot: 'THE THORNROOT HOLLOW', dunegate: 'THE DESERT ROAD', amberwell: 'AMBERWELL', sealedvault: 'THE SEALED VAULT',
+  flowerfield: 'FLOWER FIELD', hive: 'HORNET HIVE', heartgrove: 'SACRED GROVE', thornpatch: 'THORN PATCH', oasis: 'OASIS', raidercamp: 'RAIDER CAMP', burrowpit: 'SAND PIT', tombmouth: 'TOMB MOUTH', dustspire: 'DUST SPIRE', thiefden: "THIEVES' DEN",
   peatfire: 'PEAT FIRE', hagshut: "HAG'S HUT", drownedshrine: 'DROWNED SHRINE', hearthcamp: 'CLAN HEARTH', giantcairn: "GIANT'S CAIRN", stormcircle: 'STORM CIRCLE', spring: 'HOT SPRING', rest: "TRAVELLERS' FIRE", cache: 'HIDDEN CACHE', hermit: "HERMIT'S HOLLOW", ancient: 'ANCIENT TREE',
 };
 // What a place looks like on the map: a colour index and whether it is hostile.

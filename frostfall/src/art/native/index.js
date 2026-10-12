@@ -5,3 +5,4 @@ import './special.js';
 import './bosses_a.js';
 import './bosses_b.js';
 import './bosses_c.js';
+import './newfauna.js';

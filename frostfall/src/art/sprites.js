@@ -159,6 +159,24 @@ export const STYLES = {
   herald: { skin: 10, hair: 13, helm: 13, body: 14, trim: 13, legs: 14, boots: 13, glow: 13, chest: 13, cape: 11, crown: 13 },
   sentinel: { skin: 6, hair: 5, helm: 6, body: 4, trim: 3, legs: 4, boots: 3, glow: 15, chest: 5, horns: 6 },
   stalker: { skin: 8, hair: 7, hood: 7, body: 8, trim: 7, legs: 7, boots: 7, chest: 8, mask: 7 },
+  // the Embergreen Vale and the Sunscorch Reach
+  hedgeknight: { skin: 8, hair: 7, helm: 8, body: 7, trim: 13, legs: 7, boots: 1, glow: 13, chest: 8, horns: 9 },
+  cutpurse: { skin: 10, hair: 1, hood: 14, body: 14, trim: 13, legs: 1, boots: 0, chest: 1, mask: 1, cape: 14 },
+  warchanter: { skin: 10, hair: 13, helm: 13, body: 11, trim: 13, legs: 9, boots: 1, glow: 13, chest: 12, horns: 12, cape: 12 },
+  sunsentinel: { skin: 13, hair: 9, helm: 13, body: 10, trim: 12, legs: 9, boots: 9, glow: 12, chest: 13, horns: 13, crown: 12 },
+  wrapped: { skin: 5, hair: 5, hood: 5, body: 5, trim: 10, legs: 5, boots: 4, glow: 11, chest: 6, mask: 6 },
+  duneraider: { skin: 10, hair: 9, hood: 10, body: 12, trim: 13, legs: 9, boots: 9, chest: 11, mask: 6, cape: 11 },
+  blightmother: { skin: 8, hair: 7, hood: 7, body: 7, trim: 13, legs: 1, boots: 0, glow: 11, chest: 8, crown: 14, cape: 8, horns: 9 },
+  vaultsovereign: { skin: 13, hair: 9, helm: 13, body: 10, trim: 12, legs: 9, boots: 9, glow: 15, chest: 12, crown: 13, cape: 11, horns: 13, beard: 9 },
+  // Vale and Sunscorch townsfolk
+  vale_elder: { skin: 10, hair: 6, hood: 8, body: 8, trim: 13, legs: 9, boots: 9, chest: 10, cape: 7 },
+  vale_gardener: { skin: 10, hair: 9, hood: 13, body: 8, trim: 9, legs: 7, boots: 9, chest: 7 },
+  vale_beekeeper: { skin: 10, hair: 13, hood: 13, body: 13, trim: 9, legs: 9, boots: 1, chest: 12, mask: 13 },
+  vale_bard: { skin: 10, hair: 11, body: 14, trim: 13, legs: 3, boots: 9, chest: 13, cape: 14 },
+  dune_sheikh: { skin: 10, hair: 6, hood: 6, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 11, beard: 6 },
+  dune_trader: { skin: 10, hair: 9, hood: 13, body: 13, trim: 12, legs: 9, boots: 9, chest: 10, cape: 12 },
+  dune_scholar: { skin: 10, hair: 6, hood: 5, body: 5, trim: 14, legs: 3, boots: 9, chest: 13 },
+  dune_guard: { skin: 10, hair: 1, helm: 10, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 11 },
   // Emberhold
   ysolde: { skin: 10, hair: 6, hood: 13, body: 13, trim: 12, legs: 3, boots: 9, chest: 12, crown: 12, cape: 11 },
   brannoch: { skin: 10, hair: 11, helm: null, body: 9, trim: 12, legs: 2, boots: 1, chest: 4, beard: 11 },
@@ -676,6 +694,20 @@ function drawTile(ctx, id, ox) {
     case TILE.HEATHROCK: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 181, [8, 9, 8, 10], 26); o(3, 2, 5, 12, 9); o(3, 4, 3, 8, 2); o(4, 3, 6, 6, 4); o(6, 4, 3, 6, 2); o(2, 2, 13, 12, 1); o(5, 5, 6, 3, 1); o(14, 11, 10, 2, 1); break;
     case TILE.ICE2: o(4, 0, 0, 16, 16); o(5, 2, 3, 6, 1); o(3, 0, 8, 16, 1); o(2, 3, 2, 1, 4); o(2, 4, 5, 3, 1); o(2, 7, 6, 1, 5); o(2, 8, 10, 4, 1); o(6, 11, 3, 2, 1); break;
     case TILE.TUFT: snow(); for (const [x, y] of [[4, 8], [8, 6], [11, 9]]) { o(8, x, y, 1, 3); o(7, x + 1, y + 1, 1, 2); o(8, x - 1, y + 1, 1, 2); } o(6, 4, 7, 1, 1); break;
+    // ---- the Embergreen Vale
+    case TILE.MEADOW: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); for (const [x, y] of [[3, 4], [11, 3], [7, 11]]) { o(7, x, y, 1, 2); o(7, x + 1, y + 1, 1, 1); } o(7, 0, 15, 16, 1); break;
+    case TILE.FLOWERS: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 302, [7, 7, 8], 18); for (const [x, y, c] of [[2, 3, 13], [7, 2, 6], [12, 4, 14], [4, 9, 11], [10, 10, 13], [13, 13, 6], [6, 13, 14]]) { o(c, x, y, 1, 1); o(c, x + 1, y + 1, 1, 1); o(7, x, y + 2, 1, 2); } break;
+    case TILE.BIRCH: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); o(0, 4, 14, 8, 1); o(6, 7, 8, 2, 7); o(5, 8, 8, 1, 7); for (const y of [10, 13]) o(0, 7, y, 2, 1); o(0, 2, 0, 12, 9); o(0, 1, 2, 14, 5); o(7, 3, 1, 10, 7); o(7, 2, 3, 12, 3); o(8, 4, 2, 8, 3); o(8, 3, 6, 4, 1); o(13, 5, 3, 1, 1); o(13, 10, 2, 1, 1); o(13, 8, 5, 1, 1); o(13, 3, 4, 1, 1); o(7, 4, 7, 8, 1); break;
+    case TILE.POND: o(15, 0, 0, 16, 16); o(5, 2, 3, 5, 1); o(6, 3, 2, 2, 1); o(5, 9, 9, 5, 1); o(3, 0, 6, 16, 1); o(4, 4, 12, 4, 1); o(3, 10, 3, 3, 1); o(8, 0, 0, 16, 1); o(8, 0, 15, 16, 1); o(7, 1, 1, 1, 3); o(7, 14, 12, 1, 3); break;
+    case TILE.HEARTROOT: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); o(0, 1, 14, 14, 1); o(9, 5, 7, 6, 8); o(10, 6, 7, 2, 8); o(1, 9, 8, 1, 7); o(9, 2, 12, 4, 3); o(9, 11, 12, 4, 3); o(0, 0, 0, 16, 9); o(7, 1, 1, 14, 7); o(8, 2, 2, 12, 5); o(13, 3, 3, 1, 1); o(13, 8, 2, 1, 1); o(13, 12, 4, 1, 1); o(13, 6, 5, 1, 1); o(12, 10, 3, 1, 1); o(7, 3, 6, 10, 1); break;
+    // ---- the Sunscorch Reach
+    case TILE.SAND: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 311, [10, 10, 13, 9], 20); o(13, 3, 5, 1, 1); o(9, 9, 10, 2, 1); break;
+    case TILE.DUNE: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 312, [10, 13, 9], 14); for (let x = 0; x < 16; x++) { o(9, x, 9 + ((x >> 2) & 1) - (x > 8 ? 1 : 0), 1, 1); o(13, x, 5 + ((x >> 2) & 1), 1, 1); } o(9, 0, 15, 16, 1); break;
+    case TILE.SANDSTONE: o(9, 0, 0, 16, 16); o(10, 0, 0, 16, 3); o(12, 0, 3, 16, 1); o(10, 0, 6, 16, 2); o(1, 0, 8, 16, 1); o(10, 0, 10, 16, 2); o(12, 3, 12, 6, 1); o(1, 0, 14, 16, 2); o(13, 2, 1, 3, 1); o(1, 7, 4, 1, 2); o(1, 12, 9, 1, 1); break;
+    case TILE.CACTUS: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 311, [10, 10, 13, 9], 20); o(9, 3, 14, 10, 1); o(7, 6, 3, 4, 12); o(8, 7, 3, 2, 12); o(7, 2, 7, 3, 2); o(7, 2, 4, 2, 4); o(8, 3, 4, 1, 4); o(7, 11, 5, 3, 2); o(7, 12, 3, 2, 3); o(8, 12, 3, 1, 3); o(13, 8, 2, 1, 1); o(6, 8, 6, 1, 1); break;
+    case TILE.OASIS: o(15, 0, 0, 16, 16); o(5, 2, 3, 5, 1); o(6, 3, 2, 2, 1); o(5, 9, 9, 5, 1); o(3, 0, 12, 16, 1); o(4, 4, 6, 4, 1); o(10, 0, 0, 16, 1); o(10, 0, 15, 16, 1); o(13, 1, 1, 1, 1); o(13, 14, 14, 1, 1); break;
+    case TILE.GLYPH: o(10, 0, 0, 16, 16); o(9, 0, 0, 16, 1); o(9, 0, 0, 1, 16); o(13, 3, 3, 10, 1); o(13, 3, 12, 10, 1); o(13, 3, 3, 1, 10); o(13, 12, 3, 1, 10); o(12, 6, 6, 4, 4); o(13, 7, 7, 2, 2); speckle(ctx, ox, 0, 313, [9, 10, 10], 8); break;
+    case TILE.SANDRUIN: o(10, 0, 0, 16, 16); o(9, 0, 5, 16, 1); o(9, 0, 10, 16, 1); o(9, 8, 0, 1, 5); o(9, 4, 6, 1, 4); o(9, 12, 6, 1, 4); o(9, 8, 11, 1, 5); o(13, 2, 1, 3, 1); o(12, 10, 7, 2, 1); o(1, 0, 15, 16, 1); o(4, 0, 0, 16, 1); break;
     default: o(0, 0, 0, 16, 16);
   }
 }

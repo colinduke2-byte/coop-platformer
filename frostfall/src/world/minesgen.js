@@ -178,3 +178,22 @@ export function buildSmugglerCove(seed) {
     bossLoot: [{ gen: 3, rarity: 2 }, { item: 'brine_ledger' }, { item: 'harbour_glaive' }, { item: 'gem_sapphire' }, { gold: 520 }],
   });
 }
+
+// The Embergreen Vale's boss delve: the Thornroot Hollow, ending in the Blight Mother.
+export function buildThornroot(seed) {
+  return buildMines(seed, 15, {
+    tier: 2, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'blightmother', id: 'tr', keyGate: true, mobs: ['thornling', 'hornet', 'blightbloom', 'hedgeknight', 'dewsprite'], exitTo: 'vale', exitSpawn: 'thornroot',
+    title: 'The Thornroot Hollow', signLine: 'THE WALLS ARE ROOT AND THE ROOTS ARE WARM. SOMETHING VERY LARGE IS BREATHING, VERY SLOWLY.',
+    bossSign: ['THE MOTHER\'S BOWER.', 'SHE TENDED THE GROVE FOR A THOUSAND YEARS AND WILL NOT LET GO OF IT NOW. SHE IS NOT CRUEL; SHE IS ONLY HOLDING ON.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'bramble_blade' }, { item: 'verdant_mail' }, { item: 'heartwood_bow' }, { item: 'gem_emerald' }, { gold: 420 }],
+  });
+}
+// The Sunscorch Reach's boss delve: the Sealed Vault, ending in the Vault Sovereign.
+export function buildSealedVault(seed) {
+  return buildMines(seed, 16, {
+    tier: 3, rooms: 5, kinds: ['fight', 'trap', 'fight'], boss: 'vaultsovereign', id: 'sv', keyGate: true, mobs: ['sunsentinel', 'wrapped', 'sandwight', 'scorpion', 'warchanter'], exitTo: 'sunscorch', exitSpawn: 'sealedvault',
+    title: 'The Sealed Vault', signLine: 'GOLD GLYPHS RUN ALONG EVERY WALL. THE AIR IS COLD HERE, AND VERY OLD.',
+    bossSign: ['THE SUN THRONE.', 'THE LAST KING SEALED HIMSELF IN WITH THE ANSWER TO THE WINTER, AND THEN FORGOT WHY HE WAS GUARDING IT.'],
+    bossLoot: [{ gen: 3, rarity: 2 }, { item: 'sun_scimitar' }, { item: 'sunplate' }, { item: 'dune_bow' }, { item: 'gem_topaz' }, { gold: 520 }],
+  });
+}

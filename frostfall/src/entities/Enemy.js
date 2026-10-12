@@ -152,6 +152,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.auraTick = (this.auraTick || 0) - dt;
       if (this.auraTick <= 0) { this.auraTick = 0.25; let n = 0; for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && Math.hypot(o.x - this.x, o.y - this.y) < 96) { o.auraT = 0.5; n++; } if (n && !this.rallied) { this.rallied = true; this.scene.fx.text(this.x, this.y - 24, 'RALLY', 13, 0.8); } }
     }
+    if (this.cfg.heals && this.alerted) {                // a healer mends the most hurt ally nearby; kill it first
+      this.healT = (this.healT ?? this.cfg.heals.every) - dt;
+      if (this.healT <= 0) {
+        this.healT = this.cfg.heals.every;
+        let best = null;
+        for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && o.hp < o.maxHp * 0.85 && Math.hypot(o.x - this.x, o.y - this.y) < this.cfg.heals.range && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o;
+        if (best) {
+          best.hp = Math.min(best.maxHp, best.hp + best.maxHp * this.cfg.heals.pct);
+          sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('frost');
+        }
+      }
+    }
     if (this.markT > 0) {
       this.markT -= dt;
       if (this.markT <= 0) { this.marker?.destroy(); this.marker = null; }
@@ -182,6 +194,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.stun > 0) {
       this.stun -= dt;
       b.velocity.scale(Math.pow(0.02, dt));
+      this.finish(dt, slow);
+      return;
+    }
+
+    // a thief that has your gold runs for it; catch and kill it to get the gold back
+    if (this.fleeT > 0) {
+      this.fleeT -= dt;
+      const away = norm(this.x - player.x, this.y - player.y);
+      b.setVelocity(away.x * (this.cfg.chase || 60) * 1.35 * slow, away.y * (this.cfg.chase || 60) * 1.35 * slow); this.face = dir8(away.x, away.y);
+      if (b.blocked.left || b.blocked.right) b.setVelocity(0, (away.y || 1) * this.cfg.chase);
+      else if (b.blocked.up || b.blocked.down) b.setVelocity((away.x || 1) * this.cfg.chase, 0);
+      if (this.fleeT <= 0 && this.stolen) { bus.emit('toast', 'THE THIEF GOT AWAY', 11); this.stolen = 0; sc.fx.puff(this.x, this.y, 13, 8, 30, 0.4); this.despawn(); return; }
       this.finish(dt, slow);
       return;
     }
@@ -556,6 +580,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.hitDone = true;
       const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this });
       if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
+      if (landed && this.cfg.steals && !this.stolen && S.gold > 0) {
+        const n = Math.min(S.gold, Math.max(8, Math.round(S.gold * this.cfg.steals)));
+        S.gold -= n; this.stolen = n; this.fleeT = 7; bus.emit('toast', `${n} GOLD STOLEN`, 11); this.mark('!', 11, 0.8);
+      }
     }
   }
 
@@ -724,6 +752,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
     if (this.spawnKey || this.spec?.nemesis) this.scene.markKilled?.(this);
     if (this.champion) this.scene.onChampionDown?.(this);
+    if (this.stolen) { this.scene.spawnLoot(this.x, this.y + 2, { gold: [this.stolen, this.stolen] }, []); this.stolen = 0; }
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;
     this.scene.enemies.remove(this);

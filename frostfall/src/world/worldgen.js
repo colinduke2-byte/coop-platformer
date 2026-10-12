@@ -72,7 +72,7 @@ export function buildRegion(def, region, seed) {
   // mountain wall around the world
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const e = Math.min(x, y, W - 1 - x, H - 1 - y);
-    if (e < 3 && (e < 1 || hash(x, y, 74) < 0.85)) { g.t[y][x] = e < 2 ? TILE.ROCK : TILE.STONE; g.res[y][x] = true; }
+    if (e < 3 && (e < 1 || hash(x, y, 74) < 0.85)) { g.t[y][x] = e < 2 ? (def.wall1 ?? TILE.ROCK) : (def.wall2 ?? TILE.STONE); g.res[y][x] = true; }
   }
 
   // ---- stamp the hand-made region (the original forest) in the north-west corner ------------------

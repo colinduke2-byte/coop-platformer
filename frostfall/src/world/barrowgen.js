@@ -14,8 +14,8 @@ const THEMES = [
   { id: 'warren', name: 'The Beast Warren', mobs: ['bear', 'boar', 'lynx', 'alpha'] },
 ];
 
-export const THEME_HELM = { draugr: 'nordic_helm', rime: 'rime_helm', wolf: 'pale_cowl', bandit: 'hunter_hood', warren: 'clan_skull' };
-export const THEME_UNIQUE = { draugr: 'grave_brand', wolf: 'packbreaker', bandit: 'smuggler_cloak', rime: 'rimebound_mail', mine: 'delvers_charm', warren: 'bearclaw_charm', cinder: 'cinder_brooch', sea: 'tide_talisman', royal: 'court_ring', bog: 'bogfire_ring', storm: 'stormglass_amulet' };
+export const THEME_HELM = { vale: 'leaf_cowl', dune: 'veil_helm', draugr: 'nordic_helm', rime: 'rime_helm', wolf: 'pale_cowl', bandit: 'hunter_hood', warren: 'clan_skull' };
+export const THEME_UNIQUE = { draugr: 'grave_brand', wolf: 'packbreaker', bandit: 'smuggler_cloak', rime: 'rimebound_mail', mine: 'delvers_charm', warren: 'bearclaw_charm', cinder: 'cinder_brooch', sea: 'tide_talisman', royal: 'court_ring', bog: 'bogfire_ring', storm: 'stormglass_amulet', vale: 'bloom_charm', dune: 'scarab_charm' };
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }
 // Themes for the delves of the other regions (chosen by the region, not the seed).
 export const EXTRA_THEMES = {
@@ -25,6 +25,8 @@ export const EXTRA_THEMES = {
   deep: { id: 'deep', name: 'The Deep Galleries', mobs: ['caveweaver', 'lodeling', 'deepdelver', 'gloomcap', 'golem'] },
   bog: { id: 'bog', name: 'The Sunken Hollow', mobs: ['leech', 'mudlurker', 'bogwraith', 'boghag', 'draugr'] },
   storm: { id: 'storm', name: 'The Shepherd Caves', mobs: ['nomad', 'wolf', 'nomadshaman', 'thunderbird', 'stonegiant'] },
+  vale: { id: 'vale', name: 'The Root Burrows', mobs: ['thornling', 'hornet', 'thornboar', 'hedgeknight', 'dewsprite'] },
+  dune: { id: 'dune', name: 'The Sand Tombs', mobs: ['scorpion', 'wrapped', 'sandburrower', 'jackal', 'duneraider'] },
   royal: { id: 'royal', name: 'The Undercrypts', mobs: ['knight', 'warden', 'reaver', 'necro', 'conjurer', 'wight'] },
 };
 
