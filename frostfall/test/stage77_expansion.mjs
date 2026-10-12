@@ -191,5 +191,24 @@ const fin = await G(async () => {
 });
 check('the Long Winter takes more from fire if you took the Sunbreaker, and hits softer if you took the Winterward', fin.seal.fire === 1 && fin.seal.slam === fin.seal.base && fin.sunbreaker.fire > 1 && fin.winterward.slam < fin.winterward.base, JSON.stringify(fin));
 
+// ---- every door of the new places leads somewhere sensible and drops you on open ground
+const exits = await G(async () => {
+  const M = await import('/src/data/maps.js'), out = [];
+  for (const id of ['reach', 'vale', 'sunscorch']) {
+    const b = id === 'reach' ? M.getReach() : M.getRegion(id);
+    for (const e of b.entities) if (e.t === 'exit' && ['vale', 'sunscorch', 'greenhollow', 'amberwell', 'thornroot', 'sealedvault'].includes(e.to)) out.push({ from: id, to: e.to, spawn: e.spawn });
+  }
+  for (const id of ['greenhollow', 'amberwell', 'thornroot', 'sealedvault']) for (const e of M.MAPS[id].build().entities) if (e.t === 'exit') out.push({ from: id, to: e.to, spawn: e.spawn });
+  return out;
+});
+check('the Reach has the two region doors, and every hub, region and dungeon has its door home', exits.some((e) => e.from === 'reach' && e.to === 'vale') && exits.some((e) => e.from === 'reach' && e.to === 'sunscorch') && exits.some((e) => e.from === 'vale' && e.to === 'greenhollow') && exits.some((e) => e.from === 'vale' && e.to === 'thornroot') && exits.some((e) => e.from === 'sunscorch' && e.to === 'amberwell') && exits.some((e) => e.from === 'sunscorch' && e.to === 'sealedvault') && exits.some((e) => e.from === 'greenhollow' && e.to === 'vale') && exits.some((e) => e.from === 'amberwell' && e.to === 'sunscorch'), JSON.stringify(exits));
+const landed = [];
+for (const e of exits.filter((x, i, a) => a.findIndex((y) => y.to === x.to && y.spawn === x.spawn) === i)) {
+  await G((x) => { window.gs().changeMap(x.to, x.spawn, 'door'); }, e);
+  await h.sleep(1500);
+  landed.push(await G((x) => { const g = window.gs(), p = g.player; return { to: x.to, spawn: x.spawn, map: window.__ff.S.map, solid: g.solidAt(p.x, p.y + 6) }; }, e));
+}
+check('stepping through each door lands you on open ground in the right place', landed.length >= 7 && landed.every((l) => l.map === l.to && !l.solid), JSON.stringify(landed.filter((l) => l.map !== l.to || l.solid)));
+
 check('no page errors', h.errors.length === 0, h.errors.join(' | '));
 await h.close();

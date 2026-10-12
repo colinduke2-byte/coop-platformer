@@ -43,6 +43,8 @@ Keys can be rebound in **Pause > System > Controls**. A gamepad and touch contro
 - **Learn the telegraph.** Every enemy winds up before it hits. Roll sideways (not backward) just as the swing begins. A *perfect dodge* is rewarded.
 - **Block and parry.** Hold F with a shield. Raising it right before a hit parries and opens the enemy up.
 - **Use elements.** Many enemies are weak to something. Undead burn (fire); golems shatter under shock; frost-based foes shrug off frost. The bestiary (in the journal) lists weaknesses once you have met a creature.
+- **New tricks to watch for.** Dew sprites heal their friends (kill them first), cutpurses steal gold and run, warchanters make their allies hit harder, sand burrowers mark the spot before they bite, hedge knights hold a shield wall.
+- **Four more spells.** Regrowth (heal over six seconds, Restoration 6), Thorn Snare (roots a group, Restoration 9), Sandstorm (scatters foes around you, Sneak 9) and Sunbeam (a column of light after a beat; a tome from the Sealed Vault or Amberwell). Cycle spells with the spell key; 4-0 and - quick-cast the first eight.
 - **Sneak first.** Sneak attacks triple your damage. Camps are far easier if you thin them quietly.
 - **Crowds are dangerous.** Back into a doorway or a corridor so they come one at a time.
 - **Day and night matter.** Night and storms make stealth easier and the world more dangerous. After dark **wolves become werewolves** and the restless dead of old places turn to **ghosts**; bandit crews sleep (they notice you at half range). The **moon** runs an eight-phase cycle (the clock and moon are in the top right): a **full moon** brings the pack out in force and every third one is a **blood moon**, when a great wolf hunts you. At a campfire you can **wait until dusk or dawn**. A **Hooded Lantern** (the smith) lights up the dark but makes you easier to notice.
@@ -82,7 +84,7 @@ A large open land of forest, ruins, camps, dens, standing stones, hamlets, watch
 - **Fishing, hunting and digging** (treasure maps lead you to dig spots) all give rewards.
 - **The Hollow Arena**: wave challenges for gold and trophies.
 
-### The seven other regions
+### The nine other regions
 Three open as the story progresses (see section 6). **The Weeping Fens, the Stormcrown Highlands and the Glasswood can be walked to from the start**: the roads leave the Hollow Reach at its south-west, north-east and south. The Underdeep is entered by the Deep Stair in the Ashen Peaks. They are dangerous. Go when you are ready.
 
 | Region | What it is like |
@@ -93,8 +95,14 @@ Three open as the story progresses (see section 6). **The Weeping Fens, the Stor
 | **The Weeping Fens** | A drowned bog of black water and boardwalks. The stilt village **Reedwick** has an inn, a smith and a chartmaker; the **Sunken Barrow** ends in the **Mire Mother**. Poison everywhere; fire works well. |
 | **The Glasswood** | A crystalline forest of ringing glass trees. **Lantern Glade** has an inn, a smith, a mapmaker and a Moon-Reader who only talks after dark; the **Hart Spire** ends in the **Hartking** (a barred gate: find the key in the first hall). Lightning and fire work well. |
 | **The Underdeep** | The caverns under the Ashen Peaks: glowing fungus, cave weavers, hollowed Delvers. **Lanternfall** has Orm's ferry up to Emberhold; the **Lode Chasm** ends in the **Lode Colossus**. Dark: carry a lantern. |
+| **The Embergreen Vale** | A warm green valley the Winter has not reached: meadows, flower fields, birch woods and ponds. **Greenhollow** has an inn, a smith, a mapmaker, a beekeeper, a bard and Elder Maeve; the **Thornroot Hollow** ends in the **Blight Mother** (she roots in behind poison pods: destroy them to tear her loose). Hornet hives, sacred groves and thorn patches each hold a named guardian. Fire works well. The gate is on the Reach's mid-road. |
+| **The Sunscorch Reach** | Dunes, oases, buried tombs and the ruins of the sun kings. **Amberwell** has an inn, a smith, a cartographer, a scholar, Sheikh Rashid and a quiet man who knows who robbed him; the **Sealed Vault** ends in the **Vault Sovereign** (sunbeams: step out of the line). Raider camps, sand pits, tomb mouths, dust spires and a thieves' den. Cutpurses steal a share of your gold and run: kill them to get it back. Frost works well. The gate is far to the east of the Reach. |
 | **Saltmarket** | The Frozen Coast's harbour city, two guilds (Tide and Smugglers: they are rivals), a tailor and sea quests. **Seaweed Cove** below ends in **Captain Brinegut**. |
 | **The Stormcrown Highlands** | Windswept heath under a storm that never leaves. **Skarn Hold** is a clan ring with an inn, a smith and a chartmaker; the **Stormspire** ends in the **Storm Giant**. Lightning everywhere; frost works well. |
+
+**Armour classes and carry weight.** Light armour is quick and quiet (+6% speed, harder to spot, cheaper spells) but easy to knock back; heavy armour is slow and loud (-8% speed) but hard to knock back and carries more; helmets add half of their class. Every item has a weight: the pack screen shows `WT carried/capacity`. Over the limit you are **Burdened** (slower), far over you are **Overloaded** (slow, no rolling). Potions, arrows and quest items weigh almost nothing; equipped gear counts half. Sell or stash extras at home.
+
+**Upgrades go to +10.** The village smith does +1 to +3, Emberhold's smith to +6, and the Great Anvil (Anvil Court reputation 45) to +10, using iron, ash iron, ember ore and the Heart Shards that region bosses drop.
 
 Gear sets (two or three matching pieces) give a bonus: Emberforged, the Court, Delvers, Wardens, Prism, Deepforged, Tide-Guild. Storms chill you unless you wear warm armour or stand by a fire. Silver weapons and daylight both hurt the undead. Moonpetals only bloom at night.
 
@@ -140,6 +148,8 @@ High standing also improves shop stock, forging (the Great Anvil sometimes makes
 | **Kragnar the Hollowed** | the Deep Mines (Emberhold) | Frost is his weakness; fire is resisted. Watch for his leaps and spikes. |
 | **The Ashen Sovereign** | Forge of the First Fire | Three phases (the Crowned, the Cinder Storm, the Pyre). Frost damage is best; fire does almost nothing. Bring faction help and plenty of potions. |
 | **Admiral Veyl** | Tidebreak Hall | Shock and fire work; frost does little. Fights get easier after his halfway phase. |
+| **The Blight Mother** | Thornroot Hollow (the Vale) | She roots in every so often and takes a quarter damage while she mends: kill the three pods to tear her loose, then hit her while she is stunned. Fire works. |
+| **The Vault Sovereign** | the Sealed Vault (the Sunscorch) | Marked sunbeams fall in a line toward you; step sideways. Gilded guards come in the later phases. Lightning works; fire does little. What you take from the vault changes the last fight. |
 | **The Hollow King** | the Sepulchre | Three phases (the Throne, the Court, the Memory). He hits hard and fast. Level up and bring your best gear first. |
 
 Bosses summon helpers. Kill the helpers if they crowd you; otherwise focus the boss.
@@ -151,8 +161,9 @@ Bosses summon helpers. Kill the helpers if they crowd you; otherwise focus the b
 There are many endings (36 variants in Chapter 3 alone). They depend on:
 1. What you did with the Frostheart and Grimfang.
 2. How you ended the Winter (thaw, warden or crown).
-3. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).
-4. Which faction you stand best with.
+3. The choices in the new regions: **replant or keep the Heart of the Grove**, **Sunbreaker, Winterward or seal the vault** (this one changes the final fight itself), and **whether to turn Red Sula in**.
+4. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).
+5. Which faction you stand best with.
 
 After the credits you can **start New Game+** with your progress and stronger enemies. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
 
