@@ -8,7 +8,13 @@ Colin's calibration (asked at the start): overall difficulty on Normal is "about
 
 ## Baseline
 
-(filled in below)
+Before any change, the full suite (`npm test`, about 90 test files, 32 minutes) passed except `campaign_bot`.
+
+## Summary
+
+68 findings logged: 5 S1 (crash, soft-lock or stuck), 19 S2, 20 S3, 9 S4, and 15 test, polish and balance entries.
+Every one is fixed except the items under "Not fixed" below. Final suite: all green (one flaky dagger check made sturdier).
+Published: artifact version 34 and GitHub Pages.
 
 ## Issues
 
@@ -82,3 +88,22 @@ Colin's calibration (asked at the start): overall difficulty on Normal is "about
 | R66 | robustness | S2 | Several scripted moments (resting at an inn or at home, house doors, fast travel, map changes) waited for a camera fade event or the scene clock with no fallback; if either never arrived (a throttled background tab, a held scene clock) the conversation never ended. The dialogue fuzz caught one at an inn. | fixed: every such wait also has a real-time fallback |
 | R67 | travel | S3 | Fast travel while bleeding, poisoned or burning could finish you off mid-journey and autosave at 0 health. | fixed: "NOT WHILE YOU ARE HURTING" |
 | R68 | balance | - | 20-trial matrix (see `docs/BALANCE_TABLE.md`). Outliers fixed: Blight Mother 0.45 -> 0.5 health (the real gate is the pods: a bot that ignores them never wins, one that kills them wins 7/20); Ashen Sovereign 0.7 -> 0.62 (2/20 -> 8/20); Hedge Knight health 80 -> 72, damage 19 -> 16 (Vale patrol 6/20 -> 13/20). Flagged, not changed: late-game patrols of the older creature types are very easy for expected gear. | done |
+
+## Not fixed (and why)
+
+- **Large UI for dialogue text and the pause menu**: the 6 px pixel font cannot scale by a non-whole amount; doubling it needs a redesigned dialogue box. Left in `IMPROVEMENTS.md`.
+- **Late-game patrols of the older creature types are very easy** for the expected gear (balance bot 20/20 at tier 2 and 3). The fix (`TUNE.scaling`) also moves the in-game danger warnings, so it needs a joint re-tune; left for Colin's call (see `docs/BALANCE_TABLE.md`).
+- **Bosses ignore status effects** (burn, bleed, poison, root, fear). Existing design; now documented in the guide. Thorn Snare and Sunbeam's burn therefore do nothing to bosses.
+- **New Game+ keeps the five Hearts**, so the Winter Throne is open from the start of a new cycle. Existing behaviour; a design decision.
+- **Armour-class dominance check**: the balance bot cannot play light versus heavy armour meaningfully (it never kites or dodges by speed), so this needs a human.
+- **Firefox, Safari, a real gamepad and a real phone**: cannot be tested here.
+
+## Spot checks for Colin (about 20 minutes)
+
+1. **Die twice** anywhere (the first and the second death must both put you back at your respawn point with full health). This was the worst bug.
+2. **Amberwell**: Jamila has her shop again (Sunbeam tome, dune bow); Captain Nadir (the gate guard) offers "Raiders on the Road". Kill a Dune Raider or two (it used to freeze the game sometimes).
+3. **Embergreen Vale, Thornroot Hollow**: the Blight Mother. When she roots in and says DESTROY THE PODS, kill the three pods. If she feels like a wall even then, lower `TUNE.bosses.blightmother.hp` (0.5) in `src/data/tuning.js`.
+4. **Walk the Hollow Reach for a few minutes**: landmarks (the Frozen Fall, Mammoth Bones, the Lone Giant, a Fallen Statue) should now turn up; each has a guard, a chest and a lore page.
+5. **Get robbed by a cutpurse** in the Sunscorch Reach: parry or block and nothing is stolen; get hit and chase it; kill it and exactly the stolen amount drops.
+6. **Pack (I)**: sort by weight (R), drop something with V twice, walk away and back to pick it up. Scroll with the mouse wheel.
+7. **Normal difficulty** is about 10% harder than before (`TUNE.difficulty.normal`: damage taken 1.04, enemy health 1.73; the old values were 0.99 and 1.65).
