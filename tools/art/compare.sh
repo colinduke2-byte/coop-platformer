@@ -20,7 +20,7 @@ SPOTS=(
  "w3_2_canopy_highway|1500,-300" "w3_4_rumbletide_rapids|3000,-300"
  "w4_1_cogwheel_courtyard|1500,-300" "w4_5_night_shift|2500,-300"
  "w5_1_seashell_shore|3800,200" "w5_5_midnight_trench|4300,800"
- "w8_1_starfall_gardens|1700,-200" "candy_canopy|3000,-300"
+ "w7_1_inkwell_foyer|1500,-200" "w7_4_the_forbidden_stacks|2500,-200" "w8_1_starfall_gardens|1700,-200" "candy_canopy|3000,-300"
 )
 i=0
 for s in "${SPOTS[@]}"; do

@@ -108,7 +108,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 
 ## Rewards ✅
 - [x] Lum Shop: every Lum from a finished run goes into a bank (`SaveData.lum_bank()`); 7 shop outfits in `Wardrobe.OUTFITS` with `"price"` (some with `"hat"`); stall on the World 1 map
-- [x] Nightmare Nebula (secret World 7, was 6): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-6's gems (`LevelCatalog.SECRET_SHARE`)
+- [x] Nightmare Nebula (secret World 8, was 6 then 7): 4 short hard remix levels, a boss-rush finale, nebula map; opens at 75% of Worlds 1-7's gems (`LevelCatalog.SECRET_SHARE`)
 - [ ] Playtest: are shop prices right (250-2000 Lums)? Is 6-4's boss rush too hard solo?
 
 ## World 6 - Midnight Carnival (gravity flips) ✅  - see docs/WORLD6_CARNIVAL.md
@@ -119,6 +119,14 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] 5 enemies + boss Madame Topsy-Turvy; levels 6-1..6-6 with bots (`test_w6_*`); secret Nebula moved to World 7 (save migration)
 - [ ] Playtest: is the 0.6 s switch cooldown / 0.2 s float right? Is 6-2's rhythm run too fast? Is Madame's dizzy window (2.8 s) fair?
 - [ ] Ideas: more gravity toys (a gravity-flipping barrel cannon, flip-on-timer clocks), W6 secret levels
+
+## World 7 - The Hushed Library (echoes) ✅  - see docs/WORLD7_LIBRARY.md
+- [x] Echo foundation: `EchoRecorder` (child of the Player, samples every physics frame), `EchoGhost` (replays, never simulates), `RecordPad` (start / `stop_only` / `loop`); each browser records every dreamer itself (friends' puppets too), so no extra traffic
+- [x] Echo-aware `PressurePlate` (echoes weigh as one dreamer; `required=2` = heavy plate), AND `Gate` (`need`, lamps), `Activation.send` -> `set_input`
+- [x] Library look: `Backdrop.Scenery.LIBRARY`, themes library / stacks / scriptorium, pages ambience, 6 new deco props, 4 tracks + 3 echo SFX, world map, "archive" colour grade
+- [x] 5 enemies + boss The Archivist; levels 7-1..7-6 with bots (`test_w7_*`); secret Nebula -> World 8 (save migration v3)
+- [ ] Playtest: is 12 s recording enough? Is the Archivist's opening (7 / 6 / 4.5 s) fair solo? Is ERASE (phase 2+) fun or annoying?
+- [ ] Ideas: a second echo per dreamer in W7 secret levels, echoes that ride moving platforms, a record pad that rewinds time
 
 ## Refinement pass (Oct 2026) - see also the Performance round 2 line above
 - [x] `tools/fuzz_levels.tscn`: a random-input bot in every level (flips gravity in World 6) - 44 levels clean

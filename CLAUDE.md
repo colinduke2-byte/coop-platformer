@@ -43,10 +43,10 @@ world/       Geometry (block, terrain, slope, back_wall), toys (bounce_pad, swin
              looks (backdrop, ambience, glow_light, waterfall, level_theme + themes/),
              mesh_painter.gd (bakes static art to one ArrayMesh = one draw call)
 decor/       deco.gd (baked scenery props, sway via skew), signpost
-enemies/     enemy.gd base + 33 enemies + 7 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella, madame_topsy)
+enemies/     enemy.gd base + 43 enemies + 8 bosses (king_grumblo, baron_bristleback, grumblefrost, chamelia, cuckoolossus, inkabella, madame_topsy, archivist)
 collectibles/ lum, gem, snoozling_cage, dream key
 levels/      level.gd (every level root), level_catalog.gd (worlds, order, unlocks),
-             w1_*..w7_*.tscn (Worlds 1-6 + secret World 7 - GENERATED, see below), bonus levels, demo_level
+             w1_*..w8_*.tscn (Worlds 1-7 + secret World 8 - GENERATED, see below), bonus levels, demo_level
 art/         BAKED by tools/art/bake_textures.py: textures/*.png (greyscale detail maps), ui/panel_paper.png
 world/shaders/ painted (terrain/blocks/deco/backdrop brushwork), grade + vignette (per-world colour), rig + creature
              (characters / enemies); Gfx quality presets (core/gfx.gd) gate every heavy effect; BlobShadow, Foreground,
@@ -104,6 +104,15 @@ pieces cost nothing. Check with `tools/bench.tscn -- --drawcalls`.
 world space. Authoring rules: world pieces that push bodies use `launch_world()`; never compare `velocity.y` with world
 geometry without `* gdir`; mirrored scenery/ceilings use `scale.y = -1` (see kit `ceiling_land` / `ceiling_block`).
 Don't name `Player` / `Enemy` types inside scripts they create (BlobShadow) - it makes a script dependency cycle.
+
+## Echoes (World 7)
+
+`RecordPad` starts an `EchoRecorder` (a child Node2D of the Player) that samples the dreamer every physics frame;
+stepping on a `stop_only` pad (or any pad again, or the time limit) turns it into an `EchoGhost` that replays the samples
+and stands where the route ended (`loop` repeats it). Ghosts never simulate physics, so they can't desync or stick. They
+count as a dreamer on `PressurePlate`s (group `echoes`) and fire `take_hit` on punchables where the original punched.
+Every browser records every dreamer itself (puppets included): there is no echo traffic. One echo per slot; they vanish on
+`EventBus.level_reset`. AND logic: `Activation.send` calls `set_input(from, on)` on targets that have it (`Gate.need`).
 
 ## Online play (Net)
 

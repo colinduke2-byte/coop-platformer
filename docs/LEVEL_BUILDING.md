@@ -202,6 +202,7 @@ bakes into one mesh through `MeshPainter`. Animated pieces call
 ## World 6 kit (gravity flips)
 Levels are a corridor: walkable floor (y = 0) and ceiling (underside y = -540, `carnival.H`). `from carnival import corridor`.
 - `L.ceiling_land(profile, top)` / `L.ceiling_block(x, y_under, w, h, conveyor=)`: ground hanging from above (mirrored, lip underneath)
+- Echoes (World 7): `L.record_pad(x, y, max_time=, loop=)` starts a recording; `L.echo_plate(x, y, targets, required=, latch=)` = a plate with a STOP pad on it (your echo is left standing there); `L.stop_pad(x, y)` alone; `L.gate(..., need=2)` is an AND gate (plate + lever, echo + you). Put record pads where players don't walk over them by accident (a pad on the path starts a recording).
 - Switches: `L.flip_lever(x, y, ceiling=)` (punch), `L.flip_pad(x, y, ceiling=)` (plate), `L.flip_bumper(x, y)`, `L.flip_gate(x, y, "up"|"down", height=)` (sets gravity)
 - `L.kill_top(x0, x1, y)` and `L.finish(..., top=, kill_top=)` for falling UP; `L.wheel(..., solid=True)` for standable-from-both-sides platforms
 - `L.deco(kind, x, y, mirror=True)`, `L.dress(x0, x1, "carnival", ceiling=True)`, `L.snoozling(..., ceiling=True)`, `L.switch(..., ceiling=True)`

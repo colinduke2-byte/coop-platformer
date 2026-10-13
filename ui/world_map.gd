@@ -62,6 +62,7 @@ func _ready() -> void:
 		"w4": art = _bake_w4()
 		"w5": art = _bake_w5()
 		"w6": art = _bake_w6()
+		"w7": art = _bake_w7()
 		"w8": art = _bake_w8()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
@@ -127,7 +128,7 @@ func _build_nodes() -> void:
 		var blurb: String = GATE_TEXT[onward][2]
 		if onward == LevelCatalog.SECRET_WORLD:
 			open = open and LevelCatalog.secret_open()
-			blurb += "  It opens with %d Dream Gems from Worlds 1-5 (you have %d)." % [
+			blurb += "  It opens with %d Dream Gems from Worlds 1-7 (you have %d)." % [
 					LevelCatalog.secret_gems_needed(), LevelCatalog.gems_before_secret()]
 		nodes.append({"id": "gate_" + onward, "pos": GATE_W2_POS, "name": GATE_TEXT[onward][0], "bonus": false, "gate": onward,
 				"unlocked": open, "done": false, "blurb": blurb})
@@ -1085,6 +1086,104 @@ func _w6_mirrors(mp: MeshPainter, c: Vector2) -> void:
 	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-82, -110), c + Vector2(0, -150), c + Vector2(82, -110)]), Color("6a4ab0"))
 
 
+func _bake_w7() -> ArrayMesh:
+	var mp := MeshPainter.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	_vgrad(mp, Rect2(0, 0, 1920, 1080), Color("0c0e2a"), Color("34336a"), 16)
+	for i in 60:   # stars through the high windows
+		var p := Vector2(rng.randf_range(0, 1920), rng.randf_range(0, 430))
+		mp.draw_circle(p, rng.randf_range(1.0, 2.2), Color(1, 1, 1, rng.randf_range(0.3, 0.9)))
+	mp.draw_circle(Vector2(300, 150), 70, Color(1, 0.95, 0.8, 0.12))   # the moon
+	mp.draw_circle(Vector2(300, 150), 44, Color("fff2cc"))
+	mp.draw_circle(Vector2(318, 140), 38, Color("171a44"))
+	# Towering bookshelves marching away in the dark, with arched windows between them.
+	for i in 14:
+		var x := 60.0 + i * 140.0
+		var h := 260.0 + float((i * 53) % 5) * 40.0
+		mp.draw_rect(Rect2(x, 640.0 - h, 96, h + 40.0), Color("1a1c48"))
+		for r in int(h / 36.0):
+			var cx := x + 6.0
+			while cx < x + 90.0:
+				var bw := rng.randf_range(6.0, 11.0)
+				mp.draw_rect(Rect2(cx, 640.0 - h + 6.0 + r * 36.0, bw, 26.0), Color.from_hsv(rng.randf_range(0.55, 0.95), 0.4, rng.randf_range(0.35, 0.55)))
+				cx += bw + 1.0
+	var floor_pts := PackedVector2Array([Vector2(0, 1080), Vector2(0, 650)])
+	for i in 25:
+		floor_pts.append(Vector2(i * 80.0, 668.0 + sin(i * 0.5) * 18.0))
+	floor_pts.append(Vector2(1920, 680))
+	floor_pts.append(Vector2(1920, 1080))
+	mp.draw_colored_polygon(floor_pts, Color("2a1a24"))
+	_vgrad(mp, Rect2(0, 860, 1920, 220), Color("2a1a24"), Color("160c14"), 6)
+	# The Great Library's dome on its hill (top right).
+	var gl := Vector2(1690, 520)
+	mp.draw_colored_polygon(Art.ellipse(gl + Vector2(0, 40), 280, 62, 24), Color("1b1d4a"))
+	mp.draw_rect(Rect2(gl + Vector2(-200, -60), Vector2(400, 100)), Color("3b3a8a"))
+	for k in 6:
+		mp.draw_rect(Rect2(gl + Vector2(-190 + k * 66.0, -60), Vector2(14, 100)), Color("c9a46a"))
+	var dome := PackedVector2Array()
+	for k in 25:
+		dome.append(gl + Vector2(cos(PI + PI * k / 24.0) * 130.0, -60.0 + sin(PI + PI * k / 24.0) * 130.0))
+	mp.draw_colored_polygon(dome, Color("4a49a8"))
+	mp.draw_line(gl + Vector2(0, -190), gl + Vector2(0, -250), Color("1d1726"), 4.0)
+	mp.draw_circle(gl + Vector2(0, -258), 9.0, Color("ffd23f"))
+	mp.draw_colored_polygon(PackedVector2Array([gl + Vector2(-40, 40), gl + Vector2(0, -30), gl + Vector2(40, 40)]), Color("ffd98a"))
+	# Region dressing: inkwell, card catalog, reading desk, leaning stacks, the belfry.
+	_w7_inkwell(mp, Vector2(230, 860))
+	_w7_catalog(mp, Vector2(520, 700))
+	_w7_desk(mp, Vector2(830, 860))
+	for k in 3:   # the Forbidden Stacks: shelves leaning in
+		mp.draw_colored_polygon(PackedVector2Array([Vector2(1090 + k * 34.0, 760), Vector2(1100 + k * 34.0, 560 + k * 12.0), Vector2(1126 + k * 34.0, 566 + k * 12.0), Vector2(1126 + k * 34.0, 760)]), Color("202a5a"))
+	mp.draw_rect(Rect2(Vector2(1395, 700), Vector2(70, 110)), Color("5a3a78"))   # the belfry tower
+	mp.draw_colored_polygon(PackedVector2Array([Vector2(1385, 700), Vector2(1430, 640), Vector2(1475, 700)]), Color("c9a46a"))
+	# Loose books and candles across the floor.
+	for i in 34:
+		var p := Vector2(rng.randf_range(30, 1890), rng.randf_range(720, 1060))
+		var clear := true
+		for n in nodes:
+			if p.distance_to(n["pos"]) < 130.0:
+				clear = false
+		if clear and _path_dist(p) > 46.0:
+			if i % 3 == 0:
+				mp.draw_rect(Rect2(p + Vector2(-4, -22), Vector2(8, 22)), Color("fff3d0"))
+				mp.draw_circle(p + Vector2(0, -28), 12.0, Color(1, 0.85, 0.5, 0.25))
+			elif i % 3 == 1:
+				mp.draw_rect(Rect2(p + Vector2(-13, -6), Vector2(26, 7)), Color.from_hsv(rng.randf_range(0.0, 1.0), 0.5, 0.8))
+				mp.draw_rect(Rect2(p + Vector2(-10, -12), Vector2(20, 7)), Color.from_hsv(rng.randf_range(0.0, 1.0), 0.5, 0.7))
+			else:
+				mp.draw_colored_polygon(Art.ellipse(p, 11, 5, 8), Color("f0dcae"))
+	# The path: a crimson reading-room runner with gold edging.
+	mp.draw_polyline(_path, Color("1d1726"), 30.0)
+	mp.draw_polyline(_path, Color("c9a46a"), 24.0)
+	mp.draw_polyline(_path, Color("8a2c4a"), 16.0)
+	return mp.build()
+
+
+func _w7_inkwell(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-44, 0), c + Vector2(-34, -60), c + Vector2(34, -60), c + Vector2(44, 0)]), Color("2b2a5c"))
+	mp.draw_colored_polygon(Art.ellipse(c + Vector2(0, -60), 34, 9, 14), Color("0e0e2c"))
+	mp.draw_line(c + Vector2(20, -64), c + Vector2(60, -130), Color("1d1726"), 5.0)   # a quill
+	mp.draw_line(c + Vector2(20, -64), c + Vector2(60, -130), Color("fff3d0"), 2.5)
+
+
+func _w7_catalog(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_rect(Rect2(c + Vector2(-54, -90), Vector2(108, 90)), Color("6b4228"))
+	for r in 3:
+		for k in 3:
+			mp.draw_rect(Rect2(c + Vector2(-48 + k * 34.0, -84 + r * 28.0), Vector2(30, 24)), Color("8a5a36"))
+			mp.draw_rect(Rect2(c + Vector2(-38 + k * 34.0, -76 + r * 28.0), Vector2(10, 4)), Color("ffd23f"))
+
+
+func _w7_desk(mp: MeshPainter, c: Vector2) -> void:
+	mp.draw_rect(Rect2(c + Vector2(-60, -50), Vector2(120, 12)), Color("6b4228"))
+	mp.draw_rect(Rect2(c + Vector2(-52, -38), Vector2(10, 38)), Color("4a2c18"))
+	mp.draw_rect(Rect2(c + Vector2(42, -38), Vector2(10, 38)), Color("4a2c18"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-30, -50), c + Vector2(0, -44), c + Vector2(0, -64), c + Vector2(-28, -68)]), Color("fff3d0"))
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(30, -50), c + Vector2(0, -44), c + Vector2(0, -64), c + Vector2(28, -68)]), Color("f0dcae"))
+	mp.draw_line(c + Vector2(40, -50), c + Vector2(40, -96), Color("1d1726"), 4.0)
+	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(28, -96), c + Vector2(52, -96), c + Vector2(44, -114), c + Vector2(36, -114)]), Color("2e8f6b"))
+
+
 func _bake_w8() -> ArrayMesh:
 	var mp := MeshPainter.new()
 	var rng := RandomNumberGenerator.new()
@@ -1399,6 +1498,9 @@ class LiveBits extends Node2D:
 		if map.world == "w6":
 			_draw_w6()
 			return
+		if map.world == "w7":
+			_draw_w7()
+			return
 		if map.world == "w8":
 			_draw_w8()
 			return
@@ -1473,7 +1575,7 @@ class LiveBits extends Node2D:
 
 	## A little flock crossing the sky.
 	func _birds() -> void:
-		if map.world in ["w5", "w6", "w7"]:
+		if map.world in ["w5", "w6", "w7", "w8"]:
 			return
 		var o := Color(0.12, 0.09, 0.16, 0.7)
 		for k in 5:
@@ -1568,6 +1670,34 @@ class LiveBits extends Node2D:
 		var pulse := 0.5 + 0.5 * sin(t * 2.5)
 		draw_circle(core, 70 + pulse * 10, Color(1.0, 0.25, 0.45, 0.15))
 		draw_circle(core, 44 + pulse * 6, Color(1.0, 0.3, 0.5, 0.25))
+
+	func _draw_w7() -> void:
+		var o := Color("1d1726")
+		# Stars twinkling through the high windows.
+		for i in 40:
+			var p := Vector2(fposmod(i * 197.0, 1920.0), fposmod(i * 83.0, 420.0))
+			draw_circle(p, 1.5 + (0.5 + 0.5 * sin(t * 2.0 + i)) * 1.2, Color(1, 1, 1, 0.5 + 0.5 * sin(t * 2.0 + i * 1.7)))
+		# The belfry's bell swinging.
+		var bell := Vector2(1430, 668) + Vector2(sin(t * 2.2) * 8.0, 0)
+		Art.shape(self, PackedVector2Array([bell + Vector2(-14, 16), bell + Vector2(-9, -6), bell + Vector2(9, -6), bell + Vector2(14, 16)]), Color("ffd23f"), o, 2.0)
+		# Candle flames flickering on the desk lamp and the foyer's quill.
+		for fp: Vector2 in [Vector2(870, 764), Vector2(290, 730)]:
+			var fl := sin(t * 14.0 + fp.x) * 2.0
+			draw_circle(fp + Vector2(0, -6), 18.0, Color(1, 0.8, 0.4, 0.12))
+			draw_colored_polygon(PackedVector2Array([fp + Vector2(-4, 0), fp + Vector2(fl, -14), fp + Vector2(4, 0)]), Color("ffb02e"))
+		# Pages drifting over the grounds, and a faint echo of the gang walking the path.
+		for i in 18:
+			var f := fposmod(t * 0.03 + i * 0.057, 1.0)
+			var p := Vector2(-60 + f * 2040.0, 220 + fposmod(i * 83.0, 480.0) + sin(t * 0.8 + i) * 22.0)
+			var a := t * 0.9 + i
+			var pts := PackedVector2Array()
+			for corner: Vector2 in [Vector2(-8, -6), Vector2(8, -6), Vector2(8, 6), Vector2(-8, 6)]:
+				pts.append(p + corner.rotated(a))
+			draw_colored_polygon(pts, Color(1.0, 0.95, 0.78, 0.45))
+		var total := WorldMap._poly_len(map._path)
+		var ec := WorldMap._sample(map._path, fposmod(t * 90.0, total))
+		draw_circle(ec + Vector2(0, -20), 9.0, Color(0.55, 0.95, 1.0, 0.35))
+		draw_circle(ec + Vector2(0, -34), 6.0, Color(0.55, 0.95, 1.0, 0.35))
 
 	func _draw_w6() -> void:
 		var o := Color("1d1726")
@@ -1698,12 +1828,15 @@ class Badges extends Node2D:
 		var to_works: bool = n["gate"] == "w4"
 		var to_sea: bool = n["gate"] == "w5"
 		var to_carnival: bool = n["gate"] == "w6"
+		var to_library: bool = n["gate"] == "w7"
 		var to_nebula: bool = n["gate"] == "w8"
 		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
 		if to_sea:
 			fill = Color("a8e4ff")
 		if to_carnival:
 			fill = Color("ff7fb0")
+		if to_library:
+			fill = Color("c9a46a")
 		if to_nebula:
 			fill = Color("6a4ab0")
 		if not n["unlocked"]:
@@ -1718,6 +1851,10 @@ class Badges extends Node2D:
 			for k in 4:
 				draw_line(p + Vector2(-17 + k * 11.0, -4), p + Vector2(-17 + k * 11.0, 14), Color("ff5d8f"), 3.0)
 			Art.shape(self, Art.star(p + Vector2(0, -9), 8.0), Color("ffd23f"), o, 1.5)
+		elif to_library:   # an open book
+			Art.shape(self, PackedVector2Array([p + Vector2(-18, -8), p + Vector2(0, -4), p + Vector2(0, 14), p + Vector2(-18, 10)]), Color("fff3d0"), o, 2.0)
+			Art.shape(self, PackedVector2Array([p + Vector2(18, -8), p + Vector2(0, -4), p + Vector2(0, 14), p + Vector2(18, 10)]), Color("f0dcae"), o, 2.0)
+			draw_line(p + Vector2(0, -4), p + Vector2(0, 14), o, 2.0)
 		elif to_nebula:
 			Art.shape(self, Art.star(p, 17.0), Color("ffd23f"), o, 2.0)
 			draw_circle(p + Vector2(10, -10), 4.0, Color.WHITE)

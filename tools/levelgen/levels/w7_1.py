@@ -24,12 +24,11 @@ L.wall(R, -900, 900)
 
 # ---- S0 the front hall (-300..1500): meet the echo -------------------------------------------------------------
 L.checkpoint(0, 0)
-L.sign(170, 0, "RECORD pad: step on it, then walk.\nYour route is recorded for 12 s.", 420)
+L.sign(190, 0, "RECORD pad (circle): step on it and walk.\nSTOP pad (square) on a plate: your ECHO\nstays there and holds it down!", 400)
 L.record_pad(420, 0, max_time=12)
 g1 = L.gate(1060, -192, 48, 192, stay_open=False)
 e1 = L.echo_plate(820, 0, [g1])
-L.sign(660, 0, "STOP pad (the square) on a plate:\nyour ECHO stays there. It holds the plate!", 440)
-L.lums(500, -110, 760, -110, 4)
+L.lums(470, -210, 780, -210, 4)
 L.ledge(1100, -330, 260)                       # the high shelf over the gate
 L.gem(1230, -380)                               # gem 0
 L.ledge(900, -170, 160)

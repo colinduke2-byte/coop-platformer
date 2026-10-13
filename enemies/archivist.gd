@@ -18,6 +18,7 @@ enum St { DRIFT, PAGES, HUSH_WIND, EXPOSED, ERASE }
 @export var plates: Array[NodePath] = []
 @export var hover_height := 190.0     ## px above the floor while warded
 @export var roam := 420.0             ## px he drifts either side of home
+@export var floor_y := INF            ## world y of the arena floor (the level sets it; INF = look down from where he is)
 
 const ROBE := Color("3b3a8a")
 const ROBE_DARK := Color("27265e")
@@ -104,6 +105,9 @@ func _all_plates_held() -> bool:
 
 
 func _find_floor() -> void:
+	if floor_y != INF:
+		_floor_y = floor_y
+		return
 	var q := PhysicsRayQueryParameters2D.create(global_position, global_position + Vector2(0, 3000.0 * gdir), 1)
 	var hit := get_world_2d().direct_space_state.intersect_ray(q)
 	_floor_y = hit["position"].y if not hit.is_empty() else global_position.y + hover_height * gdir

@@ -93,8 +93,8 @@ position = Vector2(0, 0)
 
 [node name="Sign1" type="Node2D" parent="Signs"]
 script = ExtResource("8")
-position = Vector2(260, 0)
-text = "RECORD pad: step on it,\nthen walk. Your route is\nrecorded for 12 s."
+position = Vector2(220, 0)
+text = "RECORD pad\n(circle): step on\nit and walk. STOP\npad (square) on a\nplate: your ECHO\nstays there and\nholds it down!"
 width = 160
 
 [node name="RecordPad1" type="Area2D" parent="Toys"]
@@ -122,17 +122,11 @@ position = Vector2(820, 0)
 stop_only = true
 width = 66
 
-[node name="Sign2" type="Node2D" parent="Signs"]
-script = ExtResource("8")
-position = Vector2(660, 0)
-text = "STOP pad (the square) on a plate:\nyour ECHO stays there. It holds the plate!"
-width = 440
-
 [node name="LumLine1" type="Node2D" parent="Pickups"]
 script = ExtResource("12")
-position = Vector2(500, -110)
+position = Vector2(470, -210)
 count = 4
-end = Vector2(260, 0)
+end = Vector2(310, 0)
 arc_height = 0
 
 [node name="Block3" parent="Blocks" instance=ExtResource("6")]
@@ -193,7 +187,7 @@ position = Vector2(1760, 0)
 stop_only = true
 width = 66
 
-[node name="Sign3" type="Node2D" parent="Signs"]
+[node name="Sign2" type="Node2D" parent="Signs"]
 script = ExtResource("8")
 position = Vector2(1670, 0)
 text = "The platform only runs while\nsomeone holds ITS plate."
@@ -253,7 +247,7 @@ position = Vector2(3300, 0)
 stop_only = true
 width = 120
 
-[node name="Sign4" type="Node2D" parent="Signs"]
+[node name="Sign3" type="Node2D" parent="Signs"]
 script = ExtResource("8")
 position = Vector2(2850, 0)
 text = "A HEAVY plate\nneeds two. Leave\nan echo on it,\nthen stand on it\ntoo."
@@ -340,6 +334,35 @@ position = Vector2(-133, 0)
 kind = 50
 size = 0.99
 seed_value = 233
+
+[node name="Deco4" type="Node2D" parent="Decor"]
+script = ExtResource("23")
+position = Vector2(615, 0)
+kind = 52
+size = 0.87
+seed_value = 242
+
+[node name="Deco5" type="Node2D" parent="Decor"]
+script = ExtResource("23")
+position = Vector2(655, 2)
+kind = 47
+size = 0.88
+front = true
+seed_value = 196
+
+[node name="Deco6" type="Node2D" parent="Decor"]
+script = ExtResource("23")
+position = Vector2(770, 0)
+kind = 51
+size = 0.96
+seed_value = 751
+
+[node name="Deco7" type="Node2D" parent="Decor"]
+script = ExtResource("23")
+position = Vector2(949, 0)
+kind = 50
+size = 0.87
+seed_value = 394
 
 [node name="Deco8" type="Node2D" parent="Decor"]
 script = ExtResource("23")

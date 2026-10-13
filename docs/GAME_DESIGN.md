@@ -92,12 +92,23 @@ Ideas backlog: air dash, carrying teammates, throwable items. TODO: pick.
   gravity). Every level is a corridor with a walkable floor AND ceiling; flipped,
   the ceiling is the floor. New: Jack-in-the-bonk, Unicyclops, Popcorn Pufflet,
   Balloonatic, Marionette. Reached from the top of World 5's map.
-- **World 7 - Nightmare Nebula (secret)**: 7-1 Starfall Gardens, 7-2 Comet
-  Clockworks, 7-3 Abyssal Canopy, 7-4 The Nightmare Core. Short, hard remix
+- **World 7 - The Hushed Library**: 7-1 Inkwell Foyer, 7-2 Card Catalog Corridor,
+  7-3 The Reading Room, 7-4 The Forbidden Stacks, 7-5 Belfry of Bookmarks, 7-6 The
+  Great Library (boss: **The Archivist**, an owl inside a ward that only shatters when
+  BOTH seal plates are held at once). THE SPIN: **echoes**. Step on a glowing record
+  pad, walk, and step on a STOP pad (usually on a plate): a ghost of your route is
+  left standing there (or looping, on a looping pad), holding plates and punching
+  levers while you do something else. One echo per dreamer; a new recording replaces
+  the old one; echoes vanish when the team respawns. New pieces: record/stop pads,
+  AND gates (lamps show how many triggers are on), echo-aware plates (heavy plates
+  need two: echo + you). New: Blotty, Wormwick, Pagebat, Shushling, Candlewick.
+  Reached from the top of World 6's map.
+- **World 8 - Nightmare Nebula (secret)**: 8-1 Starfall Gardens, 8-2 Comet
+  Clockworks, 8-3 Abyssal Canopy, 8-4 The Nightmare Core. Short, hard remix
   levels mixing every world's pieces over a starry void; the finale is a boss
-  rush (Cuckoolossus, then Inkabella). Opens from the top of World 6's map once
-  World 6 is beaten AND 75% of the Dream Gems in Worlds 1-6 are found (81 of 108).
-  (It used to be World 6; old saves move over automatically.)
+  rush (Cuckoolossus, then Inkabella). Opens from the top of World 7's map once
+  World 7 is beaten AND 75% of the Dream Gems in Worlds 1-7 are found (95 of 126).
+  (It used to be World 6, then 7; old saves move over automatically.)
 - Bonus Dreams: the movement playground, Candy Canopy, Sunset Gusts, Glacier Grotto.
 - Level types so far: standard, dark cave, river/water, vertical climb, chase (avalanche), boss. TODO: music levels.
 - Target level length: 3–5 min.

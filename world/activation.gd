@@ -11,6 +11,8 @@ static func send(from: Node, targets: Array[NodePath], on: bool) -> void:
 		var t := from.get_node_or_null(path)
 		if t == null:
 			push_warning("%s: target %s not found" % [from.name, path])
+		elif t.has_method(&"set_input"):
+			t.set_input(from, on)   # an AND-style target (Gate.need > 1): it counts which triggers are on
 		elif t.has_method(&"set_active"):
 			t.set_active(on)
 		else:

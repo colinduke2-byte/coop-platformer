@@ -6,7 +6,7 @@ class_name LevelCatalog
 ## Within a world, a level unlocks when the one before it is finished.
 ## Bonus Dreams are always open.
 
-## The secret last world: it opens once World 5 is beaten AND you've found
+## The secret last world: it opens once World 7 is beaten AND you've found
 ## SECRET_SHARE of every Dream Gem in the worlds before it.
 const SECRET_WORLD := "w8"
 const SECRET_SHARE := 0.75
@@ -21,6 +21,7 @@ const WORLDS: Array[Dictionary] = [
 	{"id": "w4", "name": "Clockwhirl Works", "blurb": "A dream factory of belts, gears and a clock that strikes thirteen."},
 	{"id": "w5", "name": "Deep Sea Dream", "blurb": "Sun, sand, coral and kelp - and something with eight arms in the temple."},
 	{"id": "w6", "name": "Midnight Carnival", "blurb": "The carnival that never closes. Punch the levers - and watch which way is down."},
+	{"id": "w7", "name": "The Hushed Library", "blurb": "A library that remembers everything. Leave an echo of yourself - it will stand where you tell it."},
 	{"id": "w8", "name": "Nightmare Nebula", "blurb": "The secret world: every dream at once, and none of them friendly.", "secret": true},
 	{"id": "bonus", "name": "Bonus Dreams", "blurb": "Old favourites and tricky extras."},
 ]
@@ -134,6 +135,24 @@ const LEVELS: Array[Dictionary] = [
 	{"id": "w6_6", "world": "w6", "name": "The Big Top", "scene": "res://levels/w6_6_the_big_top.tscn",
 		"blurb": "Madame Topsy-Turvy whacks the lever - and gravity does the rest.",
 		"theme": "res://world/themes/bigtop.tres", "map": Vector2(1690, 400), "boss": true},
+	{"id": "w7_1", "world": "w7", "name": "Inkwell Foyer", "scene": "res://levels/w7_1_inkwell_foyer.tscn",
+		"blurb": "Step on the glowing pad, walk, and leave an echo of yourself on a plate.",
+		"theme": "res://world/themes/library.tres", "map": Vector2(230, 840)},
+	{"id": "w7_2", "world": "w7", "name": "Card Catalog Corridor", "scene": "res://levels/w7_2_card_catalog_corridor.tscn",
+		"blurb": "A gate that needs two plates - and a lift that needs an echo.",
+		"theme": "res://world/themes/library.tres", "map": Vector2(520, 690)},
+	{"id": "w7_3", "name": "The Reading Room", "world": "w7", "scene": "res://levels/w7_3_the_reading_room.tscn",
+		"blurb": "A lever too far to reach in time. Loop an echo to keep punching it - and don't stand still near a shushling.",
+		"theme": "res://world/themes/library.tres", "map": Vector2(830, 850)},
+	{"id": "w7_4", "world": "w7", "name": "The Forbidden Stacks", "scene": "res://levels/w7_4_the_forbidden_stacks.tscn",
+		"blurb": "Dark shelves, candlewicks and a gate that pulses. Time your dash.",
+		"theme": "res://world/themes/stacks.tres", "map": Vector2(1130, 640)},
+	{"id": "w7_5", "world": "w7", "name": "Belfry of Bookmarks", "scene": "res://levels/w7_5_belfry_of_bookmarks.tscn",
+		"blurb": "Up the tower: each lift only runs while your echo holds its plate.",
+		"theme": "res://world/themes/library.tres", "map": Vector2(1430, 790)},
+	{"id": "w7_6", "world": "w7", "name": "The Great Library", "scene": "res://levels/w7_6_the_great_library.tscn",
+		"blurb": "The Archivist's ward only breaks when both plates are held at once.",
+		"theme": "res://world/themes/scriptorium.tres", "map": Vector2(1690, 400), "boss": true},
 	{"id": "w8_1", "world": "w8", "name": "Starfall Gardens", "scene": "res://levels/w8_1_starfall_gardens.tscn",
 		"blurb": "Thorns, crumbling stars and icy comets - the Lullaby Woods gone wrong.",
 		"theme": "res://world/themes/nebula.tres", "map": Vector2(300, 820)},

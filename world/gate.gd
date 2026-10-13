@@ -12,8 +12,10 @@ extends AnimatableBody2D
 @export var open_time := 0.5
 @export var stay_open := true
 @export var start_open := false
+@export var need := 1                       ## triggers that must be ON together (an AND gate: plate + lever, echo + you...)
 
 var _open := false
+var _inputs := {}   ## trigger -> on
 var _closed_pos := Vector2.ZERO
 var _col: CollisionShape2D
 var _tween: Tween
@@ -43,6 +45,16 @@ func _rebuild() -> void:
 	queue_redraw()
 
 
+func set_input(from: Node, on: bool) -> void:
+	_inputs[from] = on
+	var n := 0
+	for v: bool in _inputs.values():
+		if v:
+			n += 1
+	set_active(n >= need)
+	queue_redraw()
+
+
 func set_active(on: bool) -> void:
 	if on == _open or (not on and stay_open):
 		return
@@ -69,5 +81,12 @@ func _draw() -> void:
 		draw_line(Vector2(x, 4), Vector2(x, size.y - 4), bar, 5.0)
 	for y: float in [12.0, size.y * 0.5, size.y - 12.0]:
 		draw_rect(Rect2(2, y - 4, size.x - 4, 8), bar.darkened(0.2))
+	if need > 1:   # lamps on the top: how many of the triggers are on
+		var lit := 0
+		for v: bool in _inputs.values():
+			if v:
+				lit += 1
+		for k in need:
+			draw_circle(Vector2(size.x * 0.5, 14.0 + k * 16.0), 5.0, Color("5fd35a") if k < lit else Color("3a3550"))
 	if Engine.is_editor_hint():
 		draw_rect(Rect2(open_offset, size), Color(1, 1, 1, 0.25), false, 2.0)

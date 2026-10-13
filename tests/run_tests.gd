@@ -7872,23 +7872,23 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 	SaveData.load_records()
 	var saved: Dictionary = SaveData.records.duplicate(true)
 	var need := LevelCatalog.secret_gems_needed()
-	check(need == int(ceil(36 * 3 * 0.75)), "75%% of Worlds 1-6's gems are needed (%d)" % need)
+	check(need == int(ceil(42 * 3 * 0.75)), "75%% of Worlds 1-7's gems are needed (%d)" % need)
 	# Finish every level of Worlds 1-6 with no gems: the gate stays shut.
-	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
+	for w in ["w1", "w2", "w3", "w4", "w5", "w6", "w7"]:
 		for l in LevelCatalog.levels_in(w):
 			SaveData.records[l["id"]] = {"done": true, "gems": [false, false, false], "time": 1.0, "lums": 0}
 	if not (OS.has_feature("unlock_all") or LevelCatalog.dev_unlock):
-		check(not LevelCatalog.is_unlocked("w8_1"), "beating World 6 alone doesn't open the secret world")
+		check(not LevelCatalog.is_unlocked("w8_1"), "beating World 7 alone doesn't open the secret world")
 	# Now give them enough gems.
 	var given := 0
-	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
+	for w in ["w1", "w2", "w3", "w4", "w5", "w6", "w7"]:
 		for l in LevelCatalog.levels_in(w):
 			if given < need:
 				var g := mini(3, need - given)
 				SaveData.records[l["id"]]["gems"] = [g > 0, g > 1, g > 2]
 				given += g
 	check(LevelCatalog.is_unlocked("w8_1"), "with %d gems the Nightmare Nebula opens" % need)
-	WorldMap.world = "w6"
+	WorldMap.world = "w7"
 	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 	_arena.add_child(m)
 	await frames(3)
@@ -7896,7 +7896,7 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 	for n in m.nodes:
 		if n.get("gate", "") == "w8":
 			gate_open = n["unlocked"]
-	check(gate_open, "World 6's map shows the gate to the Nebula open")
+	check(gate_open, "World 7's map shows the gate to the Nebula open")
 	m.queue_free()
 	await frames(2)
 	WorldMap.world = "w8"
@@ -7906,7 +7906,7 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 	var ids: Array = []
 	for n in m.nodes:
 		ids.append(n["id"])
-	check(ids.has("w8_1") and ids.has("w8_4") and ids.has("gate_w6"), "the Nebula map has its four levels and a way back (%s)" % [ids])
+	check(ids.has("w8_1") and ids.has("w8_4") and ids.has("gate_w7"), "the Nebula map has its four levels and a way back (%s)" % [ids])
 	m.queue_free()
 	await frames(2)
 	WorldMap.world = "w1"
@@ -9309,3 +9309,257 @@ func test_w7_1_bot_leaves_echoes_on_plates_to_open_the_way() -> void:
 	await frames(30)
 	check(gm().level_complete, "the goal completes Inkwell Foyer (at %s)" % p.global_position)
 	await _finish_demo()
+
+
+const W7_2 := "res://levels/w7_2_card_catalog_corridor.tscn"
+
+
+func test_w7_2_bot_opens_the_and_gate_and_rides_the_echo_lift() -> void:
+	var p: Player = await _load_demo(W7_2)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var gate := _demo.find_children("*", "Gate", true, false)[0] as Gate
+	await _walk_to(p, 1400.0, 14.0)
+	check(await _echo(p, 1480.0, 1900.0), "an echo on the first plate")
+	await _walk_to(p, 2100.0, 8.0)
+	check(not gate.is_open(), "one plate (the echo) is not enough for the AND gate")
+	await _walk_to(p, 2380.0, 8.0)
+	await seconds(1.0)
+	check(gate.is_open(), "echo on one plate + us on the other open it")
+	await _walk_to(p, 3000.0, 10.0)
+	check(await _echo(p, 3080.0, 3460.0), "a second echo on the lift's plate")
+	var lift := _demo.find_children("*", "MovingPlatform", true, false)[0] as Node2D
+	await _walk_to(p, 3860.0, 6.0)
+	var up := false
+	for i in 2400:
+		await get_tree().physics_frame
+		if lift.global_position.y < -360.0 and p.global_position.y < -300.0:
+			up = true
+			await _walk_to(p, 4300.0, 6.0)
+			break
+	check(up and p.global_position.x > 4100.0 and p.global_position.y < -300.0, "the lift carries us up onto the shelf wall (at %s)" % p.global_position)
+	await _walk_to(p, 5780.0, 30.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Card Catalog Corridor (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W7_3 := "res://levels/w7_3_the_reading_room.tscn"
+
+
+func test_w7_3_bot_loops_an_echo_to_keep_the_timed_lever_on() -> void:
+	var p: Player = await _load_demo(W7_3)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var gate := _demo.find_children("*", "Gate", true, false)[0] as Gate
+	await _walk_to(p, 1400.0, 14.0)
+	await _walk_to(p, 1480.0, 6.0)      # the record pad (loop = true)
+	await frames(6)
+	check(p.has_node("EchoRecorder"), "recording starts")
+	await _walk_to(p, 2350.0, 8.0)
+	await _throw_punch(p, 1)             # punch the timed lever ourselves...
+	await _walk_to(p, 2500.0, 4.0)       # ...and finish on the stop pad
+	await seconds(0.8)
+	var ghosts := get_tree().get_nodes_in_group(&"echoes")
+	check(ghosts.size() == 1 and (ghosts[0] as EchoGhost).loop, "a looping echo was left behind")
+	# We can't get from the lever to the plate inside its 2 s window: stand on the plate and let the echo keep punching.
+	await _walk_to(p, 2800.0, 8.0)
+	var opened := false
+	for i in 1500:
+		await get_tree().physics_frame
+		if gate.is_open():
+			opened = true
+			break
+	check(opened, "the looping echo's punch + us on the plate open the AND gate")
+	await _walk_to(p, 3300.0, 8.0)
+	# The crumbling bridge.
+	await _walk_to(p, 4500.0, 20.0)
+	check(p.global_position.x > 4400.0, "across the crumbling bridge (x %.0f)" % p.global_position.x)
+	await _walk_to(p, 6040.0, 40.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes The Reading Room (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W7_4 := "res://levels/w7_4_the_forbidden_stacks.tscn"
+
+
+func test_w7_4_bot_times_the_pulse_gate_and_the_timed_lever() -> void:
+	var p: Player = await _load_demo(W7_4)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var gates := _demo.find_children("*", "Gate", true, false)
+	var pulse := gates[0] as Gate
+	await _walk_to(p, 1400.0, 20.0)
+	check(await _echo(p, 1480.0, 2260.0), "a looping echo on the pulse plate")
+	await _walk_to(p, 2420.0, 6.0)
+	var opens := 0
+	var was := pulse.is_open()
+	for i in 1500:
+		await get_tree().physics_frame
+		if pulse.is_open() != was:
+			opens += 1
+			was = pulse.is_open()
+	check(opens >= 2, "the gate opens and shuts as the plate pulses (%d changes in 12 s)" % opens)
+	for i in 600:
+		await get_tree().physics_frame
+		if pulse.is_open():
+			break
+	await _walk_to(p, 2700.0, 6.0)
+	check(p.global_position.x > 2560.0, "dashed through while it was open (x %.0f)" % p.global_position.x)
+	# The timed lever.
+	await _walk_to(p, 3000.0, 8.0)
+	await _throw_punch(p, 1)
+	await _walk_to(p, 3640.0, 6.0)
+	check(p.global_position.x > 3560.0, "ran through the timed gate (x %.0f)" % p.global_position.x)
+	await _walk_to(p, 3880.0, 6.0)
+	# The bridge of hopping books.
+	await _walk_to(p, 4760.0, 40.0)
+	check(p.global_position.x > 4690.0 and p.global_position.y > -100.0 and p.global_position.y < 50.0, "hopped the book bridge (at %s)" % p.global_position)
+	await _walk_to(p, 6150.0, 40.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes The Forbidden Stacks (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W7_5 := "res://levels/w7_5_belfry_of_bookmarks.tscn"
+
+
+## Wait for a lift to come back down to `y`, then step on and ride it up past `top_y`.
+func _ride_echo_lift(p: Player, lift: Node2D, x: float, floor_y: float, top_y: float, exit_x: float) -> bool:
+	await _walk_to(p, x, 8.0)
+	for i in 2400:
+		await get_tree().physics_frame
+		if lift.global_position.y < top_y + 20.0 and p.global_position.y < top_y + 20.0:
+			await _walk_to(p, exit_x, 6.0)
+			return true
+	return false
+
+
+func test_w7_5_bot_climbs_the_belfry_with_echo_lifts() -> void:
+	var p: Player = await _load_demo(W7_5)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var lifts := _demo.find_children("*", "MovingPlatform", true, false)
+	await _walk_to(p, 480.0, 8.0)
+	check(await _echo(p, 560.0, 1000.0), "an echo on the first lift's plate")
+	var up1: bool = await _ride_echo_lift(p, lifts[0], 1470.0, 0.0, -420.0, 1700.0)
+	check(up1 and p.global_position.y < -380.0, "the first lift raises us to the second storey (at %s)" % p.global_position)
+	await _walk_to(p, 2000.0, 10.0)
+	check(await _echo(p, 2100.0, 3300.0), "a second echo on the second lift's plate")
+	var up2: bool = await _ride_echo_lift(p, lifts[1], 3850.0, -420.0, -840.0, 4100.0)
+	check(up2 and p.global_position.y < -800.0, "the second lift raises us to the belfry (at %s)" % p.global_position)
+	await _walk_to(p, 6250.0, 40.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Belfry of Bookmarks (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+const W7_6 := "res://levels/w7_6_the_great_library.tscn"
+
+
+func test_w7_6_bot_beats_the_archivist_with_echoes() -> void:
+	var p: Player = await _load_demo(W7_6)
+	p.invulnerable_timer = 100000.0
+	await _place(p, Vector2(0, -2))
+	var boss := _demo.find_children("*", "Archivist", true, false)[0] as Archivist
+	# Run-in practice: an echo holds the gate.
+	check(await _echo(p, 520.0, 820.0), "the run-in practice echo")
+	await _walk_to(p, 1700.0, 20.0)
+	await frames(10)
+	var woke := not boss.asleep
+	check(woke, "the Archivist wakes when we enter the hall")
+	var opened := false
+	var hits := 0
+	for round in 60:
+		if boss.dead:
+			break
+		if boss.warded():
+			var ghosts := get_tree().get_nodes_in_group(&"echoes")
+			var on_a := ghosts.size() > 0 and absf((ghosts[0] as Node2D).global_position.x - 1880.0) < 60.0
+			var on_b := ghosts.size() > 0 and absf((ghosts[0] as Node2D).global_position.x - 3120.0) < 60.0
+			if not on_a and not on_b:   # (the run-in's practice echo doesn't count)
+				await _walk_to(p, 1640.0, 14.0)
+				await _echo(p, 1700.0, 1880.0)   # record the walk onto the left seal plate
+				on_a = true
+			# Step onto the plate the echo is NOT holding.
+			await _walk_to(p, 3120.0 if on_a else 1880.0, 14.0)
+			for i in 360:
+				await get_tree().physics_frame
+				if not boss.warded() or boss.dead:
+					break
+		if boss.dead:
+			break
+		if not boss.warded():
+			opened = true
+			# Run to him and hit him until the ward closes again.
+			for i in 900:
+				if boss.dead or boss.warded():
+					break
+				var dx := boss.global_position.x - p.global_position.x
+				if absf(dx) > 80.0:
+					await _walk_to(p, boss.global_position.x - signf(dx) * 60.0, 3.0)
+				else:
+					var h0 := boss.health
+					await _throw_punch(p, 1 if dx > 0.0 else -1)
+					await seconds(0.3)
+					if boss.health < h0:
+						hits += 1
+	check(opened, "both plates (an echo + us) broke the ward at least once")
+	check(hits >= 1 or boss.dead, "and we landed hits while he was dazed (%d)" % hits)
+	check(boss.dead, "the Archivist is beaten (health %d)" % boss.health)
+	await seconds(2.0)
+	await _walk_to(p, 5500.0, 30.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes The Great Library (at %s)" % p.global_position)
+	await _finish_demo()
+
+
+func test_echoes_are_one_per_dreamer_and_a_new_recording_replaces_the_old() -> void:
+	var pad := RecordPad.new()
+	pad.position = Vector2(0, 0)
+	_arena.add_child(pad)
+	var stop := RecordPad.new()
+	stop.stop_only = true
+	stop.position = Vector2(300, 0)
+	_arena.add_child(stop)
+	var p0 := add_player(0, Vector2(0, -60))
+	var p1 := add_player(1, Vector2(-1000, -60))
+	await seconds(0.3)
+	await _walk_to(p0, 300.0, 6.0)
+	await seconds(1.0)
+	check(get_tree().get_nodes_in_group(&"echoes").size() == 1, "dreamer 1's echo")
+	p0.global_position = Vector2(-500, -60)   # (out of the way: dreamers can stand on each other's heads)
+	p1.global_position = Vector2(0, -60)
+	await seconds(0.3)
+	check(p1.has_node("EchoRecorder"), "dreamer 2 records on the same pad")
+	p1.global_position = Vector2(300, -60)
+	await seconds(1.2)
+	check(get_tree().get_nodes_in_group(&"echoes").size() == 2, "each dreamer has an echo of their own")
+	# Dreamer 1 records again: only THEIR old echo is replaced.
+	p0.global_position = Vector2(0, -60)
+	await seconds(0.3)
+	p0.global_position = Vector2(300, -60)
+	await seconds(1.2)
+	var slots: Array = get_tree().get_nodes_in_group(&"echoes").map(func(g: Node) -> int: return (g as EchoGhost).slot)
+	slots.sort()
+	check(slots == [0, 1], "a new recording replaces the dreamer's own echo only (slots %s)" % [slots])
+
+
+func test_echo_ghost_never_hurts_and_stops_at_the_end_of_the_route() -> void:
+	var pad := RecordPad.new()
+	pad.max_time = 1.5
+	_arena.add_child(pad)
+	var p := add_player(0, Vector2(0, -60))
+	await seconds(0.3)
+	press(0, "move_right")
+	await seconds(1.4)
+	release(0, "move_right")
+	await seconds(0.8)
+	var g := get_tree().get_nodes_in_group(&"echoes")
+	check(g.size() == 1, "recording ended at its time limit")
+	await seconds(1.5)   # (the replay itself takes as long as the recording did)
+	var x_end: float = (g[0] as Node2D).global_position.x
+	await seconds(2.0)
+	check(absf((g[0] as Node2D).global_position.x - x_end) < 1.0, "a non-looping echo stands where the route ended")
+	check(not p.is_bubbled(), "and an echo never hurts anyone")

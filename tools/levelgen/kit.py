@@ -156,6 +156,10 @@ class LevelKit:
         return self._tool("Toys", "RecordPad", "Area2D", "record_pad", x, y, max_time=float(max_time) if max_time else None,
                           width=width, loop=True if loop else None)
 
+    def stop_pad(self, x, y, width=None):
+        """A STOP pad on its own (ends a recording; the echo is left standing here)."""
+        return self._tool("Toys", "StopPad", "Area2D", "record_pad", x, y, stop_only=True, width=width)
+
     def echo_plate(self, x, y, targets, required=1, latch=False, width=96):
         """A pressure plate with a STOP pad on it: record at a record_pad, walk here, and your echo is left
         standing on the plate (it counts as one dreamer). Returns the plate's path."""
@@ -559,10 +563,10 @@ class LevelKit:
                           rise_distance=float(rise), speed=float(speed), active=active or None)
 
     # --- logic --------------------------------------------------------------------
-    def gate(self, x, y, w=48, h=192, open_offset=None, stay_open=True, start_open=False):
+    def gate(self, x, y, w=48, h=192, open_offset=None, stay_open=True, start_open=False, need=1):
         return self._tool("Logic", "Gate", "AnimatableBody2D", "gate", x, y, size=V(w, h),
                           open_offset=V(*(open_offset or (0, -h))), stay_open=None if stay_open else False,
-                          start_open=start_open or None)
+                          start_open=start_open or None, need=need if need > 1 else None)
 
     def pit_kill(self, x0, x1, y):
         """Kill strip under a pit so falls end quickly (instead of the level-wide one)."""
