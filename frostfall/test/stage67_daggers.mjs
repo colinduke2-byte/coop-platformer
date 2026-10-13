@@ -58,8 +58,8 @@ const stab = async (sneak) => { if (sneak) { await press('ShiftLeft'); await h.s
 // median of a few swings; the first swing after a weapon change is thrown away (it can land twice)
 const avgHit = async (weapon, face, sneak, n = 5) => { const v = []; for (let i = 0; i < n + 1; i++) { await setup(weapon, face); await stab(sneak); const s = await snap(); if (i) v.push(s.max - s.hp); await h.sleep(150); } v.sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
 
-const back = await avgHit('skinning_knife', { x: 1, y: 0 }, false);       // enemy faces away from the player (player is to its left)
-const front = await avgHit('skinning_knife', { x: -1, y: 0 }, false);
+const back = await avgHit('skinning_knife', { x: 1, y: 0 }, false, 9);       // enemy faces away from the player (player is to its left)
+const front = await avgHit('skinning_knife', { x: -1, y: 0 }, false, 9);
 console.log('back/front', back, front);
 check('a dagger in the back hits ~1.4x harder than from the front', back > front * 1.2, `${back} vs ${front}`);
 const sneakD = await avgHit('skinning_knife', { x: -1, y: 0 }, true);
