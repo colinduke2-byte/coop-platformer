@@ -143,6 +143,7 @@ func _process(delta: float) -> void:
 func _connect_events() -> void:
 	var E := EventBus
 	E.player_jumped.connect(func(_p: Player) -> void: play("jump", -4.0))
+	E.gravity_flipped.connect(func(dir: int) -> void: play("flip_up" if dir < 0 else "flip_down", -3.0, 1.0, 0.0))
 	E.player_wall_jumped.connect(func(_p: Player) -> void: play("wall_jump", -6.0))
 	E.player_landed.connect(func(_p: Player) -> void: play("land", -10.0, 1.0, 0.1))
 	E.player_hard_landed.connect(func(_p: Player, _s: float) -> void: play("hard_land", -4.0))

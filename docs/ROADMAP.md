@@ -120,6 +120,11 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [ ] Playtest: is the 0.6 s switch cooldown / 0.2 s float right? Is 6-2's rhythm run too fast? Is Madame's dizzy window (2.8 s) fair?
 - [ ] Ideas: more gravity toys (a gravity-flipping barrel cannon, flip-on-timer clocks), W6 secret levels
 
+## Refinement pass (Oct 2026) - see also the Performance round 2 line above
+- [x] `tools/fuzz_levels.tscn`: a random-input bot in every level (flips gravity in World 6) - 44 levels clean
+- [x] Input rebinding, comfort settings (screen shake, hit freeze, reduce flashing), flip whoosh SFX, `tools/process_census.tscn`
+- [ ] Still needs real playtests: boss fairness solo, 6-2's rhythm run, shop prices, wall-climb strength
+
 ## Visual overhaul (next) - see docs/VISUAL_OVERHAUL.md
 - [x] Phase 0 foundation (texture baker `tools/art/bake_textures.py`, quality presets `core/gfx.gd` + Settings -> Graphics, before/after harness `tools/art/compare.sh`, perf gate `tools/art/bench.sh`)
 - [x] Phase 1 worlds & terrain (painted ground shader `world/shaders/painted.gdshader` + `PaintedSurface`, tapered ink `MeshPainter.draw_ink`, per-world colour grade `ColorGrade`, `Foreground` framing silhouettes, backdrop mist + brush texture, sun shafts, grass that bends, water caustics, web `GfxWatchdog`) - still to do from the plan: extra backdrop layers per scenery, glow halos, per-deco painted shading · [x] Phase 2 characters (rim light + highlights on body/limbs/head, eye sparkle, mouth expressions, spring follow-through on hat/plume/scarf/bandana, breathing, 3 victory dances, cloth shader, `BlobShadow` contact shadows) · [x] Phase 3 enemies & bosses (creature shader: material brushwork by kind via `Enemy.PAINT`, saturation pop, top light; contact shadows for ground walkers; boss defeat flourish in `Vfx._boss_defeat`; still to do: warning-tell glows, boss intro camera) · [x] Phase 4 UI, menus & maps (Fredoka font, baked paper panel `art/ui/panel_paper.png` via `UIStyle.panel`/`PaperPanel`, `DreamBackdrop`, spotlit character cards, title pop-in + sparkles + grade, map brushwork + parchment frame + cloud shadows + sailboat/birds, results medal stars + Lum count-up) · [x] Phase 5 final pass (goal halo, brushwork on deco, perf gate: draw calls +5% / +5% / +24% vs baseline, tests + level audit green, deployed)
@@ -140,7 +145,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Performance round 2 (5800X + 4070 Ti target, 120 fps): F3 overlay shows frame median/p99/worst + hitch log, F4 saves `perf_report.txt` (user data dir); shaders + textures pre-warmed at boot (`world/shader_warmup.gd`); idle rope bridges skip all work. Still to do: pooling for Lums/VFX, off-screen script gating (lum/deco/glow), merged full-screen passes, physics interpolation for 144/240 Hz
 - [x] Performance: static art baked to meshes, on-screen-only redraws (draw calls 1200–2700 -> 280–530 on the busiest levels)
 - [x] Settings: music / SFX volume, fullscreen (Pause -> Settings, saved in user://settings.json)
-- [ ] Input rebinding
+- [x] Input rebinding (keyboards + gamepad jump/punch): Settings.key_binds/pad_binds, Pause > Settings > Rebind controls
 - [x] Windows export preset (`export_presets.cfg`, single .exe)
 - [ ] macOS export preset
 
@@ -152,7 +157,7 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [x] Mumbleby is now a witch-wizard (long hair, lashes: `CharacterDef.has_long_hair / has_lashes / nose_size`)
 - [x] Punch = Shift (Left Shift P1, Right Shift P2); sprint = hold Ctrl / RT, or double-tap a direction
 - [ ] Playtest round 2: are single-wall climbs too strong for level secrets? (`wall_climb_velocity`)
-- [ ] Button rebinding in a settings menu
+- [x] Button rebinding in a settings menu (see above)
 
 
 ## Online multiplayer (browser)

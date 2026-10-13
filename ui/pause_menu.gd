@@ -15,7 +15,12 @@ var _panel: Control
 var _controls: Control     ## the ControlsCard overlay (null = not showing)
 var _settings := false     ## showing the Settings rows instead of the main list
 var _main_items: Array[String] = []
-const SETTING_ROWS := ["music", "sfx", "graphics", "fullscreen", "back"]
+const SETTING_ROWS := ["music", "sfx", "graphics", "fullscreen", "shake", "hitstop", "flash", "rebind", "back"]
+const ACTION_LABELS := {&"move_left": "Move left", &"move_right": "Move right", &"move_up": "Up", &"move_down": "Down",
+		&"jump": "Jump", &"attack": "Punch", &"sprint": "Sprint", &"glide": "Glide"}
+var _rebind := false        ## showing the key-rebinding rows
+var _capturing := ""        ## the row waiting for a key / button press ("" = none)
+var _capture_cool := 0.0
 
 
 func _ready() -> void:
@@ -110,8 +115,15 @@ func _process(_delta: float) -> void:
 		if _menu.back or _menu.pause or _menu.confirm:
 			_hide_controls()
 		return
+	_capture_cool = maxf(_capture_cool - _delta, 0.0)
+	if _rebind:
+		_process_rebind()
+		return
+	if _settings and _items[_index] == "rebind" and _menu.confirm:
+		_show_rebind(true)
+		return
 	if _settings and (_menu.left or _menu.right or _menu.confirm) and _items[_index] != "back":
-		Settings.nudge(_items[_index], 1 if (_menu.right or (_menu.confirm and _items[_index] == "fullscreen")) else (-1 if _menu.left else 0))
+		Settings.nudge(_items[_index], 1 if (_menu.right or (_menu.confirm and _items[_index] in ["fullscreen", "hitstop", "flash"])) else (-1 if _menu.left else 0))
 		_rebuild()
 		return
 	if _settings and (_menu.back or _menu.pause or _menu.confirm):
@@ -175,15 +187,103 @@ func _show_settings(on: bool) -> void:
 	_rebuild()
 
 
+## The key / button rows. Select a row + JUMP, then press the new key (Esc cancels).
+func _show_rebind(on: bool) -> void:
+	_rebind = on
+	_capturing = ""
+	if on:
+		_settings_items = _items.duplicate()
+		_items.clear()
+		for layout: String in ["left", "right"]:
+			for a: StringName in Settings.REBINDABLE:
+				_items.append("k:%s:%s" % [layout, a])
+		for a: StringName in Settings.PAD_REBINDABLE:
+			_items.append("p:%s" % a)
+		_items.append("reset")
+		_items.append("back")
+		_index = 0
+		_note.text = "JUMP on a row, then press the new key or button.  Esc cancels."
+	else:
+		_items = _settings_items
+		_index = _items.find("rebind")
+		_note.text = "Left / Right: change"
+	_note.visible = true
+	_rebuild()
+
+
+var _settings_items: Array[String] = []
+
+
+func _process_rebind() -> void:
+	if _capturing != "" or _capture_cool > 0.0:
+		return
+	if _menu.up:
+		_index = wrapi(_index - 1, 0, _items.size())
+		_rebuild()
+	elif _menu.down:
+		_index = wrapi(_index + 1, 0, _items.size())
+		_rebuild()
+	elif _menu.back or _menu.pause:
+		_show_rebind(false)
+	elif _menu.confirm:
+		var item := _items[_index]
+		if item == "back":
+			_show_rebind(false)
+		elif item == "reset":
+			Settings.reset_binds()
+			_rebuild()
+		else:
+			_capturing = item
+			_rebuild()
+
+
+func _input(event: InputEvent) -> void:
+	if _capturing == "" or not _open:
+		return
+	var parts := _capturing.split(":")
+	var done := false
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_ESCAPE:
+			done = true   # cancel
+		elif parts[0] == "k":
+			var layout := parts[1]
+			Settings.set_key(layout, StringName(parts[2]), event.physical_keycode, InputRouter.KEYS_LEFT if layout == "left" else InputRouter.KEYS_RIGHT)
+			done = true
+	elif event is InputEventJoypadButton and event.pressed and parts[0] == "p":
+		Settings.set_pad(StringName(parts[1]), event.button_index)
+		done = true
+	if done:
+		get_viewport().set_input_as_handled()
+		_capturing = ""
+		_capture_cool = 0.3
+		_rebuild()
+
+
+func _row_text(item: String) -> String:
+	if item == "back":
+		return "Back"
+	if item == "reset":
+		return "Reset to defaults"
+	var parts := item.split(":")
+	var waiting := item == _capturing
+	if parts[0] == "k":
+		var who := "P1 keys" if parts[1] == "left" else "P2 keys"
+		return "%s  %s:  %s" % [who, ACTION_LABELS[StringName(parts[2])], "press a key..." if waiting else InputRouter.key_name(parts[1], StringName(parts[2]))]
+	return "Gamepad  %s:  %s" % [ACTION_LABELS[StringName(parts[1])], "press a button..." if waiting else InputRouter.pad_button_name(StringName(parts[1]))]
+
+
 func _rebuild() -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	for i in _items.size():
 		var sel := i == _index
 		var text := _items[i]
-		if _settings:
+		if _rebind:
+			text = _row_text(text)
+		elif _settings:
 			text = "Back" if text == "back" else Settings.describe(text)
-		var l := UIStyle.label(("> %s <" if sel and not _settings else "%s") % text, 34 if sel else 28,
+		var small := _rebind
+		var l := UIStyle.label(("> %s <" if sel and not _settings else "%s") % text, (24 if small else 34) if sel else (20 if small else 28),
 				UIStyle.ACCENT if sel else UIStyle.INK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(l)

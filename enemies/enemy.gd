@@ -154,7 +154,7 @@ func _physics_process(delta: float) -> void:
 	_check_contacts(delta)
 	_squash = _squash.lerp(Vector2.ONE, clampf(12.0 * delta, 0.0, 1.0))
 	visual.scale = Vector2(_squash.x * facing, _squash.y)
-	var f := 1.0 + 2.5 * hit_flash
+	var f := 1.0 + 2.5 * hit_flash * Settings.flash_scale()
 	visual.modulate = Color(f, f, f)
 	View.redraw(visual)
 

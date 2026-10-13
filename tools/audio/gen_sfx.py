@@ -112,6 +112,11 @@ def main():
     save("gate", mix(noise(0.6, 0.05) * env(int(SR * 0.6), 0.1, curve=1), sweep(80, 60, 0.6, "saw") * 0.3 * env(int(SR * 0.6), 0.1, curve=1)), 0.55)
     save("crumble", seq(*[noise(0.05, 0.3) * env(int(SR * 0.05)) for _ in range(5)], gap=0.02), 0.5)
     save("break", mix(noise(0.3, 0.35) * env(int(SR * 0.3), 0.001, curve=2.5), sweep(250, 80, 0.2, "square") * 0.3 * env(int(SR * 0.2))), 0.75)
+    # World 6 gravity flips: a rising whoosh + sparkle going UP, a falling whoosh + soft thump going DOWN.
+    n = int(SR * 0.5)
+    swell = np.sin(np.linspace(0, np.pi, n)) ** 1.5
+    save("flip_up", mix(sweep(160, 1200, 0.5, "sine", 0.7) * swell * 0.8, noise(0.5, 0.12) * swell * 0.5, np.concatenate([np.zeros(int(SR * 0.3)), tone(1760, 0.2, "sine", curve=3) * 0.4])), 0.6)
+    save("flip_down", mix(sweep(1200, 110, 0.5, "sine", 0.7) * swell * 0.8, noise(0.5, 0.12) * swell * 0.5, np.concatenate([np.zeros(int(SR * 0.38)), sweep(130, 60, 0.12) * env(int(SR * 0.12), 0.001, curve=2) * 0.8])), 0.6)
     save("clank", mix(tone(1400, 0.25, "square", curve=4) * 0.5, tone(2100, 0.2, "sine", curve=5), noise(0.03, 0.9) * 0.4), 0.5)
     save("enemy_pop", mix(sweep(900, 200, 0.2, "square", 0.5) * env(int(SR * 0.2), 0.001, curve=2) * 0.6, noise(0.15, 0.3) * env(int(SR * 0.15))), 0.6)
     save("shoot", sweep(700, 300, 0.15, "square", 0.4) * env(int(SR * 0.15), 0.001, curve=2), 0.4)

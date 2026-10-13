@@ -152,6 +152,9 @@ func _bottom(mp: MeshPainter, rng: RandomNumberGenerator, style: int, c: Color) 
 
 
 func _process(_delta: float) -> void:
+	if _layers.is_empty():
+		set_process(false)   # switched off (or Low): nothing to scroll, so stop ticking
+		return
 	if not View.active:
 		return
 	var cam_x := View.rect.position.x + View.rect.size.x * 0.5

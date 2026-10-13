@@ -46,7 +46,7 @@ func _physics_process(delta: float) -> void:
 ## Shake the screen. Trauma stacks (capped at 1); the shake is trauma squared,
 ## so small bumps stay subtle and big hits really rattle.
 func add_trauma(amount: float) -> void:
-	_trauma = clampf(_trauma + amount, 0.0, 1.0)
+	_trauma = clampf(_trauma + amount * Settings.shake, 0.0, 1.0)
 
 
 func _process(delta: float) -> void:

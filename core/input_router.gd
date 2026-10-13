@@ -122,10 +122,49 @@ func unbind_slot(slot: int) -> void:
 			InputMap.erase_action(n)
 
 
+## Re-apply every slot's bindings (after a rebind in the settings menu).
+func rebuild_bindings() -> void:
+	for slot: int in _slots.keys():
+		var d: Dictionary = _slots[slot]
+		bind_slot(slot, d["kind"], d["id"])
+
+
+## The key that does `action` for a keyboard layout ("left" / "right") right now, as text ("Left Shift", "A").
+static func key_name(layout: String, action: StringName) -> String:
+	var map: Dictionary = KEYS_LEFT if layout == "left" else KEYS_RIGHT
+	var o := Settings.key_override(layout, action)
+	if o != -1:
+		return OS.get_keycode_string(o as Key)
+	var d: Variant = map.get(action)
+	if d is Array:
+		return ("Left " if d[1] == KEY_LOCATION_LEFT else "Right ") + OS.get_keycode_string(d[0] as Key)
+	return OS.get_keycode_string(d as Key)
+
+
+const PAD_NAMES: Array[String] = ["A", "B", "X", "Y", "Back", "Guide", "Start", "L-Stick", "R-Stick", "LB", "RB", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right"]
+
+
+static func pad_button_name(action: StringName) -> String:
+	var b: int = int(Settings.pad_binds.get(String(action), -1))
+	if b == -1:
+		match action:
+			&"jump": return "A"
+			&"attack": return "X / B"
+			&"glide": return "RB"
+		return "?"
+	return PAD_NAMES[b] if b >= 0 and b < PAD_NAMES.size() else "Button %d" % b
+
+
 func _bind_keys(slot: int, map: Dictionary) -> void:
+	var layout := "left" if map == KEYS_LEFT else "right"
 	for action: StringName in map:
 		var ev := InputEventKey.new()
 		var key: Variant = map[action]
+		var o := Settings.key_override(layout, action)
+		if o != -1:
+			ev.physical_keycode = o as Key   # rebound: any copy of that key
+			InputMap.action_add_event(action_name(slot, action), ev)
+			continue
 		if key is Array:
 			ev.physical_keycode = key[0]
 			ev.location = key[1]  # e.g. Left Shift only, so the other player keeps Right Shift
@@ -143,14 +182,19 @@ func _bind_joypad(slot: int, id: int) -> void:
 	_add_button(slot, &"move_right", id, JOY_BUTTON_DPAD_RIGHT)
 	_add_button(slot, &"move_up", id, JOY_BUTTON_DPAD_UP)
 	_add_button(slot, &"move_down", id, JOY_BUTTON_DPAD_DOWN)
-	_add_button(slot, &"jump", id, JOY_BUTTON_A)
-	_add_button(slot, &"attack", id, JOY_BUTTON_X)
-	_add_button(slot, &"attack", id, JOY_BUTTON_B)
+	_add_button(slot, &"jump", id, _pad(&"jump", JOY_BUTTON_A))
+	_add_button(slot, &"attack", id, _pad(&"attack", JOY_BUTTON_X))
+	if not Settings.pad_binds.has("attack"):
+		_add_button(slot, &"attack", id, JOY_BUTTON_B)
 	_add_axis(slot, &"sprint", id, JOY_AXIS_TRIGGER_RIGHT, 1.0)
 	_add_axis(slot, &"sprint", id, JOY_AXIS_TRIGGER_LEFT, 1.0)
 	_add_button(slot, &"sprint", id, JOY_BUTTON_LEFT_SHOULDER)
-	_add_button(slot, &"glide", id, JOY_BUTTON_RIGHT_SHOULDER)
+	_add_button(slot, &"glide", id, _pad(&"glide", JOY_BUTTON_RIGHT_SHOULDER))
 	_add_button(slot, &"pause", id, JOY_BUTTON_START)
+
+
+func _pad(action: StringName, default: JoyButton) -> JoyButton:
+	return int(Settings.pad_binds.get(String(action), default)) as JoyButton
 
 
 func _add_axis(slot: int, action: StringName, id: int, axis: JoyAxis, value: float) -> void:

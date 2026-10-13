@@ -13,6 +13,7 @@ var _hint: Label
 var _banner: Label
 var _bump := 0.0
 var _debug: Label
+var _gravity: Label        ## World 6: shows an arrow while gravity is flipped
 var _stats := FrameStats.new()
 var _report_note := ""
 var _snooze: SnoozeIcon
@@ -70,6 +71,14 @@ func _ready() -> void:
 	_timer.custom_minimum_size.x = 160
 	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top_right.add_child(_timer)
+
+	_gravity = UIStyle.label("", 26, Color("7fd8ff"), 8)
+	_gravity.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_gravity.position = Vector2(-300, 76)
+	_gravity.custom_minimum_size.x = 270
+	_gravity.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_gravity.visible = false
+	root.add_child(_gravity)
 
 	_hint = UIStyle.label("", 24, Color.WHITE, 8)
 	_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
@@ -176,6 +185,10 @@ func _process(delta: float) -> void:
 			else "More friends can join anytime: SPACE / ENTER / A")
 	# Once someone's playing, the join reminder fades after a few seconds.
 	_hint.modulate.a = 1.0 if n == 0 else clampf(1.0 - (GameManager.level_time - 5.0) / 1.5, 0.0, 0.55)
+	var flipped := GameManager.gravity_dir < 0
+	_gravity.visible = flipped
+	if flipped:
+		_gravity.text = "GRAVITY: UP"
 	if _debug.visible:
 		_stats.record(_where())
 		_debug.text = _debug_text()

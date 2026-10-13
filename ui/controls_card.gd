@@ -4,15 +4,19 @@ extends PanelContainer
 ## Shown from the pause menu ("Controls") and with PAUSE in the lobby.
 ## Keep in sync with InputRouter's bindings and docs/CONTROLS.md.
 
-## [action, player 1 keyboard, player 2 keyboard, gamepad]
-const BUTTONS := [
-	["Join", "Space", "Enter", "A"],
-	["Move", "W A S D", "Arrow keys", "Left stick / D-pad"],
-	["Jump", "Space", "Enter", "A"],
-	["Punch", "Left Shift", "Right Shift", "X  or  B"],
-	["Sprint (hold)", "Left Ctrl", "Right Ctrl", "RT / LT / LB"],
-	["Pause", "Esc", "Backspace", "Start"],
-]
+## [action, player 1 keyboard, player 2 keyboard, gamepad] - read from the live bindings (Pause > Settings > Rebind).
+static func buttons() -> Array:
+	var k := func(layout: String, a: StringName) -> String: return InputRouter.key_name(layout, a)
+	var move := func(layout: String) -> String:
+		return " ".join([k.call(layout, &"move_left"), k.call(layout, &"move_up"), k.call(layout, &"move_down"), k.call(layout, &"move_right")])
+	return [
+		["Join", "Space", "Enter", "A"],
+		["Move", move.call("left"), move.call("right"), "Left stick / D-pad"],
+		["Jump", k.call("left", &"jump"), k.call("right", &"jump"), InputRouter.pad_button_name(&"jump")],
+		["Punch", k.call("left", &"attack"), k.call("right", &"attack"), InputRouter.pad_button_name(&"attack")],
+		["Sprint (hold)", k.call("left", &"sprint"), k.call("right", &"sprint"), "RT / LT / LB"],
+		["Pause", "Esc", "Backspace", "Start"],
+	]
 
 ## [move, how]
 const MOVES := [
@@ -50,7 +54,7 @@ func _init() -> void:
 	v.add_child(grid)
 	for h: String in ["", "Player 1 keyboard", "Player 2 keyboard", "Gamepad"]:
 		grid.add_child(UIStyle.label(h, 22, HEAD))
-	for row: Array in BUTTONS:
+	for row: Array in buttons():
 		for i in row.size():
 			grid.add_child(UIStyle.label(row[i], 22, UIStyle.ACCENT if i == 0 else UIStyle.INK))
 

@@ -4,8 +4,12 @@ The same list is in the game: **Pause → Controls**, or press **Pause** on the
 character select screen. Bindings live in `core/input_router.gd`; the in-game
 card is `ui/controls_card.gd`. Keep all three in sync.
 
-Volume (music / sound effects) and fullscreen: **Pause → Settings**, LEFT / RIGHT
-to change. Saved between sessions.
+**Pause → Settings** (LEFT / RIGHT to change, saved between sessions): music and sound-effect
+volume, graphics, fullscreen, and comfort options - **screen shake** (0-100%), **hit freeze** on/off,
+**reduce flashing** on/off. **Rebind controls** lets you set every key for both keyboards and the
+gamepad's jump / punch buttons: pick a row, press JUMP, then press the new key (Esc cancels). A key
+already in use on that keyboard swaps with the one you pick; "Reset to defaults" undoes it all. The table
+below shows the DEFAULTS; the in-game Controls card always shows your current keys.
 
 ## Buttons
 

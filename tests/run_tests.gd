@@ -9007,3 +9007,106 @@ func test_respawning_at_a_checkpoint_restores_normal_gravity() -> void:
 	check(gm().gravity_dir == 1 and p.gdir == 1, "respawning resets gravity")
 	check(p.is_on_floor() and p.global_position.y > -10.0, "and puts you back on the floor (%s)" % p.global_position)
 	await _finish_demo()
+
+
+# --- input rebinding -------------------------------------------------------------------
+
+func _key_events(slot: int, action: StringName) -> Array[int]:
+	var out: Array[int] = []
+	for ev in InputMap.action_get_events(InputRouter.action_name(slot, action)):
+		if ev is InputEventKey:
+			out.append(int((ev as InputEventKey).physical_keycode))
+	return out
+
+
+func test_rebinding_keys_rebinds_the_slot_swaps_conflicts_and_resets() -> void:
+	var saved_keys: Dictionary = Settings.key_binds.duplicate(true)
+	var saved_pad: Dictionary = Settings.pad_binds.duplicate(true)
+	Settings.reset_binds()
+	router().bind_slot(0, InputRouter.DeviceKind.KEYBOARD_LEFT)
+	check(_key_events(0, &"jump") == [KEY_SPACE], "defaults: jump is Space")
+	Settings.set_key("left", &"jump", KEY_J, InputRouter.KEYS_LEFT)
+	check(_key_events(0, &"jump") == [KEY_J], "rebinding jump to J takes effect on the bound slot right away")
+	check(InputRouter.key_name("left", &"jump") == "J", "and the key name follows")
+	# Binding a key another action already uses swaps the two.
+	Settings.set_key("left", &"attack", KEY_J, InputRouter.KEYS_LEFT)
+	check(_key_events(0, &"attack") == [KEY_J] and _key_events(0, &"jump") == [KEY_SHIFT], "taking J for punch gives jump punch's old key (swap, no duplicates)")
+	# The other keyboard is untouched.
+	check(InputRouter.key_name("right", &"jump") == "Enter", "the second keyboard keeps its own layout")
+	# Pad.
+	router().bind_slot(1, InputRouter.DeviceKind.JOYPAD, 0)
+	Settings.set_pad(&"jump", JOY_BUTTON_Y)
+	var pad_jump := false
+	for ev in InputMap.action_get_events(InputRouter.action_name(1, &"jump")):
+		pad_jump = pad_jump or (ev is InputEventJoypadButton and (ev as InputEventJoypadButton).button_index == JOY_BUTTON_Y)
+	check(pad_jump and InputRouter.pad_button_name(&"jump") == "Y", "the gamepad's jump moves to Y")
+	# Saved and reloaded.
+	var raw := FileAccess.get_file_as_string(Settings.PATH)
+	check(raw.contains("\"keys\"") and raw.contains("\"pad\""), "bindings are written to settings.json")
+	Settings.reset_binds()
+	check(_key_events(0, &"jump") == [KEY_SPACE] and InputRouter.key_name("left", &"attack") == "Left Shift", "reset restores every default")
+	Settings.key_binds = saved_keys
+	Settings.pad_binds = saved_pad
+	Settings.save()
+	router().unbind_slot(1)
+	router().rebuild_bindings()
+
+
+func test_rebind_menu_captures_the_next_key_and_the_controls_card_follows() -> void:
+	var saved_keys: Dictionary = Settings.key_binds.duplicate(true)
+	Settings.reset_binds()
+	router().bind_slot(0, InputRouter.DeviceKind.KEYBOARD_LEFT)
+	var pm: Node = load("res://ui/pause_menu.tscn").instantiate()
+	_arena.add_child(pm)
+	await frames(2)
+	pm.open(0)
+	pm._show_settings(true)
+	pm._show_rebind(true)
+	check(pm._items.size() > 15 and pm._items[0] == "k:left:move_left", "the rebind list has every key and button (%d rows)" % pm._items.size())
+	pm._index = pm._items.find("k:left:sprint")
+	pm._capturing = pm._items[pm._index]
+	var ev := InputEventKey.new()
+	ev.physical_keycode = KEY_Q
+	ev.pressed = true
+	pm._input(ev)
+	check(InputRouter.key_name("left", &"sprint") == "Q" and pm._capturing == "", "the next key press becomes the binding")
+	var row: Array = ControlsCard.buttons().filter(func(r: Array) -> bool: return r[0] == "Sprint (hold)")[0]
+	check(row[1] == "Q", "the Controls card shows the new key (%s)" % row[1])
+	pm._capturing = "k:left:jump"
+	var esc := InputEventKey.new()
+	esc.physical_keycode = KEY_ESCAPE
+	esc.pressed = true
+	pm._input(esc)
+	check(InputRouter.key_name("left", &"jump") == "Space", "Esc cancels a capture")
+	pm.close()
+	pm.queue_free()
+	Settings.key_binds = saved_keys
+	Settings.reset_binds()
+
+
+func test_comfort_settings_scale_shake_flash_and_hit_stop() -> void:
+	var old := [Settings.shake, Settings.hit_stop, Settings.reduce_flash]
+	Settings.shake = 1.0
+	Settings.nudge("shake", -1)
+	check(is_equal_approx(Settings.shake, 0.9), "shake steps down by 10%")
+	Settings.shake = 0.0
+	var cam := CoopCamera.new()
+	_arena.add_child(cam)
+	cam.add_trauma(0.8)
+	check(cam._trauma == 0.0, "with shake at 0 the camera takes no trauma")
+	Settings.shake = 0.5
+	cam.add_trauma(0.8)
+	check(is_equal_approx(cam._trauma, 0.4), "and half shake gives half (%.2f)" % cam._trauma)
+	cam.queue_free()
+	Settings.nudge("flash", 1)
+	check(Settings.reduce_flash and Settings.flash_scale() < 1.0, "reduce flashing softens hit flashes")
+	Settings.hit_stop = false
+	Vfx.hit_stop_enabled = true
+	Vfx.hit_stop(0.05)
+	check(not Vfx.is_hit_stopped(), "hit freeze OFF means no freeze")
+	for a in ["shake", "hitstop", "flash"]:
+		check(Settings.describe(a).length() > 5, "the %s row has text" % a)
+	Settings.shake = old[0]
+	Settings.hit_stop = old[1]
+	Settings.reduce_flash = old[2]
+	Settings.save()
