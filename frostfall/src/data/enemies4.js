@@ -31,7 +31,7 @@ Object.assign(ENEMIES, {
     body: [8, 7, 4, 7], loot: loot([8, 18], [['dew_essence', 0.5], ['mp_potion', 0.2]]),
   },
   hedgeknight: {
-    name: 'Hedge Knight', tex: 'spr_hedgeknight', shield: true, bark: 'human', weak: { fire: 1.5, shock: 1.1 }, hp: 80, speed: 26, chase: 40, dmg: 19, detect: 70,
+    name: 'Hedge Knight', tex: 'spr_hedgeknight', shield: true, bark: 'human', weak: { fire: 1.5, shock: 1.1 }, hp: 72, speed: 26, chase: 40, dmg: 16, detect: 70,
     kind: 'melee', range: 21, windup: 0.62, atkDur: 0.16, recover: 0.65, cooldown: 0.75, kbResist: 0.5,
     body: [8, 7, 4, 9], loot: loot([14, 30], [['thornvine', 0.3], ['iron_ingot', 0.3], ['hp_potion', 0.25]]),
   },
