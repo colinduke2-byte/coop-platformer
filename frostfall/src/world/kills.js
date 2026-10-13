@@ -85,7 +85,7 @@ export const killMethods = {
   },
   onFirstAlert(en) {
     tip('sneak');
-    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear', 'elk', 'troll', 'bearcub'].includes(en.kind)) tip(en.kind);
+    if (en && ['reaver', 'knight', 'fencer', 'imp', 'necro', 'frostworm', 'wyvern', 'shroom', 'golem', 'lynx', 'bear', 'elk', 'troll', 'bearcub', 'dewsprite', 'cutpurse', 'warchanter', 'sandburrower', 'sunsentinel'].includes(en.kind)) tip(en.kind);
     if (this.t - (this.lastCombat || -99) > 8 && !(this.boss && this.boss.engaged)) music.stinger();
   },
   summonAdds(boss) {

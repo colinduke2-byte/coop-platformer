@@ -44,7 +44,8 @@ const roam = await G(async () => {
   const g = window.gs(), S = window.__ff.S, R = await import('/src/world/roamers.js');
   const e = g.built.entities.find((x) => x.t === 'roamboss' && x.id === 'elk');
   const a = R.routePos(e.route, 0, e.phase), b = R.routePos(e.route, 100, e.phase), c = R.routePos(e.route, 100, e.phase);
-  const q = R.routePos(e.route, 20, e.phase), moved = Math.hypot(a.x - q.x, a.y - q.y) > 100, same = b.x === c.x && b.y === c.y;
+  const moved = [10, 20, 30, 40, 60].some((t) => { const q = R.routePos(e.route, t, e.phase); return Math.hypot(a.x - q.x, a.y - q.y) > 100; }),   // it walks away (a corner can bring it back near the start for a while)
+    q = 0, same = b.x === c.x && b.y === c.y;
   const wrap = R.routePos(e.route, R.loopLength(e.route) / R.ROAM_SPEED, e.phase);
   return { moved, same, closed: Math.hypot(wrap.x - R.routePos(e.route, 0, e.phase).x, wrap.y - R.routePos(e.route, 0, e.phase).y) < 2 };
 });

@@ -48,6 +48,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     if (this.t < (this.spec.big ? 1.2 : 0.45)) return;
     const dx = player.x - this.gx, dy = player.y + 3 - this.gy;
     const d = Math.hypot(dx, dy);
+    if (this.spec.dropped && !this.armed) { if (d > 40) this.armed = true; return; }     // something you dropped stays put until you walk away and come back
     if (d < (this.spec.big ? 400 : 34) && player.mode !== 'dead') { // magnet
       const sp = (this.spec.big ? 70 : 90) * dt;
       this.gx += (dx / (d || 1)) * Math.min(sp, d); this.gy += (dy / (d || 1)) * Math.min(sp, d);

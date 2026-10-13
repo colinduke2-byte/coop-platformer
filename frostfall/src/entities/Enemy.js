@@ -53,6 +53,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (ng > 0 && !cfg.title) { this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * (1 + 0.15 * ng)) }; this.maxHp = Math.round(this.maxHp * (1 + 0.4 * ng)); }
     this.camp = spec.camp || null;
     this.takenMul = 1;
+    if (cfg.summons) this.summons = cfg.summons;      // a creature that calls for help by nature (elites get theirs from elite.js)
     // the further you are into the game (region and story), the harder and sturdier ordinary enemies are
     if (!cfg.title && !cfg.passive) {
       const f = progress(this.tier);

@@ -5,6 +5,7 @@ import { TUNE } from '../data/tuning.js';
 import { ITEMS } from '../data/items.js';
 import { S } from './state.js';
 import { bus } from './bus.js';
+import { tip } from './tips.js';
 
 const BY_TYPE = {
   potion: 0.5, elixir: 0.5, tome: 0.5, gem: 0.5, rune: 0.5, charm: 0.5, misc: 0.5, whistle: 0.5,
@@ -57,6 +58,7 @@ export const invalidate = () => { cacheT = -1; };
 // Called every frame by the player: a warning the moment you tip over a line, whatever caused it (loot, selling, gear, food wearing off).
 export function watch() {
   const l = level();
+  if (l !== lastSeen && l !== 'ok') tip('burden');
   if (l !== lastSeen && l !== 'ok' && (lastSeen === 'ok' || l === 'over')) bus.emit('toast', l === 'over' ? 'OVERLOADED: NO ROLLING. SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12);
   lastSeen = l;
 }

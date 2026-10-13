@@ -128,7 +128,7 @@ function buildForestRegion() {
   g.set(43, 4, TILE.GRAVE); g.set(49, 4, TILE.GRAVE); g.set(41, 5, TILE.ROCK); g.set(51, 5, TILE.ROCK);
   g.set(46, 23, TILE.FIRE);
   g.reserve(0, 0, 1, 1);
-  for (const [x, y] of [[5, 13], [22, 11], [8, 17], [16, 17], [26, 17], [33, 17], [37, 12], [20, 10], [9, 6], [29, 9], [23, 16], [36, 9]]) g.clear(x, y);
+  for (const [x, y] of [[5, 13], [22, 11], [8, 17], [16, 17], [26, 17], [33, 17], [37, 12], [20, 10], [9, 6], [29, 9], [23, 16], [23, 17], [22, 17], [36, 9]]) g.clear(x, y);   // (23,17): a path out for the frost lily, which pines used to wall in
   g.scatter(TILE.PINE, 250, 21);
   g.scatter(TILE.DEADTREE, 14, 24);
   g.scatter(TILE.STUMP, 10, 25);

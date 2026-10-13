@@ -8,7 +8,8 @@ import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF, SLOT_NAMES, iconKey } from '../data/items.js';
 import { upgraded, KIND_OF_TYPE } from '../systems/upgrades.js';
-import { equip, unequip } from '../systems/inventory.js';
+import { equip, unequip, removeItem } from '../systems/inventory.js';
+import Pickup from '../entities/Pickup.js';
 import { stats } from '../systems/stats.js';
 import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
@@ -48,7 +49,7 @@ export default class MenuScene extends Phaser.Scene {
   get gs() { return this.scene.get('Game'); }
 
   create() {
-    ui.modal = true;
+    ui.modal = true; keys.wheel = 0;
     this.tabs = [
       { name: 'ITEMS', render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },
       { name: 'SKILLS', render: () => this.renderSkills(), input: () => {} },
@@ -127,6 +128,7 @@ export default class MenuScene extends Phaser.Scene {
 
   nav(len, rows = ROWS) {
     let moved = false;
+    if (keys.wheel && len) { this.cursor = Math.max(0, Math.min(len - 1, this.cursor + keys.wheel)); keys.wheel = 0; moved = true; }   // the mouse wheel scrolls lists
     if (keys.pressed('down') && len) { this.cursor = (this.cursor + 1) % len; moved = true; }
     if (keys.pressed('up') && len) { this.cursor = (this.cursor + len - 1) % len; moved = true; }
     if (moved) {
@@ -138,11 +140,25 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   inputItems() {
-    if (keys.pressed('swap')) { this.filter = (this.filter + 1) % FILTERS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
+    const byWheel = performance.now() - (keys.wheelT || -1e9) < 80;
+    if (keys.pressed('swap') && !byWheel) { this.filter = (this.filter + 1) % FILTERS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
     if (keys.pressed('shout')) { this.sort = (this.sort + 1) % SORTS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
     const list = this.inventory();
     this.cursor = Math.min(this.cursor, Math.max(0, list.length - 1));
     this.nav(list.length);
+    // V: drop the selected stack at your feet (press twice; equipped and quest items stay). For when the pack is too heavy.
+    if (keys.pressed('ammo') && list.length) {
+      const id = list[this.cursor], it = ITEMS[id], n = S.inv[id] || 0;
+      if (it.type === 'quest' || it.type === 'note' || Object.values(S.equip).includes(id)) { bus.emit('toast', Object.values(S.equip).includes(id) ? 'TAKE IT OFF FIRST' : 'YOU CANNOT DROP THAT', 11); sfx.play('nostamina'); }
+      else if (this.dropArm !== id) { this.dropArm = id; bus.emit('toast', `PRESS V AGAIN TO DROP ${it.name.toUpperCase()}${n > 1 ? ' X' + n : ''}`, 12); sfx.play('move'); }
+      else {
+        this.dropArm = null; removeItem(id, n);
+        const p = this.gs.player; this.gs.pickups.push(new Pickup(this.gs, p.x + 6, p.y + 4, { type: 'item', id, n, dropped: true }));
+        bus.emit('toast', `DROPPED ${it.name.toUpperCase()}: IT STAYS HERE UNTIL YOU LEAVE`, 12); sfx.play('pickup');
+      }
+      this.dirty = true;
+    }
+    if (keys.pressed('up') || keys.pressed('down')) this.dropArm = null;
     const wantEquip = keys.pressed('interact'), wantOff = keys.pressed('block');
     if ((wantEquip || wantOff) && list.length) {
       const id = list[this.cursor], it = ITEMS[id];
@@ -197,7 +213,7 @@ export default class MenuScene extends Phaser.Scene {
   renderItems() {
     const g = this.bg;
     const list = this.inventory();
-    this.help = `E USE  F OFF-HAND  Q FILTER  R SORT: ${SORTS[this.sort]}`;
+    this.help = `E USE  F OFFHAND  V DROP  Q FILTER  R SORT ${SORTS[this.sort]}`;
     panel(g, 6, 22, 150, 130, 2);
     // filter chips + sort
     let fx = 11;

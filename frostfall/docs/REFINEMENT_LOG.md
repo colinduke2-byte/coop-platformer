@@ -50,3 +50,18 @@ Colin's calibration (asked at the start): overall difficulty on Normal is "about
 | R34 | burden | S4 | One weapon held in both hands counted as one and a half; unknown armour classes in content packs could crash. | fixed; the validator checks `weight` and `wt` |
 | R35 | ui | S3 | Pack screen: the sort label overlapped the MISC filter; gold overlapped the weight; the armour stat ran off the panel; the CHARM row was hidden; descriptions ran out of their box; long names ran into the count. | fixed (sort shown in the help line; tighter rows; shorter labels) |
 | R36 | ui | S3 | Shop detail pane: heavy armour's lines ran past the pane into the footer. | fixed: shorter class line; the description gives way to stats; nothing drawn past the pane |
+| R37 | world | S2 | A frost lily in the starting forest was walled in by pines on every seed (Mirra's herbs need three lilies). Found by the new reachability fuzz. | fixed: a clear path next to it |
+| R38 | tests | - | No test walked every region and dungeon for unreachable chests, NPCs, herbs, lore, exits or missing quest places. | added `test/unit/reach.mjs`: 10 regions x 24 seeds plus 9 generated dungeons x 12 seeds (run with 200 seeds by hand: clean) |
+| R39 | tests | - | No test ran every NPC's dialogue with random answers. | added `test/stage79_dialogue.mjs`: 115 scripts x 3 story states; all finish, none throw |
+| R40 | tests | - | The monkey (random input) test never visited the new regions, hubs or boss dungeons. | added 11 maps; ran on 3 seeds: clean except one crypt hiccup that did not reproduce |
+| R41 | tests | - | `campaign_bot` failed since the health increase: its bot re-equipped the starting fur tunic before the crypt (throwing away the armour it bought), and it is simply too weak to beat Jarl Valdrek reliably. | fixed the re-equip bug; it now farms more and gets three tries at the boss like a player; the boss result is reported, not asserted (the balance bot measures that fight), so the test checks the campaign's flow through chapter one |
+| R42 | tests | - | `stage37` measured the Winter Elk's movement as straight-line distance after 20 seconds, which fails when the route turns a corner (it did after the landmark fix). | fixed: checks several times along the route |
+| R43 | ui | S3 | Lore list names ran into the right panel. | fixed; new `test/stage81_ui.mjs` checks every menu tab for text running off screen or across columns |
+| R44 | ui | S4 | The quick-cast key list called slot 8 "Spirit Wolf"; it is Ember Nova. | fixed |
+| R45 | quests | S4 | "Verses of the Grove" said "visit" a grove but needs it cleared (its warden fought). | reworded |
+| R46 | art | S4 | The Grove Warden mini-boss looked exactly like an ordinary Mosshulk. | fixed: pale green tint |
+| R47 | polish | - | New: DROP in the pack (V twice): drops the selected stack at your feet; it stays until you leave the area and is not pulled straight back. Equipped and quest items cannot be dropped. | added |
+| R48 | polish | - | New: the mouse wheel scrolls the pack and shop lists (it used to switch the pack filter). | added |
+| R49 | polish | - | New: chain quests show a marker back to the giver once the goal is met, and a one-time "QUEST READY" notice. | added |
+| R50 | polish | - | New one-time tips: carry weight, dew sprites, cutpurses, warchanters, sand burrowers, sun sentinels. Rootbound Pod has a bestiary entry. | added |
+| R51 | spelling | - | Spell-checked every sentence in the expansion's data files: no typos (only names and British spellings flagged). | checked |

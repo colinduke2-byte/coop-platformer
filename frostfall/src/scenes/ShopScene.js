@@ -28,6 +28,7 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   create() {
+    keys.wheel = 0;
     ui.modal = true;
     this.bg = this.add.graphics();
     this.dyn = this.add.container(0, 0);
@@ -76,10 +77,11 @@ export default class ShopScene extends Phaser.Scene {
     if (!this.busy) {
       const n = this.cfg.rows().length;
       if (keys.pressed('pause') || keys.back()) { this.leave(); return; }
+      if (n && keys.wheel) { this.move(Math.sign(keys.wheel), n); keys.wheel = 0; }      // the mouse wheel scrolls the list
       if (n && keys.pressed('down')) this.move(1, n);
       if (n && keys.pressed('up')) this.move(-1, n);
       if (keys.pressed('interact')) this.choose(false);
-      else if (keys.pressed('swap') && this.cfg.onAlt) this.choose(true);
+      else if (keys.pressed('swap') && this.cfg.onAlt && performance.now() - (keys.wheelT || -1e9) > 80) this.choose(true);
     }
     if (this.dirty) { this.dirty = false; this.draw(); }
   }

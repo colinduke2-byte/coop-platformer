@@ -4,9 +4,10 @@ const KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyJ', 'KeyK', 'KeyL', '
 const seconds = Number(process.argv[2] || 30);
 const h = await launch();
 const ONLY = process.env.ONLY;
-for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['arena', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep'], ['maw', 'entry'], ['keep', 'entry'], ['chapel', 'entry'], ['rootvault', 'entry'], ['throne', 'entry'], ['nest', 'entry'], ['fens', 'entry'], ['reedwick', 'entry'], ['highlands', 'entry'], ['skarnhold', 'entry'], ['mirebarrow', 'entry'], ['stormspire', 'entry']]) {
+for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['crypt', 'entry'], ['pass', 'south'], ['hall', 'in'], ['lodge', 'in'], ['shop', 'in'], ['cottage', 'in'], ['arena', 'in'], ['barrow0', 'entry'], ['barrow1', 'entry'], ['barrow2', 'entry'], ['forest', 'west', 'deep'], ['maw', 'entry'], ['keep', 'entry'], ['chapel', 'entry'], ['rootvault', 'entry'], ['throne', 'entry'], ['nest', 'entry'], ['fens', 'entry'], ['reedwick', 'entry'], ['highlands', 'entry'], ['skarnhold', 'entry'], ['mirebarrow', 'entry'], ['stormspire', 'entry'],
+  ['vale', 'entry'], ['vale', 'entry', 'deep'], ['greenhollow', 'entry'], ['thornroot', 'entry'], ['sunscorch', 'entry'], ['sunscorch', 'entry', 'deep'], ['amberwell', 'entry'], ['sealedvault', 'entry'], ['glasswood', 'entry'], ['underdeep', 'entry'], ['ashen', 'entry']]) {
   if (ONLY && map !== ONLY) continue;
-  await h.open(`scene=game&map=${map}&spawn=${spawn}&seed=7771`);
+  await h.open(`scene=game&map=${map}&spawn=${spawn}&seed=${process.env.SEED || 7771}`);
   await h.sleep(500);
   await h.ev(() => { window.__ff.S.flags.introDone = true; });
   if (mode === 'deep') await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const p = g.built.pois.filter((q) => q.tier >= 2 && q.kind === 'camp')[0] || g.built.pois.filter((q) => q.tier >= 2)[0]; g.player.setPosition(p.x * 16, (p.y + 6) * 16); window.__ff.S.maxHp = 400; window.__ff.S.hp = 400; });

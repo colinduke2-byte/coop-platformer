@@ -143,7 +143,7 @@ const mini = (base, id, over) => {
 };
 mini('thornling', 'elderthorn', { name: 'Elder Thornwood', hp: 280, dmg: 22, speed: 30, chase: 70, detect: 90, ambush: false, loot: loot([90, 160], [['thorn_crown', 1], ['thornvine', 1, [4, 4]], ['hp_potion_g', 1]]) });
 mini('hornet', 'hornetqueen', { name: 'Queen Vespera', hp: 160, dmg: 12, speed: 40, chase: 80, detect: 120, summons: 3, summonKind: 'hornet', loot: loot([90, 160], [['queens_sting', 1], ['honeycomb', 1, [4, 4]], ['hp_potion_g', 1]]) });
-mini('mosshulk', 'grovewarden', { name: 'Grove Warden Moss', hp: 520, dmg: 34, speed: 20, chase: 34, detect: 80, loot: loot([120, 200], [['hulk_heart', 1], ['moss_heart', 1, [3, 3]], ['hp_potion_g', 1, [2, 2]]]) });
+mini('mosshulk', 'grovewarden', { name: 'Grove Warden Moss', tint: 0xb8f0a0, hp: 520, dmg: 34, speed: 20, chase: 34, detect: 80, loot: loot([120, 200], [['hulk_heart', 1], ['moss_heart', 1, [3, 3]], ['hp_potion_g', 1, [2, 2]]]) });
 mini('sandburrower', 'sandmaw', { name: 'The Sandmaw', hp: 300, dmg: 30, speed: 40, chase: 90, detect: 150, loot: loot([100, 180], [['maw_tooth', 1], ['sand_glass', 1, [3, 3]], ['hp_potion_g', 1]]) });
 mini('scorpion', 'tombscorpion', { name: 'Ankhet, the Tomb Scorpion', hp: 280, dmg: 25, speed: 42, chase: 90, detect: 100, loot: loot([100, 180], [['ankhet_ring', 1], ['stinger', 1, [4, 4]], ['hp_potion_g', 1]]) });
 mini('dustdevil', 'dustlord', { name: 'Kharn, the Dust Lord', hp: 220, dmg: 19, speed: 46, chase: 104, detect: 120, loot: loot([100, 180], [['dust_cloak', 1], ['dust_shard', 1, [4, 4]], ['hp_potion_g', 1]]) });
@@ -162,6 +162,7 @@ Object.assign(BEASTS, {
   mosshulk: { name: 'Mosshulk', desc: 'A boulder wearing a mantle of moss. Slow, heals itself, and each blow crushes a raised shield.', weak: 'Fire.' },
   sandburrower: { name: 'Sand Burrower', desc: 'Tunnels toward you unseen and untouchable, marks the spot, then bites. Move when the sand swells.', weak: 'Frost.' },
   scorpion: { name: 'Sunscorch Scorpion', desc: 'Fast, armoured and venomous. The tail comes over the back on a lunge.', weak: 'Frost.' },
+  blightpod: { name: 'Rootbound Pod', desc: 'A bloom the Blight Mother grows to guard her while she roots. Destroy every pod to tear her loose.', weak: 'Fire.' },
   dustdevil: { name: 'Dust Devil', desc: 'A whirl of sand with a face. Quick and hard to pin down; it dies in a few good hits.', weak: 'Frost, lightning.' },
   sunsentinel: { name: 'Sun Sentinel', desc: 'A gold-plated guardian of the old desert kings. Armoured; only a parry, a stagger or lightning gets through.', weak: 'Lightning.' },
   cutpurse: { name: 'Cutpurse', desc: 'Hits you, takes a fifth of your gold and runs. Catch it and the gold drops. Let it go and it is gone.', weak: 'Anything. It is fast.' },

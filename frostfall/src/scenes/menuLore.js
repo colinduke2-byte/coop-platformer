@@ -50,10 +50,10 @@ export function loreTab(m) {
       l.slice(m.scroll, m.scroll + ROWS).forEach((e, k) => {
         const i = m.scroll + k, y = 26 + k * 11;
         if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 112, 11); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 11); }
-        m.T(14, y, (e.k === 'book' ? '' : e.k === 'item' ? '+ ' : '* ') + e.title.slice(0, 17), e.dim ? 3 : e.k === 'book' ? 6 : e.k === 'item' ? 8 : 15);
+        m.T(14, y, ((e.k === 'book' ? '' : e.k === 'item' ? '+ ' : '* ') + e.title).slice(0, 17), e.dim ? 3 : e.k === 'book' ? 6 : e.k === 'item' ? 8 : 15);
       });
       const e = l[m.cursor];
-      m.T(132, 27, e.title, e.dim ? 4 : e.k === 'book' ? 13 : 15);
+      m.T(132, 27, e.title.slice(0, 29), e.dim ? 4 : e.k === 'book' ? 13 : 15);
       m.T(132, 38, wrap(e.text, 29), 5);
       m.T(132, 146, tally(), 4);
     },

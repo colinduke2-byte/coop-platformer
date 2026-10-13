@@ -180,6 +180,7 @@ export function installKeys(game) {
   window.addEventListener('wheel', (e) => {
     if (!settings.mouse || e.target !== cv()) return;
     const c = e.deltaY < 0 ? 'WheelUp' : 'WheelDown';
+    keys.wheel = (keys.wheel || 0) + (e.deltaY < 0 ? -1 : 1); keys.wheelT = performance.now();   // menus read this to scroll
     keys._press(c); setTimeout(() => keys._release(c), 30);
   }, { passive: true });
 }
