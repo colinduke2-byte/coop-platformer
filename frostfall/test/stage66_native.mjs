@@ -8,7 +8,7 @@ await h.ev(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); wi
 const BOSS = { warlord: 'Warlord', tide: 'Tidemother', root: 'AshenRoot', winter: 'LongWinter', dragon: 'EmberDragon', kragnar: 'Kragnar', sovereign: 'AshenSovereign', admiral: 'DrownedAdmiral', hollowking: 'HollowKing', miremother: 'MireMother', stormgiant: 'StormGiant', hartking: 'HartKing', lodecolossus: 'LodeColossus', brinegut: 'Brinegut' };
 const kinds = await h.ev(async () => (await import('/src/art/native_registry.js')).nativeKinds());
 check('creatures with native art are registered', kinds.length >= 20, kinds.join(','));
-const NEWART = new Set(['thornling', 'hornet', 'blightbloom', 'dewsprite', 'mosshulk', 'sandburrower', 'scorpion', 'dustdevil', 'elderthorn', 'hornetqueen', 'grovewarden', 'sandmaw', 'tombscorpion', 'dustlord', 'blightmother', 'vaultsovereign']);   // new creatures have no 16px original to compare with (checked in stage77)
+const NEWART = new Set(['thornling', 'hornet', 'blightbloom', 'blightpod', 'dewsprite', 'mosshulk', 'sandburrower', 'scorpion', 'dustdevil', 'elderthorn', 'hornetqueen', 'grovewarden', 'sandmaw', 'tombscorpion', 'dustlord', 'blightmother', 'vaultsovereign']);   // new creatures have no 16px original to compare with (checked in stage77)
 
 const probe = (kind, cls) => h.ev(async ([kind, cls]) => {
   const g = window.gs();

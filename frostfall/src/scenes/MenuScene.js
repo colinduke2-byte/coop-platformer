@@ -282,6 +282,7 @@ export default class MenuScene extends Phaser.Scene {
         if (it.armor) line = `ARMOR ${Math.round(eff(id, it, 'armor') * 100)}%${diff(eff(id, it, 'armor'), eff(curId, cur, 'armor'), true)}. ` + line;
       }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
+      { const w = itemWeight(id); if (w >= 1) line = `WT ${Math.round(w * 10) / 10}. ` + line; }      // what it adds to your load
       this.T(rx + 6, 132, wrap(line, 23).split('\n').slice(0, 3).join('\n'), 5);
     }
   }

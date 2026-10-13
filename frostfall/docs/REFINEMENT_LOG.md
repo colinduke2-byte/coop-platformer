@@ -65,3 +65,7 @@ Colin's calibration (asked at the start): overall difficulty on Normal is "about
 | R49 | polish | - | New: chain quests show a marker back to the giver once the goal is met, and a one-time "QUEST READY" notice. | added |
 | R50 | polish | - | New one-time tips: carry weight, dew sprites, cutpurses, warchanters, sand burrowers, sun sentinels. Rootbound Pod has a bestiary entry. | added |
 | R51 | spelling | - | Spell-checked every sentence in the expansion's data files: no typos (only names and British spellings flagged). | checked |
+| R52 | burden | S3 | A busy buff list could push BURDENED/OVERLOADED off the HUD status row. | fixed: shown first |
+| R53 | burden | S4 | The pack's WEIGHT sort ordered by a number the pack never showed. | fixed: the item description starts with its weight |
+| R54 | tests | - | stage66 (native art sizes) did not know the new Rootbound Pod. | updated |
+| R55 | balance | - | Colin: Normal felt "about right, maybe 10% too easy". | `TUNE.difficulty.normal.dmgTaken` 0.99 -> 1.04, `enemyHp` 1.65 -> 1.73 (Easy and Hard unchanged) |

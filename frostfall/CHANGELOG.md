@@ -3,6 +3,18 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Refinement pass (after the world expansion)
+A full audit of the game, with fixes, balance and polish. The full list, with every number changed, is in `docs/REFINEMENT_LOG.md`.
+- **Quest soft-locks fixed:** Captain Nadir's raider chain could never start; Jamila's shop disappeared behind her quest chain; Red Sula's decision now happens in one conversation; early boss kills and New Game+ handled.
+- **Crash fixed:** killing a Dune Raider could freeze the game.
+- **Landmarks now appear** in every region (they almost never did).
+- **Creature fixes:** cutpurses steal only on a clean hit and give back exactly what they took; Queen Vespera calls hornets; dew sprites never heal bosses and stop when frozen; the Blight Mother's pods drop nothing; mini-bosses inherit their base creature's poison/bleed rules.
+- **Carry weight:** Overloaded is now properly slower than Burdened; the warning fires whatever changed your load; "TOO HEAVY TO ROLL".
+- **New:** drop items from the pack (V twice); the mouse wheel scrolls lists; chain quests mark the way back to the giver and announce when ready; tips for the new creatures.
+- **Normal difficulty** is about 10% harder (enemy health and damage +5% each).
+- **UI:** the pack, shop and lore screens no longer overflow.
+- **Tests:** quest audit, dialogue fuzz, reachability fuzz over 200 seeds, UI overflow audit, regression tests for every fix.
+
 ## Round 12: items, economy and home (Phase 5)
 - **Hollow Relics:** eight relics (Frozen Signet, Cracked War Horn, Black Mirror Shard, Ember Seed, Wardens' Lantern, Antler Circlet, Troll Tooth Charm, Star Chart) found by digging (10%), in chests (7%), from world bosses (guaranteed), nemeses and arena milestones. Each is a lore entry. 3 relics: +10 max health; 6: +15 max mana; all 8: **The Hollow Crown** charm (+30 health and mana, +20 stamina, +5% crit).
 - **Elixirs** (brewed at a cauldron, drunk from the Items tab, one at a time, stack with meals): **Berserker Draught** (+30% damage, take +20%), **Quicksilver Tonic** (+18% speed, take +10%), **Nightsight Elixir** (night turns pale, harder to spot), **Ironhide Brew** (take -25%, move -7%), **Frostward Tonic** (immune to chill, freeze and slow). Shown in the status row with a timer.

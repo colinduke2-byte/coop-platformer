@@ -182,6 +182,7 @@ export default class HudScene extends Phaser.Scene {
   drawStatus(g, pl, y0) {
     if (!this.statTxt) this.statTxt = [0, 1, 2, 3, 4, 5].map(() => txt(this, 0, 0, '', 15));
     const list = [];
+    { const bl2 = burden.level(); if (bl2 !== 'ok') list.push([bl2 === 'over' ? 'OVERLOADED' : 'BURDENED', bl2 === 'over' ? 11 : 12]); }   // first, so a long buff list never hides it
     if (pl.counterT > 0) list.push(['COUNTER ' + pl.counterT.toFixed(1), 15]);
     if (pl.riposteT > 0) list.push(['RIPOSTE ' + pl.riposteT.toFixed(1), 13]);
     if (S.blessing) list.push([BLESSINGS[S.blessing].name.toUpperCase(), BLESSINGS[S.blessing].kind === 'pact' ? 11 : 13]);
@@ -192,7 +193,6 @@ export default class HudScene extends Phaser.Scene {
     if (S.flags.elixir && S.flags.elixirUntil > S.playtime) list.push([ITEMS[S.flags.elixir].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil(S.flags.elixirUntil - S.playtime) + 'S', 14]);
     if (S.flags.food && S.flags.foodUntil > S.playtime) list.push([ITEMS[S.flags.food].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
     for (const sl of statusList(pl)) list.push(sl);
-    { const bl2 = burden.level(); if (bl2 !== 'ok') list.push([bl2 === 'over' ? 'OVERLOADED' : 'BURDENED', bl2 === 'over' ? 11 : 12]); }
     if (pl.sneaking) list.push(['SNEAK', 4]);
     if (pl.blocking) list.push(['GUARD', 7]);
     let x = 3;
