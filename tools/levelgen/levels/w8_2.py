@@ -1,10 +1,10 @@
-"""World 7-2 (secret): COMET CLOCKWORKS - the Clockwhirl Works adrift in the nebula.
+"""World 8-2 (secret): COMET CLOCKWORKS - the Clockwhirl Works adrift in the nebula.
 Short and hard: a tick-tock row over the void, a belt against you between zap
 arcs with Sparkbots overhead, a tick-tock climb past a saw, then the gate.
 Secrets: gem 0 high over the tick-tock row (a full jump), gem 1 at the
 top of the tick-tock climb, gem 2 in a cog crate at the finish; the Snoozling
 sits on the belt's far platform.
-Regenerate: python3 tools/levelgen/levels/w7_2.py"""
+Regenerate: python3 tools/levelgen/levels/w8_2.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
@@ -74,4 +74,4 @@ L.wall(8200, -1200, 0)
 L.dress(-250, 850, "dream", spacing=170, seed=221)
 L.dress(6420, 8150, "dream", spacing=170, seed=222, skip=[(6600, 6700), (7150, 7550), (7750, 7850)])
 L.finish(spawn=(0, -2), left=-360, right=8260, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w7_2_comet_clockworks.tscn"))
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w8_2_comet_clockworks.tscn"))

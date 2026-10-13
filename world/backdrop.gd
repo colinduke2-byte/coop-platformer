@@ -26,6 +26,7 @@ enum Scenery {
 	DEEP,       ## deep under the sea: rock spires, kelp, glowing jellies and passing fish
 	NEBULA,     ## the dream's edge: planets, nebula swirls, floating islands and crystal spires
 	CARNIVAL,   ## a moonlit fairground: big tops, a turning ferris wheel, coaster tracks, fairy lights, fireworks
+	LIBRARY,    ## a vast moonlit library: towering shelves, arched windows, hanging lanterns, drifting pages
 }
 
 @export var horizon_y := 600.0:
@@ -90,7 +91,7 @@ func _rebuild() -> void:
 	_th = theme_override if theme_override else LevelTheme.find(self)
 	_rng.seed = seed_value
 	_build_sky()
-	if clouds and not scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL]:
+	if clouds and not scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL, Scenery.LIBRARY]:
 		_build_clouds()
 	match scenery:
 		Scenery.HILLS: _hills_scene()
@@ -108,6 +109,7 @@ func _rebuild() -> void:
 		Scenery.DEEP: _deep_scene()
 		Scenery.NEBULA: _nebula_scene()
 		Scenery.CARNIVAL: _carnival_scene()
+		Scenery.LIBRARY: _library_scene()
 	if critters:
 		_critters()
 	if Gfx.at_least(Gfx.Level.MEDIUM) and not scenery in [Scenery.JUNGLE, Scenery.RUINS]:
@@ -141,7 +143,7 @@ func _build_sky() -> void:
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(sky)
 	var mp := MeshPainter.new()
-	var night := stars or scenery == Scenery.CARNIVAL
+	var night := stars or scenery in [Scenery.CARNIVAL, Scenery.LIBRARY]
 	if night or scenery in [Scenery.CAVE, Scenery.NEBULA]:
 		for i in 90:
 			var p := Vector2(_rng.randf_range(0, 1920), _rng.randf_range(0, 700))
@@ -668,7 +670,7 @@ func _deep_scene() -> void:
 ## play area (and, on High, a second slowly drifting band lower down).
 func _mist() -> void:
 	var col := _th.sky_bottom.lerp(Color.WHITE, 0.35)
-	var dark := scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL]
+	var dark := scenery in [Scenery.CAVE, Scenery.DEEP, Scenery.NEBULA, Scenery.CARNIVAL, Scenery.LIBRARY]
 	if dark:
 		col = _th.sky_bottom.lightened(0.1)
 	_mist_band(0.55, horizon_y - 120.0, 420.0, Color(col, 0.2 if not dark else 0.14), Vector2.ZERO)
@@ -710,6 +712,8 @@ func _critters() -> void:
 			_shooting_stars()
 		Scenery.CARNIVAL:
 			_drifting_balloons()
+		Scenery.LIBRARY:
+			_drifting_pages()
 
 
 ## A drifting layer of birds (little flapping V's; colourful parrots when `parrots`).
@@ -959,6 +963,105 @@ func _drifting_balloons() -> void:
 			mp.draw_line(b, b + Vector2(_rng.randf_range(-10, 10), 70), Color(1, 1, 1, 0.3), 1.5)
 			mp.draw_colored_polygon(Art.ellipse(b, 20, 25, 14), col)
 			mp.draw_colored_polygon(Art.ellipse(b + Vector2(-6, -8), 6, 9, 8), Color(1, 1, 1, 0.3))
+	p.add_child(MeshArt.new(mp.build()))
+	p.z_index = -95
+
+
+# --- Library ---------------------------------------------------------------------------
+
+## A bookshelf wall: shelves of colourful spines between two uprights, with an arched top.
+func _shelf_wall(l: Layer, x: float, base_y: float, w: float, h: float, wood: Color) -> void:
+	var p := l.painter
+	p.draw_rect(Rect2(x, base_y - h, w, h), wood)
+	var rows := int(h / 70.0)
+	for r in rows:
+		var y := base_y - h + 14.0 + float(r) * 70.0
+		var cx := x + 10.0
+		while cx < x + w - 18.0:
+			var bw := _rng.randf_range(9.0, 18.0)
+			var bh := _rng.randf_range(34.0, 58.0)
+			var col: Color = _th.flower_colors[_rng.randi() % _th.flower_colors.size()].lerp(_th.ledge, 0.45)
+			p.draw_rect(Rect2(cx, y + 58.0 - bh, bw, bh), _haze(col, 0.35))
+			p.draw_rect(Rect2(cx + bw * 0.5 - 1.0, y + 58.0 - bh + 6.0, 2.0, 5.0), Color(_th.top, 0.28))
+			cx += bw + 1.5
+		p.draw_rect(Rect2(x, y + 58.0, w, 7.0), wood.darkened(0.25))
+	p.draw_rect(Rect2(x - 6.0, base_y - h - 10.0, w + 12.0, 12.0), wood.lightened(0.08))
+
+
+## A tall arched window with a moonlit pane and mullions.
+func _arch_window(l: Layer, c: Vector2, w: float, h: float, frame: Color, glass: Color) -> void:
+	var pts := PackedVector2Array([Vector2(c.x - w * 0.5, c.y)])
+	for i in 13:
+		var a := PI + PI * float(i) / 12.0
+		pts.append(Vector2(c.x + cos(a) * w * 0.5, c.y - h + w * 0.5 + sin(a) * w * 0.5))
+	pts.append(Vector2(c.x + w * 0.5, c.y))
+	l.painter.draw_colored_polygon(pts, frame)
+	var inner := PackedVector2Array()
+	for p in pts:
+		inner.append(Vector2(c.x + (p.x - c.x) * 0.84, c.y + (p.y - c.y) * 0.96))
+	l.painter.draw_colored_polygon(inner, glass)
+	l.painter.draw_line(Vector2(c.x, c.y), Vector2(c.x, c.y - h), frame, 4.0)
+	l.painter.draw_line(Vector2(c.x - w * 0.5, c.y - h * 0.45), Vector2(c.x + w * 0.5, c.y - h * 0.45), frame, 4.0)
+
+
+## A hanging lantern on a chain, with a soft halo.
+func _lantern(l: Layer, top: Vector2, drop: float, chain: Color) -> void:
+	var b := top + Vector2(0, drop)
+	l.painter.draw_line(top, b, chain, 2.0)
+	l.painter.draw_circle(b + Vector2(0, 14), 46.0, Color(1.0, 0.85, 0.5, 0.08))
+	l.painter.draw_circle(b + Vector2(0, 14), 26.0, Color(1.0, 0.85, 0.5, 0.14))
+	l.painter.draw_colored_polygon(Art.rounded_rect(b + Vector2(-9, 0), b + Vector2(9, 28), 4.0), Color(1.0, 0.92, 0.65))
+	l.painter.draw_rect(Rect2(b.x - 11.0, b.y - 3.0, 22.0, 5.0), chain)
+
+
+func _library_scene() -> void:
+	var wood := _haze(_th.ground, 0.3)
+	# Far: the cathedral of shelves - towering stacks with moonlit arched windows between them.
+	var far := _layer(0.06, 3000.0)
+	for i in 6:
+		var x := float(i) * 500.0
+		_shelf_wall(far, x, horizon_y + 60.0, 170.0, 520.0 + float(i % 3) * 80.0, _haze(_th.ledge_dark, 0.55))
+		_arch_window(far, Vector2(x + 330.0, horizon_y + 60.0), 120.0, 560.0, _haze(_th.ledge, 0.5), Color(_th.sun, 0.30))
+	_commit(far)
+	# Mid: nearer stacks, reading ladders and lanterns on long chains.
+	var mid := _layer(0.22, 2400.0)
+	for i in 4:
+		var x := float(i) * 600.0 + _rng.randf_range(0, 80)
+		_shelf_wall(mid, x, horizon_y + 90.0, 230.0, _rng.randf_range(380.0, 520.0), _haze(wood, 0.1))
+		var lx := x + 260.0
+		mid.painter.draw_line(Vector2(lx, horizon_y + 90.0), Vector2(lx + 60.0, horizon_y - 330.0), _haze(_th.top_dark, 0.35), 5.0)
+		mid.painter.draw_line(Vector2(lx + 36.0, horizon_y + 90.0), Vector2(lx + 96.0, horizon_y - 330.0), _haze(_th.top_dark, 0.35), 5.0)
+		for r in 6:
+			var t := float(r) / 5.0
+			mid.painter.draw_line(Vector2(lx + 60.0 * t * 0.0 + 6.0 + 10.0 * t, horizon_y + 70.0 - t * 380.0), Vector2(lx + 40.0 + 10.0 * t, horizon_y + 70.0 - t * 380.0), _haze(_th.top_dark, 0.35), 4.0)
+	for i in 5:
+		_lantern(mid, Vector2(float(i) * 480.0 + _rng.randf_range(0, 120), horizon_y - 900.0), _rng.randf_range(380.0, 560.0), _haze(_th.top_dark, 0.3))
+	_commit(mid)
+	# Near: pillars with glowing rune bands and hanging chains.
+	var near := _layer(0.5, 1800.0)
+	for i in 4:
+		var x := (float(i) + _rng.randf_range(0.1, 0.8)) * 1800.0 / 4.0
+		near.painter.draw_rect(Rect2(x, horizon_y - 900.0, 64.0, 1100.0), _th.ledge_dark.darkened(0.25))
+		near.painter.draw_rect(Rect2(x + 6.0, horizon_y - 900.0, 10.0, 1100.0), Color(_th.ledge, 0.5))
+		for r in 6:
+			near.painter.draw_rect(Rect2(x - 5.0, horizon_y - 700.0 + float(r) * 120.0, 74.0, 10.0), _th.ledge_dark.darkened(0.4))
+			near.painter.draw_circle(Vector2(x + 32.0, horizon_y - 640.0 + float(r) * 120.0), 5.0, Color(_th.accent, 0.8))
+	_commit(near)
+
+
+## Pages and gold motes drifting across the dusk of the stacks.
+func _drifting_pages() -> void:
+	var p := _parallax(0.3, 3000.0, Vector2(-18, 0))
+	var mp := MeshPainter.new()
+	for g in 14:
+		var c := Vector2(_rng.randf_range(0, 3000), horizon_y - _rng.randf_range(260, 900))
+		var a := _rng.randf_range(-0.6, 0.6)
+		var pts := PackedVector2Array([Vector2(-14, -10), Vector2(14, -10), Vector2(14, 10), Vector2(-14, 10)])
+		for i in pts.size():
+			pts[i] = c + pts[i].rotated(a)
+		mp.draw_colored_polygon(pts, Color(1.0, 0.95, 0.78, 0.26))
+		mp.draw_line(pts[0].lerp(pts[3], 0.3), pts[1].lerp(pts[2], 0.3), Color(_th.ledge_dark, 0.35), 1.5)
+		mp.draw_line(pts[0].lerp(pts[3], 0.6), pts[1].lerp(pts[2], 0.6), Color(_th.ledge_dark, 0.35), 1.5)
 	p.add_child(MeshArt.new(mp.build()))
 	p.z_index = -95
 

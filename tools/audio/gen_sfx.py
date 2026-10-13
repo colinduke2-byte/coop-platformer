@@ -117,6 +117,10 @@ def main():
     swell = np.sin(np.linspace(0, np.pi, n)) ** 1.5
     save("flip_up", mix(sweep(160, 1200, 0.5, "sine", 0.7) * swell * 0.8, noise(0.5, 0.12) * swell * 0.5, np.concatenate([np.zeros(int(SR * 0.3)), tone(1760, 0.2, "sine", curve=3) * 0.4])), 0.6)
     save("flip_down", mix(sweep(1200, 110, 0.5, "sine", 0.7) * swell * 0.8, noise(0.5, 0.12) * swell * 0.5, np.concatenate([np.zeros(int(SR * 0.38)), sweep(130, 60, 0.12) * env(int(SR * 0.12), 0.001, curve=2) * 0.8])), 0.6)
+    # World 7 echoes: a rising two-blip when recording starts, a falling shimmer when the echo is released.
+    save("echo_rec", seq(tone(660, 0.07, "sine", curve=2), tone(990, 0.12, "sine", curve=2.5)) * 0.8, 0.45)
+    save("echo_release", mix(sweep(1400, 380, 0.45, "sine", 0.6) * env(int(SR * 0.45), 0.004, curve=2) * 0.7, sweep(2100, 570, 0.45, "tri", 0.6) * env(int(SR * 0.45), 0.004, curve=2.5) * 0.3), 0.5)
+    save("echo_hold", tone(520, 0.12, "sine", curve=3) * 0.6, 0.25)
     save("clank", mix(tone(1400, 0.25, "square", curve=4) * 0.5, tone(2100, 0.2, "sine", curve=5), noise(0.03, 0.9) * 0.4), 0.5)
     save("enemy_pop", mix(sweep(900, 200, 0.2, "square", 0.5) * env(int(SR * 0.2), 0.001, curve=2) * 0.6, noise(0.15, 0.3) * env(int(SR * 0.15))), 0.6)
     save("shoot", sweep(700, 300, 0.15, "square", 0.4) * env(int(SR * 0.15), 0.001, curve=2), 0.4)

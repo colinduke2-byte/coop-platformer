@@ -1,11 +1,11 @@
-"""World 7-4 (secret): THE NIGHTMARE CORE - the heart of the bad dream, and the remix finale.
+"""World 8-4 (secret): THE NIGHTMARE CORE - the heart of the bad dream, and the remix finale.
 A short gauntlet that borrows from every world (spike balls, flame jets,
 crumbling stars, zaps), then two old foes back to back in the Core: first
 CUCKOOLOSSUS (stomp the cuckoo when it sticks in the floor), then INKABELLA
 (stomp or punch her tentacle when it sticks). Beat both and the dream is over.
 Secrets: gem 0 above the spike-ball run, gem 1 between the two arenas, gem 2 in
 a dream-chest past the Core; the Snoozling sits in the gauntlet.
-Regenerate: python3 tools/levelgen/levels/w7_4.py"""
+Regenerate: python3 tools/levelgen/levels/w8_4.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
@@ -91,4 +91,4 @@ L.dress(-250, 950, "dream", spacing=170, seed=241)
 L.dress(4570, 5350, "dream", spacing=170, seed=242, skip=[(4950, 5050), (5150, 5250)])
 L.dress(6770, 9550, "dream", spacing=170, seed=243, skip=[(6950, 7350), (7850, 7950), (8250, 8350)])
 L.finish(spawn=(0, -2), left=-360, right=9660, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w7_4_nightmare_core.tscn"))
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w8_4_nightmare_core.tscn"))

@@ -7878,7 +7878,7 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 		for l in LevelCatalog.levels_in(w):
 			SaveData.records[l["id"]] = {"done": true, "gems": [false, false, false], "time": 1.0, "lums": 0}
 	if not (OS.has_feature("unlock_all") or LevelCatalog.dev_unlock):
-		check(not LevelCatalog.is_unlocked("w7_1"), "beating World 6 alone doesn't open the secret world")
+		check(not LevelCatalog.is_unlocked("w8_1"), "beating World 6 alone doesn't open the secret world")
 	# Now give them enough gems.
 	var given := 0
 	for w in ["w1", "w2", "w3", "w4", "w5", "w6"]:
@@ -7887,26 +7887,26 @@ func test_nightmare_nebula_opens_with_three_quarters_of_the_gems() -> void:
 				var g := mini(3, need - given)
 				SaveData.records[l["id"]]["gems"] = [g > 0, g > 1, g > 2]
 				given += g
-	check(LevelCatalog.is_unlocked("w7_1"), "with %d gems the Nightmare Nebula opens" % need)
+	check(LevelCatalog.is_unlocked("w8_1"), "with %d gems the Nightmare Nebula opens" % need)
 	WorldMap.world = "w6"
 	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
 	_arena.add_child(m)
 	await frames(3)
 	var gate_open := false
 	for n in m.nodes:
-		if n.get("gate", "") == "w7":
+		if n.get("gate", "") == "w8":
 			gate_open = n["unlocked"]
 	check(gate_open, "World 6's map shows the gate to the Nebula open")
 	m.queue_free()
 	await frames(2)
-	WorldMap.world = "w7"
+	WorldMap.world = "w8"
 	m = load("res://ui/world_map.tscn").instantiate()
 	_arena.add_child(m)
 	await frames(3)
 	var ids: Array = []
 	for n in m.nodes:
 		ids.append(n["id"])
-	check(ids.has("w7_1") and ids.has("w7_4") and ids.has("gate_w6"), "the Nebula map has its four levels and a way back (%s)" % [ids])
+	check(ids.has("w8_1") and ids.has("w8_4") and ids.has("gate_w6"), "the Nebula map has its four levels and a way back (%s)" % [ids])
 	m.queue_free()
 	await frames(2)
 	WorldMap.world = "w1"
@@ -7921,14 +7921,14 @@ func test_screen_wipe_changes_scenes_instantly_when_headless() -> void:
 	w.free()
 
 
-const W7_1 := "res://levels/w7_1_starfall_gardens.tscn"
-const W7_2 := "res://levels/w7_2_comet_clockworks.tscn"
-const W7_3 := "res://levels/w7_3_abyssal_canopy.tscn"
-const W7_4 := "res://levels/w7_4_nightmare_core.tscn"
+const W8_1 := "res://levels/w8_1_starfall_gardens.tscn"
+const W8_2 := "res://levels/w8_2_comet_clockworks.tscn"
+const W8_3 := "res://levels/w8_3_abyssal_canopy.tscn"
+const W8_4 := "res://levels/w8_4_nightmare_core.tscn"
 
 
-func test_w7_1_crumbling_stars_over_the_void() -> void:
-	var p: Player = await _load_demo(W7_1)
+func test_w8_1_crumbling_stars_over_the_void() -> void:
+	var p: Player = await _load_demo(W8_1)
 	await _clear_enemies()
 	await _place(p, Vector2(780, -2))
 	var ok := await _hop_run(p, [860, 1204, 1504, 1804, 2104, 2404], 2700, false, 10.0)
@@ -7937,8 +7937,8 @@ func test_w7_1_crumbling_stars_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w7_1_bramble_garden_and_the_ice() -> void:
-	var p: Player = await _load_demo(W7_1)
+func test_w8_1_bramble_garden_and_the_ice() -> void:
+	var p: Player = await _load_demo(W8_1)
 	await _clear_enemies()
 	await _place(p, Vector2(2700, -2))
 	var ok := await _hop_run(p, [2850, 3350, 4660, 5310], 5800, false, 14.0)
@@ -7946,16 +7946,16 @@ func test_w7_1_bramble_garden_and_the_ice() -> void:
 	await _finish_demo()
 
 
-func test_w7_1_mushroom_bounces_you_to_gem_1() -> void:
-	var p: Player = await _load_demo(W7_1)
+func test_w8_1_mushroom_bounces_you_to_gem_1() -> void:
+	var p: Player = await _load_demo(W8_1)
 	await _clear_enemies()
 	await _pad_hop(p, Vector2(3780, 0), -560.0, 3700.0, 6.0)
 	check(gm().gems[1], "the mushroom bounces you up to gem 1 (at %s)" % p.global_position)
 	await _finish_demo()
 
 
-func test_w7_1_starlit_gate() -> void:
-	var p: Player = await _load_demo(W7_1)
+func test_w8_1_starlit_gate() -> void:
+	var p: Player = await _load_demo(W8_1)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(6100, -2))
 	await _hop_run(p, [7000], 7700, false, 8.0)
@@ -7963,8 +7963,8 @@ func test_w7_1_starlit_gate() -> void:
 	await _finish_demo()
 
 
-func test_w7_2_tick_tock_row_over_the_void() -> void:
-	var p: Player = await _load_demo(W7_2)
+func test_w8_2_tick_tock_row_over_the_void() -> void:
+	var p: Player = await _load_demo(W8_2)
 	await _clear_enemies()
 	await _place(p, Vector2(800, -2))
 	await _beat_hops(p, [[1060, 0], [1300, 1], [1540, 0], [1780, 1], [2100, -1]])
@@ -7972,8 +7972,8 @@ func test_w7_2_tick_tock_row_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w7_2_belt_between_the_zaps() -> void:
-	var p: Player = await _load_demo(W7_2)
+func test_w8_2_belt_between_the_zaps() -> void:
+	var p: Player = await _load_demo(W8_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(2100, -2))
 	var ok := await _auto_run(p, 4300, 16.0)
@@ -7981,8 +7981,8 @@ func test_w7_2_belt_between_the_zaps() -> void:
 	await _finish_demo()
 
 
-func test_w7_2_tick_tock_climb_to_gem_1() -> void:
-	var p: Player = await _load_demo(W7_2)
+func test_w8_2_tick_tock_climb_to_gem_1() -> void:
+	var p: Player = await _load_demo(W8_2)
 	await _clear_enemies()
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(4420, -2))
@@ -7992,8 +7992,8 @@ func test_w7_2_tick_tock_climb_to_gem_1() -> void:
 	await _finish_demo()
 
 
-func test_w7_2_down_to_the_gate() -> void:
-	var p: Player = await _load_demo(W7_2)
+func test_w8_2_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W8_2)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(5600, -602))
 	await _auto_run(p, 7000, 12.0)
@@ -8002,8 +8002,8 @@ func test_w7_2_down_to_the_gate() -> void:
 	await _finish_demo()
 
 
-func test_w7_3_liana_ravine() -> void:
-	var p: Player = await _load_demo(W7_3)
+func test_w8_3_liana_ravine() -> void:
+	var p: Player = await _load_demo(W8_3)
 	await _clear_enemies()
 	await _place(p, Vector2(950, -2))
 	var ok := await _liana_cross(p, 1090.0, 2300.0)
@@ -8011,8 +8011,8 @@ func test_w7_3_liana_ravine() -> void:
 	await _finish_demo()
 
 
-func test_w7_3_starry_pool_and_the_sea_well() -> void:
-	var p: Player = await _load_demo(W7_3)
+func test_w8_3_starry_pool_and_the_sea_well() -> void:
+	var p: Player = await _load_demo(W8_3)
 	await _clear_enemies()
 	await _place(p, Vector2(2600, -2))
 	press(0, "move_right")
@@ -8028,8 +8028,8 @@ func test_w7_3_starry_pool_and_the_sea_well() -> void:
 	await _finish_demo()
 
 
-func test_w7_3_jellies_over_the_void() -> void:
-	var p: Player = await _load_demo(W7_3)
+func test_w8_3_jellies_over_the_void() -> void:
+	var p: Player = await _load_demo(W8_3)
 	for e in get_tree().get_nodes_in_group(&"enemies"):
 		if not e is Jellybob:
 			e.queue_free()
@@ -8066,8 +8066,8 @@ func test_w7_3_jellies_over_the_void() -> void:
 	await _finish_demo()
 
 
-func test_w7_3_down_to_the_gate() -> void:
-	var p: Player = await _load_demo(W7_3)
+func test_w8_3_down_to_the_gate() -> void:
+	var p: Player = await _load_demo(W8_3)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(6200, -802))
 	await _auto_run(p, 6850, 10.0)
@@ -8076,8 +8076,8 @@ func test_w7_3_down_to_the_gate() -> void:
 	await _finish_demo()
 
 
-func test_w7_4_the_gauntlet() -> void:
-	var p: Player = await _load_demo(W7_4)
+func test_w8_4_the_gauntlet() -> void:
+	var p: Player = await _load_demo(W8_4)
 	p.invulnerable_timer = 100.0
 	await _place(p, Vector2(950, -2))
 	var ok := await _hop_run(p, [1760, 2054, 2354], 2850, false, 10.0)
@@ -8085,9 +8085,9 @@ func test_w7_4_the_gauntlet() -> void:
 	await _finish_demo()
 
 
-func test_w7_4_both_bosses_can_be_beaten() -> void:
+func test_w8_4_both_bosses_can_be_beaten() -> void:
 	seed(20261009)
-	var p: Player = await _load_demo(W7_4)
+	var p: Player = await _load_demo(W8_4)
 	var cuckoo: Cuckoolossus = null
 	var ink: Inkabella = null
 	for e in get_tree().get_nodes_in_group(&"enemies"):
@@ -8181,8 +8181,8 @@ func test_w7_4_both_bosses_can_be_beaten() -> void:
 	await _finish_demo()
 
 
-func test_w7_every_snoozling_cage_and_chest() -> void:
-	for spot: Array in [[W7_1, Vector2(7000, -2)], [W7_2, Vector2(7100, -2)], [W7_3, Vector2(6900, -2)], [W7_4, Vector2(6900, -2)]]:
+func test_w8_every_snoozling_cage_and_chest() -> void:
+	for spot: Array in [[W8_1, Vector2(7000, -2)], [W8_2, Vector2(7100, -2)], [W8_3, Vector2(6900, -2)], [W8_4, Vector2(6900, -2)]]:
 		var p: Player = await _load_demo(spot[0])
 		await _clear_enemies_except_bosses()
 		var cage: SnoozlingCage = _demo.find_children("*", "SnoozlingCage", true, false)[0]
@@ -8607,13 +8607,18 @@ func test_net_flip_sets_exact_direction_even_inside_the_cooldown() -> void:
 	gm().set_gravity_dir(1, true)
 
 
-func test_save_migration_moves_secret_world_records_from_w6_to_w7() -> void:
+func test_save_migration_moves_secret_world_records_to_w8() -> void:
 	var old := SaveData.records
 	SaveData.records = {"w6_1": {"time": 12.0, "lums": 3, "gems": [true, false, false], "done": true}, "w1_1": {"done": true}}
 	SaveData._migrate()
-	check(SaveData.records.has("w7_1") and not SaveData.records.has("w6_1"), "w6_* records become w7_*")
+	check(SaveData.records.has("w8_1") and not SaveData.records.has("w6_1") and not SaveData.records.has("w7_1"), "old secret records (w6_*) end up as w8_*")
 	check(SaveData.records.has("w1_1"), "other records are untouched")
-	check(int(SaveData.records.get("_v", 0)) == 2, "and it only runs once")
+	check(int(SaveData.records.get("_v", 0)) == 3, "and it only runs once")
+	SaveData.records = {"_v": 2, "w7_2": {"done": true}}
+	SaveData._migrate()
+	check(SaveData.records.has("w8_2") and not SaveData.records.has("w7_2"), "a v2 save's w7_* secret records move to w8_*")
+	SaveData._migrate()
+	check(SaveData.records.has("w8_2"), "re-running changes nothing")
 	SaveData.records = old
 	SaveData._write()
 
@@ -9110,3 +9115,197 @@ func test_comfort_settings_scale_shake_flash_and_hit_stop() -> void:
 	Settings.hit_stop = old[1]
 	Settings.reduce_flash = old[2]
 	Settings.save()
+
+
+func test_echo_replays_a_route_and_holds_a_plate() -> void:
+	var pad := RecordPad.new()
+	pad.max_time = 3.0
+	pad.position = Vector2(0, 0)
+	_arena.add_child(pad)
+	var plate := PressurePlate.new()
+	plate.position = Vector2(400, 0)
+	_arena.add_child(plate)
+	var p := add_player(0, Vector2(0, -60))
+	await seconds(0.3)
+	check(p.has_node("EchoRecorder"), "stepping on the record pad starts recording")
+	check(not plate.on, "plate is off before anyone reaches it")
+	await _walk_to(p, 400.0, 4.0)
+	await seconds(0.5)
+	check(plate.on, "walking the route presses the plate")
+	await seconds(2.4)   # recording times out (3 s) -> the echo is released
+	check(not p.has_node("EchoRecorder"), "the recording ends at its time limit")
+	check(get_tree().get_nodes_in_group(&"echoes").size() == 1, "an echo was created")
+	await _walk_to(p, 900.0, 6.0)   # leave; the plate should be pressed by the echo's replay
+	var saw := false
+	for i in 600:
+		await get_tree().physics_frame
+		if plate.on:
+			saw = true
+			break
+	check(saw and absf(p.global_position.x - 400.0) > 120.0, "the echo holds the plate while the dreamer is elsewhere")
+	gm().respawn_all_at_checkpoint()
+	await frames(2)
+	check(get_tree().get_nodes_in_group(&"echoes").is_empty(), "respawning at a checkpoint clears echoes")
+
+
+func test_echo_punches_a_lever() -> void:
+	var pad := RecordPad.new()
+	pad.max_time = 2.5
+	_arena.add_child(pad)
+	var sw := PunchSwitch.new()
+	sw.mode = PunchSwitch.Mode.TOGGLE
+	sw.position = Vector2(220, 0)
+	_arena.add_child(sw)
+	var p := add_player(0, Vector2(0, -60))
+	await seconds(0.3)
+	await _walk_to(p, 150.0, 3.0)
+	p.facing = 1
+	await _throw_punch(p)
+	await seconds(0.4)
+	check(sw.on, "the dreamer's own punch flips the switch")
+	sw.on = false
+	await seconds(2.4)
+	check(get_tree().get_nodes_in_group(&"echoes").size() == 1, "echo released")
+	p.global_position = Vector2(-600, -60)
+	var flipped := false
+	for i in 600:
+		await get_tree().physics_frame
+		if sw.on:
+			flipped = true
+			break
+	check(flipped, "the echo repeats the punch and flips the switch while the dreamer is away")
+
+
+# --- World 7: library enemies and the Archivist ----------------------------------------
+
+const LIBRARY_ENEMIES := ["blotty", "wormwick", "pagebat", "shushling", "candlewick", "archivist"]
+
+
+func test_library_enemies_all_run_and_survive() -> void:
+	for kind: String in LIBRARY_ENEMIES:
+		var e: Enemy = load("res://enemies/%s.tscn" % kind).instantiate()
+		e.position = Vector2(-500 + LIBRARY_ENEMIES.find(kind) * 180, -2 if kind != "pagebat" else -240)
+		_arena.add_child(e)
+	var p := add_player(0, Vector2(300, -2))
+	await seconds(4.0)
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		check(is_instance_valid(e) and not e.dead, "%s runs without trouble" % e.name)
+	check(is_instance_valid(p), "and so do we")
+
+
+func test_shushling_creeps_only_while_you_stand_still() -> void:
+	var s: Enemy = load("res://enemies/shushling.tscn").instantiate()
+	s.position = Vector2(400, 0)
+	s.start_facing = -1
+	_arena.add_child(s)
+	var p := add_player(0, Vector2(0, -2))
+	await settle(p)
+	await seconds(1.0)
+	check(s.global_position.x < 360.0, "a still dreamer: the shushling creeps closer (x %.0f)" % s.global_position.x)
+	var x0 := s.global_position.x
+	press(0, "move_left")   # now keep moving
+	await seconds(0.8)
+	release(0, "move_left")
+	check(absf(s.global_position.x - x0) < 40.0 or s.global_position.x > x0, "while a dreamer moves it freezes")
+
+
+func test_wormwick_is_armoured_when_shut_and_candlewick_cannot_be_stomped() -> void:
+	var w: Wormwick = load("res://enemies/wormwick.tscn").instantiate()
+	w.position = Vector2(-300, 0)
+	_arena.add_child(w)
+	var c: Candlewick = load("res://enemies/candlewick.tscn").instantiate()
+	c.position = Vector2(300, 0)
+	_arena.add_child(c)
+	await seconds(0.3)
+	w.st = Wormwick.St.SHUT
+	check(w.blocks_hit(null, Enemy.HitKind.STOMP), "a shut book shrugs off a stomp")
+	check(not w.blocks_hit(null, Enemy.HitKind.PUNCH), "but not a punch")
+	w.st = Wormwick.St.OUT
+	check(not w.blocks_hit(null, Enemy.HitKind.STOMP), "an open one can be stomped")
+	check(not c.stompable, "a burning candle cannot be stomped")
+	c._on_hurt(null, Enemy.HitKind.PUNCH)
+	await frames(2)
+	check(c.stompable, "once snuffed it can")
+
+
+func test_archivist_ward_breaks_only_when_both_plates_are_held() -> void:
+	var a := PressurePlate.new()
+	a.position = Vector2(-400, 0)
+	_arena.add_child(a)
+	var b := PressurePlate.new()
+	b.position = Vector2(400, 0)
+	_arena.add_child(b)
+	var boss: Archivist = load("res://enemies/archivist.tscn").instantiate()
+	boss.position = Vector2(0, -190)
+	_arena.add_child(boss)
+	boss.plates = [boss.get_path_to(a), boss.get_path_to(b)]
+	boss.set_active(true)
+	await seconds(1.0)
+	check(boss.warded() and boss.blocks_hit(null, Enemy.HitKind.PUNCH), "the ward blocks everything at first")
+	b.required = 99   # (a plate that needs 99 dreamers is never held; required 0 is always held)
+	a.required = 0
+	await frames(3)
+	check(boss.warded(), "one plate is not enough")
+	b.required = 0
+	await seconds(0.3)
+	check(not boss.warded(), "both plates at once shatter the ward")
+	await seconds(1.5)
+	check(boss.global_position.y > -60.0, "and he sinks to the floor (y %.0f)" % boss.global_position.y)
+	var hp := boss.health
+	boss.damage(null, Enemy.HitKind.PUNCH, Vector2.ZERO)
+	check(boss.health == hp - 1, "a hit lands while he is exposed")
+
+
+# --- World 7: the Hushed Library (bots) -----------------------------------------------------------
+
+const W7_1 := "res://levels/w7_1_inkwell_foyer.tscn"
+
+
+## Record a route: walk onto the record pad at `pad_x`, then to the stop pad / plate at `plate_x`.
+func _echo(p: Player, pad_x: float, plate_x: float) -> bool:
+	await _walk_to(p, pad_x, 10.0)
+	await frames(6)
+	var recording := p.has_node("EchoRecorder")
+	await _walk_to(p, plate_x, 12.0)
+	await seconds(0.8)
+	return recording and not p.has_node("EchoRecorder") and get_tree().get_nodes_in_group(&"echoes").size() >= 1
+
+
+func test_w7_1_bot_leaves_echoes_on_plates_to_open_the_way() -> void:
+	var p: Player = await _load_demo(W7_1)
+	p.invulnerable_timer = 1000.0
+	await _place(p, Vector2(0, -2))
+	var gate1 := _demo.find_children("*", "Gate", true, false)[0] as Gate
+	check(await _echo(p, 420.0, 820.0), "stepping on the record pad and then the stop pad leaves an echo")
+	await _walk_to(p, 1000.0, 6.0)   # off the plate; the echo keeps the gate open
+	await seconds(0.8)
+	check(gate1._open, "the echo on the plate holds the first gate open")
+	await _walk_to(p, 1500.0, 8.0)
+	# The bridge only runs while the second echo holds its plate.
+	var bridge := _demo.find_children("*", "MovingPlatform", true, false)[0] as Node2D
+	var x0 := bridge.global_position.x
+	check(await _echo(p, 1560.0, 1760.0), "a second echo, on the bridge's plate")
+	await _walk_to(p, 1860.0, 6.0)
+	var rode := false
+	for i in 1500:
+		await get_tree().physics_frame
+		if bridge.global_position.x < 1930.0 and bridge.global_position.x != x0 - 1.0:
+			await _walk_to(p, 2000.0, 3.0)
+			break
+	for i in 1200:
+		await get_tree().physics_frame
+		if bridge.global_position.x > 2400.0:
+			rode = true
+			await _walk_to(p, 2560.0, 4.0)
+			break
+	check(rode and p.global_position.x > 2500.0, "the bridge ferries us across the gap (x %.0f)" % p.global_position.x)
+	await _walk_to(p, 2700.0, 6.0)
+	# The heavy plate needs the echo AND us.
+	check(await _echo(p, 2900.0, 3300.0), "an echo on the heavy plate")
+	var g2 := _demo.find_children("*", "Gate", true, false)[1] as Gate
+	await seconds(0.8)
+	check(g2._open, "the echo plus the dreamer standing there open the heavy plate's gate")
+	await _walk_to(p, 4750.0, 20.0)
+	await frames(30)
+	check(gm().level_complete, "the goal completes Inkwell Foyer (at %s)" % p.global_position)
+	await _finish_demo()

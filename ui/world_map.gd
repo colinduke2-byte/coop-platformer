@@ -22,7 +22,8 @@ const GATE_TEXT := {
 	"w4": ["Up to the Clockwhirl Works", "Back to the Clockwhirl Works", "World 4! Climb past the temple to the clanking dream factory."],
 	"w5": ["Down to the Deep Sea Dream", "Back to the Deep Sea Dream", "World 5! Out of the factory's back door and down to the seaside."],
 	"w6": ["Over to the Midnight Carnival", "Back to the Midnight Carnival", "World 6! Follow the fairy lights out of the sea to the carnival that never closes. Gravity gets silly there."],
-	"w7": ["The Nightmare Nebula", "Back to the Nightmare Nebula", "The secret world, beyond the Big Top. Only the bravest dreamers..."],
+	"w7": ["Into the Hushed Library", "Back to the Hushed Library", "World 7! Slip through the carnival's back tent into a library that has been waiting for you. Shh."],
+	"w8": ["The Nightmare Nebula", "Back to the Nightmare Nebula", "The secret world, beyond the Hushed Library. Only the bravest dreamers..."],
 }
 const WALK_SPEED := 520.0            ## px/s along the path
 const O := Color("1d1726")
@@ -61,7 +62,7 @@ func _ready() -> void:
 		"w4": art = _bake_w4()
 		"w5": art = _bake_w5()
 		"w6": art = _bake_w6()
-		"w7": art = _bake_w7()
+		"w8": art = _bake_w8()
 		_: art = _bake_land()
 	add_child(MapArt.new(art))
 	if Gfx.at_least(Gfx.Level.MEDIUM):
@@ -103,7 +104,7 @@ func _ready() -> void:
 			n["unlocked"] = n["unlocked"] or Net.is_client()
 		if Net.is_client():
 			_show_toast("The host picks the level - enjoy the ride!")
-	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef", "w6": "midway", "w7": "nebula"}.get(world, "worldmap"))
+	Audio.play_music({"w1": "worldmap", "w2": "gondola", "w3": "treetops", "w4": "brass", "w5": "reef", "w6": "midway", "w7": "athenaeum", "w8": "nebula"}.get(world, "worldmap"))
 
 
 func _build_nodes() -> void:
@@ -1084,7 +1085,7 @@ func _w6_mirrors(mp: MeshPainter, c: Vector2) -> void:
 	mp.draw_colored_polygon(PackedVector2Array([c + Vector2(-82, -110), c + Vector2(0, -150), c + Vector2(82, -110)]), Color("6a4ab0"))
 
 
-func _bake_w7() -> ArrayMesh:
+func _bake_w8() -> ArrayMesh:
 	var mp := MeshPainter.new()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 61
@@ -1398,8 +1399,8 @@ class LiveBits extends Node2D:
 		if map.world == "w6":
 			_draw_w6()
 			return
-		if map.world == "w7":
-			_draw_w7()
+		if map.world == "w8":
+			_draw_w8()
 			return
 		# Gondola bobbing up the cable to World 2.
 		if LevelCatalog.exists("w2_1"):
@@ -1552,7 +1553,7 @@ class LiveBits extends Node2D:
 			draw_line(Vector2(x, y), Vector2(x + 3, y + 16), Color(0.85, 0.95, 1.0, 0.35), 1.5)
 		_clouds()
 
-	func _draw_w7() -> void:
+	func _draw_w8() -> void:
 		# Twinkling stars and a slow comet.
 		for i in 60:
 			var p := Vector2(fposmod(i * 211.0, 1920.0), fposmod(i * 97.0, 620.0))
@@ -1697,7 +1698,7 @@ class Badges extends Node2D:
 		var to_works: bool = n["gate"] == "w4"
 		var to_sea: bool = n["gate"] == "w5"
 		var to_carnival: bool = n["gate"] == "w6"
-		var to_nebula: bool = n["gate"] == "w7"
+		var to_nebula: bool = n["gate"] == "w8"
 		var fill := Color("bfe6ff") if to_snow else (Color("ffb0d0") if to_jungle else (Color("ffd9a0") if to_works else Color("9be07e")))
 		if to_sea:
 			fill = Color("a8e4ff")

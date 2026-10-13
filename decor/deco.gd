@@ -10,7 +10,8 @@ enum Kind { GRASS, FLOWERS, BUSH, TREE, PINE, MUSHROOMS, ROCK, FENCE, CRYSTALS, 
 		FERN, LOG, STUMP, GIANT_MUSHROOM, HANGING_VINES, LILYPADS, BIG_FLOWER, ROOTS, HUT, LANTERN,
 		SNOWMAN, ICICLES, IGLOO, SKIS, PALM, BIG_LEAF, TOTEM, BROMELIAD, GEAR, PIPES, CLOCK, TOYBLOCKS,
 		CORAL, SEAWEED, SHELL, ANCHOR, STARFISH, CHEST,
-		TENT, BUNTING, BALLOONS, POPCORN_CART, TICKET_BOOTH, LAMPPOST, DRUM }
+		TENT, BUNTING, BALLOONS, POPCORN_CART, TICKET_BOOTH, LAMPPOST, DRUM,
+		BOOKSTACK, GLOBE, LECTERN, CANDELABRA, SCROLLS, READING_LAMP }
 
 const SWAYERS := [Kind.GRASS, Kind.FLOWERS, Kind.REEDS, Kind.TREE, Kind.PINE, Kind.BUSH, Kind.FERN,
 		Kind.HANGING_VINES, Kind.BIG_FLOWER, Kind.PALM, Kind.BIG_LEAF, Kind.BROMELIAD, Kind.SEAWEED, Kind.BUNTING, Kind.BALLOONS]
@@ -607,6 +608,59 @@ func _paint(mp: MeshPainter) -> void:
 			Art.shape(mp, Art.ellipse(Vector2(0, -h), w, 11 * s, 18), th.top, o, 3.0)
 			for k in 7:
 				mp.draw_circle(Vector2(-w * 0.85 + k * w * 0.283, -h + 3.0), 2.5 * s, Color("fff2b8"))
+		Kind.BOOKSTACK:
+			# A leaning tower of old books.
+			var y := 0.0
+			for k in 5:
+				var bw := (62.0 - float(k) * 5.0 + rng.randf_range(-6, 6)) * s
+				var bh := (15.0 + rng.randf_range(0, 5)) * s
+				var off := rng.randf_range(-7, 7) * s
+				var col: Color = th.flower_colors[(k + seed_value) % th.flower_colors.size()].lerp(th.ledge, 0.4)
+				Art.shape(mp, Art.rounded_rect(Vector2(-bw * 0.5 + off, y - bh), Vector2(bw * 0.5 + off, y), 3.0 * s), col, o, 2.5)
+				mp.draw_rect(Rect2(-bw * 0.5 + off + 4.0 * s, y - bh * 0.5 - 1.0, bw - 8.0 * s, 2.5 * s), th.top)
+				y -= bh
+		Kind.GLOBE:
+			# A big old globe on a stand.
+			mp.draw_line(Vector2.ZERO, Vector2(0, -52) * s, o, 8.0 * s)
+			mp.draw_line(Vector2.ZERO, Vector2(0, -52) * s, th.top_dark, 4.5 * s)
+			Art.shape(mp, Art.ellipse(Vector2(0, 0), 26 * s, 6 * s, 14), th.top_dark, o, 2.5)
+			var gc := Vector2(0, -88) * s
+			Art.shape(mp, Art.ellipse(gc, 34 * s, 34 * s, 22), th.ledge, o, 3.0)
+			for k in 3:
+				mp.draw_colored_polygon(Art.ellipse(gc + Vector2(rng.randf_range(-16, 16), rng.randf_range(-16, 16)) * s, 11 * s, 8 * s, 8), th.top.darkened(0.15))
+			mp.draw_arc(gc, 40.0 * s, -0.9, 3.2, 20, th.top, 3.0)
+		Kind.LECTERN:
+			# A reading lectern with an open book and a quill.
+			Art.shape(mp, _sc(PackedVector2Array([Vector2(-20, 0), Vector2(20, 0), Vector2(14, -66), Vector2(-14, -66)]), s), th.ground.lightened(0.1), o, 3.0)
+			Art.shape(mp, _sc(PackedVector2Array([Vector2(-36, -66), Vector2(36, -66), Vector2(30, -82), Vector2(-30, -82)]), s), th.ground.lightened(0.18), o, 3.0)
+			Art.shape(mp, _sc(PackedVector2Array([Vector2(-30, -82), Vector2(0, -78), Vector2(0, -98), Vector2(-28, -102)]), s), Color("fff3d0"), o, 2.0)
+			Art.shape(mp, _sc(PackedVector2Array([Vector2(30, -82), Vector2(0, -78), Vector2(0, -98), Vector2(28, -102)]), s), Color("f6e6bd"), o, 2.0)
+			mp.draw_line(Vector2(18, -92) * s, Vector2(34, -126) * s, o, 4.0 * s)
+			mp.draw_line(Vector2(18, -92) * s, Vector2(34, -126) * s, th.accent, 2.0 * s)
+		Kind.CANDELABRA:
+			mp.draw_line(Vector2.ZERO, Vector2(0, -92) * s, o, 8.0 * s)
+			mp.draw_line(Vector2.ZERO, Vector2(0, -92) * s, th.top_dark, 4.5 * s)
+			Art.shape(mp, Art.ellipse(Vector2.ZERO, 22 * s, 6 * s, 12), th.top_dark, o, 2.5)
+			mp.draw_arc(Vector2(0, -92) * s, 30.0 * s, 0.1, PI - 0.1, 14, th.top_dark, 4.0 * s)
+			for cx: float in [-30.0, 0.0, 30.0]:
+				var top := Vector2(cx, -92.0 - (0.0 if cx == 0.0 else -4.0) - 24.0) * s
+				mp.draw_circle(top + Vector2(0, -10) * s, 22.0 * s, Color(1.0, 0.85, 0.5, 0.12))
+				Art.shape(mp, Art.rect(top + Vector2(-4, 0) * s, top + Vector2(4, 24) * s), Color("fff3d0"), o, 1.5)
+				Art.shape(mp, Art.ellipse(top + Vector2(0, -6) * s, 4 * s, 7 * s, 8), Color("ffd23f"), o, 1.5)
+		Kind.SCROLLS:
+			# A rack of rolled scrolls tied with ribbon.
+			Art.shape(mp, Art.rect(Vector2(-34, -44) * s, Vector2(34, 0)), th.ground.lightened(0.12), o, 3.0)
+			for k in 4:
+				var sx := (-24.0 + float(k) * 16.0) * s
+				Art.shape(mp, Art.rect(Vector2(sx - 6 * s, -62 * s), Vector2(sx + 6 * s, -20 * s)), Color("f6e6bd"), o, 2.0)
+				mp.draw_line(Vector2(sx - 6 * s, -40 * s), Vector2(sx + 6 * s, -40 * s), th.accent, 3.0)
+		Kind.READING_LAMP:
+			mp.draw_line(Vector2.ZERO, Vector2(0, -110) * s, o, 7.0 * s)
+			mp.draw_line(Vector2.ZERO, Vector2(0, -110) * s, th.ledge_dark, 4.0 * s)
+			Art.shape(mp, Art.ellipse(Vector2.ZERO, 20 * s, 5 * s, 12), th.ledge_dark, o, 2.5)
+			Art.shape(mp, _sc(PackedVector2Array([Vector2(-8, -110), Vector2(8, -110), Vector2(26, -138), Vector2(-26, -138)]), s), Color("2e8f6b"), o, 2.5)
+			mp.draw_circle(Vector2(0, -120) * s, 50.0 * s, Color(1.0, 0.9, 0.55, 0.10))
+			mp.draw_circle(Vector2(0, -118) * s, 8.0 * s, Color("fff2b8"))
 		Kind.CLOCK:
 			# A clock on a post (its hands are painted at ten to two).
 			mp.draw_line(Vector2.ZERO, Vector2(0, -90) * s, o, 6.0 * s)
@@ -628,3 +682,10 @@ func _paint(mp: MeshPainter) -> void:
 				var col: Color = cols[(k + rng.randi()) % 4]
 				Art.shape(mp, Art.rounded_rect(p + Vector2(-15, -14) * s, p + Vector2(15, 16) * s, 4.0 * s), col, o, 2.5)
 				Art.shape(mp, Art.rounded_rect(p + Vector2(-8, -7) * s, p + Vector2(8, 9) * s, 3.0 * s), col.lightened(0.3), o, 1.5)
+
+
+func _sc(pts: PackedVector2Array, k: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in pts:
+		out.append(p * k)
+	return out

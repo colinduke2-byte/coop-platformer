@@ -1,10 +1,10 @@
-"""World 7-3 (secret): ABYSSAL CANOPY - the Rainbloom Jungle hanging over the Deep Sea Dream.
+"""World 8-3 (secret): ABYSSAL CANOPY - the Rainbloom Jungle hanging over the Deep Sea Dream.
 Short and hard: a liana ravine over the void, a starry pool full of eels (dive
 under the rock), a bubble column up to the canopy, jellybob trampolines over a
 second void, then the gate.
 Secrets: gem 0 on the pool floor under the rock, gem 1 high above the jellies,
 gem 2 in a hollow log at the finish; the Snoozling sits on top of the canopy.
-Regenerate: python3 tools/levelgen/levels/w7_3.py"""
+Regenerate: python3 tools/levelgen/levels/w8_3.py"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from kit import LevelKit
@@ -76,4 +76,4 @@ L.dress(-250, 1100, "dream", spacing=170, seed=231)
 L.dress(4220, 4980, "dream", spacing=170, seed=232, skip=[(4750, 4850)])
 L.dress(6650, 7950, "dream", spacing=170, seed=233, skip=[(6950, 7350), (7550, 7650)])
 L.finish(spawn=(0, -2), left=-360, right=8060, bottom=1100, kill_y=1500)
-L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w7_3_abyssal_canopy.tscn"))
+L.save(os.path.join(os.path.dirname(__file__), "../../../levels/w8_3_abyssal_canopy.tscn"))

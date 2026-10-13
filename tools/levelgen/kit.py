@@ -21,13 +21,14 @@ ENEMIES = {k: f"{RES}enemies/{k}.tscn" for k in
             "cocobonk", "swoopbeak", "nibblefin", "chamelia",
             "windup", "sparkbot", "springbot", "cuckoolossus",
             "pufferfin", "crabbit", "jellybob", "eelectra", "anglerling", "inkabella",
-            "jackbonk", "unicyclops", "popcorn_pufflet", "balloonatic", "marionette", "madame_topsy"]}
+            "jackbonk", "unicyclops", "popcorn_pufflet", "balloonatic", "marionette", "madame_topsy",
+            "blotty", "wormwick", "pagebat", "shushling", "candlewick", "archivist"]}
 GROUPS = ["Decor", "Blocks", "Toys", "Hazards", "Logic", "Pickups", "Enemies", "Signs", "Checkpoints"]
 
 
 class LevelKit:
     SCENERY = {"hills": 0, "forest": 1, "cave": 2, "canopy": 3, "river": 4, "castle": 5, "candy": 6, "ice": 7,
-               "jungle": 8, "ruins": 9, "factory": 10, "ocean": 11, "deep": 12, "nebula": 13, "carnival": 14}
+               "jungle": 8, "ruins": 9, "factory": 10, "ocean": 11, "deep": 12, "nebula": 13, "carnival": 14, "library": 15}
 
     def __init__(self, root, level_name, theme="meadow", horizon=0.0, script="res://levels/level.gd",
                  scenery="hills", backdrop=None):
@@ -149,6 +150,20 @@ class LevelKit:
         self._set_last("scale", V(1, -1))
         return node
 
+    def record_pad(self, x, y, max_time=None, width=None, loop=False):
+        """World 7 echo pad: step on to start recording your route, step on any pad again (or run out of time)
+        to release a ghost that replays it forever. y = the surface it stands on."""
+        return self._tool("Toys", "RecordPad", "Area2D", "record_pad", x, y, max_time=float(max_time) if max_time else None,
+                          width=width, loop=True if loop else None)
+
+    def echo_plate(self, x, y, targets, required=1, latch=False, width=96):
+        """A pressure plate with a STOP pad on it: record at a record_pad, walk here, and your echo is left
+        standing on the plate (it counts as one dreamer). Returns the plate's path."""
+        plate = self.plate(x, y, targets, required=required, latch=latch)
+        self._set_last("width", float(width))
+        self._tool("Toys", "StopPad", "Area2D", "record_pad", x, y, stop_only=True, width=float(width) - 30.0)
+        return plate
+
     def flip_lever(self, x, y, ceiling=False):
         """Punch it: gravity flips. (y = the surface it stands on; ceiling=True hangs it from above.)"""
         return self._tool("Toys", "GravityLever", "Area2D", "gravity_lever", x, y, ceiling=True if ceiling else None)
@@ -238,6 +253,9 @@ class LevelKit:
         "carnival": [("balloons", 1.4), ("lamppost", 1.2), ("tent", 0.9), ("drum", 1.0), ("popcorn_cart", 0.5),
                      ("ticket_booth", 0.35), ("lantern", 0.4)],
         "funhouse": [("crystals", 1.6), ("drum", 0.8), ("balloons", 0.8), ("lamppost", 0.8)],
+        "library": [("bookstack", 2.0), ("candelabra", 0.9), ("lectern", 0.6), ("globe", 0.5), ("scrolls", 0.6),
+                    ("reading_lamp", 0.7)],
+        "stacks": [("bookstack", 1.6), ("scrolls", 0.8), ("candelabra", 0.5), ("reading_lamp", 0.5), ("crystals", 0.6)],
     }
 
     # Small props drawn IN FRONT of the players every few dressed spots (low, so they never hide anything).
@@ -247,6 +265,7 @@ class LevelKit:
         "jungle": ["fern", "grass", "big_leaf"], "ruins": ["fern", "grass"], "swamp": ["reeds", "fern"],
         "factory": ["grass"], "beach": ["shell", "grass"], "reef": ["seaweed", "coral"], "wreck": ["seaweed"],
         "dream": ["crystals"], "carnival": ["drum"], "funhouse": ["crystals"],
+        "library": ["bookstack"], "stacks": ["scrolls"],
     }
 
     def dress(self, x0, x1, style="meadow", spacing=150, seed=1, front_every=4, skip=(), trees=True, ceiling=False):
@@ -470,7 +489,7 @@ class LevelKit:
         return self._tool("Hazards", "Acorns", "Node2D", "acorn_dropper", x, y, interval=float(interval), phase=float(phase))
 
     def ambience(self, kind="pollen", density=1.0, darkness=None, tint=None):
-        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain", "bubbles", "stars", "confetti"]
+        kinds = ["pollen", "leaves", "fireflies", "spores", "petals", "embers", "snow", "rain", "bubbles", "stars", "confetti", "pages"]
         props = {"script": self.s.script(RES + "world/ambience.gd"), "kind": kinds.index(kind),
                  "density": float(density) if density != 1.0 else None, "darkness": darkness, "tint": tint}
         return self.s.node("Ambience", "Node2D", "Decor", {k: v for k, v in props.items() if v is not None})
@@ -636,7 +655,8 @@ class LevelKit:
                  "LILYPADS", "BIG_FLOWER", "ROOTS", "HUT", "LANTERN", "SNOWMAN", "ICICLES", "IGLOO", "SKIS",
                  "PALM", "BIG_LEAF", "TOTEM", "BROMELIAD", "GEAR", "PIPES", "CLOCK", "TOYBLOCKS",
                  "CORAL", "SEAWEED", "SHELL", "ANCHOR", "STARFISH", "CHEST",
-                 "TENT", "BUNTING", "BALLOONS", "POPCORN_CART", "TICKET_BOOTH", "LAMPPOST", "DRUM"]
+                 "TENT", "BUNTING", "BALLOONS", "POPCORN_CART", "TICKET_BOOTH", "LAMPPOST", "DRUM",
+                 "BOOKSTACK", "GLOBE", "LECTERN", "CANDELABRA", "SCROLLS", "READING_LAMP"]
         return self.s.node("Deco", "Node2D", "Decor", {
             "script": self.s.script(RES + "decor/deco.gd"), "position": V(x, y),
             "kind": kinds.index(kind.upper()), "size": float(size) if size != 1.0 else None,

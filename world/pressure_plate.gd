@@ -37,6 +37,11 @@ func _physics_process(_delta: float) -> void:
 	for b in get_overlapping_bodies():
 		if b is Player and not b.is_bubbled():
 			n += 1
+	if not Engine.is_editor_hint():
+		for g in get_tree().get_nodes_in_group(&"echoes"):   # World 7: a replayed echo weighs as much as a dreamer
+			var d := (g as Node2D).global_position - global_position
+			if absf(d.x) < width * 0.5 - 6.0 and d.y > -34.0 and d.y < 8.0:
+				n += 1
 	var want := n >= required or (latch and on)
 	if want != on:
 		on = want

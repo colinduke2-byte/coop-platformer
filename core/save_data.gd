@@ -24,15 +24,24 @@ static func load_records() -> void:
 
 
 ## v2: the secret Nightmare Nebula moved from World 6 to World 7 (World 6 is now the Carnival),
-## so its records move from w6_* to w7_*. Runs once per save (marked by "_v").
+## so its records move from w6_* to w7_*; v3 moves them on to w8_* (the Hushed Library is World 7).
+## Runs once per save (marked by "_v").
 static func _migrate() -> void:
-	if int(records.get("_v", 1)) >= 2:
+	var v := int(records.get("_v", 1))
+	if v >= 3:
 		return
+	if v < 2:
+		for key: String in records.keys():
+			if key.begins_with("w6_"):
+				records["w7_" + key.substr(3)] = records[key]
+				records.erase(key)
+	# v3: the Hushed Library became World 7, so the secret Nebula moved again: w7_* -> w8_*.
+	# (Only the OLD secret records can exist at this point: nobody has played the Library yet.)
 	for key: String in records.keys():
-		if key.begins_with("w6_"):
-			records["w7_" + key.substr(3)] = records[key]
+		if key.begins_with("w7_"):
+			records["w8_" + key.substr(3)] = records[key]
 			records.erase(key)
-	records["_v"] = 2
+	records["_v"] = 3
 	_write()
 
 

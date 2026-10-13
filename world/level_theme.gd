@@ -54,6 +54,7 @@ const GROUND_TEXTURE := {
 	"shore": "sand", "reef": "coral", "kelp": "coral",
 	"candy": "jelly", "nebula": "nebula", "nebula_boss": "nebula",
 	"carnival": "brick", "funhouse": "crystal", "bigtop": "sand",
+	"library": "bark", "stacks": "brick", "scriptorium": "brick",
 }
 
 static var _default: LevelTheme  # loaded lazily: a preload here would be a circular load
@@ -72,6 +73,7 @@ const GRADES := {
 	"night":   {"sat": 1.1, "con": 1.12, "tint": Color(0.95, 0.98, 1.08), "shadow": Color(0.01, 0.0, 0.04), "vig": 0.5},
 	"nebula":  {"sat": 1.25, "con": 1.1, "tint": Color(1.02, 0.95, 1.1), "shadow": Color(0.03, 0.0, 0.05), "vig": 0.5},
 	"candy":   {"sat": 1.2, "con": 1.04, "tint": Color(1.03, 0.98, 1.03), "shadow": Color(0.02, 0.0, 0.02), "vig": 0.26},
+	"archive": {"sat": 1.14, "con": 1.09, "tint": Color(1.03, 0.98, 0.94), "shadow": Color(0.02, 0.0, 0.05), "vig": 0.42},
 	"carnival": {"sat": 1.22, "con": 1.08, "tint": Color(1.04, 0.97, 1.04), "shadow": Color(0.03, 0.0, 0.05), "vig": 0.42},
 }
 const GRADE_BY_THEME := {
@@ -83,6 +85,7 @@ const GRADE_BY_THEME := {
 	"shore": "sea", "reef": "sea", "shipwreck": "sea", "kelp": "sea", "trench": "deep", "octopus": "deep",
 	"nebula": "nebula", "nebula_boss": "nebula", "candy": "candy",
 	"carnival": "carnival", "funhouse": "carnival", "bigtop": "carnival",
+	"library": "archive", "stacks": "archive", "scriptorium": "archive",
 }
 
 
