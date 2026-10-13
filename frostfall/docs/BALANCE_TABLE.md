@@ -43,4 +43,15 @@ level about right; worth a look if the late game feels easy.
 
 ## Round 2 (the three tuned fights)
 
-(filled in below)
+| Fight | Change | Bot wins | Boss health left on losses | Verdict |
+|---|---|---|---|---|
+| Ashen Sovereign | health x0.7 -> x0.62 | 8/20 | 17% | ok |
+| Vale patrol | Hedge Knight 80 -> 72 health, 19 -> 16 damage | 13/20 | | ok |
+| Blight Mother, bot ignores pods | health x0.35 | 0/20 | 28% | the pods are the fight |
+| Blight Mother, bot kills pods first (as the fight tells you) | health x0.35 | 15/20 | 3% | too easy |
+| same | health x0.42 | 16/20 | 7% | too easy |
+| same | **health x0.5** (final) | **7/20** | 11% | ok |
+
+The Blight Mother is a fight you learn: a player who ignores the pods will not win; one who destroys them each time she roots
+wins with a few tries. If that first wall feels unfair, the knobs are her rooted damage taken (`takenMul = 0.25` in
+`entities/Guardians4.js`) and her root timer (12-14 s, 10 s in phase 2).
