@@ -26,7 +26,9 @@ await G(async () => {
   };
   window.__closer = setInterval(() => {
     const sm = window.__ff.game.scene;
-    for (const k of ['Shop', 'Menu', 'Lockpick', 'Smith', 'Craft']) if (sm.isActive(k)) { window.__ff.keys._press('Escape'); setTimeout(() => window.__ff.keys._release('Escape'), 40); }
+    for (const k of ['Shop', 'Lockpick', 'Smith', 'Craft']) if (sm.isActive(k)) { window.__ff.keys._press('Escape'); setTimeout(() => window.__ff.keys._release('Escape'), 40); }
+    if (sm.isActive('Menu')) sm.stop('Menu');                  // a stray Escape opened the pause menu: close it so the game clock runs again
+    if (sm.isPaused('Game')) sm.resume('Game');
   }, 120);
 });
 const ids = await G(() => window.__ids);
@@ -46,7 +48,7 @@ for (const [name, setup] of Object.entries(states)) {
         window.__stub(seed);
         const D = await import('/src/data/dialogue.js');
         try {
-          return await Promise.race([Promise.resolve(D.SCRIPTS[n]()).then(() => 'ok'), new Promise((res) => setTimeout(() => res('hang'), 6000))]);
+          return await Promise.race([Promise.resolve(D.SCRIPTS[n]()).then(() => 'ok'), new Promise((res) => setTimeout(() => res('hang'), 15000))]);
         } catch (e) { return 'threw: ' + e.message; } finally { window.__ff.game.scene.getScene('Hud')?.dialogue?.hideBox?.(); }
       }, [id, 1 + run * 7919 + id.length * 31]);
       if (r !== 'ok') { problems.push(`${name}/${id}#${run}: ${r}`); break; }

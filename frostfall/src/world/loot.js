@@ -40,7 +40,7 @@ export const lootMethods = {
     // elites and champions always drop gear; ordinary foes now and then
     const tier = enemy.tier || 0;
     const gearChance = enemy.champion ? 1 : enemy.elite ? 0.7 : enemy.isBoss ? 1 : 0.025 + 0.015 * tier;
-    if (!enemy.cfg.passive && Math.random() < gearChance) {
+    if (!enemy.cfg.passive && !enemy.cfg.noLoot && Math.random() < gearChance) {
       const id = makeGenItem(tier + (enemy.champion ? 1 : 0) + (enemy.isBoss ? 2 : 0), Math.random, enemy.champion ? 2 : null);
       this.pickups.push(new Pickup(this, enemy.x + rand(-6, 6), enemy.y + 4, { type: 'item', id, n: 1 }));
     }

@@ -116,7 +116,7 @@ variant('bear', 'frostbear', { name: 'Frost Bear', tint: 0xa0d8f0, hp: 120, dmg:
 variant('lynx', 'mirelynx', { name: 'Mire Lynx', tint: 0x60a070, hp: 30, dmg: 16, weak: { fire: 1.4 }, gold: [3, 9], drops: [['hide', 0.5], ['wolf_fang', 0.2]] });
 variant('fencer', 'sunfencer', { name: 'Sun Fencer', tint: 0xf0c060, hp: 46, dmg: 14, weak: { frost: 1.2, shock: 1.2 }, gold: [12, 28], drops: [['sand_glass', 0.2], ['hp_potion', 0.3]] });
 
-variant('blightbloom', 'blightpod', { name: 'Rootbound Pod', gold: [0, 0], drops: [] });
+variant('blightbloom', 'blightpod', { name: 'Rootbound Pod', noLoot: true, gold: [0, 0], drops: [] });
 
 const INFLICTS = {
   thornling: [{ type: 'bleed', chance: 0.35, t: 4, dps: 2 }], hornet: [{ type: 'poison', chance: 0.4, t: 4, dps: 1 }], blightbloom: [{ type: 'poison', chance: 0.7, t: 6, dps: 2 }], blightpod: [{ type: 'poison', chance: 0.7, t: 6, dps: 2 }],

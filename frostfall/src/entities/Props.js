@@ -62,15 +62,15 @@ export class RestSpot {
       if (act === 'cook') { await cookMenu(); return; }
       sfx.play('select');
       if (act === 'wait') {
-        await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
+        await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); setTimeout(r, 1300); });
         const target = night ? 6 * 60 : 20.5 * 60;
         advanceTime(((target - S.time) % 1440 + 1440) % 1440 || 1440);
         await sc.delay(500);
         bus.emit('toast', night ? 'DAWN BREAKS' : 'DUSK GATHERS', 13);
-        await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); });
+        await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); setTimeout(r, 1300); });
         return;
       }
-      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); });
+      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); setTimeout(r, 1300); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       clearStatus(sc.player, 'rest');
       sc.player.invuln = 0.5;
@@ -79,7 +79,7 @@ export class RestSpot {
       saveGame(sc);
       bus.emit('toast', 'RESTED BY THE FIRE', 12);
       tip('rest');
-      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); });
+      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); setTimeout(r, 1300); });
       sfx.play('potion');
       sc.fx.puff(sc.player.x, sc.player.y, 12, 8, 30, 0.6, -20);
     });
@@ -215,7 +215,7 @@ export class Bed {
     await runScript(async () => {
       const c = await choose(['Sleep until morning', 'Cancel']);
       if (c !== 0) return;
-      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); });
+      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); setTimeout(r, 1600); });
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
       S.respawn = { map: sc.mapId, x: Math.round(sc.player.x), y: Math.round(sc.player.y) };
@@ -223,7 +223,7 @@ export class Bed {
       await sc.delay(700);
       bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
       if (sc.mapId === 'cottage') { S.flags.restedUntil = S.playtime + 600; recalc(); bus.emit('toast', 'WELL RESTED: +25 MAX HEALTH FOR 10 MIN', 8); }
-      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); });
+      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); setTimeout(r, 1600); });
     });
   }
 }

@@ -151,21 +151,23 @@ export const eventMethods = {
   fastTravel(f) {
     if (hasMod('pilgrim')) { bus.emit('toast', 'A PILGRIM WALKS', 11); return false; }
     if (this.leaving || this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) { bus.emit('toast', 'NOT WITH ENEMIES NEAR', 11); return false; }
+    if (S.hp <= 0 || this.player?.statuses && Object.keys(this.player.statuses).some((k) => ['bleed', 'poison', 'burn'].includes(k))) { bus.emit('toast', 'NOT WHILE YOU ARE HURTING', 11); return false; }   // a bleed must not finish you off mid-journey
     this.leaving = true;
     const cam = this.cameras.main;
+    const after = (fn) => { let d = false; const go = () => { if (d) return; d = true; fn(); }; cam.once('camerafadeoutcomplete', go); setTimeout(go, 1100); };   // with a fallback timer
     cam.fadeOut(350, 11, 14, 26);
     // the journey takes time: the walk you skipped, at the clock's pace (2 game minutes per second walked)
     const tiles = f.map && f.map !== this.mapId ? 160 : Math.hypot(f.x - this.player.x, f.y - this.player.y) / 16, mins = Math.round(tiles / 4.5 * 2);
     advanceTime(mins); this.travelMins = mins;
     if (f.map && f.map !== this.mapId) {          // another region: load its map and drop in at the fire
-      cam.once('camerafadeoutcomplete', () => {
+      after(() => {
         S.map = f.map; S.spawn = 'entry'; S.x = f.x; S.y = f.y + 16;
         saveGame(this, { auto: true });
         this.scene.restart({ map: f.map, spawn: 'entry', pos: { x: f.x, y: f.y + 16 } });
       });
       return true;
     }
-    cam.once('camerafadeoutcomplete', () => {
+    after(() => {
       this.player.setPosition(f.x, f.y + 16); this.player.body.setVelocity(0, 0); this.player.mode = 'free'; this.player.target = null;
       this.pend.forEach((p) => { if (p.live && !p.live.alerted) { p.live.despawn(); p.live = null; } });
       this.streamTick();

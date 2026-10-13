@@ -571,7 +571,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  delay(ms) { return new Promise((r) => this.time.delayedCall(ms, r)); }
+  delay(ms) { return new Promise((r) => { this.time.delayedCall(ms, r); setTimeout(r, ms + 400); }); }   // the timer: a held scene clock must not stall a script
 
   async startIntro() {
     const pl = this.player;
