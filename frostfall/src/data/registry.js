@@ -21,7 +21,7 @@ export function validateEnemy(id, e, items = ITEMS) {
   if (!AI_KINDS.has(e.kind)) bad.push(`${id}.kind "${e.kind}" is not one of ${[...AI_KINDS].join('/')}`);
   if (!Array.isArray(e.body) || e.body.length !== 4 || !e.body.every(num)) bad.push(`${id}.body must be [w, h, offsetX, offsetY]`);
   if (e.bark && !BARKS[e.bark]) bad.push(`${id}.bark "${e.bark}" has no bark table`);
-  for (const [it] of e.loot?.drops || []) if (it !== 'arrows' && !items[it]) bad.push(`${id} drops unknown item "${it}"`);
+  for (const [it, , range] of e.loot?.drops || []) { if (it !== 'arrows' && !items[it]) bad.push(`${id} drops unknown item "${it}"`); if (range && !(Array.isArray(range) && range.length === 2 && range.every(num))) bad.push(`${id} drop "${it}" has a bad range`); }
   for (const s of e.inflicts || []) if (!STATUS[s.type]) bad.push(`${id}.inflicts unknown status "${s.type}"`);
   for (const s of e.immune || []) if (!STATUS[s] && !['bleed', 'poison', 'burn', 'chill', 'freeze', 'shock', 'fear', 'slow', 'root'].includes(s)) bad.push(`${id}.immune unknown status "${s}"`);
   return bad;
@@ -36,6 +36,8 @@ export function validateItem(id, it, items = ITEMS) {
   if (it.type === 'potion' && !['hp', 'mp', 'sp'].includes(it.restore)) bad.push(`${id}.restore must be hp/mp/sp`);
   if (it.type === 'food' && !it.food) bad.push(`${id} is food but has no .food buffs`);
   if (it.cook && !items[it.cook]) bad.push(`${id}.cook points to unknown item "${it.cook}"`);
+  if ((it.type === 'armor' || it.type === 'helmet') && it.weight != null && !['light', 'medium', 'heavy'].includes(it.weight)) bad.push(`${id}.weight must be light/medium/heavy`);
+  if (it.wt != null && !(num(it.wt) && it.wt >= 0)) bad.push(`${id}.wt must be a number >= 0`);
   return bad;
 }
 

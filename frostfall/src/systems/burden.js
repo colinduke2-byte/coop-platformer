@@ -4,6 +4,7 @@
 import { TUNE } from '../data/tuning.js';
 import { ITEMS } from '../data/items.js';
 import { S } from './state.js';
+import { bus } from './bus.js';
 
 const BY_TYPE = {
   potion: 0.5, elixir: 0.5, tome: 0.5, gem: 0.5, rune: 0.5, charm: 0.5, misc: 0.5, whistle: 0.5,
@@ -30,28 +31,40 @@ export function carried() {
   for (const [id, n] of Object.entries(S.inv || {})) {
     if (!n || !ITEMS[id]) continue;
     const per = itemWeight(id);
-    const wornN = eq.has(id) ? 1 : 0;
+    const wornN = eq.has(id) ? Math.min(n, Object.values(S.equip).filter((e) => e === id).length) : 0;   // one dagger in each hand counts twice
     w += per * (n - wornN) + per * wornN * B.equipHalf;
   }
   return w + (S.arrows || 0) * BY_TYPE.ammo;
 }
 
-const classOf = (id) => ITEMS[id]?.weight || null;
+const classOf = (id) => (TUNE.player.weights[ITEMS[id]?.weight] ? ITEMS[id].weight : null);   // unknown classes count as medium
 export function capacity() {
   const B = TUNE.burden, W = TUNE.player.weights;
   const arm = W[classOf(S.equip?.armor) || 'medium'].carry, helm = S.equip?.head ? W[classOf(S.equip.head) || 'medium'].carry * 0.5 : 0;
   return Math.round(B.base + Math.max(0, (S.maxSp || 100) - 100) * B.perSp + arm + helm + (S.mounted ? B.pony : 0));
 }
 
-// 'ok' | 'burdened' | 'over'
+// 'ok' | 'burdened' | 'over'. Read several times a frame (movement, regen, HUD), so it is worked out at most ten times a second.
+let cacheT = -1, cacheL = 'ok', cacheInv = null, cacheEq = null, lastSeen = 'ok';
 export function level() {
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  if (now - cacheT < 100 && cacheT >= 0 && cacheInv === S.inv && cacheEq === S.equip) return cacheL;
   const c = carried(), cap = capacity();
-  return c <= cap ? 'ok' : c <= cap * TUNE.burden.over ? 'burdened' : 'over';
+  cacheT = now; cacheInv = S.inv; cacheEq = S.equip; cacheL = c <= cap ? 'ok' : c <= cap * TUNE.burden.over ? 'burdened' : 'over';
+  return cacheL;
+}
+export const invalidate = () => { cacheT = -1; };
+// Called every frame by the player: a warning the moment you tip over a line, whatever caused it (loot, selling, gear, food wearing off).
+export function watch() {
+  const l = level();
+  if (l !== lastSeen && l !== 'ok' && (lastSeen === 'ok' || l === 'over')) bus.emit('toast', l === 'over' ? 'OVERLOADED: NO ROLLING. SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12);
+  lastSeen = l;
 }
 export const moveMul = () => { const l = level(), B = TUNE.burden; return l === 'ok' ? 1 : l === 'burdened' ? B.burdened.move : B.overMove; };
-export const regenMul = () => { const l = level(), B = TUNE.burden; return l === 'ok' ? 1 : l === 'burdened' ? B.burdened.regen : B.burdened.regen * 0.8; };
+export const regenMul = () => { const l = level(), B = TUNE.burden; return l === 'ok' ? 1 : l === 'burdened' ? B.burdened.regen : B.overRegen; };
 export const canRoll = () => level() !== 'over';
-export const burden = { carried, capacity, level, moveMul, regenMul, canRoll, itemWeight };
+export const moveFloor = () => (level() === 'over' ? TUNE.burden.overFloor : TUNE.burden.floor);
+export const burden = { carried, capacity, level, moveMul, regenMul, canRoll, itemWeight, watch, invalidate, moveFloor };
 
 // The armour-class effects: body armour in full, helmet at half strength. Unarmoured counts as medium.
 export function classMix() {

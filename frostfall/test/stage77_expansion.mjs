@@ -119,10 +119,10 @@ await G(() => { const S = window.__ff.S; S.flags.blightMotherDead = true; S.inv.
 await stub([0]); await SCRIPT('vale_elder'); await unstub();
 const g1 = await G(() => { const s = window.__ff.S; return { q: s.quests.blightmother.status, c: s.flags.choiceGrove, gold: s.gold, charm: !!s.inv.bloom_charm, heart: s.inv.blight_heart || 0 }; });
 check('replanting the heart finishes the quest, pays gold and a charm, and sets the grove choice', g1.q === 'done' && g1.c === 'replant' && g1.gold === 650 && g1.charm && g1.heart === 0, JSON.stringify(g1));
-await G(() => { const S = window.__ff.S; S.quests.blightmother.status = 'active'; S.inv.blight_heart = 1; S.bonusHp = 0; S.gold = 0; });
+await G(async () => { const S = window.__ff.S; S.quests.blightmother.status = 'active'; S.inv.blight_heart = 1; S.gold = 0; delete S.flags.choiceGrove; (await import('/src/systems/stats.js')).recalc(); window.__hp0 = S.maxHp; });
 await stub([1]); await SCRIPT('vale_elder'); await unstub();
-const g2 = await G(() => { const s = window.__ff.S; return { c: s.flags.choiceGrove, hp: s.bonusHp, gold: s.gold }; });
-check('keeping the heart gives permanent health and more gold instead', g2.c === 'keep' && g2.hp === 20 && g2.gold === 1000, JSON.stringify(g2));
+const g2 = await G(() => { const s = window.__ff.S; return { c: s.flags.choiceGrove, hp: s.maxHp - window.__hp0, gold: s.gold }; });
+check('keeping the heart gives +20 health for this run and more gold instead', g2.c === 'keep' && g2.hp === 20 && g2.gold === 1000, JSON.stringify(g2));
 await G(() => { const S = window.__ff.S; S.gold = 0; });
 await stub([0]); await SCRIPT('dune_sheikh'); await unstub();
 check('Sheikh Rashid sends you to the Sealed Vault', await G(() => window.__ff.S.quests.sunvault.status === 'active'));

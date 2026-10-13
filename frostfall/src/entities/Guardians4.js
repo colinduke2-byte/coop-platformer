@@ -22,31 +22,32 @@ export class BlightMother extends PatternBoss {
   special(dt, player) {
     this.rootT = (this.rootT ?? 12) - dt;
     if (!this.rooted && this.rootT <= 0 && !this.invulnerable) {
-      this.rooted = true; this.takenMul = 0.25; this.setTint(0x9ad890);
+      this.rooted = true; this.takenMul = 0.25; this.stateTint = 0x9ad890;
       this.pods = [];
       for (let i = 0; i < 3; i++) {
         const a = (i / 3) * Math.PI * 2 + Math.random(), x = this.x + Math.cos(a) * 64, y = this.y + Math.sin(a) * 52;
         if (this.scene.solidAt(x, y)) continue;
-        const p = this.scene.addEnemy('blightbloom', x, y, { tier: 0 }); p.alert(true); this.pods.push(p);
+        const p = this.scene.addEnemy('blightpod', x, y, { tier: 0 }); p.alert(true); this.pods.push(p);
       }
       if (!this.pods.length) this.endRoot(false);
       else { bus.emit('toast', 'ROOTBOUND! DESTROY THE PODS', 8); sfx.play('nova'); }
     } else if (this.rooted) {
-      this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.006 * dt * 60 / 60);
+      this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.006 * dt);
       this.pods = this.pods.filter((p) => p.active && !p.dead);
       if (!this.pods.length) this.endRoot(true);
     }
   }
   endRoot(torn) {
-    this.rooted = false; this.takenMul = torn ? 1.4 : 1; this.clearTint();
+    this.rooted = false; this.takenMul = torn ? 1.4 : 1; this.stateTint = 0;
     this.rootT = this.bphase >= 2 ? 10 : 14;
     if (torn) {
       this.scene.fx.ring(this.x, this.y, 2, 0.5, 'ring', 0x9ad890); this.scene.fx.text(this.x, this.y - 30, 'TORN LOOSE', 8, 1.0); sfx.play('guardbreak');
+      this.clearTele?.(); this.marker?.destroy(); this.marker = null;
       this.setState('roar', 1.8); this.body.setVelocity(0, 0);
       this.scene.time.delayedCall(2500, () => { if (!this.dead) this.takenMul = 1; });
     }
   }
-  die(info) { for (const p of this.pods || []) if (p.active && !p.dead) p.destroy(); return super.die(info); }
+  die(info) { for (const p of this.pods || []) if (p.active && !p.dead) p.despawn(); return super.die(info); }
 }
 
 // The Sunscorch Reach: the Vault Sovereign, the last of the desert kings, still guarding what they sealed. Sunbeams and gilded guards.

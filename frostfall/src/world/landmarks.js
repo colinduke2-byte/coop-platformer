@@ -3,7 +3,7 @@
 // never moves anything else: patches of snowdrift, frostbloom, ember blooms, lily pads, glass flowers and spores, and lone boulders.
 import { TILE } from '../config.js';
 import { hash } from '../util.js';
-import { vnoise, REACH, ASHEN, COAST, KINGDOM, EXTRA_KIND_NAME, STRICT } from './worldgen.js';
+import { vnoise, REACH, ASHEN, COAST, KINGDOM, EXTRA_KIND_NAME, STRICT, SMALL_GAP } from './worldgen.js';
 import { FENS, HIGHLANDS } from './regions2.js';
 import { GLASSWOOD, UNDERDEEP } from './regions3.js';
 import { VALE, SUNSCORCH } from './regions4.js';
@@ -45,6 +45,7 @@ const DEFS = {
   sunobelisk: ['A SUN OBELISK', 'The Sun Obelisk', 'It points at noon all day. The kings could not decide if this was wisdom or laziness.', 13, 80, ['    q    ', '    q    ', '    q    ', '   qqq   ', '  qqqqq  ']],
   buriedcolossus: ['A BURIED COLOSSUS', 'The Colossus', 'A head the size of a house, a shoulder, and a hand holding nothing at all. The rest is in the sand. Possibly. Hopefully.', 12, 60, ['   nnn   ', '  nnnnn  ', ' nnnnnnn ', ' nnqnqnn ', 'nnnnnnnnn']],
 };
+export const LANDMARK_IDS = new Set(Object.keys(DEFS));
 const WHERE = {
   reach: [REACH, [['frozenfall', 2], ['mammothbones', 2], ['lonepine', 2], ['fallenstatue', 2]]],
   ashen: [ASHEN, [['lavafall', 2], ['obsidianspire', 1], ['ashbell', 1]]],
@@ -60,6 +61,7 @@ const WHERE = {
 
 for (const [id, [name, title, text, col, r, shape]] of Object.entries(DEFS)) {
   EXTRA_KIND_NAME[id] = name; PLACE_NAME[id] = name.replace(/^(A|AN|THE) /, ''); PLACE_COL[id] = col; LANDMARKS.add(id); STRICT.add(id);
+  SMALL_GAP[id] = 24;         // a landmark is something you pass on the way, not a destination: it may sit closer to other places
   LORE['lm_' + id] = { title, text: [text] };
 }
 // each landmark: a clearing, the structure, a glow, a guard, a chest, a lore page and a sign
@@ -81,7 +83,14 @@ for (const [, [def, list]] of Object.entries(WHERE)) {
   def.dressers = def.dressers || {};
   const old = def.plan;
   for (const [id] of list) def.dressers[id] = dresser(id);
-  def.plan = (place, mustHave, placeBest) => { old(place, mustHave, placeBest); for (const [id, n] of list) place(id, n, 8); };
+  def.plan = (place, mustHave, placeBest, pois) => {
+    old(place, mustHave, placeBest, pois);
+    for (const [id, n] of list) {
+      place(id, n, 8);
+      // a crowded region: put one in the most open spot left, if that spot is still a fair walk from everything
+      if (pois && !pois.some((p) => p.kind === id) && placeBest(id, 6)) { const p = pois[pois.length - 1]; if (pois.some((q) => q !== p && Math.hypot(q.x - p.x, q.y - p.y) < 18)) pois.pop(); }
+    }
+  };
 }
 
 // ---------------------------------------------------------------------------------------------- scatter terrain (tile-only: uses hash noise, not the world's RNG)
@@ -92,7 +101,7 @@ const SCATTER = [
   [COAST, [[SNOWS, TILE.SNOWDRIFT, 9, 0.62, 0.7, 405]], [SNOWS, TILE.BOULDER, 0.005, 406]],
   [KINGDOM, [[new Set([TILE.MARBLE]), TILE.MARBLEMOSS, 8, 0.6, 0.6, 407]], null],
   [FENS, [[new Set([TILE.BOG]), TILE.LILYPAD, 7, 0.62, 0.65, 408]], null],
-  [HIGHLANDS, [[SNOWS, TILE.SNOWDRIFT, 9, 0.64, 0.7, 409]], [new Set([TILE.HEATH, TILE.SLATE]), TILE.BOULDER, 0.007, 410]],
+  [HIGHLANDS, [[SNOWS, TILE.SNOWDRIFT, 9, 0.64, 0.7, 409]], [new Set([TILE.HEATH, TILE.SLATE]), TILE.HEATHROCK, 0.007, 410]],
   [GLASSWOOD, [[new Set([TILE.GLASSMOSS, TILE.MOSS]), TILE.GLASSBLOOM, 7, 0.62, 0.6, 411]], null],
   [UNDERDEEP, [[new Set([TILE.DEEPSTONE, TILE.CFLOOR2]), TILE.SPORES, 7, 0.62, 0.6, 412]], null],
 ];

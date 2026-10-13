@@ -144,6 +144,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   gainXp(skill, amt) { addXp(skill, amt); }
 
   update(dt) {
+    burden.watch();
     this.currentDt = dt;
     if (this.mode === 'dead') { this.animate(false); return; }
     this.flashT -= dt;
@@ -238,7 +239,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   move(ix, iy, dt) {
     const b = this.body;
-    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * Math.max(TUNE.burden.floor, stats.trait('moveMul') * burden.moveMul()) * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1) * (this.scene.mireMul ? this.scene.mireMul() : 1);
+    let sp = (this.sneaking ? P.sneakSpeed : P.speed) * Math.max(burden.moveFloor(), stats.trait('moveMul') * burden.moveMul()) * (this.statuses ? Math.max(0.25, statusMods(this).speed) : 1) * (this.scene.mireMul ? this.scene.mireMul() : 1);
     if (S.mounted) sp *= PONY_SPEED;
     if (this.lockT > 0) sp *= this.lockMove;
     if (this.drawing) sp *= P.bow.move;
@@ -264,6 +265,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     const wantRoll = keys.pressed('roll') || this.bufRoll > 0;
+    if (keys.pressed('roll') && !burden.canRoll() && this.scene.t - (this.heavyMsgT ?? -9) > 2) { this.heavyMsgT = this.scene.t; this.scene.fx.text(this.x, this.y - 18, 'TOO HEAVY TO ROLL', 11, 0.9); sfx.play('nostamina'); }
     if (wantRoll && this.rollCd <= 0 && burden.canRoll() && (!this.swing || this.swing.t >= this.swing.c.total * P.sword.rollCancel) && this.spend(P.roll.cost * (S.hearts?.tide ? 0.65 : 1) * classMix().roll)) {
       this.mode = 'roll'; this.bufRoll = 0;
       this.rollStart = this.scene.t;

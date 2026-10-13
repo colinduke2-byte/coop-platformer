@@ -79,7 +79,7 @@ Object.assign(ENEMIES, {
   duneraider: {
     name: 'Dune Raider', tex: 'spr_duneraider', bark: 'human', weak: { fire: 1.2, shock: 1.2 }, hp: 52, speed: 40, chase: 60, dmg: 16, detect: 80, flee: true, drinks: true,
     kind: 'melee', range: 21, windup: 0.38, atkDur: 0.14, recover: 0.6, cooldown: 0.4, kbResist: 0.25,
-    body: [8, 7, 4, 9], loot: loot([14, 30], [['sand_glass', 0.15], ['hp_potion', 0.3], ['arrows', 0.2]]),
+    body: [8, 7, 4, 9], loot: loot([14, 30], [['sand_glass', 0.15], ['hp_potion', 0.3], ['arrows', 0.2, [2, 4]]]),
   },
 
   // ======================================================================= bosses
@@ -87,13 +87,13 @@ Object.assign(ENEMIES, {
     name: 'The Blight Mother', title: 'THE BLIGHT MOTHER, KEEPER OF THE ROT', tex: 'spr_blightmother', bark: 'undead', weak: { fire: 1.6, shock: 1.1, frost: 0.8 },
     hp: 900, speed: 36, chase: 46, dmg: 24, detect: 9999,
     kind: 'boss', range: 42, windup: 0.7, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.96,
-    body: [8, 7, 4, 9], loot: { gold: [380, 520], drops: [['blight_heart', 1], ['hp_potion_g', 2], ['thornvine', 4], ['bloom_petal', 3]] },
+    body: [8, 7, 4, 9], loot: { gold: [380, 520], drops: [['blight_heart', 1], ['hp_potion_g', 1, [2, 2]], ['thornvine', 1, [4, 4]], ['bloom_petal', 1, [3, 3]]] },
   },
   vaultsovereign: {
     name: 'The Vault Sovereign', title: 'THE VAULT SOVEREIGN, LAST OF THE SUN KINGS', tex: 'spr_vaultsovereign', bark: 'undead', weak: { shock: 1.3, frost: 1.0, fire: 0.5 },
     hp: 1150, speed: 36, chase: 46, dmg: 28, detect: 9999,
     kind: 'boss', range: 44, windup: 0.75, atkDur: 0.2, recover: 0.75, cooldown: 0.85, kbResist: 0.97,
-    body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['vault_seal', 1], ['hp_potion_g', 2], ['sun_gold', 4], ['sand_glass', 3]] },
+    body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['vault_seal', 1], ['hp_potion_g', 1, [2, 2]], ['sun_gold', 1, [4, 4]], ['sand_glass', 1, [3, 3]]] },
   },
 });
 
@@ -116,6 +116,24 @@ variant('bear', 'frostbear', { name: 'Frost Bear', tint: 0xa0d8f0, hp: 120, dmg:
 variant('lynx', 'mirelynx', { name: 'Mire Lynx', tint: 0x60a070, hp: 30, dmg: 16, weak: { fire: 1.4 }, gold: [3, 9], drops: [['hide', 0.5], ['wolf_fang', 0.2]] });
 variant('fencer', 'sunfencer', { name: 'Sun Fencer', tint: 0xf0c060, hp: 46, dmg: 14, weak: { frost: 1.2, shock: 1.2 }, gold: [12, 28], drops: [['sand_glass', 0.2], ['hp_potion', 0.3]] });
 
+variant('blightbloom', 'blightpod', { name: 'Rootbound Pod', gold: [0, 0], drops: [] });
+
+const INFLICTS = {
+  thornling: [{ type: 'bleed', chance: 0.35, t: 4, dps: 2 }], hornet: [{ type: 'poison', chance: 0.4, t: 4, dps: 1 }], blightbloom: [{ type: 'poison', chance: 0.7, t: 6, dps: 2 }], blightpod: [{ type: 'poison', chance: 0.7, t: 6, dps: 2 }],
+  scorpion: [{ type: 'poison', chance: 0.6, t: 6, dps: 3 }], sandburrower: [{ type: 'bleed', chance: 0.3, t: 4, dps: 3 }], tombscorpion: [{ type: 'poison', chance: 0.7, t: 7, dps: 4 }],
+  ashwolf: [{ type: 'burn', chance: 0.3, t: 3, dps: 2 }], bogwolf: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }], emberknight: [{ type: 'burn', chance: 0.3, t: 3, dps: 3 }],
+  thornboar: [{ type: 'bleed', chance: 0.3, t: 4, dps: 2 }], marshdraugr: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }], mirelynx: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }],
+  elderthorn: [{ type: 'bleed', chance: 0.5, t: 5, dps: 3 }], hornetqueen: [{ type: 'poison', chance: 0.5, t: 5, dps: 2 }],
+};
+const IMMUNE = { thornling: ['poison'], blightbloom: ['poison'], blightpod: ['poison'], mosshulk: ['poison', 'bleed'], scorpion: ['poison'], tombscorpion: ['poison'], sunsentinel: ['poison', 'bleed', 'fear'], wrapped: ['poison', 'bleed'], dustdevil: ['bleed', 'poison'], ashwolf: ['burn'], emberknight: ['burn'], frostbear: ['chill', 'freeze'], grovewarden: ['poison', 'bleed'], elderthorn: ['poison'] };
+const applyStatus = () => {
+  for (const k of ['mosshulk', 'sunsentinel', 'grovewarden']) if (ENEMIES[k]) ENEMIES[k].crush = true;
+  for (const k of ['ashwolf', 'bogwolf', 'jackal', 'mirelynx']) if (ENEMIES[k]) ENEMIES[k].flank = true;
+  for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
+  for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;
+};
+applyStatus();                                   // bases first, so the mini-bosses below inherit them
+
 // ============================================================================= mini-bosses: named, tougher, one unique prize each
 const mini = (base, id, over) => {
   const b = ENEMIES[base];
@@ -123,27 +141,17 @@ const mini = (base, id, over) => {
   const nat = nativeSpec(id) || nativeSpec(base);
   if (nat) registerNative(id, nat);
 };
-mini('thornling', 'elderthorn', { name: 'Elder Thornwood', hp: 280, dmg: 22, speed: 30, chase: 70, detect: 90, ambush: false, loot: loot([90, 160], [['thorn_crown', 1], ['thornvine', 4], ['hp_potion_g', 1]]) });
-mini('hornet', 'hornetqueen', { name: 'Queen Vespera', hp: 160, dmg: 12, speed: 40, chase: 80, detect: 120, summons: 3, loot: loot([90, 160], [['queens_sting', 1], ['honeycomb', 4], ['hp_potion_g', 1]]) });
-mini('mosshulk', 'grovewarden', { name: 'Grove Warden Moss', hp: 520, dmg: 34, speed: 20, chase: 34, detect: 80, loot: loot([120, 200], [['hulk_heart', 1], ['moss_heart', 3], ['hp_potion_g', 2]]) });
-mini('sandburrower', 'sandmaw', { name: 'The Sandmaw', hp: 300, dmg: 30, speed: 40, chase: 90, detect: 150, loot: loot([100, 180], [['maw_tooth', 1], ['sand_glass', 3], ['hp_potion_g', 1]]) });
-mini('scorpion', 'tombscorpion', { name: 'Ankhet, the Tomb Scorpion', hp: 280, dmg: 25, speed: 42, chase: 90, detect: 100, loot: loot([100, 180], [['ankhet_ring', 1], ['stinger', 4], ['hp_potion_g', 1]]) });
-mini('dustdevil', 'dustlord', { name: 'Kharn, the Dust Lord', hp: 220, dmg: 19, speed: 46, chase: 104, detect: 120, loot: loot([100, 180], [['dust_cloak', 1], ['dust_shard', 4], ['hp_potion_g', 1]]) });
-mini('cutpurse', 'redsula', { name: 'Red Sula', scale: 1.25, hp: 180, dmg: 14, steals: 0.35, speed: 46, chase: 96, detect: 110, loot: loot([160, 300], [['sula_dagger', 1], ['gem_amber', 1], ['lockpick', 3]]) });
-mini('duneraider', 'captainkarrow', { name: 'Captain Karrow', scale: 1.3, hp: 300, dmg: 24, aura: true, speed: 38, chase: 64, detect: 110, flee: false, drinks: false, loot: loot([140, 260], [['karrow_blade', 1], ['sun_gold', 2], ['hp_potion_g', 2]]) });
+mini('thornling', 'elderthorn', { name: 'Elder Thornwood', hp: 280, dmg: 22, speed: 30, chase: 70, detect: 90, ambush: false, loot: loot([90, 160], [['thorn_crown', 1], ['thornvine', 1, [4, 4]], ['hp_potion_g', 1]]) });
+mini('hornet', 'hornetqueen', { name: 'Queen Vespera', hp: 160, dmg: 12, speed: 40, chase: 80, detect: 120, summons: 3, summonKind: 'hornet', loot: loot([90, 160], [['queens_sting', 1], ['honeycomb', 1, [4, 4]], ['hp_potion_g', 1]]) });
+mini('mosshulk', 'grovewarden', { name: 'Grove Warden Moss', hp: 520, dmg: 34, speed: 20, chase: 34, detect: 80, loot: loot([120, 200], [['hulk_heart', 1], ['moss_heart', 1, [3, 3]], ['hp_potion_g', 1, [2, 2]]]) });
+mini('sandburrower', 'sandmaw', { name: 'The Sandmaw', hp: 300, dmg: 30, speed: 40, chase: 90, detect: 150, loot: loot([100, 180], [['maw_tooth', 1], ['sand_glass', 1, [3, 3]], ['hp_potion_g', 1]]) });
+mini('scorpion', 'tombscorpion', { name: 'Ankhet, the Tomb Scorpion', hp: 280, dmg: 25, speed: 42, chase: 90, detect: 100, loot: loot([100, 180], [['ankhet_ring', 1], ['stinger', 1, [4, 4]], ['hp_potion_g', 1]]) });
+mini('dustdevil', 'dustlord', { name: 'Kharn, the Dust Lord', hp: 220, dmg: 19, speed: 46, chase: 104, detect: 120, loot: loot([100, 180], [['dust_cloak', 1], ['dust_shard', 1, [4, 4]], ['hp_potion_g', 1]]) });
+mini('cutpurse', 'redsula', { name: 'Red Sula', scale: 1.25, hp: 180, dmg: 14, steals: 0.35, speed: 46, chase: 96, detect: 110, loot: loot([160, 300], [['sula_dagger', 1], ['gem_amber', 1], ['lockpick', 1, [3, 3]]]) });
+mini('duneraider', 'captainkarrow', { name: 'Captain Karrow', scale: 1.3, hp: 300, dmg: 24, aura: true, speed: 38, chase: 64, detect: 110, flee: false, drinks: false, loot: loot([140, 260], [['karrow_blade', 1], ['sun_gold', 1, [2, 2]], ['hp_potion_g', 1, [2, 2]]]) });
 
-const INFLICTS = {
-  thornling: [{ type: 'bleed', chance: 0.35, t: 4, dps: 2 }], hornet: [{ type: 'poison', chance: 0.4, t: 4, dps: 1 }], blightbloom: [{ type: 'poison', chance: 0.7, t: 6, dps: 2 }],
-  scorpion: [{ type: 'poison', chance: 0.6, t: 6, dps: 3 }], sandburrower: [{ type: 'bleed', chance: 0.3, t: 4, dps: 3 }], tombscorpion: [{ type: 'poison', chance: 0.7, t: 7, dps: 4 }],
-  ashwolf: [{ type: 'burn', chance: 0.3, t: 3, dps: 2 }], bogwolf: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }], emberknight: [{ type: 'burn', chance: 0.3, t: 3, dps: 3 }],
-  thornboar: [{ type: 'bleed', chance: 0.3, t: 4, dps: 2 }], marshdraugr: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }], mirelynx: [{ type: 'poison', chance: 0.3, t: 4, dps: 2 }],
-  elderthorn: [{ type: 'bleed', chance: 0.5, t: 5, dps: 3 }], hornetqueen: [{ type: 'poison', chance: 0.5, t: 5, dps: 2 }],
-};
-const IMMUNE = { thornling: ['poison'], blightbloom: ['poison'], mosshulk: ['poison', 'bleed'], scorpion: ['poison'], tombscorpion: ['poison'], sunsentinel: ['poison', 'bleed'], wrapped: ['poison', 'bleed'], dustdevil: ['bleed', 'poison'], ashwolf: ['burn'], emberknight: ['burn'], frostbear: ['chill', 'freeze'], grovewarden: ['poison', 'bleed'], elderthorn: ['poison'] };
-for (const k of ['mosshulk', 'sunsentinel', 'grovewarden']) ENEMIES[k].crush = true;
-for (const k of ['ashwolf', 'bogwolf', 'jackal', 'mirelynx']) ENEMIES[k].flank = true;
-for (const [k, v] of Object.entries(INFLICTS)) if (ENEMIES[k]) ENEMIES[k].inflicts = v;
-for (const [k, v] of Object.entries(IMMUNE)) if (ENEMIES[k]) ENEMIES[k].immune = v;
+
+applyStatus();                                   // and the mini-bosses' own entries
 
 Object.assign(BEASTS, {
   thornling: { name: 'Thornling', desc: 'A briar that learned to walk. Lies still among the hedges until you are close, then lunges. Bleeding barbs.', weak: 'Fire.' },

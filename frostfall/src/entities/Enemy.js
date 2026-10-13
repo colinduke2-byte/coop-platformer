@@ -9,6 +9,7 @@ import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { S } from '../systems/state.js';
 import Projectile from './Projectile.js';
+import Pickup from './Pickup.js';
 import { TUNE } from '../data/tuning.js';
 import { elementMult } from '../systems/damage.js';
 import { BARKS } from '../data/enemies.js';
@@ -152,12 +153,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.auraTick = (this.auraTick || 0) - dt;
       if (this.auraTick <= 0) { this.auraTick = 0.25; let n = 0; for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && Math.hypot(o.x - this.x, o.y - this.y) < 96) { o.auraT = 0.5; n++; } if (n && !this.rallied) { this.rallied = true; this.scene.fx.text(this.x, this.y - 24, 'RALLY', 13, 0.8); } }
     }
-    if (this.cfg.heals && this.alerted) {                // a healer mends the most hurt ally nearby; kill it first
+    if (this.cfg.heals && this.alerted && this.stun <= 0 && !(this.statuses && !statusMods(this).act)) {   // a healer mends the most hurt ally nearby; kill it first (not while stunned or frozen)
       this.healT = (this.healT ?? this.cfg.heals.every) - dt;
       if (this.healT <= 0) {
         this.healT = this.cfg.heals.every;
         let best = null;
-        for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && o.hp < o.maxHp * 0.85 && Math.hypot(o.x - this.x, o.y - this.y) < this.cfg.heals.range && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o;
+        for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && !o.isBoss && !o.cfg.title && o.hp < o.maxHp * 0.85 && Math.hypot(o.x - this.x, o.y - this.y) < this.cfg.heals.range && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o;
         if (best) {
           best.hp = Math.min(best.maxHp, best.hp + best.maxHp * this.cfg.heals.pct);
           sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('frost');
@@ -181,7 +182,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const slow = Math.min(this.slowT > 0 ? 0.5 : 1, sm ? sm.speed : 1);
     if (this.statuses) { tickStatuses(this, dt, Math.hypot(b.velocity.x, b.velocity.y) > 8); if (this.dead) return; }
     if (sm && !sm.act) this.stun = Math.max(this.stun, 0.12);       // frozen solid
-    if (sm && sm.flee && !this.isBoss && !this.cfg.passive) {        // terrified: runs from the player
+    if (sm && sm.flee && !this.isBoss && !this.cfg.passive && !this.cfg.stationary) {        // terrified: runs from the player
       const away = norm(this.x - player.x, this.y - player.y);
       b.setVelocity(away.x * (this.cfg.chase || 40) * 0.9 * slow, away.y * (this.cfg.chase || 40) * 0.9 * slow);
       this.face = dir8(away.x, away.y);
@@ -203,8 +204,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.fleeT -= dt;
       const away = norm(this.x - player.x, this.y - player.y);
       b.setVelocity(away.x * (this.cfg.chase || 60) * 1.35 * slow, away.y * (this.cfg.chase || 60) * 1.35 * slow); this.face = dir8(away.x, away.y);
-      if (b.blocked.left || b.blocked.right) b.setVelocity(0, (away.y || 1) * this.cfg.chase);
-      else if (b.blocked.up || b.blocked.down) b.setVelocity((away.x || 1) * this.cfg.chase, 0);
+      if (b.blocked.left || b.blocked.right) b.setVelocity(0, (Math.sign(away.y) || 1) * this.cfg.chase * slow);
+      else if (b.blocked.up || b.blocked.down) b.setVelocity((Math.sign(away.x) || 1) * this.cfg.chase * slow, 0);
       if (this.fleeT <= 0 && this.stolen) { bus.emit('toast', 'THE THIEF GOT AWAY', 11); this.stolen = 0; sc.fx.puff(this.x, this.y, 13, 8, 30, 0.4); this.despawn(); return; }
       this.finish(dt, slow);
       return;
@@ -578,11 +579,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.cfg.kind === 'lunge') { const b = this.body; r = new Phaser.Geom.Rectangle(b.x - 3, b.y - 3, b.width + 6, b.height + 6); }
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
+      const hp0 = S.hp;
       const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this });
       if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
-      if (landed && this.cfg.steals && !this.stolen && S.gold > 0) {
+      // a thief only steals on a clean hit: not through a parry, a block or a ward, and not if the hit's thorns killed it
+      if (landed && S.hp < hp0 && !this.dead && this.cfg.steals && !this.stolen && S.gold > 0) {
         const n = Math.min(S.gold, Math.max(8, Math.round(S.gold * this.cfg.steals)));
-        S.gold -= n; this.stolen = n; this.fleeT = 7; bus.emit('toast', `${n} GOLD STOLEN`, 11); this.mark('!', 11, 0.8);
+        S.gold -= n; this.stolen = n; this.fleeT = 7; this.setState('flee'); bus.emit('toast', `${n} GOLD STOLEN: CATCH THE THIEF`, 11); sfx.play('coin'); this.mark('!', 11, 0.8);
       }
     }
   }
@@ -623,6 +626,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.flashT > 0) this.setTintFill(0xffffff);
     else if (this.state === 'windup' && this.blinkOn) this.setTint(0xff8080);
     else if (this.slowT > 0) this.setTint(0x8fe0f0);
+    else if (this.stateTint) this.setTint(this.stateTint);
     else if (this.cfg.tint) this.setTint(this.cfg.tint);
     else this.clearTint();
     this.setDepth(this.y + 8);
@@ -737,7 +741,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.scene.fx.ring(this.x, this.y + 4, 1.4, 0.6, 'ring', 0xb0a0ff); sfx.play('alert');
     this.scene.fx.text(this.x, this.y - 24, 'REINFORCEMENTS', 14, 1);
     for (let i = 0; i < this.summons; i++) {
-      const m = this.scene.addEnemy(this.kind === 'wolf' || this.kind === 'alpha' ? 'wolf' : 'draugr', this.x + (i ? 14 : -14), this.y + 6, { tier: Math.max(0, this.tier - 1) });
+      const m = this.scene.addEnemy(this.cfg.summonKind || (this.kind === 'wolf' || this.kind === 'alpha' ? 'wolf' : 'draugr'), this.x + (i ? 14 : -14), this.y + 6, { tier: Math.max(0, this.tier - 1) });
       m.alert(true);
     }
   }
@@ -752,7 +756,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.explodes) { this.scene.addZone(this.x, this.y + 3, 30, 0.9, Math.round(this.cfg.dmg * 0.9), null); this.scene.fx.text(this.x, this.y - 26, 'ABOUT TO BLOW!', 12, 1); }
     if (this.spawnKey || this.spec?.nemesis) this.scene.markKilled?.(this);
     if (this.champion) this.scene.onChampionDown?.(this);
-    if (this.stolen) { this.scene.spawnLoot(this.x, this.y + 2, { gold: [this.stolen, this.stolen] }, []); this.stolen = 0; }
+    if (this.stolen) { this.scene.pickups.push(new Pickup(this.scene, this.x, this.y + 2, { type: 'gold', n: this.stolen, raw: true })); this.stolen = 0; }
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;
     this.scene.enemies.remove(this);

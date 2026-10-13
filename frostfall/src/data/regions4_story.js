@@ -8,9 +8,11 @@ import { dailyWares } from './stock.js';
 import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count, removeItem } from '../systems/inventory.js';
-import { getRegion } from './maps.js';
+import { getRegion, MAPS } from './maps.js';
+import { bus } from '../systems/bus.js';
 import { innMenu, cartographerMenu, smithMenu } from './services2.js';
 import { LORE } from './lore.js';
+import { recalc } from '../systems/stats.js';
 import './items4.js';
 
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
@@ -45,7 +47,7 @@ for (const [id, name, tex] of [
   ['vale_herbalist', 'DAHLIA', 'spr_fisher'], ['vale_child', 'CLOVER', 'spr_child'], ['vale_watch', 'GREENHOLLOW WATCH', 'spr_guard'], ['vale_inn', 'MOTHER MARIGOLD', 'spr_hilda'],
   ['vale_map', 'THISTLE THE MAPMAKER', 'spr_scribe'], ['vale_beekeeper', 'BEEKEEPER ORLA', 'spr_vale_beekeeper'], ['vale_bard', 'LARK THE BARD', 'spr_vale_bard'], ['vale_gardener', 'GARDENER ASH', 'spr_vale_gardener'],
   ['dune_sheikh', 'SHEIKH RASHID', 'spr_dune_sheikh'], ['dune_trader', 'JAMILA OF THE WELL', 'spr_dune_trader'], ['dune_smith', 'KHALID SUNFORGE', 'spr_prospector'], ['dune_hunter', 'TARIQ SANDWALKER', 'spr_nomad'],
-  ['dune_scholar', 'SCHOLAR NEFER', 'spr_dune_scholar'], ['dune_child', 'SAMIRA', 'spr_child'], ['dune_guard', 'AMBERWELL GUARD', 'spr_dune_guard'], ['dune_inn', 'UMM HASSAN', 'spr_hilda'],
+  ['dune_scholar', 'SCHOLAR NEFER', 'spr_dune_scholar'], ['dune_child', 'SAMIRA', 'spr_child'], ['dune_guard', 'CAPTAIN NADIR', 'spr_dune_guard'], ['dune_inn', 'UMM HASSAN', 'spr_hilda'],
   ['dune_map', 'IBRAHIM THE CARTOGRAPHER', 'spr_scribe'], ['dune_thief', 'A QUIET MAN', 'spr_cutpurse'], ['dune_bard', 'WANDERING SONGSTRESS', 'spr_dune_trader'], ['dune_caravan', 'CARAVAN MASTER BASIL', 'spr_nomad'],
 ]) NPC_DEFS[id] = { name, tex };
 
@@ -53,7 +55,25 @@ for (const [id, name, tex] of [
 // A chain is 3 linked quests from one giver. goal kinds: { kills: [kind, n] } { have: [item, n] } { cleared: [regex, n, label] } { sula: true }
 const goalDone = (g, q) => (g.kills ? killsSince(q, g.kills[0]) >= g.kills[1] : g.have ? count(g.have[0]) >= g.have[1] : g.cleared ? cleared(g.cleared[0]) >= g.cleared[1] : false);
 const goalText = (g, q) => (g.kills ? `${Math.min(killsSince(q, g.kills[0]), g.kills[1])}/${g.kills[1]} ${g.kills[2] || g.kills[0]}` : g.have ? `${Math.min(count(g.have[0]), g.have[1])}/${g.have[1]} ${g.have[2] || g.have[0]}` : `${Math.min(cleared(g.cleared[0]), g.cleared[1])}/${g.cleared[1]} ${g.cleared[2]}`);
+export const CHAINS = [];
+// where a chain's giver stands (hub layouts are fixed, so this is worked out once)
+const spots = {};
+const giverSpot = (npc) => {
+  const map = npc.startsWith('vale_') ? 'greenhollow' : 'amberwell';
+  if (!spots[map]) { spots[map] = {}; for (const e of MAPS[map].build().entities) if (e.t === 'npc') spots[map][e.id] = { map, x: e.x, y: e.y + 1 }; }
+  return spots[map][npc] || null;
+};
+// a chain step whose goal is met says so once, so you know to go back
+bus.on('enemy:killed', () => queueMicrotask(readyCheck)); bus.on('item:added', () => queueMicrotask(readyCheck));   // after the kill or item is counted
+function readyCheck() {
+  for (const c of CHAINS) for (const st of c.steps) {
+    const q = S.quests[st.qid];
+    if (q?.status === 'active' && !q.told && goalDone(st.goal, q)) { q.told = true; bus.emit('toast', `QUEST READY: TELL ${c.who.toUpperCase()}`, 13); }
+  }
+}
 function chain(c) {
+  CHAINS.push(c);
+  const prev = SCRIPTS[c.npc];                   // a shop or service the giver already runs stays reachable
   c.steps.forEach((st, i) => {
     const id = `${c.id}${i + 1}`; reg(id); st.qid = id;
     QUESTS[id] = {
@@ -61,12 +81,16 @@ function chain(c) {
       short: (q) => (q.status === 'ready' || goalDone(st.goal, q) ? `Tell ${c.who}` : goalText(st.goal, q)),
       objectives: (q) => [{ t: `${st.label} (${goalText(st.goal, q)})`, done: goalDone(st.goal, q) || q.status === 'done' }, { t: `Tell ${c.who}`, done: q.status === 'done' }],
     };
-    if (st.goal.cleared && st.goal.poi) TARGETS[id] = () => { const p = getRegion(st.goal.poi[0]).pois.find((x) => x.kind === st.goal.poi[1] && !S.bounty[x.id]); return p ? { map: st.goal.poi[0], x: p.x, y: p.y + 2 } : null; };
-    else TARGETS[id] = () => null;
+    // the marker: back to the giver once the goal is met, else the nearest uncleared place for a "clear" step
+    TARGETS[id] = (q) => {
+      if (q && goalDone(st.goal, q)) return giverSpot(c.npc);
+      if (st.goal.cleared && st.goal.poi) { const p = getRegion(st.goal.poi[0]).pois.find((x) => x.kind === st.goal.poi[1] && !S.bounty[x.id]); return p ? { map: st.goal.poi[0], x: p.x, y: p.y + 2 } : null; }
+      return null;
+    };
   });
   SCRIPTS[c.npc] = async function () {
     const cur = c.steps.find((st) => S.quests[st.qid].status !== 'done');
-    if (!cur) { await say(c.who, cyc(c.key, c.idle)); return; }
+    if (!cur) { if (prev) return prev(); await say(c.who, cyc(c.key, c.idle)); return; }
     const q = S.quests[cur.qid], prevDone = cur === c.steps[0] ? (!c.gate || c.gate()) : true;
     if (q.status === 'active' && goalDone(cur.goal, q)) {
       for (const l of cur.thanks) await say(c.who, l);
@@ -77,10 +101,14 @@ function chain(c) {
     if (q.status === 'inactive' && prevDone) {
       for (const l of cur.intro) await say(c.who, l);
       const yes = await choose([cur.yes || 'I will do it.', 'Not today.']);
-      if (yes === 0) { startQuest(cur.qid); S.quests[cur.qid].base = cur.goal.kills ? (S.kills[cur.goal.kills[0]] || 0) : 0; await say(c.who, cur.go); }
+      if (yes === 0) {
+        startQuest(cur.qid); S.quests[cur.qid].base = cur.goal.kills ? (S.kills[cur.goal.kills[0]] || 0) : 0; await say(c.who, cur.go);
+        if (cur.instant) { for (const l of cur.thanks) await say(c.who, l); if (cur.after) await cur.after(); cur.pay(); finishQuest(cur.qid); }   // a decision step: decide now, no second visit
+      }
       return;
     }
-    if (q.status === 'active') { await say(c.who, cur.progress); return; }
+    if (q.status === 'active') { await say(c.who, cur.progress); if (prev) await prev(); return; }
+    if (prev) return prev();
     await say(c.who, cyc(c.key, c.idle));
   };
 }
@@ -100,6 +128,10 @@ QUESTS.blightmother = {
 TARGETS.blightmother = () => { const p = poiOf('vale', S.flags.blightMotherDead ? 'greenhollow' : 'thornroot'); return p ? { map: 'vale', x: p.x, y: p.y + 2 } : null; };
 SCRIPTS.vale_elder = async function () {
   const q = S.quests.blightmother;
+  if (q.status === 'inactive' && S.flags.blightMotherDead) {            // you found the Hollow before you found Maeve
+    await say('Maeve', 'Welcome to Greenhollow. You smell of rot and fire, and the grove tree stopped shaking an hour ago. You have been in the Thornroot Hollow.');
+    startQuest('blightmother');
+  }
   if (q.status === 'active' && S.flags.blightMotherDead) {
     await say('Maeve', 'You are back. The tree stopped shaking an hour ago, and I did not dare to hope.');
     await say('Maeve', 'The heart of the grove is in your hands, and I am old, and it is not my place to say what happens to it. But it is yours to decide.');
@@ -109,7 +141,7 @@ SCRIPTS.vale_elder = async function () {
       await say('Maeve', 'Then the Vale will live. Take this, and a word: the grove will remember who gave it back.');
       addGold(650); addItem('bloom_charm'); addItem('hp_potion_g', 3, true);
     } else {
-      S.flags.choiceGrove = 'keep'; S.bonusHp = (S.bonusHp || 0) + 20;
+      S.flags.choiceGrove = 'keep'; recalc();
       await say('Maeve', 'Then the Vale will fade slowly instead of quickly, and you will carry what it was. I understand. I do not forgive it, but I understand.');
       addGold(1000); addItem('hp_potion_g', 3, true);
     }
@@ -140,7 +172,7 @@ chain({ id: 'hornets', npc: 'vale_beekeeper', who: 'Orla', giver: 'Beekeeper Orl
   { title: 'The Queen\'s Court', label: 'Clear a hornet hive', goal: { cleared: [/^vale_hive\d+$/, 1, 'hives'], poi: ['vale', 'hive'] }, desc: 'The hornets follow a queen. If she falls, the wasps scatter. Find a hornet hive and clear it.',
     intro: ['They answer to a queen. She lives in a ring of birches, and she is the size of a hound.', 'Clear the hive and the Vale gets its summer back.'], go: 'Take a shield. The wasps do not care about shields but the queen does.', progress: 'A hornet hive. Look for birch rings and a hum.', thanks: ['She is gone? The sky feels larger.'], pay() { addGold(300); addItem('hp_potion_g', 2, true); } },
   { title: 'Honey for the Winter', label: 'Bring wild honeycomb', goal: { have: ['honeycomb', 4, 'honeycomb'] }, desc: 'The honey stores are low for the cold months. Orla needs four fresh combs, from the hornets\' own stores.',
-    intro: ['One more thing, if you are willing. The winter is coming and my stores are low.', 'Four combs. Hornets keep their honey in the most inconvenient places.'], go: 'The queen\'s hive, the flower fields. They carry some. I will not ask where.', progress: 'Four combs. The hornets are not generous.', thanks: ['Gold from the flowers. Thank you, dreamer.'], pay() { addGold(260); addItem('elixir_speed', 1, true); } },
+    intro: ['One more thing, if you are willing. The winter is coming and my stores are low.', 'Four combs. Hornets keep their honey in the most inconvenient places.'], go: 'The queen\'s hive, the flower fields. They carry some. I will not ask where.', progress: 'Four combs. The hornets are not generous.', thanks: ['Gold from the flowers. Thank you, dreamer.'], pay() { addGold(260); addItem('quicksilver_tonic', 1, true); } },
 ] });
 chain({ id: 'dew', npc: 'vale_herbalist', who: 'Dahlia', giver: 'Dahlia the herbalist', key: 'dahliaN', idle: ['The garden is happier. So am I.', 'Your dew potion helped the Warden\'s knee. He has not forgiven me for noticing.'], steps: [
   { title: 'Roots for the Dew', label: 'Gather valeroot', goal: { have: ['valeroot', 5, 'valeroot'] }, desc: 'Dahlia brews a draught from valeroot that keeps the Winter out of the lungs. She needs five roots from the meadows.',
@@ -182,6 +214,10 @@ QUESTS.sunvault = {
 TARGETS.sunvault = () => { const p = poiOf('sunscorch', S.flags.vaultSovereignDead ? 'amberwell' : 'sealedvault'); return p ? { map: 'sunscorch', x: p.x, y: p.y + 2 } : null; };
 SCRIPTS.dune_sheikh = async function () {
   const q = S.quests.sunvault;
+  if (q.status === 'inactive' && S.flags.vaultSovereignDead) {          // you opened the vault before anyone asked you to
+    await say('Rashid', 'Peace on you, traveller. They say a stranger walked out of the Sealed Vault with the Sovereign\'s seal in hand. Let us talk about what lies inside.');
+    startQuest('sunvault');
+  }
   if (q.status === 'active' && S.flags.vaultSovereignDead) {
     await say('Rashid', 'The Sovereign is down, and the vault stands open. I felt the sand shift from here.');
     await say('Rashid', 'Two things lie inside. A sword that burns, and a ward that cools. The kings made both and used neither. What will you take?');
@@ -202,14 +238,14 @@ SCRIPTS.dune_sheikh = async function () {
 };
 SCRIPTS.dune_trader = () => trade('Jamila', [{ id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'veil_helm', price: 400, once: true }, { id: 'tome_sunbeam', price: 640, once: true }, { id: 'dune_bow', price: 560, once: true }, ...dailyWares('Jamila', 2)],
   cyc('jamilaN', ['Water costs nothing here. Carrying it costs a great deal.', 'Spice, silk, scorpion antidote. Do you want to haggle, or shall we pretend?', 'I sell to everyone. Even the people who say they will not buy.']));
-SCRIPTS.dune_smith = () => smithMenu('Khalid', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }],
+SCRIPTS.dune_smith = () => smithMenu('Khalid', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'glyph_shield', price: 760, once: true }, { id: 'iron_ingot', price: 28 }],
   cyc('khalidN', ['Gold is soft. Iron is honest. I use both, according to the customer.', 'The sun does half my smithing for me. I charge for the other half.']));
 SCRIPTS.dune_inn = () => innMenu('Umm Hassan', { room: 24, meal: 12, news: 28, hello: cyc('hassanN', ['Tea, bread, a bed. The bed is cooler than the room, because it is on the roof.', 'Everyone sleeps better at Amberwell. Nobody asks why. It is not rude, it is wise.']) });
 SCRIPTS.dune_map = () => cartographerMenu('Ibrahim');
 SCRIPTS.dune_child = talk('Samira', 'samiraN', ['The jackals are not scary. The dust devils are scary. The dust devils are also funny.', 'I have a scorpion. He is called Mr Pinch. He is very friendly and very small.']);
 SCRIPTS.dune_bard = talk('Songstress', 'songN', ['I sing the old songs of the sun kings, the ones with the long words and the short endings.', 'Every verse ends with the same line: and then the sand came.']);
 SCRIPTS.dune_caravan = talk('Basil', 'basilN', ['I have crossed this desert two hundred times. I could not tell you what is in the middle. Nobody ever stays.', 'Caravans never stop at the sand pits. The sand is not hungry. It just remembers.']);
-SCRIPTS.dune_guard = talk('Amberwell Guard', 'dguardN', ['Gates are open, walls are manned, the well is full. A good day.', 'Raiders, cutpurses, burrowers. Pick a thing to fear and you will be right.']);
+SCRIPTS.dune_guard = talk('Nadir', 'dguardN', ['Gates are open, walls are manned, the well is full. A good day.', 'Raiders, cutpurses, burrowers. Pick a thing to fear and you will be right.']);
 
 chain({ id: 'water', npc: 'dune_trader', who: 'Jamila', giver: 'Jamila of the Well', key: 'jamilaN2', idle: ['The oasis is clear and the caravans are happy. I could sing.'], steps: [
   { title: 'The Oasis Road', label: 'Clear an oasis', goal: { cleared: [/^sunscorch_oasis\d+$/, 1, 'oases'], poi: ['sunscorch', 'oasis'] }, desc: 'Jackals and scorpions have taken the nearest oasis. Jamila needs the caravan road open again.',
@@ -227,25 +263,24 @@ chain({ id: 'tombs', npc: 'dune_scholar', who: 'Nefer', giver: 'Scholar Nefer', 
   { title: 'Sunglass Lens', label: 'Bring sunglass', goal: { have: ['sand_glass', 4, 'sunglass'] }, desc: 'Nefer needs four lumps of sunglass to read the vault glyphs by sunlight.',
     intro: ['One more. Sunglass focuses the glyphs so they can be read. Four lumps.', 'It is in the sand where the old fires burned.'], go: 'Sentinels and burrowers carry it.', progress: 'Four lumps of sunglass.', thanks: ['Clear! The glyphs are as clear as day. They say: do not open this door.'], pay() { addGold(380); addItem('ankhet_ring'); } },
 ] });
-chain({ id: 'raiders', npc: 'dune_guard2', who: 'Captain Nadir', giver: 'Captain Nadir', key: 'nadirN', idle: ['The roads are quiet. I hear you did that.'], steps: [
+chain({ id: 'raiders', npc: 'dune_guard', who: 'Captain Nadir', giver: 'Captain Nadir', key: 'nadirN', idle: ['The roads are quiet. I hear you did that.'], steps: [
   { title: 'Raiders on the Road', label: 'Defeat dune raiders', goal: { kills: ['duneraider', 6, 'raiders'] }, desc: 'Dune raiders have been taking caravans. Captain Nadir wants six of them dealt with.',
-    intro: ['Raiders on the road. Sand-coloured, fast, and they run when hurt. Six, if you can.', 'The captain pays by the head.'], go: 'Do not chase the ones who flee. They come back.', progress: 'Six raiders.', thanks: ['Six! The caravan master sends his thanks and a bottle.'], pay() { addGold(240); addItem('hp_potion_g', 2, true); } },
+    intro: ['Raiders on the road. Sand-coloured, fast, and they run when hurt. Six, if you can.', 'I pay by the head.'], go: 'Do not chase the ones who flee. They come back.', progress: 'Six raiders.', thanks: ['Six! The caravan master sends his thanks and a bottle.'], pay() { addGold(240); addItem('hp_potion_g', 2, true); } },
   { title: 'The Raider Camp', label: 'Clear a raider camp', goal: { cleared: [/^sunscorch_raidercamp\d+$/, 1, 'camps'], poi: ['sunscorch', 'raidercamp'] }, desc: 'The raiders have a camp under a captain\'s banner. Clear it.',
     intro: ['Their camp is under a banner. The captain is a man called Karrow. He is good, and he is loud.', 'Take the camp. Take the banner.'], go: 'Kill the warchanters first. They shout the others stronger.', progress: 'A raider camp. Look for a banner on a column.', thanks: ['Karrow\'s banner, in the sand. Amberwell breathes.'], pay() { addGold(420); addItem('hp_potion_g', 3, true); } },
   { title: 'Silence the Chanters', label: 'Defeat warchanters', goal: { kills: ['warchanter', 3, 'warchanters'] }, desc: 'The last of the war-drummers must go. Three warchanters.',
     intro: ['Three more drummers remain. They bring the others back.', 'Cut them down and the desert is quiet.'], go: 'They keep their distance. Use arrows.', progress: 'Three warchanters.', thanks: ['Silence. At last.'], pay() { addGold(460); addItem('karrow_blade'); } },
 ] });
-SCRIPTS.dune_guard2 = SCRIPTS.dune_guard;
 chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', giver: 'The quiet man of Amberwell', key: 'quietN', idle: ['I see nothing, hear nothing, and keep my hand on my purse. Wise, yes?'], steps: [
   { title: 'The Red Purse', label: 'Catch cutpurses', goal: { kills: ['cutpurse', 4, 'cutpurses'] }, desc: 'A quiet man in Amberwell says Red Sula\'s cutpurses took his savings. He wants four of them caught.',
     intro: ['I was robbed. I do not like to say by whom. Red Sula\'s children.', 'Catch four of them. Make them drop what they hold.'], go: 'They run. Stun them. Hit hard.', progress: 'Four cutpurses.', thanks: ['That is a start. I hear they are not happy.'], pay() { addGold(220); addItem('lockpick', 3, true); } },
   { title: 'The Thieves\' Den', label: 'Clear Sula\'s den', goal: { cleared: [/^sunscorch_thiefden\d+$/, 1, 'dens'], poi: ['sunscorch', 'thiefden'] }, desc: 'Red Sula\'s den holds what the cutpurses took. Clear it.',
-    intro: ['Sula keeps her den south-east, behind a false sign. Clear it. She will not go quietly.', 'But bring her back alive, if you can. There is a matter of justice.'], go: 'She takes a third of what you carry. Do not carry much.', progress: 'The thieves\' den.', thanks: ['Sula is beaten. Now: the question.'], pay() { addGold(360); addItem('hp_potion_g', 2, true); } },
-  { title: 'A Matter of Justice', label: 'Decide Sula\'s fate', goal: { have: ['lockpick', 0, ''] }, desc: 'Red Sula is beaten. The quiet man asks what to do with her.',
-    intro: ['I know where she is, now. The guard would hang her. I would not.', 'You decide. I only keep the purse.'], go: 'Do as you see fit.', progress: 'Decide.', thanks: [], after: async () => {
+    intro: ['Sula keeps her den south-east, behind a false sign. Clear it. She will not go quietly.', 'Beat her, but leave her breathing if you can. There is a matter of justice.'], go: 'She takes a third of what you carry. Do not carry much.', progress: 'The thieves\' den.', thanks: ['Sula is beaten. Now: the question.'], pay() { addGold(360); addItem('hp_potion_g', 2, true); } },
+  { title: 'A Matter of Justice', label: 'Decide Sula\'s fate', instant: true, goal: { have: ['lockpick', 0, ''] }, desc: 'Red Sula is beaten. The quiet man asks what to do with her.',
+    intro: ['I know where she is, now. The guard would hang her. I would not.', 'You decide. I only keep the purse.'], go: 'Well? What will it be?', progress: 'Decide.', thanks: [], after: async () => {
       const c = await choose(['Turn her over to the guard', 'Let her go']);
       if (c === 0) { S.flags.choiceSula = 'turnin'; addGold(500); await say('The quiet man', 'The guard thanks you. So do I. Mostly.'); }
-      else { S.flags.choiceSula = 'freed'; addItem('sula_dagger'); await say('The quiet man', 'She will remember it. That is either very good or very bad.'); }
+      else { S.flags.choiceSula = 'freed'; addItem('gem_amber', 2); addItem('lockpick', 5, true); await say('The quiet man', 'She left these for whoever let her walk. She will remember it. That is either very good or very bad.'); }
     }, pay() { addGold(200); } },
 ] });
 chain({ id: 'burrowers', npc: 'dune_hunter', who: 'Tariq', giver: 'Tariq Sandwalker', key: 'tariqN', idle: ['The sand is quieter. I owe you a drink and a story.'], steps: [

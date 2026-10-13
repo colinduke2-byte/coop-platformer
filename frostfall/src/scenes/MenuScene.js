@@ -197,16 +197,15 @@ export default class MenuScene extends Phaser.Scene {
   renderItems() {
     const g = this.bg;
     const list = this.inventory();
-    this.help = 'E USE  F OFF-HAND  Q FILTER  R SORT';
+    this.help = `E USE  F OFF-HAND  Q FILTER  R SORT: ${SORTS[this.sort]}`;
     panel(g, 6, 22, 150, 130, 2);
     // filter chips + sort
     let fx = 11;
     FILTERS.forEach(([n], i) => {
       const w = textW(n) + 4;
       if (i === this.filter) { g.fillStyle(C[13]); g.fillRect(fx - 2, 25, w, 9); this.T(fx, 26, n, 0); } else this.T(fx, 26, n, 4);
-      fx += w + 1;
+      fx += w + 2;
     });
-    this.T(156 - 4 - textW(SORTS[this.sort]), 26, SORTS[this.sort], 15);
     g.fillStyle(C[3]); g.fillRect(8, 35, 146, 1);
     if (!list.length) this.T(14, 44, 'NOTHING HERE', 4);
     list.slice(this.scroll, this.scroll + ROWS).forEach((id, k) => {
@@ -216,9 +215,10 @@ export default class MenuScene extends Phaser.Scene {
       this.I(12, y, iconKey(id), 1);
       const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
       const rc = rarityCol(id);
-      this.T(30, y + 5, (it.name + up).slice(0, 17), rc ?? (i === this.cursor ? 6 : 5));
       const c = S.inv[id];
       const tag = S.equip.offhand === id ? 'O' : Object.values(S.equip).includes(id) ? 'E' : '';
+      const right = tag ? 12 : c > 1 ? textW('x' + c) + 6 : 0;          // names stop short of the count or the E tag
+      this.T(30, y + 5, (it.name + up).slice(0, Math.floor((150 - right - 30) / 6)), rc ?? (i === this.cursor ? 6 : 5));
       if (tag) this.T(146 - 6, y + 5, tag, 13);
       else if (c > 1) this.T(150 - textW('x' + c), y + 5, 'x' + c, 4);
     });
@@ -231,7 +231,7 @@ export default class MenuScene extends Phaser.Scene {
     const rx = 162;
     panel(g, rx, 22, 152, 62, 2);
     Object.entries(SLOT_NAMES).forEach(([slot, name], i) => {
-      const y = 26 + i * 11, id = S.equip[slot];
+      const y = 25 + i * 10, id = S.equip[slot];
       this.T(rx + 6, y + 1, name, 4);
       if (id) {
         this.I(rx + 46, y - 2, iconKey(id), 0.75);
@@ -242,15 +242,15 @@ export default class MenuScene extends Phaser.Scene {
     // stats
     panel(g, rx, 86, 152, 32, 2);
     const dmg = (stats.weaponDmg() + stats.offhandDmg() * 0.6) * bonus.melee(), bdmg = stats.bowDmg() * bonus.arrow();
-    this.T(rx + 6, 90, `MELEE ${dmg.toFixed(1)}  BOW ${bdmg.toFixed(1)}  ARM ${Math.round(stats.armor() * 100)}%`, 5);
-    this.T(rx + 6, 99, `HP ${S.maxHp}  MP ${S.maxMp}  SP ${S.maxSp}`, 5);
+    this.T(rx + 6, 90, `ATK ${dmg.toFixed(1)} BOW ${bdmg.toFixed(1)} ARM ${Math.round(stats.armor() * 100)}%`, 5);
+    this.T(rx + 6, 99, `HP ${S.maxHp} MP ${S.maxMp} SP ${S.maxSp}`, 5);
     const lv = burden.level();
-    this.T(rx + 6, 108, `LV ${S.charLevel || 1} GOLD ${S.gold}`, 13);
+    this.T(rx + 6, 108, `${S.gold} GOLD`, 13);
     const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`;
     this.T(rx + 146 - textW(wt), 108, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11);
 
     // description
-    panel(g, rx, 120, 152, 36, 2);
+    panel(g, rx, 120, 152, 42, 2);
     const id = list[this.cursor];
     if (id) {
       const it = ITEMS[id];
@@ -266,7 +266,7 @@ export default class MenuScene extends Phaser.Scene {
         if (it.armor) line = `ARMOR ${Math.round(eff(id, it, 'armor') * 100)}%${diff(eff(id, it, 'armor'), eff(curId, cur, 'armor'), true)}. ` + line;
       }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
-      this.T(rx + 6, 132, wrap(line, 24).split('\n').slice(0, 3).join('\n'), 5);
+      this.T(rx + 6, 132, wrap(line, 23).split('\n').slice(0, 3).join('\n'), 5);
     }
   }
 

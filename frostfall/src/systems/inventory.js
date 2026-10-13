@@ -10,13 +10,8 @@ import { burden } from './burden.js';
 
 export const count = (id) => S.inv[id] || 0;
 
-let lastLevel = 'ok';
-// A short warning the moment you tip over the carry limit (nothing is ever refused).
-function warnWeight() {
-  const l = burden.level();
-  if (l !== lastLevel && l !== 'ok') bus.emit('toast', l === 'over' ? 'OVERLOADED: SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12);
-  lastLevel = l;
-}
+// The pack changed: weigh it again on the next look (the warning itself comes from burden.watch(), every frame).
+const warnWeight = () => burden.invalidate();
 
 export function addItem(id, n = 1, quiet = false) {
   S.inv[id] = (S.inv[id] || 0) + n;

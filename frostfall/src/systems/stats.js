@@ -44,7 +44,7 @@ export function recalc() {
   const ch = eq('charm') || {}, ar = eq('armor') || {}, he = eq('head') || {};
   const bl = blessing() || {};
   const rested = S.flags && S.flags.restedUntil > (S.playtime || 0) ? 25 : 0;
-  S.maxHp = 100 + (bl.maxHp || 0) + rested + (ch.maxHp || 0) + (ar.maxHp || 0) + (he.maxHp || 0) + (S.bonusHp || 0) + foodVal('maxHp') + relicBonus().hp + trophyHp() + modSum('maxHp') + gemBonus('maxHp') + setBonus('maxHp');
+  S.maxHp = 100 + (bl.maxHp || 0) + rested + (ch.maxHp || 0) + (ar.maxHp || 0) + (he.maxHp || 0) + (S.bonusHp || 0) + (S.flags?.choiceGrove === 'keep' ? 20 : 0) + foodVal('maxHp') + relicBonus().hp + trophyHp() + modSum('maxHp') + gemBonus('maxHp') + setBonus('maxHp');
   S.maxHp = Math.round(S.maxHp * modMul('maxHpMul'));
   S.maxMp = 100 + (bl.maxMp || 0) + (ch.maxMp || 0) + (ar.maxMp || 0) + (he.maxMp || 0) + (S.bonusMp || 0) + foodVal('maxMp') + relicBonus().mp + modSum('maxMp') + gemBonus('maxMp') + setBonus('maxMp');
   S.maxSp = 100 + (S.hearts?.rime ? 20 : 0) + (ch.maxSp || 0) + (ar.maxSp || 0) + (he.maxSp || 0) + (S.bonusSp || 0) + foodVal('maxSp') + modSum('maxSp') + gemBonus('maxSp') + setBonus('maxSp');

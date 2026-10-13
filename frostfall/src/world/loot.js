@@ -31,8 +31,8 @@ export const lootMethods = {
     if (g && Math.random() < (g.chance ?? 1)) at({ type: 'gold', n: randInt(g.gold[0], g.gold[1]) });
     for (const [id, chance, range] of drops) {
       if (Math.random() > chance * (/potion|stew|meat|venison|pike|trout/.test(id) ? diff().drops : 1)) continue;
-      if (id === 'arrows') at({ type: 'arrows', n: randInt(range[0], range[1]) });
-      else at({ type: 'item', id, n: 1 });
+      if (id === 'arrows') at({ type: 'arrows', n: range ? randInt(range[0], range[1]) : randInt(2, 4) });
+      else at({ type: 'item', id, n: range ? randInt(range[0], range[1]) : 1 });
     }
   },
 
@@ -53,8 +53,8 @@ export const lootMethods = {
     for (let i = 0; i < coins; i++) at({ type: 'gold', n: Math.floor(g / coins) + (i === 0 ? g % coins : 0) });
     for (const [id, chance, range] of loot.drops) {
       if (Math.random() > chance) continue;
-      if (id === 'arrows') at({ type: 'arrows', n: randInt(range[0], range[1]) });
-      else at({ type: 'item', id, n: 1 });
+      if (id === 'arrows') at({ type: 'arrows', n: range ? randInt(range[0], range[1]) : randInt(2, 4) });
+      else at({ type: 'item', id, n: range ? randInt(range[0], range[1]) : 1 });
     }
   },
 };

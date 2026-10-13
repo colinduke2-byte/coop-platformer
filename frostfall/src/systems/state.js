@@ -85,6 +85,6 @@ export function startNgPlus() {
   const fresh = newState();
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, fresh, JSON.parse(JSON.stringify(keep)));
-  S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt;
+  S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt; delete S.inv.blight_heart;
   S.hp = 1e9; S.mp = 1e9; S.sp = 1e9;
 }

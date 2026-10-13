@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { S } from '../../src/systems/state.js';
 import { getRegion } from '../../src/data/maps.js';
 import { MAJOR } from '../../src/world/worldgen.js';
+import { LANDMARK_IDS as LANDMARKS } from '../../src/world/landmarks.js';
 let n = 0, failed = 0;
 const t = (name, fn) => { try { fn(); n++; console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message.split('\n')[0]); } };
 const LIMITS = { reach: { min: 22, p10: 30, med: 40, maj: 50, size: [540, 378] }, ashen: { min: 20, p10: 24, med: 26, maj: 40 }, coast: { min: 20, p10: 24, med: 28, maj: 40 }, kingdom: { min: 20, p10: 24, med: 28, maj: 40 }, fens: { min: 20, p10: 24, med: 28, maj: 40 }, highlands: { min: 20, p10: 24, med: 28, maj: 40 }, glasswood: { min: 20, p10: 24, med: 28, maj: 40 }, underdeep: { min: 20, p10: 24, med: 28, maj: 40 } };
@@ -14,7 +15,7 @@ for (const [id, L] of Object.entries(LIMITS)) {
       S.seed = 5000 + k * 104729;
       const reg = getRegion(id);
       if (L.size) assert.deepEqual([reg.w, reg.h], L.size);
-      const pois = reg.pois.filter((p) => !['rest', 'spring', 'cache', 'hermit', 'ancient'].includes(p.kind));
+      const pois = reg.pois.filter((p) => !['rest', 'spring', 'cache', 'hermit', 'ancient'].includes(p.kind) && !LANDMARKS.has(p.kind));
       const nn = pois.map((p, i) => Math.min(...pois.filter((_, j) => j !== i).map((q) => dist(p, q)))).sort((a, b) => a - b);
       assert.ok(nn[0] >= L.min, `seed ${S.seed}: closest pair ${Math.round(nn[0])} < ${L.min}`);
       assert.ok(nn[Math.floor(nn.length * 0.1)] >= L.p10, `seed ${S.seed}: 10th percentile ${Math.round(nn[Math.floor(nn.length * 0.1)])} < ${L.p10}`);
@@ -43,6 +44,18 @@ t('long roads carry waystones that name what lies ahead', () => {
     const w = reg.entities.filter((e) => e.t === 'sign' && /WAYSTONE/.test(e.text[0]));
     assert.ok(w.length >= min, `${id}: ${w.length} waystones`);
     assert.ok(w.every((e) => /PACES\.$/.test(e.text[1]) && /^(NORTH|SOUTH|EAST|WEST)/.test(e.text[1])), `${id}: bad waystone text`);
+  }
+});
+t('landmarks appear: every region places nearly all the landmarks it asks for, away from other places', () => {
+  const want = { reach: 8, ashen: 4, coast: 3, kingdom: 3, fens: 2, highlands: 2, glasswood: 2, underdeep: 2, vale: 2, sunscorch: 3 };
+  for (const [id, n] of Object.entries(want)) {
+    let got = 0;
+    for (let k = 0; k < 4; k++) {
+      S.seed = 7000 + k * 7919; const reg = getRegion(id);
+      const lm = reg.pois.filter((p) => LANDMARKS.has(p.kind)); got += lm.length;
+      for (const a of lm) for (const b of reg.pois) if (a !== b) assert.ok(dist(a, b) >= 18, `${id} seed ${S.seed}: ${a.id} only ${Math.round(dist(a, b))} from ${b.id}`);
+    }
+    assert.ok(got >= Math.ceil(n * 4 * 0.75), `${id}: only ${got} of ${n * 4} landmarks placed over 4 seeds`);
   }
 });
 console.log(failed ? 'SPACING FAILED' : `SPACING PASSED (${n} tests)`);

@@ -125,11 +125,14 @@ export default class ShopScene extends Phaser.Scene {
       if (r.id) { g.fillStyle(C[0]); g.fillRect(192, 28, 36, 36); g.fillStyle(C[3]); g.fillRect(193, 29, 34, 34); this.I(196, 32, iconKey(r.id), 1.6, r.ok ? 1 : 0.4); }
       this.T(234, 30, r.name.slice(0, 13), 6);
       if (r.sub) this.T(234, 40, r.sub.slice(0, 13), 4);
+      // the description gives way to the stat lines, and nothing is drawn past the bottom of the pane
+      const bottom = 22 + 8 + ROWS * RH - 9, stat = (r.lines || []).flatMap(([text, col]) => wrap(text, 19).split('\n').map((ln) => [ln, col]));
       let y = 70;
       const desc = r.desc || (r.id && ITEMS[r.id]?.desc) || '';
-      for (const ln of wrap(desc, 19).split('\n').slice(0, 4)) { this.T(192, y, ln, 5); y += 9; }
+      const room = Math.max(1, Math.min(4, Math.floor((bottom - y - 3 - stat.length * 9) / 9) + 1));
+      for (const ln of wrap(desc, 19).split('\n').slice(0, room)) { this.T(192, y, ln, 5); y += 9; }
       y += 3;
-      for (const [text, col] of r.lines || []) { for (const ln of wrap(text, 19).split('\n')) { this.T(192, y, ln, col ?? 5); y += 9; } }
+      for (const [ln, col] of stat) { if (y > bottom) break; this.T(192, y, ln, col ?? 5); y += 9; }
     }
     // footer
     g.fillStyle(C[3]); g.fillRect(4, H - 24, W - 8, 1);

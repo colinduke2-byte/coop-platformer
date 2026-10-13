@@ -4,7 +4,7 @@ import { W, H, C, TILE } from '../config.js';
 import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
 
-const SNOWY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT]);
+const SNOWY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT, TILE.SNOWDRIFT, TILE.FROSTBLOOM]);
 const WIND = { blizzard: 14, whiteout: 42 };
 
 export const ambientMethods = {

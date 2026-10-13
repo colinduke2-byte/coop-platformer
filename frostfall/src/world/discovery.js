@@ -21,7 +21,8 @@ export const PLACE_NAME = {
   peatfire: 'PEAT FIRE', hagshut: "HAG'S HUT", drownedshrine: 'DROWNED SHRINE', hearthcamp: 'CLAN HEARTH', giantcairn: "GIANT'S CAIRN", stormcircle: 'STORM CIRCLE', spring: 'HOT SPRING', rest: "TRAVELLERS' FIRE", cache: 'HIDDEN CACHE', hermit: "HERMIT'S HOLLOW", ancient: 'ANCIENT TREE',
 };
 // What a place looks like on the map: a colour index and whether it is hostile.
-export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6, tower: 6, grove: 8, hamlet: 13, standing: 14, barrow: 14, cave: 6, foundry: 11, wreck: 6, lighthouse: 13, courtyard: 6, spring: 15, rest: 12, cache: 13, hermit: 8, ancient: 14 };
+export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6, tower: 6, grove: 8, hamlet: 13, standing: 14, barrow: 14, cave: 6, foundry: 11, wreck: 6, lighthouse: 13, courtyard: 6, spring: 15, rest: 12, cache: 13, hermit: 8, ancient: 14,
+  flowerfield: 8, hive: 11, heartgrove: 8, thornpatch: 11, oasis: 15, raidercamp: 11, burrowpit: 11, tombmouth: 6, dustspire: 6, thiefden: 11, valegate: 13, dunegate: 13, greenhollow: 13, amberwell: 13, thornroot: 14, sealedvault: 14 };
 // Tall things you can see from a long way off: a place on this list is "sighted" (the map shows a ? for it) from far away.
 export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest', 'hartspire', 'saltgate']);
 export const SIGHT_RANGE = 42;

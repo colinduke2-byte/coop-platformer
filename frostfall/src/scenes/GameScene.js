@@ -400,7 +400,7 @@ export default class GameScene extends Phaser.Scene {
       if (spec.champion) { en.champion = true; en.maxHp = Math.round(en.maxHp * 1.5); en.hp = en.maxHp; en.displayName = 'Champion ' + en.displayName; }
     }
     if (spec.roamRoute) {
-      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll', cinder: 'Cinderjaw, the Magma Golem', floe: 'Hrimgar, the Floe Troll', lastknight: 'Sir Aldric, the Last Knight', slough: 'Slough, the Mire Hulk', greytusk: 'Greytusk, the Mammoth King', shardstag: 'Shardstag, the Glass King', lodehulk: 'Lodehulk, the Walking Vein' }[spec.rid] || en.displayName;
+      en.displayName = { elk: 'Frostbrow, the Winter Elk', troll: 'Grungnir, the Bridge Troll', cinder: 'Cinderjaw, the Magma Golem', floe: 'Hrimgar, the Floe Troll', lastknight: 'Sir Aldric, the Last Knight', slough: 'Slough, the Mire Hulk', greytusk: 'Greytusk, the Mammoth King', shardstag: 'Shardstag, the Glass King', lodehulk: 'Lodehulk, the Walking Vein', mossking: 'Mossking, the Walking Hill', sunwyrm: 'Sunwyrm, the Dune Swallower' }[spec.rid] || en.displayName;
       en.worldBoss = true; en.cfg = { ...en.cfg, call: 0 };
       const hpMul = { greytusk: 3.2 }[spec.rid]; if (hpMul) { en.maxHp = Math.round(en.maxHp * hpMul); en.hp = en.maxHp; }
     }

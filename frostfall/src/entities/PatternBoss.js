@@ -47,7 +47,7 @@ export default class PatternBoss extends Boss {
     music.setPhase(this.bphase);
   }
   enterPhase2() { /* handled by enterPhase */ }
-  phase2Stats() { this.cdMul = this.bphase >= 3 ? 0.5 : 0.7; this.speedMul = this.bphase >= 3 ? 1.8 : 1.5; }
+  phase2Stats() { this.cdMul = (this.bphase >= 3 ? 0.5 : 0.7) * (this.cdBias || 1); this.speedMul = this.bphase >= 3 ? 1.8 : 1.5; }
 
   // ---- telegraphs ----
   makeTele(a) {

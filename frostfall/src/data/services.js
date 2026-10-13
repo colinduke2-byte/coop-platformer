@@ -37,7 +37,7 @@ const bp = (w) => Math.max(1, Math.round(w.price * diff().price));   // shop buy
 export const sellPrice = (id) => Math.max(1, Math.floor(price(id) * 0.5));
 
 // Short stat lines for the detail pane of the list screens.
-const CLASS_LINE = { light: 'FAST AND QUIET', medium: 'BALANCED', heavy: 'SLOW, LOUD, +CARRY' };
+const CLASS_LINE = { light: 'FAST, QUIET', medium: 'BALANCED', heavy: 'SLOW, +CARRY' };
 export function statLines(id) {
   const it = ITEMS[id];
   if (!it) return [];
@@ -74,7 +74,7 @@ export function statLines(id) {
   }
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
   if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'helmet' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
-  if (it.weight) out.push([`${it.weight.toUpperCase()} ${it.type === 'helmet' ? 'HELM' : 'ARMOUR'}: ${CLASS_LINE[it.weight]}`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
+  if (it.weight) out.push([`${it.weight.toUpperCase()}${it.type === 'helmet' ? ' HELM' : ''}: ${CLASS_LINE[it.weight]}`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (itemWeight(id) >= 1) out.push([`WEIGHT ${itemWeight(id)}`, 4]);
   if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);

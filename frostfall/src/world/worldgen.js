@@ -110,7 +110,7 @@ export function buildRegion(def, region, seed) {
       if (!okSpot(x, y, r) || tierAt(x, y) < minTier) continue;
       if (!spaced(x, y, kind, STRICT.has(kind) ? 1 : tries < 1400 ? 1 : tries < 2000 ? 0.75 : 0.55)) continue;
       if (biomeWant && tries < 1200 && bio[y][x] !== biomeWant) continue;       // prefer the right biome, fall back to anywhere
-      taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` }); made++;
+      taken.push({ x, y, r }); pois.push({ kind, x, y, r, tier: tierAt(x, y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${pois.filter((q) => q.kind === kind).length}` }); made++;   // ids count every place of the kind, so a second place() call never repeats one
     }
   };
   const mustHave = (kind, r, tier, biome = null, near = null) => { place(kind, 1, r, near, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r, null, tier, biome); if (!pois.some((p) => p.kind === kind)) place(kind, 1, r - 3, null, Math.max(0, tier - 1)); };
@@ -128,12 +128,13 @@ export function buildRegion(def, region, seed) {
     taken.push({ x: best.x, y: best.y, r }); pois.push({ kind, x: best.x, y: best.y, r, tier: tierAt(best.x, best.y), id: `${def.id === 'reach' ? '' : def.id + '_'}${kind}${made}` });
     return true;
   };
-  def.plan(place, mustHave, placeBest);
+  def.plan(place, mustHave, placeBest, pois);
 
   // roads: connect each poi to its nearest connected node (nearest-first)
   const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
   const edges = [];
   const remaining = pois.filter((p) => !HIDDEN_KINDS.has(p.kind)).sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
+  remaining.sort((p, q) => (STRICT.has(p.kind) ? 1 : 0) - (STRICT.has(q.kind) ? 1 : 0));   // landmarks join the road net last, so they never shorten the roads between real destinations
   const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire', ...FACADE_EXTRA]);   // a stone front sits north of the door: roads end below it
   for (const p of remaining) {
     const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
@@ -331,7 +332,7 @@ export function buildRegion(def, region, seed) {
       for (let i = 0; i < 3 + p.tier; i++) enemy(pickOf([...m.melee, ...m.ranged]), p.x + Math.round((R() - 0.5) * 11), p.y + 2 + Math.round(R() * 3), p.tier, { camp: p.id });
       for (const dx of [-3, 3]) enemy('sentinel', p.x + dx, p.y + 5, p.tier, { camp: p.id });
       chest(p, 0, 4, p.tier + 1, 'hard');
-      if (Number((p.id.match(/\d+$/) || ['0'])[0]) === 0) add({ t: 'npc', id: 'scribe', x: p.x - 4, y: p.y + 4 });
+      if (def.id === 'kingdom' && Number((p.id.match(/\d+$/) || ['0'])[0]) === 0) add({ t: 'npc', id: 'scribe', x: p.x - 4, y: p.y + 4 });      // the Scribe lives in the Old Kingdom only
       add({ t: 'lore', id: 'court' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'hamlet') {

@@ -205,7 +205,7 @@ export const magicMethods = {
         for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; sc.fx.puff(this.x + Math.cos(a) * sp.r * 0.7, this.y + 3 + Math.sin(a) * sp.r * 0.7, i % 2 ? 10 : 13, 6, 50, 0.5); }
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > sp.r) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 120, src: 'shout', stun: 0.5, forceStun: !e.isBoss, status: [{ type: 'fear', t: 2.2 }, { type: 'slow', t: 3 }] });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 120, src: 'spell', stun: 0.5, forceStun: !e.isBoss, status: [{ type: 'fear', t: 2.2 }, { type: 'slow', t: 3 }] });
           sc.fx.text(e.x, e.y - 10, String(dealt), 10);
         }
         this.gainXp('sneak', 8);
