@@ -185,7 +185,7 @@ export default class Grimfang extends Boss {
 
   async askSpare() {
     const sc = this.scene;
-    if (!sc.scene.isActive('Game') || this.dead) return;
+    if (!sc || !sc.scene.isActive('Game') || this.dead || sc.player?.mode === 'dead' || S.hp <= 0) return;
     await runScript(async () => {
       await say('Grimfang', '*The great wolf lowers its head. Its flanks heave. It does not look away.*');
       const c = await choose(['Finish him.', 'Let him go.']);
@@ -200,6 +200,9 @@ export default class Grimfang extends Boss {
   spare() {
     const sc = this.scene;
     S.flags.alphaSpared = true; S.flags.grimfangDone = true; S.bossState = null;
+    const q0 = S.quests.alpha;                       // the quest first: if the map has already gone, the story still moves on
+    if (q0.status === 'active') { q0.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); }
+    if (!sc) return;
     sc.enemies.remove(this);
     this.dead = true;
     this.body.enable = false;
@@ -210,7 +213,7 @@ export default class Grimfang extends Boss {
     sc.pickups.push(new Pickup(sc, this.x, this.y + 6, { type: 'item', id: 'alpha_fang', big: true }));
     sc.tweens.add({ targets: this, alpha: 0, duration: 1500, onComplete: () => { this.shadow?.destroy(); this.destroy(); } });
     music.play('pass');
-    sc.time.delayedCall(2500, () => { if (sc.scene.isActive('Game')) saveGame(sc, { auto: false }); });
+    sc.time.delayedCall(2500, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
   }
 
   victory(sc) {
@@ -219,6 +222,6 @@ export default class Grimfang extends Boss {
     bus.emit('toast', 'GRIMFANG IS DEAD', 13);
     const q = S.quests.alpha;
     if (q.status === 'active') { q.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); }
-    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game')) saveGame(sc, { auto: false }); });
+    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
   }
 }

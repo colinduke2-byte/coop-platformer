@@ -69,3 +69,12 @@ Colin's calibration (asked at the start): overall difficulty on Normal is "about
 | R53 | burden | S4 | The pack's WEIGHT sort ordered by a number the pack never showed. | fixed: the item description starts with its weight |
 | R54 | tests | - | stage66 (native art sizes) did not know the new Rootbound Pod. | updated |
 | R55 | balance | - | Colin: Normal felt "about right, maybe 10% too easy". | `TUNE.difficulty.normal.dmgTaken` 0.99 -> 1.04, `enemyHp` 1.65 -> 1.73 (Easy and Hard unchanged) |
+| R56 | death | **S1** | **After your first death and respawn, a second death left you walking around at 0 health forever**: the "respawning" flag survived the map reload, so the game never noticed you had died again (reproduced: second and third deaths stayed at 0 HP). The companion test even asserted the broken behaviour. | fixed (reset on every map load); test now requires three deaths in a row to each respawn at full health |
+| R57 | story | S1 | Closing the game between beating the Long Winter and picking its ending left the story stuck (Chapter 3 never opens); same for the Ashen Sovereign's last choice. | fixed: the choice is offered again on the next load; the game saves after the ending |
+| R58 | quests | S1 | Dying in the 0.7 s between Grimfang yielding and his spare prompt could leave "The Pale Alpha" stuck forever. | fixed: no prompt while you are down; sparing updates the quest first |
+| R59 | saves | S2 | The save 3 seconds after a boss kill could store 0 health if leftover adds killed you, so loading it killed you again. | fixed: no save while dead |
+| R60 | loot | S2 | Heart shards and Skaldrath's three dragon items were loose pickups: dying to leftover adds or reloading could lose them for good. | fixed: they go straight into the pack |
+| R61 | ng+ | S2 | New Game+ (which promises "character and gear carry over") dropped the stash contents, socketed gems and runes, learned tomes, trophies, cloak, pet and the Emberhold house. | fixed: all carried over |
+| R62 | saves | S3 | A mid-fight save brought a boss back half-dead after you died and respawned in the same dungeon. | fixed |
+| R63 | dialogue | S3 | A conversation cut off by death stayed on screen after the respawn; scene event listeners for the ending piled up on every map load. | fixed |
+| R64 | doors | - | A reviewer reported a door pressed during the 0.35 s arrival fade-in could freeze the game. Not reproducible: Phaser's fadeOut always forces. Added a timer fallback anyway. | checked |

@@ -42,7 +42,7 @@ Keys can be rebound in **Pause > System > Controls**. A gamepad and touch contro
 - **Stamina is your real health bar.** Swinging, rolling and blocking all spend it. When it hits zero you are helpless. Fight in short bursts.
 - **Learn the telegraph.** Every enemy winds up before it hits. Roll sideways (not backward) just as the swing begins. A *perfect dodge* is rewarded.
 - **Block and parry.** Hold F with a shield. Raising it right before a hit parries and opens the enemy up.
-- **Use elements.** Many enemies are weak to something. Undead burn (fire); golems shatter under shock; frost-based foes shrug off frost. The bestiary (in the journal) lists weaknesses once you have met a creature.
+- **Use elements.** Many enemies are weak to something. Undead burn (fire); golems shatter under shock; frost-based foes shrug off frost. The bestiary (in the journal) lists weaknesses once you have met a creature. Bosses shrug off burning, bleeding, poison, roots and fear: against them, the element they are weak to matters, the extra effects do not.
 - **New tricks to watch for.** Dew sprites heal their friends (kill them first), cutpurses steal gold and run, warchanters make their allies hit harder, sand burrowers mark the spot before they bite, hedge knights hold a shield wall.
 - **Four more spells.** Regrowth (heal over six seconds, Restoration 6), Thorn Snare (roots a group, Restoration 9), Sandstorm (scatters foes around you, Sneak 9) and Sunbeam (a column of light after a beat; a tome from the Sealed Vault or Amberwell). Cycle spells with the spell key; 4-0 and - quick-cast the first eight.
 - **Sneak first.** Sneak attacks triple your damage. Camps are far easier if you thin them quietly.

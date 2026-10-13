@@ -47,7 +47,7 @@ import { LockedGate, StashChest, GardenPlot, TrophyWall, CookPot, OrphanCub, Soa
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
-import { runScript, say, choose } from '../systems/dialogue.js';
+import { runScript, say, choose, dialogue } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
 import { txtS } from '../art/font.js';
 import { sfx, music, ambience } from '../audio/sfx.js';
@@ -98,6 +98,8 @@ export default class GameScene extends Phaser.Scene {
     this.items = ITEMS;
     this.hitStopT = 0;
     this.deadT = 0;
+    this.respawning = false;          // the same scene object is reused on every map load: a second death must still respawn
+    dialogue.hud?.hideBox?.();         // a conversation cut off by death or a door does not follow you to the next map
     S.mounted = false; this.pony = null;
     this.listeners = [];
     const def = this.def = MAPS[this.mapId];
@@ -224,7 +226,15 @@ export default class GameScene extends Phaser.Scene {
     this.on('charlevel', () => tip('perks'));
     this.on('item:added', (id) => { if (id === 'lockpick') tip('lock'); if (S.quests.wolves.status === 'active') tip('quest'); });
     this.on('ending', (kind) => { this.pendingEnding = kind; });
-    this.events.on('ending-done', () => { this.applyEnding(); if (S.flags.finale && !S.flags.chapter3) startChapter3(); });
+    this.events.off('ending-done');
+    this.events.on('ending-done', () => { this.applyEnding(); if (S.flags.finale && !S.flags.chapter3) startChapter3(); saveGame(this, { auto: true }); });
+    // a game closed between a final boss and its choice picks the choice up again (otherwise the story would stop there)
+    this.time.delayedCall(2500, () => {
+      if (ui.modal || this.player?.mode !== 'free' || this.boss?.engaged) return;
+      if (S.flags.winterDead && !S.flags.finale) this.startFinale();
+      else if (S.flags.finale && !S.flags.chapter3) { startChapter3(); saveGame(this, { auto: true }); }
+      else if (S.flags.sovereignDead && !S.flags.finalChoice) this.startFinale3();
+    });
     this.applyEnding();
     this.time.delayedCall(1800, () => { const w = !this.opts.intro && dangerWarning(this); if (w) bus.emit('toast', w, 12); });
     if (this.opts.intro) this.startIntro();
@@ -522,12 +532,16 @@ export default class GameScene extends Phaser.Scene {
     this.leaving = true;
     sfx.play(sound);
     ui.modal = true;
-    this.cameras.main.fadeOut(280, 11, 14, 26);
-    this.cameras.main.once('camerafadeoutcomplete', () => {
+    let done = false;
+    const go = () => {
+      if (done) return; done = true;
       S.map = to; S.spawn = spawn; S.x = S.y = null;
       saveGame(this, { auto: true });
       this.scene.restart({ map: to, spawn });
-    });
+    };
+    this.cameras.main.fadeOut(280, 11, 14, 26);              // the timer below is a fallback if the fade event never arrives (throttled tab)
+    this.cameras.main.once('camerafadeoutcomplete', go);
+    setTimeout(go, 1200);
   }
 
   drawBars() {
@@ -753,6 +767,7 @@ export default class GameScene extends Phaser.Scene {
 
   respawn() {
     this.respawning = true;
+    S.bossState = null;                // a mid-fight save does not bring the boss back half-dead after you fall
     this.afterFade(() => {
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       S.gold = Math.floor(S.gold * 0.9);

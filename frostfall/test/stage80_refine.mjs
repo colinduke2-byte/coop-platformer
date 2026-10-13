@@ -132,6 +132,25 @@ const chain = await G(async () => {
 });
 check('a met chain goal points the marker at the giver in Amberwell and says so once', chain.before === null && chain.after?.map === 'amberwell' && chain.ready.length === 1, JSON.stringify(chain));
 
+// ---- dying twice: the second fall respawns too (the respawn flag used to survive the map reload, leaving you at 0 health for good)
+await G(() => { const S = window.__ff.S; S.flags.introDone = true; S.respawn = { map: 'village', spawn: 'start' }; for (const pk of window.gs().pickups.slice()) pk.collect?.(); });
+const falls = [];
+for (let i = 0; i < 3; i++) {
+  await G(() => { window.__ff.S.hp = 0; });
+  await h.sleep(5500);
+  falls.push(await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { hp: window.__ff.S.hp, mode: g.player?.mode, map: g.mapId }; }));
+}
+check('every death respawns you at full health, not just the first', falls.every((f) => f.hp > 0 && f.mode === 'free' && f.map === 'village'), JSON.stringify(falls));
+
+// ---- the final choices come back if the game was closed between the boss and the choice
+const fin = await G(async () => { const S = window.__ff.S; S.flags.winterDead = true; delete S.flags.finale; window.__said = []; return true; });
+await G(() => window.__ff.game.scene.getScene('Game').changeMap('village', 'start'));
+await h.sleep(5000);
+const fin2 = await G(() => ({ modal: (window.__ff.game.scene.getScene('Hud')?.dlg ? true : false) || !!window.__ffModal, ui: true }));
+const asked = await G(async () => (await import('/src/systems/ui.js')).ui.modal);
+check('the Long Winter\'s choice is offered again after a reload that skipped it', asked === true, JSON.stringify({ fin2, asked }));
+await G(async () => { const S = window.__ff.S; delete S.flags.winterDead; (await import('/src/systems/ui.js')).ui.modal = false; window.__ff.game.scene.getScene('Hud')?.hideBox?.(); });
+
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 5).join('\n'));
 await h.close();
 console.log(failCount() ? 'REFINE FAILED' : 'REFINE PASSED');

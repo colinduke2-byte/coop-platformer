@@ -2,6 +2,7 @@ import PatternBoss from './PatternBoss.js';
 import { TUNE } from '../data/tuning.js';
 import { sfx } from '../audio/sfx.js';
 import Pickup from './Pickup.js';
+import { addItem } from '../systems/inventory.js';
 import { bus } from '../systems/bus.js';
 import { S } from '../systems/state.js';
 import { bestHelp, FACTIONS } from '../data/factions.js';
@@ -87,9 +88,7 @@ export class EmberDragon extends PatternBoss {
       scale: 1.9, flag: 'dragonDead', heart: null, toast: 'SKALDRATH FALLS', summon: ['wyvern'], col: 12, tier: 3,
       phaseAt: [0.66, 0.33], phaseText: { 2: 'THE SKY BURNS', 3: 'EMBER FURY' },
       onVictory: (sc, b) => {
-        sc.pickups.push(new Pickup(sc, b.x - 16, b.y + 8, { type: 'item', id: 'dragonscale_armor', big: true }));
-        sc.pickups.push(new Pickup(sc, b.x, b.y + 16, { type: 'item', id: 'scale_helm', big: true }));
-        sc.pickups.push(new Pickup(sc, b.x + 16, b.y + 8, { type: 'item', id: 'dragonbone_blade', big: true }));
+        for (const id of ['dragonscale_armor', 'scale_helm', 'dragonbone_blade']) addItem(id);    // into the pack: a fall to a leftover wyvern cannot lose them
         bus.emit('toast', 'YOU LEARN DRAGONFIRE (G TO SWAP SHOUT)', 12);
       },
     });

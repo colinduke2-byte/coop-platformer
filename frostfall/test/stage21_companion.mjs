@@ -13,8 +13,8 @@ await h.sleep(1200);
 const up = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { mode: g.player.mode, hp: window.__ff.S.hp, max: window.__ff.S.maxHp, resp: !!g.respawning }; });
 check('Ragna pulls you back up with 40% health', up.mode === 'free' && up.hp === Math.round(up.max * 0.4) && !up.resp, JSON.stringify(up));
 await kill();
-await h.sleep(3200);
-const second = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return !!g.respawning || g.scene.isActive('Game') && g.player?.mode !== 'free'; });
+await h.sleep(5500);
+const second = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; return S.hp === S.maxHp && g.player?.mode === 'free'; });   // a full-health respawn, not Ragna's 40% lift
 check('a second fall inside the cooldown is a real death (respawn)', second);
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();

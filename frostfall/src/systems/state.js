@@ -80,10 +80,13 @@ export function startNgPlus() {
     skills: S.skills, perks: S.perks, perkPoints: S.perkPoints, charLevel: S.charLevel, skillUps: S.skillUps,
     bonusHp: S.bonusHp, bonusMp: S.bonusMp, bonusSp: S.bonusSp, inv: S.inv, equip: S.equip, upgrades: S.upgrades, enchants: S.enchants,
     gold: S.gold, arrows: S.arrows, gen: S.gen, hearts: S.hearts, lore: S.lore, tips: S.tips, kills: S.kills, seen: S.seen, spell: S.spell, ngPlus: (S.ngPlus || 0) + 1,
-    flags: { introDone: true, tutDone: true, alchemy: S.flags.alchemy, houseBought: S.flags.houseBought, furn: S.flags.furn },
+    // what you own carries over too: the stash, gems and runes in your gear, learned tomes, trophies, cloak and pet
+    stash: S.stash, sockets: S.sockets, runes: S.runes, tomes: S.tomes, trophies: S.trophies, cloak: S.cloak, pet: S.pet,
+    flags: { introDone: true, tutDone: true, alchemy: S.flags.alchemy, houseBought: S.flags.houseBought, emberHouse: S.flags.emberHouse, furn: S.flags.furn },
   };
   const fresh = newState();
   for (const k of Object.keys(S)) delete S[k];
+  for (const k of Object.keys(keep)) if (keep[k] === undefined) delete keep[k];
   Object.assign(S, fresh, JSON.parse(JSON.stringify(keep)));
   S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt; delete S.inv.blight_heart;
   S.hp = 1e9; S.mp = 1e9; S.sp = 1e9;

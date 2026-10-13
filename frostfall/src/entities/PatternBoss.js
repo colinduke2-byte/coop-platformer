@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Boss from './Boss.js';
 import Enemy from './Enemy.js';
 import Pickup from './Pickup.js';
+import { addItem } from '../systems/inventory.js';
 import { C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
@@ -173,13 +174,13 @@ export default class PatternBoss extends Boss {
     sc.setGate(false);
     music.play('crypt');
     bus.emit('toast', this.info.toast, 13);
-    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game')) saveGame(sc, { auto: false }); });
+    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {
       if (!sc.scene.isActive('Game')) return;
       sfx.play('levelup');
       sc.fx.ring(this.x, this.y + 4, 2.5, 0.8, 'ring', 0x5cc8d8);
       if (this.info.heart) sc.pickups.push(new Pickup(sc, this.x, this.y + 6, { type: 'heart', id: this.info.heart, big: true }));
-      sc.pickups.push(new Pickup(sc, this.x + 12, this.y + 10, { type: 'item', id: 'heart_shard' }));     // one for the Great Anvil's last tempers
+      addItem('heart_shard');     // one for the Great Anvil's last tempers, straight into the pack so a death or a reload cannot lose it
       if (this.info.onVictory) this.info.onVictory(sc, this);
     });
   }

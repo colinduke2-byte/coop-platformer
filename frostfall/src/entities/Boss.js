@@ -305,7 +305,7 @@ export default class Boss extends Enemy {
     sc.setGate(false);
     music.play('crypt');
     bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
-    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game')) saveGame(sc, { auto: false }); });
+    sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {
       if (!sc.scene.isActive('Game')) return;
       sfx.play('levelup');
