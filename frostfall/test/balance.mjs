@@ -99,6 +99,7 @@ for (const sc of SCENARIOS) {
           // nearest threat
           let tgt = null, td = 1e9;
           for (const e of foes) { const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < td) { td = d; tgt = e; } }
+          { const pod = foes.filter((e) => e.kind === 'blightpod').sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (pod) { tgt = pod; td = Math.hypot(pod.x - p.x, pod.y - p.y); } }   // do what the game says: destroy the pods
           if (!tgt) return;
           const now2 = performance.now();
           if (S.hp < S.maxHp * 0.4 && (S.inv.hp_potion > 0 || S.inv.hp_potion_g > 0) && now2 - lastPot > 1200) { keys._press('Digit1'); setTimeout(() => keys._release('Digit1'), 40); potions++; lastPot = now2; }
