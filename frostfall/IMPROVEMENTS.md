@@ -8,6 +8,12 @@ Almost everything from the first backlog is built (see CHANGELOG.md). What is le
 - Run the GitHub Actions workflow once and fix anything that differs from the sandbox.
 - Re-run `npm run balance` after balance changes and compare with a human's results.
 
+## Needs a human (after the refinement pass)
+- Play the fights the bot cannot judge (see the spot-check list at the end of `docs/REFINEMENT_LOG.md`).
+- Firefox and Safari, a real gamepad and a real phone: none can be tested in the build sandbox.
+- Bosses ignore burn, bleed, poison, roots and fear by design; decide whether Thorn Snare and Sunbeam's burn should do something to bosses.
+- New Game+ keeps the five Hearts, so the Winter Throne gate is open from the start of a new cycle. Decide whether that is intended.
+
 ## Partly done
 - **Animation**: weapons swing and enemies telegraph, but characters still use 3 walk frames per direction.
   Dedicated attack / hurt / death poses (arm extended, crouch, collapse) would make fights read better.
@@ -15,8 +21,8 @@ Almost everything from the first backlog is built (see CHANGELOG.md). What is le
 - **Code health**: `GameScene` is smaller (pathing, fog, loot, zones, lighting are mixins) but still owns entity spawning and the update loop;
   `Player` could be split further (movement / melee / ranged / magic).
 - **UI scale**: integer scaling and fullscreen exist, but text size is tied to the 320x180 canvas.
-- **Mouse**: menus and shops now work with the mouse; the Items tab right-click and mouse wheel scrolling are not wired up.
-- **Large UI** only enlarges the bars and target bar; dialogue text and the pause menu stay at the base size.
+- **Mouse**: menus and shops work with the mouse, and the wheel scrolls the pack and shop lists; the Items tab right-click is not wired up.
+- **Large UI** only enlarges the bars and target bar; dialogue text and the pause menu stay at the base size (the 6 px pixel font cannot scale by a non-whole amount, so this needs a redesigned dialogue box).
 
 ## Ideas not started
 - More zones (frozen lake village, mountain monastery), a third boss, a hard-mode NPC-escort quest.
