@@ -49,6 +49,7 @@ import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose, dialogue } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
+import { padHint } from '../systems/access.js';
 import { txtS } from '../art/font.js';
 import { sfx, music, ambience } from '../audio/sfx.js';
 import { pathingMethods } from '../world/pathing.js';
@@ -624,8 +625,9 @@ export default class GameScene extends Phaser.Scene {
     }
     this.target = best;
     if (best) {
-      this.promptTxt.setText(best.label()).setVisible(true);
-      this.promptTxt.setPosition(Math.round(best.ix - best.label().length * 3), Math.round(best.iy - 22));
+      const lab = padHint(best.label());          // "E: TALK" becomes "B: TALK" on a controller
+      this.promptTxt.setText(lab).setVisible(true);
+      this.promptTxt.setPosition(Math.round(best.ix - lab.length * 3), Math.round(best.iy - 22));
       if (keys.pressed('interact') && pl.lockT <= 0) { sfx.play('select'); best.interact(); }
     } else this.promptTxt.setVisible(false);
   }

@@ -42,7 +42,7 @@ check('heavy armour is slower, louder, harder to knock back and costs more stami
 check('a helmet adds half of its own class to the body armour', near(r.lightMedHelm.move, r.light.move) && near(r.lightHeavyHelm.move, r.light.move * (1 + (0.92 - 1) * 0.5)) && r.lightLightHelm.move > r.light.move, JSON.stringify([r.lightHeavyHelm, r.light]));
 check('class effects reach the real stats (move, detect)', r.heavyMoveTrait < r.baseMove && r.heavyDetectTrait > r.baseDetect, JSON.stringify([r.heavyMoveTrait, r.baseMove]));
 check('weights: potions are light, quest items weigh nothing, heavy armour outweighs light', r.w.potion <= 0.5 && r.w.quest && r.w.heavyArmor > r.w.lightArmor, JSON.stringify(r.w));
-check('capacity: base 120, more with stamina and the pony, heavy armour +, light -', r.cap0 === 120 && r.capSp > r.cap0 && r.capPony > r.cap0 && r.capHeavy > r.cap0 && r.capLight < r.cap0, JSON.stringify(r));
+check('capacity: base 180, more with stamina and the pony, heavy armour +, light -', r.cap0 === 180 && r.capSp > r.cap0 && r.capPony > r.cap0 && r.capHeavy > r.cap0 && r.capLight < r.cap0, JSON.stringify(r));
 check('burden levels: light load is fine, over capacity burdened (slower), far over overloaded (slower still, no rolling)', r.lvl0 === 'ok' && r.mm0 === 1 && r.lvl1 === 'burdened' && r.mm1 < 1 && r.roll1 && r.lvl2 === 'over' && r.mm2 < r.mm1 && !r.roll2, JSON.stringify(r));
 check('equipped gear counts at half weight; arrows are nearly weightless', r.equippedHalf && r.arrows <= 6, JSON.stringify([r.equippedHalf, r.arrows]));
 

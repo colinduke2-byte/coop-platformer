@@ -12,7 +12,8 @@ import { PAD_ACTIONS, padMap, setPadBinding, resetPadMap, getPadInfo, capturePad
 import { textW } from '../art/font.js';
 import { panel } from './MenuScene.js';
 import { MAPS } from '../data/maps.js';
-import { CVD_MODES, applyCvd } from '../systems/access.js';
+import { CVD_MODES, applyCvd, padLabel } from '../systems/access.js';
+import { padActive } from '../systems/keys.js';
 import { durOn } from '../systems/durability.js';
 import { unstick } from '../systems/unstick.js';
 
@@ -27,6 +28,11 @@ const CONTROLS = [
   ['L / Q', 'SPELL / SWAP'], ['R / G', 'SHOUT / SWAP'], ['U / T', 'HEAVY / LOCK ON'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK'],
   ['E', 'TALK/OPEN/REST'], ['1-3 / 4-8', 'POTIONS / SPELLS'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
 ];
+// The same list for a controller, read from the player's own pad mapping.
+const PAD_CONTROLS = [[['Space'], 'DODGE ROLL'], [['KeyJ'], 'SWORD COMBO'], [['KeyK'], 'BOW (HOLD)'], [['KeyL', 'KeyQ'], 'SPELL / SWAP'], [['KeyR', 'KeyG'], 'SHOUT / SWAP'],
+  [['KeyU', 'KeyT'], 'HEAVY / LOCK'], [['KeyF'], 'BLOCK, PARRY'], [['KeyC'], 'SNEAK'], [['KeyE'], 'TALK/OPEN/REST'], [['Digit1', 'Digit2'], 'HP / MP POTION'], [['Escape'], 'MENU']];
+const shortPad = (n) => (n || '-').replace('R-STICK ', 'RS ').replace('D-PAD ', 'DP ').replace('LEFT', 'L').replace('RIGHT', 'R').replace('UP', 'U').replace('DOWN', 'D');
+const padControls = () => [['L-STICK', 'MOVE'], ...PAD_CONTROLS.map(([codes, what]) => [codes.map((c) => shortPad(padLabel(c))).join('/'), what])];
 const DIFFS = ['easy', 'normal', 'hard'];
 // One line about each row, shown in the help bar while it is selected.
 const HINTS = {
@@ -278,7 +284,7 @@ export function systemTab(m) {
       m.T(144, 36, 'PLAYTIME ' + fmtTime(S.playtime) + (S.daily ? '  DAILY ' + runScore() : ''), 5);
       m.T(144, 45, info ? (info.recovered ? 'SLOT RECOVERED FROM BACKUP' : 'LAST SAVE ' + new Date(info.t).toLocaleTimeString().slice(0, 5)) : 'SLOT ' + settings.slot + ' IS EMPTY', 4);
       g.fillStyle(C[3]); g.fillRect(144, 52, W - 156, 1);
-      CONTROLS.forEach(([k, v], i) => {
+      (padActive() ? padControls() : CONTROLS).forEach(([k, v], i) => {      // controller in hand: its buttons
         m.T(144, 57 + i * 8, k, 6);
         m.T(204, 57 + i * 8, v, 4);
       });

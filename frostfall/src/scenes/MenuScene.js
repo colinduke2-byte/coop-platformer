@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { burden, itemWeight } from '../systems/burden.js';
+import { TUNE } from '../data/tuning.js';
+import { padHint } from '../systems/access.js';
 import { W, H, C, BINDINGS } from '../config.js';
 import { txt, wrap, textW } from '../art/font.js';
 import { keys } from '../systems/keys.js';
@@ -207,14 +209,14 @@ export default class MenuScene extends Phaser.Scene {
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
     this.help = null;
     this.tabs[this.tab].render();
-    this.T(8, H - 12, this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 4);
+    this.T(8, H - 12, padHint(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 51), 4);
   }
 
   renderItems() {
     const g = this.bg;
     const list = this.inventory();
     this.help = `E USE  F OFFHAND  V DROP  Q FILTER  R SORT ${SORTS[this.sort]}`;
-    panel(g, 6, 22, 150, 130, 2);
+    panel(g, 6, 22, 150, 140, 2);
     // filter chips + sort
     let fx = 11;
     FILTERS.forEach(([n], i) => {
@@ -262,8 +264,21 @@ export default class MenuScene extends Phaser.Scene {
     this.T(rx + 6, 99, `HP ${S.maxHp} MP ${S.maxMp} SP ${S.maxSp}`, 5);
     const lv = burden.level();
     this.T(rx + 6, 108, `${S.gold} GOLD`, 13);
-    const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`;
-    this.T(rx + 146 - textW(wt), 108, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11);
+    { const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`; this.T(rx + 146 - textW(wt), 108, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11); }
+    // carry weight: a bar under the item list. Green while there is room, yellow when Burdened, red when Overloaded;
+    // a notch marks the Overloaded line (125%), and the text says how much more you can carry
+    {
+      const carried = burden.carried(), cap = burden.capacity(), over = TUNE.burden.over, left = Math.floor(cap) - Math.round(carried);
+      const by = 152, bx = 26, bw = 78, full = cap * over, frac = Math.min(1, carried / full), capX = bx + Math.round(bw / over);
+      const col = lv === 'ok' ? (left < cap * 0.15 ? 12 : 8) : lv === 'burdened' ? 12 : 11;
+      this.T(10, by - 1, 'WT', 4);
+      g.fillStyle(C[0]); g.fillRect(bx - 1, by, bw + 2, 6);
+      g.fillStyle(C[3]); g.fillRect(bx, by + 1, bw, 4);
+      g.fillStyle(C[col]); g.fillRect(bx, by + 1, Math.max(1, Math.round(bw * frac)), 4);
+      g.fillStyle(C[6]); g.fillRect(capX, by - 1, 1, 8);                       // the carry limit
+      const msg = lv === 'ok' ? `${left} LEFT` : `OVER ${Math.ceil(carried - cap)}`;
+      this.T(154 - textW(msg), by - 1, msg, lv === 'ok' ? 5 : col);
+    }
 
     // description
     panel(g, rx, 120, 152, 42, 2);

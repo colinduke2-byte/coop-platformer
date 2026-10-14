@@ -13,6 +13,7 @@ A full audit of the game, with fixes, balance and polish. The full list, with ev
 - **New:** drop items from the pack (V twice); the mouse wheel scrolls lists; chain quests mark the way back to the giver and announce when ready; tips for the new creatures.
 - **Normal difficulty** is about 10% harder (enemy health and damage +5% each).
 - **UI:** the pack, shop and lore screens no longer overflow.
+- **Follow-up:** the map tab works again (2x view by default, overview fixed); carry limit 120 -> 180 (+1 per stamina point over 100); a weight bar in the pack; menus, shops and prompts show controller buttons when you play with a controller.
 - **Tests:** quest audit, dialogue fuzz, reachability fuzz over 200 seeds, UI overflow audit, regression tests for every fix.
 
 ## Round 12: items, economy and home (Phase 5)

@@ -55,3 +55,29 @@ export function padLabel(code) {
 }
 // What to show the player for a virtual key right now: the pad button if a controller was used last, else the key.
 export function prompt(code) { return (padActive() && padLabel(code)) || keyLabel(code); }
+
+// Keyboard hints like "E USE  F OFFHAND  ESC CLOSE" or "E: TALK", rewritten for the controller when it was used last:
+// each hint's leading key becomes the button that sends it ("A USE  X OFFHAND  START CLOSE"). Mouse-only hints are dropped.
+const PAIR = { 'W/S': 'UP/DOWN', 'A/D': 'LEFT/RIGHT', 'WASD': 'L-STICK', 'W/S/A/D': 'D-PAD' };
+const codeOf = (tok) => (tok === 'ESC' ? 'Escape' : tok === 'SPACE' ? 'Space' : tok === 'ENTER' ? 'Enter' : /^[A-Z]$/.test(tok) ? 'Key' + tok : /^[0-9]$/.test(tok) ? 'Digit' + tok : null);
+const SHORT = (n) => n.replace('R-STICK ', 'RS ').replace('D-PAD ', 'DP ').replace(/\b(UP|DOWN|LEFT|RIGHT)$/, (d) => d[0]);
+export function padKey(tok, short = false) {
+  if (PAIR[tok]) return PAIR[tok];
+  if (tok.includes('/')) return tok.split('/').map((t) => padKey(t, short)).join('/');
+  const c = codeOf(tok), n = (c && padLabel(c)) || tok;
+  return short ? SHORT(n) : n;
+}
+// max: characters that fit; a long pad line first shortens stick names ("RS D"), then closes the gaps, then drops hints off the end.
+export function padHint(text, max = Infinity) {
+  if (!text || !padActive()) return text;
+  if (/^[A-Z0-9]+: /.test(text)) { const i = text.indexOf(':'); return padKey(text.slice(0, i)) + text.slice(i); }     // "E: TALK"
+  const segs = (short) => text.split(/\s{2,}/).filter((seg) => seg && !/^OR CLICK$|^CLICK OK$/.test(seg)).map((seg) => {
+    const m = seg.match(/^(\S+)(\s.*)$/);
+    return m && (PAIR[m[1]] || codeOf(m[1].split('/')[0])) ? padKey(m[1], short) + m[2] : seg;
+  });
+  let list = segs(false), gap = '  ';
+  if (list.join(gap).length > max) list = segs(true);
+  if (list.join(gap).length > max) gap = ' ';
+  while (list.length > 1 && list.join(gap).length > max) list.pop();
+  return list.join(gap);
+}

@@ -22,8 +22,8 @@ export function fogDims(w, h) { return { cw: Math.ceil(w / FOG), ch: Math.ceil(h
 
 const ZOOMS = [1, 2, 3];
 // Zoom steps for a map: small maps scale up from their fitted size; big overworlds start from a whole-map overview.
-const scalesOf = (b) => { const fit = Math.min(296 / b.w, 112 / b.h); return fit >= 1 ? [1, 2, 3].map((z) => Math.floor(fit) * z) : [Math.max(0.25, Math.floor(fit * 20) / 20), 1, 2, 3]; };
-const VX = 10, VY = 26, VW = 300, VH = 112;
+const scalesOf = (b) => { const fit = Math.min((VW - 4) / b.w, (VH - 4) / b.h); return fit >= 1 ? [1, 2, 3].map((z) => Math.floor(fit) * z) : [Math.max(0.25, Math.floor(fit * 20) / 20), 1, 2, 3]; };
+const VX = 10, VY = 37, VW = 300, VH = 102;      // the map view sits below the title line and above the legend
 
 // The map being looked at: the current map, or another unlocked region's overworld (R switches).
 const viewOf = (gs, view) => {
@@ -35,7 +35,10 @@ const viewOf = (gs, view) => {
 
 // Terrain is baked once per (map, scale) into a canvas texture and cropped to the view, so a very large overworld costs the
 // same to draw as a small one. Markers go on their own layer above it.
-function bakeTerrain(m, vid, b, sc, fog) {
+// A zoomed-out overview (less than a pixel per tile) is baked at one pixel per tile and shrunk when drawn: drawing quarter-pixel
+// rectangles left the overview almost black.
+function bakeTerrain(m, vid, b, scIn, fog) {
+  const sc = Math.max(1, scIn);
   if (m._bake && m._bake.sig === vid + '|' + sc) return m._bake.key;
   const cv = document.createElement('canvas'); cv.width = b.w * sc; cv.height = b.h * sc;
   const x = cv.getContext('2d'), { cw } = fogDims(b.w, b.h);
@@ -58,7 +61,7 @@ export function mapTab(m) {
     m.mapTerrain = m.add.container(0, 0).setDepth(0.5); m.mapOver = m.add.graphics().setDepth(0.8); m.dyn.setDepth(1);
     const oc = m.clear.bind(m); m.clear = () => { oc(); m.mapTerrain.removeAll(true); m.mapOver.clear(); };
   };
-  let zoom = 0, cur = null, curMode = false, rep = 0, view = null;
+  let zoom = null, cur = null, curMode = false, rep = 0, view = null;     // zoom null: pick a readable start the first time
   const base = (b) => Math.max(1, Math.min(Math.floor(296 / b.w), Math.floor(112 / b.h)));
   return {
     name: 'MAP',
@@ -76,10 +79,10 @@ export function mapTab(m) {
           view = next === gs.mapId ? null : next;
           const nb = viewOf(gs, view).b;
           cur = view ? { x: Math.floor(nb.w / 2), y: Math.floor(nb.h / 2) } : { x: Math.floor(gs.player.x / T), y: Math.floor((gs.player.y + 3) / T) };
-          zoom = 0; sfx.play('select');
+          zoom = null; sfx.play('select');
         }
       }
-      if (keys.pressed('swap')) { zoom = (zoom + 1) % scalesOf(b).length; sfx.play('select'); }
+      if (keys.pressed('swap')) { zoom = ((zoom ?? 0) + 1) % scalesOf(b).length; sfx.play('select'); }
       if (keys.pressed('interact')) {
         if (!curMode) { curMode = true; sfx.play('select'); }
         else {
@@ -108,7 +111,9 @@ export function mapTab(m) {
       const gs = m.gs, g = m.bg, vw = viewOf(gs, view), vid = vw.id;
       panel(g, 6, 22, 308, 134, 2);
       const b = vw.b, w = b.w, h = b.h;
-      const SCS = scalesOf(b); zoom %= SCS.length;
+      const SCS = scalesOf(b);
+      if (zoom == null) zoom = SCS[0] < 1 ? 2 : 0;           // a big overworld opens at two pixels per tile around you; Q cycles to 3x, the overview and 1x
+      zoom %= SCS.length;
       const sc = SCS[zoom];
       const p = gs.player;
       // view centre in tiles: the map centre when it fits, otherwise the cursor (or the player)
@@ -126,7 +131,8 @@ export function mapTab(m) {
         const key = bakeTerrain(m, vid, b, sc, fog);
         const x0 = Math.max(0, Math.floor((VX - ox) / sc)), x1 = Math.min(w, Math.ceil((VX + VW - ox) / sc)), y0 = Math.max(0, Math.floor((VY - oy) / sc)), y1 = Math.min(h, Math.ceil((VY + VH - oy) / sc));
         if (x1 > x0 && y1 > y0) {
-          const img = m.add.image(ox, oy, key).setOrigin(0).setCrop(x0 * sc, y0 * sc, (x1 - x0) * sc, (y1 - y0) * sc);
+          const bs = Math.max(1, sc);
+          const img = m.add.image(ox, oy, key).setOrigin(0).setScale(sc / bs).setCrop(x0 * bs, y0 * bs, (x1 - x0) * bs, (y1 - y0) * bs);
           m.mapTerrain.add(img);
         }
       }
@@ -189,12 +195,17 @@ export function mapTab(m) {
       for (const [tx, ty, text] of labels) {
         if (zoom === 0 && labels.length > 3) continue;
         const [px, py] = spot(tx, ty, sc);
-        const lw = text.length * 6, lx = Math.max(VX, Math.min(VX + VW - lw, px - lw / 2)), ly = py - 9;
-        if (ly < VY) continue;
+        const lw = text.length * 6, lx = Math.max(VX, Math.min(VX + VW - lw, px - lw / 2));
+        let ly = py - 10;                                     // above the exit, or below it near the top edge
+        if (ly < VY) ly = py + sc + 2;
+        if (ly + 8 > VY + VH) continue;
+        if (vw.here && Math.abs(lx + lw / 2 - pxp) < lw / 2 + 4 && Math.abs(ly + 4 - pyp) < 8) continue;   // never over your own marker
         go.fillStyle(C[0], 0.7); go.fillRect(lx - 1, ly - 1, lw + 2, 9);
         m.T(lx, ly, text, 15);
       }
-      m.T(10, 26, MAPS[vid].name + (zoom ? '  ' + Math.round(sc * 10) / 10 + 'X' : SCS[0] < 1 ? '  OVERVIEW' : '') + (unlockedRegions().length > 1 ? '   R: NEXT REGION' : '') + (MAPS[vid].stream ? '   FOUND ' + found.length + '/' + (b.pois || []).length : ''), 13);
+      const zl = sc < 1 ? 'OVERVIEW' : sc + 'X';
+      m.T(10, 26, (MAPS[vid].name.toUpperCase().slice(0, 28) + '  ' + zl), 13);
+      if (MAPS[vid].stream) { const ft = 'FOUND ' + found.length + '/' + (b.pois || []).length; m.T(310 - ft.length * 6, 26, ft, 4); }
       const ly = 143;
       let lx = 12;
       [[13, 'YOU'], [15, 'EXIT'], [12, 'FIRE'], [14, 'SHRINE'], [11, 'FOE SITE'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {

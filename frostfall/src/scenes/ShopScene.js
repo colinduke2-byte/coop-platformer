@@ -3,6 +3,7 @@
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
 import { txt, textW, wrap } from '../art/font.js';
+import { padHint } from '../systems/access.js';
 import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
 import { S } from '../systems/state.js';
@@ -139,6 +140,6 @@ export default class ShopScene extends Phaser.Scene {
     // footer
     g.fillStyle(C[3]); g.fillRect(4, H - 24, W - 8, 1);
     if (this.msg) this.T(8, H - 20, this.msg, this.msgCol ?? 6);
-    this.T(8, H - 10, this.cfg.hint || 'E SELECT   ESC DONE   CLICK OK', 4);
+    this.T(8, H - 10, padHint(this.cfg.hint || 'E SELECT   ESC DONE   CLICK OK', 51), 4);
   }
 }
