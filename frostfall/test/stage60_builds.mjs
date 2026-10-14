@@ -10,12 +10,16 @@ const buf = await G(async () => {
   const g = window.gs(), S = window.__ff.S, p = g.player, keys = window.__ff.keys;
   g.enemies.getChildren().slice().forEach((e) => e.destroy());
   S.sp = S.maxSp; p.mode = 'free'; p.swing = null; p.invuln = 99; p.rollCd = 0; let n = 0; const orig = p.startSwing.bind(p); p.startSwing = () => { n++; return orig(); };
-  keys._press('Space'); await new Promise((r) => { const t0 = performance.now(); const iv = setInterval(() => { if (p.mode === 'roll' || performance.now() - t0 > 1500) { clearInterval(iv); r(); } }, 5); }); keys._release('Space');
+  // frame-exact (the real loop is paused): the roll lasts ~20 frames; J goes in 13 frames after it starts, for 2 frames
+  const st = window.__ffStep, dt = 1000 / 60, step = (k) => st.frames(k, dt);
+  st.pause();
+  keys._press('Space'); for (let i = 0; i < 90 && p.mode !== 'roll'; i++) await step(1); keys._release('Space');
   const rolling = p.mode === 'roll'; window.__dbg = { mode: p.mode, stun: p.stunT, mounted: S.mounted, sp: S.sp, rollCd: p.rollCd, swing: !!p.swing, lock: p.lockT, drawing: p.drawing, hp: S.hp, perks: Object.keys(S.perks) };
-  await new Promise((r) => setTimeout(r, 210));
-  keys._press('KeyJ'); await new Promise((r) => setTimeout(r, 30)); keys._release('KeyJ');        // a moment before the roll ends: still rolling
+  await step(13);
+  keys._press('KeyJ'); await step(2); keys._release('KeyJ');        // a moment before the roll ends: still rolling
   const stillRolling = p.mode === 'roll', swungDuring = !!p.swing;
-  await new Promise((r) => setTimeout(r, 420));
+  await step(25);
+  st.resume();
   p.startSwing = orig; return { rolling, stillRolling, swungDuring, swings: n, dbg: window.__dbg };
 });
 check('a swing pressed mid-roll is remembered and happens when the roll ends', buf.rolling && buf.stillRolling && !buf.swungDuring && buf.swings === 1, JSON.stringify(buf));

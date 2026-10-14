@@ -2,11 +2,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { build } from 'vite';
 import { check, failCount } from './harness.mjs';
 const pw = await import('playwright').catch(() => import('/opt/node-tools/node_modules/playwright/index.mjs'));
-const root = new URL('..', import.meta.url).pathname, out = '/tmp/frostfall-offline-dist';
-fs.rmSync(out, { recursive: true, force: true });
+const root = new URL('..', import.meta.url).pathname, out = fs.mkdtempSync(path.join(os.tmpdir(), 'frostfall-offline-'));   // unique: parallel runs must not share it
 await build({ root, logLevel: 'error', build: { outDir: out, emptyOutDir: true, chunkSizeWarningLimit: 4000 } });
 check('the build ships the service worker', fs.existsSync(path.join(out, 'sw.js')));
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json', '.svg': 'image/svg+xml' };
@@ -33,5 +33,6 @@ const booted = await page.waitForFunction(() => window.__ff && window.__ff.game.
 check('with no connection the game still starts from the cache', booted);
 check('no page errors while offline', errs.length === 0, errs.join('\n'));
 await browser.close(); server.close();
+fs.rmSync(out, { recursive: true, force: true });
 console.log(failCount() ? 'OFFLINE FAILED' : 'OFFLINE PASSED');
 process.exit(failCount() ? 1 : 0);
