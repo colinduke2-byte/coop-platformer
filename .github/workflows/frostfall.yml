@@ -63,7 +63,7 @@ jobs:
           if-no-files-found: ignore
 
   long:
-    # campaign bot, arena soak and the other long runs, in parallel with the job above
+    # campaign bot, dialogue fuzz and arena soak, in parallel with the job above
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -79,8 +79,11 @@ jobs:
       - run: npm ci
       - name: Install Chromium for the browser tests
         run: npx playwright install --with-deps chromium
+      # the fuzz / soak tests get a different random seed every run (printed in the log; rerun locally with FF_SEED=<n>)
       - name: Long bots and soak tests
         run: node test/run.mjs --long --jobs=3
+        env:
+          FF_SEED: ${{ github.run_number }}
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

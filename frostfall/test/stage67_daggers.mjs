@@ -1,5 +1,5 @@
 // Daggers: twelve distinct blades, the sneak and back-hit rules, status on hit, and where each one is found.
-import { launch, check, failCount } from './harness.mjs';
+import { launch, check, failCount, FRAME_MS } from './harness.mjs';
 const h = await launch();
 await h.open('scene=game');
 await h.sleep(700);
@@ -45,6 +45,11 @@ check('Grimfang drops Grimfang\'s Bite; wardens drop Bone Shivs', where.grim && 
 check('boss chests hold the regional daggers (Tidebreak, Sepulchre, Mire, Stormspire, Hart Spire, Lode Chasm)', where.tide && where.seph && where.mire && where.storm && where.hart && where.lode, JSON.stringify(where));
 
 // ---- combat rules
+// Frame-exact from here (the real loop is paused): the target cannot turn round between being set up facing away and the
+// stab landing, however busy the machine is.
+const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
+const wait = (ms) => h.frames(F(ms));
+await h.pause();
 const snap = () => G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; if (!e) return { hp: 0, max: 0, dead: true, st: [] }; return { hp: e.hp, max: e.maxHp, dead: e.dead, st: Object.keys(e.statuses || {}) }; });
 const setup = (weapon, face = { x: 1, y: 0 }) => G(([w, f]) => {
   const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S;
@@ -53,10 +58,11 @@ const setup = (weapon, face = { x: 1, y: 0 }) => G(([w, f]) => {
   S.inv[w] = 1; S.equip.weapon = w; S.hp = 100; S.mp = 100; S.sp = 100;
   g.player.setPosition(300, 250); g.player.face = { x: 1, y: 0 }; g.player.mode = 'free'; g.player.invuln = 99; g.player.comboT = 0; g.player.swing = null;
   e.setPosition(314, 250); e.home = { x: 314, y: 250 }; e.hp = e.maxHp = 400; e.cfg = { ...e.cfg, detect: 0, speed: 0 }; e.alerted = false; e.state = 'idle'; e.slowT = 0; e.stun = 0; e.statuses = {}; e.face = { ...f }; e.dead = false;
+  if (e.wander) { e.wander.t = 99; e.wander.dx = 0; e.wander.dy = 0; }   // an idle wander step would turn it round (face follows the wander direction)
 }, [weapon, face]);
-const stab = async (sneak) => { if (sneak) { await press('ShiftLeft'); await h.sleep(120); } await tap('KeyJ', 60); await h.sleep(260); if (sneak) await rel('ShiftLeft'); };
+const stab = async (sneak) => { if (sneak) { await press('ShiftLeft'); await wait(120); } await h.tap('KeyJ', F(60), 0); await wait(260); if (sneak) await rel('ShiftLeft'); };
 // median of a few swings; the first swing after a weapon change is thrown away (it can land twice)
-const avgHit = async (weapon, face, sneak, n = 5) => { const v = []; for (let i = 0; i < n + 1; i++) { await setup(weapon, face); await stab(sneak); const s = await snap(); if (i) v.push(s.max - s.hp); await h.sleep(150); } v.sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+const avgHit = async (weapon, face, sneak, n = 5) => { const v = []; for (let i = 0; i < n + 1; i++) { await setup(weapon, face); await stab(sneak); const s = await snap(); if (i) v.push(s.max - s.hp); await wait(150); } v.sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
 
 const back = await avgHit('skinning_knife', { x: 1, y: 0 }, false, 9);       // enemy faces away from the player (player is to its left)
 const front = await avgHit('skinning_knife', { x: -1, y: 0 }, false, 9);

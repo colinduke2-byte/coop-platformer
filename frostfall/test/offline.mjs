@@ -22,9 +22,16 @@ const page = await ctx.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 await page.goto(url + '?renderer=canvas');
 await page.waitForFunction(() => window.__ff && window.__ff.game.isBooted, null, { timeout: 20000 });
-await page.waitForFunction(async () => { const r = await navigator.serviceWorker.getRegistration(); return !!r?.active && !!navigator.serviceWorker.controller; }, null, { timeout: 15000 }).catch(() => {});
+await page.waitForFunction(async () => { const r = await navigator.serviceWorker.getRegistration(); return !!r?.active && !!navigator.serviceWorker.controller; }, null, { timeout: 60000 }).catch(() => {});
 await page.reload(); await page.waitForFunction(() => window.__ff && window.__ff.game.isBooted, null, { timeout: 20000 });
-await page.waitForTimeout(1500);                       // let the worker store everything the game loaded
+// let the worker store everything the game loaded (the page itself and every same-origin file it fetched); a fixed wait was
+// not always long enough on a busy machine
+const cached = await page.waitForFunction(async () => {
+  const c = await caches.open('frostfall-v1'), keys = new Set((await c.keys()).map((r) => r.url.split('?')[0]));
+  const want = performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.startsWith(location.origin)).map((u) => u.split('?')[0]);
+  return keys.has(location.origin + '/') && want.every((u) => keys.has(u));
+}, null, { timeout: 60000, polling: 250 }).then(() => true).catch(() => false);
+check('the service worker cached the page and everything it loaded', cached);
 const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
 check('the service worker is running and controls the page', controlled);
 await ctx.setOffline(true);

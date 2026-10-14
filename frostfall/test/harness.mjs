@@ -111,6 +111,7 @@ function installStepper() {
 }
 
 export async function launch(opts = {}) {
+  if (process.env.FF_SEED && !opts.realRandom) console.log(`  (Math.random seed ${process.env.FF_SEED} from FF_SEED unless the page URL has ?seed=)`);
   const srv = await devServer();
   const url = srv.url;
   const browser = await launchBrowser(opts.args || ['--no-sandbox']);
@@ -172,3 +173,6 @@ export function check(name, cond, extra = '') {
   else { fails++; console.log('  FAIL ' + name + ' ' + extra); }
 }
 export const failCount = () => fails;
+// Many files end without process.exit(failCount() ? 1 : 0), so their failed checks used to exit 0 and never failed the run.
+// Whatever a file does at the end, a failed check now makes its exit code non-zero.
+process.on('exit', (code) => { if (fails && !code) process.exitCode = 1; });

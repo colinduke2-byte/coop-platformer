@@ -1,11 +1,16 @@
-import { launch, check, failCount } from './harness.mjs';
+import { launch, check, failCount, FRAME_MS } from './harness.mjs';
 const h = await launch();
 await h.open('scene=game');
-await h.sleep(700);
+// The real game loop is paused: time only moves through h.frames, so wind-ups and swings are timed in game frames, not
+// in wall-clock time that a busy machine stretches.
+await h.pause();
+const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
+const wait = (ms) => h.frames(F(ms));
+await wait(700);
 const G = (fn, a) => h.ev(fn, a);
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
-const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel(c); await h.sleep(70); };
+const tap = (c, ms = 80) => h.tap(c, F(ms), F(70));
 const reset = () => G(() => {
   const g = window.__ff.game.scene.getScene('Game'); const S = window.__ff.S;
   g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0;
@@ -21,16 +26,16 @@ const E = () => G(() => { const e = window.__ff.game.scene.getScene('Game').enem
 
 // ---- poise: enough hits stagger an enemy and open it up
 await reset(); await dummy('draugr', 16);
-for (let i = 0; i < 4; i++) { await tap('KeyJ', 40); await h.sleep(330); }
+for (let i = 0; i < 4; i++) { await tap('KeyJ', 40); await wait(330); }
 let e = await E();
 check('chipping poise staggers the enemy', e.stag > 0 || e.hp < e.max, JSON.stringify(e));
 
 // ---- heavy attack: slow, big, staggers
 await reset(); await dummy('draugr', 18);
 const sp0 = await G(() => window.__ff.S.sp);
-await tap('KeyU', 50); await h.sleep(150);
+await tap('KeyU', 50); await wait(150);
 check('heavy attack winds up (no hit yet)', (await E()).hp === (await E()).max);
-await h.sleep(450);
+await wait(450);
 e = await E();
 check('heavy attack lands big and staggers', e.hp < e.max * 0.85 && e.stag > 0, JSON.stringify(e));
 check('heavy attack costs stamina', (await G(() => window.__ff.S.sp)) < sp0 - 15);
@@ -41,18 +46,18 @@ await G(() => {
   const g = window.__ff.game.scene.getScene('Game'); const e = g.addEnemy('draugr', g.player.x + 16, g.player.y);
   e.alerted = true; e.cfg = { ...e.cfg, chase: 0, speed: 0, windup: 0.5, dmg: 20 }; e.startWindup({ x: -1, y: 0 }); e.stateT = 0.5;
 });
-await h.sleep(400);                // hit lands at ~0.5 + attack frame
+await wait(400);                // hit lands at ~0.5 + attack frame
 await tap('Space', 30);
-await h.sleep(500);
+await wait(500);
 const pd = await G(() => { const p = window.__ff.game.scene.getScene('Game').player; return { counter: p.counterT, hp: window.__ff.S.hp }; });
 check('rolling at the last moment is a perfect dodge (counter window, no damage)', pd.counter > 0 && pd.hp === 100, JSON.stringify(pd));
 // counter bonus
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; e.stun = 0; e.hp = e.maxHp; g.player.counterT = 2; g.player.face = { x: 1, y: 0 }; g.player.setPosition(e.x - 16, e.y); g.player.mode = 'free'; });
 const hp1 = (await E()).hp;
-await tap('KeyJ', 40); await h.sleep(350);
+await tap('KeyJ', 40); await wait(350);
 const dmgCounter = hp1 - (await E()).hp;
 await reset(); await dummy('draugr', 16);
-const hp2 = (await E()).hp; await tap('KeyJ', 40); await h.sleep(350);
+const hp2 = (await E()).hp; await tap('KeyJ', 40); await wait(350);
 const dmgPlain = hp2 - (await E()).hp;
 check('the counter-attack hits harder', dmgCounter > dmgPlain * 1.15, `${dmgCounter} vs ${dmgPlain}`);
 
@@ -64,7 +69,7 @@ await G(async () => {
   window.__ff.S.inv[id] = 1; window.__ff.S.equip.weapon = id; window.__ff.S.hp = 50;
 });
 await dummy('draugr', 16);
-await tap('KeyJ', 40); await h.sleep(350);
+await tap('KeyJ', 40); await wait(350);
 check('gear lifesteal heals on hit', (await G(() => window.__ff.S.hp)) > 50);
 const crits = await G(() => window.__ff.game.scene.getScene('Game').fx.texts.some((t) => t.t.main && t.t.main.text === 'CRIT'));
 check('gear crit chance shows CRIT', crits);
