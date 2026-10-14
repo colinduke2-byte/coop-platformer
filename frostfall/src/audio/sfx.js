@@ -16,8 +16,24 @@ function ac() {
     musicBus = ctx.createGain(); musicBus.gain.value = musicLevel(); musicBus.connect(master);
     ambBus = ctx.createGain(); ambBus.gain.value = settings.ambVol ?? 1; ambBus.connect(master);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  if ((ctx.state === 'suspended' || ctx.state === 'interrupted') && !hidden) ctx.resume();
   return ctx;
+}
+// The tab is hidden (or the phone switched apps): stop the audio clock so nothing plays and no battery is spent.
+let hidden = false;
+export function setHidden(h) {
+  hidden = h;
+  try { if (ctx) { if (h) ctx.suspend(); else ctx.resume(); } } catch { /* ignore */ }
+}
+// One shared buffer of white noise; each noisy sound plays a random slice of it instead of making its own.
+let noiseBuf = null;
+function noiseBuffer(a) {
+  if (noiseBuf && noiseBuf.sampleRate === a.sampleRate) return noiseBuf;
+  const len = a.sampleRate * 2;
+  noiseBuf = a.createBuffer(1, len, a.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return noiseBuf;
 }
 export function setVolume(v) { settings.volume = Math.max(0, Math.min(1, v)); if (master) master.gain.value = settings.volume; saveSettings(); }
 export function setMusic(on) { settings.music = on; if (musicBus) musicBus.gain.value = musicLevel(); saveSettings(); }
@@ -46,17 +62,13 @@ function tone(type, f0, f1, dur, vol = 0.15, delay = 0, dest = null) {
 function noise(dur, vol = 0.2, delay = 0, lp0 = 4000, lp1 = 400, dest = null) {
   const a = ac(); if (!a) return;
   const t = a.currentTime + delay;
-  const len = Math.max(1, Math.floor(a.sampleRate * dur));
-  const buf = a.createBuffer(1, len, a.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  const s = a.createBufferSource(); s.buffer = buf;
+  const s = a.createBufferSource(); s.buffer = noiseBuffer(a);
   const f = a.createBiquadFilter(); f.type = 'lowpass';
   f.frequency.setValueAtTime(lp0, t); f.frequency.exponentialRampToValueAtTime(Math.max(60, lp1), t + dur);
   const g = a.createGain();
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
   s.connect(f); f.connect(g); g.connect(dest || sfxBus);
-  s.start(t); s.stop(t + dur + 0.02);
+  s.start(t, Math.random() * Math.max(0, 2 - dur - 0.05)); s.stop(t + dur + 0.02);
 }
 
 const SOUNDS = {
@@ -119,11 +131,25 @@ const SOUNDS = {
   nova: () => { tone('sawtooth', 600, 100, 0.5, 0.14); noise(0.4, 0.2, 0, 6000, 400); },
 };
 
-export function unlock() { try { if (ctx && ctx.state === 'suspended') ctx.resume(); else if (!ctx) ac(); } catch { /* ignore */ } }
+// Called from user gestures. iOS only starts audio from inside a gesture, and only after something has played: a
+// one-sample silent buffer does that. 'interrupted' (a phone call, Siri) is treated like 'suspended'.
+let unlocked = false;
+export function unlock() {
+  try {
+    if (!ctx) ac();
+    else if (ctx.state === 'suspended' || ctx.state === 'interrupted') { if (!hidden) ctx.resume(); }
+    if (ctx && !unlocked) { unlocked = true; const b = ctx.createBuffer(1, 1, 22050), src = ctx.createBufferSource(); src.buffer = b; src.connect(ctx.destination); src.start(0); }
+  } catch { /* ignore */ }
+}
 
+// The same sound at most once every 35 ms: a crowd of enemies hit at once does not stack forty copies of it.
+const lastPlayed = new Map();
 export const sfx = {
   play(name) {
-    if (settings.volume <= 0) return;
+    if (settings.volume <= 0 || hidden) return;
+    const now = performance.now();
+    if (now - (lastPlayed.get(name) || -1e9) < 35) return;
+    lastPlayed.set(name, now);
     try { SOUNDS[name]?.(); } catch { /* audio is best-effort */ }
   },
 };
@@ -205,7 +231,9 @@ SONGS.saltmarket = { bpm: 96, lead: 'square', bass: 'triangle', root: 48,
   B: { chords: [[-3, 0, 4], [-7, -3, 0], [0, 4, 7], [-5, -1, 2]], melody: [16, null, 19, null, 21, 19, null, 16, 14, null, 12, null, 14, 16, null, null] } };
 let song = null, songName = null, nextT = 0, step = 0, timer = null, intensity = 0, bossPhase = 1;
 function schedule() {
-  const a = ac(); if (!a || !song) return;
+  if (!ctx || !song || hidden) return;
+  const a = ac(); if (!a) return;
+  if (musicLevel() <= 0) { nextT = a.currentTime + 0.1; return; }      // music off: schedule nothing
   const stepDur = 60 / (song.bpm * (1 + 0.07 * (bossPhase - 1))) / 2;
   while (nextT < a.currentTime + 0.6) {
     const secB = song.B && Math.floor(step / 64) % 2 === 1;

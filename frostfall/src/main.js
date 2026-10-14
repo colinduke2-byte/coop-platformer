@@ -12,13 +12,14 @@ import ShopScene from './scenes/ShopScene.js';
 import IntroScene from './scenes/IntroScene.js';
 import EndingScene from './scenes/EndingScene.js';
 import { wireQuests } from './systems/quests.js';
-import { unlock } from './audio/sfx.js';
+import { unlock, setHidden } from './audio/sfx.js';
+import { saveGame, probeStorage } from './systems/save.js';
 import { ui } from './systems/ui.js';
 import { settings } from './systems/settings.js';
 import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
-import { installErrorLog } from './systems/debug.js';
+import { installErrorLog, guardGame } from './systems/debug.js';
 import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
 installErrorLog();
@@ -36,9 +37,11 @@ const game = new Phaser.Game({
   roundPixels: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: q.get('physics') === '1' } },
+  audio: { noAudio: true },                  // all sound is our own Web Audio synth (audio/sfx.js): no second, idle AudioContext
   scene: [BootScene, TitleScene, ArenaSetupScene, ArenaResultsScene, IntroScene, GameScene, HudScene, MenuScene, ShopScene, EndingScene],
 });
 
+guardGame(Phaser, game);
 installKeys(game);
 installTouch();
 
@@ -76,13 +79,24 @@ window.__updateRotate = () => updateRotate(applyScaling);
 game.events.once('ready', () => applyScaling());
 window.__applyScaling = applyScaling;
 applyCvd();
-window.addEventListener('keydown', unlock);
-window.addEventListener('pointerdown', unlock);
+probeStorage();
+// Audio may only start inside a user gesture; iOS ignores pointerdown from touch, so listen to the release events as well.
+for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click']) window.addEventListener(ev, unlock, { passive: true });
 // Alt-tabbing away opens the pause menu so you never get ambushed.
-window.addEventListener('blur', () => {
+const pauseIfPlaying = () => {
   const gs = game.scene.getScene('Game');
   if (gs && game.scene.isActive('Game') && !ui.modal && gs.player?.mode === 'free') gs.openMenu(-1, 'SYSTEM');
+};
+window.addEventListener('blur', pauseIfPlaying);
+// A quiet save (keeping your position) whenever the page may be about to disappear: tab hidden, app switched, tab closed.
+const quietSave = () => {
+  const gs = game.scene.getScene('Game');
+  if (gs && game.scene.isActive('Game') && gs.safeToSave?.()) saveGame(gs, { quiet: true });
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { quietSave(); pauseIfPlaying(); setHidden(true); } else setHidden(false);
 });
+window.addEventListener('pagehide', quietSave);
 wireQuests();
 
 // Handy handle for the console and the automated tests.

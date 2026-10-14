@@ -3,7 +3,9 @@ import { burden, itemWeight } from '../systems/burden.js';
 import { TUNE } from '../data/tuning.js';
 import { padHint } from '../systems/access.js';
 import { W, H, C, BINDINGS } from '../config.js';
-import { txt, wrap, textW } from '../art/font.js';
+import { txt, wrap, textW, fit } from '../art/font.js';
+import { overlayOpen } from '../ui/overlay.js';
+import { settings } from '../systems/settings.js';
 import { keys } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { ui } from '../systems/ui.js';
@@ -111,6 +113,7 @@ export default class MenuScene extends Phaser.Scene {
   // ---------------------------------------------------------------- input
   update() {
     if (this.warm > 0) { this.warm--; return; }
+    if (overlayOpen()) return;                    // an HTML panel (save tools, bug report) has the keys
     if (this.tabs[this.tab].busy?.()) { this.tabs[this.tab].input(); if (this.dirty) { this.dirty = false; this.draw(); } return; }
     if (keys.pressed('pause') || keys.back() || keys.pressed('inventory') && this.tab === 0 || keys.pressed('journal') && this.tabs[this.tab].name === 'QUESTS') { this.close(); return; }
     if (keys.pressed('inventory') && this.tab !== 0) this.go(0);
@@ -207,9 +210,10 @@ export default class MenuScene extends Phaser.Scene {
       x += w + 1;
     });
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
-    this.help = null;
+    this.help = null; this.helpCol = null;
     this.tabs[this.tab].render();
-    this.T(8, H - 12, padHint(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 51), 4);
+    const help = padHint(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 51);
+    this.T(8, H - 12, fit(help, 51), this.helpCol || (settings.highContrast ? 6 : 4));
   }
 
   renderItems() {

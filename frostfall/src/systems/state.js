@@ -64,14 +64,29 @@ export function resetState() {
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, fresh);
 }
+// A value from a save is only trusted when it has the same kind as the default (object, array, number, string...).
+const kindOf = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 export function loadInto(data) {
   const fresh = newState();
   for (const k of Object.keys(S)) delete S[k];
-  Object.assign(S, fresh, data);
-  // make sure nested defaults exist for older saves
-  for (const k of SKILLS) S.skills[k] ||= { lvl: 1, xp: 0 };
+  Object.assign(S, fresh);
+  for (const [k, v] of Object.entries(data || {})) {
+    if (!(k in fresh)) { if (v !== undefined) S[k] = v; continue; }          // extra keys (stash, runes...) are kept as they are
+    const want = kindOf(fresh[k]), got = kindOf(v);
+    if (want === 'null') S[k] = v;                                        // fields that start empty (x, y, tracked...) take anything
+    else if (want === 'number') S[k] = Number.isFinite(v) ? v : fresh[k];
+    else if (want === got) S[k] = v;
+  }
+  // nested defaults (older saves, damaged fields)
+  for (const k of SKILLS) { const sk = S.skills[k]; S.skills[k] = sk && typeof sk === 'object' && Number.isFinite(sk.lvl) ? { lvl: sk.lvl, xp: Number.isFinite(sk.xp) ? sk.xp : 0 } : { lvl: 1, xp: 0 }; }
   S.equip = { ...fresh.equip, ...S.equip };
+  for (const [k, v] of Object.entries(S.equip)) if (v !== null && typeof v !== 'string') S.equip[k] = null;
   S.quests = { ...fresh.quests, ...S.quests };
+  for (const [k, q] of Object.entries(S.quests)) if (!q || typeof q !== 'object' || typeof q.status !== 'string') S.quests[k] = { status: 'inactive' };
+  for (const [k, n] of Object.entries(S.inv)) if (!Number.isFinite(n) || n <= 0) delete S.inv[k];
+  for (const k of ['flags', 'fog', 'perks', 'kills', 'gen', 'upgrades', 'enchants', 'sockets', 'rep', 'lore', 'seen', 'found', 'tips', 'discovered', 'sighted', 'hearts', 'killed', 'bounty', 'shrines', 'run']) if (!S[k] || typeof S[k] !== 'object') S[k] = fresh[k];
+  if (!S.respawn?.map) S.respawn = fresh.respawn;
+  for (const k of ['hp', 'mp', 'sp']) S[k] = Math.max(1, Math.min(S[k], S['max' + k[0].toUpperCase() + k.slice(1)] || S[k]));
 }
 
 // New Game+: keep your character (level, skills, perks, gear, gold) and start a fresh, harder world.

@@ -44,7 +44,7 @@ check('save captures position, map, inventory, quests, skills', sv.s.x === 250 &
 
 // ---- mess up state, then load from the pause menu
 await G(() => { const S = window.__ff.S; S.gold = 0; S.arrows = 1; S.quests.wolves = { status: 'inactive', kills: 0 }; S.equip.weapon = null; });
-await tap('KeyS'); await tap('KeyE');   // LOAD GAME
+await tap('KeyS'); await tap('KeyE'); await tap('KeyE');   // LOAD GAME asks first: E twice
 await h.sleep(900);
 const back = await G(() => { const S = window.__ff.S, g = window.__ff.game.scene.getScene('Game'); return { gold: S.gold, arrows: S.arrows, w: S.equip.weapon, kills: S.quests.wolves.kills, lvl: S.skills.archery.lvl, x: Math.round(g.player.x), hp: S.hp, flag: S.flags.testflag, menu: window.__ff.game.scene.isActive('Menu') }; });
 check('Load restores gold, arrows, equipment, quest, skills', back.gold === 321 && back.arrows === 33 && back.w === 'iron_sword' && back.kills === 2 && back.lvl === 4, JSON.stringify(back));
@@ -58,7 +58,8 @@ check('travelling autosaves', auto === 'forest', auto);
 
 // ---- volume / music settings persist
 await tap('Escape'); await h.sleep(300);
-for (let i = 0; i < 3; i++) await tap('KeyS');   // VOLUME row
+const volRow = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return m.tabs[m.tab].rowIndex('VOLUME'); });
+for (let i = 0; i < volRow; i++) await tap('KeyS');   // VOLUME row
 const v0 = await G(() => JSON.parse(localStorage.getItem('frostfall_settings') || '{}').volume ?? null);
 await tap('KeyA'); await tap('KeyA');
 const v1 = await G(() => JSON.parse(localStorage.getItem('frostfall_settings')).volume);

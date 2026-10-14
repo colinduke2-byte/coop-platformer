@@ -1,7 +1,9 @@
 import { C, W, H, BINDINGS } from '../config.js';
 import { S } from '../systems/state.js';
 import { keys, capture, capturing, setBinding, resetBindings, codeName } from '../systems/keys.js';
-import { saveGame, loadGame, saveInfo, fmtTime, SLOTS } from '../systems/save.js';
+import { fit } from '../art/font.js';
+import { saveGame, loadGame, saveInfo, fmtTime, SLOTS, lastSaveTime, storage, tabs } from '../systems/save.js';
+import { openSaveTools } from '../ui/savetools.js';
 import { unlockedCloaks, currentCloak } from '../systems/achievements.js';
 import { runScore } from '../systems/daily.js';
 import { sfx, setVolume, setMusic, setChannel, music } from '../audio/sfx.js';
@@ -23,11 +25,17 @@ const ACTION_NAMES = [
   ['potion1', 'HEALTH POTION'], ['potion2', 'MANA POTION'], ['potion3', 'STAMINA POTION'], ['inventory', 'PACK'], ['journal', 'JOURNAL'], ['map', 'MAP'], ['pause', 'PAUSE MENU'],
   ['spell1', 'QUICK FIREBALL'], ['spell2', 'QUICK FROST'], ['spell3', 'QUICK LIGHTNING'], ['spell4', 'QUICK HEALING'], ['spell5', 'QUICK WARD'], ['spell6', 'QUICK BLINK'], ['spell7', 'QUICK FROST NOVA'], ['spell8', 'QUICK EMBER NOVA'],
 ];
-const CONTROLS = [
-  ['WASD', 'MOVE'], ['SPACE', 'DODGE ROLL'], ['J', 'SWORD 3X COMBO'], ['K HOLD', 'BOW, CHARGE'],
-  ['L / Q', 'SPELL / SWAP'], ['R / G', 'SHOUT / SWAP'], ['U / T', 'HEAVY / LOCK ON'], ['F HOLD', 'BLOCK, PARRY'], ['C / SHIFT', 'SNEAK'],
-  ['E', 'TALK/OPEN/REST'], ['1-3 / 4-8', 'POTIONS / SPELLS'], ['I O M ESC', 'PACK/LOG/MAP/MENU'],
-];
+// The keyboard cheat sheet, read from the player's own bindings (so it stays right after rebinding).
+const kn = (a) => codeName((BINDINGS[a] || [])[0] || '-');
+const CONTROLS = () => {
+  const mv = ['up', 'left', 'down', 'right'].map(kn);
+  return [
+    [mv.every((k) => k.length === 1) ? mv.join('') : mv.join(' '), 'MOVE'], [kn('roll'), 'DODGE ROLL'], [kn('sword'), 'SWORD 3X COMBO'], [kn('bow') + ' HOLD', 'BOW, CHARGE'],
+    [kn('spell') + ' / ' + kn('swap'), 'SPELL / SWAP'], [kn('shout') + ' / ' + kn('shoutswap'), 'SHOUT / SWAP'], [kn('heavy') + ' / ' + kn('lockon'), 'HEAVY / LOCK ON'],
+    [kn('block') + ' HOLD', 'BLOCK, PARRY'], [kn('sneak'), 'SNEAK'], [kn('interact'), 'TALK/OPEN/REST'],
+    [`${kn('potion1')}-${kn('potion3')} / ${kn('spell1')}+`, 'POTIONS / SPELLS'], [[kn('inventory'), kn('journal'), kn('map'), kn('pause')].join(' '), 'PACK/LOG/MAP/MENU'],
+  ];
+};
 // The same list for a controller, read from the player's own pad mapping.
 const PAD_CONTROLS = [[['Space'], 'DODGE ROLL'], [['KeyJ'], 'SWORD COMBO'], [['KeyK'], 'BOW (HOLD)'], [['KeyL', 'KeyQ'], 'SPELL / SWAP'], [['KeyR', 'KeyG'], 'SHOUT / SWAP'],
   [['KeyU', 'KeyT'], 'HEAVY / LOCK'], [['KeyF'], 'BLOCK, PARRY'], [['KeyC'], 'SNEAK'], [['KeyE'], 'TALK/OPEN/REST'], [['Digit1', 'Digit2'], 'HP / MP POTION'], [['Escape'], 'MENU']];
@@ -36,28 +44,37 @@ const padControls = () => [['L-STICK', 'MOVE'], ...PAD_CONTROLS.map(([codes, wha
 const DIFFS = ['easy', 'normal', 'hard'];
 // One line about each row, shown in the help bar while it is selected.
 const HINTS = {
-  'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK BETWEEN THINGS? THIS MOVES YOU TO THE NEAREST OPEN SPOT', 'SAVE GAME': 'WRITE THE CURRENT SLOT. FIRES AND BEDS SAVE TOO', 'LOAD GAME': 'RELOAD THE SLOT. UNSAVED PROGRESS IS LOST',
-  'VOLUME': 'MASTER VOLUME. A/D ADJUST', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS',
-  'FULLSCREEN': 'FILL THE SCREEN. ALSO F11', 'SLOT': 'THREE SAVE SLOTS. A/D SWITCH', 'DIFFICULTY': 'EASY, NORMAL OR HARD. CHANGES ENEMIES, PRICES AND DROPS',
-  'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'BRIGHT SCREEN FLASHES. TURN OFF IF THEY BOTHER YOU', 'PIXEL SCALE': 'INTEGER: CRISP. FIT: FILLS THE WINDOW',
-  'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD THE SWORD KEY TO KEEP THE COMBO GOING',
-  'LARGE UI': 'BIGGER TEXT AND BARS', 'ROTATE VIEW': 'PHONE: TURN THE PICTURE TO FIT WHEN HELD UPRIGHT', 
+  'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK? MOVES YOU TO THE NEAREST OPEN SPOT', 'SAVE GAME': 'SAVE TO THIS SLOT. FIRES AND BEDS SAVE TOO',
+  'LOAD GAME': 'RELOAD THIS SLOT. UNSAVED PROGRESS IS LOST', 'SAVES & BUG REPORT': 'EXPORT OR IMPORT SAVES, COPY A BUG REPORT',
+  'VOLUME': 'MASTER VOLUME', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS',
+  'FULLSCREEN': 'FILL THE SCREEN (ALSO F11)', 'SLOT': 'THREE SAVE SLOTS', 'DIFFICULTY': 'CHANGES ENEMIES, PRICES AND DROPS',
+  'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'SCREEN FLASHES AND THE LOW-HEALTH PULSE', 'PIXEL SCALE': 'INTEGER IS CRISP. FIT FILLS THE WINDOW',
+  'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD SWORD TO KEEP THE COMBO GOING',
+  'LARGE UI': 'BIGGER HUD BARS, NUMBERS AND TARGET BAR', 'ROTATE VIEW': 'PHONE HELD UPRIGHT: TURN THE PICTURE',
   'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
-  'DURABILITY': 'GEAR WEARS OUT AND NEEDS REPAIR. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES. A/D CHANGE',
-  'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD AND SEE WHAT IT SENDS', 'QUIT TO TITLE': 'BACK TO THE TITLE SCREEN. SAVE FIRST',
+  'DURABILITY': 'GEAR WEARS OUT. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES',
+  'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD, SEE WHAT IT SENDS', 'QUIT TO TITLE': 'SAVES, THEN GOES BACK TO THE TITLE',
+  'REDUCE MOTION': 'STILL MARKERS, NO BLINKING, LESS SNOW', 'HIGH CONTRAST': 'BRIGHTER TEXT ON THE DARK PANELS', 'BAR NUMBERS': 'NUMBERS ON THE HEALTH, MAGIC, STAMINA BARS',
+  'TEXT SPEED': 'HOW FAST DIALOGUE TYPES OUT', 'FRAME RATE': 'LOWER SAVES BATTERY ON LAPTOPS AND PHONES', 'STICK DEADZONE': 'HOW FAR A STICK MOVES BEFORE IT COUNTS',
 };
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  const rows = ['RESUME', 'SAVE GAME', 'LOAD GAME', 'VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'FULLSCREEN', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DURABILITY', 'CLOAK', 'CONTROLS', 'CONTROLLER', 'UNSTUCK', 'QUIT TO TITLE'];
-  if (S.quick) rows.splice(rows.indexOf('SAVE GAME'), 2);        // no saving or loading inside Arena Mode
+  // The list is long, so it is grouped into pages, in this order. Q jumps to the first row of the next page.
+  const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
+    ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
+    ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']],
+    ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'CONTROLS', 'CONTROLLER']]];
+  const rows = PAGES.flatMap(([, l]) => l).filter((r) => !(S.quick || S.daily) || !['SAVE GAME', 'LOAD GAME', 'SLOT'].includes(r));   // no saving inside Arena or a Daily run
+  let armed = null;           // 'LOAD GAME' / 'QUIT TO TITLE' wait for a second press
   const VISIBLE = 9;
   let mode = 'main';          // main | controls | pad
   let waitingPad = null;      // game key code being learned from the controller
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE'];
+  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'TEXT SPEED', 'FRAME RATE', 'STICK DEADZONE'];
+  const SPEEDS = ['slow', 'normal', 'fast', 'instant'], RATES = [0, 60, 30];
   const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
@@ -69,15 +86,15 @@ export function systemTab(m) {
     else if (r === 'SLOT') settings.slot = ((settings.slot - 1 + dir + SLOTS) % SLOTS) + 1;
     else if (r === 'DIFFICULTY') settings.difficulty = DIFFS[(DIFFS.indexOf(settings.difficulty) + dir + 3) % 3];
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
+    else if (r === 'TEXT SPEED') settings.textSpeed = SPEEDS[(SPEEDS.indexOf(settings.textSpeed) + dir + 4) % 4];
+    else if (r === 'FRAME RATE') { settings.fpsCap = RATES[(RATES.indexOf(settings.fpsCap) + dir + 3) % 3]; window.__applyFps?.(); }
+    else if (r === 'STICK DEADZONE') settings.deadzone = Math.round(Math.max(0.2, Math.min(0.7, (settings.deadzone ?? 0.45) + dir * 0.05)) * 100) / 100;
     else return;
     saveSettings(); sfx.play('select'); m.dirty = true;
   };
 
   const toggle = (key) => { settings[key] = !settings[key]; saveSettings(); sfx.play('select'); m.dirty = true; };
 
-  // The list is long, so it is grouped into four pages. Q jumps to the first row of the next page; the page name shows under the list.
-  const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'DIFFICULTY', 'DURABILITY', 'UNSTUCK', 'QUIT TO TITLE']], ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
-    ['SCREEN', ['FULLSCREEN', 'SCREEN SHAKE', 'FLASHES', 'PIXEL SCALE', 'LARGE UI', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']], ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'CONTROLS', 'CONTROLLER']]];
   const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
   function nextPage() {
     const to = (pageOf(rows[m.cursor]) + 1) % PAGES.length;
@@ -86,8 +103,10 @@ export function systemTab(m) {
     m.cursor = i; m.scroll = Math.max(0, Math.min(i, rows.length - VISIBLE)); sfx.play('select'); m.dirty = true;
   }
   function mainInput() {
+    const was = m.cursor;
     m.nav(rows.length, VISIBLE);
-    if (keys.pressed('swap')) nextPage();
+    if (m.cursor !== was) armed = null;
+    if (keys.pressed('swap')) { nextPage(); armed = null; }
     if (SLIDERS.includes(rows[m.cursor])) {
       if (keys.pressed('left')) adjust(-1);
       if (keys.pressed('right')) adjust(1);
@@ -98,8 +117,12 @@ export function systemTab(m) {
       case 'RESUME': m.close(); break;
       case 'UNSTUCK': { const moved = unstick(gs, gs.player, 'manual'); if (!moved) bus.emit('toast', 'YOU ARE NOT STUCK', 4); m.close(); break; }
       case 'SAVE GAME': saveGame(gs); m.dirty = true; break;
+      case 'SAVES & BUG REPORT': openSaveTools(m, { onImported: () => { m.dirty = true; } }); sfx.play('select'); break;
       case 'LOAD GAME':
-        if (!loadGame()) { bus.emit('toast', 'NO SAVE IN THIS SLOT', 11); sfx.play('nostamina'); break; }
+        if (!saveInfo()) { bus.emit('toast', 'NO SAVE IN THIS SLOT', 11); sfx.play('nostamina'); break; }
+        if (armed !== 'LOAD GAME') { armed = 'LOAD GAME'; sfx.play('alert'); m.dirty = true; break; }
+        armed = null;
+        if (!loadGame()) { sfx.play('nostamina'); break; }
         m.scene.stop();
         ui.modal = false;
         gs.scene.restart({ map: S.map, spawn: S.spawn, pos: S.x != null ? { x: S.x, y: S.y } : null });
@@ -115,11 +138,17 @@ export function systemTab(m) {
       case 'MOUSE': toggle('mouse'); break;
       case 'SNEAK MODE': toggle('sneakToggle'); break;
       case 'HOLD TO CHAIN': toggle('holdChain'); break;
+      case 'REDUCE MOTION': toggle('reduceMotion'); break;
+      case 'HIGH CONTRAST': toggle('highContrast'); bus.emit('uiscale'); break;
+      case 'BAR NUMBERS': toggle('hudNumbers'); break;
       case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
       case 'ROTATE VIEW': settings.autoRotate = settings.autoRotate === false; saveSettings(); m.dirty = true; sfx.play('select'); break;
       case 'CONTROLLER': mode = 'pad'; pc.cursor = 0; pc.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'CONTROLS': mode = 'controls'; ctrl.cursor = 0; ctrl.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'QUIT TO TITLE':
+        if (armed !== 'QUIT TO TITLE') { armed = 'QUIT TO TITLE'; sfx.play('alert'); m.dirty = true; break; }
+        armed = null;
+        if (!S.quick && !S.daily) saveGame(gs, { quiet: true });        // your progress goes with you
         music.stop();
         ui.modal = false;
         m.scene.stop('Hud'); m.scene.stop('Game'); m.scene.start('Title');
@@ -195,6 +224,7 @@ export function systemTab(m) {
   return {
     name: 'SYSTEM',
     help: 'W/S MOVE  E SELECT  A/D ADJUST  ESC RESUME',
+    rowIndex: (name) => rows.indexOf(name),          // for tests and tools: where a row is in the current list
     busy: () => mode === 'controls' || mode === 'pad' || !!waiting || capturing(),
     captureLR: () => mode === 'controls' || mode === 'pad' || SLIDERS.includes(rows[m.cursor]),
     cursorOf: () => (mode === 'controls' ? ctrl.cursor : m.cursor),
@@ -241,7 +271,8 @@ export function systemTab(m) {
         });
         return;
       }
-      m.help = HINTS[rows[m.cursor]] || null;
+      m.help = armed === 'LOAD GAME' ? 'E AGAIN TO LOAD. UNSAVED PROGRESS IS LOST' : armed === 'QUIT TO TITLE' ? (S.quick || S.daily ? 'E AGAIN TO QUIT THIS RUN' : 'E AGAIN TO SAVE AND QUIT') : HINTS[rows[m.cursor]] || null;
+      m.helpCol = armed ? 12 : null;
       panel(g, 6, 22, 128, 134, 2);
       rows.slice(m.scroll, m.scroll + VISIBLE).forEach((r, k) => {
         const i = m.scroll + k, y = 28 + k * 13;
@@ -254,7 +285,8 @@ export function systemTab(m) {
           return;
         }
         if (r === 'MUSIC') { v = settings.music ? 'ON' : 'OFF'; vc = settings.music ? 8 : 11; }
-        else if (r === 'LOAD GAME') { v = saveInfo() ? null : 'EMPTY'; vc = 3; }
+        else if (r === 'LOAD GAME') { v = armed === r ? 'SURE?' : saveInfo() ? null : 'EMPTY'; vc = armed === r ? 12 : 3; }
+        else if (r === 'QUIT TO TITLE' && armed === r) { v = 'SURE?'; vc = 12; }
         else if (r === 'SLOT') { v = `${settings.slot}/${SLOTS}${saveInfo() ? '' : ' EMPTY'}`; vc = 13; }
         else if (r === 'DIFFICULTY') { v = settings.difficulty.toUpperCase(); vc = { easy: 8, normal: 5, hard: 11 }[settings.difficulty]; }
         else if (r === 'SCREEN SHAKE') v = settings.shake === 0 ? 'OFF' : settings.shake === 0.5 ? 'LOW' : 'FULL';
@@ -270,6 +302,14 @@ export function systemTab(m) {
         else if (r === 'COLOUR MODE') { v = settings.cvd.toUpperCase(); vc = settings.cvd === 'off' ? 4 : 8; }
         else if (r === 'ROTATE VIEW') { v = settings.autoRotate === false ? 'OFF' : 'AUTO'; vc = settings.autoRotate === false ? 4 : 8; }
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
+        else if (r === 'REDUCE MOTION') { v = settings.reduceMotion ? 'ON' : 'OFF'; vc = settings.reduceMotion ? 8 : 4; }
+        else if (r === 'HIGH CONTRAST') { v = settings.highContrast ? 'ON' : 'OFF'; vc = settings.highContrast ? 8 : 4; }
+        else if (r === 'BAR NUMBERS') { v = settings.hudNumbers ? 'ON' : 'OFF'; vc = settings.hudNumbers ? 8 : 4; }
+        else if (r === 'TEXT SPEED') { v = settings.textSpeed.toUpperCase(); }
+        else if (r === 'FRAME RATE') { v = settings.fpsCap ? settings.fpsCap + ' FPS' : 'SCREEN'; }
+        else if (r === 'STICK DEADZONE') { v = Math.round((settings.deadzone ?? 0.45) * 100) + '%'; }
+        else if (r === 'FULLSCREEN' && document.fullscreenEnabled === false) { v = 'N/A'; vc = 3; }
+        else if (r === 'SAVES & BUG REPORT') { v = storage.ok ? null : '!'; vc = 11; }
         row(g, i, y, r, v, vc);
       });
       m.T(12, 146, `${PAGES[pageOf(rows[m.cursor])][0]} ${pageOf(rows[m.cursor]) + 1}/${PAGES.length}  Q NEXT`, 13);
@@ -280,13 +320,15 @@ export function systemTab(m) {
       // right: info + controls
       panel(g, 138, 22, W - 144, 134, 2);
       const info = saveInfo();
-      m.T(144, 27, MAPS[S.map]?.name || '', 13);
-      m.T(144, 36, 'PLAYTIME ' + fmtTime(S.playtime) + (S.daily ? '  DAILY ' + runScore() : ''), 5);
-      m.T(144, 45, info ? (info.recovered ? 'SLOT RECOVERED FROM BACKUP' : 'LAST SAVE ' + new Date(info.t).toLocaleTimeString().slice(0, 5)) : 'SLOT ' + settings.slot + ' IS EMPTY', 4);
-      g.fillStyle(C[3]); g.fillRect(144, 52, W - 156, 1);
-      (padActive() ? padControls() : CONTROLS).forEach(([k, v], i) => {      // controller in hand: its buttons
-        m.T(144, 57 + i * 8, k, 6);
-        m.T(204, 57 + i * 8, v, 4);
+      m.T(144, 27, fit(MAPS[S.map]?.name || '', 28), 13);
+      // how long ago progress was last written, in a colour that says whether that is a worry
+      const at = Math.max(lastSaveTime(), info?.t || 0), mins = at ? Math.floor((Date.now() - at) / 60000) : null;
+      const saveLine = S.quick ? 'ARENA RUNS ARE NOT SAVED' : S.daily ? 'DAILY ' + runScore() + '  (NOT SAVED)' : tabs.other ? 'OTHER TAB OPEN: NOT SAVING' : !storage.ok ? 'SAVING IS BLOCKED HERE' : at ? `${fmtTime(S.playtime)}  SAVED ${mins < 1 ? 'JUST NOW' : mins + ' MIN AGO'}` : `${fmtTime(S.playtime)}  NOT SAVED YET`;
+      m.T(144, 36, fit(saveLine, 28), !at || !storage.ok || tabs.other ? 12 : 5);
+      g.fillStyle(C[3]); g.fillRect(144, 44, W - 156, 1);
+      (padActive() ? padControls() : CONTROLS()).forEach(([k, v], i) => {      // controller in hand: its buttons
+        m.T(144, 48 + i * 9, fit(k, 10), 6);
+        m.T(208, 48 + i * 9, fit(v, 17), 4);
       });
     },
   };

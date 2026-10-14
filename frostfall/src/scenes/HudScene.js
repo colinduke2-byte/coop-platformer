@@ -86,7 +86,7 @@ export default class HudScene extends Phaser.Scene {
     bus.on('hint', this.onHint);
     this.debugTxt = txt(this, 4, 32, '', 15).setVisible(false);
     this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); }
-      if (e.code === 'F4') { e.preventDefault(); copyDebugInfo(this).then((ok) => bus.emit('toast', ok ? 'DEBUG INFO COPIED' : 'DEBUG INFO READY (CONSOLE)', ok ? 13 : 4)); } };
+      if (e.code === 'F4') { e.preventDefault(); copyDebugInfo(this).then((ok) => { if (ok) bus.emit('toast', 'BUG REPORT COPIED', 13); }); } };
     window.addEventListener('keydown', this.onKey);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));

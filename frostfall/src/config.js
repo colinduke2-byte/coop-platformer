@@ -3,6 +3,8 @@ export const W = 320;
 export const H = 180;
 export const T = 16;
 export const VERSION = 'V1.0';
+// build id stamped by vite.config.js (git hash + date), 'dev' while developing
+export const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'dev'; // eslint-disable-line no-undef
 
 // 16-colour palette. Every pixel in the game comes from here.
 export const PAL = [

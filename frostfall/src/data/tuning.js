@@ -281,6 +281,7 @@ export const TUNE = {
   // Difficulty multipliers (Settings > Difficulty).
   // Ordinary monsters (not bosses, not passive animals) are tougher than their table entry: wolves, bears, bandits and the like.
   // carry weight: capacity = base + perSp per stamina above 100 + armour class + pony; equipped gear counts at equipHalf
+  autosave: 240,                 // seconds between quiet autosaves while exploring (out of combat)
   burden: { base: 180, perSp: 1, pony: 60, equipHalf: 0.5, burdened: { move: 0.85, regen: 0.8 }, over: 1.25, overMove: 0.65, floor: 0.7, overFloor: 0.5, overRegen: 0.64 },
   mobs: { hp: 1.3, dmg: 1.15 },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).

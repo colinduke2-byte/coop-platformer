@@ -528,6 +528,22 @@ export default class GameScene extends Phaser.Scene {
     music.setIntensity(fight && !bossOn);
   }
 
+  // A quiet save every few minutes while exploring, so a closed tab or a crash never costs more than that.
+  // Never mid-fight, mid-boss or while dying; the HUD shows a small save mark.
+  autosaveTick(dt) {
+    this.autoT = (this.autoT ?? TUNE.autosave) - dt;
+    if (this.autoT > 0) return;
+    this.autoT = 20;                                            // not safe now: look again shortly
+    if (!this.safeToSave()) return;
+    if (saveGame(this, { quiet: true })) this.autoT = TUNE.autosave;
+  }
+  safeToSave() {
+    if (S.quick || S.daily || this.leaving || this.respawning || S.hp <= 0) return false;
+    if (!this.player || this.player.mode !== 'free') return false;
+    if (this.boss && this.boss.engaged && !this.boss.dead) return false;
+    return !this.enemies.getChildren().some((e) => e.alerted && !e.dead);
+  }
+
   changeMap(to, spawn, sound = 'door') {
     if (this.leaving) return;
     this.leaving = true;
@@ -694,6 +710,7 @@ export default class GameScene extends Phaser.Scene {
       if (p.done) this.pickups.splice(i, 1);
     }
     this.updateInteract();
+    this.autosaveTick(dt);
     if ((S.pendingStat || 0) > 0 && !this.askingStat && this.player.mode === 'free' && !this.leaving
       && !this.enemies.getChildren().some((e) => e.alerted && !e.dead)) this.askStat();
     if (this.pendingEnding && !ui.modal) {
