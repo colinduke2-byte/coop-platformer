@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { W, H, BINDINGS, VERSION } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
-import { keys } from '../systems/keys.js';
+import { keys, padActive } from '../systems/keys.js';
 import { S, resetState, startNgPlus } from '../systems/state.js';
 import { recalc } from '../systems/stats.js';
 import { anySave, loadGame, listSaves, fmtTime, readSlot } from '../systems/save.js';
@@ -12,7 +12,7 @@ import { dayStamp, dailySeed, dailyMods, startDaily, todaysBest, topBoard } from
 import { MODS, MOD_IDS } from '../data/mods.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { setVolume, setChannel } from '../audio/sfx.js';
-import { CVD_MODES, applyCvd } from '../systems/access.js';
+import { CVD_MODES, applyCvd, padHint, prompt } from '../systems/access.js';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
@@ -43,8 +43,10 @@ export default class TitleScene extends Phaser.Scene {
       return t;
     });
     this.cursor = txt(this, 0, 92, '\u25B6', 13);
-    const hint = txt(this, 0, 172, 'W/S SELECT   E CONFIRM', 4);
-    hint.x = Math.floor((W - hint.width) / 2);
+    const hint = txt(this, 0, 172, '', 4);
+    this.footPad = null;                        // the footer follows the device in use (redrawn in update when it changes)
+    this.footer = () => { if (this.footPad === padActive()) return; this.footPad = padActive(); hint.setText(padHint('W/S SELECT   E CONFIRM')); hint.x = Math.floor((W - hint.width) / 2); };
+    this.footer();
     const ver = txt(this, 0, 172, VERSION, 3); ver.x = W - 4 - ver.width;
     // mouse: hover to pick, click to confirm
     const rowAt = (p) => this.texts.findIndex((t) => p.x >= t.x - 14 && p.x <= t.x + t.width + 6 && p.y >= t.y - 2 && p.y <= t.y + 11);
@@ -74,7 +76,7 @@ export default class TitleScene extends Phaser.Scene {
     rows.push(['TOP SCORES', 6]);
     if (!top.length) rows.push(['NONE YET. BE THE FIRST.', 4]);
     top.forEach((e, i) => rows.push([`${i + 1}. ${e.score}   ${String(e.day).slice(4, 6)}/${String(e.day).slice(6)}   ${e.mods.map((m) => MODS[m].name.split(' ')[0]).join('+')}`.toUpperCase(), 5]));
-    rows.push(['E BEGIN   ESC BACK', 4]);
+    rows.push([padHint('E BEGIN   ESC BACK'), 4]);
     this.dailyBox = this.add.rectangle(W / 2, 90, 280, 160, 0x0b0e1a, 0.92);
     this.dailyTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 16 + i * 11, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
@@ -86,7 +88,7 @@ export default class TitleScene extends Phaser.Scene {
     const lines = [['START NEW GAME+?', 13, 38], ['YOUR CHARACTER AND GEAR CARRY OVER.', 6, 54], ['THE WORLD AND QUESTS START AGAIN, AND', 6, 65], ['ENEMIES ARE TOUGHER.', 6, 76]];
     this.ngTxt = lines.map(([t, c, y]) => { const o = txt(this, 0, y, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.ngRows = ['NO, GO BACK', 'YES, START NEW GAME+'].map((t, i) => { const o = txt(this, 0, 94 + i * 12, t, 6); o.x = Math.floor((W - o.width) / 2); return o; });
-    this.ngFoot = txt(this, 0, 126, 'W/S MOVE   E CHOOSE   ESC BACK', 4); this.ngFoot.x = Math.floor((W - this.ngFoot.width) / 2);
+    this.ngFoot = txt(this, 0, 126, padHint('W/S MOVE   E CHOOSE   ESC BACK'), 4); this.ngFoot.x = Math.floor((W - this.ngFoot.width) / 2);
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
   }
   closeNgConfirm() {
@@ -109,7 +111,7 @@ export default class TitleScene extends Phaser.Scene {
     this.optHead = txt(this, 0, 22, 'OPTIONS', 13); this.optHead.x = Math.floor((W - this.optHead.width) / 2);
     this.optTxt = this.optRows.map((r, i) => txt(this, 50, 34 + i * 12, r, 6));
     this.optVal = this.optRows.map((r, i) => txt(this, 0, 34 + i * 12, '', 5));
-    this.optFoot = txt(this, 0, 150, 'W/S MOVE   A/D ADJUST   ESC BACK', 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
+    this.optFoot = txt(this, 0, 150, padHint('W/S MOVE   A/D ADJUST   ESC BACK'), 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
     this.refreshOptions();
   }
@@ -149,8 +151,9 @@ export default class TitleScene extends Phaser.Scene {
   // How to play: a one-page card for people who have never seen the game.
   openHowTo() {
     this.howMode = true; this.warm = 4;
-    const rows = [['HOW TO PLAY', 13], ['', 4], ['MOVE  WASD / STICK / TOUCH PAD', 6], ['SWORD J   BOW K (HOLD)   SPELL L', 6], ['DODGE ROLL  SPACE  (SLIPS THROUGH BLOWS)', 6], ['BLOCK F (HOLD)   RAISE IT LATE TO PARRY', 6], ['SNEAK C   TALK / OPEN / REST  E', 6], ['PACK I   JOURNAL O   MAP M   PAUSE ESC', 6], ['', 4],
-      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['EVERY PICTURE, SONG AND WORLD IS MADE IN CODE.', 3], ['E OR ESC TO GO BACK', 4]];
+    const rows = [['HOW TO PLAY', 13], ['', 4], ...(padActive() ? [['MOVE  LEFT STICK', 6], [`SWORD ${prompt('KeyJ')}   BOW ${prompt('KeyK')} (HOLD)   SPELL ${prompt('KeyL')}`, 6], [`DODGE ROLL  ${prompt('Space')}  (SLIPS THROUGH BLOWS)`, 6], [`BLOCK ${prompt('KeyF')} (HOLD)   RAISE IT LATE TO PARRY`, 6], [`SNEAK ${prompt('KeyC')}   TALK / OPEN / REST  ${prompt('KeyE')}`, 6], [`MENU ${prompt('Escape')}   (PACK, JOURNAL, MAP)`, 6]]
+        : [['MOVE  WASD / STICK / TOUCH PAD', 6], ['SWORD J   BOW K (HOLD)   SPELL L', 6], ['DODGE ROLL  SPACE  (SLIPS THROUGH BLOWS)', 6], ['BLOCK F (HOLD)   RAISE IT LATE TO PARRY', 6], ['SNEAK C   TALK / OPEN / REST  E', 6], ['PACK I   JOURNAL O   MAP M   PAUSE ESC', 6]]), ['', 4],
+      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['EVERY PICTURE, SONG AND WORLD IS MADE IN CODE.', 3], [padActive() ? `${prompt('KeyE')} OR ${prompt('Escape')} TO GO BACK` : 'E OR ESC TO GO BACK', 4]];
     this.howBox = this.add.rectangle(W / 2, 90, 300, 164, 0x0b0e1a, 0.94);
     this.howTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 14 + i * 10, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.texts.forEach((t) => t.setVisible(false)); this.cursor.setVisible(false);
@@ -190,6 +193,7 @@ export default class TitleScene extends Phaser.Scene {
     const dt = ms / 1000;
     this.t += dt;
     this.snow.update(dt);
+    this.footer();
     if (this.slotMode) { this.updateSlots(); return; }
     if (this.optMode) {
       if (this.warm > 0) { this.warm--; return; }

@@ -2,21 +2,26 @@
 // and walks through: move -> roll -> a lone, weakened wolf (lock on, swing, roll its telegraph) -> done.
 import { S } from './state.js';
 import { bus } from './bus.js';
+import { prompt } from './access.js';
+import { padActive } from './keys.js';
 
 export const TUT_STEPS = ['move', 'roll', 'fight', 'done'];
 const TEXT = {
-  move: 'MOVE WITH WASD OR THE ARROW KEYS.\nGO ON, STRETCH YOUR LEGS.',
-  roll: 'PRESS SPACE TO DODGE ROLL.\nYOU CANNOT BE HIT MID-ROLL.',
-  fight: 'A WOLF! PRESS T TO LOCK ON,\nTAP J TO SWING (THREE TIMES MAKES A COMBO).',
-  windup: 'IT IS WINDING UP TO LUNGE!\nROLL THROUGH IT WITH SPACE, THEN STRIKE BACK.',
+  move: 'MOVE WITH {move}.\nGO ON, STRETCH YOUR LEGS.',
+  roll: 'PRESS {Space} TO DODGE ROLL.\nYOU CANNOT BE HIT MID-ROLL.',
+  fight: 'A WOLF! PRESS {KeyT} TO LOCK ON,\nTAP {KeyJ} TO SWING (THREE TIMES MAKES A COMBO).',
+  windup: 'IT IS WINDING UP TO LUNGE!\nROLL THROUGH IT WITH {Space}, THEN STRIKE BACK.',
+  ready: 'WELL FOUGHT.\nTALK TO BJORN AT THE LODGE. PRESS {KeyE}.',
 };
+// {Code} becomes the key or controller button the player is using right now
+const fill = (t) => t.replace(/\{(\w+)\}/g, (_, c) => (c === 'move' ? (padActive() ? 'THE LEFT STICK' : 'WASD OR THE ARROW KEYS') : prompt(c)));
 
 export function startTutorial() { if (!S.flags.tutDone) S.flags.tut = 'move'; }
 export const tutorialActive = () => !!S.flags.tut && S.flags.tut !== 'done';
 
 const tut = { start: null, rolls0: 0, wolf: null, said: '', t: 0, windupShown: false };
 
-function say(key) { tut.said = key; tut.t = 10; bus.emit('hint', TEXT[key]); }
+function say(key) { tut.said = key; tut.t = 10; bus.emit('hint', fill(TEXT[key])); }
 
 export function updateTutorial(gs, dt) {
   const step = S.flags.tut;
@@ -36,7 +41,7 @@ export function updateTutorial(gs, dt) {
       if (tut.wolf && tut.wolf.dead) {
         S.flags.tut = 'done'; S.flags.tutDone = true; tut.wolf = null;
         bus.emit('toast', 'YOU ARE READY. SEE SIGRID AND BJORN', 13);
-        bus.emit('hint', 'WELL FOUGHT.\nTALK TO BJORN AT THE LODGE. PRESS E.');
+        bus.emit('hint', fill(TEXT.ready));
         return;
       }
       // spawn the lone wolf a short way off, weakened so the first fight is about learning

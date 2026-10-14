@@ -585,7 +585,7 @@ export default class GameScene extends Phaser.Scene {
     pl.mode = 'free';
     await this.delay(500);
     await runScript(introScript);
-    bus.emit('hint', 'WASD MOVE  SPACE ROLL  C SNEAK  E TALK\nJ SWORD  K BOW  L SPELL  Q SWAP  R SHOUT');
+    bus.emit('hint', ['WASD MOVE  SPACE ROLL  C SNEAK  E TALK', 'J SWORD  K BOW  L SPELL  Q SWAP  R SHOUT'].map((l) => padHint(l)).join('\n'));
     const sigrid = this.npcs.find((n) => n.id === 'sigrid');
     if (sigrid) sigrid.walkTo(sigrid.home.x, sigrid.home.y);
   }

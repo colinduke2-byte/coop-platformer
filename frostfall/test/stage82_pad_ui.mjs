@@ -53,6 +53,28 @@ for (const [i, name] of [[0, 'items'], [-1, 'SYSTEM']]) {
   await h.sleep(300);
 }
 
+// the tutorial names the pad buttons too
+const tut = await G(async () => {
+  const { bus } = await import('/src/systems/bus.js'), T = await import('/src/systems/tutorial.js'), S = window.__ff.S;
+  const said = []; const on = (t) => said.push(t); bus.on('hint', on);
+  S.flags.tutDone = false; S.flags.tut = 'roll';
+  T.updateTutorial(window.__ff.game.scene.getScene('Game'), 0.016);
+  bus.off('hint', on); S.flags.tut = 'done'; S.flags.tutDone = true;
+  return said.join('|');
+});
+check('the tutorial says which pad button rolls', /PRESS A TO DODGE ROLL/.test(tut), tut);
+
+// the title screen's How To Play card lists pad buttons
+await G(() => { const sm = window.__ff.game.scene; sm.getScenes(true).forEach((s) => sm.stop(s.scene.key)); sm.start('Title'); });
+await h.sleep(1200);
+await G(() => window.__ff.game.scene.getScene('Title').openHowTo());
+await h.sleep(300);
+await h.shot('s82_pad_howto');
+const how = await G(() => window.__ff.game.scene.getScene('Title').howTxt.map((t) => t.text).join('|'));
+const foot = await G(() => { const t = window.__ff.game.scene.getScene('Title'); return t.children.list.filter((c) => c.y === 172 && c.text).map((c) => c.text).join('|'); });
+check('the title footer names pad buttons', /UP\/DOWN SELECT  B CONFIRM/.test(foot), foot);
+check('How To Play shows controller buttons', /MOVE  LEFT STICK/.test(how) && /DODGE ROLL  A/.test(how) && !/SPACE/.test(how), how);
+
 // a key press switches back
 await G(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyZ' })));
 await G(() => window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyZ' })));
