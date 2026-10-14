@@ -99,8 +99,10 @@ check('all the new creatures can be spawned', Object.values(mk).every(Boolean), 
 await G(() => { const St = window.__ff.S; for (const q of ['miremother', 'leeches', 'orchids', 'stormgiant', 'feathers', 'greytusk']) St.quests[q].status = 'inactive'; St.flags.mireMotherDead = false; St.flags.stormGiantDead = false; St.gold = 0; St.inv = {}; });
 await stub([0]); await SCRIPT('wick_elder'); await unstub();
 check('Ilse sends you to the Sunken Barrow', await G(() => window.__ff.S.quests.miremother.status === 'active'));
+// the loop is paused through the quest rewards so nothing else (a pickup, a trophy) pays gold meanwhile
+await h.pause();
 // gold-find gear or a blessing from earlier in this run raises the reward: expect what addGold really pays (as for Ulfar below)
-const mireWant = await G(async () => { window.__ff.S.flags.mireMotherDead = true; const { stats } = await import('/src/systems/stats.js'), { modMul } = await import('/src/data/mods.js'); return Math.round(520 * stats.mul('goldMul') * modMul('goldMul')); });
+const mireWant = await G(async () => { window.__ff.S.flags.mireMotherDead = true; window.__ff.S.gold = 0; const { stats } = await import('/src/systems/stats.js'), { modMul } = await import('/src/data/mods.js'); return Math.round(520 * stats.mul('goldMul') * modMul('goldMul')); });
 await stub([]); await SCRIPT('wick_elder'); await unstub();
 const iq = await G(() => { const s = window.__ff.S; return { q: s.quests.miremother.status, mail: !!s.inv.peat_mail, hook: !!s.inv.drowned_hook, gold: s.gold }; });
 check('finishing it pays Peat-Warden Mail, the Drowned Hook and gold', iq.q === 'done' && iq.mail && iq.hook && iq.gold === mireWant, JSON.stringify({ ...iq, mireWant }));
@@ -118,6 +120,7 @@ const goldWant = await G(async () => { window.__ff.S.flags.stormGiantDead = true
 await stub([]); await SCRIPT('skarn_chief'); await unstub();
 const uq = await G(() => { const s = window.__ff.S; return { q: s.quests.stormgiant.status, maul: !!s.inv.giants_maul, furs: !!s.inv.clan_furs, gold: s.gold }; });
 check('Ulfar pays Clan Furs, the Giant\'s Maul and gold for the Storm Giant', uq.q === 'done' && uq.maul && uq.furs && uq.gold === goldWant, JSON.stringify({ ...uq, goldWant }));
+await h.resume();
 await stub([0]); await SCRIPT('skarn_shaman'); await unstub();
 await G(() => { window.__ff.S.inv.storm_feather = 5; });
 await stub([]); await SCRIPT('skarn_shaman'); await unstub();

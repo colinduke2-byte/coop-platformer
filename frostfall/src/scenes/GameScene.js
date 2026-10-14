@@ -555,14 +555,18 @@ export default class GameScene extends Phaser.Scene {
     return !this.enemies.getChildren().some((e) => e.alerted && !e.dead);
   }
 
+  // false once this scene has been stopped or torn down: late callbacks (timers, tweens) must not touch it
+  alive() { return !!(this.sys && this.cameras?.main && (this.sys.isActive() || this.sys.isPaused())); }
+
   changeMap(to, spawn, sound = 'door') {
-    if (this.leaving) return;
+    if (this.leaving || !this.alive()) return;
     this.leaving = true;
     sfx.play(sound);
     ui.modal = true;
     let done = false;
     const go = () => {
       if (done) return; done = true;
+      if (!this.alive()) return;                              // quit to the title while fading
       S.map = to; S.spawn = spawn; S.x = S.y = null;
       saveGame(this, { auto: true });
       this.scene.restart({ map: to, spawn });
@@ -789,7 +793,8 @@ export default class GameScene extends Phaser.Scene {
   // Run `go` once, when the fade-out ends or, if that event never arrives (a throttled tab, a paused scene), after a short timer.
   afterFade(go) {
     let done = false;
-    const once = () => { if (done) return; done = true; go(); };
+    const once = () => { if (done) return; done = true; if (this.alive()) go(); };
+    if (!this.alive()) return;
     this.cameras.main.fadeOut(500, 11, 14, 26);
     this.cameras.main.once('camerafadeoutcomplete', once);
     setTimeout(once, 1500);

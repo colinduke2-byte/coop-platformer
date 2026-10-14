@@ -149,6 +149,7 @@ export const eventMethods = {
     }
   },
   fastTravel(f) {
+    if (!this.alive?.()) return false;
     if (hasMod('pilgrim')) { bus.emit('toast', 'A PILGRIM WALKS', 11); return false; }
     if (this.leaving || this.enemies.getChildren().some((e) => e.alerted && !e.dead && !e.cfg.passive)) { bus.emit('toast', 'NOT WITH ENEMIES NEAR', 11); return false; }
     if (S.hp <= 0 || this.player?.statuses && Object.keys(this.player.statuses).some((k) => ['bleed', 'poison', 'burn'].includes(k))) { bus.emit('toast', 'NOT WHILE YOU ARE HURTING', 11); return false; }   // a bleed must not finish you off mid-journey
