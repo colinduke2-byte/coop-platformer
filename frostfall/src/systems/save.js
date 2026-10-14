@@ -98,6 +98,9 @@ export function anySave() { for (let i = 1; i <= SLOTS; i++) if (readSlot(i)) re
 
 // small per-slot summary, cached until the next write (menus redraw often)
 const infoCache = new Map();
+export const forgetInfo = () => infoCache.clear();
+// another tab (or a tool) changed storage: the summaries may be stale
+if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { if (!e.key || e.key.startsWith('frostfall_save')) forgetInfo(); });
 export function saveInfo(slot = settings.slot) {
   if (infoCache.has(slot)) return infoCache.get(slot);
   const r = readSlot(slot);

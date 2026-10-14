@@ -15,40 +15,43 @@ await load('scene=game&map=village&spawn=start');
 await tap('Escape'); await h.sleep(300);
 const rowsInfo = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return m.tabs[m.tab].name; });
 check('pause opens SYSTEM', rowsInfo === 'SYSTEM');
-const goRow = async (name, from) => { /* rows list order is fixed */ };
-// rows: 0 RESUME 1 SAVE 2 LOAD 3 VOLUME 4 MUSIC 5 FULLSCREEN 6 SLOT 7 DIFFICULTY 8 SHAKE 9 FLASHES 10 PIXEL SCALE 11 MOUSE 12 CONTROLS 13 QUIT
-for (let i = 0; i < 9; i++) await tap('KeyS', 50);     // cursor on SLOT
-await tap('KeyD', 50);
+// rows are found by name (the System list is grouped into pages and its order may change)
+const goRow = async (name) => {
+  const [idx, cur] = await G((n) => { const m = window.__ff.game.scene.getScene('Menu'); const t = m.tabs[m.tab]; return [t.rowIndex(n), t.cursorOf()]; }, name);
+  if (idx < 0) throw new Error('no System row ' + name);
+  for (let i = cur; i < idx; i++) await tap('KeyS', 50);
+  for (let i = cur; i > idx; i--) await tap('KeyW', 50);
+};
+await goRow('SLOT'); await tap('KeyD', 50);
 check('SLOT row cycles slots', (await G(() => window.__set.slot)) === 2);
 await tap('KeyA', 50);
-await tap('KeyS', 50); await tap('KeyD', 50);
+await goRow('DIFFICULTY'); await tap('KeyD', 50);
 check('difficulty option changes (normal -> hard)', (await G(() => window.__set.difficulty)) === 'hard');
 await tap('KeyA', 50); await tap('KeyA', 50);
 check('difficulty can go to easy', (await G(() => window.__set.difficulty)) === 'easy');
 await tap('KeyD', 50);
-await tap('KeyS', 50); await tap('KeyA', 50);
+await goRow('SCREEN SHAKE'); await tap('KeyA', 50);
 check('screen shake option', (await G(() => window.__set.shake)) === 0.5 || (await G(() => window.__set.shake)) === 0);
 await tap('KeyD', 50);
-await tap('KeyS', 50); await tap('KeyE', 50);
+await goRow('FLASHES'); await tap('KeyE', 50);
 check('flashes can be turned off', (await G(() => window.__set.flashes)) === false);
 await tap('KeyE', 50);
-await tap('KeyS', 50); await tap('KeyE', 70); await h.sleep(300);
+await goRow('PIXEL SCALE'); await tap('KeyE', 70); await h.sleep(300);
 const sizeInt = await G(() => ({ on: window.__set.intScale, w: window.__ff.game.canvas.clientWidth }));
 check('integer pixel scaling option works (whole-number zoom)', sizeInt.on && sizeInt.w % 320 === 0, JSON.stringify(sizeInt));
 await tap('KeyE', 70); await h.sleep(200);
-await tap('KeyS', 50); await tap('KeyE', 50);
+await goRow('MOUSE'); await tap('KeyE', 50);
 check('mouse option toggles', (await G(() => window.__set.mouse)) === true);
 await tap('KeyE', 50);
-await tap('KeyS', 50); await tap('KeyE', 50);
+await goRow('SNEAK MODE'); await tap('KeyE', 50);
 check('sneak mode option toggles', (await G(() => window.__set.sneakToggle)) === true);
 await tap('KeyE', 50);
-await tap('KeyS', 50); await tap('KeyE', 50);
+await goRow('HOLD TO CHAIN'); await tap('KeyE', 50);
 check('hold-to-chain option toggles', (await G(() => window.__set.holdChain)) === false);
 await tap('KeyE', 50);
-await tap('KeyS', 50);
 await h.shot('s14_options');
 // ---------------- rebinding
-for (let i = 0; i < 7; i++) await tap('KeyS', 50); await tap('KeyE', 80); await h.sleep(250);
+await goRow('CONTROLS'); await tap('KeyE', 80); await h.sleep(250);
 // CONTROLS list: cursor on first action (MOVE UP). move to SWORD (index 5)
 for (let i = 0; i < 5; i++) await tap('KeyS', 50);
 await h.shot('s14_controls');
@@ -73,10 +76,10 @@ const infos = await G(() => window.__save.listSaves().map((x) => !!x.info));
 check('three independent slots', infos[0] && infos[1] && !infos[2], JSON.stringify(infos));
 await G(() => { window.__save.loadGame(2); });
 check('slot 2 loads its own data', (await S('gold')) === 222);
-await G(() => { localStorage.setItem('frostfall_save_v1', '{"corrupt": tru'); });
+await G(() => { localStorage.setItem('frostfall_save_v1', '{"corrupt": tru'); window.__save.forgetInfo(); });
 const rec = await G(() => { const ok = window.__save.loadGame(1); return { ok, gold: window.__ff.S.gold, info: window.__save.saveInfo(1) }; });
 check('a corrupted save is recovered from its backup copy', rec.ok && rec.gold === 111 && rec.info.recovered, JSON.stringify(rec));
-await G(() => { localStorage.setItem('frostfall_save_v1', 'nonsense'); localStorage.setItem('frostfall_save_v1_bak', 'also nonsense'); });
+await G(() => { for (const k of ['frostfall_save_v1', 'frostfall_save_v1_bak', 'frostfall_save_v1_session']) localStorage.setItem(k, 'nonsense'); window.__save.forgetInfo(); });
 check('a fully corrupt slot is treated as empty (no crash)', (await G(() => window.__save.loadGame(1))) === false);
 
 // ---------------- mid-boss save
