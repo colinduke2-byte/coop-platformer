@@ -112,10 +112,11 @@ await G(() => { window.__ff.S.inv.marsh_orchid = 5; });
 await stub([]); await SCRIPT('wick_herbalist'); await unstub();
 check('Maud trades a draught for five marsh orchids', await G(() => window.__ff.S.quests.orchids.status === 'done' && !window.__ff.S.inv.marsh_orchid));
 await stub([0]); await SCRIPT('skarn_chief'); await unstub();
-await G(() => { window.__ff.S.flags.stormGiantDead = true; window.__ff.S.gold = 0; });
+// a gold-find item or blessing picked up earlier in this run raises the reward: expect what addGold really pays
+const goldWant = await G(async () => { window.__ff.S.flags.stormGiantDead = true; window.__ff.S.gold = 0; const { stats } = await import('/src/systems/stats.js'), { modMul } = await import('/src/data/mods.js'); return Math.round(640 * stats.mul('goldMul') * modMul('goldMul')); });
 await stub([]); await SCRIPT('skarn_chief'); await unstub();
 const uq = await G(() => { const s = window.__ff.S; return { q: s.quests.stormgiant.status, maul: !!s.inv.giants_maul, furs: !!s.inv.clan_furs, gold: s.gold }; });
-check('Ulfar pays Clan Furs, the Giant\'s Maul and gold for the Storm Giant', uq.q === 'done' && uq.maul && uq.furs && uq.gold === 640, JSON.stringify(uq));
+check('Ulfar pays Clan Furs, the Giant\'s Maul and gold for the Storm Giant', uq.q === 'done' && uq.maul && uq.furs && uq.gold === goldWant, JSON.stringify({ ...uq, goldWant }));
 await stub([0]); await SCRIPT('skarn_shaman'); await unstub();
 await G(() => { window.__ff.S.inv.storm_feather = 5; });
 await stub([]); await SCRIPT('skarn_shaman'); await unstub();
