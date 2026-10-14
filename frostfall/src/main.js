@@ -17,6 +17,7 @@ import { unlock, setHidden } from './audio/sfx.js';
 import { saveGame, probeStorage } from './systems/save.js';
 import { ui } from './systems/ui.js';
 import { settings } from './systems/settings.js';
+import { setContrast } from './art/font.js';
 import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
@@ -25,6 +26,7 @@ import { showCrash } from './ui/crash.js';
 import { installDepthGuard, installPhysicsClamp, applyFpsCap, installFontGuard } from './systems/perf.js';
 import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
+setContrast(settings.highContrast);      // high contrast lifts dim text everywhere
 installErrorLog();
 onCrash(showCrash);
 installDepthGuard(Phaser);

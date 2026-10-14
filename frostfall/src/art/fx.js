@@ -1,5 +1,5 @@
 import { settings } from '../systems/settings.js';
-import { txtS } from './font.js';
+import { txtS, fontKey } from './font.js';
 import { C } from '../config.js';
 
 // Particles, floating text, slashes, rings: small timed effects for a scene.
@@ -18,7 +18,7 @@ export class Fx {
   getText(x, y, str, col) {
     const o = this.textPool.pop();
     if (!o) return txtS(this.s, x, y, str, col, 0).setDepth(99500);
-    o.main.setFont('f' + col); o.setText(str).setPosition(x, y).setAlpha(1);
+    o.main.setFont(fontKey(col)); o.setText(str).setPosition(x, y).setAlpha(1);
     o.main.setVisible(true); o.shadow.setVisible(true);
     return o;
   }

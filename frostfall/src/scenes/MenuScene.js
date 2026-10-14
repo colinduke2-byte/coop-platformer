@@ -270,6 +270,8 @@ export default class MenuScene extends Phaser.Scene {
       const y = 37 + k * 18;
       if (i === this.cursor) { g.fillStyle(C[3]); g.fillRect(8, y, 146, 17); g.fillStyle(C[13]); g.fillRect(8, y, 2, 17); }
       this.I(12, y, iconKey(id), 1);
+      const rk = RARITY.findIndex((x) => x.id === it.rarity);       // rarity is told by pips too (1 magic .. 3 legendary), not colour alone
+      for (let d = 0; d < rk; d++) { g.fillStyle(C[RARITY[rk].col]); g.fillRect(30 + d * 4, y + 13, 2, 2); }   // under the name
       const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
       const rc = rarityCol(id);
       const c = S.inv[id];

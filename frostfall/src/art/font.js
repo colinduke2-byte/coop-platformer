@@ -80,7 +80,10 @@ const CW = 6;
 const CH = 8;
 const PER_ROW = 16;
 
-export const fontKey = (col) => 'f' + col;
+// High contrast lifts the dim greys one step everywhere (3 -> 4, 4 -> 5), so hints, locked rows and labels stay readable.
+let contrast = false;
+export const setContrast = (on) => { contrast = !!on; };
+export const fontKey = (col) => 'f' + (contrast && (col === 3 || col === 4) ? col + 1 : col);
 
 // Build font textures for all 16 palette colours.
 export function buildFonts(scene) {

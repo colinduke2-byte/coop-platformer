@@ -9,7 +9,7 @@ import { anySave, loadGame, listSaves, fmtTime, slotState, deleteSave, rescueInf
 import { openSaveTools } from '../ui/savetools.js';
 import { overlayOpen } from '../ui/overlay.js';
 import { bus } from '../systems/bus.js';
-import { fit } from '../art/font.js';
+import { fit, fontKey } from '../art/font.js';
 import { MAPS, prebuildRegion } from '../data/maps.js';
 import { regionOfMap } from '../data/regions.js';
 import { readSlot } from '../systems/save.js';
@@ -176,7 +176,7 @@ export default class TitleScene extends Phaser.Scene {
   refreshOptions() {
     this.optRows.forEach((r, i) => {
       this.optTxt[i].setFont(i === this.optSel ? 'f13' : 'f6');
-      const [v, c] = this.optValue(r); this.optVal[i].setText(v).setFont('f' + c); this.optVal[i].x = W - 44 - this.optVal[i].width;
+      const [v, c] = this.optValue(r); this.optVal[i].setText(v).setFont(fontKey(c)); this.optVal[i].x = W - 44 - this.optVal[i].width;
     });
     this.optDesc.setText(this.optHelp(this.optRows[this.optSel]));
   }
@@ -255,13 +255,13 @@ export default class TitleScene extends Phaser.Scene {
   }
   refreshSlots() {
     const r = this.slotRows[this.slotSel];
-    this.slotTxt.forEach((t, i) => t.setFont(i === this.slotSel ? 'f13' : (this.slotRows[i].info || this.slotMode === 'new') ? 'f6' : 'f3'));
+    this.slotTxt.forEach((t, i) => t.setFont(i === this.slotSel ? 'f13' : (this.slotRows[i].info || this.slotMode === 'new') ? 'f6' : fontKey(3)));
     this.slotCursor.setPosition(28, this.slotTxt[this.slotSel].y);
     let foot;
     if (this.slotArm === 'delete') foot = `DELETE ${r.rescue ? 'THE RESCUE SAVE' : 'SLOT ' + r.slot}? V AGAIN TO DELETE`;
     else if (this.slotArm === 'overwrite') foot = `OVERWRITE SLOT ${r.slot}? E AGAIN TO START OVER`;
     else foot = `W/S SLOT  E ${this.slotMode === 'load' ? 'LOAD' : 'START'}${r.info || r.state === 'damaged' ? '  V DELETE' : ''}  ESC BACK`;
-    this.slotFoot.setText(padHint(foot, 46)).setFont(this.slotArm ? 'f11' : 'f4');
+    this.slotFoot.setText(padHint(foot, 46)).setFont(this.slotArm ? 'f11' : fontKey(4));
     this.slotFoot.x = Math.floor((W - this.slotFoot.width) / 2);
   }
   closeSlots() {

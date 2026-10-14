@@ -6,7 +6,7 @@ import { STATUS as STATUS_INFO } from '../systems/status.js';
 import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
-import { txt, textW, wrap, normText, fit } from '../art/font.js';
+import { txt, textW, wrap, normText, fit, fontKey } from '../art/font.js';
 import { padHint, prompt } from '../systems/access.js';
 import { logLine } from '../systems/msglog.js';
 import { keys } from '../systems/keys.js';
@@ -254,7 +254,7 @@ export default class HudScene extends Phaser.Scene {
       const w = textW(label) + 4;
       if (x + w > maxX) { if (row === 1) break; row = 1; x = 3; }
       const t = this.statTxt[shown++];
-      t.setText(label).setFont('f' + col); t.x = x + 2; t.y = y0 + 1 + row * 10;
+      t.setText(label).setFont(fontKey(col)); t.x = x + 2; t.y = y0 + 1 + row * 10;
       g.fillStyle(C[0], 0.62); g.fillRect(x, y0 + row * 10, t.width + 4, 9);
       x += t.width + 6;
     }
@@ -400,7 +400,7 @@ export default class HudScene extends Phaser.Scene {
     if (!s || S.hp <= 0) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
     s.t += dt;
     const lines = wrap(s.text, 52);
-    this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont('f' + s.col);
+    this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont(fontKey(s.col));
     const h = lines.split('\n').length * 9;
     // above the boss bar and above the newest toasts, so the three never print over each other
     const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? H - 36 - (this.toasts.length - 1) * 9 - 4 : H);
@@ -588,7 +588,7 @@ export default class HudScene extends Phaser.Scene {
       const id = ids[i];
       if (!id || ui.modal || dead) { t.setText(''); return; }
       const line = fit((id === tid ? '> ' : '') + QUESTS[id].short(S.quests[id]), 30);
-      t.setText(line); t.setFont(id === tid ? 'f13' : 'f4'); t.x = W - 4 - t.width; t.y = 26 + i * 9;
+      t.setText(line); t.setFont(id === tid ? 'f13' : fontKey(4)); t.x = W - 4 - t.width; t.y = 26 + i * 9;
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
     });
     this.drawQuestMarker(g, tid, dt);
@@ -661,7 +661,7 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[12]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 1);
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
-      this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg >= 4 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont('f' + (dg ? DANGER_COL[dg] : 6)).setVisible(true);
+      this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg && dg !== 2 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont(fontKey(dg ? DANGER_COL[dg] : 6)).setVisible(true);
       this.tgtTxt.x = Math.round(tx + (tw - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);
 
