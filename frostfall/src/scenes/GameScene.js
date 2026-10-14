@@ -152,6 +152,7 @@ export default class GameScene extends Phaser.Scene {
     this.t = 0;
     this.leaving = false;
     this.promptTxt = txtS(this, 0, 0, '', 6, 0).setDepth(99400).setVisible(false);
+    this.promptBg = this.add.rectangle(0, 0, 10, 10, 0x0b0e1a, 0.72).setOrigin(0).setDepth(99399).setVisible(false);   // dark plate behind it
 
     // --- spawn points
     const sp = built.entities.find((e) => e.t === 'spawn' && e.name === this.spawnName)
@@ -653,10 +654,13 @@ export default class GameScene extends Phaser.Scene {
     this.target = best;
     if (best) {
       const lab = padHint(best.label());          // "E: TALK" becomes "B: TALK" on a controller
+      // above a talker's floating name, never on top of it
+      const named = best.nameTxt && (best.nameTxt.main ? best.nameTxt.main.visible : best.nameTxt.visible), px = Math.round(best.ix - lab.length * 3), py = Math.round(best.iy - (named ? 32 : 22));
       this.promptTxt.setText(lab).setVisible(true);
-      this.promptTxt.setPosition(Math.round(best.ix - lab.length * 3), Math.round(best.iy - 22));
+      this.promptTxt.setPosition(px, py);
+      this.promptBg.setPosition(px - 3, py - 2).setSize(lab.length * 6 + 6, 11).setVisible(true);
       if (keys.pressed('interact') && pl.lockT <= 0) { sfx.play('select'); best.interact(); }
-    } else this.promptTxt.setVisible(false);
+    } else { this.promptTxt.setVisible(false); this.promptBg.setVisible(false); }
   }
 
   update(time, ms) {
@@ -804,7 +808,7 @@ export default class GameScene extends Phaser.Scene {
     S.bossState = null;                // a mid-fight save does not bring the boss back half-dead after you fall
     this.afterFade(() => {
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
-      S.gold = Math.floor(S.gold * 0.9);
+      S.gold = Math.floor(S.gold * 0.9);                         // (the death screen announced this loss)
       let r = S.respawn || { map: 'village', spawn: 'start' };
       if (!MAPS[r.map]) r = { map: 'village', spawn: 'start' };          // never respawn into a map that does not exist
       S.map = r.map;

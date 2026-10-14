@@ -18,6 +18,15 @@ export function installDepthGuard(Phaser) {
   }
 }
 
+// BitmapText.setFont re-measures the text every call, even with the same font; the HUD calls it every frame.
+export function installFontGuard(Phaser) {
+  const BT = Phaser.GameObjects.BitmapText?.prototype;
+  if (!BT || BT.setFont.__guarded) return;
+  const orig = BT.setFont;
+  BT.setFont = function (font, size, align) { if (font === this.font && size === undefined && align === undefined) return this; return orig.call(this, font, size, align); };
+  BT.setFont.__guarded = true;
+}
+
 // Physics runs on the real frame time (fixedStep off) so 120 / 144 Hz screens move bodies every frame instead of every
 // other one. A long frame (a hitch, a background tab) is clamped to 50 ms so nothing can tunnel through a wall.
 export function installPhysicsClamp(Phaser) {

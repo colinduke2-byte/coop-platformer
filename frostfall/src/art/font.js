@@ -118,7 +118,8 @@ export function txt(scene, x, y, str, col = 6) {
   const t = scene.add.bitmapText(x, y, fontKey(col), normText(str));
   t.setOrigin(0, 0);
   const raw = t.setText.bind(t);
-  t.setText = (v) => raw(normText(v)); // always upper-case / sanitise
+  t._raw = str;
+  t.setText = (v) => { if (v === t._raw) return t; t._raw = v; return raw(normText(v)); }; // always upper-case / sanitise (skipped when unchanged)
   return t;
 }
 // Text with a 1px dark drop shadow (returns a small container-like helper).

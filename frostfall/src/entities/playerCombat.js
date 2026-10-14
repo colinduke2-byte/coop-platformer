@@ -192,6 +192,8 @@ export const combatMethods = {
       return false;
     }
     const sc = this.scene;
+    // remembered for the death screen ("SLAIN BY ...")
+    this.lastHitBy = opts.attacker ? (opts.attacker.displayName || opts.attacker.cfg?.title || opts.attacker.cfg?.name || null) : opts.by || this.lastHitBy;
     if (this.swing && stats.weapon()?.swingGuard) dmg *= 1 - stats.weapon().swingGuard;
     let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * classMix().knock, blocked = false;
     const crush = !!(opts.crush || opts.attacker?.cfg?.crush);

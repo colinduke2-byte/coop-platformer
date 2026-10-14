@@ -59,6 +59,8 @@ export const keys = {
   pressed(act) { return anyIn(BINDINGS[act], pressedSet) || anyIn(VIRT[act], pressedSet); },
   // Menus: the cast button, or the controller's right bumper (RB) whatever it is mapped to, backs out of anything.
   back() { return this.pressed('spell') || pressedSet.has('PadBack') || pressedSet.has('PadBack2'); },
+  // leave a conversation: the cast key (or RB outside menus); never B, which only backs out of a choice
+  skipTalk() { return this.pressed('spell') || pressedSet.has('PadBack'); },
   // controller bumpers in menus
   tabLeft() { return pressedSet.has('PadTabL'); },
   tabRight() { return pressedSet.has('PadTabR'); },

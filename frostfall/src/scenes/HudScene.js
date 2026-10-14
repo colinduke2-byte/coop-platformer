@@ -2,11 +2,13 @@ import { ITEMS } from '../data/items.js';
 import { burden } from '../systems/burden.js';
 import { dangerOfEnemy, dangerName, DANGER_COL } from '../systems/danger.js';
 import { BOSS_TAUNTS } from '../data/story.js';
-import { statusList } from '../systems/status.js';
+import { STATUS as STATUS_INFO } from '../systems/status.js';
 import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
-import { txt, textW, wrap, normText } from '../art/font.js';
+import { txt, textW, wrap, normText, fit } from '../art/font.js';
+import { padHint, prompt } from '../systems/access.js';
+import { logLine } from '../systems/msglog.js';
 import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
 import { dialogue } from '../systems/dialogue.js';
@@ -61,8 +63,18 @@ export default class HudScene extends Phaser.Scene {
 
     this.toasts = [];
     this.area = null;
-    this.onToast = (text, col = 6) => { this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4 }); if (this.toasts.length > 5) this.toasts.shift().t.destroy(); };
+    // the same message twice in a row stacks ("x2") instead of pushing older news off the screen
+    this.onToast = (text, col = 6) => {
+      const same = this.toasts.find((ts) => ts.text === text && ts.life > 0.3);
+      if (same) { same.n++; same.life = 2.4; same.t.setText(`${text} X${same.n}`); return; }
+      this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4, text, n: 1 });
+      if (this.toasts.length > 5) this.toasts.shift().t.destroy();
+    };
     this.onArea = (name) => { this.area?.destroy(); this.area = txt(this, 0, 36, name, 5); this.area.x = Math.round((W - this.area.width) / 2); this.areaT = 3; };
+    // a small "saved" mark (top right, under the clock) whenever progress is written, quiet autosaves included
+    this.savedT = 0; this.savedTxt = txt(this, 0, 35, 'SAVED', 8).setVisible(false);
+    this.onSaved = () => { this.savedT = 1.6; };
+    bus.on('saved', this.onSaved);
     bus.on('toast', this.onToast); bus.on('area', this.onArea);
     this.banners = [];
     this.bannerObj = null;
@@ -79,10 +91,20 @@ export default class HudScene extends Phaser.Scene {
     this.dBody = txt(this, 14, H - 49, '', 6).setDepth(11);
     this.dChoice = [0, 1, 2, 3, 4, 5].map((i) => txt(this, 22, H - 52 + i * 9, '', 6).setDepth(11));
     this.dMore = txt(this, W - 22, H - 15, '\u25B6', 13).setDepth(11);
+    this.dQ = txt(this, 14, 0, '', 4).setDepth(11);             // the question stays in view while you choose
+    this.dKeys = txt(this, 0, 0, '', 3).setDepth(11);           // which keys advance / leave, in the box corner
+    this.dArrows = [txt(this, 0, 0, '\u25B2', 13).setDepth(11), txt(this, 0, 0, '\u25BC', 13).setDepth(11)];
     dialogue.hud = this;
     this.questTxt = [txt(this, 0, 26, '', 4), txt(this, 0, 35, '', 4)];
     this.hint = null;
-    this.onHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 5, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; };
+    // tips wait their turn instead of replacing one another; they sit under the status row, clear of the bars and the purse
+    this.hintQ = [];
+    this.showHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 0, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; this.hintText = text; };
+    this.onHint = (text) => {
+      if (this.hint && this.hintText === text) { this.hintT = 12; return; }
+      if (this.hint && this.hintT > 4) { if (!this.hintQ.includes(text)) this.hintQ.push(text); if (this.hintQ.length > 3) this.hintQ.shift(); this.hintT = Math.min(this.hintT, 6); return; }
+      this.showHint(text);
+    };
     bus.on('hint', this.onHint);
     this.debugTxt = txt(this, 4, 32, '', 15).setVisible(false);
     this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); }
@@ -90,8 +112,11 @@ export default class HudScene extends Phaser.Scene {
     window.addEventListener('keydown', this.onKey);
     this.dead = this.add.container(0, 0).setVisible(false);
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
-    const d1 = txt(this, W / 2, 74, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
-    this.dead.add(d1);
+    const d1 = txt(this, W / 2, 60, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
+    // what happened and what it costs: who did it, the gold you drop, where you wake
+    this.deadWhy = txt(this, 0, 92, '', 6); this.deadCost = txt(this, 0, 104, '', 12); this.deadWake = txt(this, 0, 116, '', 4);
+    this.dead.add([d1, this.deadWhy, this.deadCost, this.deadWake]);
+    this.deadShown = false;
 
     // boss intro card: letterbox bars slide in and the boss's name appears
     this.intro = null;
@@ -109,12 +134,14 @@ export default class HudScene extends Phaser.Scene {
     bus.on('boss:engaged', this.onBossIntro);
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('discover', this.onDiscover); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); bus.off('say', this.onSay); bus.off('boss:phase', this.onBossPhase); bus.off('enemy:killed', this.onKilled); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
+    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('discover', this.onDiscover); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); bus.off('say', this.onSay); bus.off('boss:phase', this.onBossPhase); bus.off('enemy:killed', this.onKilled); bus.off('saved', this.onSaved); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
 
   // ------------------------------------------------------- dialogue API
   say(name, text) {
     if (this.skipTalk) return Promise.resolve();        // the cast button was pressed: read nothing more until a choice or the end
+    this.lastSay = text;
+    logLine('talk', (name ? name + ': ' : '') + text, 6);
     return new Promise((res) => {
       const lines = wrap(normText(text), 47).split('\n');
       const pages = [];
@@ -127,7 +154,10 @@ export default class HudScene extends Phaser.Scene {
   choose(opts) {
     this.skipTalk = false;
     return new Promise((res) => {
-      this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, sel: 0, age: 0 };
+      // long options wrap with a hanging indent; the window scrolls when there are more than fit
+      const rows = opts.map((o) => wrap(normText(String(o)), 44).split('\n'));
+      const q = this.lastSay ? fit(normText(this.lastSay).replace(/\s+/g, ' '), 47) : '';
+      this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, rows, q, sel: 0, top: 0, age: 0 };
     });
   }
 
@@ -157,10 +187,14 @@ export default class HudScene extends Phaser.Scene {
     g.fillStyle(C[2]); g.fillRect(bx, by, bw, bh);
     g.fillStyle(C[8]); g.fillRect(Math.round(bx + (L.c - L.w) * bw), by, Math.round(L.w * 2 * bw), bh);
     g.fillStyle(C[13]); g.fillRect(Math.round(bx + L.pos * bw) - 1, by - 3, 3, bh + 6);
-    for (let i = 0; i < L.need; i++) { g.fillStyle(i < L.hits ? C[13] : C[3]); g.fillRect(bx + i * 12, by + 22, 9, 5); }
-    if (!this.lockTxt) this.lockTxt = [txt(this, 0, 54, '', 6), txt(this, 0, 110, '', 4)];
-    this.lockTxt[0].setText('PICKING THE LOCK').setPosition(Math.round(160 - 48), by - 20);
-    this.lockTxt[1].setText(`E: PICK   ESC: STOP   LOCKPICKS ${count('lockpick')}`).setPosition(Math.round(160 - 78), by + 31);
+    for (let i = 0; i < L.need; i++) { g.fillStyle(i < L.hits ? C[13] : C[3]); g.fillRect(bx + 40 + i * 12, by + 22, 9, 5); }
+    // the words sit above the panel (depth 11 over the panel's 10): title, pins done, picks left and the keys
+    if (!this.lockTxt) this.lockTxt = [txt(this, 0, 0, '', 13).setDepth(11), txt(this, 0, 0, '', 6).setDepth(11), txt(this, 0, 0, '', 4).setDepth(11), txt(this, 0, 0, '', 5).setDepth(11)];
+    this.lockTxt[0].setText('PICKING THE LOCK'); this.lockTxt[0].setPosition(Math.round((W - this.lockTxt[0].width) / 2), by - 20);
+    this.lockTxt[1].setText('PINS').setPosition(bx, by + 21);
+    this.lockTxt[3].setText(`LOCKPICKS ${count('lockpick')}`); this.lockTxt[3].setPosition(bx + bw - this.lockTxt[3].width, by + 21);
+    const lh = padHint(`E PICK IN THE GREEN   ESC STOP`, 34);
+    this.lockTxt[2].setText(lh); this.lockTxt[2].setPosition(Math.round((W - this.lockTxt[2].width) / 2), by + 32);
     if (L.age < 4) return;
     if (keys.pressed('pause') || keys.back()) { this.lock = null; g.clear(); this.lockTxt.forEach((t) => t.setText('')); L.res(false); return; }
     if (keys.pressed('interact')) {
@@ -180,29 +214,46 @@ export default class HudScene extends Phaser.Scene {
 
   // Small status row under the bars: ward / weapon enchant / lock-on, each with its remaining time.
   drawStatus(g, pl, y0) {
-    if (!this.statTxt) this.statTxt = [0, 1, 2, 3, 4, 5].map(() => txt(this, 0, 0, '', 15));
-    const list = [];
-    { const bl2 = burden.level(); if (bl2 !== 'ok') list.push([bl2 === 'over' ? 'OVERLOADED' : 'BURDENED', bl2 === 'over' ? 11 : 12]); }   // first, so a long buff list never hides it
-    if (pl.counterT > 0) list.push(['COUNTER ' + pl.counterT.toFixed(1), 15]);
-    if (pl.riposteT > 0) list.push(['RIPOSTE ' + pl.riposteT.toFixed(1), 13]);
-    if (S.blessing) list.push([BLESSINGS[S.blessing].name.toUpperCase(), BLESSINGS[S.blessing].kind === 'pact' ? 11 : 13]);
-    if (pl.ward) list.push(['WARD ' + Math.ceil(pl.ward.t), 15]);
+    if (!this.statTxt) this.statTxt = Array.from({ length: 12 }, () => txt(this, 0, 0, '', 15));
+    // harmful things first (burning, bleeding, slowed...), so a long list of buffs can never hide them
+    const bad = [], good = [];
+    { const bl2 = burden.level(); if (bl2 !== 'ok') bad.push([bl2 === 'over' ? 'OVERLOADED' : 'BURDENED', bl2 === 'over' ? 11 : 12]); }
+    for (const [k, v] of Object.entries(pl.statuses || {})) {
+      const st = STATUS_INFO[k]; if (!st) continue;
+      bad.push([st.name + (k === 'chill' ? ' ' + v.stacks : '') + (v.t > 0 ? ' ' + Math.ceil(v.t) : ''), st.col]);
+    }
+    if (pl.counterT > 0) good.push(['COUNTER ' + pl.counterT.toFixed(1), 15]);
+    if (pl.riposteT > 0) good.push(['RIPOSTE ' + pl.riposteT.toFixed(1), 13]);
+    if (S.blessing) good.push([BLESSINGS[S.blessing].name.toUpperCase(), BLESSINGS[S.blessing].kind === 'pact' ? 11 : 13]);
+    if (pl.ward) good.push(['WARD ' + Math.ceil(pl.ward.t), 15]);
     const en = stats.enchant();
-    if (en) list.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);
-    if (S.flags.restedUntil > S.playtime) list.push(['RESTED ' + Math.ceil((S.flags.restedUntil - S.playtime) / 60) + 'M', 8]);
-    if (S.flags.elixir && S.flags.elixirUntil > S.playtime) list.push([ITEMS[S.flags.elixir].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil(S.flags.elixirUntil - S.playtime) + 'S', 14]);
-    if (S.flags.food && S.flags.foodUntil > S.playtime) list.push([ITEMS[S.flags.food].name.toUpperCase().slice(0, 9) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
-    for (const sl of statusList(pl)) list.push(sl);
-    if (pl.sneaking) list.push(['SNEAK', 4]);
-    if (pl.blocking) list.push(['GUARD', 7]);
-    let x = 3;
-    this.statTxt.forEach((t, i) => {
-      const e = list[i];
-      if (!e) { t.setText(''); return; }
-      t.setText(e[0]).setFont('f' + e[1]); t.x = x + 2; t.y = y0 + 1;
-      g.fillStyle(C[0], 0.62); g.fillRect(x, y0, t.width + 4, 9);
+    if (en) good.push([en.type.toUpperCase(), { fire: 12, frost: 15, shock: 13 }[en.type] || 5]);
+    if (S.flags.restedUntil > S.playtime) good.push(['RESTED ' + Math.ceil((S.flags.restedUntil - S.playtime) / 60) + 'M', 8]);
+    if (S.flags.elixir && S.flags.elixirUntil > S.playtime) good.push([fit((ITEMS[S.flags.elixir]?.name || 'ELIXIR').toUpperCase(), 12) + ' ' + Math.ceil(S.flags.elixirUntil - S.playtime) + 'S', 14]);
+    if (S.flags.food && S.flags.foodUntil > S.playtime) good.push([fit((ITEMS[S.flags.food]?.name || 'MEAL').toUpperCase(), 12) + ' ' + Math.ceil((S.flags.foodUntil - S.playtime) / 60) + 'M', 12]);
+    if (pl.sneaking) good.push(['SNEAK', 4]);
+    if (pl.blocking) good.push(['GUARD', 7]);
+    if ((S.perkPoints || 0) > 0 && !S.quick) good.push([`PERK POINT${S.perkPoints > 1 ? 'S ' + S.perkPoints : ''}`, 13]);
+    const list = [...bad, ...good];
+    // up to two rows, left half of the screen (the quest tracker owns the right); anything more is counted
+    const maxX = W / 2 + 40;
+    let x = 3, row = 0, shown = 0;
+    this.statTxt.forEach((t) => t.setText(''));
+    for (let i = 0; i < list.length && shown < this.statTxt.length - 1; i++) {
+      const [label, col] = list[i];
+      const w = textW(label) + 4;
+      if (x + w > maxX) { if (row === 1) break; row = 1; x = 3; }
+      const t = this.statTxt[shown++];
+      t.setText(label).setFont('f' + col); t.x = x + 2; t.y = y0 + 1 + row * 10;
+      g.fillStyle(C[0], 0.62); g.fillRect(x, y0 + row * 10, t.width + 4, 9);
       x += t.width + 6;
-    });
+    }
+    if (shown < list.length) {
+      const t = this.statTxt[this.statTxt.length - 1];
+      t.setText('+' + (list.length - shown)).setFont('f6'); t.x = x + 2; t.y = y0 + 1 + row * 10;
+      g.fillStyle(C[0], 0.62); g.fillRect(x, y0 + row * 10, t.width + 4, 9);
+    }
+    this.statRows = list.length ? row + 1 : 0;
   }
 
   // Diamond over the objective when it is on screen, an edge arrow when it is not, a label when it is in another area.
@@ -218,15 +269,16 @@ export default class HudScene extends Phaser.Scene {
   markerAt(g, T, col, dt) {
     const gs = this.gs;
     if (T.map !== gs.mapId) {
-      const label = 'GO TO ' + (MAPS[T.map]?.name || T.map).toUpperCase();
-      this.qm.setText(label).setFont('f15'); this.qm.x = Math.round((W - this.qm.width) / 2); this.qm.y = H - 38;
+      if (this.bossOn) return;                       // the boss bar owns the bottom centre during a fight
+      const label = fit('GO TO ' + (MAPS[T.map]?.name || T.map).toUpperCase(), 34);
+      this.qm.setText(label).setFont('f15'); this.qm.x = Math.round((W - this.qm.width) / 2); this.qm.y = H - 13;
       g.fillStyle(C[0], 0.6); g.fillRect(this.qm.x - 3, this.qm.y - 2, this.qm.width + 6, 11);
       return;
     }
     const cam = gs.cameras.main.worldView;
     const wx = (T.x + 0.5) * 16, wy = (T.y + 0.5) * 16;
     const sx = wx - cam.x, sy = wy - cam.y;
-    const bob = Math.sin(this.time.now / 220) * 2;
+    const bob = settings.reduceMotion ? 0 : Math.sin(this.time.now / 220) * 2;
     if (sx > 6 && sx < W - 6 && sy > 14 && sy < H - 6) {
       const x = Math.round(sx), y = Math.round(sy - 16 + bob);
       g.fillStyle(C[0]); g.fillRect(x - 4, y - 1, 9, 9); g.fillRect(x - 1, y - 4, 3, 15);
@@ -254,9 +306,15 @@ export default class HudScene extends Phaser.Scene {
   updateDialogue(dt) {
     const d = this.dlg, g = this.dg;
     g.clear();
-    if (!d) { this.dMore.setVisible(false); return; }
+    if (!d) { this.dMore.setVisible(false); this.dQ.setText(''); this.dKeys.setText(''); this.dArrows.forEach((a) => a.setVisible(false)); return; }
     d.age++;
-    const h = d.choices ? 14 + Math.min(6, d.choices.length) * 9 : 52;
+    const VIS = 5;                                          // choice lines shown at once (the window scrolls past that)
+    let h = 52, lines = 0;
+    if (d.choices) {
+      const all = d.rows.flat().length;
+      lines = Math.min(VIS, all);
+      h = 16 + (d.q ? 10 : 0) + lines * 9;
+    }
     const top = H - 6 - h;
     g.fillStyle(C[0]); g.fillRect(6, top, W - 12, h);
     g.fillStyle(C[3]); g.fillRect(7, top + 1, W - 14, h - 2);
@@ -271,36 +329,52 @@ export default class HudScene extends Phaser.Scene {
     if (d.choices) {
       this.dBody.setText('');
       this.dMore.setVisible(false);
-      this.dChoice.forEach((c, i) => {
-        const o = d.choices[i];
-        c.setText(o ? (i === d.sel ? '\u25B6 ' : '  ') + o : '');
-        c.setFont(i === d.sel ? 'f13' : 'f6');
-        c.setPosition(14, top + 7 + i * 9);
+      this.dQ.setText(d.q).setPosition(14, top + 5);
+      // which option rows are visible: keep the selected option (all of its lines) inside the window
+      const startOf = (i) => d.rows.slice(0, i).reduce((n, r) => n + r.length, 0);
+      const selStart = startOf(d.sel), selEnd = selStart + d.rows[d.sel].length;
+      if (selStart < d.top) d.top = selStart;
+      if (selEnd > d.top + VIS) d.top = selEnd - VIS;
+      const flat = [];
+      d.rows.forEach((r, i) => r.forEach((ln, k) => flat.push({ i, text: (k === 0 ? (i === d.sel ? '\u25B6 ' : '  ') : '  ') + ln })));
+      const y0 = top + 6 + (d.q ? 10 : 0);
+      this.dChoice.forEach((c, k) => {
+        const f = flat[d.top + k];
+        if (!f || k >= VIS) { c.setText(''); return; }
+        c.setText(f.text).setFont(f.i === d.sel ? 'f13' : 'f6').setPosition(14, y0 + k * 9);
       });
+      this.dArrows[0].setVisible(d.top > 0).setPosition(W - 20, y0);
+      this.dArrows[1].setVisible(d.top + VIS < flat.length).setPosition(W - 20, y0 + (VIS - 1) * 9);
+      this.dKeys.setText('');
       if (d.age < 3) return;
       if (keys.pressed('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
       if (keys.pressed('up')) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.play('move'); }
-      if (keys.pressed('interact')) { sfx.play('select'); const r = d.res, s = d.sel; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); r(s); }
-      else if (keys.back()) {       // the cast button backs out: take the "leave" option if there is one
+      if (keys.pressed('interact')) { sfx.play('select'); const r = d.res, s = d.sel; logLine('talk', '> ' + d.choices[s], 4); this.dlg = null; this.dChoice.forEach((c) => c.setText('')); this.dQ.setText(''); this.dArrows.forEach((a) => a.setVisible(false)); r(s); }
+      else if (keys.back()) {       // back (B, ESC's cast key): take the "leave" option if there is one
         const out = d.choices.map((o, i) => [o, i]).reverse().find(([o]) => /^(leave|goodbye|bye|never ?mind|nothing|back|cancel|no thanks|not now|farewell|later|done)\b/i.test(String(o).trim()));
-        if (out) { sfx.play('back'); const r = d.res; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); r(out[1]); }
+        if (out) { sfx.play('back'); const r = d.res; this.dlg = null; this.dChoice.forEach((c) => c.setText('')); this.dQ.setText(''); this.dArrows.forEach((a) => a.setVisible(false)); r(out[1]); }
       }
       return;
     }
-    this.dChoice.forEach((c) => c.setText(''));
+    this.dChoice.forEach((c) => c.setText('')); this.dQ.setText(''); this.dArrows.forEach((a) => a.setVisible(false));
     const page = d.pages[d.p];
-    if (d.age > 2 && keys.back()) {   // the cast button leaves the talk: this and every later line is skipped, choices still ask
-      this.skipTalk = true; const r = d.res; this.dlg = null; this.dMore.setVisible(false); sfx.play('back'); r(); return;
+    // the keys, small in the corner: what advances, what leaves
+    const kh = padHint(`E NEXT  ${prompt('KeyL')} SKIP`, 20);
+    this.dKeys.setText(kh).setPosition(W - 26 - textW(kh), H - 15);
+    if (d.age > 2 && keys.skipTalk()) {   // the cast key leaves the talk: this and every later line is skipped, choices still ask
+      this.skipTalk = true; const r = d.res; this.dlg = null; this.dMore.setVisible(false); this.dKeys.setText(''); sfx.play('back'); r(); return;
     }
+    const step = { slow: 0.04, normal: 0.022, fast: 0.011, instant: 0 }[settings.textSpeed] ?? 0.022;
     if (d.n < page.length) {
+      if (step === 0) d.n = page.length;
       d.t += dt;
-      while (d.t > 0.022 && d.n < page.length) { d.t -= 0.022; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play('blip'); }
+      while (d.t > step && d.n < page.length) { d.t -= step; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play('blip'); }
       if (d.age > 2 && keys.pressed('interact')) d.n = page.length;
     } else if (d.age > 2) {
-      this.dMore.setVisible(Math.floor(this.time.now / 300) % 2 === 0).setPosition(W - 22, H - 16);
+      this.dMore.setVisible(settings.reduceMotion || Math.floor(this.time.now / 300) % 2 === 0).setPosition(W - 22, H - 16);
       if (keys.pressed('interact')) {
         if (d.p < d.pages.length - 1) { d.p++; d.n = 0; d.t = 0; sfx.play('select'); }
-        else { const r = d.res; this.dlg = null; this.dMore.setVisible(false); r(); }
+        else { const r = d.res; this.dlg = null; this.dMore.setVisible(false); this.dKeys.setText(''); r(); }
       }
     }
     this.dBody.setText(page.slice(0, d.n)).setPosition(15, top + 6);
@@ -311,13 +385,15 @@ export default class HudScene extends Phaser.Scene {
   // Spoken lines: a name and a sentence over the bottom of the screen for a few seconds.
   updateSub(dt) {
     const s = this.sub;
-    if (!s) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
+    if (!s || S.hp <= 0) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
     s.t += dt;
     const lines = wrap(s.text, 52);
     this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont('f' + s.col);
     const h = lines.split('\n').length * 9;
-    this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = H - 40 - h;
-    this.subTxt.x = Math.round((W - this.subTxt.width) / 2); this.subTxt.y = H - 30 - h + 9;
+    // above the boss bar and above the newest toasts, so the three never print over each other
+    const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? H - 36 - (this.toasts.length - 1) * 9 - 4 : H);
+    this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = floor - 10 - h;
+    this.subTxt.x = Math.round((W - this.subTxt.width) / 2); this.subTxt.y = floor - h;
     const a = s.t < 0.3 ? s.t / 0.3 : s.t > 3.4 ? Math.max(0, (3.8 - s.t) / 0.4) : 1;
     this.subTxt.setAlpha(a); this.subWho.setAlpha(a);
     if (s.t > 3.8) this.sub = null;
@@ -359,11 +435,19 @@ export default class HudScene extends Phaser.Scene {
   update(_, ms) {
     const dt = ms / 1000;
     this.updateIntro(dt); this.updateSub(dt);
-    if (this.lock) this.updateLock(dt); else this.updateDialogue(dt);
+    if (this.lock) this.updateLock(dt); else { if (this.lockTxt && this.lockTxt[0]._raw) this.lockTxt.forEach((t) => t.setText('')); this.updateDialogue(dt); }
     const g = this.g;
     const pl = this.gs.player;
     g.clear();
-    this.dead.setVisible(S.hp <= 0);
+    const dead = S.hp <= 0;
+    this.dead.setVisible(dead);
+    if (dead && !this.deadShown) {
+      // the death card says what happened and what it costs, once, when it appears
+      this.deadShown = true;
+      const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * 0.9), r = S.respawn || { map: 'village' };
+      const lines = [[this.deadWhy, by ? fit('SLAIN BY ' + String(by).toUpperCase(), 48) : 'YOU FELL'], [this.deadCost, S.quick ? '' : loss > 0 ? `YOU DROP ${loss} GOLD (10%)` : ''], [this.deadWake, S.quick ? 'THE RUN IS OVER' : fit('YOU WAKE AT ' + (r.x != null ? 'THE LAST BRAZIER IN ' : '') + (MAPS[r.map]?.name || 'THE VILLAGE').toUpperCase(), 48)]];
+      for (const [t, v] of lines) { t.setText(v); t.x = Math.round((W - t.width) / 2); }
+    } else if (!dead) this.deadShown = false;
     if (S.quick) {
       const q = S.quick, a = this.gs.arena || {}, mult = Math.min(3, 1 + Math.floor(Math.max(0, q.combo - 1) / 4) * 0.25);
       const score = (a.cleared || 0) * (q.mode === 'rush' ? 500 : 100) + (q.pts || 0);
@@ -377,8 +461,14 @@ export default class HudScene extends Phaser.Scene {
       }
     } else if (this.quickTxt) { this.quickTxt.forEach((t) => t.destroy()); this.quickTxt = null; this.quickKey = null; }
 
+    // the boss fight owns the bottom centre (its bar) and pushes spoken lines up; see updateSub
+    const bs = this.gs.boss;
+    this.bossOn = !!(bs && bs.engaged && !bs.dead);
     // panels
     const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;
+    const nums = settings.hudNumbers || big;
+    if (!this.barNums) this.barNums = BARS.map(() => txt(this, 0, 0, '', 6));
+    let numsRight = 0;
     g.fillStyle(C[0], 0.62); g.fillRect(0, 1, 16, rs * BARS.length + 1);       // the same translucent grey as behind the gold and arrow counts
     BARS.forEach((b, i) => {
       this.flash[b.key] -= dt;
@@ -392,8 +482,16 @@ export default class HudScene extends Phaser.Scene {
       const low = this.flash[b.key] > 0 && Math.floor(this.flash[b.key] * 20) % 2 === 0;
       g.fillStyle(low ? C[11] : C[b.col]); g.fillRect(x, y, fw, bh);
       g.fillStyle(C[b.hi]); g.fillRect(x, y, fw, 1);
+      // numbers beside the bar (Bar Numbers or Large UI)
+      const nt = this.barNums[i];
+      if (nums) {
+        nt.setText(`${Math.max(0, Math.ceil(S[b.key]))}/${S[b.max]}`).setVisible(true); nt.x = x + w + 4; nt.y = y + (big ? 1 : -1);
+        g.fillStyle(C[0], 0.62); g.fillRect(nt.x - 2, nt.y - 1, nt.width + 4, 8);
+        numsRight = Math.max(numsRight, nt.x + nt.width + 2);
+      } else nt.setVisible(false);
     });
     this.drawStatus(g, pl, big ? 38 : 30);
+    const statBottom = (big ? 38 : 30) + (this.statRows || 0) * 10;
 
     // gold + arrows
     const gold = String(S.gold), ar = String(S.arrows);
@@ -433,7 +531,7 @@ export default class HudScene extends Phaser.Scene {
       box(p.x + 1, H - 20);
       const n = (S.inv[p.id] || 0) + (S.inv[p.id + '_g'] || 0);
       p.img.setAlpha(n ? 1 : 0.3);
-      p.cnt.setText(n ? String(n) : '');
+      p.cnt.setText(n ? String(n) : ''); p.cnt.x = p.x + 18 - p.cnt.width; p.cnt.y = H - 10;      // inside the slot, bottom right
     });
 
     // toasts stack above the bottom-left slots
@@ -443,12 +541,15 @@ export default class HudScene extends Phaser.Scene {
       if (ts.life <= 0) { ts.t.destroy(); this.toasts.splice(i, 1); }
     }
     this.toasts.forEach((ts, i) => {
+      ts.t.setVisible(!dead);
+      if (dead) return;
       ts.t.y = H - 36 - (this.toasts.length - 1 - i) * 9;
       ts.t.setAlpha(Math.min(1, ts.life * 2.5));
       g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, 9);
     });
     if (this.area) {
-      this.areaT -= dt;
+      if (!this.bannerObj) this.areaT -= dt;          // waits while a level-up banner holds the middle of the screen
+      this.area.setVisible(!this.bannerObj && !dead);
       this.area.setAlpha(Math.max(0, Math.min(1, this.areaT)));
       g.fillStyle(C[0], 0.5 * Math.max(0, Math.min(1, this.areaT))); g.fillRect(this.area.x - 4, 34, this.area.width + 8, 11);
       if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
@@ -456,7 +557,8 @@ export default class HudScene extends Phaser.Scene {
 
     // low-health warning pulse
     if (S.hp > 0 && S.hp / S.maxHp < 0.3) {
-      const a = 0.18 + 0.14 * Math.sin(this.time.now / 160);
+      const steady = settings.reduceMotion || settings.flashes === false;     // no pulsing for those who asked for calm
+      const a = steady ? 0.22 : 0.18 + 0.14 * Math.sin(this.time.now / 160);
       g.fillStyle(C[11], a);
       g.fillRect(0, 0, W, 3); g.fillRect(0, H - 3, W, 3); g.fillRect(0, 0, 3, H); g.fillRect(W - 3, 0, 3, H);
     }
@@ -468,11 +570,12 @@ export default class HudScene extends Phaser.Scene {
 
     // quest tracker
     const tid = trackedId();
-    const ids = [tid, ...activeQuestIds().filter((x) => x !== tid)].filter(Boolean).slice(0, 2);
+    const act = activeQuestIds();
+    const ids = [tid, ...act.filter((x) => x !== tid)].filter(Boolean).slice(0, 2);
     this.questTxt.forEach((t, i) => {
       const id = ids[i];
-      if (!id || ui.modal) { t.setText(''); return; }
-      const line = ((id === tid ? '> ' : '') + QUESTS[id].short(S.quests[id])).slice(0, 34);
+      if (!id || ui.modal || dead) { t.setText(''); return; }
+      const line = fit((id === tid ? '> ' : '') + QUESTS[id].short(S.quests[id]), 30);
       t.setText(line); t.setFont(id === tid ? 'f13' : 'f4'); t.x = W - 4 - t.width; t.y = 26 + i * 9;
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
     });
@@ -484,10 +587,19 @@ export default class HudScene extends Phaser.Scene {
     }
     if (this.hint) {
       this.hintT -= dt;
-      g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, 2, this.hint.width + 8, this.hintH);
+      // under the status row and the quest tracker; below the banner while one is showing
+      const hy = this.bannerObj ? 88 : Math.max(statBottom + 3, 46);
+      this.hint.y = hy + 2; this.hint.setVisible(!dead);
+      if (!dead) { g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, hy, this.hint.width + 8, this.hintH); }
       this.hint.setAlpha(Math.min(1, this.hintT));
-      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; }
+      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; if (this.hintQ.length) this.showHint(this.hintQ.shift()); }
     }
+    // the "saved" mark
+    if (this.savedT > 0) {
+      this.savedT -= dt;
+      const st = this.savedTxt; st.setVisible(!dead && !ui.modal).setAlpha(Math.min(1, this.savedT * 2)); st.x = W - 4 - st.width; st.y = this.clockTxt?.visible ? 35 : 25;
+      if (st.visible) { g.fillStyle(C[0], 0.6 * Math.min(1, this.savedT * 2)); g.fillRect(st.x - 9, st.y - 1, st.width + 11, 9); g.fillStyle(C[8], Math.min(1, this.savedT * 2)); g.fillRect(st.x - 7, st.y + 1, 5, 5); }
+    } else this.savedTxt.setVisible(false);
 
     // level-up banner (queue)
     if (!this.bannerObj && this.banners.length) {
@@ -504,30 +616,32 @@ export default class HudScene extends Phaser.Scene {
       const b = this.bannerObj;
       b.t -= dt;
       const a = Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
-      b.c.setAlpha(a);
+      b.c.setAlpha(dead ? 0 : a);
       g.fillStyle(C[0], 0.7 * a); g.fillRect((W - b.w) / 2, 40, b.w, 44);
       g.fillStyle(C[13], a); g.fillRect((W - b.w) / 2, 40, b.w, 1); g.fillRect((W - b.w) / 2, 83, b.w, 1);
       if (b.t <= 0) { b.c.destroy(); this.bannerObj = null; }
     }
 
-    // boss bar
-    const bs = this.gs.boss;
-    if (bs && bs.engaged && !bs.dead) {
-      const bw = 170, bx = Math.round((W - bw) / 2);
-      g.fillStyle(C[0], 0.75); g.fillRect(bx - 6, 3, bw + 12, 22);
-      g.fillStyle(C[0]); g.fillRect(bx - 1, 14, bw + 2, 9);
-      g.fillStyle(C[1]); g.fillRect(bx, 15, bw, 7);
-      g.fillStyle(bs.bphase === 2 ? C[11] : C[14]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 7);
-      g.fillStyle(bs.bphase === 2 ? C[12] : C[5]); g.fillRect(bx, 15, Math.round(bw * bs.hpFrac), 1);
-      g.fillStyle(C[13]); g.fillRect(bx + bw / 2, 14, 1, 9);
-      if (this.bossFor !== bs) { this.bossName?.destroy(); this.bossName = txt(this, 0, 5, bs.cfg.title || bs.cfg.name, 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); this.bossFor = bs; }
+    // boss bar: bottom centre, between the spell and potion slots, clear of your own bars
+    if (this.bossOn && !dead) {
+      const bw = 170, bx = Math.round((W - bw) / 2), by0 = H - 24;
+      g.fillStyle(C[0], 0.75); g.fillRect(bx - 6, by0, bw + 12, 22);
+      g.fillStyle(C[0]); g.fillRect(bx - 1, by0 + 11, bw + 2, 9);
+      g.fillStyle(C[1]); g.fillRect(bx, by0 + 12, bw, 7);
+      g.fillStyle(bs.bphase === 2 ? C[11] : C[14]); g.fillRect(bx, by0 + 12, Math.round(bw * bs.hpFrac), 7);
+      g.fillStyle(bs.bphase === 2 ? C[12] : C[5]); g.fillRect(bx, by0 + 12, Math.round(bw * bs.hpFrac), 1);
+      g.fillStyle(C[13]); g.fillRect(bx + bw / 2, by0 + 11, 1, 9);
+      if (this.bossFor !== bs) { this.bossName?.destroy(); this.bossName = txt(this, 0, by0 + 2, fit(bs.cfg.title || bs.cfg.name, 28), 13); this.bossName.x = Math.round((W - this.bossName.width) / 2); this.bossFor = bs; }
       this.bossName.setVisible(true);
     } else this.bossName?.setVisible(false);
 
     // target bar: lock-on target, or whoever the bow is aimed at
-    const tg = !(bs && bs.engaged && !bs.dead) ? (pl.target || (pl.drawing ? pl.pickTarget(190) : null)) : null;
+    const tg = !this.bossOn && !dead ? (pl.target || (pl.drawing ? pl.pickTarget(190) : null)) : null;
+    this.tgtOn = !!(tg && !tg.dead);
     if (tg && !tg.dead) {
-      const oy = (this.hint ? this.hintH + 2 : 0), tw = settings.largeUi ? 120 : 90, tx = Math.round((W - tw) / 2), frac = Math.max(0, tg.hp / tg.maxHp);
+      // below the Arena score lines; right of the bar numbers when those are on
+      const oy = this.quickTxt ? this.quickTxt.length * 9 + 2 : 0, tw = settings.largeUi ? 120 : 90;
+      const tx = Math.max(Math.round((W - tw) / 2), numsRight + 6), frac = Math.max(0, tg.hp / tg.maxHp);
       g.fillStyle(C[0], 0.7); g.fillRect(tx - 4, 2 + oy, tw + 8, 17);
       g.fillStyle(C[0]); g.fillRect(tx - 1, 11 + oy, tw + 2, 7);
       g.fillStyle(C[1]); g.fillRect(tx, 12 + oy, tw, 5);
@@ -536,17 +650,18 @@ export default class HudScene extends Phaser.Scene {
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
       this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg >= 4 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont('f' + (dg ? DANGER_COL[dg] : 6)).setVisible(true);
-      this.tgtTxt.x = Math.round((W - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
+      this.tgtTxt.x = Math.round(tx + (tw - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);
 
     // sneak indicator
-    if (pl.sneaking && !(bs && bs.engaged && !bs.dead)) {
+    if (pl.sneaking && !this.bossOn && !dead) {
       const seen = this.gs.enemies.getChildren().some((e) => e.alerted && !e.dead);
-      g.fillStyle(C[0], 0.65); g.fillRect(W / 2 - 25, 3, 50, 10);
+      const sy = (this.quickTxt ? this.quickTxt.length * 9 + 2 : 0) + (this.tgtOn ? 21 : 3);        // under the target bar when there is one
+      g.fillStyle(C[0], 0.65); g.fillRect(W / 2 - 25, sy, 50, 10);
       if (!this.sneakTxt) this.sneakTxt = txt(this, 0, 5, '', 4);
       this.sneakTxt.setText(seen ? 'DETECTED' : 'HIDDEN').setVisible(true);
       this.sneakTxt.x = Math.round(W / 2 - this.sneakTxt.width / 2);
-      this.sneakTxt.y = 5;
+      this.sneakTxt.y = sy + 2;
       this.sneakTxt.setFont(seen ? 'f11' : 'f15');
     } else this.sneakTxt?.setVisible(false);
   }

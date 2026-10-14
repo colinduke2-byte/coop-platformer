@@ -22,13 +22,14 @@ import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
 import { installErrorLog, guardGame, onCrash } from './systems/debug.js';
 import { showCrash } from './ui/crash.js';
-import { installDepthGuard, installPhysicsClamp, applyFpsCap } from './systems/perf.js';
+import { installDepthGuard, installPhysicsClamp, applyFpsCap, installFontGuard } from './systems/perf.js';
 import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
 installErrorLog();
 onCrash(showCrash);
 installDepthGuard(Phaser);
 installPhysicsClamp(Phaser);
+installFontGuard(Phaser);
 
 const q = new URLSearchParams(location.search);
 
