@@ -2,6 +2,10 @@
 import Phaser from 'phaser';
 import { T } from '../config.js';
 
+// shared search buffers (one search runs at a time)
+const MAXQ = 2500;
+const BFS = { prev: null, stamp: null, gen: 0, q: new Int32Array(MAXQ + 16) };
+
 export const pathingMethods = {
   tileIdAt(px, py) {
     const x = Math.floor(px / T), y = Math.floor(py / T);
@@ -43,21 +47,30 @@ export const pathingMethods = {
       }
       if (!found) return null;
     }
-    const prev = new Int32Array(w * h).fill(-2);
-    const q = [sy * w + sx];
-    prev[q[0]] = -1;
+    // Buffers are reused between calls (a fresh whole-map array per call was ~0.8 MB of garbage in the Hollow Reach).
+    // A cell counts as visited only when its stamp matches this call's generation, so nothing needs clearing.
+    const n = w * h;
+    if (!BFS.prev || BFS.prev.length < n) { BFS.prev = new Int32Array(n); BFS.stamp = new Uint32Array(n); BFS.gen = 0; }
+    const prev = BFS.prev, stamp = BFS.stamp;
+    if (++BFS.gen >= 0xffffffff) { stamp.fill(0); BFS.gen = 1; }
+    const gen = BFS.gen, q = BFS.q;
+    const seen = (i) => stamp[i] === gen;
+    const mark = (i, from) => { stamp[i] = gen; prev[i] = from; };
+    let qn = 0;
+    q[qn++] = sy * w + sx; mark(q[0], -1);
     const goal = gy * w + gx;
     let qi = 0, hit = false;
-    while (qi < q.length && q.length < 2500) {
+    while (qi < qn && qn < MAXQ) {
       const cur = q[qi++];
       if (cur === goal) { hit = true; break; }
       const cx = cur % w, cy = (cur / w) | 0;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = cx + dx, ny = cy + dy;
-        if (!free(nx, ny) || prev[ny * w + nx] !== -2) continue;
+        if (!free(nx, ny) || seen(ny * w + nx)) continue;
         if (dx && dy && (!free(cx + dx, cy) || !free(cx, cy + dy))) continue;
-        prev[ny * w + nx] = cur; q.push(ny * w + nx);
+        if (qn >= MAXQ + 8) break;
+        mark(ny * w + nx, cur); q[qn++] = ny * w + nx;
       }
     }
     if (!hit) return null;

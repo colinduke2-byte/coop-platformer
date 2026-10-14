@@ -6,7 +6,7 @@
 import { bus } from './bus.js';
 
 const STEP = 2;            // search / flood-fill grid, in pixels
-const SOLID_GROUPS = ['propBodies', 'breakBodies', 'npcBodies', 'chestBodies'];
+const SOLID_GROUPS = ['staticBodies'];          // every solid prop, chest, breakable and NPC (GameScene keeps them in one group)
 
 // Is the body box with top-left (x, y) clear of everything solid?
 export function boxFree(sc, x, y, w, h) {

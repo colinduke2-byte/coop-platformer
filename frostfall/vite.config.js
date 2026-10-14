@@ -49,5 +49,6 @@ export default defineConfig({
     // Exact match only, so 'phaser/src/...' style imports would still reach the real package.
     alias: [{ find: /^phaser$/, replacement: 'phaser/dist/phaser-arcade-physics.min.js' }],
   },
-  build: { chunkSizeWarningLimit: 2200 },
+  // one bundle, always: the single-file build (artifact) cannot load extra chunks, so dynamic import() must stay inline
+  build: { chunkSizeWarningLimit: 2200, rollupOptions: { output: { inlineDynamicImports: true } } },
 });

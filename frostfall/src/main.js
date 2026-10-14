@@ -19,10 +19,14 @@ import { settings } from './systems/settings.js';
 import { installTouch } from './ui/touch.js';
 import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
-import { installErrorLog, guardGame } from './systems/debug.js';
+import { installErrorLog, guardGame, onCrash } from './systems/debug.js';
+import { showCrash } from './ui/crash.js';
+import { installDepthGuard } from './systems/perf.js';
 import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
 installErrorLog();
+onCrash(showCrash);
+installDepthGuard(Phaser);
 
 const q = new URLSearchParams(location.search);
 

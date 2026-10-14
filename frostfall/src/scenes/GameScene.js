@@ -83,6 +83,8 @@ import '../data/regions4_story.js';
 import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
+import { cullScene, culled } from '../systems/perf.js';
+const FLAME_KEYS = ['flame0', 'flame1', 'flame2'];
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -127,14 +129,15 @@ export default class GameScene extends Phaser.Scene {
     this.barGfx = this.add.graphics().setDepth(99200);
     this.pickups = [];
     this.interactables = [];
-    this.chestBodies = null;
-    this.propBodies = null;
-    this.npcBodies = null;
+    // One static group for every solid prop, chest, breakable and standing NPC: Arcade searches its static tree once per
+    // moving body per collider, so four groups meant four searches each frame. The old names stay as aliases.
+    this.staticBodies = this.physics.add.staticGroup();
+    this.chestBodies = this.propBodies = this.npcBodies = this.staticBodies;
     this.npcs = [];
     this.breakables = [];
     this.zones = [];
     this.lastBark = -9;
-    this.breakBodies = null;
+    this.breakBodies = this.staticBodies;
     this.boss = null;
     this.gate = null;
     this.initSetPieces();
@@ -190,9 +193,8 @@ export default class GameScene extends Phaser.Scene {
         if (spec && (kind === 'ragna' ? this.mapId === 'village' : this.mapId === 'emberhold')) this.spawnEntity(spec);
       }
     });
-    if (this.npcBodies) { this.physics.add.collider(this.player, this.npcBodies); this.physics.add.collider(this.enemies, this.npcBodies); }
-    for (const grp of [this.breakBodies, this.propBodies]) if (grp) { this.physics.add.collider(this.player, grp); this.physics.add.collider(this.enemies, grp); }
-    if (this.chestBodies) { this.physics.add.collider(this.player, this.chestBodies); this.physics.add.collider(this.enemies, this.chestBodies); }
+    this.physics.add.collider(this.player, this.staticBodies);
+    this.physics.add.collider(this.enemies, this.staticBodies);
     if (this.pendingBossRestore) { this.boss.restoreState(S.bossState); this.pendingBossRestore = false; }
     music.play(def.interior ? 'interior' : (this.isNightPre ? 'night' : (def.music || 'village')));
     ambience.play(def.ambience || null);
@@ -247,7 +249,11 @@ export default class GameScene extends Phaser.Scene {
     if (S.inv.pony_whistle > 0 && (def.stream || def.snow) && !def.interior && !def.cave && !def.arena && !def.quick) { this.pony = new Pony(this, this.player.x - 16, this.player.y + 6); this.interactables.push(this.pony); }
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
     if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startQuick()); }
+    // skip off-screen scenery in rendering (re-checked every frame, so moving things are always right)
+    this.onCull = () => cullScene(this);
+    this.events.on('prerender', this.onCull);
     this.events.once('shutdown', () => {
+      this.events.off('prerender', this.onCull);
       this.snow?.destroy();
       this.fx.clear();
       this.listeners.forEach(([ev, fn]) => bus.off(ev, fn));
@@ -687,7 +693,11 @@ export default class GameScene extends Phaser.Scene {
     }
     this.fogT -= dt;
     if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
-    for (const f of this.flames) { f.ph += dt * 9; f.f.setTexture('flame' + (Math.floor(f.ph) % 3)); }
+    for (const f of this.flames) {           // animate only the flames on screen, and only when their frame changes
+      f.ph += dt * 9;
+      const fr = Math.floor(f.ph) % 3;
+      if (fr !== f.fr && !culled(f.f)) { f.fr = fr; f.f.setTexture(FLAME_KEYS[fr]); }
+    }
     this.updateClock(dt);
     this.schedT = (this.schedT || 0) - dt;
     if (this.schedT <= 0 && this.npcs.length) {
@@ -696,7 +706,7 @@ export default class GameScene extends Phaser.Scene {
       for (const n of this.npcs) if (n.sched && n.away !== night) { n.setAway(night); if (night) this.fx.puff(n.x, n.y, 5, 4, 20, 0.4); }
     }
     const night = this.nightness();
-    for (const l of this.lights) { l.ph += dt * 7; l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
+    for (const l of this.lights) { l.ph += dt * 7; if (!culled(l.l)) l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
     for (const n of this.npcs) n.update(dt, this.player);
     this.follower?.update(dt, this.player);
     this.hound?.update(dt, this.player);

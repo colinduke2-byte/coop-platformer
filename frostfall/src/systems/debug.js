@@ -3,6 +3,8 @@
 import { S } from './state.js';
 import { settings } from './settings.js';
 import { VERSION, BUILD } from '../config.js';
+import { bus } from './bus.js';
+import { copyText } from '../ui/overlay.js';
 
 const errors = [];
 const stackOf = (e) => (e?.stack ? String(e.stack).split('\n').slice(1, 7).map((l) => l.trim()).join(' | ') : '');
@@ -15,7 +17,7 @@ function push(m, err) {
 let lastToast = -1e9;
 const note = () => {
   const now = Date.now();
-  if (now - lastToast > 60000) { lastToast = now; import('./bus.js').then(({ bus }) => bus.emit('toast', 'SOMETHING WENT WRONG. THE GAME KEPT GOING. SYSTEM > BUG REPORT', 11)); }
+  if (now - lastToast > 60000) { lastToast = now; bus.emit('toast', 'SOMETHING WENT WRONG. THE GAME KEPT GOING. SYSTEM > BUG REPORT', 11); }
 };
 
 export function installErrorLog() {
@@ -34,8 +36,10 @@ function caught(e, where) {
   note();
   const now = performance.now();
   if (now - burst.since > 3000) { burst.since = now; burst.n = 0; }
-  if (++burst.n >= 30 && !burst.card) { burst.card = true; import('../ui/crash.js').then(({ showCrash }) => showCrash(e)).catch(() => {}); }
+  if (++burst.n >= 30 && !burst.card) { burst.card = true; try { crashHandler?.(e); } catch { /* the card itself must never throw */ } }
 }
+let crashHandler = null;                       // set by main.js (ui/crash.js), kept out of here to avoid an import cycle
+export const onCrash = (fn) => { crashHandler = fn; };
 export const crashReset = () => { burst.card = false; burst.n = 0; };
 export function guardGame(Phaser, game) {
   const Systems = Phaser.Scenes.Systems.prototype;
@@ -81,6 +85,5 @@ export async function copyDebugInfo(scene) {
   const text = debugInfo(scene);
   console.log(text);
   window.__debugInfo = text;
-  const { copyText } = await import('../ui/overlay.js');
   return copyText(text, 'Bug report');
 }
