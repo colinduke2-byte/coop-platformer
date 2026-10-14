@@ -87,7 +87,7 @@ export function applyScaling() {
 window.addEventListener('resize', () => { settings.intScale && applyScaling(); updateRotate(applyScaling); setTimeout(() => updateRotate(applyScaling), 200); });   // again after Phaser's own resize pass
 window.addEventListener('orientationchange', () => setTimeout(() => updateRotate(applyScaling), 200));
 // no polling: the picture is re-fitted when the window, the orientation or the device in use changes
-onPadChange(() => updateRotate(applyScaling));
+onPadChange((on) => { updateRotate(applyScaling); document.body.classList.toggle('pad', on); });
 try { matchMedia('(orientation: portrait)').addEventListener('change', () => updateRotate(applyScaling)); } catch { /* old browser */ }
 window.__updateRotate = () => updateRotate(applyScaling);
 game.events.once('ready', () => applyScaling());
@@ -112,6 +112,26 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { quietSave(); pauseIfPlaying(); setHidden(true); } else setHidden(false);
 });
 window.addEventListener('pagehide', quietSave);
+
+// Fullscreen: say so when the browser or the frame cannot (iPhone Safari, the artifact frame); on phones lock landscape.
+game.events.once('ready', () => {
+  const sc = game.scale;
+  sc.on('fullscreenunsupported', () => bus.emit('toast', 'FULLSCREEN IS NOT AVAILABLE HERE. ADD THE GAME TO YOUR HOME SCREEN', 11));
+  sc.on('fullscreenfailed', () => bus.emit('toast', 'FULLSCREEN WAS BLOCKED BY THE BROWSER', 11));
+  sc.on('enterfullscreen', () => { try { screen.orientation?.lock?.('landscape').catch(() => {}); } catch { /* not supported */ } });
+});
+
+// Keep the screen awake while playing (a phone with a controller gets no touches, so it would dim and lock).
+let wake = null;
+const wantWake = () => game.scene.isActive('Game') && !document.hidden;
+async function syncWake() {
+  try {
+    if (wantWake() && !wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); }
+    else if (!wantWake() && wake) { await wake.release(); wake = null; }
+  } catch { wake = null; }                     // refused (battery saver, iframe): nothing to do
+}
+document.addEventListener('visibilitychange', syncWake);
+bus.on('scene:game', syncWake); bus.on('scene:title', syncWake);
 wireQuests();
 
 // Handy handle for the console and the automated tests.

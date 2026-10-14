@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { padHint } from '../systems/access.js';
 import { W, H, C } from '../config.js';
 import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
@@ -65,7 +66,7 @@ export default class EndingScene extends Phaser.Scene {
       if (keys.pressed('interact')) this.n = this.full.length;
       this.body.setText(this.full.slice(0, this.n));
     } else if (this.pi < this.pages.length - 1) {
-      this.end.setText(`E: CONTINUE  ${this.pi + 1}/${this.pages.length}`).x = Math.round((W - this.end.width) / 2);
+      this.end.setText(padHint(`E: CONTINUE`) + `  ${this.pi + 1}/${this.pages.length}`).x = Math.round((W - this.end.width) / 2);
       if (keys.pressed('interact')) { this.pi++; this.full = this.pages[this.pi]; this.n = 0; this.t = 0; this.body.setText(''); this.end.setText(''); }
     } else {
       this.end.setText(this.ch2 ? 'CHAPTER TWO ENDS   -   E: THE MOUNTAIN STIRS' : 'THE END   -   E: KEEP EXPLORING').x = Math.round((W - this.end.width) / 2);

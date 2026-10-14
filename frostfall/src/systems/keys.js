@@ -31,28 +31,47 @@ export function applyBindings(custom = settings.keys) {
   for (const [act, codes] of Object.entries(custom || {})) if (BINDINGS[act] && codes?.length) BINDINGS[act] = [...codes];
   rebuild();
 }
+// Returns the action that gave up the key (it takes your old key instead), or null.
 export function setBinding(act, code) {
   const old = BINDINGS[act][0];
+  let swapped = null;
   // swap with whoever owned this key so nothing is left unbound
   for (const [other, codes] of Object.entries(BINDINGS)) {
-    if (other !== act && codes[0] === code) BINDINGS[other] = [old, ...codes.slice(1)];
+    if (other !== act && codes[0] === code) { BINDINGS[other] = [old, ...codes.slice(1)]; swapped = other; }
     else if (other !== act) BINDINGS[other] = codes.filter((c) => c !== code);
   }
   BINDINGS[act] = [code, ...BINDINGS[act].slice(1).filter((c) => c !== code)];
-  settings.keys = JSON.parse(JSON.stringify(BINDINGS));
+  // only what differs from the defaults is stored, so later default changes still reach players who rebound something
+  const diff = {};
+  for (const [a, codes] of Object.entries(BINDINGS)) if (JSON.stringify(codes) !== JSON.stringify(DEFAULT_BINDINGS[a])) diff[a] = [...codes];
+  settings.keys = diff;
   saveSettings(); rebuild();
+  return swapped;
 }
 export function resetBindings() { settings.keys = {}; saveSettings(); applyBindings({}); }
+// What a key code is called on this keyboard. Codes are physical positions (KeyW is "Z" on AZERTY), so letters come from
+// the browser's layout map where it has one, or from what the key typed last time it was pressed.
+const layout = new Map();
+export const learnKey = (code, key) => { if (/^(Key|Digit)/.test(code) && key && key.length === 1 && /\S/.test(key)) layout.set(code, key.toUpperCase()); };
+try { navigator.keyboard?.getLayoutMap?.().then((m) => { for (const [code, key] of m) learnKey(code, key); }).catch(() => {}); } catch { /* not available */ }
 export function codeName(c) {
-  const m = { Space: 'SPACE', ShiftLeft: 'LSHIFT', ShiftRight: 'RSHIFT', Escape: 'ESC', Enter: 'ENTER', Tab: 'TAB', ArrowUp: 'UP', ArrowDown: 'DOWN', ArrowLeft: 'LEFT', ArrowRight: 'RIGHT', Mouse0: 'CLICK', Mouse1: 'MID-CLICK', Mouse2: 'R-CLICK', WheelUp: 'WHEEL', WheelDown: 'WHEEL' };
-  return m[c] || String(c).replace(/^Key|^Digit/, '');
+  const m = { Space: 'SPACE', ShiftLeft: 'LSHIFT', ShiftRight: 'RSHIFT', Escape: 'ESC', Enter: 'ENTER', Tab: 'TAB', ArrowUp: 'UP', ArrowDown: 'DOWN', ArrowLeft: 'LEFT', ArrowRight: 'RIGHT', Mouse0: 'CLICK', Mouse1: 'MID-CLICK', Mouse2: 'R-CLICK', WheelUp: 'WHEEL', WheelDown: 'WHEEL', Minus: '-' };
+  return m[c] || layout.get(c) || String(c).replace(/^Key|^Digit/, '');
 }
+// The name of the key that does `act` right now (first binding), e.g. keyFor('interact') -> 'E'.
+export const keyFor = (act) => codeName((BINDINGS[act] || [])[0] || '-');
+// The action a default key code stood for (KeyE -> interact), so prompts written with default letters can follow rebinding.
+const DEFAULT_ACT = {};
+for (const [a, codes] of Object.entries(DEFAULT_BINDINGS)) for (const c of codes) DEFAULT_ACT[c] ||= a;
+export const actionOfDefault = (code) => DEFAULT_ACT[code] || null;
 let captureCb = null;
 export const capture = (cb) => { captureCb = cb; };
 export const capturing = () => !!captureCb;
 applyBindings();
 const blockDefault = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
+const REP = {};
+let frameNo = 0;
 const anyIn = (codes, set) => { if (!codes) return false; for (let i = 0; i < codes.length; i++) if (set.has(codes[i])) return true; return false; };
 export const keys = {
   isDown(act) { return anyIn(BINDINGS[act], down) || anyIn(VIRT[act], down); },
@@ -70,7 +89,17 @@ export const keys = {
   // Test hooks: let automated tests inject presses without the DOM.
   _press(code) { if (captureCb) { const cb = captureCb; captureCb = null; cb(code); return; } if (!down.has(code)) { down.add(code); pressedSet.add(code); } },
   _release(code) { if (down.delete(code)) releasedSet.add(code); },
-  endFrame() { pressedSet.clear(); releasedSet.clear(); },
+  // held direction keys repeat in lists: first after 300 ms, then every 80 ms (one answer per frame, however many ask)
+  repeat(act) {
+    if (this.pressed(act)) { REP[act] = { at: performance.now() + 300, f: frameNo, r: true }; return true; }
+    const st = REP[act];
+    if (!st || !this.isDown(act)) { if (st) delete REP[act]; return false; }
+    if (st.f === frameNo) return st.r;
+    st.f = frameNo; st.r = false;
+    if (performance.now() >= st.at) { st.at = performance.now() + 80; st.r = true; }
+    return st.r;
+  },
+  endFrame() { pressedSet.clear(); releasedSet.clear(); frameNo++; },
   clearAll() { down.clear(); pressedSet.clear(); releasedSet.clear(); },
 };
 
@@ -227,6 +256,7 @@ export function installKeys(game) {
   window.addEventListener('keydown', (e) => {
     if (e.target?.closest?.('input, textarea, select')) return;          // typing into a panel (save code), not playing
     setUsingPad(false);
+    learnKey(e.code, e.key);
     if (captureCb) { e.preventDefault(); if (!e.repeat) { const cb = captureCb; captureCb = null; cb(e.code); } return; }
     if (blockDefault.has(e.code) || e.code in codeToActions) e.preventDefault();
     if (!e.repeat) keys._press(e.code);

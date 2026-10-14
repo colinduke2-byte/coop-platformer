@@ -47,6 +47,13 @@ export function singleFileHtml({ manifest = false, build = 'dev', dist = path.jo
   :root { --bg:#0b0e1a; --panel:#1c2338; --ink:#eaf2f8; --muted:#7b8fb5; --accent:#f4d460; color-scheme: dark; }
   html, body { height: 100%; }
   body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; overflow: hidden; }
+  /* a game, not a page: no long-press menus, no text selection, no pull-to-refresh or bounce */
+  html, body, #game { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  #start button[disabled] { opacity: .6; cursor: wait; }
+  /* a phone held upright without a controller: ask for landscape (the game turns itself sideways when a controller is used) */
+  #rotate { display: none; position: fixed; inset: 0; z-index: 40; align-items: center; justify-content: center; text-align: center; padding: 24px; background: var(--bg); color: var(--ink); letter-spacing: .08em; }
+  #rotate b { display: block; font-size: 2.4rem; color: var(--accent); margin-bottom: 12px; }
+  @media (orientation: portrait) and (pointer: coarse) { body:not(.pad) #rotate { display: flex; } }
   #game { position: fixed; inset: 0; }
   canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(11,14,26,.78); z-index: 30; padding-inline: 16px; }
@@ -61,19 +68,22 @@ export function singleFileHtml({ manifest = false, build = 'dev', dist = path.jo
 </head>
 <body>
 <div id="game"></div>
+<div id="rotate"><div><b>&#x21bb;</b>TURN YOUR PHONE SIDEWAYS<br><small>OR CONNECT A CONTROLLER</small></div></div>
 <div id="start">
   <div class="card">
     <h1>FROSTFALL</h1>
     <p>A top-down 8-bit action RPG of the frozen north.</p>
-    <button id="go" type="button">CLICK TO PLAY</button>
+    <button id="go" type="button" disabled>LOADING...</button>
     <small>WASD move, Space roll, J sword, K bow, L spell, F block, E interact, Esc menu. Touch controls appear on phones.</small>
   </div>
 </div>
 <script>
   (function () {
-    var s = document.getElementById('start');
-    function go() { s.hidden = true; try { window.focus(); } catch (e) {} }
-    document.getElementById('go').addEventListener('click', go);
+    var s = document.getElementById('start'), b = document.getElementById('go');
+    // the button wakes up once the game has booted (a slow phone would otherwise show a black screen after the click)
+    (function wait() { if (window.__ff && window.__ff.game && window.__ff.game.isBooted) { b.disabled = false; b.textContent = 'CLICK TO PLAY'; } else requestAnimationFrame(wait); })();
+    function go() { if (b.disabled) return; s.hidden = true; try { window.focus(); } catch (e) {} }
+    b.addEventListener('click', go);
     window.addEventListener('keydown', function (e) { if (!s.hidden && (e.code === 'Enter' || e.code === 'Space')) go(); });
   })();
 </script>

@@ -9,7 +9,7 @@ const css = `
   width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px;padding:14px;box-sizing:border-box;box-shadow:0 0 0 2px #0b0e1a}
 .ff-ov h2{margin:0;font-size:16px;color:#ffd75e;letter-spacing:1px;text-transform:uppercase}
 .ff-ov p{margin:0;color:#b4c7e0;white-space:pre-wrap}
-.ff-ov textarea{width:100%;box-sizing:border-box;min-height:120px;flex:1;background:#0b0e1a;color:#eaf2f8;border:1px solid #4a5c86;font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.ff-ov textarea{user-select:text;-webkit-user-select:text;touch-action:auto;width:100%;box-sizing:border-box;min-height:120px;flex:1;background:#0b0e1a;color:#eaf2f8;border:1px solid #4a5c86;font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 .ff-ov .row{display:flex;flex-wrap:wrap;gap:8px}
 .ff-ov button,.ff-ov label.btn{background:#2e3a5c;color:#eaf2f8;border:2px solid #6d82b0;padding:8px 12px;font:inherit;cursor:pointer;text-transform:uppercase}
 .ff-ov button:focus-visible,.ff-ov label.btn:focus-within{outline:2px solid #ffd75e}

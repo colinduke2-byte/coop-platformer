@@ -2,11 +2,12 @@
 import Phaser from 'phaser';
 import { W, H } from '../config.js';
 import { txt } from '../art/font.js';
+import { padHint } from '../systems/access.js';
 import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { sfx, music } from '../audio/sfx.js';
-import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey, arenaUnlocked, nextRoomAt } from './heroes.js';
+import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey, arenaUnlocked, nextRoomAt, ARENA_UNLOCK } from './heroes.js';
 import { ARENAS, arenaById } from './arenas.js';
 
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -25,7 +26,7 @@ export class ArenaSetupScene extends Phaser.Scene {
     this.cursor = txt(this, 12, 44, '▶', 13);
     this.panel = this.add.rectangle(104, 42, 208, 118, 0x0b0e1a, 0.7).setOrigin(0);
     this.info = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => txt(this, 110, 47 + i * 11, '', 6));
-    this.add.existing(txt(this, 0, 168, 'W/S HERO  A/D MODE  Q ARENA  E GO', 4)).x = 80;
+    this.foot = txt(this, 0, 168, '', 4); this.footPad = null;     // centred, and in controller buttons when a pad is in use
     this.sel = 0; this.modeI = 0; this.arenaI = 0; this.warm = 6; this.t = 0; this.go = false;
     this.input.on('pointermove', (p) => { if (this.warm > 0) return; const i = this.list.findIndex((_, k) => p.y >= 42 + k * 16 && p.y <= 56 + k * 16 && p.x < 100); if (i >= 0 && !this.list[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
     this.input.on('pointerdown', (p) => { if (this.warm > 0 || p.x >= 100) return; const i = this.list.findIndex((_, k) => p.y >= 42 + k * 16 && p.y <= 56 + k * 16); if (i >= 0 && !this.list[i].off) { this.sel = i; this.begin(); } });
@@ -38,13 +39,17 @@ export class ArenaSetupScene extends Phaser.Scene {
     this.rows.forEach((o, i) => o.setFont(this.list[i].off ? 'f4' : i === this.sel ? 'f13' : 'f6'));
     this.cursor.y = this.rows[this.sel].y;
     const lines = h.id === 'own' ? [['YOUR HERO', 13], [h.off ? 'NO SAVE FOUND.' : 'YOUR CURRENT SAVE,', 6], [h.off ? 'START A GAME FIRST.' : 'GEAR AND LEVELS AS THEY ARE.', 6], ['NOTHING IS SAVED OR LOST.', 4]] : [[hero.name, hero.col], ...hero.blurb.map((b) => [b, 6])];
-    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}` : 'NO RECORD YET', 15], [r ? `${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : '', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, 8], [nextRoomAt() ? `NEXT ROOM AT WAVE ${nextRoomAt()}` : '', 4]);
+    const locked = mode.id !== 'daily' && !arenaUnlocked(arena.id);
+    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}` : 'NO RECORD YET', 15], [r ? `${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : '', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, locked ? 4 : 8], [locked ? `LOCKED: REACH WAVE ${ARENA_UNLOCK[arena.id]}` : nextRoomAt() ? `NEXT ROOM AT WAVE ${nextRoomAt()}` : '', locked ? 12 : 4]);
+    const ft = padHint('W/S HERO  A/D MODE  Q ARENA  E GO', 52);
+    if (ft !== this.footText) { this.footText = ft; this.foot.setText(ft); this.foot.x = Math.floor((W - this.foot.width) / 2); }
     this.info.forEach((o, i) => { const l = lines[i] || ['', 6]; o.setText(l[0]); o.setFont(i === 0 ? 'f13' : l[1] === 15 ? 'f15' : l[1] === 4 ? 'f4' : l[1] === 12 ? 'f12' : l[1] === 8 ? 'f8' : 'f6'); });
   }
   begin() {
     if (this.go) return;
     const h = this.list[this.sel]; if (h.off) return;
     const mode = MODES[this.modeI], opts = { mode: mode.id, arena: ARENAS[this.arenaI].id };
+    if (mode.id !== 'daily' && !arenaUnlocked(opts.arena)) { sfx.play('nostamina'); return; }     // locked arenas are shown, with what opens them
     if (!beginQuickRun(h.id, opts)) return;
     this.go = true; sfx.play('select');
     this.scene.start('Game', { map: arenaById(S.quick.arena).map, spawn: 'in' });
@@ -54,12 +59,12 @@ export class ArenaSetupScene extends Phaser.Scene {
     if (this.warm > 0) { this.warm--; return; }
     if (this.go) return;
     const n = this.list.length;
-    if (keys.pressed('down') || keys.pressed('up')) {
-      let s = this.sel; do { s = (s + (keys.pressed('down') ? 1 : n - 1)) % n; } while (this.list[s].off);
+    if (keys.repeat('down') || keys.repeat('up')) {
+      let s = this.sel; do { s = (s + (keys.repeat('down') ? 1 : n - 1)) % n; } while (this.list[s].off);
       if (s !== this.sel) { this.sel = s; sfx.play('move'); }
     }
     if (keys.pressed('left') || keys.pressed('right')) { this.modeI = (this.modeI + (keys.pressed('right') ? 1 : MODES.length - 1)) % MODES.length; sfx.play('move'); }
-    if (keys.pressed('swap')) { let i = this.arenaI; do { i = (i + 1) % ARENAS.length; } while (!arenaUnlocked(ARENAS[i].id)); this.arenaI = i; sfx.play('move'); }
+    if (keys.pressed('swap')) { this.arenaI = (this.arenaI + 1) % ARENAS.length; sfx.play('move'); }
     this.refresh();
     if (keys.pressed('pause')) { sfx.play('back'); this.go = true; this.scene.start('Title'); return; }
     if (keys.pressed('interact') || keys.pressed('roll')) this.begin();
@@ -78,17 +83,17 @@ export class ArenaResultsScene extends Phaser.Scene {
     const name = r.hero === 'own' ? 'YOUR HERO' : heroById(r.hero).name;
     const rows = [[`${name}  ${modeById(r.mode || 'survival').name}`, 13], [`${r.mode === 'rush' ? 'BOSSES FELLED' : 'WAVES CLEARED'}  ${r.waves}`, 6], [`FOES DEFEATED  ${r.kills}`, 6], [`CHAMPIONS  ${r.champions}`, 6], [`TIME  ${fmtTime(r.time)}`, 6], [`SCORE  ${r.score}`, 13], [rec.isBest ? 'NEW PERSONAL BEST!' : `BEST ${rec.best.score}   WAVE ${rec.best.waves}`, rec.isBest ? 15 : 4]];
     rows.forEach(([s, c], i) => { const o = txt(this, 0, 56 + i * 13, s, c); o.x = Math.floor((W - o.width) / 2); });
-    const h = txt(this, 0, 164, 'E AGAIN   H CHANGE HERO   ESC TITLE', 4); h.x = Math.floor((W - h.width) / 2);
+    const h = txt(this, 0, 164, padHint('E AGAIN   Q CHANGE HERO   ESC TITLE', 52), 4); h.x = Math.floor((W - h.width) / 2);
     this.warm = 24; this.go = false;
-    this.onH = (e) => { if (e.code === 'KeyH' && this.warm <= 0 && !this.go) { this.go = true; this.scene.start('ArenaSetup'); } };
-    window.addEventListener('keydown', this.onH);
-    this.events.once('shutdown', () => window.removeEventListener('keydown', this.onH));
+    // mouse / touch: tap to go again
+    this.input.on('pointerdown', () => { if (this.warm <= 0 && !this.go) { keys._press('V:KeyE'); setTimeout(() => keys._release('V:KeyE'), 60); } });
   }
   update(_, ms) {
     this.snow.update(ms / 1000);
     if (this.warm > 0) { this.warm--; return; }
     if (this.go) return;
     if (keys.pressed('pause')) { this.go = true; sfx.play('back'); music.stop(); this.scene.start('Title'); return; }
+    if (keys.pressed('swap')) { this.go = true; sfx.play('select'); this.scene.start('ArenaSetup'); return; }   // change hero (keyboard, pad, any binding)
     if (keys.pressed('interact') || keys.pressed('roll')) {
       this.go = true; sfx.play('select');
       if (!beginQuickRun(this.res.hero, { mode: this.res.mode, arena: this.res.arena })) { this.scene.start('ArenaSetup'); return; }

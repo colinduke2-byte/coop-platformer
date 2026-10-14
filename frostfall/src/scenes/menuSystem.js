@@ -161,8 +161,8 @@ export function systemTab(m) {
   function ctrlInput() {
     if (waiting) return;
     let moved = false;
-    if (keys.pressed('down')) { ctrl.cursor = (ctrl.cursor + 1) % ctrlRows; moved = true; }
-    if (keys.pressed('up')) { ctrl.cursor = (ctrl.cursor + ctrlRows - 1) % ctrlRows; moved = true; }
+    if (keys.repeat('down')) { ctrl.cursor = (ctrl.cursor + 1) % ctrlRows; moved = true; }
+    if (keys.repeat('up')) { ctrl.cursor = (ctrl.cursor + ctrlRows - 1) % ctrlRows; moved = true; }
     if (moved) {
       if (ctrl.cursor < ctrl.scroll) ctrl.scroll = ctrl.cursor;
       if (ctrl.cursor >= ctrl.scroll + VISIBLE) ctrl.scroll = ctrl.cursor - VISIBLE + 1;
@@ -199,8 +199,8 @@ export function systemTab(m) {
       return;
     }
     let moved = false;
-    if (keys.pressed('down')) { pc.cursor = (pc.cursor + 1) % padRows; moved = true; }
-    if (keys.pressed('up')) { pc.cursor = (pc.cursor + padRows - 1) % padRows; moved = true; }
+    if (keys.repeat('down')) { pc.cursor = (pc.cursor + 1) % padRows; moved = true; }
+    if (keys.repeat('up')) { pc.cursor = (pc.cursor + padRows - 1) % padRows; moved = true; }
     if (moved) {
       if (pc.cursor < pc.scroll) pc.scroll = pc.cursor;
       if (pc.cursor >= pc.scroll + 7) pc.scroll = pc.cursor - 6;

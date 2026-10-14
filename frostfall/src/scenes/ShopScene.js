@@ -97,10 +97,10 @@ export default class ShopScene extends Phaser.Scene {
       if (this.cfg.tabs && (keys.pressed('left') || keys.tabLeft())) { this.switchTab(-1); return; }
       if (this.cfg.qty && keys.pressed('shout')) { this.qtyAt = (this.qtyAt + 1) % QTY.length; this.dirty = true; sfx.play('move'); }
       if (this.cfg.sorts && keys.pressed('shoutswap')) { this.sort = (this.sort + 1) % this.cfg.sorts.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
-      if (keys.pressed('up') || keys.pressed('down')) this.armed = null;
+      if (keys.repeat('up') || keys.repeat('down')) this.armed = null;
       if (n && keys.wheel) { this.move(Math.sign(keys.wheel), n); keys.wheel = 0; }      // the mouse wheel scrolls the list
-      if (n && keys.pressed('down')) this.move(1, n);
-      if (n && keys.pressed('up')) this.move(-1, n);
+      if (n && keys.repeat('down')) this.move(1, n);
+      if (n && keys.repeat('up')) this.move(-1, n);
       if (keys.pressed('interact')) this.choose(false);
       else if (keys.pressed('swap') && this.cfg.onAlt && performance.now() - (keys.wheelT || -1e9) > 80) this.choose(true);
     }

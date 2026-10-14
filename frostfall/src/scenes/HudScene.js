@@ -80,7 +80,7 @@ export default class HudScene extends Phaser.Scene {
     this.bannerObj = null;
     this.onLevel = (skill, lv) => this.banners.push({ skill, lv });
     bus.on('levelup', this.onLevel);
-    this.onChar = (n) => this.banners.push({ custom: true, title: 'LEVEL ' + n, top: 'CHARACTER LEVEL UP', line: '+1 PERK POINT  -  PRESS I, THEN PERKS' });
+    this.onChar = (n) => this.banners.push({ custom: true, title: 'LEVEL ' + n, top: 'CHARACTER LEVEL UP', line: '+1 PERK POINT  -  PRESS ' + prompt('KeyI') + ', THEN PERKS' });
     bus.on('charlevel', this.onChar);
     this.onDiscover = (d) => this.banners.push({ custom: true, title: d.name, top: d.top, line: d.line });
     bus.on('discover', this.onDiscover);
@@ -95,6 +95,16 @@ export default class HudScene extends Phaser.Scene {
     this.dKeys = txt(this, 0, 0, '', 3).setDepth(11);           // which keys advance / leave, in the box corner
     this.dArrows = [txt(this, 0, 0, '\u25B2', 13).setDepth(11), txt(this, 0, 0, '\u25BC', 13).setDepth(11)];
     dialogue.hud = this;
+    // touch and mouse in conversations: a tap moves the text on; a tap on an option picks it
+    this.input.on('pointerdown', (p) => {
+      const d = this.dlg; if (!d || this.lock || d.age < 3) return;
+      if (d.choices) {
+        const hit = (this.choiceRows || []).find((r) => p.y >= r.y - 1 && p.y < r.y + 9);
+        if (!hit) return;
+        if (d.sel !== hit.i) { d.sel = hit.i; sfx.play('move'); return; }
+      }
+      keys._press('V:KeyE'); setTimeout(() => keys._release('V:KeyE'), 60);
+    });
     this.questTxt = [txt(this, 0, 26, '', 4), txt(this, 0, 35, '', 4)];
     this.hint = null;
     // tips wait their turn instead of replacing one another; they sit under the status row, clear of the bars and the purse
@@ -338,17 +348,19 @@ export default class HudScene extends Phaser.Scene {
       const flat = [];
       d.rows.forEach((r, i) => r.forEach((ln, k) => flat.push({ i, text: (k === 0 ? (i === d.sel ? '\u25B6 ' : '  ') : '  ') + ln })));
       const y0 = top + 6 + (d.q ? 10 : 0);
+      this.choiceRows = [];
       this.dChoice.forEach((c, k) => {
         const f = flat[d.top + k];
         if (!f || k >= VIS) { c.setText(''); return; }
         c.setText(f.text).setFont(f.i === d.sel ? 'f13' : 'f6').setPosition(14, y0 + k * 9);
+        this.choiceRows.push({ y: y0 + k * 9, i: f.i });
       });
       this.dArrows[0].setVisible(d.top > 0).setPosition(W - 20, y0);
       this.dArrows[1].setVisible(d.top + VIS < flat.length).setPosition(W - 20, y0 + (VIS - 1) * 9);
       this.dKeys.setText('');
       if (d.age < 3) return;
-      if (keys.pressed('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
-      if (keys.pressed('up')) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.play('move'); }
+      if (keys.repeat('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
+      if (keys.repeat('up')) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.play('move'); }
       if (keys.pressed('interact')) { sfx.play('select'); const r = d.res, s = d.sel; logLine('talk', '> ' + d.choices[s], 4); this.dlg = null; this.dChoice.forEach((c) => c.setText('')); this.dQ.setText(''); this.dArrows.forEach((a) => a.setVisible(false)); r(s); }
       else if (keys.back()) {       // back (B, ESC's cast key): take the "leave" option if there is one
         const out = d.choices.map((o, i) => [o, i]).reverse().find(([o]) => /^(leave|goodbye|bye|never ?mind|nothing|back|cancel|no thanks|not now|farewell|later|done)\b/i.test(String(o).trim()));

@@ -1,20 +1,28 @@
 // On-screen touch controls: a virtual stick and action buttons that feed the same key system.
 // Shown on touch devices (or with ?touch=1). Pure DOM, no assets.
 import { keys, padActive, touchUsed, virt, onPadChange } from '../systems/keys.js';
+import { ui } from '../systems/ui.js';
 
+// positions keep clear of the notch and the home bar (safe-area insets)
+const R = (n) => `calc(${n}px + env(safe-area-inset-right))`, B = (n) => `calc(${n}px + env(safe-area-inset-bottom))`;
+const L = (n) => `calc(${n}px + env(safe-area-inset-left))`, TP = (n) => `calc(${n}px + env(safe-area-inset-top))`;
 const BUTTONS = [
-  // [label, code, css position, size, colour]: the four things you press all the time
-  ['ROLL', 'Space', 'right:100px;bottom:18px', 54, '#4a5c86'],
-  ['HIT', 'KeyJ', 'right:18px;bottom:62px', 62, '#c8383c'],
-  ['E', 'KeyE', 'right:18px;bottom:4px', 44, '#f4d460'],
-  ['LOCK', 'KeyT', 'right:104px;bottom:84px', 40, '#b88a30'],
+  // [label, code, css position, size, colour, keepInMenus]: the four things you press all the time
+  ['ROLL', 'Space', `right:${R(100)};bottom:${B(18)}`, 54, '#4a5c86'],
+  ['HIT', 'KeyJ', `right:${R(18)};bottom:${B(62)}`, 62, '#c8383c'],
+  ['E', 'KeyE', `right:${R(18)};bottom:${B(4)}`, 44, '#f4d460', false, true],
+  ['LOCK', 'KeyT', `right:${R(104)};bottom:${B(84)}`, 40, '#b88a30'],
+  // potions get their own buttons (no trip to the pack mid-fight), above the stick
+  ['HP', 'Digit1', `left:${L(18)};bottom:${B(148)}`, 36, '#8a2430'],
+  ['MP', 'Digit2', `left:${L(60)};bottom:${B(148)}`, 36, '#2a5a9a'],
+  ['SP', 'Digit3', `left:${L(102)};bottom:${B(148)}`, 36, '#2f7a46'],
 ];
 // Everything else lives in a ring that opens from MORE. [label, code, toggle]
 const RING = [
   ['BOW', 'KeyK'], ['MAG', 'KeyL'], ['SWAP', 'KeyQ'], ['SHOUT', 'KeyR'],
   ['BLOCK', 'KeyF', true], ['SNEAK', 'KeyC', true], ['AMMO', 'KeyV'], ['HEAVY', 'KeyU'], ['PACK', 'KeyI'], ['MAP', 'KeyM'],
 ];
-const TOP = [['||', 'Escape', 'right:10px;top:10px']];
+const TOP = [['||', 'Escape', `right:${R(10)};top:${TP(10)}`]];
 
 export function installTouch(force = false) {
   const q = new URLSearchParams(location.search);
@@ -25,7 +33,8 @@ export function installTouch(force = false) {
   root.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:20;font:bold 11px monospace;color:#eaf2f8;user-select:none;-webkit-user-select:none;touch-action:none';
   document.body.appendChild(root);
 
-  const mk = (label, code, pos, size, bg, toggle = false) => {
+  const combat = [];          // buttons that step aside while a menu or a conversation is open
+  const mk = (label, code, pos, size, bg, toggle = false, keep = false) => {
     const b = document.createElement('div');
     b.textContent = label;
     b.dataset.code = code;
@@ -38,17 +47,19 @@ export function installTouch(force = false) {
     b.addEventListener('pointercancel', up);
     b.addEventListener('pointerleave', up);
     root.appendChild(b);
+    if (!keep) combat.push(b);
   };
-  BUTTONS.forEach(([l, c, p, s, bg, t]) => mk(l, c, p, s, bg, t));
+  BUTTONS.forEach(([l, c, p, s, bg, t, k]) => mk(l, c, p, s, bg, t, k));
   TOP.forEach(([l, c, p]) => mk(l, c, p, 40, '#1c2338'));
 
   // MORE button + a two-row ring of the rarer actions
   const more = document.createElement('div');
   more.textContent = 'MORE';
-  more.style.cssText = 'position:absolute;right:182px;bottom:18px;width:44px;height:44px;border-radius:50%;background:#2e3a5c;opacity:.6;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a';
+  combat.push(more);
+  more.style.cssText = `position:absolute;right:${R(182)};bottom:${B(18)};width:44px;height:44px;border-radius:50%;background:#2e3a5c;opacity:.6;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a`;
   root.appendChild(more);
   const ring = document.createElement('div');
-  ring.style.cssText = 'position:absolute;right:182px;bottom:18px;width:44px;height:44px;display:none;pointer-events:none';
+  ring.style.cssText = `position:absolute;right:${R(182)};bottom:${B(18)};width:44px;height:44px;display:none;pointer-events:none`;
   root.appendChild(ring);
   RING.forEach(([label, code, tog], i) => {
     const x = -(i % 5) * 44 - 20, y = -(Math.floor(i / 5) + 1) * 46 - 2;
@@ -65,7 +76,8 @@ export function installTouch(force = false) {
 
   // virtual stick
   const pad = document.createElement('div');
-  pad.style.cssText = 'position:absolute;left:18px;bottom:18px;width:120px;height:120px;border-radius:50%;background:#1c2338;opacity:.45;border:2px solid #0b0e1a;pointer-events:auto;touch-action:none';
+  combat.push(pad);
+  pad.style.cssText = `position:absolute;left:${L(18)};bottom:${B(18)};width:120px;height:120px;border-radius:50%;background:#1c2338;opacity:.45;border:2px solid #0b0e1a;pointer-events:auto;touch-action:none`;
   const nub = document.createElement('div');
   nub.style.cssText = 'position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#b4c7e0;opacity:.9';
   pad.appendChild(nub);
@@ -96,5 +108,8 @@ export function installTouch(force = false) {
   // While a controller is in use the on-screen buttons step aside, so a stray thumb cannot fight it. Touching the screen brings them back.
   const sync = () => { root.style.display = padActive() ? 'none' : ''; };
   onPadChange(sync); sync();
+  // menus and conversations take taps on the picture itself: the fight buttons step aside (E and the pause button stay)
+  const modal = (on) => { for (const el of combat) el.style.visibility = on ? 'hidden' : ''; if (on) ring.style.display = 'none'; };
+  ui.onModal(modal); modal(ui.modal);
   window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && root.style.display === 'none') { touchUsed(); sync(); window.__updateRotate?.(); } }, true);
 }

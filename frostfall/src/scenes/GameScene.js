@@ -253,6 +253,7 @@ export default class GameScene extends Phaser.Scene {
     if (S.inv.pony_whistle > 0 && (def.stream || def.snow) && !def.interior && !def.cave && !def.arena && !def.quick) { this.pony = new Pony(this, this.player.x - 16, this.player.y + 6); this.interactables.push(this.pony); }
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
     if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startQuick()); }
+    bus.emit('scene:game');
     // skip off-screen scenery in rendering (re-checked every frame, so moving things are always right)
     this.onCull = () => cullScene(this);
     this.events.on('prerender', this.onCull);

@@ -139,8 +139,8 @@ export default class MenuScene extends Phaser.Scene {
   nav(len, rows = ROWS) {
     let moved = false;
     if (keys.wheel && len) { this.cursor = Math.max(0, Math.min(len - 1, this.cursor + keys.wheel)); keys.wheel = 0; moved = true; }   // the mouse wheel scrolls lists
-    if (keys.pressed('down') && len) { this.cursor = (this.cursor + 1) % len; moved = true; }
-    if (keys.pressed('up') && len) { this.cursor = (this.cursor + len - 1) % len; moved = true; }
+    if (keys.repeat('down') && len) { this.cursor = (this.cursor + 1) % len; moved = true; }
+    if (keys.repeat('up') && len) { this.cursor = (this.cursor + len - 1) % len; moved = true; }
     if (moved) {
       if (this.cursor < this.scroll) this.scroll = this.cursor;
       if (this.cursor >= this.scroll + rows) this.scroll = this.cursor - rows + 1;
@@ -169,7 +169,7 @@ export default class MenuScene extends Phaser.Scene {
       }
       this.dirty = true;
     }
-    if (keys.pressed('up') || keys.pressed('down')) this.dropArm = null;
+    if (keys.repeat('up') || keys.repeat('down')) this.dropArm = null;
     if (this.dropArm && list[this.cursor] === this.dropArm) {      // A/D: how many to drop
       const n = S.inv[this.dropArm] || 1;
       if (keys.pressed('left')) { this.dropN = Math.max(1, (this.dropN || n) - 1); this.dirty = true; sfx.play('move'); }

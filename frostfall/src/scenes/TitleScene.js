@@ -8,6 +8,7 @@ import { recalc } from '../systems/stats.js';
 import { anySave, loadGame, listSaves, fmtTime, slotState, deleteSave, rescueInfo, loadRescue, dropRescue, storage, tabs, SLOTS } from '../systems/save.js';
 import { openSaveTools } from '../ui/savetools.js';
 import { overlayOpen } from '../ui/overlay.js';
+import { bus } from '../systems/bus.js';
 import { fit } from '../art/font.js';
 import { MAPS, prebuildRegion } from '../data/maps.js';
 import { regionOfMap } from '../data/regions.js';
@@ -75,6 +76,7 @@ export default class TitleScene extends Phaser.Scene {
       if (!this.scene.isActive()) return;
       try { const d = readSlot(settings.slot)?.data?.s; if (d?.seed != null) prebuildRegion(regionOfMap(d.map), d.seed); } catch (e) { console.warn('prebuild skipped', e); }
     });
+    bus.emit('scene:title');
     this.snow = new SnowFx(this, 80);
     this.snow.g.setDepth(5);                  // behind every overlay box on this screen
     this.t = 0;
@@ -203,8 +205,8 @@ export default class TitleScene extends Phaser.Scene {
   openHowTo() {
     this.howMode = true; this.warm = 4;
     const rows = [['HOW TO PLAY', 13], ['', 4], ...(padActive() ? [['MOVE  LEFT STICK', 6], [`SWORD ${prompt('KeyJ')}   BOW ${prompt('KeyK')} (HOLD)   SPELL ${prompt('KeyL')}`, 6], [`DODGE ROLL  ${prompt('Space')}  (SLIPS THROUGH BLOWS)`, 6], [`BLOCK ${prompt('KeyF')} (HOLD)   RAISE IT LATE TO PARRY`, 6], [`SNEAK ${prompt('KeyC')}   TALK / OPEN / REST  ${prompt('KeyE')}`, 6], [`MENU ${prompt('Escape')}   (PACK, JOURNAL, MAP)`, 6]]
-        : [['MOVE  WASD / STICK / TOUCH PAD', 6], ['SWORD J   BOW K (HOLD)   SPELL L', 6], ['DODGE ROLL  SPACE  (SLIPS THROUGH BLOWS)', 6], ['BLOCK F (HOLD)   RAISE IT LATE TO PARRY', 6], ['SNEAK C   TALK / OPEN / REST  E', 6], ['PACK I   JOURNAL O   MAP M   PAUSE ESC', 6]]), ['', 4],
-      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['EVERY PICTURE, SONG AND WORLD IS MADE IN CODE.', 3], [padActive() ? `${prompt('KeyE')} OR ${prompt('Escape')} TO GO BACK` : 'E OR ESC TO GO BACK', 4]];
+        : [[`MOVE  ${['KeyW', 'KeyA', 'KeyS', 'KeyD'].map(prompt).join('')} / STICK / TOUCH PAD`, 6], [`SWORD ${prompt('KeyJ')}   BOW ${prompt('KeyK')} (HOLD)   SPELL ${prompt('KeyL')}`, 6], [`DODGE ROLL  ${prompt('Space')}  (SLIPS THROUGH BLOWS)`, 6], [`BLOCK ${prompt('KeyF')} (HOLD)   RAISE IT LATE TO PARRY`, 6], [`SNEAK ${prompt('KeyC')}   TALK / OPEN / REST  ${prompt('KeyE')}`, 6], [`PACK ${prompt('KeyI')}   JOURNAL ${prompt('KeyO')}   MAP ${prompt('KeyM')}   PAUSE ${prompt('Escape')}`, 6]]), ['', 4],
+      ['STAMINA IS YOUR REAL HEALTH BAR. FIGHT IN BURSTS.', 15], ['NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU.', 15], ['GEAR AND PREPARATION MATTER MORE THAN LEVELS.', 15], ['REST AT CAMPFIRES TO SAVE AND FAST TRAVEL.', 15], ['', 4], ['EVERY PICTURE, SONG AND WORLD IS MADE IN CODE.', 3], [`${prompt('KeyE')} OR ${prompt('Escape')} TO GO BACK`, 4]];
     this.howBox = this.add.rectangle(W / 2, 90, 300, 164, 0x0b0e1a, 0.94);
     this.howTxt = rows.map(([t, c], i) => { const o = txt(this, 0, 14 + i * 10, t, c); o.x = Math.floor((W - o.width) / 2); return o; });
     this.lift(this.howBox, this.howTxt);
@@ -270,7 +272,7 @@ export default class TitleScene extends Phaser.Scene {
   updateSlots() {
     if (this.warm > 0) { this.warm--; return; }
     const n = this.slotRows.length, r = this.slotRows[this.slotSel];
-    if (keys.pressed('down') || keys.pressed('up')) { this.slotSel = (this.slotSel + (keys.pressed('down') ? 1 : n - 1)) % n; this.slotArm = null; sfx.play('move'); this.refreshSlots(); return; }
+    if (keys.repeat('down') || keys.repeat('up')) { this.slotSel = (this.slotSel + (keys.repeat('down') ? 1 : n - 1)) % n; this.slotArm = null; sfx.play('move'); this.refreshSlots(); return; }
     if (keys.pressed('pause') || keys.back()) { if (this.slotArm) { this.slotArm = null; this.refreshSlots(); } else this.closeSlots(); sfx.play('back'); return; }
     if (keys.pressed('ammo') && (r.info || r.state === 'damaged')) {
       if (this.slotArm !== 'delete') { this.slotArm = 'delete'; sfx.play('alert'); this.refreshSlots(); return; }
@@ -307,8 +309,8 @@ export default class TitleScene extends Phaser.Scene {
       if (this.warm > 0) { this.warm--; return; }
       if (keys.pressed('pause') || keys.pressed('roll')) { this.closeOptions(); sfx.play('back'); return; }
       const n = this.optRows.length;
-      if (keys.pressed('down')) { this.optSel = (this.optSel + 1) % n; sfx.play('move'); }
-      if (keys.pressed('up')) { this.optSel = (this.optSel + n - 1) % n; sfx.play('move'); }
+      if (keys.repeat('down')) { this.optSel = (this.optSel + 1) % n; sfx.play('move'); }
+      if (keys.repeat('up')) { this.optSel = (this.optSel + n - 1) % n; sfx.play('move'); }
       if (keys.pressed('left')) this.optAdjust(-1);
       if (keys.pressed('right') || keys.pressed('interact')) this.optAdjust(1);
       this.refreshOptions();
@@ -324,7 +326,7 @@ export default class TitleScene extends Phaser.Scene {
       this.ngRows.forEach((o, i) => o.setFont(i === this.ngSel ? 'f13' : 'f6'));
       this.ngCursor = this.ngCursor || txt(this, 0, 0, '\u25B6', 13);
       this.ngCursor.setPosition(this.ngRows[this.ngSel].x - 12, this.ngRows[this.ngSel].y);
-      if (keys.pressed('down') || keys.pressed('up')) { this.ngSel = 1 - this.ngSel; sfx.play('move'); }
+      if (keys.repeat('down') || keys.repeat('up')) { this.ngSel = 1 - this.ngSel; sfx.play('move'); }
       if (keys.pressed('pause') || keys.back()) { this.closeNgConfirm(); sfx.play('back'); }
       else if (keys.pressed('interact')) { if (this.ngSel === 1) { sfx.play('select'); this.startNg(); } else { this.closeNgConfirm(); sfx.play('back'); } }
       return;
@@ -340,10 +342,10 @@ export default class TitleScene extends Phaser.Scene {
     this.cursor.setPosition(t.x - 12, t.y).setVisible(true);
     if (this.warm > 0) { this.warm--; return; }
     if (this.go) return;
-    if (keys.pressed('down') || keys.pressed('up')) {
+    if (keys.repeat('down') || keys.repeat('up')) {
       const n = this.items.length;
       let s = this.sel;
-      do { s = (s + (keys.pressed('down') ? 1 : n - 1)) % n; } while (this.items[s].off);
+      do { s = (s + (keys.repeat('down') ? 1 : n - 1)) % n; } while (this.items[s].off);
       if (s !== this.sel) { this.sel = s; sfx.play('move'); }
     }
     if (keys.pressed('interact') || keys.pressed('roll')) {

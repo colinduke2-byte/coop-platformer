@@ -1,6 +1,7 @@
 // Accessibility helpers: colour-blind assist filter and controller-aware button prompts.
 import { settings } from './settings.js';
-import { padActive, padMap, inMenu, getPadInfo } from './keys.js';
+import { padActive, padMap, inMenu, getPadInfo, codeName, actionOfDefault } from './keys.js';
+import { BINDINGS } from '../config.js';
 
 export const CVD_MODES = ['off', 'deutan', 'protan', 'tritan'];
 // Machado-style simulation matrices; the filter adds the lost colour difference back into the remaining channels.
@@ -45,8 +46,11 @@ export function applyCvd() {
 
 // Controller button names (standard layout) for prompts.
 const PAD_NAME = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'BACK', b9: 'START', b10: 'L3', b11: 'R3', hu: 'D-PAD UP', hd: 'D-PAD DOWN', hl: 'D-PAD LEFT', hr: 'D-PAD RIGHT', 'a2-': 'R-STICK LEFT', 'a2+': 'R-STICK RIGHT', 'a3-': 'R-STICK UP', 'a3+': 'R-STICK DOWN' };
+// The key the player actually uses for what `code` did by default (rebinding and keyboard layouts both honoured).
 export function keyLabel(code) {
-  return code.replace(/^Key/, '').replace(/^Digit/, '').replace('Space', 'SPACE').replace('Escape', 'ESC').replace('Arrow', '').toUpperCase();
+  const act = actionOfDefault(code);
+  if (act && BINDINGS[act]?.[0]) return codeName(BINDINGS[act][0]);
+  return codeName(code);
 }
 // In menus a standard pad confirms with A and backs out with B, whatever the gameplay map says (see keys.js).
 const MENU_LABEL = { KeyE: 'A', Enter: 'A', Escape: 'B' };
@@ -74,8 +78,16 @@ export function padKey(tok, short = false) {
   return short ? SHORT(n) : n;
 }
 // max: characters that fit; a long pad line first shortens stick names ("RS D"), then closes the gaps, then drops hints off the end.
+// Keyboard: hints written with default letters ("E USE") follow the player's bindings and layout ("F USE" after rebinding).
+function kbHint(text) {
+  if (!text) return text;
+  const tr = (tok) => tok.split('/').map((t) => { const c = codeOf(t); if (!c) return t; const act = actionOfDefault(c); return act && BINDINGS[act]?.[0] ? codeName(BINDINGS[act][0]) : t; }).join('/');
+  if (/^[A-Z0-9]+: /.test(text)) { const i = text.indexOf(':'); return tr(text.slice(0, i)) + text.slice(i); }
+  return text.split(/(\s{2,})/).map((seg) => { if (/^\s+$/.test(seg)) return seg; const m = seg.match(/^(\S+)(\s.*)$/); return m && !PAIR[m[1]] && codeOf(m[1].split('/')[0]) ? tr(m[1]) + m[2] : seg; }).join('');
+}
 export function padHint(text, max = Infinity) {
-  if (!text || !padActive()) return text;
+  if (!text) return text;
+  if (!padActive()) return kbHint(text);
   if (/^[A-Z0-9]+: /.test(text)) { const i = text.indexOf(':'); return padKey(text.slice(0, i)) + text.slice(i); }     // "E: TALK"
   const segs = (short) => text.split(/\s{2,}/).filter((seg) => seg && !/^OR CLICK$|^CLICK OK$/.test(seg)).map((seg) => {
     const m = seg.match(/^(\S+)(\s.*)$/);

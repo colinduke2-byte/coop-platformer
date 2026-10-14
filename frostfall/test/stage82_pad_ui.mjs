@@ -48,7 +48,7 @@ for (const [i, name] of [[0, 'items'], [-1, 'SYSTEM']]) {
   await h.shot('s82_pad_' + name.toLowerCase());
   const txt = await G(() => { const all = []; const walk = (l) => l.forEach((c) => { if (c.list) walk(c.list); else if (c.type === 'BitmapText') all.push(c.text); }); walk(window.__ff.game.scene.getScene('Menu').children.list); return all.join('|'); });
   if (name === 'SYSTEM') check('SYSTEM tab lists controller buttons', /L-STICK/.test(txt) && /DODGE ROLL/.test(txt) && !/SPACE/.test(txt), txt.slice(0, 400));
-  else check('ITEMS help line uses menu pad buttons (A confirms) and fits the screen', /\bA USE/.test(txt) && !/E USE/.test(txt) && txt.split('|').every((l) => l.length <= 52), txt.slice(0, 400));
+  else check('ITEMS help line uses menu pad buttons (A confirms) and fits the screen', /\bA (USE|TAKE OFF|EQUIP|WEAR)/.test(txt) && !/\bE (USE|TAKE OFF|EQUIP|WEAR)/.test(txt) && txt.split(/[|\n]/).every((l) => l.length <= 52), txt.slice(0, 400));
   await G(() => { const sm = window.__ff.game.scene; sm.stop('Menu'); if (sm.isPaused('Game')) sm.resume('Game'); });
   await h.sleep(300);
 }

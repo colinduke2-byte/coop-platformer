@@ -17,11 +17,15 @@
     #game { width: 100vw; height: 100vh; }
     #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #b4c7e0; font: 14px monospace; letter-spacing: 3px; background: #0b0e1a; z-index: 5; }
     canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+    html, body, #game { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    #rotate { display: none; position: fixed; inset: 0; z-index: 40; align-items: center; justify-content: center; text-align: center; padding: 24px; background: #0b0e1a; color: #eaf2f8; font: 14px monospace; letter-spacing: 2px; }
+    @media (orientation: portrait) and (pointer: coarse) { body:not(.pad) #rotate { display: flex; } }
   </style>
 </head>
 <body>
   <div id="boot">LOADING FROSTFALL...</div>
   <div id="game"></div>
+  <div id="rotate"><div>TURN YOUR PHONE SIDEWAYS<br><small>OR CONNECT A CONTROLLER</small></div></div>
   <script>new MutationObserver((m, o) => { if (document.querySelector("#game canvas")) { const b = document.getElementById("boot"); if (b) b.remove(); o.disconnect(); } }).observe(document.body, { childList: true, subtree: true });</script>
   <script type="module" src="/src/main.js"></script>
 </body>
