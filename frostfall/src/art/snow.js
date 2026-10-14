@@ -1,4 +1,5 @@
 import { W, H, C } from '../config.js';
+import { settings } from '../systems/settings.js';
 
 // Cheap falling-snow overlay drawn in screen space with one Graphics object.
 export class SnowFx {
@@ -21,7 +22,8 @@ export class SnowFx {
     const g = this.g;
     g.clear();
     g.fillStyle(this.color, 0.9);
-    for (let i = 0; i < this.n; i++) {
+    const n = settings.reduceMotion ? Math.min(this.n, 24) : this.n;      // Reduce Motion: a light sprinkle, not a storm
+    for (let i = 0; i < n; i++) {
       const f = this.f[i];
       f.y += f.s * this.fall * dt; f.x += (windX + Math.sin(this.t * 1.5 + f.w) * 5) * dt;
       if (f.y > H) { f.y = -2; f.x = Math.random() * W; }

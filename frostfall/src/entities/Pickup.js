@@ -6,14 +6,14 @@ import { rand } from '../util.js';
 import { HEARTS } from '../data/hearts.js';
 import { recalc } from '../systems/stats.js';
 import { bus } from '../systems/bus.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, iconKey } from '../data/items.js';
 import { RARITY } from '../systems/genloot.js';
 import { C } from '../config.js';
 
 // spec: { type: 'gold'|'arrows'|'item', n, id }
 export default class Pickup extends Phaser.GameObjects.Image {
   constructor(scene, x, y, spec) {
-    const tex = spec.type === 'orb' ? 'orb_' + spec.kind : spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : spec.type === 'heart' ? 'icon_frostheart' : 'icon_' + spec.id;
+    const tex = spec.type === 'orb' ? 'orb_' + spec.kind : spec.type === 'gold' ? 'mini_coin' : spec.type === 'arrows' ? 'icon_arrows' : spec.type === 'heart' ? iconKey('frostheart') : iconKey(spec.id);
     super(scene, x, y, tex);
     scene.add.existing(this);
     this.spec = spec;

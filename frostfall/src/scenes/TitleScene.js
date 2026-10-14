@@ -9,7 +9,9 @@ import { anySave, loadGame, listSaves, fmtTime, slotState, deleteSave, rescueInf
 import { openSaveTools } from '../ui/savetools.js';
 import { overlayOpen } from '../ui/overlay.js';
 import { fit } from '../art/font.js';
-import { MAPS } from '../data/maps.js';
+import { MAPS, prebuildRegion } from '../data/maps.js';
+import { regionOfMap } from '../data/regions.js';
+import { readSlot } from '../systems/save.js';
 import { music, sfx } from '../audio/sfx.js';
 import { dayStamp, dailySeed, dailyMods, startDaily, todaysBest, topBoard } from '../systems/daily.js';
 import { MODS, MOD_IDS } from '../data/mods.js';
@@ -67,6 +69,11 @@ export default class TitleScene extends Phaser.Scene {
       if (this.slotMode) { const i = this.slotTxt.findIndex((t) => p.y >= t.y - 2 && p.y <= t.y + 19); if (i >= 0) { if (i !== this.slotSel) { this.slotSel = i; this.slotArm = null; this.refreshSlots(); return; } keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); } return; }
       const i = rowAt(p);
       if (i >= 0 && !this.items[i].off) { this.sel = i; keys._press(BINDINGS.interact[0]); setTimeout(() => keys._release(BINDINGS.interact[0]), 60); }
+    });
+    // while the menu is up, build the saved game's overworld region so CONTINUE drops you straight in
+    this.time.delayedCall(1500, () => {
+      if (!this.scene.isActive()) return;
+      try { const d = readSlot(settings.slot)?.data?.s; if (d?.seed != null) prebuildRegion(regionOfMap(d.map), d.seed); } catch (e) { console.warn('prebuild skipped', e); }
     });
     this.snow = new SnowFx(this, 80);
     this.snow.g.setDepth(5);                  // behind every overlay box on this screen

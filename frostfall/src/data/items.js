@@ -252,4 +252,8 @@ for (const r of RELICS) ITEMS[r.id] = { name: r.name, type: 'quest', icon: ['rel
 export const SLOT_OF = { weapon: 'weapon', weapon2h: 'weapon', shield: 'offhand', bow: 'bow', helmet: 'head', armor: 'armor', charm: 'charm' };
 export const SLOT_NAMES = { weapon: 'WEAPON', offhand: 'OFFHAND', bow: 'BOW', head: 'HELMET', armor: 'ARMOR', charm: 'CHARM' };
 export const isEquipable = (id) => !!SLOT_OF[ITEMS[id]?.type];
-export const iconKey = (id) => 'icon_' + id;
+// Item icons and held-weapon sprites are drawn on first use (and in idle time after boot) instead of all at start-up.
+let ensureIcon = null, ensureHeld = null;
+export const setArtEnsure = (icon, held) => { ensureIcon = icon; ensureHeld = held; };
+export const iconKey = (id) => { ensureIcon?.(id); return 'icon_' + id; };
+export const heldKey = (id) => { ensureHeld?.(id); return 'held_' + id; };

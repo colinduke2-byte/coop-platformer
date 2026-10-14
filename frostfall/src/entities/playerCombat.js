@@ -2,7 +2,7 @@
 // Mixed into Player (see the bottom of Player.js).
 import Phaser from 'phaser';
 import { keys, rumble } from '../systems/keys.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, heldKey } from '../data/items.js';
 import { S } from '../systems/state.js';
 import { curseMul } from '../world/nightlife.js';
 import { bus } from '../systems/bus.js';
@@ -94,7 +94,7 @@ export const combatMethods = {
     {
       // animate the held blade through its arc
       const f = this.face, k = Math.min(1, s.t / s.c.total);
-      const key = 'held_' + S.equip.weapon;
+      const key = heldKey(S.equip.weapon);
       const sweep = 1.25 - 2.5 * k;
       const ang = Math.atan2(f.y, f.x) + (s.c.flip ? -sweep : sweep);
       this.heldImg.setTexture(this.scene.textures.exists(key) ? key : 'blade_default').setOrigin(['staff', 'halberd'].includes(stats.weapon()?.style) ? 0.34 : 0.08, 0.5).setVisible(true)
@@ -310,7 +310,7 @@ export const combatMethods = {
     if (this.blocking) {
       this.blockT += dt;
       this.spDelay = Math.max(this.spDelay, 0.25);
-      const key = 'held_' + sh.id;
+      const key = heldKey(sh.id);
       this.heldImg.setTexture(this.scene.textures.exists(key) ? key : 'blade_default').setVisible(true)
         .setPosition(this.x + this.face.x * 8, this.y + 3 + this.face.y * 8).setDepth(this.y + (this.face.y < 0 ? 4 : 12))
         .setOrigin(0.5, 0.5).setRotation(0).setScale(1).setAlpha(this.blockT < 0.18 ? 1 : 0.92);

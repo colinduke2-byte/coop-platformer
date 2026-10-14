@@ -425,6 +425,15 @@ export function getRegion(id) {
   return regionCache[id].built;
 }
 export const getReach = () => getRegion('reach');
+// Build a region ahead of time (the title screen does this for the saved game while you read the menu), so entering it
+// later costs nothing. Same cache and seed rule as getRegion.
+export function prebuildRegion(id, seed) {
+  if (!REGION_DEFS[id] && id !== 'reach') return false;
+  if (regionCache[id]?.seed === seed) return true;
+  const def = REGION_DEFS[id];
+  regionCache[id] = { seed, built: id === 'reach' ? buildReach(buildForestRegion(), seed) : buildRegion(def, null, (seed ^ (def.salt || 0)) >>> 0) };
+  return true;
+}
 MAPS.ashen = { name: 'The Ashen Peaks', snow: false, outdoors: true, ambience: 'wind', build: () => getRegion('ashen'), music: 'ashen', dim: 0.16, stream: true };
 MAPS.forest = { name: 'The Hollow Reach', snow: true, ambience: 'wind', build: () => getReach(), music: 'forest', dim: 0.12, stream: true };
 for (let i = 0; i < 8; i++) {
