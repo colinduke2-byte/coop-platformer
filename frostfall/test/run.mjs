@@ -7,6 +7,7 @@
 //   --only=a,b      only files whose name contains one of these substrings
 //   --skip=a,b      leave out files whose name contains one of these substrings
 //   --fast          leave out LONG
+//   --long          only LONG (npm run test:long)
 //   --timeout=MIN   per-file timeout in minutes (default 15; LONG files get TIMEOUT_LONG)
 //   --no-retry      a failed file is not run a second time
 //   --list          print the files that would run and exit
@@ -29,7 +30,7 @@ const list = (v) => (typeof v === 'string' ? v.split(',').map((s) => s.trim()).f
 const jobs = Math.max(1, Number(args.jobs) || Math.max(2, Math.floor(os.cpus().length / 2)));
 const timeoutMin = Number(args.timeout) || 15;
 const only = list(args.only), skip = list(args.skip);
-let files = TESTS.filter((t) => (!only.length || only.some((s) => t.includes(s))) && !skip.some((s) => t.includes(s)) && !(args.fast && LONG.includes(t)));
+let files = TESTS.filter((t) => (!only.length || only.some((s) => t.includes(s))) && !skip.some((s) => t.includes(s)) && !(args.fast && LONG.includes(t)) && !(args.long && !LONG.includes(t)));
 if (args.list) { console.log(files.join('\n')); process.exit(0); }
 if (!files.length) { console.log('no test files match'); process.exit(1); }
 
