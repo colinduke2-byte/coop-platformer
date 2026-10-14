@@ -1,12 +1,14 @@
 // The refinement pass: regression tests for the bugs it fixed and the small features it added.
 //   node test/stage80_refine.mjs
 import { launch, check, failCount } from './harness.mjs';
-const h = await launch();
+// paused: the real game loop stops after every h.open(); time only moves through stepped frames (h.wait / h.tap),
+// so every check sees the same number of frames however busy the machine is.
+const h = await launch({ paused: true });
 await h.open('scene=game&map=sunscorch&spawn=entry&seed=4242');
-await h.sleep(1500);
+await h.wait(1500);
 const G = (fn, a) => h.ev(fn, a);
 await G(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.__ff.S.flags.introDone = true; });
-const tap = async (c) => { await G((k) => window.__ff.keys._press(k), c); await h.sleep(70); await G((k) => window.__ff.keys._release(k), c); await h.sleep(90); };
+const tap = (c) => h.tap(c, h.msFrames(70), h.msFrames(90));
 
 // ---- a Dune Raider dies without freezing the game, many times (its arrow drop used to crash about one kill in five)
 const raid = await G(async () => {
@@ -23,7 +25,7 @@ check('forty Dune Raiders die cleanly; their arrow drops carry 2-4 arrows', raid
 // ---- the cutpurse: no theft through a parry or block; a clean hit steals; the kill returns exactly what was taken
 const thief = await G(async () => {
   const g = window.gs(), p = g.player, S = window.__ff.S;
-  for (const pk of g.pickups.slice()) pk.collect?.();
+  for (const pk of g.pickups.slice()) if (pk.scene && !pk.done) pk.collect?.();     // skip ones already collected (the list is pruned next frame)
   const e = g.addEnemy('cutpurse', p.x + 10, p.y); e.alert(true);
   S.gold = 1000; S.hp = S.maxHp;
   const real = p.hurt.bind(p);
@@ -93,11 +95,11 @@ check('Sunbreaker: the Long Winter strikes 10% faster in every phase', Math.abs(
 // ---- the pack: V twice drops the selected stack at your feet; it is not sucked straight back; equipped items stay
 const drop = await G(async () => {
   const S = window.__ff.S, g = window.gs(); const { addItem } = await import('/src/systems/inventory.js');
-  for (const pk of g.pickups.slice()) pk.collect?.();
+  for (const pk of g.pickups.slice()) if (pk.scene && !pk.done) pk.collect?.();     // skip ones already collected (the list is pruned next frame)
   S.inv = { iron_ingot: 7, rusty_sword: 1 }; S.equip.weapon = 'rusty_sword';
   g.openMenu(0); return true;
 });
-await h.sleep(500);
+await h.wait(500);
 const sel = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); const l = m.inventory(); m.cursor = l.indexOf('iron_ingot'); m.dirty = true; return l; });
 await tap('KeyV'); const armed = await G(() => window.__ff.S.inv.iron_ingot);
 await tap('KeyV');
@@ -105,13 +107,13 @@ const dropped = await G(() => ({ inv: window.__ff.S.inv.iron_ingot || 0, pk: win
 await G(() => { const m = window.__ff.game.scene.getScene('Menu'); m.cursor = m.inventory().indexOf('rusty_sword'); m.dirty = true; });
 await tap('KeyV'); await tap('KeyV');
 const kept = await G(() => window.__ff.S.inv.rusty_sword || 0);
-await tap('Escape'); await h.sleep(300);
-await h.sleep(900);
+await tap('Escape'); await h.wait(300);
+await h.wait(900);
 const stillThere = await G(() => window.gs().pickups.some((x) => x.spec.dropped && !x.done));
 await G(() => { const p = window.gs().player; p.setPosition(p.x + 120, p.y); });
-await h.sleep(400);
+await h.wait(400);
 await G(() => { const p = window.gs().player, d = window.gs().pickups.find((x) => x.spec.dropped && !x.done); if (d) p.setPosition(d.gx, d.gy - 3); });
-await h.sleep(600);
+await h.wait(600);
 const back = await G(() => window.__ff.S.inv.iron_ingot || 0);
 check('V once only asks; V twice drops the whole stack on the ground', armed === 7 && dropped.inv === 0 && dropped.pk[0] === 7, JSON.stringify({ armed, dropped, sel }));
 check('an equipped item cannot be dropped', kept === 1);
@@ -137,7 +139,7 @@ await G(() => { const S = window.__ff.S; S.flags.introDone = true; S.respawn = {
 const falls = [];
 for (let i = 0; i < 3; i++) {
   await G(() => { window.__ff.S.hp = 0; });
-  await h.sleep(5500);
+  await h.wait(5500);
   falls.push(await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { hp: window.__ff.S.hp, mode: g.player?.mode, map: g.mapId }; }));
 }
 check('every death respawns you at full health, not just the first', falls.every((f) => f.hp > 0 && f.mode === 'free' && f.map === 'village'), JSON.stringify(falls));
@@ -145,7 +147,7 @@ check('every death respawns you at full health, not just the first', falls.every
 // ---- the final choices come back if the game was closed between the boss and the choice
 const fin = await G(async () => { const S = window.__ff.S; S.flags.winterDead = true; delete S.flags.finale; window.__said = []; return true; });
 await G(() => window.__ff.game.scene.getScene('Game').changeMap('village', 'start'));
-await h.sleep(5000);
+await h.wait(5000);
 const fin2 = await G(() => ({ modal: (window.__ff.game.scene.getScene('Hud')?.dlg ? true : false) || !!window.__ffModal, ui: true }));
 const asked = await G(async () => (await import('/src/systems/ui.js')).ui.modal);
 check('the Long Winter\'s choice is offered again after a reload that skipped it', asked === true, JSON.stringify({ fin2, asked }));

@@ -97,19 +97,26 @@ check('the Hollow King wakes, changes phase and falls', hk.has && hk.engaged && 
 await h.shot('s46_hollowking');
 
 // ---- quests
+// quest rewards: the loop is paused so nothing else (a pickup, a trophy) adds gold meanwhile, and the expected gold includes
+// any gold-find bonus from gear or blessings picked up earlier in the run (what addGold really pays)
+await h.pause();
+const goldMul = () => G(async () => { const { stats } = await import('/src/systems/stats.js'), { modMul } = await import('/src/data/mods.js'); return stats.mul('goldMul') * modMul('goldMul'); });
 await G(() => { const St = window.__ff.S; St.quests.admiral.status = 'inactive'; St.quests.hollowking.status = 'inactive'; St.flags.admiralDead = false; St.flags.hollowKingDead = false; St.gold = 0; St.inv = {}; });
 await stub([0]); await SCRIPT('keeper'); await unstub();
 check('the Keeper sends you to Tidebreak', await G(() => window.__ff.S.quests.admiral.status === 'active'));
-await G(() => { window.__ff.S.flags.admiralDead = true; });
+await G(() => { window.__ff.S.flags.admiralDead = true; window.__ff.S.gold = 0; });
+const keeperWant = Math.round(450 * (await goldMul()));
 await stub([]); await SCRIPT('keeper'); await unstub();
 const kq = await G(() => { const s = window.__ff.S; return { q: s.quests.admiral.status, mail: !!s.inv.sealskin_mail, gold: s.gold }; });
-check('telling her it is done pays Sealskin Mail and gold', kq.q === 'done' && kq.mail && kq.gold === 450, JSON.stringify(kq));
+check('telling her it is done pays Sealskin Mail and gold', kq.q === 'done' && kq.mail && kq.gold === keeperWant, JSON.stringify({ ...kq, keeperWant }));
 await stub([0]); await SCRIPT('scribe'); await unstub();
 check('the Scribe asks you to remember the last King', await G(() => window.__ff.S.quests.hollowking.status === 'active'));
-await G(() => { window.__ff.S.flags.hollowKingDead = true; });
+await G(() => { window.__ff.S.flags.hollowKingDead = true; window.__ff.S.gold = 0; });
+const scribeWant = Math.round(600 * (await goldMul()));
 await stub([]); await SCRIPT('scribe'); await unstub();
 const sq = await G(() => { const s = window.__ff.S; return { q: s.quests.hollowking.status, rem: !!s.flags.kingRemembered, gold: s.gold }; });
-check('the Scribe finishes the last name, and the epilogue remembers it', sq.q === 'done' && sq.rem && sq.gold === 1050, JSON.stringify(sq));
+check('the Scribe finishes the last name, and the epilogue remembers it', sq.q === 'done' && sq.rem && sq.gold === scribeWant, JSON.stringify({ ...sq, scribeWant }));
+await h.resume();
 const epi = await G(async () => (await import('/src/data/story.js')).epilogueLines().join(' '));
 check('the ending epilogue mentions the coast and the Scribe', /Last Light/.test(epi) && /Scribe/.test(epi), epi.slice(0, 120));
 

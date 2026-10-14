@@ -9,6 +9,8 @@
 //    fast the machine is. While stepping, performance.now and Date.now (tweens use it) follow the stepped time.
 //    h.tap / h.hold press keys for an exact number of frames. h.until(pred, maxFrames) steps frame by frame until a page-side
 //    predicate holds. The old wall-clock API (h.sleep) still works and can be mixed with these.
+//    launch({ paused: true }) pauses the real loop after every h.open(), so the whole file runs on stepped frames
+//    (use h.wait(ms) where it used h.sleep(ms)).
 //
 // When FF_URL is set (test/run.mjs does this) the tests share one already running Vite server instead of starting their own.
 const pw = await import('playwright').catch(() => import('/opt/node-tools/node_modules/playwright/index.mjs'));
@@ -126,6 +128,7 @@ export async function launch(opts = {}) {
   const open = async (query = '') => {
     await page.goto(url + '?renderer=canvas&' + query, { timeout: 90000 });
     await page.waitForFunction(() => window.__ff && window.__ff.game.isBooted, null, { timeout: 60000 });
+    if (opts.paused) await page.evaluate(() => window.__ffStep.pause());
   };
   const shot = (name) => page.locator('canvas').screenshot({ path: new URL(`./out/${name}.png`, import.meta.url).pathname });
   const close = async () => { await browser.close(); await srv.close(); };
@@ -154,6 +157,9 @@ export async function launch(opts = {}) {
     try { k._press(c); await st.frames(n, dt); k._release(c); await st.frames(after, dt); } finally { if (!wasPaused) st.resume(); }
   }, [code, n, after, FRAME_MS]);
   const tap = (code, n = 4, after = 2) => hold(code, n, after);
+  // Wall-clock milliseconds as game frames: h.wait(500) steps 30 frames. For converting h.sleep in frame-exact tests.
+  const wait = (ms) => frames(Math.max(1, Math.round(ms / FRAME_MS)));
+  const msFrames = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
   // Step frame by frame (at most maxFrames) until pred (a page-side function, like ev's) returns truthy.
   // Resolves to { ok, frames }.
   const until = (pred, maxFrames = 600, arg) => page.evaluate(async ([src, max, a, dt]) => {
@@ -164,7 +170,7 @@ export async function launch(opts = {}) {
     return { ok, frames: n };
   }, [pred.toString(), maxFrames, arg, FRAME_MS]);
 
-  return { page, errors, open, shot, close, sleep, ev, frames, pause, resume, press, release, hold, tap, until, url };
+  return { page, errors, open, shot, close, sleep, ev, frames, pause, resume, press, release, hold, tap, until, wait, msFrames, url };
 }
 
 let fails = 0;
