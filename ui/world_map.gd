@@ -50,6 +50,10 @@ var _panel_stats: Label
 var _toast: Label
 var _toast_t := 0.0
 var _controls: CanvasLayer
+var _picker: CanvasLayer             ## the quick world switcher (UP opens it)
+var _pick := 0                        ## highlighted world in the switcher
+var _pick_cards: Array[PanelContainer] = []
+var _pick_worlds: Array[String] = []
 var _path := PackedVector2Array()    ## the whole winding path (for drawing)
 
 
@@ -168,7 +172,7 @@ func _build_ui() -> void:
 	v.add_child(_panel_blurb)
 	_panel_stats = UIStyle.label("", 22, UIStyle.ACCENT)
 	v.add_child(_panel_stats)
-	var hint := UIStyle.label("Left / Right: walk     Jump: play     Punch: back     Pause: controls", 20, Color.WHITE, 6)
+	var hint := UIStyle.label("Left / Right: walk     Jump: play     Up: worlds     Punch: back     Pause: controls", 20, Color.WHITE, 6)
 	hint.position = Vector2(44, 1022)
 	layer.add_child(hint)
 	_toast = UIStyle.label("", 28, Color.WHITE, 10)
@@ -212,6 +216,10 @@ func _process(delta: float) -> void:
 	_shake = maxf(_shake - delta * 3.0, 0.0)
 	_toast_t -= delta
 	_toast.modulate.a = clampf(_toast_t * 2.0, 0.0, 1.0)
+	if _picker:
+		_process_picker()
+		_update_gang(delta)
+		return
 	if _controls:
 		_menu.poll(false)
 		if _menu.pause or _menu.confirm or _menu.back:
@@ -245,6 +253,8 @@ func _process(delta: float) -> void:
 		_try_walk(index - 1)
 	elif _menu.confirm:
 		_enter()
+	elif _menu.up:
+		_open_picker()
 	elif _menu.back:
 		set_process(false)
 		GameManager.goto_scene(GameManager.CHARACTER_SELECT)
@@ -334,6 +344,144 @@ func _update_gang(delta: float) -> void:
 		rig.scale.x = absf(rig.scale.x) * _facing
 		var speed := WALK_SPEED * _facing if _walking else 0.0
 		rig.update_pose(&"Ground", Vector2(speed, 0), true, WALK_SPEED, delta)
+
+
+# --- The quick world switcher ----------------------------------------------------------
+
+## Is the world's first level open? (Same rule as walking through its gate, so nothing is skipped.)
+static func world_open(world_id: String) -> bool:
+	return LevelCatalog.exists(world_id + "_1") and LevelCatalog.is_unlocked(world_id + "_1")
+
+
+func _open_picker() -> void:
+	_pick_worlds.clear()
+	for w in LevelCatalog.story_worlds():
+		if LevelCatalog.exists(w + "_1"):
+			_pick_worlds.append(w)
+	_pick = maxi(_pick_worlds.find(world), 0)
+	_picker = CanvasLayer.new()
+	_picker.layer = 12
+	add_child(_picker)
+	var dim := ColorRect.new()
+	dim.color = Color(0.05, 0.03, 0.1, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_picker.add_child(dim)
+	var head := UIStyle.label("Where to?", 52, Color.WHITE, 12)
+	head.position = Vector2(0, 170)
+	head.custom_minimum_size.x = 1920
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_picker.add_child(head)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 14)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.position = Vector2(0, 300)
+	row.custom_minimum_size = Vector2(1920, 420)
+	row.pivot_offset = Vector2(960, 0)
+	row.scale = Vector2.ONE * 0.84   # eight cards plus the selected one's pop must fit the screen
+	_picker.add_child(row)
+	_pick_cards.clear()
+	for w in _pick_worlds:
+		var card := _picker_card(w)
+		row.add_child(card)
+		_pick_cards.append(card)
+	var hint := UIStyle.label("Left / Right: choose     Jump: go     Up / Punch: back to the map", 24, Color.WHITE, 8)
+	hint.position = Vector2(0, 770)
+	hint.custom_minimum_size.x = 1920
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_picker.add_child(hint)
+	_refresh_picker()
+	Audio.play("menu_move", -4.0)
+
+
+func _picker_card(w: String) -> PanelContainer:
+	var info := LevelCatalog.world_info(w)
+	var open := world_open(w)
+	var tint := Color("9a93a8")
+	var first := LevelCatalog.by_id(w + "_1")
+	if open and first.has("theme"):
+		var th: LevelTheme = load(first["theme"])
+		tint = th.accent
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(196, 360)
+	card.pivot_offset = Vector2(98, 180)
+	card.set_meta(&"tint", tint)
+	card.add_theme_stylebox_override(&"panel", UIStyle.panel(Color(UIStyle.PANEL, 0.97 if open else 0.7), 16, 5))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override(&"separation", 6)
+	card.add_child(v)
+	var band := ColorRect.new()   # the world's own accent colour
+	band.color = tint
+	band.custom_minimum_size = Vector2(0, 16)
+	v.add_child(band)
+	var num := UIStyle.label(str(LevelCatalog.world_number(w)), 72, UIStyle.INK if open else Color(UIStyle.INK, 0.4))
+	num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(num)
+	var name := UIStyle.label(String(info.get("name", w)), 22, UIStyle.INK if open else Color(UIStyle.INK, 0.5))
+	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name.custom_minimum_size = Vector2(176, 66)
+	v.add_child(name)
+	var stat: String
+	if not open:
+		stat = "Locked"
+		if w == LevelCatalog.SECRET_WORLD and LevelCatalog.world_done(LevelCatalog.previous_world(w)):
+			stat = "%d more gems" % (LevelCatalog.secret_gems_needed() - LevelCatalog.gems_before_secret())
+	else:
+		var t := SaveData.world_totals(w)
+		stat = "%d / %d levels\n%d / %d gems" % [t["done"], t["levels"], t["gems"], t["gems_total"]]
+	var s := UIStyle.label(stat, 20, UIStyle.ACCENT if open else Color(UIStyle.INK, 0.5))
+	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(s)
+	if w == world:
+		var here := UIStyle.label("YOU ARE HERE", 16, UIStyle.INK)
+		here.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(here)
+	return card
+
+
+func _refresh_picker() -> void:
+	for i in _pick_cards.size():
+		var c := _pick_cards[i]
+		var sel := i == _pick
+		c.scale = Vector2.ONE * (1.1 if sel else 0.94)
+		c.modulate = Color.WHITE if sel else Color(1, 1, 1, 0.82)
+		var tint: Color = c.get_meta(&"tint")
+		var open := world_open(_pick_worlds[i])
+		c.add_theme_stylebox_override(&"panel", UIStyle.panel(Color(UIStyle.PANEL, 0.97 if open else 0.7), 16, 9 if sel else 5))
+		c.z_index = 1 if sel else 0
+		if sel:
+			c.add_theme_stylebox_override(&"panel", UIStyle.panel(tint.lightened(0.55) if open else Color("c9c4d4"), 16, 9))
+
+
+func _process_picker() -> void:
+	_menu.poll()
+	if _menu.right:
+		_pick = mini(_pick + 1, _pick_worlds.size() - 1)
+		_refresh_picker()
+	elif _menu.left:
+		_pick = maxi(_pick - 1, 0)
+		_refresh_picker()
+	elif _menu.up or _menu.back or _menu.pause:
+		_close_picker()
+	elif _menu.confirm:
+		var w := _pick_worlds[_pick]
+		if w == world:
+			_close_picker()
+		elif not world_open(w):
+			_shake = 1.0
+			Audio.play("clank", -6.0)
+			_show_toast("%s is still locked." % LevelCatalog.world_info(w).get("name", w))
+		else:
+			set_process(false)
+			last_index[world] = index
+			world = w
+			GameManager.goto_scene(GameManager.WORLD_MAP)
+
+
+func _close_picker() -> void:
+	_picker.queue_free()
+	_picker = null
+	_pick_cards.clear()
 
 
 # --- Path maths -----------------------------------------------------------------------

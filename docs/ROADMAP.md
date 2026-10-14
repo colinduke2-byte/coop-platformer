@@ -128,6 +128,8 @@ Claude ticks boxes and adds discovered follow-ups. Colin reorders freely.
 - [ ] Playtest: is 12 s recording enough? Is the Archivist's opening (7 / 6 / 4.5 s) fair solo? Is ERASE (phase 2+) fun or annoying?
 - [ ] Ideas: a second echo per dreamer in W7 secret levels, echoes that ride moving platforms, a record pad that rewinds time
 
+- [x] World switcher: UP on any world map opens a card row (one per world, tinted by the world's own accent, progress + lock state); Left/Right choose, Jump travels, Up/Punch closes. Locked worlds can't be picked (same rule as the gates). Host/offline only - online friends follow the host
+
 ## Refinement pass (Oct 2026) - see also the Performance round 2 line above
 - [x] `tools/fuzz_levels.tscn`: a random-input bot in every level (flips gravity in World 6) - 44 levels clean
 - [x] Input rebinding, comfort settings (screen shake, hit freeze, reduce flashing), flip whoosh SFX, `tools/process_census.tscn`

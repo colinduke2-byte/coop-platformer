@@ -13,6 +13,9 @@ func _ready() -> void:
 	WorldMap.world = args.get("map_world", "w1")
 	var scene: Node = load(args.get("scene", "res://ui/world_map.tscn")).instantiate()
 	add_child(scene)
+	if args.has("picker") and scene.has_method(&"_open_picker"):
+		await get_tree().process_frame
+		scene._open_picker()
 	await get_tree().create_timer(float(args.get("wait", "1.0"))).timeout
 	await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(args.get("out", "/tmp/shot.png"))

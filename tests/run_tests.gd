@@ -9563,3 +9563,28 @@ func test_echo_ghost_never_hurts_and_stops_at_the_end_of_the_route() -> void:
 	await seconds(2.0)
 	check(absf((g[0] as Node2D).global_position.x - x_end) < 1.0, "a non-looping echo stands where the route ended")
 	check(not p.is_bubbled(), "and an echo never hurts anyone")
+
+
+func test_world_picker_lists_every_world_and_respects_locks() -> void:
+	SaveData.load_records()
+	var saved: Dictionary = SaveData.records.duplicate(true)
+	SaveData.records = {}
+	LevelCatalog.dev_unlock = false
+	WorldMap.world = "w3"
+	var m: WorldMap = load("res://ui/world_map.tscn").instantiate()
+	_arena.add_child(m)
+	await frames(3)
+	m._open_picker()
+	await frames(2)
+	check(m._pick_cards.size() == 8, "the switcher shows all eight worlds (%d)" % m._pick_cards.size())
+	check(m._pick_worlds[m._pick] == "w3", "it starts on the world you are in")
+	check(WorldMap.world_open("w1") and not WorldMap.world_open("w2") and not WorldMap.world_open("w8"), "a fresh save can only pick World 1")
+	LevelCatalog.dev_unlock = true
+	check(WorldMap.world_open("w7") and WorldMap.world_open("w8"), "with everything unlocked every world can be picked")
+	LevelCatalog.dev_unlock = false
+	m._close_picker()
+	check(m._picker == null, "closing removes the overlay")
+	m.queue_free()
+	await frames(2)
+	WorldMap.world = "w1"
+	SaveData.records = saved

@@ -43,6 +43,7 @@ below shows the DEFAULTS; the in-game Controls card always shows your current ke
 
 ## Dev shortcuts
 
+- **Up** on the world map: the world switcher (jump straight to any world you have opened; Left/Right choose, Jump go, Up/Punch close).
 - **F9** on the world map: unlock every level, world and outfit (this session only; F9 again to undo).
 - **F3** in a level: debug overlay (states, speeds, timers).
 
