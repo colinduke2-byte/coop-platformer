@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H } from './config.js';
+import { W, H, BUILD } from './config.js';
 import { installKeys, keys } from './systems/keys.js';
 import { S, resetState, loadInto } from './systems/state.js';
 import BootScene from './scenes/BootScene.js';
@@ -100,7 +100,7 @@ window.addEventListener('pagehide', quietSave);
 wireQuests();
 
 // Handy handle for the console and the automated tests.
-window.__ff = { game, S, keys, resetState, loadInto, loadPack: (pack) => loadContentPack(pack) };
+window.__ff = { game, S, keys, resetState, loadInto, build: BUILD, loadPack: (pack) => loadContentPack(pack) };
 // ?pack=<url> loads a JSON content pack (see src/data/registry.js) before the world is built
 function loadContentPack(pack) {
   const r = loadPack(pack, TIER_MOBS);
@@ -108,10 +108,42 @@ function loadContentPack(pack) {
   return r;
 }
 const packUrl = new URLSearchParams(location.search).get('pack');
-if (packUrl) fetch(packUrl).then((r) => r.json()).then(loadContentPack).catch((e) => console.warn('pack failed', e));
+// only packs from this same site (or any while developing): a shared link must not be able to change someone's game
+const packOk = (u) => { try { return import.meta.env.DEV || new URL(u, location.href).origin === location.origin; } catch { return false; } };
+if (packUrl && !packOk(packUrl)) console.warn('pack ignored: not from this site', packUrl);
+else if (packUrl) fetch(packUrl).then((r) => r.json()).then(loadContentPack).catch((e) => console.warn('pack failed', e));
 
-// Offline play: a tiny service worker (public/sw.js) keeps the game in the browser after the first visit. Quietly skipped when the
-// page is not served over http(s) (a single-file copy, a sandboxed frame) or while developing.
+// Offline play + updates: public/sw.js keeps the game in the browser (see docs/PUBLISHING.md). Skipped off http(s), in frames, in dev.
+// When a newer build is waiting, a button offers to reload into it (saving first).
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !import.meta.env.DEV && window.top === window) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  const askBuild = (w) => new Promise((res) => {
+    const ch = new MessageChannel();
+    ch.port1.onmessage = (e) => res(e.data && e.data.build);
+    w.postMessage({ type: 'GET_BUILD' }, [ch.port2]);
+    setTimeout(() => res(null), 3000);
+  });
+  const showUpdateToast = (worker) => {
+    if (document.getElementById('ff-update')) return;
+    const b = document.createElement('button');
+    b.id = 'ff-update'; b.type = 'button'; b.textContent = 'UPDATE READY - SAVE AND RELOAD';
+    b.style.cssText = 'position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;'
+      + 'font:700 12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.1em;color:#0b0e1a;background:#f4d460;border:0;padding:10px 16px;cursor:pointer';
+    b.addEventListener('click', () => { quietSave(); window.__ffReloadOnSwap = true; b.disabled = true; b.textContent = 'UPDATING...'; worker.postMessage({ type: 'SKIP_WAITING' }); });
+    document.body.appendChild(b);
+  };
+  const offer = (w) => {
+    if (!w) return;
+    const ready = () => {
+      if (w.state !== 'installed' || !navigator.serviceWorker.controller) return;
+      w.removeEventListener('statechange', ready);
+      askBuild(w).then((b) => (b === BUILD ? w.postMessage({ type: 'SKIP_WAITING' }) : showUpdateToast(w)));
+    };
+    ready(); w.addEventListener('statechange', ready);
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (window.__ffReloadOnSwap) { window.__ffReloadOnSwap = false; location.reload(); } });
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').then((reg) => {
+    offer(reg.waiting);
+    reg.addEventListener('updatefound', () => offer(reg.installing));
+    setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);   // long sessions notice new builds too
+  }).catch(() => {}));
 }

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, BINDINGS, VERSION } from '../config.js';
+import { W, H, BINDINGS, VERSION, BUILD } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
 import { keys, padActive } from '../systems/keys.js';
@@ -56,7 +56,7 @@ export default class TitleScene extends Phaser.Scene {
     this.footPad = null;                        // the footer follows the device in use (redrawn in update when it changes)
     this.footer = () => { if (this.footPad === padActive()) return; this.footPad = padActive(); hint.setText(padHint('W/S SELECT   E CONFIRM')); hint.x = Math.floor((W - hint.width) / 2); };
     this.footer();
-    const ver = txt(this, 0, 172, VERSION, 2); ver.x = W - 4 - ver.width;
+    const ver = txt(this, 0, 172, `${VERSION} ${BUILD.split('-')[0]}`, 2); ver.x = W - 4 - ver.width;
     this.verTxt = ver;
     // mouse: hover to pick, click to confirm
     const rowAt = (p) => this.texts.findIndex((t) => p.x >= t.x - 14 && p.x <= t.x + t.width + 6 && p.y >= t.y - 2 && p.y <= t.y + 11);
