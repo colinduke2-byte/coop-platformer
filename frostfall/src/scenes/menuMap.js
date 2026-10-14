@@ -43,7 +43,7 @@ let bakeCache = null;
 const RGB = [];
 function bakeTerrain(m, vid, b, scIn, fog) {
   const sc = Math.max(1, scIn), sig = vid + '|' + sc;
-  if (bakeCache && bakeCache.sig === sig && bakeCache.fog === fog && m.textures.exists(bakeCache.key)) return bakeCache.key;
+  if (bakeCache && bakeCache.sig === sig && bakeCache.fog === fog && m.textures.exists(bakeCache.key)) { m._bake = bakeCache; return bakeCache.key; }
   const W2 = b.w * sc, H2 = b.h * sc;
   const cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
   const ctx = cv.getContext('2d'), { cw } = fogDims(b.w, b.h);
@@ -67,6 +67,7 @@ function bakeTerrain(m, vid, b, scIn, fog) {
   const key = 'mapbake' + (bakeCache ? bakeCache.n + 1 : 1);
   m.textures.addCanvas(key, cv);
   bakeCache = { sig, fog, key, n: bakeCache ? bakeCache.n + 1 : 1 };
+  m._bake = bakeCache;                                      // (tools and tests look here)
   return key;
 }
 
