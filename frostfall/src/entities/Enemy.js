@@ -100,7 +100,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   // Native-pixel art is already at its on-screen size, so scale requests (bosses call setScale) are ignored.
   setScale(x, y) { return this.native ? this : super.setScale(x, y); }
   get vs() { return this.native ? this.native.scale : this.scaleX; }     // on-screen scale, whatever the art
-  get rect() { const b = this.body; return new Phaser.Geom.Rectangle(b.x, b.y, b.width, b.height); }
+  get rect() { const b = this.body; return (this._rect ||= new Phaser.Geom.Rectangle()).setTo(b.x, b.y, b.width, b.height); }   // reused: read it, do not keep it
   get cx() { return this.body.center.x; }
   get cy() { return this.body.center.y; }
 
@@ -245,7 +245,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     // ---- awareness
-    if (!this.alerted) {
+    if (!this.alerted && d > this.cfg.detect * 3 && this.notice <= 0) {
+      // far beyond any sight range (no detection modifier reaches 3x): skip the costly stealth maths
+    } else if (!this.alerted) {
       const range = this.cfg.detect * player.detectMult() * (S.weather === 'blizzard' && sc.def.snow && BEASTS_NOSE.has(this.kind) ? 1.33 : 1);   // predators hunt by scent in a blizzard
       const seen = !dead && d < range && sc.hasLOS(this.cx, this.cy, player.body.center.x, player.body.center.y);
       this.notice = seen ? this.notice + dt : Math.max(0, this.notice - dt * 0.7);

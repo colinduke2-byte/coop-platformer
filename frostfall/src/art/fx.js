@@ -10,7 +10,26 @@ export class Fx {
     this.texts = [];
     this.temp = [];
     this.pool = [];
+    this.textPool = [];          // floating texts, slashes, rings and bolts are recycled too (crowd fights made hundreds)
+    this.imgPool = {};
+    this.gfxPool = [];
   }
+  // a floating text from the pool
+  getText(x, y, str, col) {
+    const o = this.textPool.pop();
+    if (!o) return txtS(this.s, x, y, str, col, 0).setDepth(99500);
+    o.main.setFont('f' + col); o.setText(str).setPosition(x, y).setAlpha(1);
+    o.main.setVisible(true); o.shadow.setVisible(true);
+    return o;
+  }
+  freeText(o) { o.main.setVisible(false); o.shadow.setVisible(false); this.textPool.push(o); }
+  getImg(key, x, y, depth) {
+    const l = this.imgPool[key];
+    const sp = l && l.pop();
+    if (!sp) return this.s.add.image(x, y, key).setDepth(depth);
+    return sp.setPosition(x, y).setVisible(true).setActive(true).setAlpha(1).setScale(1).setRotation(0).setFlip(false, false).clearTint().setOrigin(0.5).setDepth(depth);
+  }
+  freeImg(sp) { sp.setVisible(false).setActive(false); (this.imgPool[sp.texture.key] ||= []).push(sp); }
 
   acquire(col, x, y) {
     const sp = this.pool.pop();
@@ -44,30 +63,33 @@ export class Fx {
   }
 
   text(x, y, str, col = 6, life = 0.8) {
-    if (settings.dmgNumbers === false && /^\d+$/.test(str)) return;       // option: hide damage numbers
+    str = String(str);
+    const isNum = /^\d+$/.test(str);
+    if (settings.dmgNumbers === false && isNum) return;       // option: hide damage numbers
     // damage numbers pile up in crowd fights: merge close ones into a running total and fade sooner
-    if (/^\d+$/.test(str) && life === 0.8) {
+    if (isNum && life === 0.8) {
       const near = this.texts.find((o) => o.num != null && o.col === col && o.life > o.t0 * 0.35 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
       if (near) {
         near.num += Number(str); near.life = near.t0; near.t.setText(String(near.num)).setPosition(Math.round(near.x - String(near.num).length * 3), Math.round(near.y));
         return;
       }
-      if (this.texts.length > 9) { const old = this.texts.shift(); old.t.destroy?.(); }
+      if (this.texts.length > 9) { const old = this.texts.shift(); this.freeText(old.t); }
       if (this.texts.length > 4) life = 0.55;
     }
-    const t = txtS(this.s, Math.round(x - str.length * 3), Math.round(y), str, col, 0).setDepth(99500);
-    this.texts.push({ t, y, x, y0: y, t0: life, life, col, num: /^\d+$/.test(str) ? Number(str) : null });
+    const t = this.getText(Math.round(x - str.length * 3), Math.round(y), str, col);
+    this.texts.push({ t, y, x, y0: y, t0: life, life, col, num: isNum ? Number(str) : null });
   }
 
   slash(x, y, angle, flip = false, scale = 1) {
-    const sp = this.s.add.image(x, y, 'slash').setOrigin(0.1, 0.5).setRotation(angle).setDepth(99100).setScale(scale);
+    const sp = this.getImg('slash', x, y, 99100).setOrigin(0.1, 0.5).setRotation(angle).setScale(scale);
     if (flip) sp.setFlipY(true);
     this.temp.push({ sp, t: 0.14, grow: 0 });
   }
 
   // Jagged lightning through a list of points.
   bolt(pts, col = 13) {
-    const g = this.s.add.graphics().setDepth(99200);
+    const g = this.gfxPool.pop()?.setVisible(true) || this.s.add.graphics().setDepth(99200);
+    g.clear();
     const draw = (c, w) => {
       g.lineStyle(w, C[c], 1); g.beginPath(); g.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) {
@@ -80,11 +102,11 @@ export class Fx {
       g.strokePath();
     };
     draw(col, 3); draw(6, 1);
-    this.s.time.delayedCall(130, () => g.destroy());
+    this.s.time.delayedCall(130, () => { if (g.scene) { g.clear(); g.setVisible(false); this.gfxPool.push(g); } });
   }
 
   ring(x, y, to = 1.2, life = 0.4, key = 'ring', tint = null) {
-    const sp = this.s.add.image(x, y, key).setDepth(99050).setAlpha(0.9).setScale(0.1);
+    const sp = this.getImg(key, x, y, 99050).setAlpha(0.9).setScale(0.1);
     if (tint != null) sp.setTint(tint);
     this.temp.push({ sp, t: life, life, to, ring: true });
   }
@@ -101,7 +123,7 @@ export class Fx {
     for (let i = this.texts.length - 1; i >= 0; i--) {
       const f = this.texts[i];
       f.life -= dt;
-      if (f.life <= 0) { f.t.destroy(); this.texts.splice(i, 1); continue; }
+      if (f.life <= 0) { this.freeText(f.t); this.texts.splice(i, 1); continue; }
       const k = 1 - f.life / f.t0;
       f.t.setPosition(f.t.x, Math.round(f.y - k * 12));
       f.t.setAlpha(f.life < 0.25 ? f.life / 0.25 : 1);
@@ -109,7 +131,7 @@ export class Fx {
     for (let i = this.temp.length - 1; i >= 0; i--) {
       const e = this.temp[i];
       e.t -= dt;
-      if (e.t <= 0) { e.sp.destroy(); this.temp.splice(i, 1); continue; }
+      if (e.t <= 0) { if (e.pooled === false) e.sp.destroy(); else this.freeImg(e.sp); this.temp.splice(i, 1); continue; }
       if (e.ring) {
         const k = 1 - e.t / e.life;
         e.sp.setScale(Math.max(0.1, e.to * (1 - (1 - k) * (1 - k))));
@@ -119,7 +141,8 @@ export class Fx {
   }
 
   clear() {
-    [...this.parts.map((p) => p.sp), ...this.pool, ...this.texts.map((f) => f.t), ...this.temp.map((e) => e.sp)].forEach((o) => o.destroy());
-    this.parts.length = this.texts.length = this.temp.length = this.pool.length = 0;
+    [...this.parts.map((p) => p.sp), ...this.pool, ...this.texts.map((f) => f.t), ...this.temp.map((e) => e.sp), ...this.textPool, ...Object.values(this.imgPool).flat(), ...this.gfxPool].forEach((o) => o.destroy?.());
+    this.parts.length = this.texts.length = this.temp.length = this.pool.length = this.textPool.length = this.gfxPool.length = 0;
+    this.imgPool = {};
   }
 }

@@ -114,7 +114,11 @@ let padInfo = { id: '', mapping: '', live: [] };
 export const getPadInfo = () => padInfo;
 let usingPad = false;                       // true after the last input came from a controller
 export const padActive = () => usingPad;
-export const touchUsed = () => { usingPad = false; };      // the on-screen controls were touched
+// listeners told when the device in use switches between controller and keyboard / touch (prompts, rotation, touch UI)
+const padWatchers = new Set();
+export const onPadChange = (fn) => { padWatchers.add(fn); return () => padWatchers.delete(fn); };
+function setUsingPad(v) { if (usingPad === v) return; usingPad = v; for (const fn of padWatchers) { try { fn(v); } catch { /* a watcher must not break input */ } } }
+export const touchUsed = () => { setUsingPad(false); };      // the on-screen controls were touched
 let padCapture = null;
 export const capturePad = (cb) => { padCapture = cb || null; };
 export const capturingPad = () => !!padCapture;
@@ -169,7 +173,7 @@ export function pollPad() {
     if (padInfo.id !== pad.id) padInfo = { id: pad.id, mapping: pad.mapping || 'non-standard', live: [] };
     padInfo.live.length = 0; for (const a of act) padInfo.live.push(a);
     const map = padMap();
-    if (act.size) usingPad = true;
+    if (act.size) setUsingPad(true);
     // left stick always moves / navigates
     const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0, dz = Math.max(0.2, Math.min(0.7, settings.deadzone ?? 0.45));
     stick.mag = Math.min(1, Math.hypot(ax, ay));
@@ -215,12 +219,12 @@ export function installKeys(game) {
   window.addEventListener('gamepaddisconnected', (e) => {
     if (e.gamepad?.index === padIndex) padIndex = -1;
     for (const c of padHeld) keys._release(c);
-    padHeld.clear(); usingPad = false;
+    padHeld.clear(); setUsingPad(false);
     import('./bus.js').then(({ bus }) => { bus.emit('toast', 'CONTROLLER DISCONNECTED', 11); bus.emit('pad:lost'); });
   });
   window.addEventListener('keydown', (e) => {
     if (e.target?.closest?.('input, textarea, select')) return;          // typing into a panel (save code), not playing
-    usingPad = false;
+    setUsingPad(false);
     if (captureCb) { e.preventDefault(); if (!e.repeat) { const cb = captureCb; captureCb = null; cb(e.code); } return; }
     if (blockDefault.has(e.code) || e.code in codeToActions) e.preventDefault();
     if (!e.repeat) keys._press(e.code);

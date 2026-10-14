@@ -18,6 +18,25 @@ export function installDepthGuard(Phaser) {
   }
 }
 
+// Physics runs on the real frame time (fixedStep off) so 120 / 144 Hz screens move bodies every frame instead of every
+// other one. A long frame (a hitch, a background tab) is clamped to 50 ms so nothing can tunnel through a wall.
+export function installPhysicsClamp(Phaser) {
+  const World = Phaser.Physics?.Arcade?.World?.prototype;
+  if (!World || World.update.__clamped) return;
+  const up = World.update;
+  World.update = function (time, delta) { return up.call(this, time, Math.min(delta, 50)); };
+  World.update.__clamped = true;
+}
+
+// Frame-rate cap from settings (0 = match the screen). Changing it restarts the frame loop with the new pacing.
+export function applyFpsCap(game, cap) {
+  const loop = game.loop;
+  const n = cap > 0 ? cap : 0;
+  if (loop.fpsLimit === n) return;
+  loop.fpsLimit = n; loop.hasFpsLimit = n > 0; loop._limitRate = n > 0 ? 1000 / n : 0;
+  if (loop.running) { loop.sleep(); loop.wake(); }
+}
+
 // Off-screen culling for a scene's world-space images and sprites. Phaser only culls tilemaps; in the Hollow Reach
 // ~1,190 of ~1,210 objects are off screen at any moment and were still batched every frame. Culled objects get the
 // camera in their cameraFilter, which skips them in rendering without touching their own visible flag (so game code

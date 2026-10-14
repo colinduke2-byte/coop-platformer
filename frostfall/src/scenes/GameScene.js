@@ -14,6 +14,7 @@ import { makeGenItem } from '../systems/genloot.js';
 import { hash } from '../util.js';
 import { completeContract } from '../data/contracts.js';
 import { T, SOLID_TILES, C, TILE } from '../config.js';
+const SOLID_LUT = new Uint8Array(256); for (const t of SOLID_TILES) SOLID_LUT[t] = 1;
 import { MAPS } from '../data/maps.js';
 import { ITEMS } from '../data/items.js';
 import { S, resetState } from '../systems/state.js';
@@ -117,7 +118,9 @@ export default class GameScene extends Phaser.Scene {
     const ts = map.addTilesetImage('tiles', 'tiles', T, T, 0, 0);
     this.layer = map.createLayer(0, ts, 0, 0);
     this.layer.setCollision(SOLID_TILES);
-    this.solid = built.grid.map((row) => row.map((t) => SOLID_TILES.includes(t)));
+    // solid grid from a lookup table, cached per built map (the Hollow Reach has 204k tiles); doors and gates edit a copy
+    if (!built._solid) built._solid = built.grid.map((row) => row.map((t) => SOLID_LUT[t] === 1));
+    this.solid = built._solid.map((row) => row.slice());
     this.worldW = built.w * T;
     this.worldH = built.h * T;
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH);

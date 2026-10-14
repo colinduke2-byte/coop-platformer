@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { W, H, BUILD } from './config.js';
-import { installKeys, keys, setMenuMode } from './systems/keys.js';
+import { installKeys, keys, setMenuMode, onPadChange } from './systems/keys.js';
 import { bus } from './systems/bus.js';
 import { S, resetState, loadInto } from './systems/state.js';
 import BootScene from './scenes/BootScene.js';
@@ -22,12 +22,13 @@ import { loadPack } from './data/registry.js';
 import { TIER_MOBS } from './world/worldgen.js';
 import { installErrorLog, guardGame, onCrash } from './systems/debug.js';
 import { showCrash } from './ui/crash.js';
-import { installDepthGuard } from './systems/perf.js';
+import { installDepthGuard, installPhysicsClamp, applyFpsCap } from './systems/perf.js';
 import { updateRotate, rotated } from './systems/rotate.js';
 import { applyCvd } from './systems/access.js';
 installErrorLog();
 onCrash(showCrash);
 installDepthGuard(Phaser);
+installPhysicsClamp(Phaser);
 
 const q = new URLSearchParams(location.search);
 
@@ -41,12 +42,15 @@ const game = new Phaser.Game({
   antialias: false,
   roundPixels: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: { default: 'arcade', arcade: { debug: q.get('physics') === '1' } },
+  physics: { default: 'arcade', arcade: { debug: q.get('physics') === '1', fixedStep: false } },
+  fps: settings.fpsCap > 0 ? { limit: settings.fpsCap } : {},
+  render: { powerPreference: 'low-power' },  // a 320x180 picture never needs the big GPU (battery on laptops)
   audio: { noAudio: true },                  // all sound is our own Web Audio synth (audio/sfx.js): no second, idle AudioContext
   scene: [BootScene, TitleScene, ArenaSetupScene, ArenaResultsScene, IntroScene, GameScene, HudScene, MenuScene, ShopScene, EndingScene],
 });
 
 guardGame(Phaser, game);
+window.__applyFps = () => applyFpsCap(game, settings.fpsCap);
 // "a menu has the keys": anything but free play in the game world (title, pause menu, shops, dialogue, cut scenes)
 setMenuMode(() => ui.modal || !game.scene.isActive('Game') || game.scene.isPaused('Game') || game.scene.isActive('Menu') || game.scene.isActive('Shop'));
 installKeys(game);
@@ -79,9 +83,11 @@ export function applyScaling() {
     sc.refresh();
   }
 }
-window.addEventListener('resize', () => { settings.intScale && applyScaling(); updateRotate(applyScaling); });
+window.addEventListener('resize', () => { settings.intScale && applyScaling(); updateRotate(applyScaling); setTimeout(() => updateRotate(applyScaling), 200); });   // again after Phaser's own resize pass
 window.addEventListener('orientationchange', () => setTimeout(() => updateRotate(applyScaling), 200));
-setInterval(() => updateRotate(applyScaling), 300);
+// no polling: the picture is re-fitted when the window, the orientation or the device in use changes
+onPadChange(() => updateRotate(applyScaling));
+try { matchMedia('(orientation: portrait)').addEventListener('change', () => updateRotate(applyScaling)); } catch { /* old browser */ }
 window.__updateRotate = () => updateRotate(applyScaling);
 game.events.once('ready', () => applyScaling());
 window.__applyScaling = applyScaling;

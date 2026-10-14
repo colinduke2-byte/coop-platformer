@@ -6,7 +6,8 @@ import { W, H } from '../config.js';
 
 let on = false, key = '';
 export const rotated = () => on;
-const isTouch = () => new URLSearchParams(location.search).get('touch') === '1' || 'ontouchstart' in window || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+let touchDev = null;          // worked out once: it does not change during a session
+const isTouch = () => touchDev ?? (touchDev = new URLSearchParams(location.search).get('touch') === '1' || 'ontouchstart' in window || !!(window.matchMedia && matchMedia('(pointer: coarse)').matches));
 
 export function updateRotate(applyScaling) {
   const w = window.innerWidth, h = window.innerHeight;

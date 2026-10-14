@@ -37,25 +37,40 @@ const viewOf = (gs, view) => {
 // same to draw as a small one. Markers go on their own layer above it.
 // A zoomed-out overview (less than a pixel per tile) is baked at one pixel per tile and shrunk when drawn: drawing quarter-pixel
 // rectangles left the overview almost black.
+// The bake is kept between menu openings (textures are game-wide) until the map, scale or fog changes, and is written as
+// raw pixels in one go rather than one fillRect per tile (the Hollow Reach is ~200k tiles).
+let bakeCache = null;
+const RGB = [];
 function bakeTerrain(m, vid, b, scIn, fog) {
-  const sc = Math.max(1, scIn);
-  if (m._bake && m._bake.sig === vid + '|' + sc) return m._bake.key;
-  const cv = document.createElement('canvas'); cv.width = b.w * sc; cv.height = b.h * sc;
-  const x = cv.getContext('2d'), { cw } = fogDims(b.w, b.h);
-  for (let ty = 0; ty < b.h; ty++) for (let tx = 0; tx < b.w; tx++) {
-    if (fog[Math.floor(ty / FOG) * cw + Math.floor(tx / FOG)] !== '1') continue;
-    x.fillStyle = '#' + C[COL[b.grid[ty][tx]] ?? 0].toString(16).padStart(6, '0');
-    x.fillRect(tx * sc, ty * sc, sc, sc);
+  const sc = Math.max(1, scIn), sig = vid + '|' + sc;
+  if (bakeCache && bakeCache.sig === sig && bakeCache.fog === fog && m.textures.exists(bakeCache.key)) return bakeCache.key;
+  const W2 = b.w * sc, H2 = b.h * sc;
+  const cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+  const ctx = cv.getContext('2d'), { cw } = fogDims(b.w, b.h);
+  const img = ctx.createImageData(W2, H2), px = new Uint32Array(img.data.buffer);
+  const le = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;          // byte order of the pixel words
+  const word = (col) => {
+    if (RGB[col] === undefined) { const c = C[col] ?? C[0], r = (c >> 16) & 255, g = (c >> 8) & 255, bl = c & 255; RGB[col] = le ? (0xff000000 | (bl << 16) | (g << 8) | r) >>> 0 : ((r << 24) | (g << 16) | (bl << 8) | 0xff) >>> 0; }
+    return RGB[col];
+  };
+  for (let ty = 0; ty < b.h; ty++) {
+    const row = b.grid[ty], frow = Math.floor(ty / FOG) * cw;
+    for (let tx = 0; tx < b.w; tx++) {
+      if (fog.charCodeAt(frow + Math.floor(tx / FOG)) !== 49) continue;       // '1' = seen
+      const v = word(COL[row[tx]] ?? 0);
+      if (sc === 1) px[ty * W2 + tx] = v;
+      else for (let yy = 0; yy < sc; yy++) px.fill(v, (ty * sc + yy) * W2 + tx * sc, (ty * sc + yy) * W2 + tx * sc + sc);
+    }
   }
-  if (m._bake) m.textures.remove(m._bake.key);
-  const key = 'mapbake' + (m._bakeN = (m._bakeN || 0) + 1);
+  ctx.putImageData(img, 0, 0);
+  if (bakeCache && m.textures.exists(bakeCache.key)) m.textures.remove(bakeCache.key);
+  const key = 'mapbake' + (bakeCache ? bakeCache.n + 1 : 1);
   m.textures.addCanvas(key, cv);
-  m._bake = { sig: vid + '|' + sc, key };
+  bakeCache = { sig, fog, key, n: bakeCache ? bakeCache.n + 1 : 1 };
   return key;
 }
 
 export function mapTab(m) {
-  m._bake = null;
   const layers = () => {
     if (m.mapOver) return;
     m.mapTerrain = m.add.container(0, 0).setDepth(0.5); m.mapOver = m.add.graphics().setDepth(0.8); m.dyn.setDepth(1);

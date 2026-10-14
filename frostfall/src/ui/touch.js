@@ -1,6 +1,6 @@
 // On-screen touch controls: a virtual stick and action buttons that feed the same key system.
 // Shown on touch devices (or with ?touch=1). Pure DOM, no assets.
-import { keys, padActive, touchUsed, virt } from '../systems/keys.js';
+import { keys, padActive, touchUsed, virt, onPadChange } from '../systems/keys.js';
 
 const BUTTONS = [
   // [label, code, css position, size, colour]: the four things you press all the time
@@ -95,6 +95,6 @@ export function installTouch(force = false) {
   document.addEventListener('contextmenu', (e) => { if (root.contains(e.target)) e.preventDefault(); });
   // While a controller is in use the on-screen buttons step aside, so a stray thumb cannot fight it. Touching the screen brings them back.
   const sync = () => { root.style.display = padActive() ? 'none' : ''; };
-  setInterval(sync, 250);
+  onPadChange(sync); sync();
   window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && root.style.display === 'none') { touchUsed(); sync(); window.__updateRotate?.(); } }, true);
 }

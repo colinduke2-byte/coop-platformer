@@ -7,9 +7,13 @@ import { tip } from '../systems/tips.js';
 import { advanceTime, isFull, isBlood, moonName } from '../systems/moon.js';
 
 const DAY_MIN = 1440;
+// integer RGB blend (no Color objects: this runs every frame)
 const lerpColor = (a, b, t) => {
-  const c = Phaser.Display.Color.Interpolate.ColorWithColor(Phaser.Display.Color.ValueToColor(a), Phaser.Display.Color.ValueToColor(b), 100, Math.round(t * 100));
-  return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
+  const k = Math.round(t * 100) / 100;
+  const r = ((a >> 16) & 255) + (((b >> 16) & 255) - ((a >> 16) & 255)) * k;
+  const g = ((a >> 8) & 255) + (((b >> 8) & 255) - ((a >> 8) & 255)) * k;
+  const bl = (a & 255) + ((b & 255) - (a & 255)) * k;
+  return (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(bl);
 };
 
 import { hasMod } from '../data/mods.js';
@@ -33,6 +37,13 @@ export const lightingMethods = {
   // { color, alpha } of the darkness layer right now.
   ambient() {
     if (this.ambientOverride) return this.ambientOverride;
+    // computed once per frame (lighting, night checks and NPCs all ask), or again if the clock or weather was changed
+    const f = this.game.loop.frame;
+    if (this._ambF === f && this._ambT === S.time && this._ambW === S.weather && this._amb) return this._amb;
+    this._ambF = f; this._ambT = S.time; this._ambW = S.weather;
+    return (this._amb = this.ambientNow());
+  },
+  ambientNow() {
     const base = this.def.dim || 0;
     let color = 0x0b0e1a, alpha = base;
     if ((this.def.snow || this.def.outdoors)) {
@@ -56,8 +67,10 @@ export const lightingMethods = {
   updateLighting(dt) {
     const rt = this.darkRT, cam = this.cameras.main;
     const amb = this.ambient();
+    // full daylight: hide the layer instead of clearing a screen-sized texture every frame
+    if (amb.alpha < 0.01) { if (rt.visible) { rt.clear(); rt.setVisible(false); } return; }
+    if (!rt.visible) rt.setVisible(true);
     rt.clear();
-    if (amb.alpha < 0.01) return;
     rt.fill(amb.color, amb.alpha);
     const ox = cam.worldView.x, oy = cam.worldView.y;
     const dark = Math.min(1, amb.alpha / 0.35);          // stronger cut-outs when it is darker

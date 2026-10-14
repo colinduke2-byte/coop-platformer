@@ -114,7 +114,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  get hurtRect() { const b = this.body; return new Phaser.Geom.Rectangle(b.x - 1, b.y - 3, b.width + 2, b.height + 3); }
+  get hurtRect() { const b = this.body; return (this._hurtR ||= new Phaser.Geom.Rectangle()).setTo(b.x - 1, b.y - 3, b.width + 2, b.height + 3); }   // reused: read it, do not keep it
   get speedNow() { return Math.hypot(this.body.velocity.x, this.body.velocity.y); }
 
   // Multiplier on enemies' sight radius.
