@@ -48,7 +48,7 @@ import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose, dialogue } from '../systems/dialogue.js';
-import { keys } from '../systems/keys.js';
+import { keys, padActive } from '../systems/keys.js';
 import { padHint } from '../systems/access.js';
 import { txtS } from '../art/font.js';
 import { sfx, music, ambience } from '../audio/sfx.js';
@@ -640,8 +640,10 @@ export default class GameScene extends Phaser.Scene {
     let best = null, bd = 25;
     if (pl.mode === 'free') {
       for (const it of this.interactables) {
+        const ix = it.ix, iy = it.iy;                   // cheap box test first: the open world has ~570 of these
+        if (ix - c.x > 25 || c.x - ix > 25 || iy - c.y > 25 || c.y - iy > 25) continue;
         if (!it.canInteract()) continue;
-        const d = dist(c.x, c.y, it.ix, it.iy);
+        const d = dist(c.x, c.y, ix, iy);
         if (d < bd) { best = it; bd = d; }
       }
     }
@@ -732,7 +734,7 @@ export default class GameScene extends Phaser.Scene {
       if (keys.pressed('inventory')) this.openMenu(0);
       else if (keys.pressed('journal')) this.openMenu(-1, 'QUESTS');
       else if (keys.pressed('map')) this.openMenu(-1, 'MAP');
-      else if (keys.pressed('pause')) this.openMenu(-1, 'SYSTEM');
+      else if (keys.pressed('pause')) this.openMenu(-1, padActive() ? ui.lastMenuTab || 'ITEMS' : 'SYSTEM');   // START: the tab you used last
     }
     if (this.t > 0.5 && !this.leaving) {
       const c = this.player.body.center;
@@ -751,7 +753,7 @@ export default class GameScene extends Phaser.Scene {
       sh.update(dt);
       if (!sh.done && this.breakables.length && this.breakAt(sh.x, sh.y, 8)) { if (sh.kind === 'fire') sh.explode(); else sh.finish(); }
     }
-    this.breakables = this.breakables.filter((b) => !b.broken);
+    for (let i = this.breakables.length - 1; i >= 0; i--) if (this.breakables[i].broken) this.breakables.splice(i, 1);
     for (const sh of this.eshots.getChildren()) sh.update(dt);
     if (this.boss && !this.boss.engaged && !this.boss.dead && !this.boss.yieldDone) {
       const pc = this.player.body.center;

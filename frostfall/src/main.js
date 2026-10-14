@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { W, H, BUILD } from './config.js';
-import { installKeys, keys } from './systems/keys.js';
+import { installKeys, keys, setMenuMode } from './systems/keys.js';
+import { bus } from './systems/bus.js';
 import { S, resetState, loadInto } from './systems/state.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/TitleScene.js';
@@ -46,6 +47,8 @@ const game = new Phaser.Game({
 });
 
 guardGame(Phaser, game);
+// "a menu has the keys": anything but free play in the game world (title, pause menu, shops, dialogue, cut scenes)
+setMenuMode(() => ui.modal || !game.scene.isActive('Game') || game.scene.isPaused('Game') || game.scene.isActive('Menu') || game.scene.isActive('Shop'));
 installKeys(game);
 installTouch();
 
@@ -92,6 +95,7 @@ const pauseIfPlaying = () => {
   if (gs && game.scene.isActive('Game') && !ui.modal && gs.player?.mode === 'free') gs.openMenu(-1, 'SYSTEM');
 };
 window.addEventListener('blur', pauseIfPlaying);
+bus.on('pad:lost', pauseIfPlaying);           // a controller dropped out mid-fight: stop the world until you are back
 // A quiet save (keeping your position) whenever the page may be about to disappear: tab hidden, app switched, tab closed.
 const quietSave = () => {
   const gs = game.scene.getScene('Game');

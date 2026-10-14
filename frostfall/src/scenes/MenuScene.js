@@ -94,6 +94,7 @@ export default class MenuScene extends Phaser.Scene {
 
   close() {
     sfx.play('back');
+    ui.lastMenuTab = this.tabs[this.tab]?.name;      // a controller's START reopens the menu here
     this.scene.stop();
   }
 
@@ -120,8 +121,8 @@ export default class MenuScene extends Phaser.Scene {
     if (keys.pressed('map')) { const q = this.tabs.findIndex((t) => t.name === 'MAP'); if (q === this.tab) { this.close(); return; } if (q >= 0) this.go(q); }
     if (keys.pressed('journal')) { const q = this.tabs.findIndex((t) => t.name === 'QUESTS'); if (q >= 0 && q !== this.tab) this.go(q); }
     const cap = this.tabs[this.tab].captureLR?.();
-    if (!cap && keys.pressed('right')) this.go((this.tab + 1) % this.tabs.length);
-    if (!cap && keys.pressed('left')) this.go((this.tab + this.tabs.length - 1) % this.tabs.length);
+    if ((!cap && keys.pressed('right')) || keys.tabRight()) this.go((this.tab + 1) % this.tabs.length);
+    if ((!cap && keys.pressed('left')) || keys.tabLeft()) this.go((this.tab + this.tabs.length - 1) % this.tabs.length);
     this.tabs[this.tab].input();
     if (this.dirty) { this.dirty = false; this.draw(); }
   }

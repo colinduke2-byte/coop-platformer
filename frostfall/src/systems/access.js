@@ -1,6 +1,6 @@
 // Accessibility helpers: colour-blind assist filter and controller-aware button prompts.
 import { settings } from './settings.js';
-import { padActive, padMap } from './keys.js';
+import { padActive, padMap, inMenu, getPadInfo } from './keys.js';
 
 export const CVD_MODES = ['off', 'deutan', 'protan', 'tritan'];
 // Machado-style simulation matrices; the filter adds the lost colour difference back into the remaining channels.
@@ -48,10 +48,15 @@ const PAD_NAME = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: '
 export function keyLabel(code) {
   return code.replace(/^Key/, '').replace(/^Digit/, '').replace('Space', 'SPACE').replace('Escape', 'ESC').replace('Arrow', '').toUpperCase();
 }
+// In menus a standard pad confirms with A and backs out with B, whatever the gameplay map says (see keys.js).
+const MENU_LABEL = { KeyE: 'A', Enter: 'A', Escape: 'B' };
+// Pack, journal and map have no button of their own: START opens the menu on the last tab used.
+const VIA_START = { KeyI: 'START', KeyO: 'START', KeyM: 'START' };
 export function padLabel(code) {
+  if (inMenu() && getPadInfo().mapping !== 'non-standard' && MENU_LABEL[code]) return MENU_LABEL[code];
   const m = padMap();
   const id = Object.keys(m).filter((k) => m[k] === code).sort((a, b) => (/^b\d+$/.test(a) ? 0 : 1) - (/^b\d+$/.test(b) ? 0 : 1))[0];
-  return id ? (PAD_NAME[id] || id.toUpperCase()) : null;
+  return id ? (PAD_NAME[id] || id.toUpperCase()) : VIA_START[code] || null;
 }
 // What to show the player for a virtual key right now: the pad button if a controller was used last, else the key.
 export function prompt(code) { return (padActive() && padLabel(code)) || keyLabel(code); }
@@ -59,6 +64,7 @@ export function prompt(code) { return (padActive() && padLabel(code)) || keyLabe
 // Keyboard hints like "E USE  F OFFHAND  ESC CLOSE" or "E: TALK", rewritten for the controller when it was used last:
 // each hint's leading key becomes the button that sends it ("A USE  X OFFHAND  START CLOSE"). Mouse-only hints are dropped.
 const PAIR = { 'W/S': 'UP/DOWN', 'A/D': 'LEFT/RIGHT', 'WASD': 'L-STICK', 'W/S/A/D': 'D-PAD' };
+const PAIR_FOR = (tok, rest) => (tok === 'A/D' && /^\s*TAB/.test(rest) && inMenu() ? 'LB/RB' : PAIR[tok]);
 const codeOf = (tok) => (tok === 'ESC' ? 'Escape' : tok === 'SPACE' ? 'Space' : tok === 'ENTER' ? 'Enter' : /^[A-Z]$/.test(tok) ? 'Key' + tok : /^[0-9]$/.test(tok) ? 'Digit' + tok : null);
 const SHORT = (n) => n.replace('R-STICK ', 'RS ').replace('D-PAD ', 'DP ').replace(/\b(UP|DOWN|LEFT|RIGHT)$/, (d) => d[0]);
 export function padKey(tok, short = false) {
@@ -73,6 +79,7 @@ export function padHint(text, max = Infinity) {
   if (/^[A-Z0-9]+: /.test(text)) { const i = text.indexOf(':'); return padKey(text.slice(0, i)) + text.slice(i); }     // "E: TALK"
   const segs = (short) => text.split(/\s{2,}/).filter((seg) => seg && !/^OR CLICK$|^CLICK OK$/.test(seg)).map((seg) => {
     const m = seg.match(/^(\S+)(\s.*)$/);
+    if (m && PAIR_FOR(m[1], m[2]) !== PAIR[m[1]]) return PAIR_FOR(m[1], m[2]) + m[2];
     return m && (PAIR[m[1]] || codeOf(m[1].split('/')[0])) ? padKey(m[1], short) + m[2] : seg;
   });
   let list = segs(false), gap = '  ';

@@ -1,6 +1,6 @@
 // On-screen touch controls: a virtual stick and action buttons that feed the same key system.
 // Shown on touch devices (or with ?touch=1). Pure DOM, no assets.
-import { keys, padActive, touchUsed } from '../systems/keys.js';
+import { keys, padActive, touchUsed, virt } from '../systems/keys.js';
 
 const BUTTONS = [
   // [label, code, css position, size, colour]: the four things you press all the time
@@ -31,8 +31,8 @@ export function installTouch(force = false) {
     b.dataset.code = code;
     b.style.cssText = `position:absolute;${pos};width:${size}px;height:${size}px;border-radius:50%;background:${bg};opacity:.55;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a`;
     let on = false;
-    const down = (e) => { e.preventDefault(); if (toggle) { on = !on; b.style.opacity = on ? '.95' : '.55'; on ? keys._press(code) : keys._release(code); } else { b.style.opacity = '.95'; keys._press(code); } };
-    const up = (e) => { e.preventDefault(); if (!toggle) { b.style.opacity = '.55'; keys._release(code); } };
+    const down = (e) => { e.preventDefault(); if (toggle) { on = !on; b.style.opacity = on ? '.95' : '.55'; on ? keys._press(virt(code)) : keys._release(virt(code)); } else { b.style.opacity = '.95'; keys._press(virt(code)); } };
+    const up = (e) => { e.preventDefault(); if (!toggle) { b.style.opacity = '.55'; keys._release(virt(code)); } };
     b.addEventListener('pointerdown', down);
     b.addEventListener('pointerup', up);
     b.addEventListener('pointercancel', up);
@@ -56,8 +56,8 @@ export function installTouch(force = false) {
     b.textContent = label; b.dataset.code = code;
     b.style.cssText = `position:absolute;left:${2 + x}px;top:${2 + y}px;width:40px;height:40px;border-radius:50%;background:#1c2338;opacity:.7;border:2px solid #0b0e1a;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;text-shadow:1px 1px #0b0e1a;font-size:10px`;
     let on = false;
-    b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (tog) { on = !on; b.style.background = on ? '#4a5c86' : '#1c2338'; on ? keys._press(code) : keys._release(code); } else { b.style.opacity = '1'; keys._press(code); } });
-    const up = (e) => { e.preventDefault(); if (!tog) { b.style.opacity = '.7'; keys._release(code); } };
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (tog) { on = !on; b.style.background = on ? '#4a5c86' : '#1c2338'; on ? keys._press(virt(code)) : keys._release(virt(code)); } else { b.style.opacity = '1'; keys._press(virt(code)); } });
+    const up = (e) => { e.preventDefault(); if (!tog) { b.style.opacity = '.7'; keys._release(virt(code)); } };
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     ring.appendChild(b);
   });
@@ -74,8 +74,8 @@ export function installTouch(force = false) {
   const held = new Set();
   const setDir = (dx, dy) => {
     const want = new Set();
-    if (dx < -0.35) want.add('KeyA'); if (dx > 0.35) want.add('KeyD');
-    if (dy < -0.35) want.add('KeyW'); if (dy > 0.35) want.add('KeyS');
+    if (dx < -0.35) want.add(virt('KeyA')); if (dx > 0.35) want.add(virt('KeyD'));
+    if (dy < -0.35) want.add(virt('KeyW')); if (dy > 0.35) want.add(virt('KeyS'));
     for (const c of want) if (!held.has(c)) { keys._press(c); held.add(c); }
     for (const c of [...held]) if (!want.has(c)) { keys._release(c); held.delete(c); }
   };

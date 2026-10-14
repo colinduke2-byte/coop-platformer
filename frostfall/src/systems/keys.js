@@ -8,6 +8,18 @@ const pressedSet = new Set();
 const releasedSet = new Set();
 export const DEFAULT_BINDINGS = JSON.parse(JSON.stringify(BINDINGS));
 let codeToActions = {};
+// The controller and the touch buttons press "virtual" keys (V:<default code>, e.g. V:KeyJ) that always mean the action that
+// code had by default. So rebinding a keyboard key never breaks the controller or the touch controls for that action.
+const VIRT = {};
+for (const [act, codes] of Object.entries(BINDINGS)) VIRT[act] = codes.map((c) => 'V:' + c);
+VIRT.pause.push('PadBack2');                     // B in menus backs out wherever ESC would
+// Menus (and dialogue, shops, the title) use the usual console layout on a standard pad: A confirms, B goes back,
+// LB / RB switch tabs. main.js says when a menu has the keys.
+let menuMode = () => false;
+export const setMenuMode = (fn) => { menuMode = fn; };
+export const inMenu = () => { try { return menuMode(); } catch { return false; } };
+const MENU_FACE = { b0: 'V:KeyE', b1: 'PadBack2', b4: 'PadTabL', b5: 'PadTabR' };
+export const virt = (code) => 'V:' + code;
 function rebuild() {
   codeToActions = {};
   for (const [act, codes] of Object.entries(BINDINGS)) for (const c of codes) (codeToActions[c] ||= []).push(act);
@@ -41,12 +53,16 @@ export const capturing = () => !!captureCb;
 applyBindings();
 const blockDefault = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
+const anyIn = (codes, set) => { if (!codes) return false; for (let i = 0; i < codes.length; i++) if (set.has(codes[i])) return true; return false; };
 export const keys = {
-  isDown(act) { return (BINDINGS[act] || []).some((c) => down.has(c)); },
-  pressed(act) { return (BINDINGS[act] || []).some((c) => pressedSet.has(c)); },
+  isDown(act) { return anyIn(BINDINGS[act], down) || anyIn(VIRT[act], down); },
+  pressed(act) { return anyIn(BINDINGS[act], pressedSet) || anyIn(VIRT[act], pressedSet); },
   // Menus: the cast button, or the controller's right bumper (RB) whatever it is mapped to, backs out of anything.
-  back() { return this.pressed('spell') || pressedSet.has('PadBack'); },
-  released(act) { return (BINDINGS[act] || []).some((c) => releasedSet.has(c)); },
+  back() { return this.pressed('spell') || pressedSet.has('PadBack') || pressedSet.has('PadBack2'); },
+  // controller bumpers in menus
+  tabLeft() { return pressedSet.has('PadTabL'); },
+  tabRight() { return pressedSet.has('PadTabR'); },
+  released(act) { return anyIn(BINDINGS[act], releasedSet) || anyIn(VIRT[act], releasedSet); },
   // Raw access for text-less menus (e.g. any key to continue).
   anyPressed() { return pressedSet.size > 0; },
   // Test hooks: let automated tests inject presses without the DOM.
@@ -71,7 +87,13 @@ export const PAD_ACTIONS = [
   ['KeyU', 'HEAVY ATTACK'], ['KeyT', 'LOCK ON'], ['KeyF', 'BLOCK'], ['KeyC', 'SNEAK'], ['KeyE', 'INTERACT'], ['KeyV', 'SWITCH ARROWS'],
   ['Digit1', 'HEALTH POTION'], ['Digit2', 'MANA POTION'], ['Digit3', 'STAMINA POTION'], ['KeyI', 'PACK'], ['KeyM', 'MAP'], ['KeyO', 'JOURNAL'], ['Escape', 'PAUSE'],
 ];
-export const padMap = () => { const m = { ...PAD_DEFAULT, ...(settings.padMap || {}) }; for (const k of Object.keys(m)) if (!m[k]) delete m[k]; return m; };
+// cached until the learned map changes (pollPad reads it every frame)
+let mapCache = null, mapSrc;
+export const padMap = () => {
+  if (mapCache && mapSrc === settings.padMap) return mapCache;
+  const m = { ...PAD_DEFAULT, ...(settings.padMap || {}) }; for (const k of Object.keys(m)) if (!m[k]) delete m[k];
+  mapSrc = settings.padMap; mapCache = m; return m;
+};
 export function setPadBinding(code, inputId) {
   const map = { ...PAD_DEFAULT, ...(settings.padMap || {}) };
   for (const k of Object.keys(map)) if (map[k] === code && !/^h[udlr]$/.test(k)) map[k] = null;      // null = explicitly unbound
@@ -99,53 +121,78 @@ export const capturingPad = () => !!padCapture;
 const padHeld = new Set();
 const padDown = new Set();       // input ids currently active (for "newly pressed" detection)
 
+const actSet = new Set();                    // reused every frame: polling allocates nothing while nobody touches the pad
 function activeInputs(pad) {
-  const out = new Set();
-  pad.buttons.forEach((b, i) => { if (b.pressed || b.value > 0.55) out.add('b' + i); });
+  const out = actSet; out.clear();
+  const btn = pad.buttons;
+  for (let i = 0; i < btn.length; i++) if (btn[i].pressed || btn[i].value > 0.55) out.add(BTN_ID[i] || 'b' + i);
   const std = pad.mapping === 'standard';
-  pad.axes.forEach((v, i) => {
-    if (!std && i === 9) return;                                   // hat axis on non-standard pads, decoded below
-    if (v > 0.55) out.add('a' + i + '+'); else if (v < -0.55) out.add('a' + i + '-');
-  });
+  const dz = Math.max(0.2, Math.min(0.7, settings.deadzone ?? 0.45)) + 0.1;     // sticks other than the left one: a little past the deadzone
+  for (let i = 0; i < pad.axes.length; i++) {
+    if (!std && i === 9) continue;                                   // hat axis on non-standard pads, decoded below
+    const v = pad.axes[i];
+    if (v > dz) out.add(AX_ID[i * 2] || 'a' + i + '+'); else if (v < -dz) out.add(AX_ID[i * 2 + 1] || 'a' + i + '-');
+  }
   if (!std && pad.axes.length >= 10) for (const h of decodeHat(pad.axes[9])) out.add(h);
   // standard layout d-pad is buttons 12-15: also report as hat ids so one map works for everything
-  if (std) { if (pad.buttons[12]?.pressed) out.add('hu'); if (pad.buttons[13]?.pressed) out.add('hd'); if (pad.buttons[14]?.pressed) out.add('hl'); if (pad.buttons[15]?.pressed) out.add('hr'); out.delete('b12'); out.delete('b13'); out.delete('b14'); out.delete('b15'); }
+  if (std) { if (btn[12]?.pressed) out.add('hu'); if (btn[13]?.pressed) out.add('hd'); if (btn[14]?.pressed) out.add('hl'); if (btn[15]?.pressed) out.add('hr'); out.delete('b12'); out.delete('b13'); out.delete('b14'); out.delete('b15'); }
   return out;
 }
+const BTN_ID = Array.from({ length: 20 }, (_, i) => 'b' + i);
+const AX_ID = Array.from({ length: 20 }, (_, i) => 'a' + (i >> 1) + (i % 2 ? '-' : '+'));
 
 // How far the left stick is pushed (0..1) and whether it alone is steering: lets the player walk slowly with a gentle push.
 export const stick = { mag: 0, kb: false };
 export function stickWalk() { return !stick.kb && stick.mag > 0.4 && stick.mag < 0.95 ? Math.max(0.5, stick.mag * 1.05) : 1; }
 
+const want = new Set();
+const KB_MOVE = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+let padIndex = -1;                             // the pad in use (rumble goes to it)
+const V = (c) => VCODE[c] || (VCODE[c] = 'V:' + c);
+const VCODE = {};
 export function pollPad() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  const list = [...pads].filter((p) => p && p.connected);
+  const pads = navigator.getGamepads ? navigator.getGamepads() : null;
   // prefer a pad that is actually being used (some browsers list phantom devices first)
-  const pad = list.find((p) => p.buttons.some((b) => b.pressed) || p.axes.some((v) => Math.abs(v) > 0.5)) || list[0];
-  const want = new Set();
+  let pad = null, first = null;
+  if (pads) for (let i = 0; i < pads.length; i++) {
+    const p = pads[i]; if (!p || !p.connected) continue;
+    if (!first) { first = p; if (padIndex < 0) padIndex = i; }
+    let busy = false;
+    for (const b of p.buttons) if (b.pressed) { busy = true; break; }
+    if (!busy) for (const v of p.axes) if (v > 0.5 || v < -0.5) { busy = true; break; }
+    if (busy) { pad = p; padIndex = i; break; }
+  }
+  pad = pad || first;
+  want.clear();
   if (pad) {
     const act = activeInputs(pad);
-    padInfo = { id: pad.id, mapping: pad.mapping || 'non-standard', live: [...act] };
+    if (padInfo.id !== pad.id) padInfo = { id: pad.id, mapping: pad.mapping || 'non-standard', live: [] };
+    padInfo.live.length = 0; for (const a of act) padInfo.live.push(a);
     const map = padMap();
     if (act.size) usingPad = true;
     // left stick always moves / navigates
-    const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+    const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0, dz = Math.max(0.2, Math.min(0.7, settings.deadzone ?? 0.45));
     stick.mag = Math.min(1, Math.hypot(ax, ay));
-    if (ax < -0.45) want.add('KeyA'); if (ax > 0.45) want.add('KeyD');
-    if (ay < -0.45) want.add('KeyW'); if (ay > 0.45) want.add('KeyS');
+    if (ax < -dz) want.add(V('KeyA')); if (ax > dz) want.add(V('KeyD'));
+    if (ay < -dz) want.add(V('KeyW')); if (ay > dz) want.add(V('KeyS'));
     // learn mode: the first newly pressed input (ignoring the left stick) is handed to the callback
     if (padCapture) {
       for (const id of act) if (!padDown.has(id) && id !== 'a0+' && id !== 'a0-' && id !== 'a1+' && id !== 'a1-') { const cb = padCapture; padCapture = null; padDown.clear(); act.forEach((x) => padDown.add(x)); cb(id); return; }
       padDown.clear(); act.forEach((x) => padDown.add(x));
     } else {
       padDown.clear(); act.forEach((x) => padDown.add(x));
-      for (const id of act) { const c = map[id]; if (c) want.add(c); }
-      if (act.has('b5')) want.add('PadBack');
+      const menu = pad.mapping === 'standard' && inMenu();
+      for (const id of act) {
+        if (menu && MENU_FACE[id]) { want.add(MENU_FACE[id]); continue; }
+        const c = map[id]; if (c) want.add(V(c));
+      }
+      if (act.has('b5') && !menu) want.add('PadBack');
     }
-  } else { padInfo = { id: '', mapping: '', live: [] }; stick.mag = 0; }
-  stick.kb = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].some((c) => down.has(c) && !padHeld.has(c));
+  } else if (padInfo.id) { padInfo = { id: '', mapping: '', live: [] }; stick.mag = 0; }
+  let kb = false; for (const c of KB_MOVE) if (down.has(c)) { kb = true; break; }
+  stick.kb = kb;
   for (const c of want) if (!padHeld.has(c)) { keys._press(c); padHeld.add(c); }
-  for (const c of [...padHeld]) if (!want.has(c)) { keys._release(c); padHeld.delete(c); }
+  for (const c of padHeld) if (!want.has(c)) { keys._release(c); padHeld.delete(c); }
   // another source (the on-screen buttons, a stray key-up) may have released a key the controller is still holding: put it back
   for (const c of padHeld) if (!down.has(c)) down.add(c);
 }
@@ -153,7 +200,8 @@ export function pollPad() {
 // Short vibration for hits, parries and big moments (ignored if the pad has no motors).
 export function rumble(ms = 120, strong = 0.6, weak = 0.3) {
   try {
-    const pad = [...(navigator.getGamepads?.() || [])].find((p) => p && p.connected);
+    const pads = navigator.getGamepads?.() || [];
+    const pad = (padIndex >= 0 && pads[padIndex]?.connected ? pads[padIndex] : null) || [...pads].find((p) => p && p.connected);
     const act = pad?.vibrationActuator;
     if (act?.playEffect) act.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak });
     else if (pad?.hapticActuators?.[0]?.pulse) pad.hapticActuators[0].pulse(strong, ms);
@@ -162,8 +210,16 @@ export function rumble(ms = 120, strong = 0.6, weak = 0.3) {
 
 export function installKeys(game) {
   game.events.on('prestep', pollPad);
-  window.addEventListener('gamepadconnected', (e) => { import('./bus.js').then(({ bus }) => bus.emit('toast', 'CONTROLLER CONNECTED', 13)); void e; });
+  window.addEventListener('gamepadconnected', () => { import('./bus.js').then(({ bus }) => bus.emit('toast', 'CONTROLLER CONNECTED', 13)); });
+  // unplugged or out of battery: let go of everything it held, say so, and pause (main.js listens for pad:lost)
+  window.addEventListener('gamepaddisconnected', (e) => {
+    if (e.gamepad?.index === padIndex) padIndex = -1;
+    for (const c of padHeld) keys._release(c);
+    padHeld.clear(); usingPad = false;
+    import('./bus.js').then(({ bus }) => { bus.emit('toast', 'CONTROLLER DISCONNECTED', 11); bus.emit('pad:lost'); });
+  });
   window.addEventListener('keydown', (e) => {
+    if (e.target?.closest?.('input, textarea, select')) return;          // typing into a panel (save code), not playing
     usingPad = false;
     if (captureCb) { e.preventDefault(); if (!e.repeat) { const cb = captureCb; captureCb = null; cb(e.code); } return; }
     if (blockDefault.has(e.code) || e.code in codeToActions) e.preventDefault();
