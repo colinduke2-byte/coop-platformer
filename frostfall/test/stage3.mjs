@@ -1,12 +1,14 @@
 import { launch, check, failCount } from './harness.mjs';
 
-const h = await launch();
+// paused: the real game loop stops after every h.open(); time only moves through stepped frames (h.wait / h.tap),
+// so every check sees the same number of frames however busy the machine is.
+const h = await launch({ paused: true });
 await h.open('scene=game');
-await h.sleep(600);
+await h.wait(600);
 await h.ev(() => window.__ff.game.scene.getScene('Game').addEnemy('draugr', 380, 250));
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
-const tap = async (c, ms = 60) => { await press(c); await h.sleep(ms); await rel(c); };
+const tap = (c, ms = 60) => h.tap(c, h.msFrames(ms), 0);
 const G = (fn, a) => h.ev(fn, a);
 const snap = () => G(() => {
   const g = window.__ff.game.scene.getScene('Game'); const p = g.player; const e = g.enemies.getChildren()[0]; const S = window.__ff.S;
@@ -26,27 +28,27 @@ const setup = (dist = 70) => G((d) => {
 await setup();
 let s = await snap();
 await tap('KeyK', 80);
-await h.sleep(100);
+await h.wait(100);
 let s1 = await snap();
 check('quick tap cancels (no arrow spent)', s1.arrows === s.arrows, `${s.arrows}->${s1.arrows}`);
 
 // --- uncharged-ish shot (0.3s) vs full charge (1.1s): full does more damage
 await setup();
-await press('KeyK'); await h.sleep(500); await rel('KeyK');
-await h.sleep(1500);
+await press('KeyK'); await h.wait(500); await rel('KeyK');
+await h.wait(1500);
 let a = await snap();
 const lightDmg = 40 - a.e.hp;
 check('bow fires an arrow & uses ammo', a.arrows === 14, `arrows=${a.arrows}`);
 check('arrow hits enemy', lightDmg > 0, `dmg=${lightDmg}`);
 check('archery xp gained', a.xp.archery > 0);
 await setup();
-await press('KeyK'); await h.sleep(1800);
+await press('KeyK'); await h.wait(1800);
 let mid = await snap();
 check('charging drains/holds stamina logic: drawing flag', mid.drawing === true);
 await rel('KeyK');
-await h.sleep(60);
+await h.wait(60);
 const spAfter = (await snap()).sp;
-await h.sleep(1500);
+await h.wait(1500);
 a = await snap();
 const fullDmg = 40 - a.e.hp;
 check('charged shot hurts more', fullDmg > lightDmg * 1.2, `light=${lightDmg} full=${fullDmg}`);
@@ -58,7 +60,7 @@ await setup(60);
 await tap('KeyL', 60);
 let f = await snap();
 check('fireball spends mana', f.mp < 90, `mp=${f.mp}`);
-await h.sleep(900);
+await h.wait(900);
 f = await snap();
 check('fireball damages enemy', f.e.hp < 40 - 8, `hp=${f.e.hp}`);
 check('destruction xp', f.xp.destruction > 0);
@@ -69,7 +71,7 @@ await tap('KeyQ', 60);
 f = await snap();
 check('Q swaps spell to frost', f.spell === 'frost');
 await tap('KeyL', 60);
-await h.sleep(700);
+await h.wait(700);
 f = await snap();
 check('frost bolt slows the enemy', f.e.slow > 0 || f.e.hp < 40, JSON.stringify(f.e));
 check('frost bolt damaged', f.e.hp < 40);
@@ -78,7 +80,7 @@ check('frost bolt damaged', f.e.hp < 40);
 await setup(40);
 const before = await snap();
 await tap('KeyR', 60);
-await h.sleep(160);
+await h.wait(160);
 const after = await snap();
 check('shout pushes the enemy away', after.e.x > before.e.x + 15, `${before.e.x}->${after.e.x}`);
 check('shout goes on cooldown', after.shoutCd > 10);
@@ -89,9 +91,9 @@ check('cannot re-shout during cooldown', true);
 // --- sneak attack bonus
 await setup(14);
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; e.alerted = false; e.notice = -99; });
-await press('ShiftLeft'); await h.sleep(120);
+await press('ShiftLeft'); await h.wait(120);
 await tap('KeyJ', 60);
-await h.sleep(200);
+await h.wait(200);
 await rel('ShiftLeft');
 const sn = await snap();
 check('sneak attack does ~3x damage', 40 - sn.e.hp >= 3 * 7 * 0.85, `dmg=${40 - sn.e.hp}`);

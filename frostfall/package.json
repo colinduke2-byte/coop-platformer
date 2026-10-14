@@ -9,18 +9,23 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node test/run.mjs",
+    "test:fast": "node test/run.mjs --fast",
+    "test:long": "node test/run.mjs --long",
     "test:unit": "node test/unit/unit.mjs",
     "balance": "node test/balance.mjs",
     "monkey": "node test/monkey.mjs 40",
     "build:single": "vite build && node tools/single-file.mjs frostfall.html",
     "publish": "node tools/publish.mjs",
-    "test:offline": "node test/offline.mjs"
+    "test:offline": "node test/offline.mjs",
+    "lint": "eslint ."
   },
   "dependencies": {
     "phaser": "3.90.0"
   },
   "devDependencies": {
-    "vite": "^8.3.2",
-    "playwright": "^1.56.1"
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "playwright": "^1.56.1",
+    "vite": "^8.3.2"
   }
 }

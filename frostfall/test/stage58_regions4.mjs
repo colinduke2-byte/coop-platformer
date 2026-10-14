@@ -99,10 +99,11 @@ check('all the new creatures can be spawned', Object.values(mk).every(Boolean), 
 await G(() => { const St = window.__ff.S; for (const q of ['miremother', 'leeches', 'orchids', 'stormgiant', 'feathers', 'greytusk']) St.quests[q].status = 'inactive'; St.flags.mireMotherDead = false; St.flags.stormGiantDead = false; St.gold = 0; St.inv = {}; });
 await stub([0]); await SCRIPT('wick_elder'); await unstub();
 check('Ilse sends you to the Sunken Barrow', await G(() => window.__ff.S.quests.miremother.status === 'active'));
-await G(() => { window.__ff.S.flags.mireMotherDead = true; });
+// gold-find gear or a blessing from earlier in this run raises the reward: expect what addGold really pays (as for Ulfar below)
+const mireWant = await G(async () => { window.__ff.S.flags.mireMotherDead = true; const { stats } = await import('/src/systems/stats.js'), { modMul } = await import('/src/data/mods.js'); return Math.round(520 * stats.mul('goldMul') * modMul('goldMul')); });
 await stub([]); await SCRIPT('wick_elder'); await unstub();
 const iq = await G(() => { const s = window.__ff.S; return { q: s.quests.miremother.status, mail: !!s.inv.peat_mail, hook: !!s.inv.drowned_hook, gold: s.gold }; });
-check('finishing it pays Peat-Warden Mail, the Drowned Hook and gold', iq.q === 'done' && iq.mail && iq.hook && iq.gold === 520, JSON.stringify(iq));
+check('finishing it pays Peat-Warden Mail, the Drowned Hook and gold', iq.q === 'done' && iq.mail && iq.hook && iq.gold === mireWant, JSON.stringify({ ...iq, mireWant }));
 await stub([0]); await SCRIPT('wick_hunter'); await unstub();
 await G(() => { window.__ff.S.kills.leech = (window.__ff.S.kills.leech || 0) + 10; });
 await stub([]); await SCRIPT('wick_hunter'); await unstub();

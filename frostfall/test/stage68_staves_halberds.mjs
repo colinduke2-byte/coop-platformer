@@ -1,8 +1,13 @@
 // Staves and halberds: distinct models, the spell and sweep rules, and where each one is found.
-import { launch, check, failCount } from './harness.mjs';
+import { launch, check, failCount, FRAME_MS } from './harness.mjs';
 const h = await launch();
 await h.open('scene=game');
-await h.sleep(700);
+// The real game loop is paused: time only moves through h.frames, so wind-ups and swings are timed in game frames, not
+// in wall-clock time that a busy machine stretches.
+await h.pause();
+const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
+const wait = (ms) => h.frames(F(ms));
+await wait(700);
 const G = (fn, a) => h.ev(fn, a);
 await G(() => window.__ff.game.scene.getScene('Game').addEnemy('draugr', 380, 250));
 const STAVES = ['walking_staff', 'hazel_staff', 'frostbirch_staff', 'reed_staff', 'stormcrown_rod', 'prism_staff', 'cinder_staff', 'tidecaller_staff', 'sovereign_scepter', 'delver_lodestaff', 'winter_staff', 'ember_staff'];
@@ -65,7 +70,7 @@ check('the Tidecaller\'s Staff lengthens Ward by half', ward.t >= 11.5, JSON.str
 await eq('hazel_staff');
 const bolt = await G(() => { const g = window.__ff.game.scene.getScene('Game'), p = g.player, S = window.__ff.S; p.mode = 'free'; p.swing = null; p.lockT = 0; S.mp = 100; S.sp = 100; const shots = g.shots.getLength(), mp = S.mp, sp = S.sp; p.startHeavy(); return { shots: g.shots.getLength() - shots, mp: mp - S.mp, sp: sp - S.sp }; });
 check('a staff heavy attack fires a free bolt (stamina, no mana)', bolt.shots === 1 && bolt.mp === 0 && bolt.sp > 0, JSON.stringify(bolt));
-const regen = async (id) => { await eq(id); return G(async () => { const S = window.__ff.S, p = window.__ff.game.scene.getScene('Game').player; S.mp = 10; p.mpDelay = 0; await new Promise((r) => setTimeout(r, 1200)); return S.mp - 10; }); };
+const regen = async (id) => { await eq(id); return G(async () => { const S = window.__ff.S, p = window.__ff.game.scene.getScene('Game').player; S.mp = 10; p.mpDelay = 0; await window.__ffStep.frames(72, 1000 / 60); return S.mp - 10; }); };   // exactly 1.2 s of game time
 const r0 = await regen('walking_staff'), r1 = await regen('delver_lodestaff');
 check('the Lodestaff regenerates mana ~45% faster', r1 / r0 > 1.25 && r1 / r0 < 1.7, `${r0} ${r1}`);
 
@@ -78,7 +83,7 @@ const setup = (id, ex = 316, ey = 250) => G(([id, ex, ey]) => {
   g.player.setPosition(300, 250); g.player.face = { x: 1, y: 0 }; g.player.mode = 'free'; g.player.invuln = 99; g.player.comboT = 0; g.player.swing = null;
   e.setPosition(ex, ey); e.home = { x: ex, y: ey }; e.hp = e.maxHp = 600; e.cfg = { ...e.cfg, detect: 0, speed: 0 }; e.alerted = false; e.state = 'idle'; e.stun = 0; e.slowT = 0; e.statuses = {}; e.dead = false;
 }, [id, ex, ey]);
-const swing = async () => { await G(() => window.__ff.keys._press('KeyJ')); await h.sleep(70); await G(() => window.__ff.keys._release('KeyJ')); await h.sleep(520); };
+const swing = () => h.tap('KeyJ', F(70), F(520));
 const dmgOf = () => G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; return e ? e.maxHp - e.hp : 600; });
 await setup('iron_halberd', 316, 268); await swing(); const sideHalb = await dmgOf();
 await setup('iron_sword', 316, 268); await swing(); const sideSword = await dmgOf();
