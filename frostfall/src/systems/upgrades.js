@@ -40,6 +40,14 @@ export function upgraded(kind, level, base) {
 }
 // Which equipment slot each menu choice upgrades.
 export const UPGRADE_SLOTS = [['weapon', 'WEAPON'], ['offhand', 'OFF-HAND / SHIELD'], ['bow', 'BOW'], ['armor', 'ARMOUR'], ['head', 'HELMET']];
+// The stat itself, before and after the next level ("DAMAGE 9 -> 9.5"), for the forge screen.
+export function gainBeforeAfter(kind, level, base) {
+  if (!base) return null;
+  const a = upgraded(kind, level, base), b = upgraded(kind, level + 1, base);
+  if (kind === 'weapon' || kind === 'bow') return `DAMAGE ${Math.round(a * 10) / 10} -> ${Math.round(b * 10) / 10}`;
+  const pct = (v) => (v * 100).toFixed(1).replace('.0', '') + '%';
+  return `${kind === 'shield' ? 'BLOCK' : 'ARMOR'} ${pct(a)} -> ${pct(b)}`;
+}
 // A plain-words line for the next level's gain.
 export function gainText(kind, level) {
   const next = totalGain(kind, level + 1) - totalGain(kind, level);

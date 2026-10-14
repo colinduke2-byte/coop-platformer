@@ -6,7 +6,9 @@ import { dangerOf, dangerName, readyTierNow } from '../systems/danger.js';
 import { progress, hpMul, dmgMul } from '../systems/enemyscale.js';
 import { S } from '../systems/state.js';
 import { LORE, BEASTS } from '../data/lore.js';
-import { wrap } from '../art/font.js';
+import { wrap, fit, textW } from '../art/font.js';
+import { keys } from '../systems/keys.js';
+import { sfx } from '../audio/sfx.js';
 import { ITEMS } from '../data/items.js';
 import { panel } from './MenuScene.js';
 
@@ -33,28 +35,44 @@ export function loreTab(m) {
     const l = entries();
     return `BEASTS ${l.filter((e) => e.k === 'beast').length}/${Object.keys(BEASTS).length}  ITEMS ${l.filter((e) => e.k === 'item').length}/${Object.values(ITEMS).filter((i) => !i.hidden).length}`;
   };
-  const ROWS = 11;
+  // Q filters the list: everything, books, beasts, or items found. Unread entries carry a dot until you look at them.
+  const FILTERS = [['ALL', null], ['BOOK', 'book'], ['BEAST', 'beast'], ['ITEM', 'item']];
+  let filter = 0;
+  const shown = () => { const k = FILTERS[filter][1]; return k ? entries().filter((e) => e.k === k) : entries(); };
+  const read = () => (S.flags.loreRead ||= {});
+  const ROWS = 10;
   return {
     name: 'LORE',
-    help: 'W/S MOVE  A/D TAB  ESC CLOSE',
+    badge: () => entries().some((e) => e.k !== 'item' && !read()[e.k + ':' + e.id]),
+    get help() { return `W/S MOVE  Q ${FILTERS[(filter + 1) % FILTERS.length][0]}${m.paneMore ? '  G MORE' : ''}  A/D TAB  ESC CLOSE`; },
     input() {
-      const l = entries();
+      if (keys.pressed('swap')) { filter = (filter + 1) % FILTERS.length; m.cursor = 0; m.scroll = 0; m.dirty = true; sfx.play('move'); return; }
+      const l = shown();
       m.cursor = Math.min(m.cursor, Math.max(0, l.length - 1));
       m.nav(l.length, ROWS);
     },
     render() {
-      const g = m.bg, l = entries();
+      const g = m.bg, l = shown();
       panel(g, 6, 22, 116, 134, 2);
       panel(g, 126, 22, W - 132, 134, 2);
-      if (!l.length) { m.T(14, 30, 'NOTHING YET.', 4); m.T(14, 42, 'READ BOOKS AND', 4); m.T(14, 51, 'MEET CREATURES.', 4); return; }
+      let fx = 10;
+      FILTERS.forEach(([n], i) => { if (i === filter) { g.fillStyle(C[13]); g.fillRect(fx - 1, 25, textW(n) + 2, 9); } m.T(fx, 26, n, i === filter ? 0 : 4); fx += textW(n) + 3; });
+      if (!l.length) { m.T(14, 40, 'NOTHING YET.', 4); m.T(14, 52, 'READ BOOKS AND', 4); m.T(14, 61, 'MEET CREATURES.', 4); return; }
+      const KIND = { book: ['', 6], beast: ['', 15], item: ['', 8] };
       l.slice(m.scroll, m.scroll + ROWS).forEach((e, k) => {
-        const i = m.scroll + k, y = 26 + k * 11;
+        const i = m.scroll + k, y = 38 + k * 11;
         if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 112, 11); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 11); }
-        m.T(14, y, ((e.k === 'book' ? '' : e.k === 'item' ? '+ ' : '* ') + e.title).slice(0, 17), e.dim ? 3 : e.k === 'book' ? 6 : e.k === 'item' ? 8 : 15);
+        const unread = e.k !== 'item' && !read()[e.k + ':' + e.id];
+        if (unread) { g.fillStyle(C[13]); g.fillRect(11, y + 2, 2, 2); }
+        m.T(14, y, fit(e.title, 17), e.dim ? 3 : KIND[e.k][1]);
       });
+      if (l.length > ROWS) { const frac = m.scroll / (l.length - ROWS); g.fillStyle(C[3]); g.fillRect(119, 37, 2, 114); g.fillStyle(C[13]); g.fillRect(119, 37 + Math.round(frac * 102), 2, 12); }
       const e = l[m.cursor];
-      m.T(132, 27, e.title.slice(0, 29), e.dim ? 4 : e.k === 'book' ? 13 : 15);
-      m.T(132, 38, wrap(e.text, 29), 5);
+      read()[e.k + ':' + e.id] = true;
+      const tl = wrap(e.title, 29).split('\n').slice(0, 2);
+      m.T(132, 27, tl.join('\n'), e.dim ? 4 : e.k === 'book' ? 13 : 15);
+      m.T(132, 28 + tl.length * 9, { book: 'BOOK', beast: 'BESTIARY', item: 'ITEM' }[e.k], 3);
+      m.pane(132, 40 + tl.length * 9, W - 144, 140 - (40 + tl.length * 9), e.text, 5);
       m.T(132, 146, tally(), 4);
     },
   };

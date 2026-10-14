@@ -240,9 +240,10 @@ export function installKeys(game) {
   window.addEventListener('mouseup', (e) => { if (settings.mouse) keys._release('Mouse' + e.button); });
   window.addEventListener('contextmenu', (e) => { if (settings.mouse && e.target === cv()) e.preventDefault(); });
   window.addEventListener('wheel', (e) => {
-    if (!settings.mouse || e.target !== cv()) return;
+    if (e.target !== cv()) return;
+    keys.wheel = (keys.wheel || 0) + (e.deltaY < 0 ? -1 : 1); keys.wheelT = performance.now();   // menus scroll with the wheel, always
+    if (!settings.mouse) return;                                                                 // in play it is an action only with mouse controls on
     const c = e.deltaY < 0 ? 'WheelUp' : 'WheelDown';
-    keys.wheel = (keys.wheel || 0) + (e.deltaY < 0 ? -1 : 1); keys.wheelT = performance.now();   // menus read this to scroll
     keys._press(c); setTimeout(() => keys._release(c), 30);
   }, { passive: true });
 }

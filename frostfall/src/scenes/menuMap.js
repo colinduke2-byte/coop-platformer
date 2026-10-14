@@ -7,6 +7,7 @@ import { panel } from './MenuScene.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
+import { settings } from '../systems/settings.js';
 import { getRegion } from '../data/maps.js';
 import { REGIONS, unlockedRegions, regionOfMap } from '../data/regions.js';
 
@@ -23,7 +24,7 @@ export function fogDims(w, h) { return { cw: Math.ceil(w / FOG), ch: Math.ceil(h
 const ZOOMS = [1, 2, 3];
 // Zoom steps for a map: small maps scale up from their fitted size; big overworlds start from a whole-map overview.
 const scalesOf = (b) => { const fit = Math.min((VW - 4) / b.w, (VH - 4) / b.h); return fit >= 1 ? [1, 2, 3].map((z) => Math.floor(fit) * z) : [Math.max(0.25, Math.floor(fit * 20) / 20), 1, 2, 3]; };
-const VX = 10, VY = 37, VW = 300, VH = 102;      // the map view sits below the title line and above the legend
+const VX = 10, VY = 37, VW = 300, VH = 98;           // the map view: below the title line, above the two-row legend
 
 // The map being looked at: the current map, or another unlocked region's overworld (R switches).
 const viewOf = (gs, view) => {
@@ -82,8 +83,9 @@ export function mapTab(m) {
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,
-    help: 'Q ZOOM  R REGION  E CURSOR  A/D TAB',
+    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'Q ZOOM  R REGION  E CURSOR  A/D TAB  ESC CLOSE'; },
     captureLR: () => curMode,
+    busy: () => curMode,                            // in cursor mode ESC (or B) leaves the cursor, not the whole menu
     input() {
       const gs = m.gs, vw = viewOf(gs, view), b = vw.b;
       m.dirty = true;
@@ -108,6 +110,13 @@ export function mapTab(m) {
           curMode = false; sfx.play('equip');
         }
       }
+      if (curMode && keys.pressed('lockon')) {       // T: hop the cursor to the next campfire you have found
+        const fires = vw.fires.filter((q) => S.flags.fires?.[q.key]);
+        if (fires.length) {
+          const at = fires.findIndex((q) => q.tx === cur.x && q.ty === cur.y);
+          const f = fires[(at + 1) % fires.length]; cur = { x: f.tx, y: f.ty }; sfx.play('move');
+        } else { bus.emit('toast', 'NO CAMPFIRES FOUND HERE YET', 4); sfx.play('nostamina'); }
+      }
       if (curMode && keys.pressed('block')) {
         const f = vw.fires.find((q) => S.flags.fires?.[q.key] && Math.abs(q.tx - cur.x) <= 1 && Math.abs(q.ty - cur.y) <= 1);
         if (f) { m.close(); gs.fastTravel(f); return; }
@@ -119,7 +128,7 @@ export function mapTab(m) {
           cur.x = Math.max(0, Math.min(b.w - 1, cur.x + dx)); cur.y = Math.max(0, Math.min(b.h - 1, cur.y + dy));
           rep = 3;
         }
-        if (keys.pressed('pause')) { curMode = false; }
+        if (keys.pressed('pause') || keys.back()) { curMode = false; sfx.play('back'); }
       }
     },
     render() {
@@ -128,7 +137,8 @@ export function mapTab(m) {
       panel(g, 6, 22, 308, 134, 2);
       const b = vw.b, w = b.w, h = b.h;
       const SCS = scalesOf(b);
-      if (zoom == null) zoom = SCS[0] < 1 ? 2 : 0;           // a big overworld opens at two pixels per tile around you; Q cycles to 3x, the overview and 1x
+      // a big overworld opens at two pixels per tile around you; a small map at the largest zoom that still fits whole
+      if (zoom == null) { if (SCS[0] < 1) zoom = 2; else { zoom = 0; SCS.forEach((z, i) => { if (w * z <= VW && h * z <= VH) zoom = i; }); } }
       zoom %= SCS.length;
       const sc = SCS[zoom];
       const p = gs.player;
@@ -154,17 +164,21 @@ export function mapTab(m) {
       }
       const go = m.mapOver;
       const spot = (tx, ty, size) => [ox + Math.floor(tx * sc + sc / 2 - size / 2), oy + Math.floor(ty * sc + sc / 2 - size / 2)];
-      const dot = (tx, ty, col, size = Math.max(2, sc)) => {
+      // every marker has a dark outline (so it never reads as terrain) and a shape of its own, not just a colour
+      const dot = (tx, ty, col, size = Math.max(2, sc), shape = 'sq') => {
         if (!seen(Math.floor(tx), Math.floor(ty))) return;
         const [px, py] = spot(tx, ty, size);
         if (!inView(px, py, size, size)) return;
-        go.fillStyle(C[col]); go.fillRect(px, py, size, size);
+        go.fillStyle(C[0]); go.fillRect(px - 1, py - 1, size + 2, size + 2);
+        go.fillStyle(C[col]);
+        if (shape === 'hollow' && size >= 3) { go.fillRect(px, py, size, 1); go.fillRect(px, py + size - 1, size, 1); go.fillRect(px, py, 1, size); go.fillRect(px + size - 1, py, 1, size); }
+        else go.fillRect(px, py, size, size);
       };
       const labels = [];
       for (const e of b.entities) {
         if (e.t === 'exit') {
           const tx = e.x + e.w / 2 - 0.5, ty = e.y + e.h / 2 - 0.5;
-          dot(tx, ty, 15, sc + 1);
+          dot(tx, ty, 15, Math.max(3, sc + 1), 'hollow');
           if (seen(Math.floor(tx), Math.floor(ty)) && MAPS[e.to]) labels.push([tx, ty, 'TO ' + MAPS[e.to].name.toUpperCase()]);
         } else if (e.t === 'npc') dot(e.x, e.y, 6);
         else if (e.t === 'chest' && !S.flags['chest_' + e.id]) dot(e.x, e.y, 13);
@@ -187,11 +201,14 @@ export function mapTab(m) {
       }
       const nearPlace = curMode && cur ? found.find((q) => Math.abs(q.x - cur.x) <= 3 && Math.abs(q.y - cur.y) <= 3) : null;
       if (nearPlace) m.T(10, 127, placeName(nearPlace), PLACE_COL[nearPlace.kind] ?? 6);
+      const diamond = (qx, qy, col) => {          // quest and waypoint: a diamond
+        go.fillStyle(C[0]); go.fillRect(qx - 1, qy - 4, 3, 9); go.fillRect(qx - 4, qy - 1, 9, 3); go.fillRect(qx - 3, qy - 2, 7, 5); go.fillRect(qx - 2, qy - 3, 5, 7);
+        go.fillStyle(C[col]); go.fillRect(qx, qy - 3, 1, 7); go.fillRect(qx - 3, qy, 7, 1); go.fillRect(qx - 2, qy - 1, 5, 3); go.fillRect(qx - 1, qy - 2, 3, 5);
+      };
       const marker = (tg, col) => {
-        const qx = ox + Math.floor((tg.x + 0.5) * sc), qy = oy + Math.floor((tg.y + 0.5) * sc), pulse = Math.floor(m.time.now / 300) % 2;
-        if (!inView(qx - 3, qy - 3, 7, 7)) return;
-        go.fillStyle(C[0]); go.fillRect(qx - 3 - pulse, qy - 3 - pulse, 7 + 2 * pulse, 7 + 2 * pulse);
-        go.fillStyle(C[col]); go.fillRect(qx - 2, qy - 2, 5, 5);
+        const qx = ox + Math.floor((tg.x + 0.5) * sc), qy = oy + Math.floor((tg.y + 0.5) * sc);
+        if (!inView(qx - 4, qy - 4, 9, 9)) return;
+        diamond(qx, qy, col);
       };
       const tid = trackedId();
       const tg = tid && TARGETS[tid]?.(S.quests[tid]);
@@ -199,7 +216,14 @@ export function mapTab(m) {
       const wp = S.flags.waypoint;
       if (wp && wp.map === vid) marker(wp, 8);
       const pxp = ox + Math.floor(p.x / T * sc), pyp = oy + Math.floor((p.y + 3) / T * sc);
-      if (vw.here && inView(pxp - 1, pyp - 1, 4, 4) && Math.floor(m.time.now / 350) % 2 === 0) { go.fillStyle(C[0]); go.fillRect(pxp - 1, pyp - 1, 4, 4); go.fillStyle(C[13]); go.fillRect(pxp, pyp, 2, 2); }
+      // you: a yellow dot inside a white ring that gently pulses (still with Reduce Motion), always visible
+      if (vw.here && inView(pxp - 3, pyp - 3, 8, 8)) {
+        const r = settings.reduceMotion ? 0 : Math.floor(m.time.now / 400) % 2;
+        go.fillStyle(C[0]); go.fillRect(pxp - 3 - r, pyp - 3 - r, 8 + 2 * r, 8 + 2 * r);
+        go.fillStyle(C[6]); go.fillRect(pxp - 2 - r, pyp - 2 - r, 6 + 2 * r, 6 + 2 * r);
+        go.fillStyle(C[0]); go.fillRect(pxp - 1, pyp - 1, 4, 4);
+        go.fillStyle(C[13]); go.fillRect(pxp, pyp, 2, 2);
+      }
       // fast travel hint: cursor on a found campfire
       const fireAt = curMode && cur ? vw.fires.find((f) => S.flags.fires?.[f.key] && Math.abs(f.tx - cur.x) <= 1 && Math.abs(f.ty - cur.y) <= 1) : null;
       if (fireAt) m.T(10, 135, 'F: FAST TRAVEL TO THIS CAMPFIRE', 12);
@@ -208,26 +232,36 @@ export function mapTab(m) {
         go.lineStyle(1, C[6]); go.strokeRect(qx - 1.5, qy - 1.5, sc + 3, sc + 3);
       }
       // exit labels (only the ones that fit in the view)
+      const placed = [];
       for (const [tx, ty, text] of labels) {
-        if (zoom === 0 && labels.length > 3) continue;
+        if (sc < 1 && labels.length > 3) continue;
         const [px, py] = spot(tx, ty, sc);
         const lw = text.length * 6, lx = Math.max(VX, Math.min(VX + VW - lw, px - lw / 2));
         let ly = py - 10;                                     // above the exit, or below it near the top edge
         if (ly < VY) ly = py + sc + 2;
         if (ly + 8 > VY + VH) continue;
         if (vw.here && Math.abs(lx + lw / 2 - pxp) < lw / 2 + 4 && Math.abs(ly + 4 - pyp) < 8) continue;   // never over your own marker
+        if (placed.some((r) => lx < r.x + r.w + 4 && lx + lw + 4 > r.x && Math.abs(ly - r.y) < 10)) continue;   // nor over another label
+        placed.push({ x: lx, y: ly, w: lw });
         go.fillStyle(C[0], 0.7); go.fillRect(lx - 1, ly - 1, lw + 2, 9);
         m.T(lx, ly, text, 15);
       }
       const zl = sc < 1 ? 'OVERVIEW' : sc + 'X';
       m.T(10, 26, (MAPS[vid].name.toUpperCase().slice(0, 28) + '  ' + zl), 13);
       if (MAPS[vid].stream) { const ft = 'FOUND ' + found.length + '/' + (b.pois || []).length; m.T(310 - ft.length * 6, 26, ft, 4); }
-      const ly = 143;
-      let lx = 12;
-      [[13, 'YOU'], [15, 'EXIT'], [12, 'FIRE'], [14, 'SHRINE'], [11, 'FOE SITE'], [15, 'QUEST'], [8, 'WAYPOINT']].forEach(([c, t]) => {
-        g.fillStyle(C[c]); g.fillRect(lx, ly + 1, 4, 4);
-        m.T(lx + 7, ly, t, 4);
-        lx += 7 + t.length * 6 + 3;
+      // legend, two rows, each mark drawn as it appears on the map
+      const LEG = [[['you', 13, 'YOU'], ['quest', 15, 'QUEST'], ['quest', 8, 'WAYPOINT'], ['hollow', 15, 'EXIT'], ['sq', 12, 'FIRE']], [['sq', 14, 'SHRINE'], ['sq', 11, 'FOE SITE'], ['sq', 6, 'PERSON'], ['sq', 13, 'CHEST'], ['sq', 4, 'SEEN FAR OFF']]];
+      LEG.forEach((row, ri) => {
+        let lx = 12; const ly = 138 + ri * 9;
+        for (const [shape, c, t] of row) {
+          const cx2 = lx + 2, cy2 = ly + 3;
+          if (shape === 'you') { g.fillStyle(C[6]); g.fillRect(lx, ly + 1, 5, 5); g.fillStyle(C[0]); g.fillRect(lx + 1, ly + 2, 3, 3); g.fillStyle(C[13]); g.fillRect(lx + 2, ly + 3, 1, 1); }
+          else if (shape === 'quest') { g.fillStyle(C[c]); g.fillRect(cx2, cy2 - 2, 1, 5); g.fillRect(cx2 - 2, cy2, 5, 1); g.fillRect(cx2 - 1, cy2 - 1, 3, 3); }
+          else if (shape === 'hollow') { g.fillStyle(C[c]); g.fillRect(lx, ly + 1, 5, 1); g.fillRect(lx, ly + 5, 5, 1); g.fillRect(lx, ly + 1, 1, 5); g.fillRect(lx + 4, ly + 1, 1, 5); }
+          else { g.fillStyle(C[0]); g.fillRect(lx, ly + 1, 5, 5); g.fillStyle(C[c]); g.fillRect(lx + 1, ly + 2, 3, 3); }
+          m.T(lx + 8, ly, t, settings.highContrast ? 5 : 4);
+          lx += 8 + t.length * 6 + 6;
+        }
       });
     },
   };

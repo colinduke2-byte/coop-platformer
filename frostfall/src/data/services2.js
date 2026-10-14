@@ -4,6 +4,7 @@ import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
 import { buyMenu, sellMenu, gearUpgradeMenu, enchantMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
+import { TABS } from '../scenes/ShopScene.js';
 import { addItem } from '../systems/inventory.js';
 import { saveGame } from '../systems/save.js';
 import { advanceTime } from '../systems/moon.js';
@@ -107,16 +108,29 @@ export async function innMenu(who, opt = {}) {
 }
 
 // A smith who does everything: stock, repairs, reforging, upgrades, enchanting, buyback.
+// Its list screens share a tab strip (BUY / SELL / REPAIR / UPGRADE / ENCHANT / BUYBACK): A/D or LB/RB hop between them
+// without going back through the conversation.
+const SMITH_TABS = ['BUY', 'SELL', 'REPAIR', 'UPGRADE', 'ENCHANT', 'BUYBACK'];
 export async function smithMenu(who, wares, hello) {
   await say(who, hello);
+  const open = [() => buyMenu(who, wares), () => sellMenu(who), () => repairMenu(who), () => gearUpgradeMenu(who, 3), () => enchantMenu(who), () => buybackMenu(who)];
+  const run = async (i) => {
+    let at = i;
+    for (;;) {
+      TABS.labels = SMITH_TABS; TABS.at = at; TABS.next = null;
+      try { await open[at](); } finally { TABS.labels = null; }
+      if (TABS.next == null) return;
+      at = TABS.next;
+    }
+  };
   for (;;) {
     const c = await choose(['Buy', 'Sell', 'Repair or reforge', 'Upgrade gear', 'Enchant', 'Buyback', 'Leave']);
-    if (c === 0) await buyMenu(who, wares);
-    else if (c === 1) await sellMenu(who);
-    else if (c === 2) { const f = await choose(['Repair', 'Reforge', 'Back']); if (f === 0) await repairMenu(who); else if (f === 1) await reforgeMenu(who); }
-    else if (c === 3) await gearUpgradeMenu(who, 3);
-    else if (c === 4) await enchantMenu(who);
-    else if (c === 5) await buybackMenu(who);
+    if (c === 0) await run(0);
+    else if (c === 1) await run(1);
+    else if (c === 2) { const f = await choose(['Repair', 'Reforge', 'Back']); if (f === 0) await run(2); else if (f === 1) await reforgeMenu(who); }
+    else if (c === 3) await run(3);
+    else if (c === 4) await run(4);
+    else if (c === 5) await run(5);
     else return;
   }
 }

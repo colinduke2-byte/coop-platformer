@@ -14,8 +14,8 @@ import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../system
 import { noteSold } from './stock.js';
 import { rarityIndex, reforgeGen } from '../systems/genloot.js';
 import { COOKABLE, cook } from '../systems/food.js';
-import { listScreen } from '../scenes/ShopScene.js';
-import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText } from '../systems/upgrades.js';
+import { listScreen, TABS } from '../scenes/ShopScene.js';
+import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -88,7 +88,8 @@ export function statLines(id) {
 export async function buyMenu(who, wares) {
   await listScreen({
     title: who.toUpperCase() + ': BUY',
-    hint: 'E BUY   ESC DONE   OR CLICK',
+    hint: 'E BUY   ESC DONE',
+    qty: true,
     rows: () => wares.map((w) => {
       const have = w.once && count(w.id), pr = bp(w);
       const ok = !have && S.gold >= pr;
@@ -101,14 +102,18 @@ export async function buyMenu(who, wares) {
     }),
     onSelect: (i, ui) => {
       const w = wares[i];
-      if (w.once && count(w.id)) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); return; }
-      if (S.gold < bp(w)) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); return; }
-      if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { ui.say('QUIVER IS FULL', 4); sfx.play('nostamina'); return; }
-      S.gold -= bp(w);
-      if (w.id === 'arrows') addArrows(w.n);
-      else addItem(w.id, w.n || 1);
-      ui.say('BOUGHT ' + (w.name || ITEMS[w.id].name).toUpperCase(), 8);
-      sfx.play('coin');
+      // R picks how many (1, 5, 10 or as many as you can afford); stops at the first thing that runs out
+      let bought = 0;
+      for (let k = 0; k < (w.once ? 1 : ui.qty ?? 1); k++) {
+        if (w.once && count(w.id)) { if (!bought) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); } break; }
+        if (S.gold < bp(w)) { if (!bought) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); } break; }
+        if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { if (!bought) { ui.say('QUIVER IS FULL', 4); sfx.play('nostamina'); } break; }
+        S.gold -= bp(w);
+        if (w.id === 'arrows') addArrows(w.n);
+        else addItem(w.id, w.n || 1);
+        bought++;
+      }
+      if (bought) { ui.say(`BOUGHT ${bought > 1 ? bought + ' X ' : ''}${(w.name || ITEMS[w.id].name).toUpperCase()}`, 8); sfx.play('coin'); }
     },
   });
 }
@@ -129,6 +134,9 @@ export function sellJunk() {
 export async function sellMenu(who) {
   if (!sellable().length) { await say(who, 'You have nothing I would buy.'); return; }
   const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
+  // value / name / type order (G); and "precious": selling the last of something rare, unique or named asks first
+  const sorted = (ui) => { const l = sellable(), k = ui?.sort || 0; return l.sort(k === 0 ? (a, b) => sellPrice(b) - sellPrice(a) : k === 1 ? (a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name) : (a, b) => String(ITEMS[a].type).localeCompare(String(ITEMS[b].type)) || ITEMS[a].name.localeCompare(ITEMS[b].name)); };
+  const precious = (id, n) => n >= avail(id) && (['rare', 'epic', 'legendary'].includes(ITEMS[id].rarity) || ITEMS[id].unique || ITEMS[id].set || (S.upgrades?.[id] || 0) > 0);
   const sellN = (id, n, ui) => {
     S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id];
     S.gold += sellPrice(id) * n; noteSold(id, n, sellPrice(id) * n);
@@ -137,12 +145,13 @@ export async function sellMenu(who) {
   };
   await listScreen({
     title: who.toUpperCase() + ': SELL',
-    hint: 'E SELL ONE   Q SELL ALL   ESC DONE',
+    hint: 'E SELL  Q SELL ALL  ESC DONE',
+    qty: true, sorts: ['VALUE', 'NAME', 'TYPE'],
     empty: 'NOTHING LEFT TO SELL',
-    rows: () => {
+    rows: (ui) => {
       const j = junkItems(), jg = j.reduce((a, id) => a + sellPrice(id) * avail(id), 0);
       const top = j.length ? [{ id: null, name: 'SELL ALL JUNK', tag: `${jg}G`, ok: true, sub: `${j.length} KINDS OF TRADE GOODS`, lines: [['HIDES, TUSKS, OIL AND THE LIKE.', 4], ['GEAR, GEMS AND POTIONS ARE KEPT.', 4]] }] : [];
-      return [...top, ...sellable().map((id) => ({
+      return [...top, ...sorted(ui).map((id) => ({
         id, name: ITEMS[id].name, tag: `x${avail(id)}  ${sellPrice(id)}G`, ok: true,
         sub: `WORTH ${sellPrice(id)}G EACH`, lines: statLines(id),
       }))];
@@ -150,20 +159,29 @@ export async function sellMenu(who) {
     onSelect: (i, ui) => {
       const off = junkItems().length ? 1 : 0;
       if (off && i === 0) { const r = sellJunk(); ui.say(`SOLD ${r.n} FOR ${r.gold}G`, 13); sfx.play('coin'); return; }
-      const id = sellable()[i - off]; if (id) sellN(id, 1, ui);
+      const id = sorted(ui)[i - off]; if (!id) return;
+      const n = Math.min(avail(id), ui.qty ?? 1);
+      if (precious(id, n) && !ui.confirm('sell:' + id, `SELL YOUR LAST ${ITEMS[id].name.toUpperCase()}? E AGAIN`)) return;
+      sellN(id, n, ui);
     },
-    onAlt: (i, ui) => { const off = junkItems().length ? 1 : 0; if (off && i === 0) return; const id = sellable()[i - off]; if (id) sellN(id, avail(id), ui); },
+    onAlt: (i, ui) => {
+      const off = junkItems().length ? 1 : 0; if (off && i === 0) return; const id = sorted(ui)[i - off]; if (!id) return;
+      if (precious(id, avail(id)) && !ui.confirm('sellall:' + id, `SELL ALL ${ITEMS[id].name.toUpperCase()}? Q AGAIN`)) return;
+      sellN(id, avail(id), ui);
+    },
   });
 }
 
 // -------------------------------------------------------------------- forge
+// A requirement line that reads as one: "✓ 50 GOLD (HAVE 2374)" in green, "■ 3 FROST LILY (HAVE 1)" in red.
+export const need = (label, have, n) => [`${have >= n ? '✓' : '■'} ${n} ${label} (HAVE ${have})`, have >= n ? 8 : 11];
 // ---- gear upgrades, +1 to +10 (tables and maths in systems/upgrades.js)
 const slotKind = (id) => KIND_OF_TYPE[ITEMS[id]?.type] || null;
 const costReady = (c) => S.gold >= c.gold && count(c.mat) >= c.n && (!c.mat2 || count(c.mat2) >= c.n2);
 const costLines = (c) => [
-  [`GOLD ${S.gold}/${c.gold}`, S.gold >= c.gold ? 8 : 11],
-  [`${ITEMS[c.mat].name.toUpperCase()} ${count(c.mat)}/${c.n}`, count(c.mat) >= c.n ? 8 : 11],
-  ...(c.mat2 ? [[`${ITEMS[c.mat2].name.toUpperCase()} ${count(c.mat2)}/${c.n2}`, count(c.mat2) >= c.n2 ? 8 : 11]] : []),
+  need('GOLD', S.gold, c.gold),
+  need(ITEMS[c.mat].name.toUpperCase(), count(c.mat), c.n),
+  ...(c.mat2 ? [need(ITEMS[c.mat2].name.toUpperCase(), count(c.mat2), c.n2)] : []),
 ];
 const costTag = (c) => `${c.gold}G`;
 // Buy the next level for what is equipped in `slot`, if this smith can (cap) and you can afford it. Returns 'ok', 'short', 'cap', 'max' or 'none'.
@@ -198,7 +216,7 @@ export async function upgradeMenu(who, slot, cap = 3) {
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
         id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
-        lines: [...statLines(id), [gainText(kind, cur), 8], ...costLines(c)],
+        lines: [[gainBeforeAfter(kind, cur, ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
         desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
       }];
     },
@@ -220,6 +238,7 @@ export async function gearUpgradeMenu(who, cap = 3) {
     const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), 'Back']);
     if (c >= have.length) return;
     await upgradeMenu(who, have[c][0], cap);
+    if (TABS.next != null) return;                 // the player tabbed to another smith screen
   }
 }
 
@@ -237,7 +256,8 @@ export async function enchantMenu(who) {
       id: e.mat, name: e.name + ' Enchant', tag: e.gold + 'G', ok,
       sub: S.enchants[id]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
       desc: `Your ${ITEMS[id].name} ${e.desc} on every hit. Replaces any other enchant.`,
-      lines: [[`${ITEMS[e.mat].name.toUpperCase()} ${have}/${e.n}`, have >= e.n ? 8 : 11], [`GOLD ${S.gold}/${e.gold}`, S.gold >= e.gold ? 8 : 11]],
+      tagCol: S.gold >= e.gold ? 13 : 11,                      // the price is red only when the gold is what is missing
+      lines: [need(ITEMS[e.mat].name.toUpperCase(), have, e.n), need('GOLD', S.gold, e.gold)],
     };
   });
   await listScreen({
@@ -279,7 +299,7 @@ export async function brewMenu(who = 'Alchemy') {
       const ok = canBrew(r);
       return {
         id: r.id, name: ITEMS[r.id].name, tag: `x${count(r.id)}`, ok, tagCol: 4, sub: ok ? 'READY TO BREW' : 'NEED ITEMS',
-        lines: Object.entries(r.needs).map(([k, n]) => [`${ITEMS[k].name.toUpperCase()} ${count(k)}/${n}`, count(k) >= n ? 8 : 11]),
+        lines: Object.entries(r.needs).map(([k, n]) => need(ITEMS[k].name.toUpperCase(), count(k), n)),
       };
     }),
     onSelect: (i, ui) => {
@@ -304,7 +324,7 @@ export async function fletchMenu() {
     title: 'FLETCHING', hint: 'E CRAFT   ESC DONE',
     rows: () => FLETCH.map((f) => ({
       id: f.id, name: `${ITEMS[f.id].name} x${f.n}`, tag: `${f.gold}G`, ok: can(f), sub: can(f) ? 'READY' : 'NEED ITEMS',
-      lines: [[`ARROWS ${S.arrows}/${f.arrows}`, S.arrows >= f.arrows ? 8 : 11], [`${ITEMS[f.mat].name.toUpperCase()} ${count(f.mat)}/${f.matN}`, count(f.mat) >= f.matN ? 8 : 11], [`YOU HAVE ${count(f.id)}`, 4]],
+      lines: [need('ARROWS', S.arrows, f.arrows), need(ITEMS[f.mat].name.toUpperCase(), count(f.mat), f.matN), [`YOU HAVE ${count(f.id)}`, 4]],
     })),
     onSelect: (i, ui) => {
       const f = FLETCH[i];
@@ -421,14 +441,14 @@ export async function stashMenu() {
   for (;;) {
     const c = await choose(['Put things in the stash', 'Take things out', 'Close']);
     if (c === 0) {
-      await listScreen({ title: 'STASH: DEPOSIT', hint: 'E PUT ONE   Q PUT ALL   ESC DONE', empty: 'NOTHING TO STORE',
+      await listScreen({ title: 'STASH: DEPOSIT', hint: 'E PUT  Q PUT ALL  ESC DONE', empty: 'NOTHING TO STORE', qty: true,
         rows: () => carried().map((id) => ({ id, name: ITEMS[id].name, tag: 'x' + (S.inv[id] - (equippedIds().has(id) ? 1 : 0)), ok: true, sub: 'IN YOUR PACK', lines: statLines(id) })),
-        onSelect: (i, ui) => { const id = carried()[i]; if (!id) return; S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id]; S.stash[id] = (S.stash[id] || 0) + 1; sfx.play('select'); ui.say('STORED ' + ITEMS[id].name.toUpperCase(), 8); },
+        onSelect: (i, ui) => { const id = carried()[i]; if (!id) return; const n = Math.min(ui.qty ?? 1, S.inv[id] - (equippedIds().has(id) ? 1 : 0)); S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id]; S.stash[id] = (S.stash[id] || 0) + n; sfx.play('select'); ui.say(`STORED ${n > 1 ? n + ' X ' : ''}${ITEMS[id].name.toUpperCase()}`, 8); },
         onAlt: (i, ui) => { const id = carried()[i]; if (!id) return; const n = S.inv[id] - (equippedIds().has(id) ? 1 : 0); S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id]; S.stash[id] = (S.stash[id] || 0) + n; sfx.play('select'); ui.say(`STORED ${n}`, 8); } });
     } else if (c === 1) {
-      await listScreen({ title: 'STASH: TAKE', hint: 'E TAKE ONE   Q TAKE ALL   ESC DONE', empty: 'THE STASH IS EMPTY',
+      await listScreen({ title: 'STASH: TAKE', hint: 'E TAKE  Q TAKE ALL  ESC DONE', empty: 'THE STASH IS EMPTY', qty: true,
         rows: () => stored().map((id) => ({ id, name: ITEMS[id].name, tag: 'x' + S.stash[id], ok: true, sub: 'IN THE STASH', lines: statLines(id) })),
-        onSelect: (i, ui) => { const id = stored()[i]; if (!id) return; S.stash[id]--; if (S.stash[id] <= 0) delete S.stash[id]; addItem(id); sfx.play('select'); ui.say('TOOK ' + ITEMS[id].name.toUpperCase(), 8); },
+        onSelect: (i, ui) => { const id = stored()[i]; if (!id) return; const n = Math.min(ui.qty ?? 1, S.stash[id]); S.stash[id] -= n; if (S.stash[id] <= 0) delete S.stash[id]; addItem(id, n); sfx.play('select'); ui.say(`TOOK ${n > 1 ? n + ' X ' : ''}${ITEMS[id].name.toUpperCase()}`, 8); },
         onAlt: (i, ui) => { const id = stored()[i]; if (!id) return; const n = S.stash[id]; delete S.stash[id]; addItem(id, n); sfx.play('select'); ui.say(`TOOK ${n}`, 8); } });
     } else return;
   }

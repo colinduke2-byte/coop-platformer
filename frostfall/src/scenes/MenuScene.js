@@ -53,10 +53,11 @@ export default class MenuScene extends Phaser.Scene {
   get gs() { return this.scene.get('Game'); }
 
   create() {
+    keys.wheel = 0;                                // wheel turns made during play do not scroll the menu
     ui.modal = true; keys.wheel = 0;
     this.tabs = [
-      { name: 'ITEMS', render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },
-      { name: 'SKILLS', render: () => this.renderSkills(), input: () => {} },
+      { name: 'ITEMS', doubleClick: true, captureLR: () => !!this.dropArm, render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },
+      { name: 'SKILLS', help: 'A/D TAB  ESC CLOSE', render: () => this.renderSkills(), input: () => {} },
       ...extraTabs(this),
     ];
     if (this.openName) { const i = this.tabs.findIndex((t) => t.name === this.openName); this.tab = i >= 0 ? i : 0; }
@@ -89,6 +90,8 @@ export default class MenuScene extends Phaser.Scene {
     if (i < 0) return;
     t.hover ? t.hover(i) : (this.cursor = i);
     this.dirty = true;
+    // the pack: a click selects, a double click uses (a stray click must never drink a potion)
+    if (t.doubleClick) { const now = performance.now(), lc = this.lastClick; this.lastClick = { i, t: now }; if (!lc || lc.i !== i || now - lc.t > 450) return; this.lastClick = null; }
     this.tapKey(t.clickKey ? t.clickKey(i) : BINDINGS.interact[0]);
   }
 
@@ -120,6 +123,7 @@ export default class MenuScene extends Phaser.Scene {
     if (keys.pressed('inventory') && this.tab !== 0) this.go(0);
     if (keys.pressed('map')) { const q = this.tabs.findIndex((t) => t.name === 'MAP'); if (q === this.tab) { this.close(); return; } if (q >= 0) this.go(q); }
     if (keys.pressed('journal')) { const q = this.tabs.findIndex((t) => t.name === 'QUESTS'); if (q >= 0 && q !== this.tab) this.go(q); }
+    if (this.paneMore && keys.pressed('shoutswap')) { this.paneOff += Math.max(1, this.paneMore - 1); this.dirty = true; sfx.play('move'); }   // G: more text
     const cap = this.tabs[this.tab].captureLR?.();
     if ((!cap && keys.pressed('right')) || keys.tabRight()) this.go((this.tab + 1) % this.tabs.length);
     if ((!cap && keys.pressed('left')) || keys.tabLeft()) this.go((this.tab + this.tabs.length - 1) % this.tabs.length);
@@ -128,7 +132,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   go(t) {
-    this.tab = t; this.cursor = 0; this.scroll = 0; this.dirty = true;
+    this.tab = t; this.cursor = 0; this.scroll = 0; this.dirty = true; this.paneMore = 0;
     sfx.play('move');
   }
 
@@ -147,8 +151,8 @@ export default class MenuScene extends Phaser.Scene {
 
   inputItems() {
     const byWheel = performance.now() - (keys.wheelT || -1e9) < 80;
-    if (keys.pressed('swap') && !byWheel) { this.filter = (this.filter + 1) % FILTERS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
-    if (keys.pressed('shout')) { this.sort = (this.sort + 1) % SORTS.length; this.cursor = 0; this.scroll = 0; this.dirty = true; sfx.play('move'); }
+    if (keys.pressed('swap') && !byWheel) { this.filter = (this.filter + 1) % FILTERS.length; this.cursor = 0; this.scroll = 0; this.dropArm = null; this.dirty = true; sfx.play('move'); }
+    if (keys.pressed('shout')) { this.sort = (this.sort + 1) % SORTS.length; this.cursor = 0; this.scroll = 0; this.dropArm = null; this.dirty = true; sfx.play('move'); }
     const list = this.inventory();
     this.cursor = Math.min(this.cursor, Math.max(0, list.length - 1));
     this.nav(list.length);
@@ -156,15 +160,21 @@ export default class MenuScene extends Phaser.Scene {
     if (keys.pressed('ammo') && list.length) {
       const id = list[this.cursor], it = ITEMS[id], n = S.inv[id] || 0;
       if (it.type === 'quest' || it.type === 'note' || Object.values(S.equip).includes(id)) { bus.emit('toast', Object.values(S.equip).includes(id) ? 'TAKE IT OFF FIRST' : 'YOU CANNOT DROP THAT', 11); sfx.play('nostamina'); }
-      else if (this.dropArm !== id) { this.dropArm = id; bus.emit('toast', `PRESS V AGAIN TO DROP ${it.name.toUpperCase()}${n > 1 ? ' X' + n : ''}`, 12); sfx.play('move'); }
+      else if (this.dropArm !== id) { this.dropArm = id; this.dropN = n; sfx.play('move'); }          // asks in the description panel
       else {
-        this.dropArm = null; removeItem(id, n);
-        const p = this.gs.player; this.gs.pickups.push(new Pickup(this.gs, p.x + 6, p.y + 4, { type: 'item', id, n, dropped: true }));
-        bus.emit('toast', `DROPPED ${it.name.toUpperCase()}: IT STAYS HERE UNTIL YOU LEAVE`, 12); sfx.play('pickup');
+        const k = Math.max(1, Math.min(n, this.dropN || n));
+        this.dropArm = null; removeItem(id, k);
+        const p = this.gs.player; this.gs.pickups.push(new Pickup(this.gs, p.x + 6, p.y + 4, { type: 'item', id, n: k, dropped: true }));
+        bus.emit('toast', `DROPPED ${it.name.toUpperCase()}${k > 1 ? ' X' + k : ''}: IT STAYS HERE UNTIL YOU LEAVE`, 12); sfx.play('pickup');
       }
       this.dirty = true;
     }
     if (keys.pressed('up') || keys.pressed('down')) this.dropArm = null;
+    if (this.dropArm && list[this.cursor] === this.dropArm) {      // A/D: how many to drop
+      const n = S.inv[this.dropArm] || 1;
+      if (keys.pressed('left')) { this.dropN = Math.max(1, (this.dropN || n) - 1); this.dirty = true; sfx.play('move'); }
+      if (keys.pressed('right')) { this.dropN = Math.min(n, (this.dropN || n) + 1); this.dirty = true; sfx.play('move'); }
+    }
     const wantEquip = keys.pressed('interact'), wantOff = keys.pressed('block');
     if ((wantEquip || wantOff) && list.length) {
       const id = list[this.cursor], it = ITEMS[id];
@@ -193,6 +203,20 @@ export default class MenuScene extends Phaser.Scene {
   // ----------------------------------------------------------------- draw
   clear() { this.dyn.removeAll(true); this.bg.clear(); }
   T(x, y, s, col = 6) { const t = txt(this, x, y, s, col); this.dyn.add(t); return t; }
+  // A text box that scrolls when its text is longer than it is tall: G (BACK on a pad) pages through, arrows show
+  // there is more. Each tab keeps one pane; its scroll resets when the selection changes.
+  pane(x, y, w, h, text, col = 5) {
+    const lines = wrap(String(text || ''), Math.floor(w / 6)).split('\n');
+    const vis = Math.max(1, Math.floor(h / 9));
+    const key = this.tab + ':' + this.cursor;
+    if (this.paneKey !== key) { this.paneKey = key; this.paneOff = 0; }
+    if (this.paneOff >= lines.length) this.paneOff = 0;
+    this.T(x, y, lines.slice(this.paneOff, this.paneOff + vis).join('\n'), col);
+    this.paneMore = lines.length > vis ? vis : 0;
+    if (this.paneOff > 0) this.T(x + w - 6, y, '\u25B2', 13);
+    if (this.paneOff + vis < lines.length) this.T(x + w - 6, y + (vis - 1) * 9, '\u25BC', 13);
+    return lines.length > vis;
+  }
   I(x, y, key, scale = 1, alpha = 1) { const i = this.add.image(x, y, key).setOrigin(0).setScale(scale).setAlpha(alpha); this.dyn.add(i); return i; }
 
   draw() {
@@ -207,11 +231,12 @@ export default class MenuScene extends Phaser.Scene {
       const w = textW(t.name) + 6;
       this.tabRects.push({ x, w });
       if (i === this.tab) { g.fillStyle(C[3]); g.fillRect(x, 5, w, 13); g.fillStyle(C[13]); g.fillRect(x, 17, w, 1); }
-      this.T(x + 3, 8, t.name, i === this.tab ? 6 : 4);
+      this.T(x + 3, 8, t.name, i === this.tab ? 6 : settings.highContrast ? 5 : 4);
+      if (t.badge?.()) { g.fillStyle(C[0]); g.fillRect(x + w - 4, 5, 4, 4); g.fillStyle(C[13]); g.fillRect(x + w - 3, 6, 2, 2); }   // something new here
       x += w + 1;
     });
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
-    this.help = null; this.helpCol = null;
+    this.help = null; this.helpCol = null; this.paneMore = 0;
     this.tabs[this.tab].render();
     const help = padHint(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 51);
     this.T(8, H - 12, fit(help, 51), this.helpCol || (settings.highContrast ? 6 : 4));
@@ -220,7 +245,16 @@ export default class MenuScene extends Phaser.Scene {
   renderItems() {
     const g = this.bg;
     const list = this.inventory();
-    this.help = `E USE  F OFFHAND  V DROP  Q FILTER  R SORT ${SORTS[this.sort]}`;
+    // the help line says what E does to the selected thing
+    {
+      const sid = list[this.cursor], sit = sid && ITEMS[sid];
+      const eq = sid && Object.values(S.equip).includes(sid);
+      const verb = !sit ? '' : SLOT_OF[sit.type] ? (eq ? 'E TAKE OFF' : 'E EQUIP') + (sit.type === 'weapon' ? (S.equip.offhand === sid ? '  F TAKE OFF' : '  F OFFHAND') : '')
+        : { potion: 'E DRINK', elixir: 'E DRINK', food: 'E EAT', tome: 'E READ', note: 'E READ', map: 'E READ', whistle: 'E CALL' }[sit.type] || '';
+      const drop = sit && !eq && sit.type !== 'quest' && sit.type !== 'note' ? '  V DROP' : '';
+      this.help = this.dropArm ? 'V AGAIN TO DROP  A/D HOW MANY  W/S CANCEL' : `${verb}${drop}  Q FILTER  R SORT ${SORTS[this.sort]}${this.paneMore ? '  G MORE' : ''}`.trim();
+      if (this.dropArm) this.helpCol = 12;
+    }
     panel(g, 6, 22, 150, 140, 2);
     // filter chips + sort
     let fx = 11;
@@ -239,10 +273,11 @@ export default class MenuScene extends Phaser.Scene {
       const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
       const rc = rarityCol(id);
       const c = S.inv[id];
-      const tag = S.equip.offhand === id ? 'O' : Object.values(S.equip).includes(id) ? 'E' : '';
-      const right = tag ? 12 : c > 1 ? textW('x' + c) + 6 : 0;          // names stop short of the count or the E tag
-      this.T(30, y + 5, (it.name + up).slice(0, Math.floor((150 - right - 30) / 6)), rc ?? (i === this.cursor ? 6 : 5));
-      if (tag) this.T(146 - 6, y + 5, tag, 13);
+      // worn things carry a check mark; the offhand weapon says OH (see the description for which slot)
+      const tag = S.equip.offhand === id ? 'OH' : Object.values(S.equip).includes(id) ? '✓' : '';
+      const right = tag ? textW(tag) + 6 : c > 1 ? textW('x' + c) + 6 : 0;          // names stop short of the count or the tag
+      this.T(30, y + 5, fit(it.name + up, Math.floor((150 - right - 30) / 6)), rc ?? (i === this.cursor ? 6 : 5));
+      if (tag) this.T(152 - textW(tag), y + 5, tag, 8);
       else if (c > 1) this.T(150 - textW('x' + c), y + 5, 'x' + c, 4);
     });
     if (list.length > ROWS) {
@@ -252,24 +287,24 @@ export default class MenuScene extends Phaser.Scene {
 
     // equipment
     const rx = 162;
-    panel(g, rx, 22, 152, 62, 2);
+    panel(g, rx, 22, 152, 64, 2);
     Object.entries(SLOT_NAMES).forEach(([slot, name], i) => {
-      const y = 25 + i * 10, id = S.equip[slot];
+      const y = 24 + i * 10, id = S.equip[slot];
       this.T(rx + 6, y + 1, name, 4);
       if (id) {
         this.I(rx + 46, y - 2, iconKey(id), 0.75);
         const up = (S.upgrades && S.upgrades[id]) ? ' +' + S.upgrades[id] : '';
-        this.T(rx + 60, y + 1, (ITEMS[id].name + up).slice(0, 15), rarityCol(id) ?? 6);
+        this.T(rx + 60, y + 1, fit(ITEMS[id].name + up, 15), rarityCol(id) ?? 6);
       } else this.T(rx + 60, y + 1, '-', 3);
     });
     // stats
-    panel(g, rx, 86, 152, 32, 2);
+    panel(g, rx, 88, 152, 30, 2);
     const dmg = (stats.weaponDmg() + stats.offhandDmg() * 0.6) * bonus.melee(), bdmg = stats.bowDmg() * bonus.arrow();
-    this.T(rx + 6, 90, `ATK ${dmg.toFixed(1)} BOW ${bdmg.toFixed(1)} ARM ${Math.round(stats.armor() * 100)}%`, 5);
-    this.T(rx + 6, 99, `HP ${S.maxHp} MP ${S.maxMp} SP ${S.maxSp}`, 5);
+    this.T(rx + 6, 91, `ATK ${dmg.toFixed(1)} BOW ${bdmg.toFixed(1)} ARM ${Math.round(stats.armor() * 100)}%`, 5);
+    this.T(rx + 6, 100, `HP ${S.maxHp} MP ${S.maxMp} SP ${S.maxSp}`, 5);
     const lv = burden.level();
-    this.T(rx + 6, 108, `${S.gold} GOLD`, 13);
-    { const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`; this.T(rx + 146 - textW(wt), 108, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11); }
+    this.T(rx + 6, 109, `${S.gold} GOLD`, 13);
+    { const wt = `WT ${Math.round(burden.carried())}/${burden.capacity()}`; this.T(rx + 146 - textW(wt), 109, wt, lv === 'ok' ? 4 : lv === 'burdened' ? 12 : 11); }
     // carry weight: a bar under the item list. Green while there is room, yellow when Burdened, red when Overloaded;
     // a notch marks the Overloaded line (125%), and the text says how much more you can carry
     {
@@ -290,7 +325,7 @@ export default class MenuScene extends Phaser.Scene {
     const id = list[this.cursor];
     if (id) {
       const it = ITEMS[id];
-      this.T(rx + 6, 123, it.name.slice(0, 24), rarityCol(id) ?? 13);
+      this.T(rx + 6, 123, fit(it.name, 24), rarityCol(id) ?? 13);
       let line = it.gen ? [it.rarity.toUpperCase(), ...(it.affixLines || [])].join('. ') + '.' : it.desc;
       const slot = SLOT_OF[it.type];
       if (slot) {
@@ -303,7 +338,12 @@ export default class MenuScene extends Phaser.Scene {
       }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
       { const w = itemWeight(id); if (w >= 1) line = `WT ${Math.round(w * 10) / 10}. ` + line; }      // what it adds to your load
-      this.T(rx + 6, 132, wrap(line, 23).split('\n').slice(0, 3).join('\n'), 5);
+      const where = Object.entries(S.equip).find(([, v]) => v === id);
+      if (where) line = `WORN: ${SLOT_NAMES[where[0]]}. ` + line;
+      if (this.dropArm === id) {
+        const n = S.inv[id] || 1, k = Math.max(1, Math.min(n, this.dropN || n));
+        this.T(rx + 6, 132, `DROP ${k} OF ${n}?`, 12); this.T(rx + 6, 141, 'V AGAIN TO DROP', 6); this.T(rx + 6, 150, n > 1 ? 'A/D: HOW MANY' : 'W/S: CANCEL', 4);
+      } else this.pane(rx + 6, 132, 142, 27, line, 5);
     }
   }
 
@@ -315,10 +355,12 @@ export default class MenuScene extends Phaser.Scene {
       this.T(14, y, d.name, 6);
       this.T(W - 14 - textW('LEVEL ' + s.lvl), y, 'LEVEL ' + s.lvl, 13);
       const need = s.lvl >= MAX_LVL ? 1 : xpNeeded(s.lvl), frac = s.lvl >= MAX_LVL ? 1 : s.xp / need;
+      const xpL = s.lvl >= MAX_LVL ? 'MASTERED' : `XP ${Math.floor(s.xp)}/${need}`;            // how far to the next level
+      this.T(W - 14 - textW('LEVEL ' + s.lvl) - 10 - textW(xpL), y, xpL, 4);
       g.fillStyle(C[0]); g.fillRect(13, y + 9, W - 28, 5);
       g.fillStyle(C[1]); g.fillRect(14, y + 10, W - 30, 3);
       g.fillStyle(C[15]); g.fillRect(14, y + 10, Math.round((W - 30) * frac), 3);
-      this.T(14, y + 15, d.perk, 4);
+      this.T(14, y + 15, fit(d.perk, 49), 4);
     });
     this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
   }
