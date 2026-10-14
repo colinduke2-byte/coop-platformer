@@ -49,6 +49,11 @@ Keys can be rebound in **Pause > System > Controls**. A gamepad and touch contro
 - **Crowds are dangerous.** Back into a doorway or a corridor so they come one at a time.
 - **Day and night matter.** Night and storms make stealth easier and the world more dangerous. After dark **wolves become werewolves** and the restless dead of old places turn to **ghosts**; bandit crews sleep (they notice you at half range). The **moon** runs an eight-phase cycle (the clock and moon are in the top right): a **full moon** brings the pack out in force and every third one is a **blood moon**, when a great wolf hunts you. At a campfire you can **wait until dusk or dawn**. A **Hooded Lantern** (the smith) lights up the dark but makes you easier to notice.
 - **Pick your difficulty** on the title screen (Options) or in Pause > System: Easy, Normal or Hard. Hard also turns gear wear on.
+- **Settings worth knowing** (Pause > System, grouped into GAME / SOUND / SCREEN / INPUT):
+  - TEXT SPEED; FRAME RATE (cap at 60 or 30 to save battery); REDUCE MOTION; HIGH CONTRAST; BAR NUMBERS.
+  - STICK DEADZONE, and CONTROLS / CONTROLLER to rebind.
+  - SAVES & BUG REPORT exports your save as a code you can paste on another device.
+- **Controller in menus:** A confirms, B goes back, LB/RB switch tabs, START opens the last tab you used.
 - **Read the name colours.** An enemy's name is coloured by how dangerous it is *to you right now* (your gear and level), and arriving somewhere far beyond you gives a warning. If it says DEADLY, come back stronger.
 
 ## 4. Getting stronger

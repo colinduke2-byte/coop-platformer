@@ -3,6 +3,41 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Runs better, smoother UI (docs/RUN_AND_UI_IMPROVEMENTS.md)
+- **Never freezes:** if something breaks, the game keeps running. If it keeps breaking, a crash card writes a rescue save and offers to copy a bug report.
+- **Saves:**
+  - Daily runs no longer overwrite your campaign.
+  - New Game asks before replacing a slot, and slots can be deleted.
+  - Damaged saves are recovered from a backup or a session snapshot.
+  - Autosave every 4 minutes when it is safe; a "SAVED" mark shows when it happens.
+  - Export and import a save as a code (System > SAVES & BUG REPORT).
+  - Saves are smaller. Blocked storage gives a warning. A second tab can't overwrite your save.
+- **Faster:**
+  - The Hollow Reach on a computer without WebGL: 22 ms -> 2 ms per frame.
+  - Worst stutter while running: 140 ms -> 10 ms.
+  - Frame-rate cap option (60/30). The game is quiet in a hidden tab.
+- **UI:**
+  - Lockpicking shows its text.
+  - Long quest lists and conversations scroll.
+  - The boss bar no longer covers your bars, and "E: TALK" no longer sits on names.
+  - Toasts merge and stay in a message log (Quests > LOG).
+  - The death card says what killed you.
+  - Optional numbers on bars; text speed option.
+  - Shops: tabs, quantity (1/5/10/ALL) and sorting, plus a confirm before selling precious items.
+  - Lore filters and unread dots; a cleaner map with shaped markers and a legend.
+- **Controls:**
+  - Rebinding a key no longer breaks the controller or touch. Prompts follow your bindings and your keyboard layout.
+  - In menus a controller uses A to confirm, B to go back and LB/RB to switch tabs. START opens the last tab.
+  - Held keys repeat in lists. A rebind tells you when it swapped with another action.
+  - Stick deadzone option.
+  - The game pauses when a controller is unplugged.
+- **Phones:**
+  - Touch buttons avoid the notch and the home bar, and hide during menus.
+  - Potion buttons; tap to advance a conversation.
+  - A "turn your phone" card; the screen stays awake while you play.
+- **Accessibility:** reduce motion, high contrast (all dim text brighter), and rarity, danger, perks and map markers told by shape or word as well as colour. The title Options now include flashes and shake.
+- **Under the hood:** build id on the title and in bug reports, an offline-capable install on the Pages site, faster parallel tests, lint, and a perf test.
+
 ## Refinement pass (after the world expansion)
 A full audit of the game, with fixes, balance and polish. The full list, with every number changed, is in `docs/REFINEMENT_LOG.md`.
 - **Quest soft-locks fixed:** Captain Nadir's raider chain could never start; Jamila's shop disappeared behind her quest chain; Red Sula's decision now happens in one conversation; early boss kills and New Game+ handled.

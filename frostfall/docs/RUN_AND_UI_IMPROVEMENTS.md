@@ -9,6 +9,29 @@ An audit in four parts, done 2026-10-14 against the current `frostfall` branch:
 Nothing in this list changes how the game plays, looks or what happens in the story. Each item has an id, the impact
 (**H**igh / **M**edium / **L**ow) and the effort (**S** = an hour or two, **M** = about a day, **L** = several days).
 
+## Status (done 2026-10-14)
+
+**Done: 95 of 101.** Every item except the six below; A1 is partly done.
+
+| Measured | Before | After |
+|---|---|---|
+| Hollow Reach frame, canvas fallback | 22.4 ms | 1.9 ms |
+| Hollow Reach frame, WebGL | 2.5 ms | 1.7 ms |
+| Worst hitch running across the Reach | 140 ms | 10 ms |
+| Save size (fog of war) | 55 KB | run-length encoded; generated items pruned |
+| Map tab reopen | 130 ms | cached bake |
+| Autosave | on map change only | also every 240 s when safe (TUNE.autosave) |
+| Memory after 16 map changes | flat | flat (no leak) |
+
+**Not done, and why:**
+- **P13** (bake prop shadows): off-screen culling (P1) already removes almost all of that cost.
+- **P22** (chunked Reach tilemap): replaced by the cheaper fix (cached solid-tile lookup).
+- **P26** (custom Phaser build): replaced by Phaser's arcade-only build (P25).
+- **P27** (lazy-load on Pages): the game must stay a single file for the artifact. The service worker caches it after the first visit instead.
+- **T8** (split the largest files): a refactor with no player-facing gain. It is left for a quiet week.
+- **T9** needs a person on real hardware.
+- **A1** is partly done: Large UI now says what it does (bigger bars and bar numbers). Real 2x text would need a second font size throughout and was not done.
+
 ## Where things stand (measured)
 
 | What | Now | Note |
