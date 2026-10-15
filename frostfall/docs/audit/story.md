@@ -13,7 +13,7 @@ Legend: impact **H/M/L**, effort **S** (hours) / **M** (a day) / **L** (days). *
 
 ### ST1. Two different "Hollow Kings" (Chapter 1's boss and the Old Kingdom's boss) — H / S / DESIGN
 **Problem.** "Hollow King" names three different things:
-- **Jarl Valdrek**, the Chapter 1 boss. Sigrid calls him this: *"the crypt of Jarl Valdrek, the Hollow King"* (`dialogue.js:95`). So do the quest title `king: 'The Hollow King'` (`quests.js:125`), Guard Haldor (*"the crypt of the Hollow King"*, `dialogue.js:351`), Asta (*"Mostly about the Hollow King"*, `dialogue.js:412`), the bestiary (`BEASTS.boss`: *"The Hollow King. Two phases..."*), and GUIDE section 6 (*"Chapter 1: The Hollow King"*).
+- **Jarl Valdrek**, the Chapter 1 boss. Sigrid calls him this: *"the crypt of Jarl Valdrek, the Hollow King"* (`dialogue.js:91`). So do the quest title `king: 'The Hollow King'` (`quests.js:125`), Guard Haldor (*"the crypt of the Hollow King"*, `dialogue.js:351`), Asta (*"Mostly about the Hollow King"*, `dialogue.js:405`), the bestiary (`BEASTS.boss`: *"The Hollow King. Two phases..."*), and GUIDE section 6 (*"Chapter 1: The Hollow King"*).
 - **THE HOLLOW KING**, the Old Kingdom boss and *"the last of the Hollow Kings"* (`story.js` taunts, `hamlets.js` quest `hollowking`).
 - **The Hollow Kings**, the ancient rulers who bound the Winter.
 
@@ -84,7 +84,7 @@ Keep a short `docs/LORE.md` canon page so future content stays consistent. (I di
 - **Corvin**, keyed on `give`: *"They say the Winter broke. It did not break. It was \*let go\*."* This plays even if you crowned the Winter. The asterisks also render literally.
 - **Ketil**, keyed on `keep`: *"a Winter King now walks the Reach, with a crown of frost"*. That describes the Chapter 2 *crown* ending, not keeping the Frostheart.
 - **Goran**, keyed on `sell`: *"You sold the Winter, I hear. Gold for a god."* You sold the Frostheart to a potion-seller.
-- **Ysolde**'s `give/sell/undecided` branches (`emberhold.js:163`) are dead text. Emberhold is only reachable after `finale` is set.
+- **Ysolde**'s `give/sell/undecided` branches (`emberhold.js:163`, after the opener on :162) are dead text. Emberhold is only reachable after `finale` is set.
 
 **Fix.** Key Corvin and Ketil on `S.flags.finale`. Rewrites:
 - Corvin (thaw): *"They say the Winter broke. It did not break. It was let go. Remember the difference."*
@@ -115,7 +115,7 @@ Keep a short `docs/LORE.md` canon page so future content stays consistent. (I di
 ### ST7. The Ironwatch banner contradicts itself twice — M / S
 **Problem.**
 - In `companionScene`, Ragna gives you the banner: *"Take the banner. I do not want to see it again."* The epilogue then says *"Ragna hung the Ironwatch banner over the lodge door"*.
-- Captain Vael of the Emberhold Wardens also rewards an `ironwatch_banner` for *The Ashen Road* (`emberhold.js:72`). The item's description is *"Ragna's company banner, cut to a sash."* A player can own two.
+- Captain Vael of the Emberhold Wardens also rewards an `ironwatch_banner` for *The Ashen Road* (`emberhold.js:69`). The item's description is *"Ragna's company banner, cut to a sash."* A player can own two.
 
 **Fix.**
 - Epilogue: *"Ragna burned a rafter in the lodge and said forty names over it. The lodge is quieter now, and so is she."* (If `ragnaBond`: *"...and an iron cairn on the Ironwatch road carries every one of them."*)
@@ -171,7 +171,7 @@ Save keys (`S.flags.*N`) use ids, not names, so renames are display-only.
 
 ### ST10. Chapter 3's seals are never handed over, and the Anvil's revelation is given away early — M / M / DESIGN
 **Problem.**
-- None of the three turn-ins (Orrin `emberhold.js:206`, Brannoch `:319`, Vael `:69`) mentions a seal. There is no seal item; CHAPTER3.md's "Seal of Cinders" was never added. The player only learns a seal was earned from the journal.
+- None of the three turn-ins (Orrin `emberhold.js:206`, Brannoch `:319`, Vael `:68`) mentions a seal. There is no seal item; CHAPTER3.md's "Seal of Cinders" was never added. The player only learns a seal was earned from the journal.
 - CHAPTER3.md says the Anvil seal is where you *"learn the true nature of the chains from Brannoch and Goran"*. Instead, Ysolde explains everything at the first meeting (`emberhold.js:164`). Goran's reveal is only the third line of a cycling chat.
 - Thessaly always says *"The missing page says..."*, because `chapter3` is always set in Emberhold. Her *"There is a page missing"* line is unreachable, so she quotes a missing page without ever having found it.
 
@@ -291,12 +291,12 @@ Give each one a *new* sound or sight instead. Ilse: *"Listen: frogs. There have 
 - *"end it, one way or another"* (Ilse and Ysolt quest descriptions)
 - *"I will make it worth (your while / the dark / the oil)"* x3
 
-**One shared turn-in for five quests.** All five Hollowfrost side quests use the same line: *"You did it. All of it. Here, this is yours, and my thanks."* (`sidequests.js:65`). Write one line per giver. Bjorn (hamlets): *"Trapper, fisher, prospector, and you came back with all your fingers. The rounds are walked."*
+**One shared turn-in for five quests.** All five Hollowfrost side quests use the same line: *"You did it. All of it. Here, this is yours, and my thanks."* (`sidequests.js:63`). Write one line per giver. Bjorn (hamlets): *"Trapper, fisher, prospector, and you came back with all your fingers. The rounds are walked."*
 
 **Files:** `regions2_story.js`, `regions3_story.js`, `regions4_story.js`, `sidequests.js`, `dialogue.js`.
 
 ### ST18. Typos, wording and small continuity fixes — L / S
-- Lisbet (`regions2_story.js:110`): *"There are always one more than yesterday."* -> **"There is always one more than yesterday."**
+- Lisbet (`regions2_story.js:106`): *"There are always one more than yesterday."* -> **"There is always one more than yesterday."**
 - Gardener Ash: *"The briars do not draw a difference between walkers and prey."* -> **"The briars do not know the difference between walkers and prey."**
 - Orla's hornet quest says *"the **wasps** scatter"* and *"The **wasps** do not care about shields"*. Change to **hornets**.
 - Varro: *"The Hollow Arena in the village is mine too. Distant cousin."* -> **"The Hollow Arena in the village belongs to my cousin. Distant cousin. Loud family."**
