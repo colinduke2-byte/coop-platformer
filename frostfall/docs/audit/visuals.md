@@ -60,11 +60,13 @@ Reviewer area: pixel scale and palette consistency, animation coverage, hit and 
 - **What's wrong:** `animalSheet` builds side0-2 + hurt0 + death0 for `spr_werewolf`, `spr_ashhound`, `spr_leech`, `spr_spider`, `spr_slime`, `spr_crab` and `spr_barnacle`. None of them is in `ANIM_CLIPS` (`src/art/anim.js`), so `Enemy.finish` falls into the sideOnly branch. That branch shows only side0/side1, a 2-frame shuffle with no hurt pose, and on death the sprite is rotated 90 degrees.
   - Affected creatures: Werewolf, Ash Hound, Fen Leech, Cave Weaver, Thornling and Scorpion (spr_spider), Slimeling, Wreck Crab, Lodeling, Frost Barnacle.
   - Related gaps:
+    - Clips are looked up by `cfg.tex`, not by native key. The native newfauna creatures (Meadow Hornet, Dew Sprite, Dust Devil on `spr_wisp`; Sand Burrower on `spr_worm`; Blightbloom on `spr_shroom`; Thornling and Scorpion on `spr_spider`) also have hurt0 and death0 frames that are never shown.
     - `make(..., ['side'])` sheets (wisp, worm, mimic, shroom, wyrm) have no hurt or death frame.
     - The native wyvern/thunderbird sheet (`native/animals.js:82`) has side0-2 only.
 - **Why it matters:** these creatures read as stiff next to the wolves and bears, which react to every hit.
 - **Change:**
   - Add the seven keys to `ANIM_CLIPS` (one line each).
+  - Look clips up by `texKey` as well, so `nat_*` sheets get the animal clip. Check that the frame exists first, because the 16px `spr_wisp` has no hurt0.
   - Add jolt/flip hurt and death frames to the `make(['side'])` sheets and the native wyvern sheet, the same way `animalSheet` does.
 - **Impact:** H. **Effort:** S.
 - **Files:** `src/art/anim.js`, `src/art/sprites.js`, `src/art/native/animals.js`, `test/art_baseline.mjs` baseline.
