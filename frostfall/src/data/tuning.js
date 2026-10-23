@@ -288,6 +288,11 @@ export const TUNE = {
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
   bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },
   scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 5.2, dmg: 2.9, gold: 2.0, elite: 0.5 },
+  // The economy (PR-03 and on): what shops pay, gold rewards, gold find. Owned by the economy pass.
+  economy: {
+    sellRate: 0.5,             // a shop pays this share of an item's value
+    sellBulk: 0.25,            // ... and this share for bulk goods (items with bulk: true: ingots, ore, lockpicks), which shops sell in bundles
+  },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
     // elite: how often elite and champion enemies appear; drops: food and potion drop chance; price: shop buy prices; durability: gear wear (null = the player's own setting, 'hard' = on unless switched off in the Hard setting)

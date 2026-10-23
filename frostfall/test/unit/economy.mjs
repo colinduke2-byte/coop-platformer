@@ -1,6 +1,14 @@
 // Economy and loot checks (PR-02, PR-03, PR-22 ...): pure node, no browser.   node test/unit/economy.mjs
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { genItem, RARITY } from '../../src/systems/genloot.js';
+import { ITEMS } from '../../src/data/items.js';
+import '../../src/data/items4.js';
+import { sellPrice, unitBuyFloor } from '../../src/systems/prices.js';
+import { POOLS } from '../../src/data/stock.js';
+const SRC = new URL('../../src/', import.meta.url).pathname;
+const srcFiles = (d = SRC) => fs.readdirSync(d).flatMap((f) => { const p = path.join(d, f); return fs.statSync(p).isDirectory() ? srcFiles(p) : p.endsWith('.js') ? [p] : []; });
 let n = 0, failed = 0;
 const t = (name, fn) => { try { fn(); n++; console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message.split('\n')[0]); } };
 // a small seeded random so a failure can be reproduced
@@ -16,6 +24,28 @@ t('PR-02: every generated item gets the full affix count of its rarity (1,000 ro
 t('PR-02: a weapon never carries two elements', () => {
   const R = rng(11);
   for (let i = 0; i < 2000; i++) { const it = genItem(3, R, 3, { slot: 'weapon' }); assert.ok(it.affixLines.filter((l) => /^(FIRE|FROST|SHOCK) /.test(l)).length <= 1, it.name); }
+});
+
+// PR-03: every ware list in the game (literal { id, price, n } rows in any source file, and the daily rotation pools) is
+// checked: the cheapest a unit can cost (Easy prices) must be at least what a shop pays for it.
+t('PR-03: nothing in any shop can be bought and sold back at a profit, on any difficulty', () => {
+  const bad = [], re = /\{ id: '([a-z_0-9]+)', price: (\d+)(?:, n: (\d+))?/g;
+  let rows = 0;
+  for (const f of srcFiles()) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(re)) {
+      if (!ITEMS[m[1]]) continue;
+      rows++;
+      const w = { id: m[1], price: +m[2], n: +m[3] || 1 };
+      if (unitBuyFloor(w) < sellPrice(w.id)) bad.push(`${path.basename(f)} ${w.id}: ${unitBuyFloor(w).toFixed(1)} < ${sellPrice(w.id)}`);
+    }
+  }
+  for (const [who, pool] of Object.entries(POOLS)) for (const [id, mul, qty] of pool) {
+    const price = Math.round(ITEMS[id].value * mul), w = qty ? { id, price: Math.round(price * qty * 0.8), n: qty } : { id, price };
+    if (unitBuyFloor(w) < sellPrice(id)) bad.push(`${who} rotation ${id}`);
+  }
+  assert.ok(rows > 60, `only ${rows} ware rows found: did the scan break?`);
+  assert.deepEqual(bad, []);
 });
 
 console.log(failed ? 'ECONOMY FAILED' : `ECONOMY PASSED (${n} tests)`);

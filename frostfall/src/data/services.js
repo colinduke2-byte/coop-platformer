@@ -12,6 +12,7 @@ import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
 import { noteSold } from './stock.js';
+import { sellPrice } from '../systems/prices.js';
 import { rarityIndex, reforgeGen } from '../systems/genloot.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
@@ -32,9 +33,8 @@ export async function pick(options, back = 'Back') {
   }
 }
 
-const price = (id) => ITEMS[id].value || 1;
 const bp = (w) => Math.max(1, Math.round(w.price * diff().price));   // shop buy price on the current difficulty
-export const sellPrice = (id) => Math.max(1, Math.floor(price(id) * 0.5));
+export { sellPrice };
 
 // Short stat lines for the detail pane of the list screens.
 const CLASS_LINE = { light: 'FAST, QUIET', medium: 'BALANCED', heavy: 'SLOW, +CARRY' };
