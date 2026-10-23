@@ -172,6 +172,19 @@ const tr = await G(async (reset) => {
 }, reset);
 check('PR-19: a +6 temper moves from the Steel Sword to the worn Ember Blade for 25% of its gold (300 g), within the smith\'s reach', Object.values(tr).every(Boolean), JSON.stringify(tr));
 
+// ---- PR-23: gems come in grades and three fuse into the next
+const gm = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, So = await import('/src/systems/sockets.js'), { stats } = await import('/src/systems/stats.js'), { ITEMS } = await import('/src/data/items.js');
+  S.inv.steel_sword = 1; S.equip.weapon = 'steel_sword'; S.inv.gem_ruby = 7; S.gold = 1000;
+  const f = So.fuseGems('gem_ruby'), left = S.inv.gem_ruby, paid = S.gold;
+  const d0 = stats.weaponDmg(); S.sockets = { steel_sword: ['gem_ruby_f'] }; const d1 = stats.weaponDmg();
+  S.inv.gem_ruby_f = 3; const r = So.fuseGems('gem_ruby_f'), royalTop = So.nextGrade('gem_ruby_r') === null;
+  S.sockets = {}; S.equip.weapon = null;
+  return { f: f === 'gem_ruby_f' && left === 4 && paid === 940, flawless: d1 - d0 === 6, royal: r === 'gem_ruby_r' && ITEMS.gem_ruby_r.gem.dmg === 11, royalTop, every: Object.values(ITEMS).filter((i) => i.type === 'gem' && !i.grade).every((i) => ITEMS[Object.keys(ITEMS).find((k) => ITEMS[k] === i) + '_r']) };
+}, reset);
+check('PR-23: three Rubies fuse into a Flawless Ruby (+6, 60 g), three Flawless into a Royal (+11); every gem has its grades', Object.values(gm).every(Boolean), JSON.stringify(gm));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

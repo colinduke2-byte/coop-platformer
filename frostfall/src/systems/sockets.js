@@ -3,6 +3,7 @@ import { S } from './state.js';
 import { modSum } from '../data/mods.js';
 import { ITEMS } from '../data/items.js';
 import { count, addItem, removeItem } from './inventory.js';
+import { TUNE } from '../data/tuning.js';
 
 const SOCKETABLE = new Set(['weapon', 'weapon2h', 'shield', 'bow', 'armor']);
 export const socketCount = (id) => { const it = ITEMS[id]; if (!it || !SOCKETABLE.has(it.type)) return 0; return it.sockets ?? ((it.value || 0) >= 250 ? 2 : (it.value || 0) >= 90 ? 1 : 0); };
@@ -36,6 +37,16 @@ export function gemBonus(key, slots = GEM_SLOTS) {
     for (const g of socketed(id)) if (g) n += ITEMS[g]?.gem?.[key] || 0;
   }
   return n + (slots === GEM_SLOTS ? runeBonus(key) : 0);
+}
+
+// ---- PR-23: fuse three gems of one grade into one of the next (Tamsin, Emberhold), for a little gold
+export const nextGrade = (id) => { const it = ITEMS[id]; if (it?.type !== 'gem') return null; const base = it.gradeOf || id, nx = !it.grade ? `${base}_f` : it.grade === 'f' ? `${base}_r` : null; return nx && ITEMS[nx] ? nx : null; };
+export const fuseCost = (id) => (ITEMS[id]?.grade === 'f' ? TUNE.economy.gemFuse[1] : TUNE.economy.gemFuse[0]);
+export function fuseGems(id) {
+  const nx = nextGrade(id);
+  if (!nx || count(id) < 3 || S.gold < fuseCost(id)) return false;
+  S.gold -= fuseCost(id); removeItem(id, 3); addItem(nx, 1, true);
+  return nx;
 }
 
 // ---- runes: one per weapon or armour, adding an effect rather than a stat

@@ -12,7 +12,7 @@ import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
 import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines, ascendMenu } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
-import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
+import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune, nextGrade, fuseCost, fuseGems } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
 import { maxLevel } from '../systems/upgrades.js';
 import { companionStory } from './companionquests.js';
@@ -371,10 +371,21 @@ export async function socketMenu(who) {
     }
   }
 }
+// PR-23: three gems of a grade become one of the next (Flawless, then Royal)
+async function fuseMenu(who) {
+  const list = () => gemList().filter((g) => nextGrade(g));
+  if (!list().length) { await say(who, 'Three alike and I can make one better. Bring me three.'); return; }
+  await listScreen({
+    title: 'FUSE GEMS', hint: 'E FUSE THREE   ESC DONE', empty: 'NO GEMS TO FUSE',
+    rows: () => list().map((g) => { const nx = nextGrade(g), ok = count(g) >= 3 && S.gold >= fuseCost(g); return { id: g, name: ITEMS[g].name, tag: fuseCost(g) + 'G', ok, tagCol: ok ? 13 : 11, sub: 'INTO ' + ITEMS[nx].name.toUpperCase(), lines: [[`HAVE ${count(g)} / 3`, count(g) >= 3 ? 8 : 11], [ITEMS[nx].desc.toUpperCase().slice(0, 38), 5]] }; }),
+    onSelect: (i, ui) => { const g = list()[i]; if (!g) return; const nx = fuseGems(g); if (!nx) { sfx.play('nostamina'); ui.say('NEED THREE AND THE GOLD', 11); return; } sfx.play('levelup'); ui.say('FUSED: ' + ITEMS[nx].name.toUpperCase(), 15); },
+  });
+}
 SCRIPTS.tamsin = async function tamsin() {
   const N = 'Tamsin';
   await say(N, cyc('tamsinN', ['A stone is a promise the earth made in a hurry. I just remind it.', 'Rubies for the blade, onyx for the plate, sapphires for the mind. Amber if you are tired of being tired.', 'Do not ask me what the runes say. Ask me what they want.']));
-  const c = await choose(['Set or remove gems', 'Buy / sell', 'Leave']);
+  const c = await choose(['Set or remove gems', 'Fuse gems', 'Buy / sell', 'Leave']);
   if (c === 0) await socketMenu(N);
-  else if (c === 1) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }, { id: 'rune_ignite', price: 220 }, { id: 'rune_rime', price: 220 }, { id: 'rune_storm', price: 240 }, { id: 'rune_drain', price: 260 }, { id: 'rune_thorns', price: 240 }, { id: 'rune_ward', price: 240 }]);
+  else if (c === 1) await fuseMenu(N);
+  else if (c === 2) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }, { id: 'rune_ignite', price: 220 }, { id: 'rune_rime', price: 220 }, { id: 'rune_storm', price: 240 }, { id: 'rune_drain', price: 260 }, { id: 'rune_thorns', price: 240 }, { id: 'rune_ward', price: 240 }]);
 };

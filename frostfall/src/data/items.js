@@ -262,3 +262,15 @@ let ensureIcon = null, ensureHeld = null;
 export const setArtEnsure = (icon, held) => { ensureIcon = icon; ensureHeld = held; };
 export const iconKey = (id) => { ensureIcon?.(id); return 'icon_' + id; };
 export const heldKey = (id) => { ensureHeld?.(id); return 'held_' + id; };
+
+// PR-23: gem grades. Every gem comes in Flawless (x2 its bonus) and Royal (x3.5); Tamsin in Emberhold fuses three of a grade
+// into one of the next (systems/sockets.js fuseGems). Ids: gem_ruby_f, gem_ruby_r ...
+export const GEM_GRADES = [['f', 'Flawless', 2, 3], ['r', 'Royal', 3.5, 9]];   // suffix, name, bonus x, value x
+for (const base of Object.keys(ITEMS).filter((k) => ITEMS[k].type === 'gem' && !/_[fr]$/.test(k))) {
+  const g = ITEMS[base];
+  for (const [suf, name, mul, vmul] of GEM_GRADES) {
+    const gem = Object.fromEntries(Object.entries(g.gem).map(([k, v]) => [k, v < 1 ? +(v * mul).toFixed(3) : Math.round(v * mul)]));
+    const words = Object.entries(gem).map(([k, v]) => (k === 'dmg' ? `+${v} weapon damage` : k === 'maxHp' ? `+${v} health` : k === 'maxMp' ? `+${v} mana` : k === 'maxSp' ? `+${v} stamina` : k === 'crit' ? `+${Math.round(v * 100)}% critical chance` : k === 'armor' ? `+${Math.round(v * 100)}% damage absorbed` : k === 'lifesteal' ? `heal ${Math.round(v * 100)}% of damage dealt` : `${k} ${v}`)).join(', ');
+    ITEMS[`${base}_${suf}`] = { name: `${name} ${g.name}`, type: 'gem', icon: g.icon, gem, grade: suf, gradeOf: base, value: g.value * vmul, desc: `Socket it: ${words}.` };
+  }
+}
