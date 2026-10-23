@@ -45,9 +45,9 @@ const AFFIXES = [
   { id: 'keen', slots: ['weapon', 'bow'], pre: 'Keen', apply: (it, k) => { it.dmg = Math.round(it.dmg * (1.08 + 0.05 * k)); }, line: (it) => `+${Math.round((1.08 - 1) * 100)}%+ DAMAGE` },
   { id: 'crit', slots: ['weapon', 'bow', 'charm'], suf: 'of Precision', apply: (it, k) => { it.crit = +(0.06 + 0.03 * k).toFixed(2); }, line: (it) => `${Math.round(it.crit * 100)}% CRIT CHANCE` },
   { id: 'vamp', slots: ['weapon', 'charm'], pre: 'Vampiric', apply: (it, k) => { it.lifesteal = +(0.05 + 0.02 * k).toFixed(2); }, line: (it) => `${Math.round(it.lifesteal * 100)}% LIFESTEAL` },
-  { id: 'ember', slots: ['weapon'], suf: 'of Embers', apply: (it, k) => { it.elem = { type: 'fire', power: 3 + 2 * k }; }, line: (it) => `FIRE +${it.elem.power}` },
-  { id: 'rime', slots: ['weapon'], suf: 'of Rime', apply: (it, k) => { it.elem = { type: 'frost', power: 3 + 2 * k }; }, line: (it) => `FROST +${it.elem.power}, SLOWS` },
-  { id: 'storm', slots: ['weapon'], suf: 'of Storms', apply: (it, k) => { it.elem = { type: 'shock', power: 4 + 2 * k }; }, line: (it) => `SHOCK +${it.elem.power}` },
+  { id: 'ember', group: 'elem', slots: ['weapon'], suf: 'of Embers', apply: (it, k) => { it.elem = { type: 'fire', power: 3 + 2 * k }; }, line: (it) => `FIRE +${it.elem.power}` },
+  { id: 'rime', group: 'elem', slots: ['weapon'], suf: 'of Rime', apply: (it, k) => { it.elem = { type: 'frost', power: 3 + 2 * k }; }, line: (it) => `FROST +${it.elem.power}, SLOWS` },
+  { id: 'storm', group: 'elem', slots: ['weapon'], suf: 'of Storms', apply: (it, k) => { it.elem = { type: 'shock', power: 4 + 2 * k }; }, line: (it) => `SHOCK +${it.elem.power}` },
   { id: 'swift', slots: ['weapon'], pre: 'Swift', apply: (it) => { it.swing = +((it.swing || 1) * 0.88).toFixed(2); }, line: () => 'FASTER SWINGS' },
   { id: 'light', slots: ['weapon', 'bow', 'armor', 'helmet'], pre: 'Light', apply: (it) => { it.costMul = +((it.costMul || 1) * 0.85).toFixed(2); it.moveMul = +((it.moveMul || 1) * 1.04).toFixed(2); }, line: () => 'CHEAPER, QUICKER' },
   { id: 'hardy', slots: ['armor', 'charm', 'shield', 'helmet'], pre: 'Hardy', apply: (it, k) => { it.maxHp = (it.maxHp || 0) + 15 + 8 * k; }, line: (it) => `+${it.maxHp} HEALTH` },
@@ -55,6 +55,7 @@ const AFFIXES = [
   { id: 'vigor', slots: ['armor', 'charm', 'helmet'], pre: 'Vigorous', apply: (it, k) => { it.maxSp = (it.maxSp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxSp} STAMINA` },
   { id: 'ward', slots: ['armor', 'shield', 'helmet'], suf: 'of the Bear', apply: (it, k) => { if (it.armor != null) it.armor = +(it.armor + 0.04 + 0.02 * k).toFixed(2); else it.block = +Math.min(0.9, it.block + 0.06).toFixed(2); }, line: () => 'TOUGHER' },
   { id: 'shadow', slots: ['armor', 'charm', 'helmet'], suf: 'of Shadows', apply: (it) => { it.detectMul = 0.8; }, line: () => 'HARDER TO SPOT' },
+  { id: 'steady', slots: ['shield'], pre: 'Steady', apply: (it) => { it.cost = +((it.cost || 1) * 0.8).toFixed(2); }, line: () => 'BLOCKING COSTS LESS' },
   { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it) => { it.goldMul = 1.25; }, line: () => '+25% GOLD FOUND' },
 ];
 
@@ -80,16 +81,22 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
   if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * (0.9 + 0.1 * rar.mult)).toFixed(2);
   if (it.block != null) it.block = +Math.min(0.88, it.block + 0.03 * tier).toFixed(2);
   if (slot === 'charm') { const k = ['maxHp', 'maxMp', 'maxSp'][Math.floor(rnd() * 3)]; it[k] = Math.round((20 + 8 * tier) * rar.mult); }
-  // affixes
+  // affixes (PR-02): draw only from affixes whose name part is still free, so every rarity gets its full count. Once the
+  // prefix and the suffix are both taken, a further affix is nameless (shown in the tooltip only). Two elements never stack.
   const pool = AFFIXES.filter((a) => a.slots.includes(slot));
   const used = [];
   const prefixes = [], suffixes = [];
-  for (let i = 0; i < rar.affixes && pool.length; i++) {
-    const a = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
-    if (a.pre && prefixes.length) { if (a.suf && !suffixes.length) { /* fall through */ } else continue; }
-    if (a.suf && suffixes.length && !a.pre) continue;
-    a.apply(it, Math.min(2, tier));
-    used.push(a); if (a.pre && !prefixes.length) prefixes.push(a.pre); else if (a.suf) suffixes.push(a.suf);
+  const k = Math.min(2, tier);
+  while (used.length < rar.affixes && pool.length) {
+    const free = (a) => (a.pre ? !prefixes.length : !suffixes.length);
+    const ok = pool.filter((a) => !(a.group && used.some((u) => u.group === a.group)));
+    if (!ok.length) break;
+    const named = ok.filter(free), from = named.length ? named : ok;
+    const a = from[Math.floor(rnd() * from.length)];
+    pool.splice(pool.indexOf(a), 1);
+    a.apply(it, k);
+    used.push(a);
+    if (free(a)) (a.pre ? prefixes : suffixes).push(a.pre || a.suf);
   }
   it.affixLines = used.map((a) => a.line(it));
   it.name = `${prefixes[0] ? prefixes[0] + ' ' : ''}${it.name}${suffixes[0] ? ' ' + suffixes[0] : ''}`;
