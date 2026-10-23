@@ -5,6 +5,7 @@ import { hash } from '../util.js';
 import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
 import { wornStyle, wornExtra, wornHelmet } from './worn.js';
 import { DAG_HI, DAG_LO, outlineCells, iconFromCells, heldFromCells, LET, Cb, col2 } from './cells.js';
+import './tintbake.js';            // tints become palette-remapped textures (VX-03)
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');
@@ -779,11 +780,13 @@ function tex(scene, key, w, h, fn) {
   scene.textures.addCanvas(key, cv);
 }
 
-function ring(ctx, size, th) {
-  const c = size / 2 - 0.5;
+// A ring of colour `col` with a 1px dark rim inside and out, so a white or frost ring still reads on snow (VX-09).
+export function ring(ctx, size, th, col = 6, rim = 2) {
+  const c = size / 2 - 0.5, ro = size / 2 - 0.3;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const d = Math.hypot(x - c, y - c);
-    if (d <= size / 2 - 0.3 && d >= size / 2 - th) R(ctx, 6, x, y);
+    if (d <= ro - 1 && d >= ro - 1 - th) R(ctx, col, x, y);
+    else if ((d <= ro && d > ro - 1) || (d < ro - 1 - th && d >= ro - 2 - th)) R(ctx, rim, x, y);
   }
 }
 
@@ -833,6 +836,7 @@ function buildFx(scene) {
   tex(scene, 'plate_on', 16, 16, (g) => {
     R(g, 0, 2, 2, 12, 12); R(g, 13, 3, 3, 10, 10); R(g, 6, 4, 4, 8, 8); R(g, 13, 5, 5, 6, 6); R(g, 6, 7, 6, 2, 4); R(g, 6, 6, 7, 4, 2);
   });
+  tex(scene, 'pop3', 5, 5, (g) => { R(g, 6, 1, 1, 3, 3); R(g, 6, 2, 0, 1, 5); R(g, 6, 0, 2, 5, 1); });     // a hit's one-frame white pop
   tex(scene, 'slash', 16, 24, (g) => {
     for (let a = -60; a <= 60; a += 2) {
       const rad = (a * Math.PI) / 180;
@@ -848,13 +852,13 @@ function buildFx(scene) {
   tex(scene, 'fireball', 8, 8, (g) => {
     R(g, 11, 1, 1, 6, 6); R(g, 12, 2, 0, 4, 8); R(g, 12, 0, 2, 8, 4); R(g, 13, 2, 2, 4, 4); R(g, 6, 3, 3, 2, 2);
   });
-  tex(scene, 'frostbolt', 8, 8, (g) => {
-    R(g, 3, 3, 0, 2, 8); R(g, 3, 0, 3, 8, 2); R(g, 15, 2, 1, 4, 6); R(g, 15, 1, 2, 6, 4); R(g, 6, 3, 3, 2, 2);
+  tex(scene, 'frostbolt', 8, 8, (g) => {         // a cyan shard in a steel outline (it vanished against snow without one)
+    R(g, 3, 2, 0, 4, 8); R(g, 3, 0, 2, 8, 4); R(g, 3, 1, 1, 6, 6); R(g, 15, 2, 2, 4, 4); R(g, 15, 3, 1, 2, 6); R(g, 15, 1, 3, 6, 2); R(g, 6, 3, 3, 2, 2);
   });
   tex(scene, 'bolt', 6, 6, (g) => { R(g, 4, 1, 0, 4, 6); R(g, 5, 0, 1, 6, 4); R(g, 15, 2, 2, 2, 2); });
   tex(scene, 'ring', 64, 64, (g) => ring(g, 64, 3));
   tex(scene, 'disc', 64, 64, (g) => {
-    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) <= 31.5) R(g, 6, x, y);
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { const d = Math.hypot(x - 31.5, y - 31.5); if (d <= 31.5) R(g, d > 30.2 ? 2 : 6, x, y); }
   });
   tex(scene, 'ring_small', 32, 32, (g) => ring(g, 32, 2));
   for (let i = 0; i < 3; i++) {

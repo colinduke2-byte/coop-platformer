@@ -50,6 +50,55 @@ const edge = await G((ids) => {
 }, ['MEADOW', 'MOSS', 'PATH', 'ASH', 'SHINGLE', 'DUNE', 'GLASSMOSS'].map((k) => [k, TILE[k]]));
 check('ground tiles draw no dark edge row (no stripes every 16 px)', !edge.length, edge.join(','));
 
+// ---- VX-03: tints are baked into palette-remapped textures (the Canvas renderer ignores real tints)
+await go('forest', 'west');
+await G(() => { const g = window.gs(); g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.player.invuln = 9999; });
+r = await G(async () => {
+  const { PAL } = await import('/src/config.js');
+  const pal = new Set(PAL.map((c) => parseInt(c.slice(1), 16)));
+  const g = window.gs(), p = g.player, out = {};
+  const e = g.addEnemy('reaver', p.x + 60, p.y); e.cfg = { ...e.cfg, detect: 0, speed: 0, chase: 0 }; e.finish(0, 1);
+  const w = g.addEnemy('wolf', p.x - 60, p.y); w.cfg = { ...w.cfg, detect: 0, speed: 0, chase: 0 };
+  out.renderer = window.__ff.game.renderer.type;
+  out.variantKey = e.texture.key;                                    // a tinted variant wears a baked copy of its sheet
+  const src = e.texture.getSourceImage(), d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
+  let off = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && !pal.has((d[i] << 16) | (d[i + 1] << 8) | d[i + 2])) off++;
+  out.offPalette = off;
+  w.flashT = 1; w.finish(0, 1); out.flash = w.texture.key; out.frameOk = w.frame.name !== '__BASE';
+  w.flashT = 0; w.finish(0, 1); out.after = w.texture.key;
+  const ring = g.add.image(0, 0, 'ring').setTint(0xc8383c); out.ring = ring.texture.key; ring.destroy();
+  e.destroy(); w.destroy();
+  return out;
+});
+check('the Canvas renderer is the one under test', r.renderer === 1, String(r.renderer));
+check('a tinted variant (Rime Reaver) is drawn from a baked copy of its sheet', r.variantKey.startsWith('~m'), r.variantKey);
+check('the baked copy has only palette colours', r.offPalette === 0, String(r.offPalette));
+check('a hit flash is a baked white silhouette that keeps its frame', r.flash.startsWith('~f') && r.frameOk, r.flash);
+check('the flash ends back on the original sheet', r.after === 'spr_wolf', r.after);
+check('a red danger ring is a red texture, not a tint', r.ring.startsWith('~m') && r.ring.endsWith('~ring'), r.ring);
+
+// ---- VX-08/09/11/18: sparks by element, rimmed native rings, frost numbers on snow, a lightning bolt you can see
+await h.pause();
+r = await G(async () => {
+  const fxm = await import('/src/art/fx.js');
+  const g = window.gs(), fx = g.fx, p = g.player, cols = (info) => { const n0 = fx.parts.length; fx.spark(p.x, p.y, 1, 0, false, 13, info); return fx.parts.slice(n0).map((q) => q.sp.texture.key); };
+  const out = { fire: cols({ element: 'fire' }), frost: cols({ element: 'frost' }), plain: cols(null) };
+  fx.ring(p.x, p.y, 1.5, 0.5, 'ring', 0x5cc8d8);
+  out.ringKey = fx.temp[fx.temp.length - 1].sp.texture.key;
+  out.kind = fxm.sparkKind({ dot: { col: 8 } });
+  const n0 = fx.temp.length; fx.bolt([{ x: p.x, y: p.y }, { x: p.x + 40, y: p.y }]); out.boltIdx = n0;
+  return out;
+});
+check('a fire hit throws fire colours (orange, red, gold)', r.fire.every((k) => ['p12', 'p11', 'p13'].includes(k)) && r.fire.includes('p12'), r.fire.join(','));
+check('a frost hit throws cyan and white with ice shards', r.frost.every((k) => ['p15', 'p6', 'p5'].includes(k)) && r.frost.length > 5, r.frost.join(','));
+check('a poison dot sparks green', r.kind === 'poison');
+check('rings are drawn at native size from a palette texture', /^ringn_\d+_15_3$/.test(r.ringKey), r.ringKey);
+await h.frames(5);
+check('a lightning bolt is still on screen 5 frames later', await G(() => window.gs().fx.temp.some((e) => e.gfx && e.sp.visible)));
+await h.frames(10);
+check('...and gone after 15 frames', await G(() => !window.gs().fx.temp.some((e) => e.gfx)));
+await h.resume();
+
 console.log(h.errors.slice(0, 5).join('\n'));
 check('no page errors', !h.errors.length, h.errors[0]);
 await h.close();
