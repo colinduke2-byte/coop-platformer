@@ -26,6 +26,8 @@ export function spellGear(spell, w = null) {
   const own = !w; w = w || staff();
   return (own ? staffPower() : w.spellMul ?? 1) * (w.elemMul?.[SPELL_ELEM[spell]] ?? w.elemMul?.[spell] ?? 1);
 }
+// The perk on a spell's damage (PR-18): Pyromancer for fire spells, Cryomancer for frost spells.
+export const spellPerk = (spell) => (SPELL_ELEM[spell] === 'fire' && S.perks?.pyromancer) || (SPELL_ELEM[spell] === 'frost' && S.perks?.cryomancer) ? 1.15 : 1;
 // The gear multiplier on a spell's mana cost: a per-spell entry wins over a per-element one.
 export function spellCostGear(spell, w = staff()) {
   return (w.manaCostMul ?? 1) * (w.spellCost?.[spell] ?? w.spellCost?.[SPELL_ELEM[spell]] ?? 1);

@@ -69,12 +69,13 @@ Skills level **by use** (five of them), so use what you want to improve:
 | Sneak | sneak attacks, pickpocketing | 3% harder to detect, sneak attacks +0.2x |
 
 - Levels come **slowly on purpose**: level 5 is around 125 sword hits and level 10 around 900. Grinding is real, and it is rewarded.
-- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu) are in chains of three per skill, unlocked at skill levels 2, 5 and 8 (for example Keen Edge, Duelist, Rending Blow).
+- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu): each skill has a perk at level 2, then a **fork** at 5 and at 8 where you take one of two (for example Duelist or Guardian, then Rending Blow or Cleave). Changed your mind? Any **shrine** will unlearn all your perks for gold and give the points back.
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
 - **Sockets**: better weapons and armour have slots for **gems** and **runes**. Runes add effects (burn, chill, shock, life-drain, thorns, warding). Set them at the rune-cutter in Emberhold.
 - **Food and alchemy**: cook meals at campfires for buffs; brew potions. Always carry a few.
 - **Companions**: hire *Ragna* in Hollowfrost, or recruit *Pell* in Emberhold. One at a time. Talk to them and choose *Orders*: stay close, hold the spot, or hunt on their own.
-- **Capstone perks** (page 2 of the perk list) unlock at skill level 12: Unbroken, Deadeye, Archmage, Second Wind and Assassin.
+- **Capstone perks** (the end of the perk list) unlock at skill level 12 after either perk of the fork at 8: Unbroken, Deadeye, Archmage, Second Wind and Assassin.
+- **Mastery**: at skill 15 and 20 every skill gives a reward of its own (cheaper swings, faster draws, cheaper spells, stronger heals, harder to see; then +10% damage and the like). The Skills tab shows the next one from level 10.
 - **Inns and chartmakers** (Reedwick, Skarn Hold): a room heals, saves and sleeps until morning; a rumour names a place you have not found; a chart reveals the map around you.
 - **Dungeon rooms to watch for**: spike halls (the floor glows red before it strikes), flooded halls (slow, with leeches) and ambush rooms (a chest in a suspiciously quiet room).
 

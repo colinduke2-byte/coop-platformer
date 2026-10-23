@@ -134,6 +134,28 @@ const dur = await G(async (reset) => {
 }, reset);
 check('PR-12: a full repair of a +10 Sunbreaker costs about a third of before (884 -> ~330); bows wear 0.5 a shot, staves 0.25 a cast', Object.values(dur).every(Boolean), JSON.stringify(dur));
 
+// ---- PR-18 / PR-20: the new branch perks work, the perks and skills tabs draw them
+const pk = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, { stats } = await import('/src/systems/stats.js'), SP = await import('/src/systems/spellpower.js');
+  S.inv.iron_shield = 1; S.equip.offhand = 'iron_shield'; S.perks = {};
+  const b0 = stats.shield(), a0 = stats.armor();
+  S.perks = { guardian: true, bastion: true, ironskin: true, cryomancer: true };
+  const b1 = stats.shield(), a1 = stats.armor();
+  const out = { guard: Math.abs(b1.block - Math.min(0.9, b0.block + 0.1)) < 1e-9, bastion: Math.abs(b1.cost - b0.cost * 0.75) < 1e-9, iron: Math.abs(a1 - a0 - 0.05) < 1e-9, cryo: SP.spellPerk('glacier') === 1.15 && SP.spellPerk('fire') === 1 };
+  // the tabs draw with forks, taken options and mastery lines
+  S.perks = { keenedge: true, guardian: true }; S.perkPoints = 2; S.skills.oneHanded.lvl = 14;
+  const g = window.__ff.game.scene.getScene('Game'); g.openMenu(0);
+  await new Promise((r) => setTimeout(r, 300));
+  const m = window.__ff.game.scene.getScene('Menu'), names = m.tabs.map((t) => t.name);
+  m.go(names.indexOf('PERKS')); m.cursor = 2; m.dirty = true; m.draw();
+  m.go(names.indexOf('SKILLS')); m.dirty = true; m.draw();
+  window.__ff.game.scene.stop('Menu');
+  S.perks = {}; S.perkPoints = 0; S.equip.offhand = null;
+  return out;
+}, reset);
+check('PR-18: Guardian, Bastion, Ironskin and Cryomancer do what they say; the perks and skills tabs draw', Object.values(pk).every(Boolean), JSON.stringify(pk));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

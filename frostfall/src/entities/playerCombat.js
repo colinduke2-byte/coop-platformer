@@ -130,7 +130,7 @@ export const combatMethods = {
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
       if (heavy && S.perks.unbroken && !s.refunded) { s.refunded = true; S.sp = Math.min(S.maxSp, S.sp + 12); this.scene.fx.text(this.x, this.y - 16, '+STAMINA', 8, 0.6); }
-      const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1);
+      const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1) * (S.perks.cleave && wp.type === 'weapon2h' ? 1.2 : 1) * (S.perks.nightblade && isDagger ? 1.15 : 1);
       let dmg = meleeDamage({
         weapon: stats.weaponDmg() + off * 0.6, skill: bonus.melee(), combo: s.c.dmg, perk: perkMult,
         sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0) + (S.perks.assassin && sneak ? 1 : 0) + (isDagger ? DG.sneakBonus : 0) + (wp.sneakBonus || 0), noise: 0.9 + Math.random() * 0.2,

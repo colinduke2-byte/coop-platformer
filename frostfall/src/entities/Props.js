@@ -15,6 +15,7 @@ import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
+import { respec, respecCost } from '../systems/skills.js';
 import { maybeRelic } from '../systems/relics.js';
 import { COOKABLE } from '../systems/food.js';
 import { clearStatus } from '../systems/status.js';
@@ -276,7 +277,13 @@ export class Shrine extends Phaser.GameObjects.Image {
       const cur = S.blessing ? BLESSINGS[S.blessing].name : 'nothing';
       await say('Shrine', `The stone hums. You carry: ${cur}. Three voices offer a gift.`);
       const labels = offers.map((o) => `${BLESSINGS[o].kind === 'pact' ? 'PACT' : 'BLESSING'}: ${BLESSINGS[o].name} - ${BLESSINGS[o].desc}`);
-      const c = await choose([...labels, 'Walk away']);
+      const rc = respecCost(), forget = rc ? [`Unlearn your perks (${rc} gold)`] : [];       // PR-18: a respec, for gold
+      const c = await choose([...labels, ...forget, 'Walk away']);
+      if (forget.length && c === offers.length) {
+        if (S.gold < rc) { await say('Shrine', 'The stone wants an offering you do not have.'); return; }
+        if ((await choose(['Unlearn every perk', 'Keep them'])) === 0 && respec()) { sfx.play('levelup'); await say('Shrine', 'You forget, and the points come back to you. Spend them again in your Perks.'); }
+        return;
+      }
       if (c >= offers.length) return;
       S.blessing = offers[c];
       S.shrines = S.shrines || {}; S.shrines[this.id] = today();

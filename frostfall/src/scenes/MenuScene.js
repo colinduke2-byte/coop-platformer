@@ -11,11 +11,12 @@ import { S } from '../systems/state.js';
 import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF, SLOT_NAMES, iconKey } from '../data/items.js';
+import { MASTERY } from '../data/perks.js';
 import { compareText, upDown } from '../systems/compare.js';
 import { equip, unequip, removeItem } from '../systems/inventory.js';
 import Pickup from '../entities/Pickup.js';
 import { stats } from '../systems/stats.js';
-import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
+import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus, nextMastery } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 import { RARITY } from '../systems/genloot.js';
@@ -356,7 +357,8 @@ export default class MenuScene extends Phaser.Scene {
       g.fillStyle(C[0]); g.fillRect(13, y + 9, W - 28, 5);
       g.fillStyle(C[1]); g.fillRect(14, y + 10, W - 30, 3);
       g.fillStyle(C[15]); g.fillRect(14, y + 10, Math.round((W - 30) * frac), 3);
-      this.T(14, y + 15, fit(d.perk, 49), 4);
+      const nm = nextMastery(k);                 // PR-20: from level 10 the line shows the next mastery reward
+      this.T(14, y + 15, fit(s.lvl < 10 ? d.perk : nm ? `MASTERY AT ${nm.lvl}: ${nm.text}` : 'MASTERED: ' + MASTERY[k].map((x) => x.text).reverse().join(', '), 49), s.lvl < 10 ? 4 : 13);
     });
     this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
   }
