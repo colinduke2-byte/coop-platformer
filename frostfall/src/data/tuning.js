@@ -317,6 +317,7 @@ export const TUNE = {
     // the Great Anvil's Ascend (PR-26), by the rarity it goes TO: Rare, Legendary, Mythic (NG+ only)
     ascend: { rare: { gold: 600, ember_ore: 2 }, legend: { gold: 1500, ember_ore: 3, heart_shard: 1 }, mythic: { gold: 3000, ember_ore: 5, winters_echo: 1 } },
     respec: { base: 150, perPerk: 50 },   // unlearning every perk at a shrine: base + per perk unlearned (PR-18)
+    transferShare: 0.25,       // moving a temper to another item costs this share of the gold its levels cost (PR-19)
     staffRubyPct: 0.015,
     xpNear: 180,               // area and utility spells pay skill XP only with an alerted enemy this close (px, PR-15)       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
   },

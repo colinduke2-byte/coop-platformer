@@ -156,6 +156,22 @@ const pk = await G(async (reset) => {
 }, reset);
 check('PR-18: Guardian, Bastion, Ironskin and Cryomancer do what they say; the perks and skills tabs draw', Object.values(pk).every(Boolean), JSON.stringify(pk));
 
+// ---- PR-19: transfer a temper at the smith
+const tr = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, T = await import('/src/data/services.js'), { stats } = await import('/src/systems/stats.js');
+  for (const id of ['steel_sword', 'ember_blade', 'long_bow']) S.inv[id] = 1;
+  S.upgrades = { steel_sword: 6 }; S.equip.weapon = 'ember_blade'; S.gold = 10000;
+  const want = Math.ceil((50 + 90 + 140 + 220 + 300 + 400) * 0.25);
+  const srcs = T.transferSources('weapon').join(), bowNo = T.transferSources('bow').length === 0;
+  const cap = T.transferTemper('steel_sword', 'weapon', 3) === 'cap';
+  const d0 = stats.weaponDmg(), ok = T.transferTemper('steel_sword', 'weapon', 6) === 'ok';
+  const res = { srcs: srcs === 'steel_sword', bowNo, cap, ok, moved: S.upgrades.ember_blade === 6 && !S.upgrades.steel_sword, paid: S.gold === 10000 - want, stronger: stats.weaponDmg() > d0 * 1.3, want };
+  S.upgrades = {}; S.equip.weapon = null;
+  return res;
+}, reset);
+check('PR-19: a +6 temper moves from the Steel Sword to the worn Ember Blade for 25% of its gold (300 g), within the smith\'s reach', Object.values(tr).every(Boolean), JSON.stringify(tr));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

@@ -242,12 +242,49 @@ export async function upgradeMenu(who, slot, cap = 3) {
     },
   });
 }
+// ---- PR-19: transfer a temper. Move every forge level of one item onto the piece you wear in its place (same kind: weapon,
+// bow, staff, armour, helmet, shield), for a share of the gold those levels cost and no materials. The old item drops to +0.
+// A smith only moves levels up to what it can forge itself.
+export const transferCost = (lv, from = 0) => { let g = 0; for (let l = from + 1; l <= lv; l++) g += UPGRADE_COST[l].gold; return Math.ceil(g * TUNE.economy.transferShare); };
+export const transferSources = (slot) => { const to = S.equip[slot], k = slotKind(to); return !to || !k ? [] : Object.keys(S.inv).filter((id) => id !== to && S.inv[id] > 0 && slotKind(id) === k && (S.upgrades?.[id] || 0) > (S.upgrades?.[to] || 0)); };
+export function transferTemper(fromId, slot, cap = 3) {
+  const to = S.equip[slot];
+  if (!to || !transferSources(slot).includes(fromId)) return 'no';
+  const lv = S.upgrades[fromId];
+  if (lv > cap) return 'cap';
+  const cost = transferCost(lv, S.upgrades[to] || 0);
+  if (S.gold < cost) return 'short';
+  S.gold -= cost; S.upgrades[to] = lv; delete S.upgrades[fromId]; recalc();
+  return 'ok';
+}
+async function transferMenu(who, cap) {
+  const slots = UPGRADE_SLOTS.filter(([slot]) => transferSources(slot).length);
+  if (!slots.length) { await say(who, 'Wear the piece you want tempered, and carry the old one I tempered before. Same kind of thing, mind.'); return; }
+  const c = await choose([...slots.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}`), 'Back']);
+  if (c >= slots.length) return;
+  const slot = slots[c][0], to = S.equip[slot];
+  await listScreen({
+    title: 'TRANSFER TO ' + ITEMS[to].name.toUpperCase(), hint: 'E TRANSFER   ESC DONE', empty: 'NOTHING TO TRANSFER',
+    rows: () => transferSources(slot).map((id) => {
+      const lv = S.upgrades[id], cost = transferCost(lv, S.upgrades[to] || 0), ok = lv <= cap && S.gold >= cost;
+      return { id, name: `${ITEMS[id].name} +${lv}`, tag: lv > cap ? 'LIMIT' : cost + 'G', ok, tagCol: ok ? 13 : 11, sub: lv > cap ? `THIS FORGE GOES TO +${cap}` : `${ITEMS[to].name.toUpperCase()} BECOMES +${lv}`, lines: [need('GOLD', S.gold, cost), ['NO MATERIALS. THE OLD PIECE DROPS TO +0', 4], ...statLines(to)] };
+    }),
+    onSelect: (i, ui) => {
+      const id = transferSources(slot)[i]; if (!id) return;
+      const r = transferTemper(id, slot, cap);
+      if (r !== 'ok') { sfx.play('nostamina'); ui.say(r === 'cap' ? 'BEYOND THIS FORGE' : 'NOT ENOUGH GOLD', 11); return; }
+      sfx.play('levelup'); ui.say(`${ITEMS[to].name.toUpperCase()} IS NOW +${S.upgrades[to]}`, 8);
+    },
+  });
+}
 // Pick which equipped piece to improve, then the forge screen. `cap` is the highest level this smith can do.
 export async function gearUpgradeMenu(who, cap = 3) {
   for (;;) {
     const have = UPGRADE_SLOTS.filter(([slot]) => S.equip[slot] && slotKind(S.equip[slot]));
     if (!have.length) { await say(who, 'You carry nothing I can improve.'); return; }
-    const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), 'Back']);
+    const canMove = UPGRADE_SLOTS.some(([slot]) => transferSources(slot).length);
+    const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), ...(canMove ? ['Transfer a temper'] : []), 'Back']);
+    if (canMove && c === have.length) { await transferMenu(who, cap); continue; }
     if (c >= have.length) return;
     await upgradeMenu(who, have[c][0], cap);
     if (TABS.next != null) return;                 // the player tabbed to another smith screen
