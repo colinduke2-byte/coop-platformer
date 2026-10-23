@@ -28,7 +28,7 @@ export const GATES = {
 // ---- the quest
 QUESTS.crown = {
   title: 'The Ember Crown', giver: 'Elder Sigrid',
-  desc: 'The Winter is decided, but the chains that held it were forged from the First Fire, and the First Fire is waking under Emberhold. Win the trust of the three houses of the forge-city, open the Forge, and face what wears the crown of cinders.',
+  desc: 'The Winter is decided, but the chain that held it was forged from the First Fire, and the First Fire is waking under Emberhold. Win the trust of the three houses of the forge-city, open the Forge, and face what wears the crown of cinders.',
   short: () => {
     if (!S.flags.arrivedEmberhold) return 'Climb the Peak Road to Emberhold';
     if (!S.flags.metYsolde) return 'Speak with Matriarch Ysolde';

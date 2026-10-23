@@ -38,7 +38,7 @@ async function heartsTalk() {
     if (S.flags.finalChoice) { await say(SIGRID, 'The smoke has cleared from the Peaks. Whatever you decided up there, the sky is quiet. That is a gift I did not expect to live to see.'); return true; }
     if (!S.flags.arrivedEmberhold) {
       await say(SIGRID, 'Smoke on the Peaks, Dreamer. The Winter loosed its hold, and something older than the Winter has woken to fill the silence.');
-      await say(SIGRID, 'The Peak Road runs from the north-east of the Reach up to Emberhold, the forge-city of the Anvil Court. It has been drifted shut for a thousand years. It is open now. Go, and ask them what the chains were made of.');
+      await say(SIGRID, 'The Peak Road runs from the north-east of the Reach up to Emberhold, the forge-city of the Anvil Court. It has been drifted shut for a thousand years. It is open now. Go, and ask them what the chain was made of.');
     } else await say(SIGRID, 'Emberhold is not Hollowfrost. Its people measure trust in what you will hold for them. Win their seals, and mind the fire.');
     return true;
   }
@@ -91,7 +91,7 @@ export async function sigrid() {
   }
   if (k.status === 'inactive') {
     await say(SIGRID, 'You return. Good. Hollowfrost is dying by inches, and I think I know why.');
-    await say(SIGRID, 'Beneath the pines lies the crypt of Jarl Valdrek, the Hollow King. Our grandmothers said he sleeps with the Frostheart in his hands. Now the draugr walk and the winter has not broken in three years.');
+    await say(SIGRID, 'Beneath the pines lies the crypt of Jarl Valdrek the Frostsworn, who swore himself to the cold. Our grandmothers said he sleeps with the Frostheart in his hands. Now the draugr walk and the winter has not broken in three years.');
     for (;;) {
       const c = await choose(['I will go.', 'Tell me more about the Frostheart.', 'Not yet.']);
       if (c === 0) {
@@ -330,8 +330,10 @@ export async function ragna() {
 }
 // The short name a person speaks under, from their sign name: "MARIT, THE LANTERN INN" -> MARIT, "ELDER SIGRID" -> SIGRID,
 // "PIM THE LAMP-SELLER" -> PIM; a group with no personal name keeps it whole ("HARBOUR WATCH").
-const TITLES = new Set(['ELDER', 'GUARD', 'CAPT.', 'CAPTAIN', 'WARDEN', 'WARDEN-MOTHER', 'SISTER', 'MOTHER', 'OLD', 'MATRIARCH', 'THE', 'KEEPER', 'FOREMAN', 'GUILDMASTER', 'HARBOURMASTER', 'SCOUT', 'SHAMAN', 'CHIEF']);
+const TITLES = new Set(['ELDER', 'GUARD', 'CAPT.', 'CAPTAIN', 'WARDEN', 'WARDEN-MOTHER', 'SISTER', 'MOTHER', 'OLD', 'MATRIARCH', 'THE', 'KEEPER', 'FOREMAN', 'GUILDMASTER', 'HARBOURMASTER', 'SCOUT', 'SHAMAN', 'CHIEF', 'MADAM', 'BEEKEEPER', 'GARDENER', 'SHEIKH', 'SCHOLAR', 'CARAVAN', 'MASTER']);
+const SPEAKER = { 'A QUIET MAN': 'QUIET MAN', 'UMM HASSAN': 'UMM HASSAN', 'GULL & ANCHOR, NELL': 'NELL', 'WANDERING SONGSTRESS': 'SONGSTRESS' };
 export function speakerName(name) {
+  if (SPEAKER[name]) return SPEAKER[name];
   const words = String(name || '').split(',')[0].trim().split(/\s+/);
   if (/^(WATCH|GUARD|TRADER)$/.test(words[words.length - 1]) && words.length === 2) return words.join(' ');
   return words.find((w) => !TITLES.has(w)) || words[words.length - 1];
@@ -359,7 +361,7 @@ export async function guard() {
     'The east gate leads to the Pine Forest. Wolves on the trail, bandits in the camp past the bend.',
     'Hold {KeyC} to sneak. Enemies spot a sneaking dreamer from half as far, and a blade in the back hits three times as hard.',
     'Warm yourself at a campfire. Press {KeyE} beside the flames to rest, heal and save your progress.',
-    'The stone gate in the north-east of the forest is the crypt of the Hollow King. Do not go in underequipped.',
+    'The stone gate in the north-east of the forest is the Frostsworn\'s crypt. Do not go in underequipped.',
     'Crates and pots sometimes hold coin. Smash them with your sword.',
   ]));
 }
@@ -413,7 +415,7 @@ export async function child() {
   await say(C, cycle('childN', [
     'I am not scared of wolves. I am scared of the dark. And wolves in the dark.',
     'The pond is frozen solid. Mirra says you can skate on it if you do not mind the cold.',
-    'Elder Sigrid tells the best stories. Mostly about the Hollow King. Mostly the scary parts.',
+    'Elder Sigrid tells the best stories. Mostly about the old Kings. Mostly the scary parts.',
   ]));
 }
 SCRIPTS.guard = guard;

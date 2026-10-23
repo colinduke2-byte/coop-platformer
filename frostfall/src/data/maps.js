@@ -144,7 +144,7 @@ function buildForestRegion() {
   g.add({ t: 'exit', x: 46, y: 2, w: 1, h: 1, to: 'crypt', spawn: 'entry', fx: 'door' });
   g.add({ t: 'fire', x: 46, y: 23, rest: true });
   g.add({ t: 'sign', x: 5, y: 13, text: ['HOLLOWFROST VILLAGE, WEST.', 'O: JOURNAL.  M: MAP.  REST AT CAMPFIRES TO HEAL AND SAVE.'] });
-  g.add({ t: 'sign', x: 22, y: 11, text: ['NORTH-EAST: THE STONE GATE. CRYPT OF THE HOLLOW KING.', 'EAST: BANDIT CAMP. THEY DO NOT TAKE VISITORS.'] });
+  g.add({ t: 'sign', x: 22, y: 11, text: ['NORTH-EAST: THE STONE GATE. CRYPT OF THE FROSTSWORN.', 'EAST: BANDIT CAMP. THEY DO NOT TAKE VISITORS.'] });
   for (const [x, y, skin] of [[42, 20, 'barrel'], [51, 25, 'barrel'], [44, 27, 'pot'], [47, 20, 'pot'], [8, 5, 'pot'], [5, 8, 'pot'], [31, 8, 'pot']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'glow', x: 46, y: 23, r: 56, col: 12 });
   g.add({ t: 'glow', x: 45, y: 3, r: 26, col: 12 });
@@ -596,7 +596,7 @@ function buildCrypt() {
   g.add({ t: 'bossgate', x: 15, y: 9, w: 2 });
   return g.out();
 }
-MAPS.crypt = { name: 'Crypt of the Hollow King', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 8.4 * T && pc.x > 6 * T && pc.x < 26 * T, build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };
+MAPS.crypt = { name: 'Crypt of the Frostsworn', snow: false, ambience: 'crypt', bossTrigger: (pc, T) => pc.y < 8.4 * T && pc.x > 6 * T && pc.x < 26 * T, build: buildCrypt, music: 'crypt', dim: 0.42, crypt: true };
 
 
 // ---------------------------------------------------------------- interiors

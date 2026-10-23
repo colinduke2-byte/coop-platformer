@@ -21,7 +21,7 @@ Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|ha
 
 Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (540x378 tiles: camps,
 dens, ruins, standing stones, hamlets, watchtowers, champions, procedural barrow dungeons, a travelling trader) with the
-Crypt of the Hollow King (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie five more seeded regions,
+Crypt of the Frostsworn (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie five more seeded regions,
 three opened by the story and two you can walk to from the start (if you dare): the **Ashen Peaks** (lava, foundries, the forge-city **Emberhold** with its three factions:
 the Anvil Court, the Delvers' Guild and the Ember Wardens), the **Frozen Coast** (wrecks, lighthouses, the drowned Tidebreak Hall)
 the **Old Kingdom** (courtyards, the Sepulchre), the **Weeping Fens** (a drowned bog; the stilt village Reedwick; the Mire Mother) and the **Stormcrown Highlands** (storm, clans, giants; Skarn Hold; the Storm Giant). Chapter 3, "The Ember Crown", is needed for the full ending

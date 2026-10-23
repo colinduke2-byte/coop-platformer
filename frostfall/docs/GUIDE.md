@@ -117,7 +117,7 @@ Each region has its own camps, caves, hamlets, loot and a boss. Check the **map 
 
 ## 6. The story (spoilers: structure only, not the ending)
 
-**Chapter 1: The Hollow King.** Find the crypt in the forest, defeat **Jarl Valdrek** and take the Frostheart. Side jobs here include **Mirra's Remedy**, **Asta's Locket**, **The Pale Alpha** (Grimfang, in Frostwind Pass), **Wolves at the Gate** and **The Bridge Troll's Toll**.
+**Chapter 1: The Frostsworn Jarl.** Find the crypt in the forest, defeat **Jarl Valdrek** and take the Frostheart. Side jobs here include **Mirra's Remedy**, **Asta's Locket**, **The Pale Alpha** (Grimfang, in Frostwind Pass), **Wolves at the Gate** and **The Bridge Troll's Toll**.
 
 **Chapter 2: The Four Hearts.** Three more Hearts and a throne. The four Heart dungeons are:
 
@@ -147,7 +147,7 @@ High standing also improves shop stock, forging (the Great Anvil sometimes makes
 
 | Boss | Where | Tips |
 |---|---|---|
-| **Jarl Valdrek** | Crypt of the Hollow King | Fight him in the open; roll his wind-up swings. Bring fire. |
+| **Jarl Valdrek** | Crypt of the Frostsworn | Fight him in the open; roll his wind-up swings. Bring fire. |
 | **Grimfang** | Frostwind Pass | Fast. Fire hurts him. You can spare him (see his quest). |
 | **The four Heart guardians** | the four Heart dungeons | Read their telegraphs; each has a pattern you can learn in one fight. |
 | **Kragnar the Hollowed** | the Deep Mines (Emberhold) | Frost is his weakness; fire is resisted. Watch for his leaps and spikes. |

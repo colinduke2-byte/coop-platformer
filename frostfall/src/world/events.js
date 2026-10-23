@@ -122,7 +122,7 @@ export const eventMethods = {
   // The Long Winter has fallen: decide what becomes of it.
   startFinale() {
     runScript(async () => {
-      await say('The Winter', 'You have broken the chains the kings forged. I was cold before the first star, and I will be cold after the last.');
+      await say('The Winter', 'You have broken the chain the Kings laid on me. I was cold before the first star, and I will be cold after the last.');
       await say('The Winter', 'But hear me, little Dreamer. Four Hearts beat in your hands. You may release me, bind me again, or take my crown. Choose.');
       const c = await choose(['Let it go. Let the Winter end.', 'Bind it again, with you as warden.', 'Take the crown. Rule the cold.']);
       const kind = ['thaw', 'warden', 'crown'][c];

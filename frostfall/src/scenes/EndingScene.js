@@ -28,7 +28,7 @@ ENDINGS.thaw = {
 };
 ENDINGS.warden = {
   title: 'THE NEW WARDEN', col: 15,
-  text: 'You pressed the four Hearts back into the chains, and set your own into the fifth. The Winter sighed, and slept.\n\nThe cold did not leave the Reach. It softened, like a hound that has found its master. Travellers say there is a lantern burning at the Winter Throne, and that whoever keeps it never grows old, or warm.',
+  text: 'You pressed the four Hearts back into the chain, and set your own heart where the fifth had been. The Winter sighed, and slept.\n\nThe cold did not leave the Reach. It softened, like a hound that has found its master. Travellers say there is a lantern burning at the Winter Throne, and that whoever keeps it never grows old, or warm.',
 };
 ENDINGS.crown = {
   title: 'THE CROWN OF RIME', col: 14,

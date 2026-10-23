@@ -127,7 +127,7 @@ SCRIPTS.varro = async function varro() {
 SCRIPTS.ketil = async function ketil() {
   const lines = [
     'Sing, O smiths of Emberhold, for the first fire sleeps, and the first fire dreams of you!',
-    'Five Hearts the Kings did bind, five chains the Anvil wrought; the Winter wore them, the Winter fought, the Winter lost the fight...',
+    'Five Hearts the Kings did bind, one chain the Anvil wrought; the Winter wore them, the Winter fought, the Winter lost the fight...',
     winter() === 'crown' ? 'And a crown of rime now walks the Reach, and the frost bows its head; I will not sing that song. Not today.' : winter() === 'thaw' ? 'And the Winter walked north on its own two feet, and the Reach learned the word for summer!' : winter() === 'warden' ? 'And the Winter sleeps on a leash of light, and its warden walks among us; hush, now, hush, or it will hear!' : 'Ask me what the Winter cost, and I will tell you in gold. Ask me what it was worth, and I will not answer.',
   ];
   await say('Ketil', cyc('ketilN', lines));
@@ -142,9 +142,9 @@ SCRIPTS.brisa = async function brisa() {
 SCRIPTS.goran = async function goran() {
   const N = 'Old Goran';
   await say(N, cyc('goranN', [
-    'I was the Court\'s smith, forty years ago. I made links for the chains. Do you know what we made them from? Not iron.',
-    'The Hollow Kings brought us a sack of something grey and warm. They said: bind the Winter. We never asked what it was. Brannoch still does not know.',
-    frostheart() === 'sell' ? 'You sold the Frostheart to a potion-seller, I hear. Gold for a god\'s heart. That is an old way of ending, and it never ends.' : S.quests.anvilcore?.status === 'done' ? 'You brought Kragnar\'s core to the Anvil. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chains held for a thousand years. Ask yourself what holds a chain that long.',
+    'My master\'s master\'s master was the Court\'s smith when the Kings came. We still keep his tongs. Do you know what he made the chain from? Not iron.',
+    'The Hollow Kings brought him a sack of something grey and warm. They said: bind the Winter. He never asked what it was. Brannoch still does not know.',
+    frostheart() === 'sell' ? 'You sold the Frostheart to a potion-seller, I hear. Gold for a god\'s heart. That is an old way of ending, and it never ends.' : S.quests.anvilcore?.status === 'done' ? 'You brought Kragnar\'s core to the Anvil. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chain held for a thousand years. Ask yourself what holds a chain that long.',
   ]));
 };
 SCRIPTS.garrow = async function garrow() {
@@ -162,7 +162,7 @@ SCRIPTS.ysolde = async function ysolde() {
     S.flags.metYsolde = true;
     await say(N, 'So. The Reach sends a dreamer. I have waited a long while to see what the Hollow Kings left behind.');
     await say(N, S.flags.finale === 'thaw' ? 'You set the Winter free. Our furnaces burned three days brighter for it. Gratitude is a cheap word; you will have it anyway.' : S.flags.finale === 'warden' ? 'You bound the Winter again, and stand its warden. I am relieved, and I am afraid, and I would like it noted that both are true.' : 'You carry the Winter\'s crown. Say nothing. I am deciding whether to be afraid, and I would like to finish.');
-    await say(N, 'Hear me. The chains that held the Winter were not iron. They were forged from the First Fire, which the Kings buried under this mountain so the world would never burn. When you loosened the Winter, you loosened the fire that held it.');
+    await say(N, 'Hear me. The chain that held the Winter was not iron. The Court forged it from the First Fire, which the Kings buried under this mountain so the world would never burn. When you loosened the Winter, you loosened the fire that held it.');
     await say(N, 'The Forge of the First Fire lies on the Ashen Peaks, sealed by the three houses of this city. Win a seal from each: the Delvers, the Court, the Wardens. Then come back, and I will open it.');
     return;
   }

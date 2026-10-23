@@ -97,7 +97,7 @@ export const ENEMIES = {
     body: [8, 7, 4, 9], loot: { gold: [6, 14], drops: [['mp_potion', 0.25], ['hp_potion', 0.12], ['sp_potion', 0.1], ['warden_glaive', 0.04]] },
   },
   boss: {
-    name: 'Jarl Valdrek', title: 'JARL VALDREK THE HOLLOW KING', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
+    name: 'Jarl Valdrek', title: 'JARL VALDREK THE FROSTSWORN', tex: 'spr_boss', bark: 'undead', weak: { fire: 1.2, frost: 0.5 }, hp: 300, speed: 30, chase: 30, dmg: 20, detect: 9999,
     kind: 'boss', range: 40, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.1, kbResist: 0.95,
     body: [8, 7, 4, 9], loot: { gold: [90, 130], drops: [['nordic_blade', 1], ['nordic_helm', 1], ['hp_potion', 1], ['hp_potion', 1], ['nordic_plate', 0.0]] },
   },
