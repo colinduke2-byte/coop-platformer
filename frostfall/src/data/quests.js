@@ -3,6 +3,8 @@ import { count } from '../systems/inventory.js';
 
 import { heartsHeld, HEART_COUNT, HEART_ORDER, HEARTS, HEART_SITE } from './hearts.js';
 import { getReach } from './maps.js';
+import { routePos } from '../world/roamers.js';
+import { fromOn, nearestOf } from '../world/questmarks.js';
 
 export const QUESTS = {
   tornmap: {
@@ -133,6 +135,16 @@ export const QUESTS = {
   },
 };
 
+// WQ2: a hunt points at the beast's own footprints: the nearest of its tracks until you have seen them, then at the beast
+// itself (where its loop puts it right now, the same clock the world uses).
+export function roamTarget(who) {
+  const r = getReach(), boss = r.entities.find((e) => e.t === 'roamboss' && e.id === who);
+  if (!boss) return null;
+  if (S.flags.sawTracks) { const p = routePos(boss.route, S.playtime || 0, boss.phase); return { map: 'forest', x: Math.floor(p.x / 16), y: Math.floor(p.y / 16) }; }
+  const t = nearestOf(r.entities.filter((e) => e.t === 'track' && e.who === who), fromOn('forest'));
+  return t ? { map: 'forest', x: t.x, y: t.y } : null;
+}
+
 // Quest targets for the map markers / HUD arrow: { map, x, y } in tiles.
 export const TARGETS = {
   tornmap: () => S.flags.noteTargets?.tornmap || null,
@@ -155,8 +167,8 @@ export const TARGETS = {
   herbs: (q) => (q.status === 'ready' ? { map: 'village', x: 32, y: 10 } : { map: 'forest', x: 20, y: 17 }),
   locket: (q) => (q.status === 'relic' ? { map: 'village', x: 24, y: 19 } : { map: 'forest', x: 50, y: 26 }),
   company: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 12 } : { map: 'keep', x: 20, y: 4 }),
-  trail: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'forest', x: 60, y: 40 }),
-  toll: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 16 } : { map: 'forest', x: 60, y: 40 }),
+  trail: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : roamTarget('elk')),
+  toll: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 16 } : roamTarget('troll')),
   alpha: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'pass', x: 36, y: 8 }),
 };
 
