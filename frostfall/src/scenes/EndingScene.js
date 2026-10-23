@@ -39,7 +39,8 @@ export default class EndingScene extends Phaser.Scene {
   constructor() { super('Ending'); }
   init(data) { this.kind = data.kind; }
   create() {
-    ui.modal = true;
+    this.releaseHold = ui.hold('ending'); ui.release('ending:launch');
+    this.events.once('shutdown', this.releaseHold);
     const ch2 = ['thaw', 'warden', 'crown'].includes(this.kind);
     const e = ENDINGS[this.kind] || chapter3Ending(this.kind);
     this.add.rectangle(0, 0, W, H, 0x0b0e1a, 1).setOrigin(0);
@@ -71,7 +72,7 @@ export default class EndingScene extends Phaser.Scene {
     } else {
       this.end.setText(this.ch2 ? 'CHAPTER TWO ENDS   -   E: THE MOUNTAIN STIRS' : 'THE END   -   E: KEEP EXPLORING').x = Math.round((W - this.end.width) / 2);
       if (keys.pressed('interact')) {
-        ui.modal = false;
+        this.releaseHold();
         this.scene.get('Game').events.emit('ending-done');
         this.scene.stop();
       }

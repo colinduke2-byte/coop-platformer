@@ -40,6 +40,8 @@ export const eventMethods = {
   },
   companionScene() {
     S.quests.company.status = 'ready';
+    // a scene cut off (a door, a death) hands the quest back, so it plays again instead of sticking at 'ready' (CH6)
+    const handBack = () => { if (S.quests.company.status === 'ready') S.quests.company.status = 'active'; };
     runScript(async () => {
       const R = 'Ragna';
       await say(R, 'Hrolf. You old fool. You held the gate for a hundred nights and did not once ask us to stay.');
@@ -49,7 +51,7 @@ export const eventMethods = {
       S.flags.ragnaVeteran = true;
       finishQuest('company');
       bus.emit('toast', 'RAGNA FIGHTS BETTER NOW: SHE SHOOTS TWICE', 13);
-    });
+    }).finally(handBack);
   },
   // ---- random events while exploring the open world
   worldEvents(dt) {
@@ -94,7 +96,7 @@ export const eventMethods = {
     });
     this.traderWares.push({ id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 12, n: 8, name: 'Arrows x8' });
     this.trader = { npc, life: 200 };
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T) };
+    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T), evt: true };
     bus.emit('toast', 'A TRAVELLING TRADER IS NEARBY', 13); sfx.play('quest');
     this.fx.puff(p.x, p.y, 13, 8, 30, 0.5);
   },

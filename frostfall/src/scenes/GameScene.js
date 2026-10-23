@@ -48,7 +48,7 @@ import { LockedGate, StashChest, GardenPlot, TrophyWall, CookPot, OrphanCub, Soa
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
 import { intro as introScript } from '../data/dialogue.js';
-import { runScript, say, choose, dialogue } from '../systems/dialogue.js';
+import { runScript, say, choose, dialogue, cancelScript } from '../systems/dialogue.js';
 import { keys, padActive } from '../systems/keys.js';
 import { padHint } from '../systems/access.js';
 import { txtS } from '../art/font.js';
@@ -69,7 +69,7 @@ import { eventMethods } from '../world/events.js';
 import { livingMethods } from '../world/livingworld.js';
 import { setPieceMethods } from '../world/setpieces.js';
 import { nightKind, sleepyCrew, isNightNow } from '../world/nightlife.js';
-import { randInt, rand, dist } from '../util.js';
+import { randInt, rand, dist, mixin } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
 import { addItem } from '../systems/inventory.js';
@@ -85,7 +85,12 @@ import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
 import { cullScene, culled } from '../systems/perf.js';
-const FLAME_KEYS = ['flame0', 'flame1', 'flame2'];
+import { SPAWNERS, TICKERS, LISTENERS } from './gameHooks.js';
+import './gameSpawners.js';
+import './gameTickers.js';
+import './gameListeners.js';
+// features register their spawners, tickers and listeners from their own file in src/features/ (docs/AGENT_RULES.md)
+import.meta.glob('../features/*.js', { eager: true });
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -98,18 +103,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    ui.modal = false;
+    this.resetOwnFields();
+    if (S.flags.waypoint?.evt) delete S.flags.waypoint;           // it pointed at a trader / traveller / raid of the last map
+    this.tweens.timeScale = 1;                                   // a bullet time cut off by the map change
+    ui.releaseAll();                   // a new map starts unfrozen: every hold of the last one (door fade, script, menu) is gone
     this.items = ITEMS;
     this.hitStopT = 0;
     this.deadT = 0;
     this.respawning = false;          // the same scene object is reused on every map load: a second death must still respawn
-    dialogue.hud?.hideBox?.();         // a conversation cut off by death or a door does not follow you to the next map
+    cancelScript();                    // a conversation cut off by death or a door does not follow you to the next map
     S.mounted = false; this.pony = null;
     this.listeners = [];
     const def = this.def = MAPS[this.mapId];
     const built = this.built = def.build();
     S.map = this.mapId;
-    if (S.boons && this.mapId !== 'arena') S.boons = {};            // arena boons end with the trial
+    if (S.boons) S.boons = {};          // arena boons end with the trial, and no trial survives a map load (CH1)
     recalc();
     this.cameras.main.setBackgroundColor(C[0]);
 
@@ -184,23 +192,11 @@ export default class GameScene extends Phaser.Scene {
     this.hound = null;
     if ((S.flags.houndOwned || S.flags.cubOwned) && !this.def.interior) this.spawnHound();
     if (this.boss && S.bossState && S.bossState.map === this.mapId) this.pendingBossRestore = true;
-    this.on('follower', (on) => {
-      const hide = (id) => { const rn = this.npcs.find((n) => n.id === id); if (rn) { this.npcs = this.npcs.filter((n) => n !== rn); this.interactables = this.interactables.filter((i) => i !== rn); rn.shadow.destroy(); rn.nameTxt.destroy(); rn.destroy(); } };
-      if (on) {
-        hide(S.companion === 'pell' ? 'pell' : 'ragna');
-        this.spawnFollower();
-      } else if (this.follower) {
-        const kind = this.follower.kind;
-        this.interactables = this.interactables.filter((i) => i !== this.follower);
-        this.follower.destroy(); this.follower = null;
-        const spec = this.built.entities.find((x) => x.t === 'npc' && x.id === kind);
-        if (spec && (kind === 'ragna' ? this.mapId === 'village' : this.mapId === 'emberhold')) this.spawnEntity(spec);
-      }
-    });
+    for (const l of LISTENERS) this.on(l.ev, (...args) => l.fn(this, ...args));      // gameListeners.js + features (CH9)
     this.physics.add.collider(this.player, this.staticBodies);
     this.physics.add.collider(this.enemies, this.staticBodies);
     if (this.pendingBossRestore) { this.boss.restoreState(S.bossState); this.pendingBossRestore = false; }
-    music.play(def.interior ? 'interior' : (this.isNightPre ? 'night' : (def.music || 'village')));
+    music.play(def.interior ? 'interior' : (def.music || 'village'));
     ambience.play(def.ambience || null);
     this.initFog();
     if (def.flag) S.flags[def.flag] = true;
@@ -228,11 +224,6 @@ export default class GameScene extends Phaser.Scene {
     this.snow = def.snow ? new SnowFx(this, 55) : null;
     this.initLighting();
     this.initAmbient();
-    this.on('player:dead', () => { this.deadT = 0.001; S.run.deaths = (S.run.deaths || 0) + 1; submitScore(); });
-    this.on('nostamina', () => tip('stamina'));
-    this.on('charlevel', () => tip('perks'));
-    this.on('item:added', (id) => { if (id === 'lockpick') tip('lock'); if (S.quests.wolves.status === 'active') tip('quest'); });
-    this.on('ending', (kind) => { this.pendingEnding = kind; });
     this.events.off('ending-done');
     this.events.on('ending-done', () => { this.applyEnding(); if (S.flags.finale && !S.flags.chapter3) startChapter3(); saveGame(this, { auto: true }); });
     // a game closed between a final boss and its choice picks the choice up again (otherwise the story would stop there)
@@ -245,11 +236,6 @@ export default class GameScene extends Phaser.Scene {
     this.applyEnding();
     this.time.delayedCall(1800, () => { const w = !this.opts.intro && dangerWarning(this); if (w) bus.emit('toast', w, 12); });
     if (this.opts.intro) this.startIntro();
-    this.on('levelup', (skill, lv) => {
-      sfx.play('levelup');
-      this.fx.ring(this.player.x, this.player.y + 4, 0.8, 0.6, 'ring', 0xf4d460);
-      this.fx.puff(this.player.x, this.player.y, 13, 14, 55, 0.7, -20);
-    });
     if (S.inv.pony_whistle > 0 && (def.stream || def.snow) && !def.interior && !def.cave && !def.arena && !def.quick) { this.pony = new Pony(this, this.player.x - 16, this.player.y + 6); this.interactables.push(this.pony); }
     if (!this.scene.isActive('Hud')) this.scene.launch('Hud');
     if (S.quick && def.quick) { this.time.delayedCall(700, () => this.startQuick()); }
@@ -265,131 +251,21 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  // CH3 + CH1: Phaser reuses this one scene object for every map load, every respawn and every save. On the first create()
+  // remember the scene's own keys (Phaser's plus init()'s); on every later one delete everything else, so no field set
+  // during play (by GameScene, its mixins or anyone else: an arena trial, a ghost merchant, hoofprints, timers, bullet
+  // time...) leaks into the next map. State that must outlive a map lives in S (saved) or in a module, never on `this`.
+  resetOwnFields() {
+    if (!this.__base) { this.__base = new Set(Object.keys(this)); this.__base.add('__base'); return; }
+    for (const k of Object.keys(this)) if (!this.__base.has(k)) delete this[k];
+  }
+
   on(ev, fn) { bus.on(ev, fn); this.listeners.push([ev, fn]); }
 
+  // Build one map entity. Each entity type has a spawner registered in gameSpawners.js (or a feature's own file, CH9).
   spawnEntity(e) {
-    const wx = (e.x + 0.5) * T, wy = (e.y + 0.5) * T;
-    switch (e.t) {
-      case 'enemy': {
-        const key = `${this.mapId}:${e._i}`;
-        if (this.def.stream && isGone(key)) break;
-        const spec = { ...e };
-        if (!e.champion && !e.elite && !e.camp && (e.tier || 0) >= 1 && hash(e._i || 0, (S.seed || 0) % 1000, 91) < (0.07 + 0.05 * e.tier) * diff().elite * eliteMul(progress(e.tier)) * modMul('eliteMul')) spec.elite = true;
-        if (this.def.stream) this.pend.push({ spec, key, wx, wy, live: null });
-        else this.addEnemy(e.kind, wx, wy, spec);
-        break;
-      }
-      case 'deer': { const key = `${this.mapId}:${e._i}`; const dk = e.kind || 'deer'; if (!isGone(key)) this.pend.push({ spec: { kind: dk, tier: 0, roam: true }, key, wx, wy, live: null, kind: dk }); break; }
-      case 'node': {
-        const key = `${this.mapId}:n${e._i}`;
-        if (isGone(key)) break;
-        const nd = new OreNode(this, wx, wy, e.ore, key);
-        this.interactables.push(nd);
-        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
-        this.propBodies.add(nd);
-        break;
-      }
-      case 'dig': { const key = `${this.mapId}:d${e._i}`; if (!isGone(key)) this.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(this, wx, wy, key, tierAt(e.x, e.y)) : new DigSpot(this, wx, wy, key, tierAt(e.x, e.y))); break; }
-      case 'hound': if (!S.flags.houndOwned) this.interactables.push(new WoundedHound(this, wx, wy)); break;
-      case 'arenamaster': { const am = new ArenaMaster(this, wx, wy); this.interactables.push(am); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(am); break; }
-      case 'spring': { const sp = new SoakSpot(this, wx, wy); this.interactables.push(sp); this.springs = (this.springs || []).concat(sp); break; }
-      case 'track': (this.trackPts = this.trackPts || []).push({ x: wx, y: wy }); this.add.image(wx, wy, 'paw').setDepth(wy - 8).setAlpha(0.45).setAngle(((e.x * 37 + e.y * 11) % 360)); break;
-      case 'roamboss': {
-        const key = `${this.mapId}:rb${e.id}`;
-        if (isGone(key)) break;
-        const p = routePos(e.route, S.playtime || 0, e.phase || 0);
-        this.pend.push({ spec: { kind: e.kind, tier: e.tier, roamRoute: e.route, roamPhase: e.phase || 0, rid: e.id }, key, wx: p.x, wy: p.y, live: null, kind: e.kind });
-        break;
-      }
-      case 'fish': this.interactables.push(new FishHole(this, wx, wy, tierAt(e.x, e.y))); break;
-      case 'shrine': {
-        const sh = new Shrine(this, wx, wy, e.id);
-        this.interactables.push(sh);
-        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
-        this.propBodies.add(sh);
-        break;
-      }
-      case 'bounty': this.campIds.add(e.id); break;
-      case 'board': { const bd = new BountyBoard(this, wx, wy); this.interactables.push(bd); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(bd); break; }
-      case 'chest': { const c = new Chest(this, wx, wy, e); this.interactables.push(c); this.chestBodies = (this.chestBodies || this.physics.add.staticGroup()); this.chestBodies.add(c); break; }
-      case 'npc': {
-        if (S.follower && e.id === (S.companion === 'pell' ? 'pell' : 'ragna')) break;
-        if (e.night && !isNightHour(hourOf())) break;               // indoor spot: only occupied at night
-        let ax = wx, ay = wy;
-        if (e.id === 'sigrid' && this.opts.intro) { ax = 21.5 * T; ay = 15.5 * T; }
-        const n = new Npc(this, ax, ay, e.id);
-        n.home = { x: wx, y: wy };
-        n.sched = !e.night && ['sigrid', 'bjorn', 'mirra', 'child'].includes(e.id);
-        if (n.sched && isNightHour(hourOf())) n.setAway(true);
-        this.npcs.push(n); this.interactables.push(n);
-        if (!this.npcBodies) this.npcBodies = this.physics.add.staticGroup();
-        this.npcBodies.add(n);
-        break;
-      }
-      case 'boss':
-        if (!(e.kind === 'grimfang' ? S.flags.grimfangDone : BOSS_FLAG[e.kind] ? S.flags[BOSS_FLAG[e.kind]] : S.flags.bossDead)) {
-          this.boss = e.kind === 'grimfang' ? new Grimfang(this, wx, wy) : BOSS_CLASS[e.kind] ? new BOSS_CLASS[e.kind](this, wx, wy) : new Boss(this, wx, wy);
-          this.enemies.add(this.boss);
-        }
-        break;
-      case 'door': this.interactables.push(new Door(this, wx, wy, e)); break;
-      case 'furnisher': { const f = new Furnisher(this, wx, wy); this.interactables.push(f); if (!this.propBodies) this.propBodies = this.physics.add.staticGroup(); this.propBodies.add(f); break; }
-      case 'furn': if (S.flags.furn?.[e.id]) this.addFurniture(e); break;
-      case 'bed': this.interactables.push(new Bed(this, wx, wy)); break;
-      case 'cauldron': this.interactables.push(new Cauldron(this, wx, wy)); break;
-      case 'lore': {
-        const lb = new Lore(this, wx, wy, e);
-        this.interactables.push(lb);
-        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
-        this.propBodies.add(lb);
-        break;
-      }
-      case 'herb': { const h = new Herb(this, wx, wy, (this.def.stream && this.mapId === 'forest' && e._i % 9 === 0) ? 'moonpetal' : e.item); this.interactables.push(h); break; }
-      case 'prop': {
-        const pr = new Prop(this, wx, wy, e.tex, e.body);
-        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
-        this.propBodies.add(pr);
-        break;
-      }
-      case 'pot': {
-        const b = new Breakable(this, wx, wy, e.skin);
-        this.breakables.push(b);
-        if (!this.breakBodies) this.breakBodies = this.physics.add.staticGroup();
-        this.breakBodies.add(b);
-        break;
-      }
-      case 'sign': {
-        const sg = new Sign(this, wx, wy, e.text);
-        this.interactables.push(sg);
-        if (!this.propBodies) this.propBodies = this.physics.add.staticGroup();
-        this.propBodies.add(sg);
-        break;
-      }
-      case 'spiketrap': case 'mire': case 'ambush': case 'crumble': this.addSetPiece(e, wx, wy); break;
-      case 'plate': { const pl = new Plate(this, wx, wy, e.rune); this.plates.push(pl); if (S.flags[this.vaultKey()]) pl.light(true); break; }
-      case 'vaultwall': this.vault = { x: e.x, y: e.y }; if (S.flags[this.vaultKey()]) this.openVault(true); break;
-      case 'vaultorder': case 'plateorder': this.plateOrder = e.order; break;
-      case 'keygate': {
-        if (!S.flags[e.id]) { for (let i = 0; i < e.w; i++) { this.layer.putTileAt(TILE_DOOR, e.x + i, e.y); this.solid[e.y][e.x + i] = true; } }
-        this.interactables.push(new LockedGate(this, (e.x + e.w / 2) * T, (e.y + 1.4) * T, e)); break;
-      }
-      case 'bossgate': this.gate = { x: e.x, y: e.y, w: e.w, closed: false }; break;
-      case 'pickup': this.pickups.push(new Pickup(this, wx, wy, e.spec)); break;
-      case 'exit': this.exits.push({ ...e, rect: new Phaser.Geom.Rectangle(e.x * T, e.y * T, e.w * T, e.h * T) }); break;
-      case 'fire': {
-        const f = this.add.image(wx, wy - 3, 'flame0').setDepth(wy + 12);
-        this.flames.push({ f, ph: Math.random() * 3 });
-        if (e.rest) { this.interactables.push(new RestSpot(this, wx, wy)); this.fires.push({ x: wx, y: wy, tx: e.x, ty: e.y, key: `${this.mapId}:${e.x},${e.y}` }); }
-        if (e.auto) this.autoCheckpoints.push({ x: wx, y: wy, lit: false });
-        break;
-      }
-      case 'glow': {
-        const l = this.add.image(wx, wy, 'glow').setTint(C[e.col ?? 12]).setBlendMode(Phaser.BlendModes.ADD).setScale(e.r / 32).setAlpha(0.5).setDepth(99900);
-        this.lights.push({ l, base: 0.5, ph: Math.random() * 6, x: wx, y: wy, r: e.r });
-        break;
-      }
-      default: break;
-    }
+    const fn = SPAWNERS.get(e.t);
+    if (fn) fn(this, e, (e.x + 0.5) * T, (e.y + 0.5) * T);
   }
 
   // Ambient accents: distant howls on snowy nights, crackling near campfires, creaking old wood indoors.
@@ -562,7 +438,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.leaving || !this.alive()) return;
     this.leaving = true;
     sfx.play(sound);
-    ui.modal = true;
+    ui.hold('changeMap');                                    // released by the next create()
     let done = false;
     const go = () => {
       if (done) return; done = true;
@@ -639,7 +515,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   openMenu(tab, name) {
-    ui.modal = true;
+    ui.hold('menu:launch');                                  // MenuScene takes over with its own hold
     sfx.play('select');
     this.scene.launch('Menu', { tab, name });
   }
@@ -676,117 +552,14 @@ export default class GameScene extends Phaser.Scene {
     if (S.hp <= 0 && this.deadT === 0 && !this.respawning && this.player?.active) { this.player.mode = 'dead'; this.deadT = 0.001; }
     if (this.deadT > 0 && !this.respawning && (ui.modal || this.hitStopT > 0)) {
       this.deadT += real; this.hitStopT = 0;
-      if (this.deadT > 2.4) { ui.modal = false; if (this.scene.isActive('Menu')) this.scene.stop('Menu'); if (S.quick) this.endQuickRun(); else this.respawn(); }
+      if (this.deadT > 2.4) { ui.releaseAll(); if (this.scene.isActive('Menu')) this.scene.stop('Menu'); if (S.quick) this.endQuickRun(); else this.respawn(); }
     }
     if (ui.modal) { this.physics.world.pause(); return; }
     if (this.hitStopT > 0) { this.hitStopT -= dt; this.physics.world.pause(); return; }
     this.physics.world.resume();
     S.playtime += dt;
     this.t += dt;
-    this.player.update(dt);
-    updateTutorial(this, dt);
-    this.worldEvents(dt);
-    foodTick(); elixirTick();
-    this.questTick(dt);
-    this.ambientLife(dt);
-    this.ambientTick(dt);
-    for (const i of this.interactables) if (i.tick) i.tick(dt, this);
-    this.trophyT = (this.trophyT || 0) - dt; if (this.trophyT <= 0) { this.trophyT = 2; checkTrophies(); }
-    if (this.def.stream) { this.fireT = (this.fireT || 0) - dt; if (this.fireT <= 0) { this.fireT = 0.6; this.discoverFires(); this.discoverTick(); } this.streamT = (this.streamT || 0) - dt; if (this.streamT <= 0) { this.streamT = 0.35; this.streamTick(); } }
-    if (S.flags.restedUntil && S.playtime > S.flags.restedUntil) { delete S.flags.restedUntil; recalc(); bus.emit('toast', 'NO LONGER WELL RESTED', 4); }
-    for (const p of this.plates) p.update(this.player);
-    this.setPieceTick(dt);
-    for (const c of this.autoCheckpoints) {
-      if (!c.lit && Math.hypot(this.player.x - c.x, this.player.y - c.y) < 30) {
-        c.lit = true;
-        if (!S.respawn || S.respawn.map !== this.mapId || Math.hypot((S.respawn.x ?? 0) - c.x, (S.respawn.y ?? 0) - c.y) > 40) {
-          S.respawn = { map: this.mapId, x: Math.round(c.x), y: Math.round(c.y + 12) };
-          bus.emit('toast', 'CHECKPOINT: BRAZIER LIT', 12); sfx.play('quest');
-        }
-      }
-    }
-    this.fogT -= dt;
-    if (this.fogT <= 0) { this.fogT = 0.3; this.revealFog(); }
-    for (const f of this.flames) {           // animate only the flames on screen, and only when their frame changes
-      f.ph += dt * 9;
-      const fr = Math.floor(f.ph) % 3;
-      if (fr !== f.fr && !culled(f.f)) { f.fr = fr; f.f.setTexture(FLAME_KEYS[fr]); }
-    }
-    this.updateClock(dt);
-    this.schedT = (this.schedT || 0) - dt;
-    if (this.schedT <= 0 && this.npcs.length) {
-      this.schedT = 1;
-      const night = isNightHour(hourOf());
-      for (const n of this.npcs) if (n.sched && n.away !== night) { n.setAway(night); if (night) this.fx.puff(n.x, n.y, 5, 4, 20, 0.4); }
-    }
-    const night = this.nightness();
-    for (const l of this.lights) { l.ph += dt * 7; if (!culled(l.l)) l.l.setAlpha((l.base + Math.sin(l.ph) * 0.05 + Math.sin(l.ph * 2.3) * 0.03) * (0.55 + 0.9 * night)); }
-    for (const n of this.npcs) n.update(dt, this.player);
-    this.follower?.update(dt, this.player);
-    this.hound?.update(dt, this.player);
-    this.arenaTick(dt);
-    this.quickTick?.(dt);
-    this.pony?.update(dt, this.player);
-    if (this.spirit && !this.spirit.dead) this.spirit.update(dt, this.player);
-    for (let i = this.pickups.length - 1; i >= 0; i--) {
-      const p = this.pickups[i];
-      p.update(dt, this.player);
-      if (p.done) this.pickups.splice(i, 1);
-    }
-    this.updateInteract();
-    this.autosaveTick(dt);
-    if ((S.pendingStat || 0) > 0 && !this.askingStat && this.player.mode === 'free' && !this.leaving
-      && !this.enemies.getChildren().some((e) => e.alerted && !e.dead)) this.askStat();
-    if (this.pendingEnding && !ui.modal) {
-      const k = this.pendingEnding; this.pendingEnding = null;
-      ui.modal = true;
-      this.scene.launch('Ending', { kind: k });
-    }
-    if (this.player.mode === 'free' && !this.leaving) {
-      if (keys.pressed('inventory')) this.openMenu(0);
-      else if (keys.pressed('journal')) this.openMenu(-1, 'QUESTS');
-      else if (keys.pressed('map')) this.openMenu(-1, 'MAP');
-      else if (keys.pressed('pause')) this.openMenu(-1, padActive() ? ui.lastMenuTab || 'ITEMS' : 'SYSTEM');   // START: the tab you used last
-    }
-    if (this.t > 0.5 && !this.leaving) {
-      const c = this.player.body.center;
-      for (const ex of this.exits) {
-        if (!ex.rect.contains(c.x, c.y)) continue;
-        if (ex.needs && GATES[ex.needs] && !GATES[ex.needs].ok()) {
-          if (this.t - (this.lastGate || -9) > 3) { bus.emit('toast', GATES[ex.needs].msg(), 11); sfx.play('nostamina'); this.lastGate = this.t; }
-          this.player.body.setVelocity(0, 40); this.player.y += 2;
-          break;
-        }
-        this.changeMap(ex.to, ex.spawn, ex.fx || 'door'); break;
-      }
-    }
-    for (const e of this.enemies.getChildren()) e.update(dt, this.player);
-    for (const sh of this.shots.getChildren()) {
-      sh.update(dt);
-      if (!sh.done && this.breakables.length && this.breakAt(sh.x, sh.y, 8)) { if (sh.kind === 'fire') sh.explode(); else sh.finish(); }
-    }
-    for (let i = this.breakables.length - 1; i >= 0; i--) if (this.breakables[i].broken) this.breakables.splice(i, 1);
-    for (const sh of this.eshots.getChildren()) sh.update(dt);
-    if (this.boss && !this.boss.engaged && !this.boss.dead && !this.boss.yieldDone) {
-      const pc = this.player.body.center;
-      if (this.def.bossTrigger?.(pc, T)) {
-        if (this.gate) this.setGate(true);
-        this.boss.engage();
-        music.play(this.def.bossMusic || 'boss');
-      }
-    }
-    this.updateZones(dt);
-    this.updateMusic(dt);
-    this.fx.update(dt);
-    this.snow?.update(dt);
-    this.updateLighting(dt);
-    this.drawBars();
-    if (this.deadT > 0) {
-      this.deadT += dt;
-      // a hired companion drags you out of the fight once in a while instead of letting you fall
-      if (this.follower && !this.respawning && this.deadT > 1.1 && (S.flags.reviveAt ?? -999) + TUNE.follower.reviveCooldown < S.playtime) this.reviveByFollower();
-      else if (this.deadT > 2.4 && !this.respawning) { if (S.quick) this.endQuickRun(); else this.respawn(); }
-    }
+    for (const tk of TICKERS) tk.fn(this, dt);          // the update order: gameTickers.js + features (CH9)
   }
 
   // Arena Mode: falling ends the run and shows the results card (nothing is saved).
@@ -823,4 +596,4 @@ export default class GameScene extends Phaser.Scene {
   }
 }
 
-Object.assign(GameScene.prototype, pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods, livingMethods, setPieceMethods);
+mixin(GameScene.prototype, { pathingMethods, fogMethods, lootMethods, zoneMethods, lightingMethods, ambientMethods, arenaMethods, quickMethods, discoveryMethods, companionMethods, killMethods, eventMethods, livingMethods, setPieceMethods });

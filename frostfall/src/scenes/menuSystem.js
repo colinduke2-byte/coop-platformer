@@ -124,7 +124,7 @@ export function systemTab(m) {
         armed = null;
         if (!loadGame()) { sfx.play('nostamina'); break; }
         m.scene.stop();
-        ui.modal = false;
+        ui.releaseAll();
         gs.scene.restart({ map: S.map, spawn: S.spawn, pos: S.x != null ? { x: S.x, y: S.y } : null });
         bus.emit('toast', 'GAME LOADED', 15);
         break;
@@ -150,7 +150,7 @@ export function systemTab(m) {
         armed = null;
         if (!S.quick && !S.daily) saveGame(gs, { quiet: true });        // your progress goes with you
         music.stop();
-        ui.modal = false;
+        ui.releaseAll();
         m.scene.stop('Hud'); m.scene.stop('Game'); m.scene.start('Title');
         break;
       default: break;

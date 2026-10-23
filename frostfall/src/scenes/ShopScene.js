@@ -40,12 +40,12 @@ export default class ShopScene extends Phaser.Scene {
 
   create() {
     keys.wheel = 0;
-    ui.modal = true;
+    const release = ui.hold('shop');           // only its own hold: a shop opened inside a conversation leaves it frozen (CH2)
     this.bg = this.add.graphics();
     this.dyn = this.add.container(0, 0);
     this.input.on('pointermove', (p) => this.onMove(p));
     this.input.on('pointerdown', (p) => this.onClick(p));
-    this.events.once('shutdown', () => { ui.modal = false; });
+    this.events.once('shutdown', release);
   }
 
   say(m, col = 6) { this.msg = m; this.msgCol = col; this.msgT = 3; this.dirty = true; }

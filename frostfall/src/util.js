@@ -32,3 +32,19 @@ export function facingKind(fx, fy) {
 // Four-beat walk cycle: stride, pass, stride, pass (frames 1, 0, 2, 0 of a 3-frame walk).
 const WALK = [1, 0, 2, 0];
 export const walkFrame = (phase) => WALK[Math.floor(phase) % 4];
+
+// CH10: copy groups of methods onto a class prototype, e.g. mixin(GameScene.prototype, { fogMethods, lootMethods }).
+// Throws when a name is already taken (by the class itself, its Phaser base class or another group), so two features
+// that each add a `tick` or `reset` can never silently replace one another. Getters / setters are copied as accessors.
+export function mixin(proto, groups) {
+  const from = new Map();
+  for (const [group, obj] of Object.entries(groups)) {
+    for (const [k, d] of Object.entries(Object.getOwnPropertyDescriptors(obj))) {
+      if (from.has(k)) throw new Error(`mixin: "${k}" is defined by both ${from.get(k)} and ${group}`);
+      if (k in proto) throw new Error(`mixin: ${group}.${k} would replace a method the class (or its base class) already has`);
+      from.set(k, group);
+      Object.defineProperty(proto, k, d);
+    }
+  }
+  return proto;
+}

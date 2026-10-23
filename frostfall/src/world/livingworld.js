@@ -54,7 +54,13 @@ SCRIPTS.ghost_merchant = async function ghostMerchant() {
   } else await say(N, 'Another night, then.');
 };
 
+// Remembered across maps (not on the scene, which forgets its fields on every map load): the day a Blood Moon Alpha
+// already hunted, so leaving and re-entering the region does not raise a second one that night.
+const memory = { bloodDay: null };
+
 export const livingMethods = {
+  get bloodDay() { return memory.bloodDay; },
+  set bloodDay(v) { memory.bloodDay = v; },
   // Called when the random-event timer fires (replaces the old two-way choice).
   rollEvent() {
     const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.nightness() > 0.5;
@@ -84,7 +90,7 @@ export const livingMethods = {
     this.woundedEvt = { npc, tier, life: 180, done: false };
     // the wolves that hurt him are still near
     for (let i = 0; i < 2; i++) { const q = this.freeSpotNear(30, 60); if (q) this.addEnemy('wolf', p.x + (q.x - this.player.x) * 0.2, p.y + (q.y - this.player.y) * 0.2, { tier, roam: true }); }
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T) };
+    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T), evt: true };
     bus.emit('toast', 'SOMEONE CALLS FOR HELP NEARBY', 13); sfx.play('quest');
   },
   removeWounded() {
@@ -134,7 +140,7 @@ export const livingMethods = {
     }
     if (!made.length) return false;
     this.raidEvt = { foes: made, poi: best, tier, life: 240 };
-    S.flags.waypoint = { map: this.mapId, x: best.x, y: best.y };
+    S.flags.waypoint = { map: this.mapId, x: best.x, y: best.y, evt: true };
     bus.emit('toast', 'RAIDERS ARE ATTACKING A HAMLET!', 11); sfx.play('alert'); music.stinger();
     return true;
   },

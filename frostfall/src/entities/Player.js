@@ -14,7 +14,7 @@ import { watchStuck } from '../systems/unstick.js';
 import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
-import { dir8, facingKind, norm, walkFrame } from '../util.js';
+import { dir8, facingKind, norm, walkFrame, mixin } from '../util.js';
 import Projectile from './Projectile.js';
 import { TILE } from '../config.js';
 import { tip } from '../systems/tips.js';
@@ -335,4 +335,4 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 }
 
-Object.assign(Player.prototype, magicMethods, combatMethods, bowMethods);
+mixin(Player.prototype, { magicMethods, combatMethods, bowMethods });

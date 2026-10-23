@@ -54,7 +54,7 @@ export default class MenuScene extends Phaser.Scene {
 
   create() {
     keys.wheel = 0;                                // wheel turns made during play do not scroll the menu
-    ui.modal = true; keys.wheel = 0;
+    const release = ui.hold('menu'); ui.release('menu:launch'); keys.wheel = 0;
     this.tabs = [
       { name: 'ITEMS', doubleClick: true, captureLR: () => !!this.dropArm, render: () => this.renderItems(), input: () => this.inputItems(), cursorOf: () => this.cursor, rowAt: (x, y) => { if (x < 8 || x > 154 || y < 37) return -1; const k = Math.floor((y - 37) / 18); const i = this.scroll + k; return k < ROWS && i < this.inventory().length ? i : -1; } },
       { name: 'SKILLS', help: 'A/D TAB  ESC CLOSE', render: () => this.renderSkills(), input: () => {} },
@@ -68,7 +68,7 @@ export default class MenuScene extends Phaser.Scene {
     this.mouse = { x: -1, y: -1 };
     this.input.on('pointermove', (p) => this.onMove(p));
     this.input.on('pointerdown', (p) => this.onClick(p));
-    this.events.once('shutdown', () => { ui.modal = false; });
+    this.events.once('shutdown', release);
   }
 
   // ------------------------------------------------------------- mouse

@@ -11,7 +11,7 @@ import { padHint, prompt } from '../systems/access.js';
 import { logLine } from '../systems/msglog.js';
 import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
-import { dialogue } from '../systems/dialogue.js';
+import { dialogue, Cancelled } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
 import { QUESTS, activeQuestIds, TARGETS, trackedId } from '../data/quests.js';
 import { MAPS } from '../data/maps.js';
@@ -33,6 +33,8 @@ const BARS = [
   { key: 'mp', max: 'maxMp', col: 15, hi: 6, label: 'MP', flash: 'nomana' },
   { key: 'sp', max: 'maxSp', col: 8, hi: 5, label: 'SP', flash: 'nostamina' },
 ];
+// a cancelled line that nobody awaited must not show up as an unhandled rejection (awaiting it still sees Cancelled)
+const quiet = (p) => { p.catch(() => {}); return p; };
 const POTIONS = [['hp_potion', '1'], ['mp_potion', '2'], ['sp_potion', '3']];
 
 export default class HudScene extends Phaser.Scene {
@@ -84,7 +86,8 @@ export default class HudScene extends Phaser.Scene {
     bus.on('charlevel', this.onChar);
     this.onDiscover = (d) => this.banners.push({ custom: true, title: d.name, top: d.top, line: d.line });
     bus.on('discover', this.onDiscover);
-    // dialogue box
+    // dialogue box (a relaunched HUD cancels whatever the old one was still asking)
+    this.dlg?.rej?.(new Cancelled());
     this.dlg = null;
     this.dg = this.add.graphics().setDepth(10);
     this.dName = txt(this, 14, H - 61, '', 13).setDepth(11);
@@ -152,23 +155,23 @@ export default class HudScene extends Phaser.Scene {
     if (this.skipTalk) return Promise.resolve();        // the cast button was pressed: read nothing more until a choice or the end
     this.lastSay = text;
     logLine('talk', (name ? name + ': ' : '') + text, 6);
-    return new Promise((res) => {
+    return quiet(new Promise((res, rej) => {
       const lines = wrap(normText(text), 47).split('\n');
       const pages = [];
       for (let i = 0; i < lines.length; i += 3) pages.push(lines.slice(i, i + 3).join('\n'));
       this.name = name;
-      this.dlg = { name, pages, p: 0, n: 0, t: 0, res, choices: null, age: 0 };
-    });
+      this.dlg = { name, pages, p: 0, n: 0, t: 0, res, rej, choices: null, age: 0 };
+    }));
   }
 
   choose(opts) {
     this.skipTalk = false;
-    return new Promise((res) => {
+    return quiet(new Promise((res, rej) => {
       // long options wrap with a hanging indent; the window scrolls when there are more than fit
       const rows = opts.map((o) => wrap(normText(String(o)), 44).split('\n'));
       const q = this.lastSay ? fit(normText(this.lastSay).replace(/\s+/g, ' '), 47) : '';
-      this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, rows, q, sel: 0, top: 0, age: 0 };
-    });
+      this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, rows, q, sel: 0, top: 0, age: 0, rej };
+    }));
   }
 
   // ------------------------------------------------------- lockpicking
@@ -305,9 +308,13 @@ export default class HudScene extends Phaser.Scene {
     }
   }
 
+  // Closes the box. A line or choice still waiting for the player is cancelled (its promise rejects with Cancelled, which
+  // runScript swallows), so a conversation cut off by a door or a death never leaves a script hanging (CH6).
   hideBox() {
     this.skipTalk = false;
+    const d = this.dlg;
     this.dlg = null;
+    d?.rej?.(new Cancelled());
     this.dg.clear();
     this.dName.setText(''); this.dBody.setText(''); this.dMore.setVisible(false);
     this.dChoice.forEach((c) => c.setText(''));

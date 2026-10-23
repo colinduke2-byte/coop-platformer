@@ -9,6 +9,15 @@ const rules = {
   'no-unreachable': 'error',
 };
 
+// the game only: rules that keep parallel work safe (docs/AGENT_RULES.md)
+const srcRules = {
+  ...rules,
+  'no-restricted-syntax': ['error', {
+    selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='ui'][left.property.name='modal']",
+    message: 'Never write ui.modal: take a hold with ui.hold(tag) and call the release it returns (docs/AGENT_RULES.md).',
+  }],
+};
+
 export default [
   { ignores: ['dist/**', 'node_modules/**', 'test/out/**', 'spike/**', 'frostfall.html'] },
   {
@@ -19,7 +28,7 @@ export default [
       sourceType: 'module',
       globals: { ...globals.browser },
     },
-    rules,
+    rules: srcRules,
   },
   {
     // tests and tools run in Node, but many functions are sent into the page (h.ev / page.evaluate), so both sets apply
