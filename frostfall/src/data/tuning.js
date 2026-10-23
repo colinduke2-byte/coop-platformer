@@ -292,6 +292,10 @@ export const TUNE = {
   economy: {
     sellRate: 0.5,             // a shop pays this share of an item's value
     sellBulk: 0.25,            // ... and this share for bulk goods (items with bulk: true: ingots, ore, lockpicks), which shops sell in bundles
+    critCap: 0.5,              // melee and bow crit chance never go above this (PR-05)
+    goldFindCap: 0.6,          // gold-find bonuses from gear, sets, Pell and blessings add up to at most +60% (PR-25)
+    pellGold: 0.1,             // Pell at your side: +10% gold
+    plenty: [0.1, 0.025],      // the generated "of Plenty" affix: +10% gold, +2.5% per tier step (k = min(2, tier)): 10 / 12.5 / 15%
   },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);

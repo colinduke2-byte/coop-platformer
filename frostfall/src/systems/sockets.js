@@ -24,15 +24,18 @@ export function removeGem(itemId, idx) {
   a[idx] = null; S.sockets[itemId] = a;
   return true;
 }
-// Sum of one bonus (dmg, armor, maxHp, crit, ...) over every equipped item's gems.
-export function gemBonus(key) {
+// Sum of one bonus (dmg, armor, maxHp, crit, ...) over the gems in the equipped items of `slots` (default: all of them),
+// plus the runes (which sit only in the weapon and the armour). Damage and crit gems count only where they are (PR-05):
+// see stats.weaponDmg / bowDmg / meleeCrit / bowCrit.
+export const GEM_SLOTS = ['weapon', 'offhand', 'bow', 'armor'];
+export function gemBonus(key, slots = GEM_SLOTS) {
   let n = 0;
-  for (const slot of ['weapon', 'offhand', 'bow', 'armor']) {
+  for (const slot of slots) {
     const id = S.equip?.[slot];
     if (!id) continue;
     for (const g of socketed(id)) if (g) n += ITEMS[g]?.gem?.[key] || 0;
   }
-  return n + runeBonus(key);
+  return n + (slots === GEM_SLOTS ? runeBonus(key) : 0);
 }
 
 // ---- runes: one per weapon or armour, adding an effect rather than a stat

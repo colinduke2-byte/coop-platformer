@@ -86,7 +86,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       const sneak = !e.alerted && pl.sneaking;
       const mult = (sneak ? 2 + bonus.sneakAttack() * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
       const special = this.ammo;
-      const crit = Math.random() < stats.sum('crit');
+      const crit = Math.random() < stats.bowCrit();
       const dealt = e.takeHit({
         dmg: this.dmg * mult * bl('dmgMul', 1) * (crit ? 1.8 : 1) * (pl.counterT > 0 ? TUNE.player.perfect.mult : 1), kx, ky, kb: 55 + 70 * this.charge, src: 'arrow', stun: 0.18 + 0.2 * this.charge, fromX: sc.player.x, fromY: sc.player.y,
         element: special === 'fire_arrow' ? 'fire' : null,
