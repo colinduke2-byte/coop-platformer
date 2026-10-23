@@ -16,11 +16,11 @@ const tilePx = (key, id, x, y) => G(([key, id, x, y]) => {
 
 // ---- VX-01: props stand on the region's ground, not in a white square
 let r = await G(async () => ({ key: window.gs().layer.tileset[0].image.key }));
-check('the village keeps the snowy base tileset', r.key === 'tiles', r.key);
+check('the village keeps snow under its props', /^(tiles|tsetm_village)$/.test(r.key) && (await tilePx(r.key, 4, 0, 8)) === 0xb4c7e0, r.key);
 await go('ashen');
 r = await G(async () => { const { TILE } = await import('/src/config.js'); return { key: window.gs().layer.tileset[0].image.key, TILE }; });
 const TILE = r.TILE;
-check('the Ashen Peaks get their own tileset', r.key === 'tset_' + TILE.ASH, r.key);
+check('the Ashen Peaks get their own tileset', r.key === 'tset_' + TILE.ASH || r.key === 'tsetm_ashen', r.key);
 for (const prop of ['PINE', 'ROCK', 'STUMP', 'DEADTREE', 'BOULDER', 'BRAZIER']) {
   const corner = await tilePx(r.key, TILE[prop], 0, 0), ground = await tilePx(r.key, TILE.ASH, 0, 0);
   check(`${prop} stands on ash in the Ashen Peaks (corner pixel is the ground's)`, corner === ground, `${corner.toString(16)} vs ${ground.toString(16)}`);
@@ -53,6 +53,8 @@ r = await G(async () => { const { TILE } = await import('/src/config.js'); const
   for (const row of g.built.grid) for (const v of row) if (v === TILE.BIRCH_B) inGrid++;
   return { alias, solidOk, inGrid }; });
 check('VX-16: some birches are drawn as a look-alike variant, still solid, without touching the map grid', r.alias > 10 && r.solidOk && r.inGrid === 0, JSON.stringify(r));
+r = await G(async () => { const { TILE_COUNT } = await import('/src/config.js'); const g = window.gs(); let n = 0, collide = 0; g.layer.forEachTile((t) => { if (t.index >= TILE_COUNT) { n++; if (t.collides !== g.built._solid[t.y][t.x]) collide++; } }); return { n, collide, key: g.layer.tileset[0].image.key }; });
+check('VX-21: fringe and prop-on-road tiles are drawn where grounds meet, each as solid as its map cell', r.n > 50 && r.collide === 0 && r.key.startsWith('tsetm_'), JSON.stringify(r));
 check('ground tiles draw no dark edge row (no stripes every 16 px)', !edge.length, edge.join(','));
 
 // ---- VX-03: tints are baked into palette-remapped textures (the Canvas renderer ignores real tints)

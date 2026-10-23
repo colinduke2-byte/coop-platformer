@@ -882,10 +882,30 @@ function buildTiles(scene) {
 }
 
 // One tileset texture. bg = null: the base set (snow under the props). Otherwise the props and the roof stand on tile `bg`.
-export function buildTileset(scene, key, bg) {
-  const cv = canvas(T * TILE_COUNT, T);
-  const ctx = cv.getContext('2d');
+// One tileset texture. bg = null: the base set (snow under the props). Otherwise the props and the roof stand on tile `bg`.
+// combos (VX-21): extra tiles appended after TILE_COUNT, each a ground `b` with a ragged 2-4px fringe of ground `a` along the
+// sides in `mask` (1 N, 2 E, 4 S, 8 W). They are only drawn, never stored in a map grid (art/tileset.js puts them on the layer).
+export function buildTileset(scene, key, bg, combos = []) {
+  const cv = canvas(T * (TILE_COUNT + combos.length), T);
+  const ctx = cv.getContext('2d', { willReadFrequently: combos.length > 0 });
   for (let i = 0; i < TILE_COUNT; i++) drawTile(ctx, i, i * T, bg != null && PROP_TILES.includes(i) ? bg : null);
+  if (combos.length) {
+    const src = canvas(T, T), sx = src.getContext('2d', { willReadFrequently: true }), cache = new Map();
+    const pix = (id) => { if (!cache.has(id)) { sx.clearRect(0, 0, T, T); drawTile(sx, id, 0); cache.set(id, sx.getImageData(0, 0, T, T).data.slice()); } return cache.get(id); };
+    combos.forEach(({ b, a, mask, prop }, n) => {
+      if (prop != null) { propOver(ctx, prop, (TILE_COUNT + n) * T, b); return; }       // a prop standing on this cell's own ground
+      const ox = (TILE_COUNT + n) * T, pb = pix(b), pa = pix(a), out = ctx.createImageData(T, T), d = out.data;
+      d.set(pb);
+      const depth = (side, u) => 2 + Math.floor(hash(u, a * 4 + side, 11) * 3);
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+        const k = Math.max((mask & 1) ? depth(0, x) - y : -9, (mask & 2) ? depth(1, y) - (T - 1 - x) : -9, (mask & 4) ? depth(2, x) - (T - 1 - y) : -9, (mask & 8) ? depth(3, y) - x : -9);
+        if (k <= 0 || (k === 1 && ((x + y) & 1))) continue;            // inside the band; its last row is dithered
+        const q = (y * T + x) * 4; d[q] = pa[q]; d[q + 1] = pa[q + 1]; d[q + 2] = pa[q + 2]; d[q + 3] = 255;
+      }
+      ctx.putImageData(out, ox, 0);
+    });
+  }
+  if (scene.textures.exists(key)) scene.textures.remove(key);
   scene.textures.addCanvas(key, cv);
   return key;
 }
