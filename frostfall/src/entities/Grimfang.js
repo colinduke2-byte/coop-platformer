@@ -10,6 +10,7 @@ import { elementMult } from '../systems/damage.js';
 import { dist, norm, rand } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { say, choose, runScript } from '../systems/dialogue.js';
+import { baseKey } from '../art/tintbake.js';      // a tinted ring wears a baked texture (VX-03): compare its own key
 
 // Grimfang, the Pale Alpha. Fast, leaps, howls for the pack. Yields at low health:
 // the player decides whether to finish him or let him go (changes the world).
@@ -91,7 +92,7 @@ export default class Grimfang extends Boss {
     if (this.blink <= 0) { this.blink = 0.08; this.blinkOn = !this.blinkOn; }
     for (const t of this.tele) {
       if (this.atk === 'howl') t.setScale(0.3 + k * 2.5).setAlpha(0.9 - k * 0.5);
-      else t.setAlpha((t.texture?.key === 'ring' ? 0.5 : 0.18) + k * 0.4);
+      else t.setAlpha((baseKey(t) === 'ring' ? 0.5 : 0.18) + k * 0.4);
     }
     if ((this.atk === 'bite' || this.atk === 'claw') && k < 0.55) {            // keeps aiming until late
       const p = this.scene.player.body.center, n = norm(p.x - this.cx, p.y - this.cy), dc = this.B[this.atk], len = dc.speed * dc.time;

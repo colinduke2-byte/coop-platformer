@@ -132,6 +132,21 @@ r = await G(async () => {
 check('the twelve odd-scale creatures are drawn at scale 1 with native art', !r.bad.length, r.bad.join(','));
 check('the werewolf has its own windup, swipe and howl frames', r.ww);
 
+// ---- VX-02: Jarl Valdrek, Grimfang and the Rime Wyrm are native (scale 1) with the hitbox their stretched sprites had
+r = await G(async () => {
+  const { ENEMIES } = await import('/src/data/enemies.js');
+  const Boss = (await import('/src/entities/Boss.js')).default, Grim = (await import('/src/entities/Grimfang.js')).default, Wyrm = (await import('/src/entities/RimeWyrm.js')).default;
+  const g = window.gs(), p = g.player, out = [];
+  for (const [kind, B, sc, size] of [['boss', Boss, 2, 32], ['grimfang', Grim, 1.9, 30], ['wyrm', Wyrm, 3, 48]]) {
+    const e = new B(g, p.x + 90, p.y + 40, kind);
+    const want = ENEMIES[kind].body[0] * sc;
+    out.push({ kind, ok: e.native && e.scaleX === 1 && Math.round(e.displayWidth) === size && Math.abs(e.body.width - want) < 0.01, sx: e.scaleX, dw: e.displayWidth, bw: e.body.width, want });
+    e.shadow?.destroy(); e.destroy();
+  }
+  return out;
+});
+check('the first three bosses are native at scale 1 with their old hitboxes', r.every((o) => o.ok), JSON.stringify(r));
+
 // ---- VX-06: statuses show on the enemy (driven by the status:on / status:off bus events)
 await h.pause();
 r = await G(async () => {

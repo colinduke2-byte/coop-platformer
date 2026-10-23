@@ -151,4 +151,4 @@ function patch(proto) {
 patch(Phaser.GameObjects.Image.prototype);
 patch(Phaser.GameObjects.Sprite.prototype);
 // the key an object was made with, whatever tint it wears now (pools key their objects by it)
-export const baseKey = (o) => o._bakeBase || o.texture.key;
+export const baseKey = (o) => o._bakeBase || o.texture?.key;

@@ -24,7 +24,7 @@ const probe = (kind, cls) => h.ev(async ([kind, cls]) => {
   return r;
 }, [kind, cls]);
 
-for (const kind of kinds.filter((k) => !NEWART.has(k) && !['ashwolf', 'bogwolf', 'jackal', 'thornboar', 'marshdraugr', 'sandwight', 'emberknight', 'frostbear', 'mirelynx', 'sunfencer', 'redsula', 'captainkarrow'].includes(k))) {
+for (const kind of kinds.filter((k) => !NEWART.has(k) && !['ashwolf', 'bogwolf', 'jackal', 'thornboar', 'marshdraugr', 'sandwight', 'emberknight', 'frostbear', 'mirelynx', 'sunfencer', 'redsula', 'captainkarrow', 'boss', 'grimfang', 'wyrm'].includes(k))) {   // the three bosses get their scale from their class, not their table entry: stage98 checks them in their lairs
   const cls = BOSS[kind] || null;
   const spec = await h.ev(async (k) => { const r = await import('/src/art/native_registry.js'); const s = r.nativeSpec(k); window.__saved = window.__saved || {}; window.__saved[k] = s; r.unregisterNative(k); return { scale: s.scale, w: s.w, h: s.h, cw: s.cw || 16, ch: s.ch || 16 }; }, kind);
   const before = await probe(kind, cls);

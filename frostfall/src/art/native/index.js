@@ -9,3 +9,4 @@ import './newfauna.js';
 import './bosses_d.js';
 import './scales.js';
 import './werewolf.js';
+import './bosses_e.js';

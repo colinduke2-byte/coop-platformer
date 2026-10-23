@@ -52,7 +52,9 @@ Goal: the hero stays 16x16. Every creature drawn larger than that on screen gets
 | imp | Cinder Imp | spr_imp | 16x16 | 0.85 | 14x14 |  |
 | slimeling | Slimeling | spr_slime | 16x16 | 0.7 | 11x11 | magmaslime |
 
-## Stay 16x16 (52)
+## Stay 16x16 (52, as listed at the time)
+
+(Correction: grimfang, wyrm and boss below were in fact stretched 1.9x, 3x and 2x by their classes; werewolf, shroom, prism, caveweaver, lodeling and gloomcap are native now. See Status.)
 
 grimfang (x1), wyrm (x1), draugr (x1), wolf (x1), werewolf (x1.25), ghost (x1), bandit (x1), archer (x1), wight (x1), boss (x1), warden (x1), alpha (x1), chief (x1), conjurer (x1), deer (x1), hare (x1), fox (x1), lynx (x1), boar (x1), necro (x1), shroom (x1.3), wisp (x1), mimic (x1), reaver (x1), knight (x1), fencer (x1), ashhound (x1), cindersmith (x1), magmaslime (x1), lavawraith (x1), harpooner (x1), wreckcrab (x1), tidehag (x1), barnacle (x1), phantom (x1), herald (x1), sentinel (x1), stalker (x1), bogwraith (x1), boghag (x1), leech (x1), mudlurker (x1), thunderbird (x1.3), nomad (x1), nomadshaman (x1), prism (x1.2), glimmerkin (x1), glassstag (x1.2), caveweaver (x1.2), lodeling (x1.2), deepdelver (x1), gloomcap (x1.3)
 
@@ -63,7 +65,7 @@ grimfang (x1), wyrm (x1), draugr (x1), wolf (x1), werewolf (x1.25), ghost (x1), 
 3. **Most bosses are humanoid sheets**: 8 poses by 3 frames (down, up, side, three attack poses, hurt, dead). A native boss therefore needs about 24 frames, not one picture. A parametric native humanoid renderer (the hero 32 px sample scaled to any size, with style options like helm, horns, crown, cape, glow) would cover Warlord, Admiral, Hollow King, Sovereign, Kragnar, Long Winter, Brinegut and the golems consistently.
 4. **Animals use clips** (`ANIM_CLIPS` in art/anim.js): side0-2, hurt0, death0. Native animal sheets need those frame names. The Skaldrath dragon uses its own clip table.
 5. **Non-humanoid bosses need bespoke art**: Tidemother, Ashen Root, Mire Mother, Storm Giant, Hartking, Lode Colossus, and Skaldrath (already 48x32).
-6. **Grimfang and the Rime Wyrm** are bosses at scale 1 (16x16). They are not stretched, so they are not part of this change unless Colin wants them bigger.
+6. **Grimfang and the Rime Wyrm** looked like scale 1 in enemies.js, but their classes stretch them: `Grimfang.js` calls `setScale(1.9)` and `RimeWyrm.js` passes `scale: 3`; Jarl Valdrek (`boss`) is `setScale(2)` in `Boss.js`. So all three were stretched 16px sprites, and this list was wrong to put them under "stay 16" (corrected 2026-10-23, visuals audit VX-02; all three are native now, see Status).
 
 ## Things that assume 16px cells (check in phase 2)
 
@@ -89,3 +91,17 @@ Native-pixel art is live for 25 creatures: all 14 bosses plus Bridge Troll, Rime
 - Still on the old stretched art by choice: Bear Cub, Imp, Slimeling (scale below 1) and everything at scale 1.0-1.3.
 - Follow-up: Bridge Troll, both golems and Stone Giant still share one body shape.
 - Dev tools: `test/native_sheet.mjs` (preview), `test/native_compare.mjs` (old vs new image), `test/old_sheet.mjs`.
+
+## Status (2026-10-23, visuals audit VX-02, VX-10, VX-11, VX-27)
+
+- **The first three bosses are native**: Jarl Valdrek (32px, boss_kit humanoid with a greataxe), Grimfang (30px wolf with crouch,
+  lunge and howl frames) and the Rime Wyrm (48px serpent: coil, rear, breath, hurt, death). Art in `src/art/native/bosses_e.js`.
+  Their hitboxes are the stretched sprites' (checked in `test/stage98_art.mjs`; stage66 skips them because their scale is set by
+  their class, not by enemies.js).
+- **The golem family has separate bodies** (bosses_e.js): Bridge Troll (hunched, long arms, club), Rime Golem (squared ice and
+  stone), Crystal Golem (faceted spikes), Stone Giant (boulder shoulders). The follow-up above is done.
+- **No more odd scales on the listed creatures**: the Werewolf is a native 20px wolf-man (`werewolf.js`, with windup, swipe and
+  howl frames), and `scales.js` draws Spore Mother and Gloomcap (21), Glass Prism, Cave Weaver and Lodeling (19), Slimeling (11),
+  Bear Cub (10), and the humanoids Cinder Imp (14), Sun Sentinel (22), Red Sula (20) and Captain Karrow (21) at their real size.
+- Tints are baked into palette-remapped copies of these sheets (`src/art/tintbake.js`), so tinted variants look the same on
+  Canvas and WebGL.
