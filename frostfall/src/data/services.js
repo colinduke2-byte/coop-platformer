@@ -14,6 +14,7 @@ import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../system
 import { noteSold } from './stock.js';
 import { sellPrice } from '../systems/prices.js';
 import { rarityIndex, reforgeGen } from '../systems/genloot.js';
+import { setOf } from '../systems/sets.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
 import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
@@ -119,6 +120,8 @@ export async function buyMenu(who, wares) {
 }
 
 // --------------------------------------------------------------------- sell
+// Selling the last of one of these asks first (PR-07): Rare or Legendary, a set piece, a unique, or anything upgraded.
+export const isPrecious = (id) => rarityIndex(ITEMS[id] || {}) >= 2 || !!setOf(id) || !!ITEMS[id]?.unique || (S.upgrades?.[id] || 0) > 0;
 const equippedIds = () => new Set(Object.values(S.equip).filter(Boolean));
 export function sellable() {
   const eq = equippedIds();
@@ -136,7 +139,7 @@ export async function sellMenu(who) {
   const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
   // value / name / type order (G); and "precious": selling the last of something rare, unique or named asks first
   const sorted = (ui) => { const l = sellable(), k = ui?.sort || 0; return l.sort(k === 0 ? (a, b) => sellPrice(b) - sellPrice(a) : k === 1 ? (a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name) : (a, b) => String(ITEMS[a].type).localeCompare(String(ITEMS[b].type)) || ITEMS[a].name.localeCompare(ITEMS[b].name)); };
-  const precious = (id, n) => n >= avail(id) && (['rare', 'epic', 'legendary'].includes(ITEMS[id].rarity) || ITEMS[id].unique || ITEMS[id].set || (S.upgrades?.[id] || 0) > 0);
+  const precious = (id, n) => n >= avail(id) && isPrecious(id);
   const sellN = (id, n, ui) => {
     S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id];
     S.gold += sellPrice(id) * n; noteSold(id, n, sellPrice(id) * n);
