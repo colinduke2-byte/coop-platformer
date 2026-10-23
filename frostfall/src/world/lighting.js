@@ -20,6 +20,10 @@ import { hasMod } from '../data/mods.js';
 import { elixirVal } from '../systems/elixir.js';
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
+// CH4: THE definition of night for gameplay (spawns, events, merchants, music, stealth): an outdoor map between 20:30 and
+// 05:30. scene.isNight() and nightlife's isNightNow() both use it. nightness() (how dark it looks: dusk, whiteout...) is
+// for visuals and sound only; never decide gameplay with it.
+export const isNightFor = (def) => !!(def.snow || def.outdoors) && isNightHour(hourOf());
 
 export const lightingMethods = {
   initLighting() {
@@ -31,7 +35,7 @@ export const lightingMethods = {
     this.applyWeather(true);
   },
 
-  isNight() { return (this.def.snow || this.def.outdoors) && isNightHour(hourOf()); },
+  isNight() { return isNightFor(this.def); },
   outdoors() { return !!(this.def.snow || this.def.outdoors); },
 
   // { color, alpha } of the darkness layer right now.
@@ -62,6 +66,7 @@ export const lightingMethods = {
     return { color, alpha };
   },
 
+  // visuals and sound only (CH4): 0 by day, 1 in full dark, and in between at dusk, dawn and in a whiteout
   nightness() { return (this.def.snow || this.def.outdoors) ? Math.min(1, this.ambient().alpha / 0.5) : 0; },
 
   updateLighting(dt) {

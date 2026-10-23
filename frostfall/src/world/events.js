@@ -70,7 +70,7 @@ export const eventMethods = {
   },
   spawnAmbush() {
     const tier = tierAt(this.player.x / T, this.player.y / T);
-    const night = this.nightness() > 0.5;
+    const night = this.isNight();                      // the gameplay night (CH4), not how dark it looks
     const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : ['wolf', 'bandit', 'wolf', 'fencer'];
     const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
     let made = 0;

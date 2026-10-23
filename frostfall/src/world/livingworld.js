@@ -63,7 +63,7 @@ export const livingMethods = {
   set bloodDay(v) { memory.bloodDay = v; },
   // Called when the random-event timer fires (replaces the old two-way choice).
   rollEvent() {
-    const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.nightness() > 0.5;
+    const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.isNight();   // CH4: the same night that later sends the Pale Merchant away
     if (night && isBlood() && this.bloodDay !== Math.floor(S.days)) return this.spawnBloodAlpha(tier);
     if (night && !this.ghostEvt && r < 0.2) return this.spawnGhostMerchant();
     if (r < 0.28) return this.spawnAmbush();

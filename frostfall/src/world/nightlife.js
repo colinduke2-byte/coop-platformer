@@ -2,12 +2,12 @@
 // werewolves, the restless dead of old places turn to ghosts, and bandit crews sleep (they notice you far less).
 // The choice is made once per spawn from the seed and the day, so it is stable while you watch.
 import { S } from '../systems/state.js';
-import { hourOf, isNightHour } from './lighting.js';
+import { hourOf, isNightHour, isNightFor } from './lighting.js';
 import { wolfChance, ghostChance } from '../systems/moon.js';
 
 const hash = (str) => { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; h = Math.imul(h, 3266489917); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
 
-export function isNightNow(scene) { return !!(scene.def.snow || scene.def.outdoors) && isNightHour(hourOf()); }
+export function isNightNow(scene) { return isNightFor(scene.def); }
 
 // Which creature actually appears for a spawn that would normally be `kind`.
 export function nightKind(scene, kind, p) {

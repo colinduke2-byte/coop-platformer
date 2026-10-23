@@ -124,6 +124,23 @@ check('bullet time does not carry over to the next map', village.slow === 0 && v
 check('after forest -> village the scene has exactly the fields of a fresh village load', JSON.stringify(villageKeys) === JSON.stringify(fresh),
   JSON.stringify({ extra: villageKeys.filter((k) => !fresh.includes(k)), missing: fresh.filter((k) => !villageKeys.includes(k)) }));
 
+// ---- CH4: one night for gameplay: at dusk (dark already, but not night) no Pale Merchant; at night one that stays
+const dusk = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, moon = await import('/src/systems/moon.js');
+  for (let d = 0; d < 40 && moon.isBlood(); d++) S.days = (S.days || 0) + 1;
+  const r0 = Math.random; Math.random = () => 0.1;
+  S.time = 19.5 * 60; g.enemies.getChildren().slice().forEach((e) => e.destroy());
+  const looksDark = g.nightness() > 0.5, night = g.isNight();
+  g.rollEvent(); const atDusk = !!g.ghostEvt;
+  S.time = 23 * 60; g.rollEvent(); const atNight = !!g.ghostEvt;
+  Math.random = r0;
+  return { looksDark, night, atDusk, atNight };
+});
+await h.wait(200);
+const stays = await G(() => !!window.__ff.game.scene.getScene('Game').ghostEvt);
+check('dusk is not night: the Pale Merchant comes only at night, and stays', dusk.looksDark && !dusk.night && !dusk.atDusk && dusk.atNight && stays, JSON.stringify({ ...dusk, stays }));
+await G(() => { window.__ff.S.time = 12 * 60; });
+
 // ---- CH1: an arena trial ends when you leave the arena: by the door, by dying, or from Arena Mode into the campaign
 await go('arena', 'in');
 const arena = await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.startArena('classic'); return { active: g.arena.active }; });
