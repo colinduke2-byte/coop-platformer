@@ -67,7 +67,7 @@ export const combatMethods = {
     this.swing = { t: 0, hit: new Set(), c };
     this.lockT = c.total;
     this.lockMove = P.sword.move;
-    sfx.play('sword');
+    sfx.play(sfx.swing(w, n === set.length - 1));
     const a = Math.atan2(this.face.y, this.face.x);
     this.scene.fx.slash(this.x + this.face.x * 4, this.y + 2 + this.face.y * 4, a, c.flip, c.scale);
     const fin = n === set.length - 1;
@@ -84,7 +84,7 @@ export const combatMethods = {
     this.comboN = 0; this.comboT = 0;
     this.swing = { t: 0, hit: new Set(), c };
     this.lockT = c.total; this.lockMove = 0.12;
-    sfx.play('telegraph');
+    sfx.play('heavy_windup');
     this.scene.fx.ring(this.x + this.face.x * 6, this.y + 3 + this.face.y * 6, 0.35, H.windup, 'ring', 0xf4d460);
   },
   tickSwing(dt) {
@@ -103,7 +103,7 @@ export const combatMethods = {
     }
     if (s.t >= (s.c.hs ?? P.sword.hitStart) && s.t <= (s.c.he ?? P.sword.hitEnd)) {
       if (s.c.heavyAtk && !s.fired) {
-        s.fired = true; sfx.play('sword'); this.scene.shake(160, 0.007);
+        s.fired = true; sfx.play(sfx.swing(stats.weapon(), true)); this.scene.shake(160, 0.007);
         this.scene.fx.slash(this.x + this.face.x * 6, this.y + 2 + this.face.y * 6, Math.atan2(this.face.y, this.face.x), false, 1.7);
         this.body.velocity.x += this.face.x * 90; this.body.velocity.y += this.face.y * 90;
       }
@@ -170,7 +170,7 @@ export const combatMethods = {
         this.scene.fx.puff(e.x, e.y, 11, 10, 70, 0.5); sfx.play('execute');
         this.scene.hitStop(0.16); this.scene.shake(220, 0.01); this.gainXp('oneHanded', 4);
       } else if (sneak) { this.scene.fx.text(e.x, e.y - 20, 'SNEAK ATTACK', 13); this.gainXp('sneak', 10); sfx.play('crit'); }
-      else sfx.play('hit');
+      else sfx.play(crit ? 'crit_hit' : sfx.hitOn(e));
       this.gainXp('oneHanded', P.sword.xp + (e.dead ? 3 : 0));
       if (!exec) { const hf = this.hitFeel(heavy, crit); this.scene.hitStop(hf.stop); this.scene.shake(hf.ms, hf.amt); }
       if (heavy) this.scene.fx.text(e.x, e.y - 20, 'HEAVY', 12);
