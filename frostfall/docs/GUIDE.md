@@ -170,7 +170,7 @@ There are many endings (36 variants in Chapter 3 alone). They depend on:
 4. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).
 5. Which faction you stand best with.
 
-After the credits you can **start New Game+** with your progress and stronger enemies. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
+Once Chapter 3 is decided you can **start New Game+** from the title screen, with your progress and stronger enemies. (Chapter 1 and 2 only close a chapter; they do not count.) There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
 
 ## 9. Tips and tricks
 

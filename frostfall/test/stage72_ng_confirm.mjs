@@ -8,7 +8,7 @@ const tap = async (c, ms = 80) => { await G((c) => window.__ff.keys._press(c), c
 // a finished game in slot 1, so the title offers NEW GAME+
 await G(async () => {
   const { S, resetState } = await import('/src/systems/state.js'), { saveGame } = await import('/src/systems/save.js'), { settings } = await import('/src/systems/settings.js');
-  resetState(); S.flags.ending = 'give'; S.gold = 123; settings.slot = 1; saveGame(1);
+  resetState(); S.flags.ending = 'give'; S.flags.ending3 = 'bind'; S.gold = 123; settings.slot = 1; saveGame(1);
   window.__ff.game.scene.getScene('Title').scene.restart();
 });
 await h.sleep(1500);

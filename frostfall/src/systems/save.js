@@ -104,7 +104,7 @@ if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { i
 export function saveInfo(slot = settings.slot) {
   if (infoCache.has(slot)) return infoCache.get(slot);
   const r = readSlot(slot);
-  const info = r ? { t: r.data.t, map: r.data.s.map, playtime: r.data.s.playtime, level: r.data.s.charLevel || 1, recovered: r.recovered, ending: !!r.data.s.flags?.ending, ngPlus: r.data.s.ngPlus || 0, newer: r.newer } : null;
+  const info = r ? { t: r.data.t, map: r.data.s.map, playtime: r.data.s.playtime, level: r.data.s.charLevel || 1, recovered: r.recovered, ending: !!r.data.s.flags?.ending3, ngPlus: r.data.s.ngPlus || 0, newer: r.newer } : null;
   infoCache.set(slot, info);
   return info;
 }
