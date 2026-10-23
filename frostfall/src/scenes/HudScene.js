@@ -27,6 +27,7 @@ import { currentShout, unlockedShouts } from '../systems/shouts.js';
 import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
+import { quickScore } from '../arena/heroes.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
@@ -470,7 +471,7 @@ export default class HudScene extends Phaser.Scene {
     } else if (!dead) this.deadShown = false;
     if (S.quick) {
       const q = S.quick, a = this.gs.arena || {}, mult = Math.min(3, 1 + Math.floor(Math.max(0, q.combo - 1) / 4) * 0.25);
-      const score = (a.cleared || 0) * (q.mode === 'rush' ? 500 : 100) + (q.pts || 0);
+      const score = quickScore(a.cleared || 0, q.pts || 0, a.champs || 0, q.mode);   // the same number the results card shows (CH7)
       const lines = [[`${q.mode === 'rush' ? 'BOSS' : 'WAVE'} ${Math.max(1, a.wave - (q.mode === 'rush' ? 0 : 1))}   SCORE ${score}`, 6]];
       if (q.combo >= 2) lines.push([`COMBO ${q.combo}  x${mult.toFixed(2).replace(/0$/, '')}`, mult >= 2 ? 11 : 13]);
       if (q.rageT > 0) lines.push([`RAGE ${Math.ceil(q.rageT)}`, 12]);

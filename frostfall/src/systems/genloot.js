@@ -2,7 +2,7 @@
 // Generated items are registered in ITEMS at runtime (id "g_<n>") and their definitions are kept in S.gen
 // so they survive saving and loading.
 import { ITEMS } from '../data/items.js';
-import { S } from './state.js';
+import { S, onStateReset } from './state.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
@@ -125,6 +125,9 @@ export function registerGen(id, def) {
   S.gen[id] = def;
   iconBuilder?.(id, def);
 }
+// Another save (or a new game) does not keep this one's generated items registered (CH8); a loaded save's own come back
+// through rehydrateGen right after.
+onStateReset((st) => { for (const id of Object.keys(ITEMS)) if (id.startsWith('g_') && !st.gen?.[id]) delete ITEMS[id]; });
 // Re-register every generated item from a loaded save.
 export function rehydrateGen() {
   for (const [id, def] of Object.entries(S.gen || {})) { ITEMS[id] = def; iconBuilder?.(id, def); }

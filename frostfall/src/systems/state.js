@@ -59,10 +59,17 @@ function withExtras(st) { for (const id of EXTRA_QUEST_IDS) st.quests[id] ||= { 
 // Singleton: mutate in place so every module sees the same object.
 export const S = newState();
 
+// Modules that keep derived state outside S (generated items in ITEMS, the message log...) clear it here whenever S is
+// replaced: New Game, loading a save, New Game+ (CH8). Handlers run after S holds the new state.
+const resetHooks = [];
+export const onStateReset = (fn) => { resetHooks.push(fn); };
+const afterReset = () => { for (const fn of resetHooks) fn(S); };
+
 export function resetState() {
   const fresh = newState();
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, fresh);
+  afterReset();
 }
 // A value from a save is only trusted when it has the same kind as the default (object, array, number, string...).
 const kindOf = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
@@ -87,6 +94,7 @@ export function loadInto(data) {
   for (const k of ['flags', 'fog', 'perks', 'kills', 'gen', 'upgrades', 'enchants', 'sockets', 'rep', 'lore', 'seen', 'found', 'tips', 'discovered', 'sighted', 'hearts', 'killed', 'bounty', 'shrines', 'run']) if (!S[k] || typeof S[k] !== 'object') S[k] = fresh[k];
   if (!S.respawn?.map) S.respawn = fresh.respawn;
   for (const k of ['hp', 'mp', 'sp']) S[k] = Math.max(1, Math.min(S[k], S['max' + k[0].toUpperCase() + k.slice(1)] || S[k]));
+  afterReset();
 }
 
 // New Game+: keep your character (level, skills, perks, gear, gold) and start a fresh, harder world.
@@ -105,4 +113,5 @@ export function startNgPlus() {
   Object.assign(S, fresh, JSON.parse(JSON.stringify(keep)));
   S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt; delete S.inv.blight_heart;
   S.hp = 1e9; S.mp = 1e9; S.sp = 1e9;
+  afterReset();
 }

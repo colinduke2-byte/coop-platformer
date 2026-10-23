@@ -1,7 +1,7 @@
 // Round 4: the world goes on without you. Extra wandering events (a wounded traveller, wolves hunting a deer,
 // raiders at a hamlet), plus camps that get reoccupied. Mixed into GameScene; hooked from worldEvents().
 import { T } from '../config.js';
-import { S } from '../systems/state.js';
+import { S, onStateReset } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
 import { tierAt } from './worldgen.js';
@@ -57,6 +57,7 @@ SCRIPTS.ghost_merchant = async function ghostMerchant() {
 // Remembered across maps (not on the scene, which forgets its fields on every map load): the day a Blood Moon Alpha
 // already hunted, so leaving and re-entering the region does not raise a second one that night.
 const memory = { bloodDay: null };
+onStateReset(() => { memory.bloodDay = null; });             // another save, another moon
 
 export const livingMethods = {
   get bloodDay() { return memory.bloodDay; },

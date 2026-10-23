@@ -158,6 +158,34 @@ const died = await G(() => { const g = window.__ff.game.scene.getScene('Game'); 
 check('dying in the arena ends the trial', died.map === 'arena' && died.hp > 0 && !died.arena && /ENTER/.test(died.label || ''), JSON.stringify(died));
 await G(() => { window.__ff.S.respawn = { map: 'village', spawn: 'start' }; });
 
+// ---- CH7: the live Arena Mode score is the score the results card will show
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); window.__ff.S.quick = { mode: 'survival', pts: 30, combo: 0, rageT: 0 }; g.arena = { cleared: 2, champs: 1, wave: 3, active: false, foes: [] }; });
+await h.wait(100);
+const live = await G(async () => {
+  const { quickScore } = await import('/src/arena/heroes.js');
+  const key = window.__ff.game.scene.getScene('Hud').quickKey || '';
+  delete window.__ff.S.quick; delete window.__ff.game.scene.getScene('Game').arena;
+  return { key, final: quickScore(2, 30, 1, 'survival') };
+});
+check('the live arena score counts champions like the final score', live.final === 270 && live.key.includes('SCORE 270'), JSON.stringify(live));
+
+// ---- CH8: another save does not keep this one's generated items or messages; an unknown enemy id says so
+const regs = await G(async () => {
+  const gl = await import('/src/systems/genloot.js'), ml = await import('/src/systems/msglog.js'), { ITEMS } = await import('/src/data/items.js');
+  const snap = JSON.parse(JSON.stringify(window.__ff.S));
+  const id = gl.makeGenItem(1, Math.random, null);
+  ml.logLine('toast', 'a message from the first character');
+  const before = !!ITEMS[id];
+  window.__ff.loadInto({ ...snap, gen: {} });
+  const out = { before, after: !!ITEMS[id], log: ml.logLines().length };
+  window.__ff.loadInto(snap); gl.rehydrateGen();
+  let msg = '';
+  try { window.__ff.game.scene.getScene('Game').addEnemy('wolff', 100, 100); } catch (e) { msg = e.message; }
+  return { ...out, msg };
+});
+check('loading another save drops generated items and messages it does not own', regs.before && !regs.after && regs.log === 0, JSON.stringify(regs));
+check('an unknown enemy id fails with a clear message', regs.msg === 'unknown enemy kind "wolff"', regs.msg);
+
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'HYGIENE FAILED' : 'HYGIENE PASSED');

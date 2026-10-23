@@ -1,6 +1,7 @@
 // A short memory of what the game told you: toasts, spoken lines and conversation lines, newest last. Read in the journal
 // (Quests tab > LOG), so a message that flashed past in a fight is never lost. Not saved: it is about this session.
 import { bus } from './bus.js';
+import { onStateReset } from './state.js';
 
 const MAX = 80;
 const lines = [];
@@ -15,6 +16,7 @@ export function logLine(kind, text, col = 6) {
   stamp++;
 }
 export const logLines = () => lines;
+onStateReset(() => { lines.length = 0; stamp++; });       // another character's messages are not yours (CH8)
 export const logStamp = () => stamp;
 bus.on('toast', (text, col) => logLine('toast', text, col ?? 6));
 bus.on('say', (who, text) => logLine('say', `${who}: ${text}`, 13));

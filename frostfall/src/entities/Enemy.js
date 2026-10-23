@@ -27,7 +27,11 @@ import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../system
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, kind, spec = {}) {
-    const cfg = ENEMIES[kind];
+    let cfg = ENEMIES[kind];
+    if (!cfg) {                                            // a typo in an enemy id (CH8): a clear message, never a TypeError
+      if (import.meta.env?.DEV) throw new Error(`unknown enemy kind "${kind}"`);
+      console.warn(`unknown enemy kind "${kind}", spawning a wolf`); kind = 'wolf'; cfg = ENEMIES.wolf;
+    }
     const nat = nativeSpec(kind);                          // native-pixel art: drawn at its on-screen size and shown at scale 1
     const texKey = nat ? ensureNative(scene, kind) : cfg.tex;
     super(scene, x, y, texKey, 'down0');
