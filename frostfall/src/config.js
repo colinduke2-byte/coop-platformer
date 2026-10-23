@@ -33,14 +33,14 @@ export const C = PAL.map((h) => parseInt(h.slice(1), 16));
 // test/unit/foundation.mjs checks that ids are unique, inside a block, < 256, and that SOLID_TILES only names real tiles.
 export const TILE_BLOCKS = {
   core: [0, 74],
-  W_world: [75, 89],
-  A_art: [90, 104],
-  C_combat: [105, 109],
-  E_economy: [110, 114],
-  S_story: [115, 119],
-  H_hud: [120, 124],
-  U_audio: [125, 129],
-  spare: [130, 255],          // ask the integrator before using these
+  spare_low: [75, 99],        // unassigned: ask the integrator
+  A_art: [100, 119],
+  W_world: [120, 139],
+  C_combat: [140, 149],
+  H_hud: [150, 154],
+  E_economy: [155, 159],
+  S_story: [160, 164],
+  spare: [165, 255],          // unassigned: ask the integrator
 };
 export const TILE = {
   SNOW: 0, SNOW2: 1, ICE: 2, STONE: 3, PINE: 4, PATH: 5, WOODFLOOR: 6,
@@ -57,19 +57,17 @@ export const TILE = {
   // scatter terrain for the older regions: patches of snowdrift and frostbloom, boulders, ember blooms, lily pads, mossy marble, glass flowers, spores
   SNOWDRIFT: 67, FROSTBLOOM: 68, BOULDER: 69, EMBERBLOOM: 70, LILYPAD: 71, MARBLEMOSS: 72, GLASSBLOOM: 73, SPORES: 74,
 
-  // W (world) 75-89:
+  // A (art) 100-119:
 
-  // A (art) 90-104:
+  // W (world) 120-139:
 
-  // C (combat) 105-109:
+  // C (combat) 140-149:
 
-  // E (economy) 110-114:
+  // H (hud) 150-154:
 
-  // S (story) 115-119:
+  // E (economy) 155-159:
 
-  // H (hud) 120-124:
-
-  // U (audio) 125-129:
+  // S (story) 160-164:
 
 };
 export const SOLID_TILES = [
@@ -79,19 +77,17 @@ export const SOLID_TILES = [
   TILE.BASALT, TILE.LAVA, TILE.PACKICE, TILE.WRECK, TILE.RUINWALL, TILE.BLACKWATER, TILE.BOGTREE, TILE.BOGREED, TILE.HEATHROCK, TILE.CRYSTAL, TILE.GLOWCAP, TILE.CAVERNPOOL,
   TILE.BOULDER, TILE.BIRCH, TILE.POND, TILE.HEARTROOT, TILE.SANDSTONE, TILE.CACTUS, TILE.OASIS, TILE.SANDRUIN,
   // solid tiles of the reserved blocks, each agent on its own line:
-  // W:
-
   // A:
 
+  // W:
+
   // C:
+
+  // H:
 
   // E:
 
   // S:
-
-  // H:
-
-  // U:
 
 ];
 // one past the highest id (unused ids inside a block draw as plain dark tiles)
