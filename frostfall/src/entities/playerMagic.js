@@ -51,7 +51,7 @@ export const magicMethods = {
   quickCast() {
     for (let i = 0; i < SPELL_ORDER.length; i++) {
       if (!keys.pressed('spell' + (i + 1))) continue;
-      if (!spellUnlocked(SPELL_ORDER[i])) { sfx.play('nostamina'); bus.emit('toast', 'SPELL LOCKED', 11); return true; }
+      if (!spellUnlocked(SPELL_ORDER[i])) { sfx.play('deny'); bus.emit('toast', 'SPELL LOCKED', 11); return true; }
       S.spell = SPELL_ORDER[i]; this.cast(); return true;
     }
     return false;
@@ -69,8 +69,8 @@ export const magicMethods = {
     if (!spellUnlocked(S.spell)) S.spell = 'fire';
     const sp = SPELLS[S.spell];
     const cost = this.spellCost(sp);
-    if (S.mp < cost) { sfx.play('nostamina'); bus.emit('nomana'); return; }
-    if ((S.spell === 'heal' || S.spell === 'regrow') && S.hp >= S.maxHp) { sfx.play('nostamina'); return; }
+    if (S.mp < cost) { sfx.play('nomana'); bus.emit('nomana'); return; }
+    if ((S.spell === 'heal' || S.spell === 'regrow') && S.hp >= S.maxHp) { sfx.play('deny'); return; }
     const wpn = stats.weapon() || {};
     const freeCast = (S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0)) || (wpn.freeEvery && ((this.castW = (this.castW || 0) + 1) % wpn.freeEvery === 0));
     if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);

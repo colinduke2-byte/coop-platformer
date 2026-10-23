@@ -33,8 +33,8 @@ export const eventMethods = {
     if (!S.flags.sawTracks && this.trackPts?.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 36)) { S.flags.sawTracks = true; bus.emit('toast', 'HUGE TRACKS... SOMETHING ENORMOUS WALKS THESE ROADS', 13); tip('tracks'); }
     this.scoreT = (this.scoreT || 0) + 1; if (S.daily && this.scoreT % 15 === 0) submitScore();
     const Q = S.quests;
-    if (Q.trail.status === 'active' && S.flags.rb_elk) { Q.trail.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); sfx.play('quest'); }
-    if (Q.toll.status === 'active' && S.flags.rb_troll) { Q.toll.status = 'ready'; bus.emit('toast', 'QUEST READY: SHOW HILDA', 13); sfx.play('quest'); }
+    if (Q.trail.status === 'active' && S.flags.rb_elk) { Q.trail.status = 'ready'; bus.emit('toast', 'QUEST READY: TELL BJORN', 13); sfx.play('quest_update'); }
+    if (Q.toll.status === 'active' && S.flags.rb_troll) { Q.toll.status = 'ready'; bus.emit('toast', 'QUEST READY: SHOW HILDA', 13); sfx.play('quest_update'); }
     // Ragna lays her company to rest once the Warlord is down and she is with you
     if (Q.company.status === 'active' && S.flags.warlordDead && S.follower && S.companion !== 'pell' && this.follower && !ui.modal && this.player.mode === 'free') this.companionScene();
   },
@@ -147,7 +147,7 @@ export const eventMethods = {
     for (const f of this.fires) {
       if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
       S.flags.fires[f.key] = true;
-      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('quest');
+      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('discover');
     }
   },
   fastTravel(f) {

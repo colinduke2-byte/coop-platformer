@@ -108,6 +108,7 @@ export const SOUNDS = {
   },
   buy: () => { tone('square', 1200, 1200, 0.04, 0.06); tone('square', 1600, 1600, 0.06, 0.06, 0.04); tone('triangle', 784, 784, 0.15, 0.06, 0.1); },
   forge: () => { tone('square', 1100, 1050, 0.08, 0.08); noise(0.04, 0.12, 0, 9000, 3000); tone('triangle', 523, 523, 0.3, 0.07, 0.12); tone('triangle', 784, 784, 0.35, 0.06, 0.2); },
+  nomana: () => { tone('triangle', 330, 240, 0.12, 0.09); tone('triangle', 247, 180, 0.12, 0.07, 0.08); },     // AU22: out of magic (stamina keeps its buzz)
   deny: () => { tone('square', 220, 200, 0.06, 0.07); tone('square', 175, 160, 0.09, 0.07, 0.07); },
 
   // AU13: statuses

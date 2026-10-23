@@ -18,7 +18,7 @@ export function perksTab(m) {
       m.cursor = Math.min(m.cursor, PERKS.length - 1);
       m.nav(PERKS.length, ROWS);
       if (keys.pressed('interact')) {
-        if (buyPerk(PERKS[m.cursor].id)) sfx.play('levelup'); else sfx.play('nostamina');
+        if (buyPerk(PERKS[m.cursor].id)) sfx.play('levelup'); else sfx.play('deny');
         m.dirty = true;
       }
     },

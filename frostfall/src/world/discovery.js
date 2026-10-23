@@ -58,7 +58,7 @@ export const discoveryMethods = {
     const reward = HIDDEN.has(p.kind) ? 20 + 12 * (p.tier || 0) : 4 + 4 * (p.tier || 0);
     addGold(Math.round(reward * modMul('goldMul')));
     bus.emit('discover', { name: placeName(p), top: how, line: `+${Math.round(reward * modMul('goldMul'))} GOLD  ${discoveredCount()} PLACES FOUND` });
-    sfx.play('quest');
+    sfx.play('discover');
     noteDiscovered(this.mapId, p);
     return true;
   },
