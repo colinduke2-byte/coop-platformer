@@ -209,6 +209,8 @@ function bloodDrone(on) {
 export const music = {
   play(name) {
     if (name === 'victory') { this.stinger('victory'); return; }
+    // a map loaded at night: go straight to the night music instead of a second of the day song first
+    if (place.fresh) { place.fresh = false; if (where.night && place.outdoors && name === place.music) name = 'night'; }
     if (name === st.req) return;
     st.req = name; st.phase = 1;
     where.night = name === 'night';
@@ -249,7 +251,7 @@ export const music = {
   duck,
   // GameScene, on every map load: what this map is (for night / dungeon / boss variants and the ambience beds).
   setPlace(map, def = {}) {
-    Object.assign(place, { map, music: def.music || null, bossMusic: def.bossMusic || null, interior: !!def.interior, cave: !!(def.cave || def.crypt), arena: !!(def.arena || def.quick), outdoors: !!(def.snow || def.outdoors), ambience: def.ambience || null });
+    Object.assign(place, { map, music: def.music || null, bossMusic: def.bossMusic || null, interior: !!def.interior, cave: !!(def.cave || def.crypt), arena: !!(def.arena || def.quick), outdoors: !!(def.snow || def.outdoors), ambience: def.ambience || null, fresh: true });
     where.bossKind = null;
   },
   clearPlace() { Object.assign(place, { map: null, music: null, bossMusic: null, interior: false, cave: false, arena: false, outdoors: false, ambience: null }); where.region = null; where.bossKind = null; st.dead = false; st.holdUntil = 0; },

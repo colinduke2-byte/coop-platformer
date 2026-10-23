@@ -17,7 +17,7 @@ const URGENT = new Set(['hurt', 'die', 'telegraph', 'telegraph_boss', 'alert', '
 const lastPlayed = new Map();
 const warned = new Set();
 let stepAlt = false;
-export const audioLog = { lastTalk: -1e9, plays: 0, last: null };
+export const audioLog = { lastTalk: -1e9, plays: 0, last: null, recent: [] };     // for tests: the last few plays
 
 function positional(src) {
   const cam = src.scene?.cameras?.main;
@@ -62,6 +62,7 @@ export const sfx = {
     }
     shape.pitch = pitch; shape.vol = vol; shape.dest = dest;
     audioLog.plays++; audioLog.last = { name, pitch, vol, gain: dest ? dest.gain.value : 1 };
+    audioLog.recent.push(name); if (audioLog.recent.length > 24) audioLog.recent.shift();
     try { fn(); } catch { /* audio is best-effort */ } finally { shape.pitch = 1; shape.vol = 1; shape.dest = null; }
   },
   has: (name) => !!SOUNDS[name],
