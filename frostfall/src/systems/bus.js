@@ -7,3 +7,14 @@ export const bus = {
   // a listener may remove itself while we call it, so several listeners are called from a copy; one needs none
   emit(ev, ...args) { const s = map.get(ev); if (!s || !s.size) return !!s; if (s.size === 1) { for (const fn of s) fn(...args); } else for (const fn of [...s]) fn(...args); return true; },
 };
+
+// CH13: a bus listener that lives as long as a Phaser scene: it is removed when the scene shuts down (or is destroyed),
+// so a relaunched scene never leaves a handler behind. Returns a function that removes it earlier.
+//   listen(this, 'toast', (text) => ...);          // in a scene's create()
+export function listen(scene, ev, fn) {
+  bus.on(ev, fn);
+  const off = () => { bus.off(ev, fn); scene.events.off('shutdown', off); scene.events.off('destroy', off); };
+  scene.events.once('shutdown', off);
+  scene.events.once('destroy', off);
+  return off;
+}

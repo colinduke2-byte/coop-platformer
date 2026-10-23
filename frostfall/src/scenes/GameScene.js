@@ -18,7 +18,7 @@ const SOLID_LUT = new Uint8Array(256); for (const t of SOLID_TILES) SOLID_LUT[t]
 import { MAPS } from '../data/maps.js';
 import { ITEMS } from '../data/items.js';
 import { S, resetState } from '../systems/state.js';
-import { bus } from '../systems/bus.js';
+import { bus, listen } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import { recalc } from '../systems/stats.js';
 import { bonus } from '../systems/skills.js';
@@ -113,7 +113,6 @@ export default class GameScene extends Phaser.Scene {
     this.respawning = false;          // the same scene object is reused on every map load: a second death must still respawn
     cancelScript();                    // a conversation cut off by death or a door does not follow you to the next map
     S.mounted = false; this.pony = null;
-    this.listeners = [];
     const def = this.def = MAPS[this.mapId];
     const built = this.built = def.build();
     S.map = this.mapId;
@@ -247,7 +246,6 @@ export default class GameScene extends Phaser.Scene {
       this.events.off('prerender', this.onCull);
       this.snow?.destroy();
       this.fx.clear();
-      this.listeners.forEach(([ev, fn]) => bus.off(ev, fn));
     });
   }
 
@@ -260,7 +258,7 @@ export default class GameScene extends Phaser.Scene {
     for (const k of Object.keys(this)) if (!this.__base.has(k)) delete this[k];
   }
 
-  on(ev, fn) { bus.on(ev, fn); this.listeners.push([ev, fn]); }
+  on(ev, fn) { listen(this, ev, fn); }                // removed when the scene shuts down (CH13)
 
   // Build one map entity. Each entity type has a spawner registered in gameSpawners.js (or a feature's own file, CH9).
   spawnEntity(e) {

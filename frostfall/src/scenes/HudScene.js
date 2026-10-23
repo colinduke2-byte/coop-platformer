@@ -17,7 +17,7 @@ import { QUESTS, activeQuestIds, TARGETS, trackedId } from '../data/quests.js';
 import { MAPS } from '../data/maps.js';
 import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
-import { bus } from '../systems/bus.js';
+import { bus, listen } from '../systems/bus.js';
 import { moonPhase, isBlood } from '../systems/moon.js';
 import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
@@ -76,16 +76,16 @@ export default class HudScene extends Phaser.Scene {
     // a small "saved" mark (top right, under the clock) whenever progress is written, quiet autosaves included
     this.savedT = 0; this.savedTxt = txt(this, 0, 35, 'SAVED', 8).setVisible(false);
     this.onSaved = () => { this.savedT = 1.6; };
-    bus.on('saved', this.onSaved);
-    bus.on('toast', this.onToast); bus.on('area', this.onArea);
+    listen(this, 'saved', this.onSaved);
+    listen(this, 'toast', this.onToast); listen(this, 'area', this.onArea);
     this.banners = [];
     this.bannerObj = null;
     this.onLevel = (skill, lv) => this.banners.push({ skill, lv });
-    bus.on('levelup', this.onLevel);
+    listen(this, 'levelup', this.onLevel);
     this.onChar = (n) => this.banners.push({ custom: true, title: 'LEVEL ' + n, top: 'CHARACTER LEVEL UP', line: '+1 PERK POINT  -  PRESS ' + prompt('KeyI') + ', THEN PERKS' });
-    bus.on('charlevel', this.onChar);
+    listen(this, 'charlevel', this.onChar);
     this.onDiscover = (d) => this.banners.push({ custom: true, title: d.name, top: d.top, line: d.line });
-    bus.on('discover', this.onDiscover);
+    listen(this, 'discover', this.onDiscover);
     // dialogue box (a relaunched HUD cancels whatever the old one was still asking)
     this.dlg?.rej?.(new Cancelled());
     this.dlg = null;
@@ -118,7 +118,7 @@ export default class HudScene extends Phaser.Scene {
       if (this.hint && this.hintT > 4) { if (!this.hintQ.includes(text)) this.hintQ.push(text); if (this.hintQ.length > 3) this.hintQ.shift(); this.hintT = Math.min(this.hintT, 6); return; }
       this.showHint(text);
     };
-    bus.on('hint', this.onHint);
+    listen(this, 'hint', this.onHint);
     this.debugTxt = txt(this, 4, 32, '', 15).setVisible(false);
     this.onKey = (e) => { if (e.code === 'F3') { e.preventDefault(); this.debugOn = !this.debugOn; this.debugTxt.setVisible(this.debugOn); }
       if (e.code === 'F4') { e.preventDefault(); copyDebugInfo(this).then((ok) => { if (ok) bus.emit('toast', 'BUG REPORT COPIED', 13); }); } };
@@ -138,16 +138,17 @@ export default class HudScene extends Phaser.Scene {
     this.introSub = txt(this, 0, 0, '', 4).setVisible(false).setDepth(901);
     this.sub = null; this.subTxt = txt(this, 0, 0, '', 6).setVisible(false).setDepth(902); this.subWho = txt(this, 0, 0, '', 13).setVisible(false).setDepth(902);
     this.onSay = (who, text, col = 6) => { this.sub = { who, text, t: 0, col }; };
-    bus.on('say', this.onSay);
+    listen(this, 'say', this.onSay);
     this.onBossPhase = (p) => { const b = this.gs?.boss; const tz = b && BOSS_TAUNTS[b.kind]; if (tz && tz[p]) this.onSay(tz.name, tz[p]); };
-    bus.on('boss:phase', this.onBossPhase);
+    listen(this, 'boss:phase', this.onBossPhase);
     this.onKilled = (kind, en) => { const tz = en?.isBoss && BOSS_TAUNTS[kind]; if (tz?.death) this.onSay(tz.name, tz.death); };
-    bus.on('enemy:killed', this.onKilled);
+    listen(this, 'enemy:killed', this.onKilled);
     this.onBossIntro = (b) => { const tz = b && BOSS_TAUNTS[b.kind]; if (tz) this.onSay(tz.name, tz.engage); if (b?.cfg) this.intro = { t: 0, title: b.cfg.title || b.cfg.name.toUpperCase(), sub: (MAPS[this.gs?.mapId]?.name || '').toUpperCase() }; };
-    bus.on('boss:engaged', this.onBossIntro);
+    listen(this, 'boss:engaged', this.onBossIntro);
     this.handlers = {};
-    for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; bus.on(b.flash, this.handlers[b.flash]); }
-    this.events.once('shutdown', () => { for (const [k, fn] of Object.entries(this.handlers)) bus.off(k, fn); bus.off('toast', this.onToast); bus.off('discover', this.onDiscover); bus.off('area', this.onArea); bus.off('levelup', this.onLevel); bus.off('charlevel', this.onChar); bus.off('hint', this.onHint); bus.off('boss:engaged', this.onBossIntro); bus.off('say', this.onSay); bus.off('boss:phase', this.onBossPhase); bus.off('enemy:killed', this.onKilled); bus.off('saved', this.onSaved); if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
+    for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; listen(this, b.flash, this.handlers[b.flash]); }
+    // bus handlers above go through listen(), which removes them on shutdown by itself (CH13): never bus.on in a scene
+    this.events.once('shutdown', () => { if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
 
   // ------------------------------------------------------- dialogue API
