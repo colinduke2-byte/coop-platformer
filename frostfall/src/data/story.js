@@ -142,6 +142,7 @@ export function epilogueLines() {
   else if (S.flags.choiceVault) out.push(S.flags.choiceVault === 'sunbreaker' ? 'Sunbreaker hangs where the light finds it. Far to the north the ice has started to weep, and nobody is sure whether to cheer.' : S.flags.choiceVault === 'winterward' ? 'The Winterward hums against the cold. The Winter, passing through you, learned something it did not expect: manners.' : 'The Sealed Vault is sealed again. Amberwell sleeps better, and nobody asks why.');
   if (S.flags.choiceSula === 'turnin') out.push('Red Sula serves her sentence mending Amberwell\'s water-skins. She still sends you a letter at midwinter, unsigned.');
   else if (S.flags.choiceSula === 'freed') out.push('Red Sula was last seen riding east with a full purse and a short list of people she trusts. You are on it.');
+  if (S.flags.pellBond) out.push('Pell Quickpick now tells the story of the Forge with himself in front. Nobody corrects him. It seems unkind.');
   if ((S.ngPlus || 0) >= 1) out.push('This is not the first winter you have broken. It may not be the last.');
   return out;
 }
