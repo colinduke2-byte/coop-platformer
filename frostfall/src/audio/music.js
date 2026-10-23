@@ -257,7 +257,7 @@ export const music = {
   clearPlace() { Object.assign(place, { map: null, music: null, bossMusic: null, interior: false, cave: false, arena: false, outdoors: false, ambience: null }); where.region = null; where.bossKind = null; st.dead = false; st.holdUntil = 0; },
   stop() {
     if (track) fadeOut(track, now(), 0.6);
-    track = null; st.req = null; st.phase = 1; st.fightWant = false; st.lastFight = -1e9;
+    track = null; st.req = null; st.phase = 1; st.fightWant = false; st.lastFight = -1e9; st.dead = false; st.holdUntil = 0;
     if (where.blood) { where.blood = false; bloodDrone(false); }
     ambience.stop();
   },

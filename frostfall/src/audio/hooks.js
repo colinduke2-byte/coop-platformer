@@ -51,7 +51,8 @@ bus.on('player:dead', () => { onPlayer.clear(); music.stinger('death'); });
 bus.on('scene:game', () => { inGame = true; onPlayer.clear(); music.respawned(); });
 bus.on('scene:title', () => { inGame = false; onPlayer.clear(); music.clearPlace(); });
 bus.on('boss:engaged', (boss) => { where.bossKind = boss?.kind || null; music.stinger('boss_intro'); });
-bus.on('charlevel', () => { sfx.play('char_level'); music.duck(2.2, 0.3); });
+// after the skill's own level-up jingle, which the same event chain plays first
+bus.on('charlevel', () => setTimeout(() => { sfx.play('char_level'); music.duck(2.2, 0.3); }, 450));
 
 // status ticks: one soft tick per second for each damage-over-time status on the player
 onContext(() => setInterval(() => {
