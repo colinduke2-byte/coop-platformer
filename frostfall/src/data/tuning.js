@@ -306,6 +306,9 @@ export const TUNE = {
       discoverHidden: [20, 12], discover: [4, 4],
     },
     deathGoldKeep: 0.9,        // dying keeps this share of your gold
+    // generated loot (PR-10): armour x rarityMult^armorPow, block x rarityMult^blockPow, affix strength grows to tier affixTierCap,
+    // staves: spell power 1 + (staff[0] + staff[1] x tier) x rarityMult, at most staffMax; a Legendary helmet or charm: +legendPools
+    gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.08, 0.05], staffMax: 1.6, legendPools: 10 },
   },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);

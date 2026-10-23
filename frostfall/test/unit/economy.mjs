@@ -56,5 +56,20 @@ t('PR-04: Emberforged Staff boosts Meteor and Ember Nova, the Long Winter boosts
   assert.ok(near(SP.spellCostGear('glacier', ITEMS.frostbirch_staff), 0.85) && near(SP.spellCostGear('embernova', ITEMS.cinder_staff), 0.85) && near(SP.spellCostGear('meteor', ITEMS.cinder_staff), 0.9) && near(SP.spellCostGear('sunbeam', ITEMS.cinder_staff), 0.85));
 });
 
+t('PR-10: rarity raises armour and block; staves grow with tier; affixes keep growing to tier 3; Legendaries carry a signature', () => {
+  const R = rng(5), avg = (f, n = 200) => { let a = 0; for (let i = 0; i < n; i++) a += f(); return a / n; };
+  const plate = (r) => avg(() => genItem(3, R, r, { slot: 'armor', baseName: 'Plate' }).armor);
+  assert.ok(plate(3) > plate(0) * 1.15, `plate ${plate(0)} -> ${plate(3)}`);
+  const shield = (r) => genItem(3, R, r, { slot: 'shield', baseName: 'Buckler' });
+  assert.ok(shield(2).block > shield(0).block);
+  const staff = (tier, r) => genItem(tier, R, r, { slot: 'weapon', baseName: 'Staff' }).spellMul;
+  assert.ok(staff(0, 0) < staff(2, 0) && staff(2, 0) < staff(3, 3) && staff(3, 3) <= 1.6, [staff(0, 0), staff(2, 0), staff(3, 3)].join());
+  for (let i = 0; i < 200; i++) {
+    const it = genItem(4, R, 3, { slot: ['weapon', 'bow', 'armor', 'shield', 'helmet', 'charm'][i % 6] });
+    assert.ok(it.signature, it.name);
+    if (it.keen) assert.ok(it.affixLines.includes(`+${Math.round(it.keen * 100)}% DAMAGE`) && it.keen > 0.2, it.affixLines.join());
+  }
+});
+
 console.log(failed ? 'ECONOMY FAILED' : `ECONOMY PASSED (${n} tests)`);
 process.exit(failed ? 1 : 0);

@@ -43,7 +43,7 @@ const SLOT_WEIGHT = [['weapon', 34], ['bow', 12], ['shield', 12], ['armor', 22],
 
 // Affixes: where they may roll, how they change the item, and their name part.
 const AFFIXES = [
-  { id: 'keen', slots: ['weapon', 'bow'], pre: 'Keen', apply: (it, k) => { it.dmg = Math.round(it.dmg * (1.08 + 0.05 * k)); }, line: (it) => `+${Math.round((1.08 - 1) * 100)}%+ DAMAGE` },
+  { id: 'keen', slots: ['weapon', 'bow'], pre: 'Keen', apply: (it, k) => { it.keen = +(0.08 + 0.05 * k).toFixed(2); it.dmg = Math.round(it.dmg * (1 + it.keen)); }, line: (it) => `+${Math.round(it.keen * 100)}% DAMAGE` },
   { id: 'crit', slots: ['weapon', 'bow', 'charm'], suf: 'of Precision', apply: (it, k) => { it.crit = +(0.06 + 0.03 * k).toFixed(2); }, line: (it) => `${Math.round(it.crit * 100)}% CRIT CHANCE` },
   { id: 'vamp', slots: ['weapon', 'charm'], pre: 'Vampiric', apply: (it, k) => { it.lifesteal = +(0.05 + 0.02 * k).toFixed(2); }, line: (it) => `${Math.round(it.lifesteal * 100)}% LIFESTEAL` },
   { id: 'ember', group: 'elem', slots: ['weapon'], suf: 'of Embers', apply: (it, k) => { it.elem = { type: 'fire', power: 3 + 2 * k }; }, line: (it) => `FIRE +${it.elem.power}` },
@@ -76,18 +76,21 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
     const ws = RARITY.map((r, i) => [r, r.weight * (i === 0 ? Math.max(0.3, 1 - 0.2 * tier) : 1 + 0.55 * tier * i)]);
     rar = pickW(ws, rnd());
   }
-  const scale = 1 + 0.22 * tier;
+  const scale = 1 + 0.22 * tier, E = TUNE.economy.gen;
   const it = { ...base, rarity: rar.id, gen: true, tier, slot, baseName: base.name };
   if (it.dmg) it.dmg = Math.round(it.dmg * scale * rar.mult);
-  if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * (0.9 + 0.1 * rar.mult)).toFixed(2);
-  if (it.block != null) it.block = +Math.min(0.88, it.block + 0.03 * tier).toFixed(2);
+  // PR-10: rarity matters off weapons too (armour by the square root of the rarity multiplier, block by its fourth root)
+  if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * Math.pow(rar.mult, E.armorPow)).toFixed(2);
+  if (it.block != null) it.block = +Math.min(0.88, (it.block + 0.03 * tier) * Math.pow(rar.mult, E.blockPow)).toFixed(2);
+  // PR-01 / PR-10: a generated staff's spell power grows with tier and rarity
+  if (it.spellMul) it.spellMul = +Math.min(E.staffMax, 1 + (E.staff[0] + E.staff[1] * tier) * rar.mult).toFixed(2);
   if (slot === 'charm') { const k = ['maxHp', 'maxMp', 'maxSp'][Math.floor(rnd() * 3)]; it[k] = Math.round((20 + 8 * tier) * rar.mult); }
   // affixes (PR-02): draw only from affixes whose name part is still free, so every rarity gets its full count. Once the
   // prefix and the suffix are both taken, a further affix is nameless (shown in the tooltip only). Two elements never stack.
   const pool = AFFIXES.filter((a) => a.slots.includes(slot));
   const used = [];
   const prefixes = [], suffixes = [];
-  const k = Math.min(2, tier);
+  const k = Math.min(E.affixTierCap, tier);
   while (used.length < rar.affixes && pool.length) {
     const free = (a) => (a.pre ? !prefixes.length : !suffixes.length);
     const ok = pool.filter((a) => !(a.group && used.some((u) => u.group === a.group)));
@@ -99,10 +102,13 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
     used.push(a);
     if (free(a)) (a.pre ? prefixes : suffixes).push(a.pre || a.suf);
   }
+  // PR-10: a Legendary carries a signature no fixed item has: one more socket (below), or (helmets and charms) +10 to every pool
+  if (rar.id === 'legend' && (slot === 'helmet' || slot === 'charm')) { for (const p of ['maxHp', 'maxMp', 'maxSp']) it[p] = (it[p] || 0) + E.legendPools; it.signature = `+${E.legendPools} HEALTH, MANA, STAMINA`; }
   it.affixLines = used.map((a) => a.line(it));
   it.name = `${prefixes[0] ? prefixes[0] + ' ' : ''}${it.name}${suffixes[0] ? ' ' + suffixes[0] : ''}`;
   if (slot === 'charm' && !prefixes.length) it.name = `${['Frost', 'Wolf', 'Raven', 'Ember', 'Oak'][Math.floor(rnd() * 5)]} ${it.name}`;
-  it.value = Math.round(((it.dmg || 0) * 6 + (it.armor || 0) * 400 + (it.block || 0) * 120 + (it.maxHp || 0) + (it.maxMp || 0) + (it.maxSp || 0) + 20) * (1 + used.length * 0.5));
+  it.value = Math.round(((it.dmg || 0) * 6 + (it.armor || 0) * 400 + (it.block || 0) * 120 + (it.maxHp || 0) + (it.maxMp || 0) + (it.maxSp || 0) + ((it.spellMul || 1) - 1) * 600 + 20) * (1 + used.length * 0.5));
+  if (rar.id === 'legend' && slot !== 'helmet' && slot !== 'charm') { it.sockets = (it.value >= 250 ? 2 : it.value >= 90 ? 1 : 0) + 1; it.signature = 'ONE MORE SOCKET'; }
   it.icon = [it.icon[0], rar.id === 'common' ? it.icon[1] : rar.col];
   it.desc = describe(it);
   return it;
@@ -112,11 +118,14 @@ function describe(it) {
   const parts = [];
   if (it.dmg) parts.push(`DAMAGE ${it.dmg}`);
   if (it.armor != null) parts.push(`ARMOR ${Math.round(it.armor * 100)}%`);
+  if (it.spellMul) parts.push(`SPELLS +${Math.round((it.spellMul - 1) * 100)}%`);
   if (it.block != null) parts.push(`BLOCKS ${Math.round(it.block * 100)}%`);
   for (const l of it.affixLines || []) parts.push(l);
-  if (it.maxHp && !(it.affixLines || []).some((l) => l.includes('HEALTH'))) parts.push(`+${it.maxHp} HEALTH`);
-  if (it.maxMp && !(it.affixLines || []).some((l) => l.includes('MANA'))) parts.push(`+${it.maxMp} MANA`);
-  if (it.maxSp && !(it.affixLines || []).some((l) => l.includes('STAMINA'))) parts.push(`+${it.maxSp} STAMINA`);
+  if (it.signature) parts.push(it.signature);
+  const said = [...(it.affixLines || []), it.signature || ''];
+  if (it.maxHp && !said.some((l) => l.includes('HEALTH'))) parts.push(`+${it.maxHp} HEALTH`);
+  if (it.maxMp && !said.some((l) => l.includes('MANA'))) parts.push(`+${it.maxMp} MANA`);
+  if (it.maxSp && !said.some((l) => l.includes('STAMINA'))) parts.push(`+${it.maxSp} STAMINA`);
   return `${(RARITY.find((r) => r.id === it.rarity) || RARITY[0]).name.toUpperCase()}. ` + parts.join('. ') + '.';
 }
 
