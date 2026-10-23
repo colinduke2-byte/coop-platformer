@@ -7,7 +7,6 @@
 // The copy keeps the frame names of the original, so setFrame keeps working, and a later setTexture keeps the tint (as Phaser
 // does). The result looks the same on Canvas and WebGL. Gradient tints (four corners), text and render textures keep the
 // renderer's own tint. A copy is named '~<mode><hex>~<key>' and is never touched by the art baseline.
-import Phaser from 'phaser';
 import { PAL } from '../config.js';
 
 const RGB = PAL.map((h) => parseInt(h.slice(1), 16));
@@ -65,7 +64,7 @@ export function bakeTexture(textures, key, mode, col) {
   const vkey = baked(mode, col, key);
   if (textures.exists(vkey)) return vkey;
   const tex = textures.get(key);
-  if (!tex || key.startsWith('__') || tex.source.length !== 1 || tex instanceof Phaser.Textures.DynamicTexture) return null;
+  if (!tex || key.startsWith('__') || tex.source.length !== 1 || typeof tex.stamp === 'function') return null;     // (stamp: a DynamicTexture)
   const src = tex.source[0].image;
   if (!(src instanceof HTMLCanvasElement || src instanceof HTMLImageElement)) return null;
   const cv = document.createElement('canvas');
@@ -148,7 +147,12 @@ function patch(proto) {
     return this;
   };
 }
-patch(Phaser.GameObjects.Image.prototype);
-patch(Phaser.GameObjects.Sprite.prototype);
+// Installed from generateArt (art/sprites.js) with the scene at hand, so this module never imports Phaser (data files that
+// import sprites.js also run in Node, in the unit tests).
+export function installBakedTints(scene) {
+  const img = scene.add.image(0, 0, '__DEFAULT'), spr = scene.add.sprite(0, 0, '__DEFAULT');
+  patch(Object.getPrototypeOf(img)); patch(Object.getPrototypeOf(spr));
+  img.destroy(); spr.destroy();
+}
 // the key an object was made with, whatever tint it wears now (pools key their objects by it)
 export const baseKey = (o) => o._bakeBase || o.texture?.key;

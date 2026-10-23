@@ -18,6 +18,16 @@ const FLIP_XY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.PATH, TILE.PATH
 const FLIP_X = new Set([TILE.SNOW4, TILE.MEADOW, TILE.FLOWERS, TILE.HEATH, TILE.DUNE, TILE.SNOWDRIFT, TILE.EMBERBLOOM, TILE.LILYPAD, TILE.GLASSBLOOM,
   TILE.SPORES, TILE.TUFT]);
 
+// VX-16: trees and rocks that repeat in straight rows get look-alike variants (same solidity; the map grid keeps the original
+// id) and are mirrored, both by a hash of the cell, so a forest edge stops reading as a wall of one stamp.
+const ALIAS = {
+  [TILE.PINE]: [TILE.PINE, TILE.PINE, TILE.PINE_B, TILE.PINE_C], [TILE.BIRCH]: [TILE.BIRCH, TILE.BIRCH, TILE.BIRCH_B], [TILE.DEADTREE]: [TILE.DEADTREE, TILE.DEADTREE_B],
+  [TILE.BOGTREE]: [TILE.BOGTREE, TILE.BOGTREE_B], [TILE.CRYSTAL]: [TILE.CRYSTAL, TILE.CRYSTAL_B], [TILE.CACTUS]: [TILE.CACTUS, TILE.CACTUS, TILE.CACTUS_B],
+  [TILE.ROCK]: [TILE.ROCK, TILE.ROCK, TILE.ROCK_B], [TILE.GLOWCAP]: [TILE.GLOWCAP, TILE.GLOWCAP_B],
+};
+const MIRROR = new Set([TILE.PINE, TILE.PINE_B, TILE.PINE_C, TILE.BIRCH, TILE.BIRCH_B, TILE.DEADTREE, TILE.DEADTREE_B, TILE.BOGTREE, TILE.BOGTREE_B,
+  TILE.CRYSTAL, TILE.CRYSTAL_B, TILE.ROCK, TILE.ROCK_B, TILE.BOULDER, TILE.STUMP, TILE.HEATHROCK, TILE.GLOWCAP, TILE.GLOWCAP_B, TILE.BOGREED]);
+
 const groundOf = new WeakMap();
 // The most common walkable tile of a built map (its ground). Cached on the built object's identity.
 export function mapGround(built) {
@@ -52,7 +62,10 @@ export function varyGround(layer) {
   for (let y = 0; y < data.length; y++) {
     const row = data[y];
     for (let x = 0; x < row.length; x++) {
-      const t = row[x], i = t.index;
+      const t = row[x];
+      if (ALIAS[t.index]) { const v = ALIAS[t.index]; t.index = v[(Math.imul(x * 2654435761 ^ y * 40503, 0x9e3779b1) >>> 24) % v.length]; }
+      const i = t.index;
+      if (MIRROR.has(i)) t.flipX = (Math.imul(x * 374761393 ^ y * 668265263, 0x5bd1e995) >>> 31) === 1;
       if (FLIP_XY.has(i) || FLIP_X.has(i)) {
         const h = Math.imul(x * 73856093 ^ y * 19349663, 0x27d4eb2d) >>> 29;
         t.flipX = (h & 1) === 1;

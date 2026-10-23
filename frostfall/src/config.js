@@ -57,7 +57,10 @@ export const TILE = {
   // scatter terrain for the older regions: patches of snowdrift and frostbloom, boulders, ember blooms, lily pads, mossy marble, glass flowers, spores
   SNOWDRIFT: 67, FROSTBLOOM: 68, BOULDER: 69, EMBERBLOOM: 70, LILYPAD: 71, MARBLEMOSS: 72, GLASSBLOOM: 73, SPORES: 74,
 
-  // A (art) 100-119:
+  // A (art) 100-119: look-alike variants of trees and rocks (art/tileset.js swaps some cells to them when a map is drawn, so
+  // forest edges stop repeating; the map grid keeps the original id), then scatter props for the world to place (VX-16, VX-22)
+  PINE_B: 100, PINE_C: 101, BIRCH_B: 102, DEADTREE_B: 103, BOGTREE_B: 104, CRYSTAL_B: 105, CACTUS_B: 106, ROCK_B: 107, GLOWCAP_B: 108,
+  BONES: 109, POTS: 110, PALM: 111, STEAMVENT: 112, OBSIDIAN: 113, SNAG: 114, LANTERNPOST: 115, STATUE: 116, STALAGMITE: 117, BEEHIVE: 118, LOG: 119,
 
   // W (world) 120-139:
 
@@ -78,6 +81,8 @@ export const SOLID_TILES = [
   TILE.BOULDER, TILE.BIRCH, TILE.POND, TILE.HEARTROOT, TILE.SANDSTONE, TILE.CACTUS, TILE.OASIS, TILE.SANDRUIN,
   // solid tiles of the reserved blocks, each agent on its own line:
   // A:
+  TILE.PINE_B, TILE.PINE_C, TILE.BIRCH_B, TILE.DEADTREE_B, TILE.BOGTREE_B, TILE.CRYSTAL_B, TILE.CACTUS_B, TILE.ROCK_B, TILE.GLOWCAP_B,
+  TILE.POTS, TILE.PALM, TILE.OBSIDIAN, TILE.SNAG, TILE.LANTERNPOST, TILE.STATUE, TILE.STALAGMITE, TILE.BEEHIVE, TILE.LOG,
 
   // W:
 

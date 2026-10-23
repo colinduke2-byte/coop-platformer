@@ -48,6 +48,11 @@ const edge = await G((ids) => {
   }
   return out;
 }, ['MEADOW', 'MOSS', 'PATH', 'ASH', 'SHINGLE', 'DUNE', 'GLASSMOSS'].map((k) => [k, TILE[k]]));
+r = await G(async () => { const { TILE } = await import('/src/config.js'); const g = window.gs(); let alias = 0, solidOk = true, inGrid = 0;
+  g.layer.forEachTile((t) => { if (t.index === TILE.BIRCH_B) { alias++; if (!t.collides) solidOk = false; } });
+  for (const row of g.built.grid) for (const v of row) if (v === TILE.BIRCH_B) inGrid++;
+  return { alias, solidOk, inGrid }; });
+check('VX-16: some birches are drawn as a look-alike variant, still solid, without touching the map grid', r.alias > 10 && r.solidOk && r.inGrid === 0, JSON.stringify(r));
 check('ground tiles draw no dark edge row (no stripes every 16 px)', !edge.length, edge.join(','));
 
 // ---- VX-03: tints are baked into palette-remapped textures (the Canvas renderer ignores real tints)

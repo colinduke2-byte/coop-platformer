@@ -5,7 +5,7 @@ import { hash } from '../util.js';
 import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
 import { wornStyle, wornExtra, wornHelmet } from './worn.js';
 import { DAG_HI, DAG_LO, outlineCells, iconFromCells, heldFromCells, LET, Cb, col2 } from './cells.js';
-import './tintbake.js';            // tints become palette-remapped textures (VX-03)
+import { installBakedTints } from './tintbake.js';      // tints become palette-remapped textures (VX-03)
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');
@@ -657,7 +657,8 @@ function speckle(ctx, ox, oy, seed, cols, count) {
 // Scenery props (trees, rocks, braziers...) are drawn over a ground. In the base tileset that ground is snow (or slate floor
 // for the dungeon props); a region's own tileset (art/tileset.js) passes its ground tile as `bg`, so the same prop stands on
 // ash, sand or moss there instead of in a white square (VX-01). `bg` also picks the roof material.
-export const PROP_TILES = [TILE.PINE, TILE.ROCK, TILE.FENCE, TILE.GRAVE, TILE.DEADTREE, TILE.STUMP, TILE.TUFT, TILE.FROSTBLOOM, TILE.BOULDER, TILE.FIRE, TILE.PILLAR, TILE.BRAZIER, TILE.SARCO, TILE.ROOF];
+export const PROP_TILES = [TILE.PINE, TILE.ROCK, TILE.FENCE, TILE.GRAVE, TILE.DEADTREE, TILE.STUMP, TILE.TUFT, TILE.FROSTBLOOM, TILE.BOULDER, TILE.FIRE, TILE.PILLAR, TILE.BRAZIER, TILE.SARCO, TILE.ROOF,
+  TILE.PINE_B, TILE.PINE_C, TILE.DEADTREE_B, TILE.ROCK_B, TILE.BONES, TILE.POTS, TILE.PALM, TILE.STEAMVENT, TILE.OBSIDIAN, TILE.SNAG, TILE.LANTERNPOST, TILE.STATUE, TILE.STALAGMITE, TILE.BEEHIVE, TILE.LOG];
 const GREEN = [TILE.MEADOW, TILE.FLOWERS, TILE.MOSS, TILE.HEATH, TILE.BOG, TILE.BOARDWALK, TILE.GLADEPATH];
 const DARK = [TILE.ASH, TILE.BASALT, TILE.SLATE, TILE.DEEPSTONE, TILE.CFLOOR, TILE.CFLOOR2, TILE.STONE];
 const SANDY = [TILE.SAND, TILE.DUNE, TILE.GLYPH, TILE.SANDRUIN];
@@ -794,6 +795,64 @@ function drawTile(ctx, id, ox, bg = null) {
     case TILE.MARBLEMOSS: o(5, 0, 0, 16, 16); o(6, 0, 0, 15, 1); o(6, 0, 0, 1, 15); o(4, 15, 0, 1, 16); o(4, 0, 15, 16, 1); o(8, 2, 3, 5, 3); o(7, 3, 5, 3, 2); o(8, 9, 9, 5, 4); o(7, 10, 11, 3, 2); o(13, 4, 8, 1, 1); o(13, 12, 3, 1, 1); o(6, 8, 6, 1, 1); break;
     case TILE.GLASSBLOOM: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); for (const [x, y, c] of [[3, 5, 15], [9, 4, 6], [12, 10, 15], [5, 11, 6]]) { o(c, x, y, 1, 3); o(c, x - 1, y + 1, 3, 1); o(8, x, y + 3, 1, 2); } break;
     case TILE.SPORES: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 271, [2, 3, 0, 2], 30); for (const [x, y, c] of [[3, 6, 15], [9, 4, 14], [12, 10, 8], [5, 12, 14]]) { o(c, x - 1, y, 3, 1); o(c, x, y - 1, 1, 1); o(4, x, y + 1, 1, 2); } break;
+    // ---- A block (VX-16, VX-22): tree and rock variants, then scatter props. All stand on snow() so a region's tileset
+    // composites them onto its own ground.
+    case TILE.PINE_B: case TILE.PINE_C: {           // a tall narrow pine; a squat one heavy with snow
+      snow();
+      const tall = id === TILE.PINE_B, tiers = tall ? 4 : 3, step = tall ? 3 : 4, maxW = tall ? 9 : 14;
+      o(0, 4, 14, 8, 1); o(9, 7, 13, 2, 3);
+      for (let t = 0; t < tiers; t++) for (let r = 0; r < 4; r++) {
+        const w = Math.min(2 + r * 2 + t, maxW), x = 8 - w / 2, y = t * step + r;
+        o(r < (tall ? 1 : 2) ? 8 : 7, x, y, w, 1);
+        if (r < (tall ? 1 : 3)) o(6, x, y, Math.max(1, Math.round(w * (tall ? 0.3 : 0.6))), 1);
+        o(0, x + w - 1, y, 1, 1);
+      }
+      break;
+    }
+    case TILE.BIRCH_B:                             // a birch leaning the other way under a rounder crown
+      o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 303, [7, 7, 8, 10], 22); o(0, 3, 14, 8, 1);
+      o(6, 6, 9, 2, 6); o(5, 6, 9, 1, 6); o(6, 5, 7, 2, 2); for (const y of [10, 12]) o(0, 6, y, 2, 1);
+      o(0, 1, 1, 12, 8); o(0, 0, 3, 14, 4); o(7, 2, 2, 10, 6); o(7, 1, 3, 12, 3); o(8, 3, 2, 7, 3); o(8, 2, 5, 4, 1);
+      o(13, 4, 3, 1, 1); o(13, 9, 2, 1, 1); o(13, 7, 5, 1, 1); break;
+    case TILE.DEADTREE_B:                          // a split, wind-bent snag
+      snow(); o(0, 5, 14, 7, 1); o(9, 7, 7, 2, 8); o(10, 7, 7, 1, 8); o(9, 5, 4, 2, 4); o(9, 4, 2, 1, 3); o(9, 9, 5, 1, 3); o(9, 10, 3, 3, 1); o(9, 12, 2, 1, 2); o(6, 4, 2, 1, 1); o(6, 12, 2, 1, 1); break;
+    case TILE.BOGTREE_B:                           // a drowned stump with hanging moss
+      o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 172, [1, 9, 8, 1], 22); o(0, 3, 14, 10, 1); o(9, 5, 6, 6, 8); o(10, 6, 6, 1, 8); o(1, 7, 9, 2, 2);
+      o(9, 3, 4, 3, 2); o(9, 11, 3, 3, 2); for (const x of [4, 6, 11, 13]) o(8, x, 5, 1, 3 + (x % 3)); break;
+    case TILE.CRYSTAL_B:                           // three thin glass spires
+      o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 252, [8, 15, 8, 6], 26); o(0, 2, 14, 12, 1);
+      for (const [x, h] of [[4, 8], [8, 12], [11, 6]]) { o(4, x, 14 - h, 2, h); o(15, x, 14 - h, 1, h - 1); o(6, x, 14 - h, 1, 1); } break;
+    case TILE.CACTUS_B:                            // a barrel cactus in flower
+      o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 314, [10, 10, 13, 9], 20); o(9, 3, 14, 10, 1); o(7, 4, 7, 8, 7); o(8, 5, 7, 6, 6); o(7, 7, 7, 1, 6); o(7, 10, 7, 1, 6);
+      for (const x of [5, 8, 11]) o(6, x, 9, 1, 1); o(11, 7, 5, 2, 2); o(12, 8, 5, 1, 1); break;
+    case TILE.ROCK_B:                              // two stones leaning together
+      snow(); o(2, 2, 13, 12, 1); o(3, 2, 7, 6, 6); o(4, 3, 7, 4, 2); o(6, 3, 6, 4, 1); o(3, 8, 5, 6, 8); o(4, 9, 5, 4, 3); o(6, 9, 4, 4, 1); o(2, 8, 12, 6, 1); break;
+    case TILE.GLOWCAP_B:                           // a ring of three small glowing caps
+      o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 272, [2, 3, 0, 2], 30); o(0, 2, 14, 12, 1);
+      for (const [x, y] of [[3, 9], [8, 6], [11, 10]]) { o(5, x + 1, y + 2, 1, 3); o(15, x, y, 3, 2); o(6, x, y, 1, 1); } break;
+    case TILE.BONES:                               // a bleached ribcage half sunk in the ground (walkable)
+      snow(); for (let i = 0; i < 4; i++) { o(6, 4 + i * 2, 6, 1, 5); o(5, 4 + i * 2, 10, 1, 1); } o(6, 3, 6, 9, 1); o(6, 11, 4, 3, 2); o(0, 12, 5, 1, 1); break;
+    case TILE.POTS:                                // two clay jars
+      snow(); o(0, 2, 14, 12, 1); o(12, 2, 6, 6, 8); o(9, 2, 12, 6, 2); o(13, 3, 7, 2, 1); o(9, 3, 4, 4, 2); o(12, 9, 8, 5, 6); o(9, 9, 12, 5, 2); o(13, 10, 9, 1, 1); o(9, 10, 6, 3, 2); break;
+    case TILE.PALM:                                // a palm: a ringed trunk and drooping fronds
+      snow(); o(0, 6, 14, 6, 1); for (let y = 6; y < 15; y++) o(y % 2 ? 9 : 10, 7 + (y < 9 ? 1 : 0), y, 2, 1);
+      for (const [x, y, w] of [[2, 3, 6], [9, 3, 6], [1, 5, 4], [11, 5, 4], [5, 1, 6]]) { o(8, x, y, w, 2); o(7, x, y + 1, w, 1); } o(9, 7, 4, 3, 2); break;
+    case TILE.STEAMVENT:                           // a cracked vent breathing steam (walkable)
+      snow(); o(1, 4, 8, 8, 4); o(0, 5, 9, 6, 2); o(12, 6, 10, 4, 1); o(11, 7, 10, 2, 1); o(2, 3, 9, 1, 2); o(2, 12, 9, 1, 2); for (const [x, y] of [[6, 5], [8, 3], [7, 1]]) o(5, x, y, 2, 1); break;
+    case TILE.OBSIDIAN:                            // a black glass shard
+      snow(); o(0, 3, 14, 10, 1); o(1, 4, 5, 8, 9); o(0, 5, 3, 3, 2); o(2, 9, 7, 2, 7); o(14, 6, 6, 1, 6); o(4, 5, 4, 1, 2); break;
+    case TILE.SNAG:                                // a mossy dead snag in the bog
+      snow(); o(0, 4, 14, 8, 1); o(9, 6, 3, 4, 11); o(10, 7, 3, 1, 11); o(9, 3, 2, 3, 2); o(9, 10, 5, 3, 2); o(8, 5, 3, 2, 3); o(8, 9, 6, 2, 2); o(7, 6, 10, 1, 3); break;
+    case TILE.LANTERNPOST:                         // a post with a hanging lantern
+      snow(); o(0, 5, 14, 5, 1); o(9, 6, 2, 2, 13); o(9, 6, 2, 6, 1); o(1, 10, 3, 1, 2); o(0, 9, 5, 3, 4); o(13, 10, 6, 1, 2); o(12, 10, 7, 1, 1); break;
+    case TILE.STATUE:                              // a weathered statue of a cloaked king
+      snow(); o(2, 3, 13, 10, 3); o(3, 4, 12, 8, 1); o(3, 5, 5, 6, 7); o(4, 6, 5, 3, 7); o(3, 6, 1, 4, 4); o(4, 7, 2, 2, 1); o(8, 4, 8, 2, 3); o(13, 6, 1, 4, 1); break;
+    case TILE.STALAGMITE:                          // a pale cone of dripstone
+      snow(); o(0, 4, 14, 8, 1); o(3, 5, 8, 6, 6); o(3, 6, 4, 4, 4); o(4, 7, 1, 2, 3); o(4, 5, 9, 2, 5); o(15, 7, 2, 1, 1); o(3, 10, 11, 3, 3); break;
+    case TILE.BEEHIVE:                             // a straw skep on a stump
+      snow(); o(0, 4, 14, 8, 1); o(9, 5, 11, 6, 3); o(10, 4, 4, 8, 7); o(13, 5, 3, 6, 1); for (const y of [6, 8]) o(9, 4, y, 8, 1); o(0, 7, 9, 2, 1); o(13, 12, 3, 1, 1); o(13, 2, 6, 1, 1); break;
+    case TILE.LOG:                                 // a fallen log
+      snow(); o(0, 1, 12, 14, 1); o(9, 1, 7, 13, 5); o(10, 1, 7, 13, 1); o(10, 13, 7, 2, 5); o(9, 14, 8, 1, 3); o(8, 4, 6, 3, 1); o(1, 6, 9, 4, 1); break;
     default: o(0, 0, 0, 16, 16);
   }
 }
@@ -867,6 +926,11 @@ function buildFx(scene) {
   tex(scene, 'foot', 4, 4, (g) => { R(g, 3, 0, 0, 2, 3); R(g, 3, 1, 3, 1, 1); });
   tex(scene, 'raven0', 8, 6, (g) => { R(g, 0, 1, 2, 5, 3); R(g, 0, 5, 1, 2, 2); R(g, 0, 0, 2, 2, 1); R(g, 12, 6, 2, 1, 1); R(g, 0, 2, 5, 1, 1); });
   tex(scene, 'raven1', 8, 6, (g) => { R(g, 0, 1, 3, 5, 2); R(g, 0, 5, 2, 2, 1); R(g, 0, 0, 3, 2, 1); R(g, 0, 0, 0, 3, 1); R(g, 0, 5, 0, 3, 1); R(g, 12, 6, 3, 1, 1); });
+  // VX-19: gulls on the Coast, vultures over the Sunscorch (same size and frames as the ravens)
+  tex(scene, 'gull0', 8, 6, (g) => { R(g, 6, 1, 2, 5, 3); R(g, 6, 5, 1, 2, 2); R(g, 4, 1, 2, 3, 1); R(g, 13, 7, 2, 1, 1); R(g, 0, 5, 1, 1, 1); R(g, 3, 0, 3, 2, 1); });
+  tex(scene, 'gull1', 8, 6, (g) => { R(g, 6, 1, 3, 5, 2); R(g, 6, 5, 2, 2, 1); R(g, 4, 0, 1, 3, 1); R(g, 4, 0, 0, 3, 1); R(g, 4, 5, 0, 3, 1); R(g, 13, 7, 3, 1, 1); });
+  tex(scene, 'vulture0', 8, 6, (g) => { R(g, 1, 1, 2, 5, 3); R(g, 9, 2, 2, 3, 2); R(g, 10, 5, 0, 2, 2); R(g, 6, 5, 2, 2, 1); R(g, 13, 7, 1, 1, 1); R(g, 0, 0, 3, 2, 1); });
+  tex(scene, 'vulture1', 8, 6, (g) => { R(g, 1, 1, 3, 5, 2); R(g, 10, 5, 1, 2, 2); R(g, 9, 0, 3, 2, 1); R(g, 1, 0, 1, 3, 1); R(g, 1, 5, 1, 3, 1); R(g, 13, 7, 2, 1, 1); });
   // town critters: a hen and a dog, two frames each
   tex(scene, 'hen0', 7, 6, (g) => { R(g, 12, 1, 2, 4, 3); R(g, 12, 0, 0, 2, 2); R(g, 8, 0, 2, 1, 1); R(g, 3, 1, 1, 5, 1); R(g, 3, 1, 0, 2, 5); R(g, 0, 2, 4, 1, 1); R(g, 0, 5, 5, 1, 1); });
   tex(scene, 'hen1', 7, 6, (g) => { R(g, 12, 1, 2, 4, 3); R(g, 12, 0, 1, 2, 2); R(g, 8, 0, 3, 1, 1); R(g, 3, 1, 1, 5, 1); R(g, 3, 1, 0, 2, 5); R(g, 0, 1, 5, 1, 1); R(g, 0, 4, 5, 1, 1); });
@@ -1255,6 +1319,7 @@ export function buildHeld(scene, key, kind, col = 5) {
 
 // --------------------------------------------------------------------- entry
 export function generateArt(scene) {
+  installBakedTints(scene);
   buildCharacters(scene);
   buildTiles(scene);
   buildFx(scene);
