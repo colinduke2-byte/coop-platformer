@@ -80,7 +80,7 @@ export const livingMethods = {
     const e = this.addEnemy('werewolf', p.x, p.y, { tier: tier + 1, champion: true, blood: true, roam: true });
     e.displayName = 'The Blood Moon Alpha'; e.alert(true);
     for (let i = 0; i < 2; i++) { const q = this.freeSpotNear(40, 80); if (q) this.addEnemy('werewolf', q.x, q.y, { tier, roam: true }).alert(true); }
-    bus.emit('toast', 'THE BLOOD MOON: A GREAT WOLF HUNTS YOU!', 8); sfx.play('alert'); music.stinger();
+    bus.emit('toast', 'THE BLOOD MOON: A GREAT WOLF HUNTS YOU!', 8); sfx.play('alert'); music.stinger('blood');
   },
   spawnWounded(tier) {
     const p = this.freeSpotNear(80, 130); if (!p) return;
@@ -142,7 +142,7 @@ export const livingMethods = {
     if (!made.length) return false;
     this.raidEvt = { foes: made, poi: best, tier, life: 240 };
     S.flags.waypoint = { map: this.mapId, x: best.x, y: best.y, evt: true };
-    bus.emit('toast', 'RAIDERS ARE ATTACKING A HAMLET!', 11); sfx.play('alert'); music.stinger();
+    bus.emit('toast', 'RAIDERS ARE ATTACKING A HAMLET!', 11); sfx.play('alert'); music.stinger('raid');
     return true;
   },
   // Storms bite: in a blizzard or whiteout you slowly chill unless you wear warm armour or stand by a fire.

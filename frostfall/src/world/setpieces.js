@@ -95,7 +95,7 @@ export const setPieceMethods = {
         const en = this.addEnemy(a.kinds[made % a.kinds.length], x, y, { tier: a.tier });
         en.alert(true); this.fx.puff(x, y, 7, 6, 30, 0.4); made++;
       }
-      bus.emit('toast', 'AMBUSH!', 11); sfx.play('alert'); music.stinger();
+      bus.emit('toast', 'AMBUSH!', 11); sfx.play('alert'); music.stinger('ambush');
     }
   },
 };

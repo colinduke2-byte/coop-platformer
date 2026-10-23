@@ -80,7 +80,7 @@ export const eventMethods = {
       const e = this.addEnemy(k, p.x, p.y, { tier, roam: true });
       e.alert(true); made++;
     }
-    if (made) { bus.emit('toast', night ? (isFull() ? 'THE PACK HUNTS UNDER THE FULL MOON!' : 'THE DEAD ARE RESTLESS!') : 'AMBUSH!', 11); sfx.play('alert'); music.stinger(); }
+    if (made) { bus.emit('toast', night ? (isFull() ? 'THE PACK HUNTS UNDER THE FULL MOON!' : 'THE DEAD ARE RESTLESS!') : 'AMBUSH!', 11); sfx.play('alert'); music.stinger('ambush'); }
   },
   spawnTrader() {
     const p = this.freeSpotNear(80, 130); if (!p) return;
