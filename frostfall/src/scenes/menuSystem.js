@@ -46,7 +46,7 @@ const DIFFS = ['easy', 'normal', 'hard'];
 const HINTS = {
   'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK? MOVES YOU TO THE NEAREST OPEN SPOT', 'SAVE GAME': 'SAVE TO THIS SLOT. FIRES AND BEDS SAVE TOO',
   'LOAD GAME': 'RELOAD THIS SLOT. UNSAVED PROGRESS IS LOST', 'SAVES & BUG REPORT': 'EXPORT OR IMPORT SAVES, COPY A BUG REPORT',
-  'VOLUME': 'MASTER VOLUME', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS',
+  'VOLUME': 'MASTER VOLUME', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS', 'HEARTBEAT': 'A HEARTBEAT WHEN HEALTH RUNS LOW',
   'FULLSCREEN': 'FILL THE SCREEN (ALSO F11)', 'SLOT': 'THREE SAVE SLOTS', 'DIFFICULTY': 'CHANGES ENEMIES, PRICES AND DROPS',
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'SCREEN FLASHES AND THE LOW-HEALTH PULSE', 'PIXEL SCALE': 'INTEGER IS CRISP. FIT FILLS THE WINDOW',
   'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD SWORD TO KEEP THE COMBO GOING',
@@ -62,7 +62,7 @@ const SHAKES = [0, 0.5, 1];
 export function systemTab(m) {
   // The list is long, so it is grouped into pages, in this order. Q jumps to the first row of the next page.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
-    ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
+    ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'HEARTBEAT']],
     ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']],
     ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'CONTROLS', 'CONTROLLER']]];
   const rows = PAGES.flatMap(([, l]) => l).filter((r) => !(S.quick || S.daily) || !['SAVE GAME', 'LOAD GAME', 'SLOT'].includes(r));   // no saving inside Arena or a Daily run
@@ -139,6 +139,7 @@ export function systemTab(m) {
       case 'SNEAK MODE': toggle('sneakToggle'); break;
       case 'HOLD TO CHAIN': toggle('holdChain'); break;
       case 'REDUCE MOTION': toggle('reduceMotion'); break;
+      case 'HEARTBEAT': toggle('heartbeat'); break;
       case 'HIGH CONTRAST': toggle('highContrast'); setContrast(settings.highContrast); bus.emit('uiscale'); break;
       case 'BAR NUMBERS': toggle('hudNumbers'); break;
       case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
@@ -311,6 +312,7 @@ export function systemTab(m) {
         else if (r === 'ROTATE VIEW') { v = settings.autoRotate === false ? 'OFF' : 'AUTO'; vc = settings.autoRotate === false ? 4 : 8; }
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
         else if (r === 'REDUCE MOTION') { v = settings.reduceMotion ? 'ON' : 'OFF'; vc = settings.reduceMotion ? 8 : 4; }
+        else if (r === 'HEARTBEAT') { v = settings.heartbeat !== false ? 'ON' : 'OFF'; vc = settings.heartbeat !== false ? 4 : 8; }
         else if (r === 'HIGH CONTRAST') { v = settings.highContrast ? 'ON' : 'OFF'; vc = settings.highContrast ? 8 : 4; }
         else if (r === 'BAR NUMBERS') { v = settings.hudNumbers ? 'ON' : 'OFF'; vc = settings.hudNumbers ? 8 : 4; }
         else if (r === 'TEXT SPEED') { v = settings.textSpeed.toUpperCase(); }
