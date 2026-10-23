@@ -1,6 +1,7 @@
 import { settings } from '../systems/settings.js';
 import { txtS, fontKey } from './font.js';
 import { C } from '../config.js';
+import { TUNE } from '../data/tuning.js';
 
 // Particles, floating text, slashes, rings: small timed effects for a scene.
 export class Fx {
@@ -76,8 +77,15 @@ export class Fx {
       if (this.texts.length > 9) { const old = this.texts.shift(); this.freeText(old.t); }
       if (this.texts.length > 4) life = 0.55;
     }
+    // VX-05: a word (WEAK, RESIST, ARMORED...) already floating over the same foe is refreshed, not stacked; and a crowd
+    // fight never shows more than TUNE.hud.maxTexts floating texts in all
+    if (!isNum) {
+      const same = this.texts.find((o) => o.str === str && o.life > 0 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
+      if (same) { same.life = same.t0; return; }
+    }
+    if (this.texts.length >= TUNE.hud.maxTexts) { const old = this.texts.shift(); this.freeText(old.t); }
     const t = this.getText(Math.round(x - str.length * 3), Math.round(y), str, col);
-    this.texts.push({ t, y, x, y0: y, t0: life, life, col, num: isNum ? Number(str) : null });
+    this.texts.push({ t, y, x, y0: y, t0: life, life, col, str, num: isNum ? Number(str) : null });
   }
 
   slash(x, y, angle, flip = false, scale = 1) {

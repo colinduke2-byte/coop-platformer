@@ -36,8 +36,10 @@ export const TIPS = {
   sunsentinel: 'SUN SENTINEL: GOLD ARMOUR. PARRY IT, STAGGER IT,\nOR USE LIGHTNING.',
   quest: 'PRESS {KeyO} FOR THE JOURNAL.\nPRESS {KeyE} ON A QUEST TO TRACK IT.',
 };
+// tips that matter right now replace the current hint instead of queueing behind it (NP1, NP5)
+const URGENT = new Set(['potion']);
 export function tip(id) {
   if (S.tips[id] || !TIPS[id]) return;
   S.tips[id] = true;
-  bus.emit('hint', TIPS[id].replace(/\{(\w+)\}/g, (_, c) => prompt(c)));
+  bus.emit('hint', TIPS[id].replace(/\{(\w+)\}/g, (_, c) => prompt(c)), URGENT.has(id));
 }

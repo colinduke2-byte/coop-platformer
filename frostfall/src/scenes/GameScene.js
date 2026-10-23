@@ -435,7 +435,7 @@ export default class GameScene extends Phaser.Scene {
         g.beginPath(); g.moveTo(Math.round(e.x), Math.round(e.y + 3)); g.lineTo(Math.round(e.x + e.dashDir.x * 90), Math.round(e.y + 3 + e.dashDir.y * 90)); g.strokePath();
       }
       const pz = e.poise > e.maxHp * 0.06 || e.staggerT > 0;
-      if (e.dead || (e.hp >= e.maxHp && !pz) || e.isBoss) continue;
+      if (e.dead || (e.hp >= e.maxHp && !pz) || e.isBoss || (!pz && !(e.barT > 0) && e !== pl.target)) continue;   // VX-05: features/hud_combat.js sets barT
       const w = e.elite ? 20 : 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
       g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, pz ? 6 : 4);
       g.fillStyle(C[1]); g.fillRect(x, y, w, 2);

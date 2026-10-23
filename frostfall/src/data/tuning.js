@@ -296,3 +296,15 @@ export const TUNE = {
     hard: { dmgTaken: 1.46, enemyHp: 2.15, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: 'hard' },
   },
 };
+
+// ---- H: HUD and first hour
+TUNE.hud = {
+  // hints: seconds on screen; a new tip waits while the current one has more than `keep` s left, trims it to `trim` s,
+  // and at most `queue` wait. Urgent hints (tutorial steps, low-health potion tip) replace the current one at once (NP1).
+  hintLife: 12, hintKeep: 4, hintTrim: 6, hintQueue: 3,
+  // the hint docks at the bottom while an alerted foe is this close (px), and for `fightHold` s after (VX-05)
+  fightR: 220, fightHold: 2,
+  // VX-05: at most this many floating combat texts at once; an enemy's small HP bar shows for `barHold` s after it is hit
+  // (always while it is your lock-on target)
+  maxTexts: 12, barHold: 2,
+};
