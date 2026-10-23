@@ -88,6 +88,30 @@ export function chapter3Ending(kind) {
   return { title, col: c.col, text: [c.text, WINTER_ECHO[choice][winter] || WINTER_ECHO[choice].thaw, HOUSE[best || 'none']].join('\n\n') };
 }
 
+// ---- the last road: the Hollow King is remembered, and the Dreamer learns what they are (EndingScene kind 'memory')
+const MEMORY_WINTER = {
+  thaw: 'You gave the Winter what the Kings never dared to: its freedom. Somewhere north of the mountains it is still walking, and it has never once looked back.',
+  warden: 'You chose for the Winter what the Kings chose, but with your own hand on the chain and your eyes open. It sleeps. It knows who is watching.',
+  crown: 'You chose to wear the Winter. The Kings would have been afraid of you. The Scribe was not, and only wrote it down, carefully, in ink.',
+};
+const MEMORY_FIRE = {
+  quench: 'And the Fire you answered with one word: enough. The mountain is only a mountain now, and the smiths of Emberhold have learned to make their own warmth.',
+  crown: 'And the Fire you wear still. Some nights you dream of every forge in the world. You do not mind. You were made from a dream.',
+  bind: 'And the Fire sleeps in the Court of Anvils, held by three houses and a stranger who trusted them. It was the first binding anyone ever asked permission for.',
+};
+export function memoryEnding(kind) {
+  if (kind !== 'memory') return null;
+  const text = [
+    'The Hollow King knelt at the end, and you did not take his crown. There was nothing in it but names.',
+    'The Scribe read the last line of the Book of Chains aloud, and you knew it before the last word. The Kings could not bring themselves to decide what the Winter deserved, so on the last night of the Binding they dreamed someone who could: a stranger with no name to lose, half buried on the north road, a thousand years later.',
+    'That was why you remembered nothing. There had been nothing to remember. Everything you are, you made in the Reach.',
+    MEMORY_WINTER[S.flags.finale] || MEMORY_WINTER.thaw,
+    MEMORY_FIRE[S.flags.finalChoice] || MEMORY_FIRE.bind,
+    'The Kings dreamed you. They never got to decide what you would do when you woke. Neither, it turns out, did anyone else.',
+  ];
+  return { title: 'THE CROWN OF MEMORY', col: 14, text: text.join('\n\n') };
+}
+
 export function epilogueLines() {
   const out = [];
   const trophies = Object.keys(S.trophies || {}).length;

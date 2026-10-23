@@ -12,6 +12,7 @@ import { getRegion } from './maps.js';
 import { restRoom } from './services2.js';
 import { isBlood, isFull, isNew } from '../systems/moon.js';
 import { today } from '../systems/bless.js';
+import { bus } from '../systems/bus.js';
 
 NPC_DEFS.trapper = { name: 'TRAPPER', tex: 'spr_trapper' };
 NPC_DEFS.fisher = { name: 'FISHER', tex: 'spr_fisher' };
@@ -105,7 +106,10 @@ SCRIPTS.scribe = async function scribe() {
   const N = 'The Scribe', q = S.quests.hollowking;
   if (q.status === 'active' && S.flags.hollowKingDead) {
     await say(N, 'He is remembered. I can feel it. The ink in my hand is wet again, for the first time in a thousand years.');
-    addGold(600); addItem('gem_ruby', 2, true); S.flags.kingRemembered = true; finishQuest('hollowking'); return;
+    await say(N, 'And now I can read the last line he made me write. It is not his name. It is the place where a name should go.');
+    await say(N, 'The Kings could not choose the Winter\'s fate. So on the last night of the Binding they dreamed someone who could: someone with no name to lose. They dreamed you, Dreamer.');
+    addGold(600); addItem('gem_ruby', 2, true); S.flags.kingRemembered = true; finishQuest('hollowking');
+    crownOfMemory(); return;
   }
   if (q.status === 'inactive') {
     await say(N, 'You can see me. Good. Most visitors walk through me and mutter about the cold.');
@@ -115,7 +119,13 @@ SCRIPTS.scribe = async function scribe() {
     return;
   }
   await say(N, cyc('scribeN', ['A kingdom is a promise that outlasts the people who made it. Ours outlasted us by a long time.', 'The marble was white once. The moss is only the world, remembering how to grow.', 'There are three crowns in the stories: Frost, Ember and Memory. I only ever wrote about the third.']));
+  if (q.status === 'done') {                                           // the last page: read it again (or for the first time, on an older save)
+    const c = await choose([S.flags.memoryEnd ? 'Read the last page again.' : 'Read the last page.', 'Leave.']);
+    if (c === 0) crownOfMemory();
+  }
 };
+// The last card of the story: the Crown of Memory (EndingScene, kind 'memory').
+function crownOfMemory() { S.flags.memoryEnd = true; bus.emit('ending', 'memory'); }
 
 // ---- The hermits: people who have walked every road. Ask one for a rumour and a place you have not found yet is revealed, with a waypoint.
 NPC_DEFS.hermit = { name: 'HERMIT', tex: 'spr_prospector' };

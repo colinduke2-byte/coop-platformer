@@ -132,6 +132,8 @@ When you hold all four, open the **Winter Throne**, face the Long Winter, and de
 
 **Chapter 3: The Ember Crown** (required for the full ending). Smoke rises on the Ashen Peaks. Take the Peak Road to **Emberhold**, speak to **Matriarch Ysolde**, and earn three **Ember Seals**, one from each faction, by finishing their quests (the Delvers' Guild: *The Silent Mines*; the Anvil Court: *The Missing Page*, from Old Goran; the Ember Wardens: *The Ashen Road*). The seals open the **Forge of the First Fire**, where the **Ashen Sovereign** waits, then comes the last choice.
 
+**The last road: the Old Kingdom.** Answering the First Fire opens the old road to the Hollow Kings' realm. The Scribe there asks you to remember the last King. His fight in the Hollow Sepulchre is the hardest in the game, and his story closes the game with *The Crown of Memory*.
+
 ### The factions of Emberhold
 Reputation runs 0 to 100 with each. Helping one house can cost goodwill with another.
 

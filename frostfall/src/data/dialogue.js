@@ -44,6 +44,7 @@ async function heartsTalk() {
   }
   if (q.status === 'inactive') {
     await say(SIGRID, 'Dreamer. Sit. What I have to tell you is older than the village.');
+    await say(SIGRID, 'You know why the hunters call you that? For three nights after we found you, you talked in your sleep. About thrones, in a tongue none of us knew.');
     await say(SIGRID, 'The Frostheart was never alone. The Hollow Kings bound the Long Winter, a thing older than snow, with five Hearts, and set a guardian to keep each one.');
     await say(SIGRID, S.flags.ending === 'give' ? 'Our hearth is warm tonight, but only because one Heart is spent. The other four still hold the cold in place, and the Winter is waking.' : S.flags.ending === 'sell' ? 'The first is in Mirra\'s cellar now, humming. The other four still hold the Winter in place, and it is waking.' : 'You carry the first, and the cold follows you for it. The other four still hold the Winter in place, and it is waking.');
     await say(SIGRID, 'The old maps are faded. I can read only the nearest: the Glacial Maw, where the east freezes under the mountain. A serpent of rime sleeps there with the second Heart.');

@@ -5,7 +5,7 @@ import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ui } from '../systems/ui.js';
-import { epilogueLines, chapter3Ending, CH2_TAIL } from '../data/story.js';
+import { epilogueLines, chapter3Ending, memoryEnding, CH2_TAIL } from '../data/story.js';
 
 const ENDINGS = {
   give: {
@@ -47,13 +47,13 @@ export default class EndingScene extends Phaser.Scene {
     this.releaseHold = ui.hold('ending'); ui.release('ending:launch');
     this.events.once('shutdown', this.releaseHold);
     const ch2 = ['thaw', 'warden', 'crown'].includes(this.kind);
-    const e = ENDINGS[this.kind] || chapter3Ending(this.kind);
+    const e = ENDINGS[this.kind] || chapter3Ending(this.kind) || memoryEnding(this.kind);
     this.add.rectangle(0, 0, W, H, 0x0b0e1a, 1).setOrigin(0);
     this.cameras.main.fadeIn(800, 11, 14, 26);
     sfx.play('ending');
     txt(this, W / 2, 18, e.title, e.col).setScale(2).setOrigin(0.5, 0);
     this.body = txt(this, 14, 48, '', 5);
-    const epi = String(this.kind).startsWith('c3_') ? epilogueLines() : [];   // the epilogue belongs to the last cards only
+    const epi = String(this.kind).startsWith('c3_') || this.kind === 'memory' ? epilogueLines() : [];   // the epilogue belongs to the last cards only
     const lines = wrap(e.text + (ch2 ? '\n\n' + CH2_TAIL : '') + (epi.length ? '\n\n' + epi.join('\n\n') : ''), 49).split('\n');
     const PER = 13;                                               // lines that fit under the title
     this.pages = [];
