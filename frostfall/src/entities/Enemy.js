@@ -120,10 +120,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.alerted = true;
     S.seen[this.kind] = true;
     this.state = 'chase';
-    if (!silent) { this.mark('!', 13, 0.7); sfx.play(this.kind === 'werewolf' ? 'werehowl' : 'alert'); this.bark('alert'); this.scene.onFirstAlert?.(this); }
+    if (!silent) { this.mark('!', 13, 0.7); sfx.play(this.kind === 'werewolf' ? 'werehowl' : sfx.voice(this.cfg, 'alert', this.kind), this); this.bark('alert'); this.scene.onFirstAlert?.(this); }
     // wake nearby friends (a howl / rally call reaches much further)
     const reach = this.cfg.call ? this.cfg.call : 60;
-    if (this.cfg.call) { sfx.play(this.cfg.bark === 'wolf' ? 'howl' : 'alert'); this.scene.fx.ring(this.x, this.y + 4, reach / 32, 0.6, 'ring', 0xf4d460); }
+    if (this.cfg.call) { sfx.play(this.cfg.bark === 'wolf' ? 'howl' : 'alert', this); this.scene.fx.ring(this.x, this.y + 4, reach / 32, 0.6, 'ring', 0xf4d460); }
     for (const o of this.scene.enemies.getChildren()) {
       if (o !== this && !o.alerted && !o.dead && dist(o.x, o.y, this.x, this.y) < reach) o.alert(true);
     }
@@ -136,7 +136,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     sc.lastBark = sc.t;
     const lines = set[kind];
     sc.fx.text(this.x, this.y - 24, lines[Math.floor(Math.random() * lines.length)], this.cfg.bark === 'undead' ? 15 : 13, 1.0);
-    sfx.play('bark_' + this.cfg.bark);
+    sfx.play(sfx.voice(this.cfg, 'bark', this.kind), this);
   }
 
   setState(s, t = 0) { this.state = s; this.stateT = t; }
@@ -166,7 +166,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && !o.isBoss && !o.cfg.title && o.hp < o.maxHp * 0.85 && Math.hypot(o.x - this.x, o.y - this.y) < this.cfg.heals.range && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o;
         if (best) {
           best.hp = Math.min(best.maxHp, best.hp + best.maxHp * this.cfg.heals.pct);
-          sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('enemy_heal');
+          sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('enemy_heal', this);
         }
       }
     }
@@ -236,7 +236,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const to = norm(player.x - this.x, player.y - this.y), side = Math.random() < 0.5 ? 1 : -1;
       this.evade = 0.24; this.dodgeCd = 1.7;
       b.setVelocity(-to.y * side * 230 - to.x * 40, to.x * side * 230 - to.y * 40);
-      sc.fx.puff(this.x, this.y + 4, 5, 4, 30, 0.25); sfx.play('roll');
+      sc.fx.puff(this.x, this.y + 4, 5, 4, 30, 0.25); sfx.play('roll', this);
       this.finish(dt, slow);
       return;
     }
@@ -284,7 +284,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (sc.solidAt(x, y) || sc.solidAt(x + 6, y) || sc.solidAt(x - 6, y)) continue;
       const m = sc.addEnemy(this.cfg.raiseKind || 'draugr', x, y, { tier: this.tier });
       m.alert(true); this.minions.push(m);
-      sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('raise');
+      sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('raise', this);
       break;
     }
   }
@@ -320,7 +320,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.bs = 'tele'; this.bT = 0.95; b.setVelocity(0, 0);
         this.popAt = { x: player.x, y: player.y + 3 };
         sc.addZone(this.popAt.x, this.popAt.y, 24, 0.95, cfg.dmg, this);
-        sfx.play('telegraph');
+        sfx.play('telegraph', this);
       }
       return true;
     }
@@ -329,7 +329,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (this.bT <= 0) {
         this.setPosition(this.popAt.x, this.popAt.y); b.updateFromGameObject();
         this.hidden = false; this.bs = 'up'; this.bT = 3.2;
-        sc.fx.puff(this.x, this.y + 4, 5, 12, 60, 0.5); sc.shake(120, 0.006); sfx.play('boom');
+        sc.fx.puff(this.x, this.y + 4, 5, 12, 60, 0.5); sc.shake(120, 0.006); sfx.play('boom', this);
       }
       return true;
     }
@@ -346,7 +346,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.enraged) return;
     this.enraged = true;
     this.cfg = { ...this.cfg, chase: this.cfg.chase * 1.3, dmg: Math.round(this.cfg.dmg * 1.3), cooldown: this.cfg.cooldown * 0.75, tint: 0xff9a80 };
-    this.scene.fx.text(this.x, this.y - 26, 'ENRAGED', 11, 1); sfx.play('roar');
+    this.scene.fx.text(this.x, this.y - 26, 'ENRAGED', 11, 1); sfx.play('roar', this);
   }
 
   // Damage-over-time from the status system (burn, bleed, poison).
@@ -526,7 +526,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.hitDone = false;
     this.blinkOn = true; this.blink = 0.07;
     this.mark('!', 11, this.cfg.windup + 0.1);
-    sfx.play('telegraph');
+    sfx.play('telegraph', this);
   }
 
   startAttack(player, to) {
@@ -540,7 +540,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const cfg = this.cfg;
     if (cfg.suicide) {                                    // imps burst: a short fuse, then a blast where they stood
       this.scene.addZone(this.x, this.y + 3, 28, 0.22, cfg.dmg, this);
-      this.scene.fx.puff(this.x, this.y, 12, 10, 50, 0.4); sfx.play('alert');
+      this.scene.fx.puff(this.x, this.y, 12, 10, 50, 0.4); sfx.play('alert', this);
       this.explodes = false; this.dead = false; this.hp = 0; this.die({ suicide: true });
       return;
     }
@@ -551,7 +551,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.scene.addZone(this.castTarget.x + jx, this.castTarget.y + jy, cfg.zoneR, cfg.zoneDelay + i * 0.16, cfg.dmg, this);
       }
       this.body.setVelocity(0, 0);
-      sfx.play('frost_enemy');
+      sfx.play('frost_enemy', this);
       this.scene.fx.puff(this.x, this.y, 14, 8, 40, 0.3);
       return;
     }
@@ -564,20 +564,20 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.scene.eshots.add(pr);
       pr.body.setVelocity(f.x * spd, f.y * spd);
       this.body.setVelocity(0, 0);
-      sfx.play('shoot');
+      sfx.play('shoot', this);
       return;
     }
     if (cfg.kind === 'lunge') {
       this.body.setVelocity(this.dashDir.x * cfg.lunge, this.dashDir.y * cfg.lunge);
       this.face = dir8(this.dashDir.x, this.dashDir.y);
-      sfx.play('roll');
+      sfx.play('roll', this);
       return;
     }
     // melee lunge forward a hair
     this.body.setVelocity(to.x * 90, to.y * 90);
     this.face = dir8(to.x, to.y);
     this.scene.fx.slash(this.x + this.face.x * 6, this.y + this.face.y * 6, Math.atan2(this.face.y, this.face.x));
-    sfx.play('sword');
+    sfx.play('sword', this);
   }
 
   attackTick(dt, player) {
@@ -745,7 +745,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   callHelp() {
     this.summoned = true;
-    this.scene.fx.ring(this.x, this.y + 4, 1.4, 0.6, 'ring', 0xb0a0ff); sfx.play('alert');
+    this.scene.fx.ring(this.x, this.y + 4, 1.4, 0.6, 'ring', 0xb0a0ff); sfx.play('alert', this);
     this.scene.fx.text(this.x, this.y - 24, 'REINFORCEMENTS', 14, 1);
     for (let i = 0; i < this.summons; i++) {
       const m = this.scene.addEnemy(this.cfg.summonKind || (this.kind === 'wolf' || this.kind === 'alpha' ? 'wolf' : 'draugr'), this.x + (i ? 14 : -14), this.y + 6, { tier: Math.max(0, this.tier - 1) });
@@ -767,7 +767,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.marker?.destroy(); this.marker = null;
     this.body.enable = false;
     this.scene.enemies.remove(this);
-    sfx.play('kill');
+    sfx.play(sfx.voice(this.cfg, 'kill', this.kind), this);
     this.scene.fx.puff(this.x, this.y, 5, 10, 55, 0.5);
     this.scene.fx.puff(this.x, this.y, 4, 6, 40, 0.5);
     this.clearTint();

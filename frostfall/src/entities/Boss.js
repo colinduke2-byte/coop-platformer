@@ -155,7 +155,7 @@ export default class Boss extends Enemy {
     this.setState('windup', this.B[a].windup * (this.bphase === 2 ? 0.8 : 1));
     this.windTotal = this.stateT;
     this.makeTele(a);
-    sfx.play('telegraph');
+    sfx.play('telegraph_boss');
     this.mark('!', 11, this.stateT + 0.05);
   }
 

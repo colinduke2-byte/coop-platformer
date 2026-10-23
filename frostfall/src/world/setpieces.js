@@ -54,7 +54,7 @@ export const setPieceMethods = {
           else { g.fillStyle(C[0]); g.fillRect(x, y + 14, T, 2); for (const sx of [2, 6, 10]) { g.fillStyle(C[5]); g.fillRect(x + sx, y + 3, 3, 11); g.fillStyle(C[6]); g.fillRect(x + sx + 1, y + 1, 1, 4); } }
         }
         if (ph === 'strike') {
-          sfx.play('spike'); this.shake(120, 0.004);
+          sfx.play('spike', { x: s.x0 + s.w / 2, y: s.y0 + s.h / 2, scene: this }); this.shake(120, 0.004);
           if (p.x > s.x0 - 2 && p.x < s.x0 + s.w + 2 && p.y + 4 > s.y0 && p.y + 4 < s.y0 + s.h && p.mode !== 'dead') p.hurt(s.dmg * (1 + 0.13 * s.tier), p.x, s.y0 + s.h / 2, { kb: 60 });
         }
       }
@@ -67,7 +67,7 @@ export const setPieceMethods = {
         else if (c.t > 0) {
           c.t -= dt;
           if (c.t <= 0) {
-            if (c.st === 1) { c.st = 2; c.t = 4; sfx.play('spike'); if (on && p.mode !== 'roll') p.hurt(14 * (1 + 0.13 * cr.tier), c.x + 8, c.y + 8, { kb: 40 }); }
+            if (c.st === 1) { c.st = 2; c.t = 4; sfx.play('spike', { x: c.x + 8, y: c.y + 8, scene: this }); if (on && p.mode !== 'roll') p.hurt(14 * (1 + 0.13 * cr.tier), c.x + 8, c.y + 8, { kb: 40 }); }
             else { c.st = 0; }
           }
         }
