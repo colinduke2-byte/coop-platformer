@@ -147,6 +147,12 @@ r = await G(async () => {
 });
 check('the first three bosses are native at scale 1 with their old hitboxes', r.every((o) => o.ok), JSON.stringify(r));
 
+// ---- VX-20: roles you can read from the silhouette
+r = await G(async () => { const sp = await import('/src/art/sprites.js'), reg = await import('/src/art/native_registry.js');
+  return { roles: ['warden', 'archer', 'conjurer', 'sentinel', 'prospector'].map((k) => sp.STYLES[k].role), reaver: !!reg.nativeSpec('reaver') && window.gs().textures.get(reg.ensureNative(window.gs(), 'reaver')).has('atkside2') }; });
+check('knights carry shields, archers bows, casters staves, sentinels spears, delvers lanterns', r.roles.join() === 'shield,bow,staff,spear,lantern', r.roles.join());
+check('the Rime Reaver has its own sheet with a two-hander', r.reaver);
+
 // ---- VX-06: statuses show on the enemy (driven by the status:on / status:off bus events)
 await h.pause();
 r = await G(async () => {

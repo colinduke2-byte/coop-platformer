@@ -7,6 +7,7 @@ import { Grid, render, blit, makeNativeSheet, shaper, flippedV } from '../native
 import { registerNative } from '../native_registry.js';
 import { registerHumanoid } from './humanoid.js';
 import { bearSheet } from './animals.js';
+import { roleSheet } from '../sprites.js';
 
 const sheet = (scene, key, N, frames) => makeNativeSheet(scene, key, N, N, frames.map(([name, pix]) => ({ name, draw: (ctx, ox) => blit(ctx, pix, N, N, ox, 0) })));
 const jolt = (pix, N, dx, dy) => { const o = new Int16Array(N * N).fill(-1); for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < N && ny < N) o[ny * N + nx] = pix[y * N + x]; } return o; };
@@ -108,3 +109,5 @@ registerHumanoid('imp', 'imp', 0.85);
 registerHumanoid('sunsentinel', 'sunsentinel', 1.35);
 registerHumanoid('redsula', 'cutpurse', 1.25);
 registerHumanoid('captainkarrow', 'duneraider', 1.3);
+// VX-20: the Rime Reaver keeps the draugr's 16px body but carries a two-hander on its shoulder
+registerNative('reaver', { scale: 1, w: 16, h: 16, build: (scene, key) => roleSheet(scene, key, 'draugr', 'greatsword') });
