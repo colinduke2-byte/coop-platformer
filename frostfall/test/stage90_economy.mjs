@@ -126,9 +126,9 @@ const dur = await G(async (reset) => {
   S.inv.sunbreaker = 1; S.upgrades = { sunbreaker: 10 }; S.dur = { sunbreaker: 0 };
   const sun = D.repairCost('sunbreaker');
   S.inv.long_bow = 1; S.equip.bow = 'long_bow'; S.arrows = 10; S.sp = 100; S.dur = {};
-  const b0 = D.durOf('long_bow'); p.drawT = 1; p.drawing = true; p.releaseBow(1); const b1 = D.durOf('long_bow');
+  const b0 = D.durOf(S.equip.bow); p.drawT = 1; p.drawing = true; p.releaseBow(1); const b1 = D.durOf(S.equip.bow);
   S.inv.hazel_staff = 1; S.equip.weapon = 'hazel_staff'; S.mp = 100; S.spell = 'fire'; p.heat = 0;
-  const s0 = D.durOf('hazel_staff'); p.cast(); const s1 = D.durOf('hazel_staff');
+  const s0 = D.durOf(S.equip.weapon); p.cast(); const s1 = D.durOf(S.equip.weapon);
   settings.difficulty = was.d; settings.durability = was.on; S.dur = {}; S.upgrades = {};
   return { sun: sun > 250 && sun < 420, bow: b0 - b1 === 0.5, staff: s0 - s1 === 0.25, vals: [sun, b0, b1, s0, s1] };
 }, reset);
@@ -166,7 +166,7 @@ const tr = await G(async (reset) => {
   const srcs = T.transferSources('weapon').join(), bowNo = T.transferSources('bow').length === 0;
   const cap = T.transferTemper('steel_sword', 'weapon', 3) === 'cap';
   const d0 = stats.weaponDmg(), ok = T.transferTemper('steel_sword', 'weapon', 6) === 'ok';
-  const res = { srcs: srcs === 'steel_sword', bowNo, cap, ok, moved: S.upgrades.ember_blade === 6 && !S.upgrades.steel_sword, paid: S.gold === 10000 - want, stronger: stats.weaponDmg() > d0 * 1.3, want };
+  const res = { srcs: srcs === 'steel_sword', bowNo, cap, ok, moved: S.upgrades[S.equip.weapon] === 6 && S.equip.weapon.startsWith('i_ember_blade') && !S.upgrades.steel_sword, paid: S.gold === 10000 - want, stronger: stats.weaponDmg() > d0 * 1.3, want };
   S.upgrades = {}; S.equip.weapon = null;
   return res;
 }, reset);
@@ -184,6 +184,36 @@ const gm = await G(async (reset) => {
   return { f: f === 'gem_ruby_f' && left === 4 && paid === 940, flawless: d1 - d0 === 6, royal: r === 'gem_ruby_r' && ITEMS.gem_ruby_r.gem.dmg === 11, royalTop, every: Object.values(ITEMS).filter((i) => i.type === 'gem' && !i.grade).every((i) => ITEMS[Object.keys(ITEMS).find((k) => ITEMS[k] === i) + '_r']) };
 }, reset);
 check('PR-23: three Rubies fuse into a Flawless Ruby (+6, 60 g), three Flawless into a Royal (+11); every gem has its grades', Object.values(gm).every(Boolean), JSON.stringify(gm));
+
+// ---- PR-08: upgrades, enchants, gems and wear belong to one copy of an item, and old saves convert
+const inst = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, { stats } = await import('/src/systems/stats.js'), { buyUpgrade } = await import('/src/data/services.js'), { ITEMS } = await import('/src/data/items.js');
+  for (const k of Object.keys(S.inv)) if (k.startsWith('i_')) delete S.inv[k];
+  S.inv.glass_dagger = 2; S.equip.weapon = 'glass_dagger'; S.equip.offhand = 'glass_dagger'; S.gold = 9999; S.inv.iron_ingot = 9;
+  const off0 = stats.offhandDmg();
+  for (let i = 0; i < 3; i++) buyUpgrade('weapon', 3);
+  const main = S.equip.weapon, out = {};
+  out.split = main.startsWith('i_glass_dagger') && S.upgrades[main] === 3 && S.equip.offhand === 'glass_dagger' && S.inv.glass_dagger === 1 && ITEMS[main].name === 'Glass Dagger';
+  out.offSame = stats.offhandDmg() === off0;
+  // selling the +3 copy and buying a fresh one: the fresh one is +0
+  delete S.inv[main]; S.equip.weapon = null; S.inv.glass_dagger += 1; out.fresh = !(S.upgrades.glass_dagger > 0);
+  // an old version-3 save: the shared +5 goes to the worn main-hand dagger; a sold item's +7 is gone
+  const sv = await import('/src/systems/save.js'), st = await import('/src/systems/state.js'), { settings } = await import('/src/systems/settings.js');
+  const old = st.newState(); for (const k of Object.keys(st.OPTIONAL_KINDS)) old[k] = null;
+  Object.assign(old, { inv: { glass_dagger: 2, steel_sword: 1 }, equip: { ...old.equip, weapon: 'glass_dagger', offhand: 'glass_dagger' }, upgrades: { glass_dagger: 5, kings_blade: 7 }, enchants: { glass_dagger: { type: 'fire', power: 5 } }, sockets: { glass_dagger: ['gem_ruby'] } });
+  localStorage.setItem('frostfall_save_s3', JSON.stringify({ v: 3, t: Date.now(), s: old }));
+  const was = settings.slot;
+  out.loaded = sv.loadGame(3);
+  const w = S.equip.weapon;
+  out.migrated = w.startsWith('i_glass_dagger') && S.upgrades[w] === 5 && S.enchants[w]?.type === 'fire' && S.sockets[w]?.[0] === 'gem_ruby' && S.equip.offhand === 'glass_dagger' && S.inv.glass_dagger === 1 && !('glass_dagger' in S.upgrades) && !('kings_blade' in S.upgrades);
+  // and it survives a save and a load (round trip)
+  sv.saveGame(null, { quiet: true, slot: 3 }); st.resetState(); const again = sv.loadGame(3);
+  out.roundTrip = again && S.equip.weapon === w && S.upgrades[w] === 5 && ITEMS[w]?.instOf === 'glass_dagger' && stats.weaponDmg() > ITEMS.glass_dagger.dmg;
+  sv.deleteSave(3); settings.slot = was;
+  return out;
+}, reset);
+check('PR-08: two Glass Daggers no longer share a forge level; a re-bought item is +0; a version-3 save converts and round-trips', Object.values(inst).every(Boolean), JSON.stringify(inst));
 
 // @@MORE@@
 

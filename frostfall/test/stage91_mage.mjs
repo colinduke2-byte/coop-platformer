@@ -44,8 +44,8 @@ const up = await h.ev(async () => {
   const p0 = SP.staffPower(), d0 = stats.weaponDmg();
   S.gold = 9999; S.inv.iron_ingot = 9; for (let i = 0; i < 3; i++) buyUpgrade('weapon', 3);
   const p3 = SP.staffPower(), d3 = stats.weaponDmg();
-  S.inv.gem_ruby = 1; S.sockets = { hazel_staff: ['gem_ruby'] }; const pr = SP.staffPower();
-  const line = statLines('hazel_staff').map((l) => l[0]).find((l) => l.startsWith('SPELLS'));
+  const sid = S.equip.weapon; S.inv.gem_ruby = 1; S.sockets = { [sid]: ['gem_ruby'] }; const pr = SP.staffPower();
+  const line = statLines(sid).map((l) => l[0]).find((l) => l.startsWith('SPELLS'));
   S.sockets = {}; S.upgrades = {};
   return { lv: Math.abs(p3 / p0 - 1.15) < 1e-9, poke: d3 === d0, ruby: Math.abs(pr / p3 - 1.045) < 1e-9, line: line === 'SPELLS +26% (+3)', got: [p0, p3, pr, line] };
 });

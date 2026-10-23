@@ -188,7 +188,7 @@ const craft = await G(async () => {
   const E = await import('/src/data/emberhold.js'), S = window.__ff.S, real = Math.random;
   S.flags.emberforged = true; S.gold = 5000; S.inv = { ash_iron: 30, ember_ore: 10 }; S.upgrades = {};
   Math.random = () => 0; const r = E.forgeEmber('ember_blade'); Math.random = real;
-  const lucky = S.upgrades.ember_blade;
+  const lucky = Object.entries(S.upgrades).find(([k]) => k === 'ember_blade' || k.startsWith('i_ember_blade'))?.[1];      // PR-08: the new copy is its own item
   S.inv = { ash_iron: 30, ember_ore: 10 }; S.upgrades = {}; S.gold = 5000;
   Math.random = () => 0.99; E.forgeEmber('ember_blade'); Math.random = real;
   return { r, lucky, plain: S.upgrades.ember_blade || 0 };

@@ -26,7 +26,7 @@ const ng = await G(async () => {
   const { bus } = await import('/src/systems/bus.js'); bus.emit('boss:killed', { cfg: { title: 'TEST' } });
   const echo = S.inv.winters_echo === 1;
   S.inv.winters_echo = 3;
-  const l11 = buyUpgrade('weapon', U.maxLevel()) === 'ok' && buyUpgrade('weapon', U.maxLevel()) === 'ok' && S.upgrades.iron_sword === 12 && buyUpgrade('weapon', U.maxLevel()) === 'max';
+  const l11 = buyUpgrade('weapon', U.maxLevel()) === 'ok' && buyUpgrade('weapon', U.maxLevel()) === 'ok' && S.upgrades[S.equip.weapon] === 12 && buyUpgrade('weapon', U.maxLevel()) === 'max';
   const gain12 = Math.abs(U.totalGain('weapon', 12) - 0.81) < 1e-9;
   S.ngPlus = 0; const cap0 = U.maxLevel() === 10 && Math.abs(U.totalGain('weapon', 12) - 0.65) < 1e-9;
   S.upgrades = {}; S.equip.weapon = null;

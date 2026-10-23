@@ -5,6 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { S, onStateReset } from './state.js';
 import { TUNE } from '../data/tuning.js';
 import { ngLevel, ngLootTiers } from './ngplus.js';
+import { rehydrateInst } from './instances.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
@@ -158,6 +159,7 @@ onStateReset((st) => { for (const id of Object.keys(ITEMS)) if (id.startsWith('g
 // Re-register every generated item from a loaded save.
 export function rehydrateGen() {
   for (const [id, def] of Object.entries(S.gen || {})) { fixOldHeavy(def); ITEMS[id] = def; iconBuilder?.(id, def); }
+  rehydrateInst();                                    // and the per-item instances of handcrafted gear (PR-08)
 }
 // PR-09: generated Plate and Greathelms from older saves carried their own speed penalty on top of the heavy class's; take it out.
 const OLD_HEAVY = { Plate: 0.94, Greathelm: 0.97 };

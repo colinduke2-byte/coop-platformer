@@ -15,6 +15,7 @@ import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune, nextGrade, fuseCost, fuseGems } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
 import { maxLevel } from '../systems/upgrades.js';
+import { own } from '../systems/instances.js';
 import { companionStory } from './companionquests.js';
 import { SETS, setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
@@ -243,7 +244,8 @@ export function forgeEmber(id) {
   S.gold -= r.gold; for (const [m, n] of Object.entries(r.mats)) removeItem(m, n);
   addItem(r.id, 1, true);
   // the Great Anvil sometimes sings: a masterwork comes out already tempered twice over
-  if (Math.random() < 0.15 + (S.rep?.anvil >= 45 ? 0.1 : 0) && (S.upgrades[r.id] || 0) < 2) { S.upgrades[r.id] = 2; S.flags.lastMasterwork = r.id; bus.emit('toast', 'MASTERWORK! TEMPERED +2', 13); }
+  // (PR-08: the new copy itself, not one you already had)
+  if (Math.random() < 0.15 + (S.rep?.anvil >= 45 ? 0.1 : 0)) { S.upgrades[own(r.id, false)] = 2; S.flags.lastMasterwork = r.id; bus.emit('toast', 'MASTERWORK! TEMPERED +2', 13); }
   return 'ok';
 }
 export async function emberforgeMenu(who) {
@@ -348,9 +350,9 @@ export async function socketMenu(who) {
     const labels = slots.map((sl) => { const id = S.equip[sl]; return `${ITEMS[id].name} (${socketed(id).filter(Boolean).length}/${socketCount(id)}${runeSlot(id) ? (runeOf(id) ? ' R' : ' r') : ''})`; });
     const i = await pick(labels, 'Done');
     if (i < 0) return;
-    const id = S.equip[slots[i]];
     for (;;) {
-      const a = socketed(id), opts = a.map((g, k) => (g ? `Remove ${ITEMS[g].name}` : `Set a gem (socket ${k + 1})`));
+      // re-read every time: setting a gem can make the worn copy its own item (PR-08)
+      const id = S.equip[slots[i]], a = socketed(id), opts = a.map((g, k) => (g ? `Remove ${ITEMS[g].name}` : `Set a gem (socket ${k + 1})`));
       if (runeSlot(id)) opts.push(runeOf(id) ? `Remove ${ITEMS[runeOf(id)].name}` : 'Set a rune');
       const k = await pick(opts, 'Back');
       if (k < 0) break;

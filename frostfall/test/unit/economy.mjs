@@ -82,5 +82,17 @@ t('PR-11: Hilda sells no Warhammer, Bulwark Plate or Crossbow early; they appear
   S.flags = {};
 });
 
+const { migrateInstances } = await import('../../src/systems/instances.js');
+t('PR-08: the v3 -> v4 migration gives shared state to one copy (worn first, then carried, then stashed) and drops the rest', () => {
+  const s = { inv: { glass_dagger: 2, iron_sword: 1 }, stash: { iron_helm: 1 }, equip: { weapon: 'glass_dagger', offhand: 'glass_dagger', head: null }, upgrades: { glass_dagger: 4, iron_sword: 2, iron_helm: 1, kings_blade: 9 }, dur: { glass_dagger: 10 }, sockets: {}, enchants: {}, runes: {} };
+  migrateInstances(s);
+  const dag = s.equip.weapon, sw = Object.keys(s.inv).find((k) => k.startsWith('i_iron_sword')), hm = Object.keys(s.stash).find((k) => k.startsWith('i_iron_helm'));
+  assert.ok(dag.startsWith('i_glass_dagger') && s.equip.offhand === 'glass_dagger' && s.inv.glass_dagger === 1 && s.inv[dag] === 1);
+  assert.equal(s.upgrades[dag], 4); assert.equal(s.dur[dag], 10); assert.equal(s.upgrades[sw], 2); assert.equal(s.upgrades[hm], 1);
+  assert.ok(!('kings_blade' in s.upgrades) && !('glass_dagger' in s.upgrades) && !s.inv.iron_sword);
+  assert.equal(s.inst[dag], 'glass_dagger');
+  const again = JSON.stringify(migrateInstances(JSON.parse(JSON.stringify(s)))); assert.equal(again, JSON.stringify(s), 'running it twice changes nothing');
+});
+
 console.log(failed ? 'ECONOMY FAILED' : `ECONOMY PASSED (${n} tests)`);
 process.exit(failed ? 1 : 0);

@@ -16,6 +16,7 @@ import { sellPrice } from '../systems/prices.js';
 import { rarityIndex, reforgeGen, ascendGen, RARITY } from '../systems/genloot.js';
 import { ngLevel } from '../systems/ngplus.js';
 import { setOf } from '../systems/sets.js';
+import { own } from '../systems/instances.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
 import { maxLevel, UPGRADE_COST, UPGRADE_SLOTS, kindOf, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
@@ -207,7 +208,7 @@ export function buyUpgrade(slot, cap = 3) {
   const c = UPGRADE_COST[lv + 1];
   if (!costReady(c)) return 'short';
   S.gold -= c.gold; removeItem(c.mat, c.n); if (c.mat2) removeItem(c.mat2, c.n2);
-  S.upgrades[id] = lv + 1; recalc();
+  S.upgrades[own(id, slot)] = lv + 1; recalc();            // PR-08: this copy, not every copy of the item
   return 'ok';
 }
 const CAP_LINE = { 3: 'I can go no further. Emberhold smiths can.', 6: 'Only the Great Anvil goes past +6.' };
@@ -222,7 +223,7 @@ export async function upgradeMenu(who, slot, cap = 3) {
     title: 'FORGE: ' + (UPGRADE_SLOTS.find(([k]) => k === slot)?.[1] || 'GEAR'),
     hint: 'E UPGRADE   ESC DONE',
     rows: () => {
-      const cur = S.upgrades[id] || 0;
+      const id = S.equip[slot], cur = S.upgrades[id] || 0;       // re-read: the first upgrade makes the worn copy its own item (PR-08)
       if (cur >= maxLevel()) return [{ id, name: ITEMS[id].name + ` +${maxLevel()}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
       if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'FORGE LIMIT REACHED', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
@@ -234,7 +235,7 @@ export async function upgradeMenu(who, slot, cap = 3) {
     },
     onSelect: (i, ui) => {
       const r = buyUpgrade(slot, cap);
-      const cur = S.upgrades[id] || 0;
+      const id = S.equip[slot], cur = S.upgrades[id] || 0;
       if (r === 'short') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
       if (r !== 'ok') return;
       sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur}`, 13);
@@ -254,7 +255,7 @@ export function transferTemper(fromId, slot, cap = 3) {
   if (lv > cap) return 'cap';
   const cost = transferCost(lv, S.upgrades[to] || 0);
   if (S.gold < cost) return 'short';
-  S.gold -= cost; S.upgrades[to] = lv; delete S.upgrades[fromId]; recalc();
+  S.gold -= cost; S.upgrades[own(to, slot)] = lv; delete S.upgrades[fromId]; recalc();
   return 'ok';
 }
 async function transferMenu(who, cap) {
@@ -303,7 +304,7 @@ export async function enchantMenu(who) {
     const have = count(e.mat), ok = S.gold >= e.gold && have >= e.n;
     return {
       id: e.mat, name: e.name + ' Enchant', tag: e.gold + 'G', ok,
-      sub: S.enchants[id]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
+      sub: S.enchants[S.equip.weapon]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
       desc: `Your ${ITEMS[id].name}: ${e.desc}. An element hits the weak x1.5 and gets through armour far better; some foes resist it.${ITEMS[id].elem && ITEMS[id].elem.type !== e.type ? ' Replaces its own ' + ITEMS[id].elem.type.toUpperCase() + '.' : ' Replaces any other enchant.'}`,
       tagCol: S.gold >= e.gold ? 13 : 11,                      // the price is red only when the gold is what is missing
       lines: [need(ITEMS[e.mat].name.toUpperCase(), have, e.n), need('GOLD', S.gold, e.gold)],
@@ -314,10 +315,10 @@ export async function enchantMenu(who) {
     onSelect: (i, ui) => {
       const e = ENCHANTS[i];
       if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
-      const own = ITEMS[id].elem;            // PR-13: overwriting the weapon's own element asks first
-      if (own && own.type !== e.type && !S.enchants[id] && !ui.confirm('ench:' + id + e.type, `REPLACE ITS OWN ${own.type.toUpperCase()}? E AGAIN`)) return;
+      const ownEl = ITEMS[id].elem;            // PR-13: overwriting the weapon's own element asks first
+      if (ownEl && ownEl.type !== e.type && !S.enchants[S.equip.weapon] && !ui.confirm('ench:' + id + e.type, `REPLACE ITS OWN ${ownEl.type.toUpperCase()}? E AGAIN`)) return;
       S.gold -= e.gold; removeItem(e.mat, e.n);
-      S.enchants[id] = { type: e.type, power: e.power };
+      S.enchants[own(S.equip.weapon, 'weapon')] = { type: e.type, power: e.power };
       sfx.play('levelup');
       bus.emit('toast', `${ITEMS[id].name.toUpperCase()} ENCHANTED: ${e.name.toUpperCase()}`, 15);
       ui.say(e.name.toUpperCase() + ' ENCHANT APPLIED', 15);

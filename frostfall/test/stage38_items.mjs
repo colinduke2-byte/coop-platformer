@@ -75,8 +75,9 @@ const dur = await G(async () => {
   const D = await import('/src/systems/durability.js'), S = window.__ff.S, st = (await import('/src/systems/stats.js')).stats, s = (await import('/src/systems/settings.js')).settings, T = await import('/src/data/items.js');
   const out = {};
   s.durability = false; D.wear('rusty_sword', 999); out.offBroken = D.isBroken('rusty_sword'); const full = st.weaponDmg();
-  s.durability = true; S.dur = {}; S.equip.weapon = 'rusty_sword'; D.wear('rusty_sword', 999); out.onBroken = D.isBroken('rusty_sword'); out.dmgRatio = st.weaponDmg() / full;
-  out.cost = D.repairCost('rusty_sword'); D.repairItem('rusty_sword'); out.fixed = !D.isBroken('rusty_sword') && D.durOf('rusty_sword') === D.durMax('rusty_sword');
+  // (PR-08: wear belongs to the worn copy, which becomes its own item: read it through S.equip.weapon)
+  s.durability = true; S.dur = {}; S.equip.weapon = 'rusty_sword'; D.wear('rusty_sword', 999); const w = S.equip.weapon; out.onBroken = D.isBroken(w); out.dmgRatio = st.weaponDmg() / full;
+  out.cost = D.repairCost(w); D.repairItem(w); out.fixed = !D.isBroken(w) && D.durOf(w) === D.durMax(w);
   s.durability = false; S.dur = {};
   return out;
 });
