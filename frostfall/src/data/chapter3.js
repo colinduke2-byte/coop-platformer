@@ -72,11 +72,12 @@ export function finalChoice() {
   return runScript(async () => {
     unlockRegion('kingdom');
     await say('The Sovereign', 'You have broken my crown. I am only the first fire now, and the first fire is only a question.');
-    await say('The Sovereign', 'Winter was my brother, and you freed him, or bound him, or wore him. What will you do with me?');
+    const bro = { thaw: 'you set him free', warden: 'you keep him on a leash', crown: 'you wear him' }[S.flags.finale] || 'you freed him, or bound him, or wore him';
+    await say('The Sovereign', `Winter was my brother, and ${bro}. What will you do with me?`);
     let pick = null;
     while (!pick) {
       const c = await choose(['Quench the Flame.', 'Wear the Ember Crown.', 'Bind it to the Anvil.']);
-      if (c === 2 && !bestHelp()) { await say('Ysolde', 'A binding needs hands to hold it. No house of Emberhold yet trusts you that far. Earn it, or choose another way.'); continue; }
+      if (c === 2 && !bestHelp()) { await say('The Sovereign', 'A binding needs hands at the other end of the chain. No house of the mountain would hold it for you. Choose again.'); continue; }
       pick = FINAL_CHOICES[c];
     }
     S.flags.finalChoice = pick;

@@ -40,7 +40,7 @@ export function updateTutorial(gs, dt) {
     if (!tut.wolf || tut.wolf.dead || !tut.wolf.active) {
       if (tut.wolf && tut.wolf.dead) {
         S.flags.tut = 'done'; S.flags.tutDone = true; tut.wolf = null;
-        bus.emit('toast', 'YOU ARE READY. SEE SIGRID AND BJORN', 13);
+        bus.emit('toast', 'YOU ARE READY. SEE BJORN AT THE LODGE', 13);
         bus.emit('hint', fill(TEXT.ready));
         return;
       }

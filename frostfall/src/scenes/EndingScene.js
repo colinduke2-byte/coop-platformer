@@ -48,7 +48,7 @@ export default class EndingScene extends Phaser.Scene {
     sfx.play('ending');
     txt(this, W / 2, 18, e.title, e.col).setScale(2).setOrigin(0.5, 0);
     this.body = txt(this, 14, 48, '', 5);
-    const epi = epilogueLines();
+    const epi = String(this.kind).startsWith('c3_') ? epilogueLines() : [];   // the epilogue belongs to the last cards only
     const lines = wrap(e.text + (ch2 ? '\n\n' + CH2_TAIL : '') + (epi.length ? '\n\n' + epi.join('\n\n') : ''), 49).split('\n');
     const PER = 13;                                               // lines that fit under the title
     this.pages = [];

@@ -1,4 +1,5 @@
 import { RELICS } from './relics.js';
+import { keyText } from '../systems/access.js';
 // Item database. icon = [drawing kind, colour index] (see art/sprites.js buildIcon).
 export const ITEMS = {
   hp_potion: { name: 'Health Potion', type: 'potion', icon: ['potion', 11], restore: 'hp', amount: 50, value: 25, desc: 'Restores 50 health.' },
@@ -59,9 +60,9 @@ export const ITEMS = {
   iron_greatsword: { name: 'Iron Greatsword', type: 'weapon2h', style: 'great', icon: ['sword_gs_iron', 4], dmg: 21, swing: 1.35, costMul: 1.5, sizeAdd: 5, value: 120, desc: 'Two-handed. Slow, wide, brutal.' },
   nordic_greatsword: { name: 'Nordic Greatsword', type: 'weapon2h', style: 'great', icon: ['sword_gs_nordic', 15], dmg: 31, swing: 1.35, costMul: 1.5, sizeAdd: 6, value: 320, desc: 'Two-handed. Frost-etched steel.' },
 
-  wooden_shield: { name: 'Wooden Shield', type: 'shield', icon: ['shield_wooden', 9], block: 0.6, cost: 0.9, value: 30, desc: 'Hold F to block. Absorbs 60%.' },
-  iron_shield: { name: 'Iron Shield', type: 'shield', icon: ['shield_iron', 4], block: 0.72, cost: 0.8, value: 85, desc: 'Hold F to block. Absorbs 72%.' },
-  nordic_shield: { name: 'Nordic Shield', type: 'shield', icon: ['shield_nordic', 15], block: 0.82, cost: 0.7, value: 240, desc: 'Hold F to block. Absorbs 82%.' },
+  wooden_shield: { name: 'Wooden Shield', type: 'shield', icon: ['shield_wooden', 9], block: 0.6, cost: 0.9, value: 30, desc: 'Hold {KeyF} to block. Absorbs 60%.' },
+  iron_shield: { name: 'Iron Shield', type: 'shield', icon: ['shield_iron', 4], block: 0.72, cost: 0.8, value: 85, desc: 'Hold {KeyF} to block. Absorbs 72%.' },
+  nordic_shield: { name: 'Nordic Shield', type: 'shield', icon: ['shield_nordic', 15], block: 0.82, cost: 0.7, value: 240, desc: 'Hold {KeyF} to block. Absorbs 82%.' },
 
   hunting_bow: { name: 'Hunting Bow', type: 'bow', icon: ['bow_hunting', 10], dmg: 8, value: 20, desc: 'Light and quiet.' },
   long_bow: { name: 'Elder Longbow', type: 'bow', icon: ['bow_long', 8], dmg: 13, value: 120, desc: 'Pulls hard, flies far.' },
@@ -87,8 +88,8 @@ export const ITEMS = {
   frost_lily: { name: 'Frost Lily', type: 'ingredient', icon: ['lily', 15], value: 7, desc: 'Alchemy: restores mana.' },
   venison: { name: 'Venison', type: 'potion', icon: ['fang', 11], restore: 'hp', amount: 35, value: 7, desc: 'Fresh meat. Restores 35 health.' },
   hide: { name: 'Deer Hide', type: 'misc', junk: true, icon: ['dust', 9], value: 16, desc: 'Good leather. Sells well.' },
-  fire_arrow: { name: 'Fire Arrow', type: 'ammo', icon: ['arrows', 12], value: 6, desc: 'Fletched by Hilda. Burns the target for a few seconds. Press V to switch ammo.' },
-  bleed_arrow: { name: 'Barbed Arrow', type: 'ammo', icon: ['arrows', 11], value: 6, desc: 'Fletched by Hilda. Leaves a bleeding wound. Press V to switch ammo.' },
+  fire_arrow: { name: 'Fire Arrow', type: 'ammo', icon: ['arrows', 12], value: 6, desc: 'Fletched by Hilda. Burns the target for a few seconds. Press {KeyV} to switch ammo.' },
+  bleed_arrow: { name: 'Barbed Arrow', type: 'ammo', icon: ['arrows', 11], value: 6, desc: 'Fletched by Hilda. Leaves a bleeding wound. Press {KeyV} to switch ammo.' },
   marsh_orchid: { name: 'Marsh Orchid', type: 'ingredient', icon: ['lily', 14], value: 14, desc: 'Alchemy: a rare fen bloom that opens only in the dark. Sells well.' },
   storm_feather: { name: 'Storm Feather', type: 'ingredient', icon: ['fang', 15], value: 22, desc: 'Crackles when stroked. Alchemy and trade.' },
   mammoth_tusk: { name: 'Mammoth Tusk', type: 'misc', junk: true, icon: ['fang', 6], value: 70, desc: 'A curve of yellow ivory. Heavy and valuable.' },
@@ -122,7 +123,7 @@ export const ITEMS = {
   moonpetal: { name: 'Moonpetal', type: 'ingredient', icon: ['lily', 6], value: 18, desc: 'A pale flower that opens only at night. Alchemy: the Moonlit Draught.' },
   moonlit_draught: { name: 'Moonlit Draught', type: 'elixir', icon: ['potion', 6], value: 80, elixir: { detectMul: 0.7, moveMul: 1.06, dur: 150 }, desc: 'Drink (E): creatures notice you from 30% less far and you move 6% faster. 150 seconds.' },
   lantern: { name: 'Hooded Lantern', type: 'quest', icon: ['locket', 13], value: 0, desc: 'Carried lit at night: you see much further in the dark, but creatures notice you from farther away too.' },
-  pony_whistle: { name: 'Pony Whistle', type: 'quest', icon: ['locket', 5], value: 0, desc: 'Your pony follows you outdoors. Stand beside it and press E to ride: much faster, free on roads, tiring off them. Fighting, rolling or being hit dismounts you.' },
+  pony_whistle: { name: 'Pony Whistle', type: 'quest', icon: ['locket', 5], value: 0, desc: 'Your pony follows you outdoors. Stand beside it and press {KeyE} to ride: much faster, free on roads, tiring off them. Fighting, rolling or being hit dismounts you.' },
   silver_locket: { name: 'Silver Locket', type: 'quest', icon: ['locket', 5], value: 120, desc: 'Engraved with a tiny wolf. Someone is missing this.' },
   asta_charm: { name: "Asta's Charm", type: 'charm', icon: ['charm_knot', 11], maxHp: 15, maxMp: 15, value: 30, desc: '+15 health and mana. Smells of woodsmoke.' },
   pale_pelt: { name: 'Pale Pelt Mantle', type: 'armor', weight: 'medium', icon: ['armor_pelt', 6], armor: 0.24, value: 160, desc: 'Absorbs 24% damage. Still warm.' },
@@ -195,7 +196,7 @@ export const ITEMS = {
   delver_pick: { name: "Delver's Pick", type: 'weapon', icon: ['axe_pick', 8], dmg: 26, crit: 0.07, sockets: 1, value: 500, desc: 'Cracks stone and skulls alike. Part of the Delver\'s Kit.' },
   delver_charm: { name: "Delver's Lantern", type: 'charm', icon: ['charm_miner', 8], maxSp: 15, crit: 0.03, value: 460, desc: 'A tin lantern on a cord. +15 stamina, +3% crit. Part of the Delver\'s Kit.' },
   warden_cuirass: { name: "Warden's Cuirass", type: 'armor', warm: true, weight: 'heavy', icon: ['armor_wardencuir', 15], armor: 0.32, maxHp: 12, sockets: 1, value: 660, desc: 'Road-worn plate. Part of the Warden Panoply.' },
-  warden_shield: { name: "Warden's Shield", type: 'shield', icon: ['shield_warden', 15], block: 0.88, cost: 0.7, sockets: 1, value: 480, desc: 'Hold F to block. Absorbs 88%. Part of the Warden Panoply.' },
+  warden_shield: { name: "Warden's Shield", type: 'shield', icon: ['shield_warden', 15], block: 0.88, cost: 0.7, sockets: 1, value: 480, desc: 'Hold {KeyF} to block. Absorbs 88%. Part of the Warden Panoply.' },
   warden_badge: { name: "Warden's Badge", type: 'charm', icon: ['charm_badge', 15], maxHp: 20, maxMp: 10, value: 440, desc: '+20 health, +10 mana. Part of the Warden Panoply.' },
   glass_bloom: { name: 'Glass Bloom', type: 'ingredient', icon: ['lily', 15], value: 16, desc: 'Alchemy: a pale flower that grows at the rim of glimmering pools. Sells well.' },
   glimmer_dust: { name: 'Glimmer Dust', type: 'ingredient', icon: ['dust', 15], value: 24, desc: 'Powdered light. Alchemy and trade.' },
@@ -224,8 +225,9 @@ export const ITEMS = {
   ember_axe: { name: 'Emberforged Axe', type: 'weapon', style: 'axe', icon: ['axe_ember', 12], dmg: 31, swing: 1.05, costMul: 1.2, elem: { type: 'fire', power: 5 }, sockets: 2, value: 500, desc: 'A broad Emberforged axe. Heavy hits stagger and burn.' },
   ember_spear: { name: 'Emberforged Spear', type: 'weapon', style: 'spear', icon: ['spear_ember', 12], dmg: 25, crit: 0.06, sockets: 2, value: 480, desc: 'Long reach, hot tip. The Wardens\' favourite.' },
   ember_mail: { name: 'Emberforged Mail', type: 'armor', warm: true, weight: 'heavy', icon: ['armor_embermail', 12], armor: 0.38, maxHp: 20, sockets: 2, value: 640, desc: 'Absorbs 38%, +20 health. Warm in any storm.' },
-  ember_bulwark: { name: 'Emberforged Bulwark', type: 'shield', icon: ['shield_bulwark', 12], block: 0.9, cost: 0.65, sockets: 1, value: 480, desc: 'Hold F to block. Absorbs 90%.' },
+  ember_bulwark: { name: 'Emberforged Bulwark', type: 'shield', icon: ['shield_bulwark', 12], block: 0.9, cost: 0.65, sockets: 1, value: 480, desc: 'Hold {KeyF} to block. Absorbs 90%.' },
   hound_collar: { name: "Pup's Collar", type: 'charm', icon: ['charm_collar', 15], maxSp: 20, crit: 0.04, value: 90, desc: 'Asta\'s hound wore it. +20 stamina, +4% crit.' },
+  warden_pennant: { name: "Warden's Pennant", type: 'charm', icon: ['charm_banner', 15], maxHp: 25, maxSp: 15, value: 120, desc: 'A Warden\'s pennant from the Ashen wall, cut to a sash. +25 health, +15 stamina.' },
   ironwatch_banner: { name: 'Ironwatch Banner', type: 'charm', icon: ['charm_banner', 12], maxHp: 25, maxSp: 15, value: 120, desc: 'Ragna\'s company banner, cut to a sash. +25 health, +15 stamina.' },
   leather_cap: { name: 'Leather Cap', type: 'helmet', weight: 'light', icon: ['helm_cap', 9], armor: 0.03, value: 25, desc: 'Stitched hide with ear flaps. Absorbs 3% damage.' },
   iron_helm: { name: 'Iron Helm', type: 'helmet', weight: 'medium', icon: ['helm_nasal', 4], armor: 0.06, value: 80, desc: 'A plain helm with a nose guard. Absorbs 6% damage.' },
@@ -248,6 +250,12 @@ export const ITEMS = {
 };
 
 for (const r of RELICS) ITEMS[r.id] = { name: r.name, type: 'quest', icon: ['relic', r.col], value: 0, desc: r.text[0] };
+// descriptions that name a key ({KeyF}) read it from the player's bindings, or the pad button, at the moment they are shown
+for (const it of Object.values(ITEMS)) {
+  if (!/\{\w+\}/.test(it.desc || '')) continue;
+  const raw = it.desc;
+  Object.defineProperty(it, 'desc', { get: () => keyText(raw), enumerable: true, configurable: true });
+}
 
 export const SLOT_OF = { weapon: 'weapon', weapon2h: 'weapon', shield: 'offhand', bow: 'bow', helmet: 'head', armor: 'armor', charm: 'charm' };
 export const SLOT_NAMES = { weapon: 'WEAPON', offhand: 'OFFHAND', bow: 'BOW', head: 'HELMET', armor: 'ARMOR', charm: 'CHARM' };

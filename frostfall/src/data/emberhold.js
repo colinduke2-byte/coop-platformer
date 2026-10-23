@@ -11,7 +11,7 @@ import { ITEMS } from './items.js';
 import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
 import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
-import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
+import { addRep, rep, repTier, bestHelp, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
 import { companionStory } from './companionquests.js';
@@ -23,7 +23,8 @@ import { SEAL_QUESTS, sealCount } from './chapter3.js';
 
 const def = (id, name, tex = id) => { NPC_DEFS[id] = { name, tex: 'spr_' + tex }; };
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
-const ending = () => S.flags.ending || null;   // 'give' | 'keep' | 'sell' once the Winter is decided
+const frostheart = () => S.flags.ending || null;   // Chapter 1: 'give' | 'keep' | 'sell' (what became of the Frostheart)
+const winter = () => S.flags.finale || null;        // Chapter 2: 'thaw' | 'warden' | 'crown' (what became of the Winter)
 
 // ---------------------------------------------------------------------------------------------------- quests
 QUESTS.silence = {
@@ -66,10 +67,10 @@ SCRIPTS.hesper = async function hesper() {
   const N = 'Captain Vael', q = S.quests.roadwatch;
   if (q.status === 'active' && ashenCleared() >= 3) {
     await say(N, 'Three strongholds down. The road breathes again. You have the Wardens\' thanks, and something better than thanks.');
-    addGold(250); addRep('wardens', 25); addItem('ironwatch_banner'); finishQuest('roadwatch'); return;
+    addGold(250); addRep('wardens', 25); addItem('warden_pennant'); finishQuest('roadwatch'); return;
   }
   if (q.status === 'inactive') {
-    await say(N, S.flags.ending ? 'You wear the mark of the Winter\'s ending. Tell me, which did you choose? ...No. Do not tell me. I want to look at your face when I decide what to think.' : 'Halt. State your business in Emberhold, and your business on the road.');
+    await say(N, winter() ? 'You wear the mark of the Winter\'s ending. Tell me, which did you choose? ...No. Do not tell me. I want to look at your face when I decide what to think.' : 'Halt. State your business in Emberhold, and your business on the road.');
     await say(N, 'The Ashen road is overrun. Camps, towers, things that do not sleep. Clear three strongholds and I will see the Wardens remember your name.');
     const c = await choose(['I will clear the road.', 'Not today.']);
     if (c === 0) { startQuest('roadwatch'); await say(N, 'Good. Look for smoke, and for fires that do not warm anyone.'); }
@@ -78,7 +79,7 @@ SCRIPTS.hesper = async function hesper() {
   await say(N, cyc('hesperN', ['The wall holds. It always holds, until the morning it does not.', `Your standing with us: ${repTier('wardens')}.`, 'Corvin lost his company to the last Winter. Be kind to him; he will not ask.']));
 };
 SCRIPTS.corvin = async function corvin() {
-  await say('Corvin', cyc('corvinN', ['I was at the Reach when the Frost came down. We were forty. I walked home with six.', ending() === 'give' ? 'They say the Winter broke. It did not break. It was *let go*. Remember the difference.' : 'The cold does not forget.', 'Do not thank me for the watch. Thank the ones who are not here to keep it.']));
+  await say('Corvin', cyc('corvinN', ['I was at the Reach when the Frost came down. We were forty. I walked home with six.', winter() === 'thaw' ? 'They say the Winter broke. It did not break. It was let go. Remember the difference.' : winter() === 'crown' ? 'The cold does not forget. Now it has a face, and the face is yours.' : 'The cold does not forget.', 'Do not thank me for the watch. Thank the ones who are not here to keep it.']));
 };
 SCRIPTS.pell = async function pell() {
   const N = 'Pell';
@@ -127,7 +128,7 @@ SCRIPTS.ketil = async function ketil() {
   const lines = [
     'Sing, O smiths of Emberhold, for the first fire sleeps, and the first fire dreams of you!',
     'Five Hearts the Kings did bind, five chains the Anvil wrought; the Winter wore them, the Winter fought, the Winter lost the fight...',
-    ending() === 'keep' ? 'And a Winter King now walks the Reach, with a crown of frost and a heart of cold; I will not sing that song. Not today.' : ending() === 'give' ? 'And the Hearth is lit in the Hollow Reach, and the frost has loosed its hold; that, my friend, is a song worth gold!' : 'Ask me what the Winter cost, and I will tell you in gold. Ask me what it was worth, and I will not answer.',
+    winter() === 'crown' ? 'And a crown of rime now walks the Reach, and the frost bows its head; I will not sing that song. Not today.' : winter() === 'thaw' ? 'And the Winter walked north on its own two feet, and the Reach learned the word for summer!' : winter() === 'warden' ? 'And the Winter sleeps on a leash of light, and its warden walks among us; hush, now, hush, or it will hear!' : 'Ask me what the Winter cost, and I will tell you in gold. Ask me what it was worth, and I will not answer.',
   ];
   await say('Ketil', cyc('ketilN', lines));
 };
@@ -143,7 +144,7 @@ SCRIPTS.goran = async function goran() {
   await say(N, cyc('goranN', [
     'I was the Court\'s smith, forty years ago. I made links for the chains. Do you know what we made them from? Not iron.',
     'The Hollow Kings brought us a sack of something grey and warm. They said: bind the Winter. We never asked what it was. Brannoch still does not know.',
-    ending() === 'sell' ? 'You sold the Winter, I hear. Gold for a god. That is an old way of ending, and it never ends.' : S.quests.anvilcore?.status === 'done' ? 'You brought Kragnar\'s core to the Anvil. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chains held for a thousand years. Ask yourself what holds a chain that long.',
+    frostheart() === 'sell' ? 'You sold the Frostheart to a potion-seller, I hear. Gold for a god\'s heart. That is an old way of ending, and it never ends.' : S.quests.anvilcore?.status === 'done' ? 'You brought Kragnar\'s core to the Anvil. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chains held for a thousand years. Ask yourself what holds a chain that long.',
   ]));
 };
 SCRIPTS.garrow = async function garrow() {
@@ -153,14 +154,14 @@ SCRIPTS.garrow = async function garrow() {
 };
 SCRIPTS.thessaly = async function thessaly() {
   const N = 'Thessaly';
-  await say(N, cyc('thessalyN', ['The archive holds every treaty, every ledger and every lie. Mostly the lies. They are better written.', S.flags.chapter3 ? 'The missing page says: when the Winter is loosed, the First Fire must be asked a question. It does not say what the question is. It says only that someone must be brave enough to answer.' : 'There is a page missing from the Book of Chains. It was cut out, cleanly, by someone who could read it.', ending() ? 'Your choice at the Throne is recorded. In pencil. Everything is pencil until a century passes.' : 'If you decide the Winter\'s fate, I would like to be the one to write it down.']));
+  await say(N, cyc('thessalyN', ['The archive holds every treaty, every ledger and every lie. Mostly the lies. They are better written.', S.flags.chapter3 ? 'The missing page says: when the Winter is loosed, the First Fire must be asked a question. It does not say what the question is. It says only that someone must be brave enough to answer.' : 'There is a page missing from the Book of Chains. It was cut out, cleanly, by someone who could read it.', winter() ? 'Your choice at the Throne is recorded. In pencil. Everything is pencil until a century passes.' : 'If you decide the Winter\'s fate, I would like to be the one to write it down.']));
 };
 SCRIPTS.ysolde = async function ysolde() {
   const N = 'Matriarch Ysolde';
   if (!S.flags.metYsolde) {
     S.flags.metYsolde = true;
     await say(N, 'So. The Reach sends a dreamer. I have waited a long while to see what the Hollow Kings left behind.');
-    await say(N, S.flags.finale === 'thaw' ? 'You set the Winter free. Our furnaces burned three days brighter for it. Gratitude is a cheap word; you will have it anyway.' : S.flags.finale === 'warden' ? 'You bound the Winter again, and stand its warden. I am relieved, and I am afraid, and I would like it noted that both are true.' : S.flags.finale === 'crown' ? 'You carry the Winter\'s crown. Say nothing. I am deciding whether to be afraid, and I would like to finish.' : ending() === 'give' ? 'You gave the Frostheart its rest. The fire has noticed.' : ending() === 'sell' ? 'You sold the Winter. For how much? ...Never mind. I can see the answer in your pockets.' : 'The Winter is not decided. How rare, and how brave, to arrive early.');
+    await say(N, S.flags.finale === 'thaw' ? 'You set the Winter free. Our furnaces burned three days brighter for it. Gratitude is a cheap word; you will have it anyway.' : S.flags.finale === 'warden' ? 'You bound the Winter again, and stand its warden. I am relieved, and I am afraid, and I would like it noted that both are true.' : 'You carry the Winter\'s crown. Say nothing. I am deciding whether to be afraid, and I would like to finish.');
     await say(N, 'Hear me. The chains that held the Winter were not iron. They were forged from the First Fire, which the Kings buried under this mountain so the world would never burn. When you loosened the Winter, you loosened the fire that held it.');
     await say(N, 'The Forge of the First Fire lies on the Ashen Peaks, sealed by the three houses of this city. Win a seal from each: the Delvers, the Court, the Wardens. Then come back, and I will open it.');
     return;
@@ -169,7 +170,7 @@ SCRIPTS.ysolde = async function ysolde() {
   if (c === 0) await say(N, 'The Anvil Court wants what it has always wanted: that what is forged here holds. The Delvers want ore. The Wardens want rest. I would like all three.');
   else if (c === 1) {
     if (S.flags.finalChoice) { await say(N, 'The Forge is quiet. Whatever you decided, you decided for all of us. I will keep the record. In ink.'); return; }
-    if (S.flags.forgeOpen) { await say(N, 'The door stands open on the Ashen Peaks. Go well. Bring something back, even if it is only a lesson.'); return; }
+    if (S.flags.forgeOpen) { await say(N, 'The door stands open on the Ashen Peaks. Go well. Bring something back, even if it is only a lesson.'); if (!bestHelp()) await say(N, 'And if you mean to bind it, you will need a house that trusts you to the end of the chain. None does yet.'); return; }
     const n = sealCount();
     if (n < 3) {
       const miss = [['delvers', 'the Delvers (The Silent Mines)'], ['anvil', 'the Court (A Core for the Anvil)'], ['wardens', 'the Wardens (The Ashen Road)']].filter(([f]) => S.quests[SEAL_QUESTS[f]]?.status !== 'done').map((x) => x[1]).join(', ');
@@ -178,6 +179,7 @@ SCRIPTS.ysolde = async function ysolde() {
       await say(N, 'Three seals. Three houses behind you. That has not happened in my lifetime.');
       S.flags.forgeOpen = true; sfx.play('quest'); bus.emit('toast', 'THE FORGE OF THE FIRST FIRE IS OPEN', 12);
       await say(N, 'The door is on the Ashen Peaks, far to the east, past the roads the Wardens cleared. Take the best you have forged. It will not be enough, and that is the point.');
+      await say(N, 'If you mean to bind it, you will need a house that trusts you to the end of the chain.');
     }
   } else if (c === 2) await say(N, standing());
 };

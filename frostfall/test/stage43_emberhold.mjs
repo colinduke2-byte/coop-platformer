@@ -125,7 +125,7 @@ check('Captain Vael sets you to clear the road', await S(() => window.__ff.S.que
 await unstub();
 await S(() => { const s = window.__ff.S; s.bounty = { ...s.bounty, ashen_camp0: true, ashen_ruin1: true, ashen_tower2: true, camp0: true }; });
 await stub([]); await D('hesper');
-const road2 = await S(() => { const s = window.__ff.S; return { q: s.quests.roadwatch.status, rep: Math.round(s.rep.wardens), banner: !!s.inv.ironwatch_banner }; });
+const road2 = await S(() => { const s = window.__ff.S; return { q: s.quests.roadwatch.status, rep: Math.round(s.rep.wardens), banner: !!s.inv.warden_pennant && !s.inv.ironwatch_banner }; });
 check('clearing three Ashen strongholds (not Reach ones) completes the Ashen Road', road2.q === 'done' && road2.rep === 25 && road2.banner, JSON.stringify(road2));
 await unstub();
 

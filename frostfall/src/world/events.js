@@ -21,6 +21,7 @@ import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
+import { prompt } from '../systems/access.js';
 
 export const eventMethods = {
   // Companion and side-quest bookkeeping, twice a second at most.
@@ -147,7 +148,7 @@ export const eventMethods = {
     for (const f of this.fires) {
       if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
       S.flags.fires[f.key] = true;
-      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('quest');
+      bus.emit('toast', `CAMPFIRE FOUND - FAST TRAVEL: ${prompt('KeyM')} MAP, THEN ${prompt('KeyF')}`, 12); sfx.play('quest');
     }
   },
   fastTravel(f) {

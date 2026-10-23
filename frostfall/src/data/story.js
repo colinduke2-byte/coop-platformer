@@ -2,6 +2,8 @@
 import { S } from '../systems/state.js';
 import { heartsHeld } from './hearts.js';
 
+// The Sovereign greets you by what you did with its brother, the Winter.
+const SOVEREIGN_OPEN = { thaw: 'Little Dreamer. You let my brother walk free. Be as generous twice.', warden: 'Little Dreamer. You keep my brother on a leash. Will you hold the other one too?', crown: 'Little Dreamer. You wear my brother. I can see him behind your eyes.', none: 'Little Dreamer. You have met my brother.' };
 // Spoken as subtitles when a boss engages, changes phase, or falls. Keys match the boss's enemy kind.
 export const BOSS_TAUNTS = {
   boss: { name: 'JARL VALDREK', engage: 'The crypt is a crown. You walk in it like a thief.', 2: 'I have worn this cold for a thousand winters. Kneel.', death: 'The Heart... was never mine to keep...' },
@@ -13,7 +15,7 @@ export const BOSS_TAUNTS = {
   winter: { name: 'THE LONG WINTER', engage: 'Little Dreamer. You carry my chains and think them yours.', 2: 'I am the storm that made your fathers kneel.', 3: 'I am the silence after the last fire dies.', death: 'You broke the chains. Now break the choice.' },
   admiral: { name: 'ADMIRAL VEYL', engage: 'Lower the boats! ...No. There is no one to give the order. There never was. Then I will give you the order: leave.', 2: 'Hard to starboard! The ice is coming up through the keel!', death: 'Ship... sinks... Now. At last. Tell them... the crew... was... loyal.' },
   hollowking: { name: 'THE HOLLOW KING', engage: 'You have come a long way to meet a king who has no kingdom. I am glad of the company.', 2: 'Rise, my court. Rise and kneel. We were so very many once.', 3: 'Do you know what it is, to be the last name in a book no one opens?', death: 'Remembered. That is... all I... wanted. Thank you, small light.' },
-  sovereign: { name: 'THE ASHEN SOVEREIGN', engage: 'Little Dreamer. You broke my brother and bound my chains. Now you stand where the Kings stood, and I am ready to ask my question.', 2: 'I was the first spark in the first dark. Every fire since is my child, and every child wants to come home.', 3: 'BURN. BURN. BURN. THE WORLD WAS ALWAYS KINDLING.', death: 'The question... is whether... you will let me... rest.' },
+  sovereign: { name: 'THE ASHEN SOVEREIGN', get engage() { return (SOVEREIGN_OPEN[S.flags.finale] || SOVEREIGN_OPEN.none) + ' Now you stand where the Kings stood, and I am ready to ask my question.'; }, 2: 'I was the first spark in the first dark. Every fire since is my child, and every child wants to come home.', 3: 'BURN. BURN. BURN. THE WORLD WAS ALWAYS KINDLING.', death: 'The question... is whether... you will let me... rest.' },
   kragnar: { name: 'KRAGNAR', engage: 'Who walks in my lode? The lanterns are mine. The dark is mine. You are mine.', 2: 'Dig! DIG! The mountain remembers every hand that wronged it!', 3: 'Break me and the lode breaks with me...', death: 'Sleep... at last... under... stone.' },
   dragon: { name: 'SKALDRATH', engage: 'Another small flame comes to my hoard. How it flickers.', 2: 'The sky burns because I wish it. Watch.', 3: 'EMBERS FALL WHERE I LOOK.', death: 'The last dragon... falls to a mortal spark...' },
 };
@@ -79,7 +81,7 @@ export function chapter3Ending(kind) {
 export function epilogueLines() {
   const out = [];
   const trophies = Object.keys(S.trophies || {}).length;
-  if (S.flags.ragnaVeteran) out.push('Ragna hung the Ironwatch banner over the lodge door, and nobody has asked her to take it down.');
+  if (S.flags.ragnaVeteran) out.push('Ragna burned a rafter in the lodge and said forty names over it. The lodge is quieter now, and so is she.' + (S.flags.ragnaBond ? ' An iron cairn on the Ironwatch road carries every one of them.' : ''));
   if (S.flags.houndGiven) out.push('Asta and her hound run the length of the palisade every morning. He has never once come back without her.');
   else if (S.flags.houndOwned) out.push('A frost hound sleeps at the foot of your bed. He does not dream of winter.');
   if (S.flags.cubOwned) out.push('The bear cub grew into a bear. She still follows you to the door, and waits.');
