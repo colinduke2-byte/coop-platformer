@@ -53,6 +53,7 @@ export function statLines(id) {
   if (it.armor) out.push([`ARMOR ${Math.round(upgraded(kd, lv, it.armor) * 1000) / 10}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.block) out.push([`BLOCKS ${Math.round(upgraded(kd, lv, it.block) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
+  { const el = S.enchants?.[id] || it.elem; if (el) out.push([`HITS AS ${el.type.toUpperCase()} +${el.power}${S.enchants?.[id] ? ' (ENCHANT)' : ''}`, el.type === 'fire' ? 12 : el.type === 'frost' ? 15 : 13]); }   // PR-13
   if (it.style === 'dagger') { out.push(['FAST. SNEAK AND BACK HITS HURT', 15]); if (it.pierce) out.push([`4TH HIT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]); if (it.assassinate) out.push(['SNEAK KILLS ANY NON-BOSS', 14]); if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]); for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}${f.sneakOnly ? ' ON SNEAK ATTACK' : ''}`, 11]); }
   if (it.style === 'staff') {
     out.push(['WEAK IN MELEE. HEAVY ATTACK: FREE BOLT', 15]);
@@ -253,9 +254,9 @@ export async function gearUpgradeMenu(who, cap = 3) {
 }
 
 export const ENCHANTS = [
-  { type: 'fire', name: 'Flame', mat: 'bone_dust', n: 3, gold: 90, power: 5, desc: 'burns for +5' },
-  { type: 'frost', name: 'Frost', mat: 'frost_lily', n: 3, gold: 90, power: 4, desc: 'slows foes, +4' },
-  { type: 'shock', name: 'Storm', mat: 'wolf_fang', n: 3, gold: 90, power: 6, desc: 'shocks for +6' },
+  { type: 'fire', name: 'Flame', mat: 'bone_dust', n: 3, gold: 90, power: 5, desc: 'hits count as FIRE (+5)' },
+  { type: 'frost', name: 'Frost', mat: 'frost_lily', n: 3, gold: 90, power: 4, desc: 'hits count as FROST (+4) and slow' },
+  { type: 'shock', name: 'Storm', mat: 'wolf_fang', n: 3, gold: 90, power: 6, desc: 'hits count as SHOCK (+6)' },
 ];
 export async function enchantMenu(who) {
   const id = S.equip.weapon;
@@ -265,7 +266,7 @@ export async function enchantMenu(who) {
     return {
       id: e.mat, name: e.name + ' Enchant', tag: e.gold + 'G', ok,
       sub: S.enchants[id]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
-      desc: `Your ${ITEMS[id].name} ${e.desc} on every hit. Replaces any other enchant.`,
+      desc: `Your ${ITEMS[id].name}: ${e.desc}. An element hits the weak x1.5 and gets through armour far better; some foes resist it.${ITEMS[id].elem && ITEMS[id].elem.type !== e.type ? ' Replaces its own ' + ITEMS[id].elem.type.toUpperCase() + '.' : ' Replaces any other enchant.'}`,
       tagCol: S.gold >= e.gold ? 13 : 11,                      // the price is red only when the gold is what is missing
       lines: [need(ITEMS[e.mat].name.toUpperCase(), have, e.n), need('GOLD', S.gold, e.gold)],
     };
@@ -275,6 +276,8 @@ export async function enchantMenu(who) {
     onSelect: (i, ui) => {
       const e = ENCHANTS[i];
       if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
+      const own = ITEMS[id].elem;            // PR-13: overwriting the weapon's own element asks first
+      if (own && own.type !== e.type && !S.enchants[id] && !ui.confirm('ench:' + id + e.type, `REPLACE ITS OWN ${own.type.toUpperCase()}? E AGAIN`)) return;
       S.gold -= e.gold; removeItem(e.mat, e.n);
       S.enchants[id] = { type: e.type, power: e.power };
       sfx.play('levelup');

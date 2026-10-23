@@ -23,7 +23,7 @@ t('PR-02: every generated item gets the full affix count of its rarity (1,000 ro
 });
 t('PR-02: a weapon never carries two elements', () => {
   const R = rng(11);
-  for (let i = 0; i < 2000; i++) { const it = genItem(3, R, 3, { slot: 'weapon' }); assert.ok(it.affixLines.filter((l) => /^(FIRE|FROST|SHOCK) /.test(l)).length <= 1, it.name); }
+  for (let i = 0; i < 2000; i++) { const it = genItem(3, R, 3, { slot: 'weapon' }); assert.ok(it.affixLines.filter((l) => /^HITS AS (FIRE|FROST|SHOCK) /.test(l)).length <= 1, it.name); }
 });
 
 // PR-03: every ware list in the game (literal { id, price, n } rows in any source file, and the daily rotation pools) is

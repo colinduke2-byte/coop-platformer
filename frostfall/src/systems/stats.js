@@ -49,6 +49,8 @@ export const stats = {
     const add = items + setBonus('goldMul') + (S.follower && S.companion === 'pell' ? TUNE.economy.pellGold : 0) + Math.max(0, (blessing()?.goldMul ?? 1) - 1);
     return 1 + Math.min(TUNE.economy.goldFindCap, add);
   },
+  // PR-13: how the element your weapon hits with fares against an enemy: 'WEAK', 'RESISTS' or ''
+  elemVs: (cfg) => { const en = stats.enchant(); const m = en && cfg?.weak ? cfg.weak[en.type] ?? 1 : 1; return m > 1 ? 'WEAK' : m < 1 ? 'RESISTS' : ''; },
   enchant: () => S.enchants?.[S.equip.weapon] || eq('weapon')?.elem || runeElem(),
 };
 

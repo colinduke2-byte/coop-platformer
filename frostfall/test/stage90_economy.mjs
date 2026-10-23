@@ -92,6 +92,18 @@ const heavy = await G(async (reset) => {
 }, reset);
 check('PR-09: generated Plate and Greathelm slow only through the heavy class; old saves are fixed; Bulwark Plate shows its total speed', Object.values(heavy).every(Boolean), JSON.stringify(heavy));
 
+// ---- PR-13: element tooltips say what an element does, and the target bar shows weak / resists
+const el = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, { stats } = await import('/src/systems/stats.js'), { statLines, ENCHANTS } = await import('/src/data/services.js');
+  S.inv.ember_blade = 1; S.equip.weapon = 'ember_blade';
+  const line = statLines('ember_blade').map((l) => l[0]).join(' | ');
+  const weak = stats.elemVs({ weak: { fire: 1.5 } }), res = stats.elemVs({ weak: { fire: 0.3 } }), none = stats.elemVs({});
+  S.equip.weapon = null;
+  return { line: /HITS AS FIRE/.test(line), weak: weak === 'WEAK' && res === 'RESISTS' && none === '', words: ENCHANTS.every((e) => /count as/.test(e.desc)) };
+}, reset);
+check('PR-13: weapons show which element they hit as; the target bar knows WEAK and RESISTS; enchants say what they do', Object.values(el).every(Boolean), JSON.stringify(el));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

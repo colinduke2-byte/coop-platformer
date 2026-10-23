@@ -671,6 +671,7 @@ export default class HudScene extends Phaser.Scene {
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
       this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg && dg !== 2 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont(fontKey(dg ? DANGER_COL[dg] : 6)).setVisible(true);
+      const ev = stats.elemVs(tg.cfg); if (ev) { const was = this.tgtTxt.text; this.tgtTxt.setText(was + '  ' + ev); if (this.tgtTxt.width > tw + 6) this.tgtTxt.setText(was); }   // PR-13: your weapon's element against it
       this.tgtTxt.x = Math.round(tx + (tw - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);
 
