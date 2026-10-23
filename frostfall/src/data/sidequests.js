@@ -9,6 +9,7 @@ import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold } from '../systems/inventory.js';
 import { heartsHeld } from './hearts.js';
 import { getReach } from './maps.js';
+import { fromOn, nearestOf } from '../world/questmarks.js';
 
 const cleared = (re) => Object.keys(S.bounty || {}).filter((k) => re.test(k) && S.bounty[k]).length;
 const prayed = () => Object.keys(S.shrines || {}).filter((k) => /standing/.test(k)).length;
@@ -34,10 +35,11 @@ mk('barrows3', 'The Restless Barrows', 'Mirra the Alchemist', 'The barrows are s
 mk('denmother', "The Den-Mother's Debt", 'Bjorn the Hunter', 'With Grimfang gone, the wolf dens have no master and no mercy. Bjorn asks you to drive three dens from the Reach before the flocks are lost.', 'Clear wolf dens');
 mk('towerwatch', 'Retake the Watch', 'Guard Haldor', 'The old watchtowers once saw trouble coming for a day. Haldor would like that again. Retake three towers.', 'Retake watchtowers');
 
-// markers: the nearest place you have not cleared yet
+// markers: the nearest place you have not cleared yet, measured from where you stand (WQ4; it used to be the first in the list)
+const HAMLET_WHO = ['Trapper', 'Fisher', 'Prospector'];
 const nearest = (re, kind) => () => {
-  const left = getReach().pois.filter((p) => p.kind === kind && !S.bounty[p.id]);
-  const p = left[0]; return p ? { map: 'forest', x: p.x, y: p.y } : null;
+  const left = getReach().pois.filter((p) => p.kind === kind && !S.bounty[p.id] && !(kind === 'hamlet' && S.flags['met' + HAMLET_WHO[Number((p.id.match(/\d+$/) || ['0'])[0]) % 3]]) && !(kind === 'standing' && S.shrines?.[p.id]));
+  const p = nearestOf(left, fromOn('forest')); return p ? { map: 'forest', x: p.x, y: p.y } : null;
 };
 TARGETS.hamlets = nearest(null, 'hamlet'); TARGETS.circles = nearest(null, 'standing');
 TARGETS.barrows3 = nearest(null, 'barrow'); TARGETS.denmother = nearest(null, 'den'); TARGETS.towerwatch = nearest(null, 'tower');
