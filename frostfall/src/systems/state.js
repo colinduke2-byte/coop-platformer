@@ -52,8 +52,49 @@ export function newState() {
     seed: Math.floor(Math.random() * 1e9),     // the run seed: lays out the open world and its dungeons
     discovered: {}, sighted: {},
     hearts: {}, gen: {}, killed: {}, bounty: {}, shrines: {}, run: { kills: 0, camps: 0, barrows: 0, champions: 0, chests: 0 }, ngPlus: 0,
+    // fields that start empty and are filled by the system that owns them (kinds in OPTIONAL_KINDS below)
+    ...Object.fromEntries(Object.keys(OPTIONAL_KINDS).map((k) => [k, null])),
   });
 }
+
+// CH5: every field of S is declared. These start as null (null behaves like the old "missing" for every check in the
+// game: S.x || ..., S.x?.y, S.x ||= ...) and, once set, must have this kind; a save with another kind there loads null.
+// A new persistent field goes here (or above with a real default), on its own line, never only into the code that uses it.
+// Transient run modes (quick, daily, boons, mounted) are never written: Arena Mode and dailies do not save, and a map
+// load clears the other two.
+export const OPTIONAL_KINDS = {
+  ammo: 'string',          // selected arrow type (playerBow)
+  arena: 'object',         // Hollow Arena records { best, modes }
+  blessing: 'string',      // shrine blessing id (systems/bless)
+  boons: 'object',         // arena trial boons (transient)
+  buyback: 'array',        // items sold at shops, to buy back (data/stock)
+  cloak: 'number',         // cloak colour (palette index, systems/achievements CLOAKS)
+  companion: 'string',     // hired companion: 'ragna' | 'pell'
+  contracts: 'object',     // daily contracts board (data/contracts)
+  daily: 'object',         // Daily Challenge run (transient, never saved)
+  dur: 'object',           // gear durability per item id (systems/durability)
+  fish: 'object',          // fishing records
+  followMode: 'string',    // follower orders
+  mods: 'object',          // challenge / daily modifiers (data/mods)
+  mounted: 'boolean',      // riding the pony (transient)
+  nemesis: 'object',       // the creature that killed you last { kind, x, y, kills, tier }
+  nemesisSlain: 'number',
+  pet: 'string',           // 'cub' | 'hound'
+  quick: 'object',         // Arena Mode run (transient, never saved)
+  runes: 'object',         // runes socketed per item (systems/sockets)
+  shout: 'string',         // selected shout id
+  stash: 'object',         // home stash: item id -> count
+  tomes: 'object',         // learned spell tomes
+  trophies: 'object',      // trophy id -> true
+};
+// New Game+ keeps these top-level fields (everything else starts fresh); flags keep only NG_KEEP_FLAGS. ngPlus counts up.
+// Fields not listed (arena records, fishing records, durability, shout, ammo, companion...) start over: that was the
+// behaviour before CH5 too; changing it is a design call.
+export const NG_KEEP = ['skills', 'perks', 'perkPoints', 'charLevel', 'skillUps', 'bonusHp', 'bonusMp', 'bonusSp', 'inv', 'equip', 'upgrades', 'enchants',
+  'gold', 'arrows', 'gen', 'hearts', 'lore', 'tips', 'kills', 'seen', 'spell',
+  // what you own carries over too: the stash, gems and runes in your gear, learned tomes, trophies, cloak and pet
+  'stash', 'sockets', 'runes', 'tomes', 'trophies', 'cloak', 'pet'];
+export const NG_KEEP_FLAGS = ['alchemy', 'houseBought', 'emberHouse', 'furn'];
 function withExtras(st) { for (const id of EXTRA_QUEST_IDS) st.quests[id] ||= { status: 'inactive' }; return st; }
 
 // Singleton: mutate in place so every module sees the same object.
@@ -80,7 +121,7 @@ export function loadInto(data) {
   for (const [k, v] of Object.entries(data || {})) {
     if (!(k in fresh)) { if (v !== undefined) S[k] = v; continue; }          // extra keys (stash, runes...) are kept as they are
     const want = kindOf(fresh[k]), got = kindOf(v);
-    if (want === 'null') S[k] = v;                                        // fields that start empty (x, y, tracked...) take anything
+    if (want === 'null') { if (v === null || !OPTIONAL_KINDS[k] || kindOf(v) === OPTIONAL_KINDS[k]) S[k] = v; }   // x, y, tracked... take anything
     else if (want === 'number') S[k] = Number.isFinite(v) ? v : fresh[k];
     else if (want === got) S[k] = v;
   }
@@ -99,17 +140,12 @@ export function loadInto(data) {
 
 // New Game+: keep your character (level, skills, perks, gear, gold) and start a fresh, harder world.
 export function startNgPlus() {
-  const keep = {
-    skills: S.skills, perks: S.perks, perkPoints: S.perkPoints, charLevel: S.charLevel, skillUps: S.skillUps,
-    bonusHp: S.bonusHp, bonusMp: S.bonusMp, bonusSp: S.bonusSp, inv: S.inv, equip: S.equip, upgrades: S.upgrades, enchants: S.enchants,
-    gold: S.gold, arrows: S.arrows, gen: S.gen, hearts: S.hearts, lore: S.lore, tips: S.tips, kills: S.kills, seen: S.seen, spell: S.spell, ngPlus: (S.ngPlus || 0) + 1,
-    // what you own carries over too: the stash, gems and runes in your gear, learned tomes, trophies, cloak and pet
-    stash: S.stash, sockets: S.sockets, runes: S.runes, tomes: S.tomes, trophies: S.trophies, cloak: S.cloak, pet: S.pet,
-    flags: { introDone: true, tutDone: true, alchemy: S.flags.alchemy, houseBought: S.flags.houseBought, emberHouse: S.flags.emberHouse, furn: S.flags.furn },
-  };
+  const keep = Object.fromEntries(NG_KEEP.map((k) => [k, S[k]]));
+  keep.ngPlus = (S.ngPlus || 0) + 1;
+  keep.flags = { introDone: true, tutDone: true, ...Object.fromEntries(NG_KEEP_FLAGS.map((k) => [k, S.flags[k]])) };
   const fresh = newState();
   for (const k of Object.keys(S)) delete S[k];
-  for (const k of Object.keys(keep)) if (keep[k] === undefined) delete keep[k];
+  for (const k of Object.keys(keep)) if (keep[k] === undefined || keep[k] === null) delete keep[k];
   Object.assign(S, fresh, JSON.parse(JSON.stringify(keep)));
   S.inv.frostheart = 0; delete S.inv.frostheart; delete S.inv.pale_pelt; delete S.inv.blight_heart;
   S.hp = 1e9; S.mp = 1e9; S.sp = 1e9;
