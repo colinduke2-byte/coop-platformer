@@ -16,7 +16,7 @@ export function logLine(kind, text, col = 6) {
   stamp++;
 }
 export const logLines = () => lines;
-onStateReset(() => { lines.length = 0; stamp++; });       // another character's messages are not yours (CH8)
 export const logStamp = () => stamp;
+onStateReset(() => { lines.length = 0; stamp++; });       // another character's messages are not yours (CH8)
 bus.on('toast', (text, col) => logLine('toast', text, col ?? 6));
 bus.on('say', (who, text) => logLine('say', `${who}: ${text}`, 13));

@@ -21,7 +21,6 @@ export const FOG = 2; // fog chunk = 2x2 tiles
 
 export function fogDims(w, h) { return { cw: Math.ceil(w / FOG), ch: Math.ceil(h / FOG) }; }
 
-const ZOOMS = [1, 2, 3];
 // Zoom steps for a map: small maps scale up from their fitted size; big overworlds start from a whole-map overview.
 const scalesOf = (b) => { const fit = Math.min((VW - 4) / b.w, (VH - 4) / b.h); return fit >= 1 ? [1, 2, 3].map((z) => Math.floor(fit) * z) : [Math.max(0.25, Math.floor(fit * 20) / 20), 1, 2, 3]; };
 const VX = 10, VY = 37, VW = 300, VH = 98;           // the map view: below the title line, above the two-row legend
@@ -79,7 +78,6 @@ export function mapTab(m) {
     const oc = m.clear.bind(m); m.clear = () => { oc(); m.mapTerrain.removeAll(true); m.mapOver.clear(); };
   };
   let zoom = null, cur = null, curMode = false, rep = 0, view = null;     // zoom null: pick a readable start the first time
-  const base = (b) => Math.max(1, Math.min(Math.floor(296 / b.w), Math.floor(112 / b.h)));
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,

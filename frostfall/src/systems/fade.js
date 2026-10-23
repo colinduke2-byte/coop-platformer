@@ -6,6 +6,7 @@
 //   await fadeOut(sc, 600);                    // fade to the night colour, then go on
 //   await fadeIn(sc, 900, [0, 0, 0], 1600);   // from black, fallback after 1.6 s of wall-clock time
 //   await delay(sc, 500);                      // scene time (with a wall-clock fallback of ms + 400)
+//   await pause(sc, 500);                      // the same, but never rejects (GameScene.delay)
 //   await sleep(sc, 700);                      // wall-clock time only
 import { Cancelled } from './dialogue.js';
 
@@ -34,3 +35,7 @@ export const fadeIn = (sc, ms, [r, g, b] = NIGHT, fallbackMs = ms + 700) =>
   settle(sc, (done) => { const cam = sc.cameras.main; cam.once('camerafadeincomplete', done); cam.fadeIn(ms, r, g, b); }, fallbackMs);
 export const delay = (sc, ms, fallbackMs = ms + 400) => settle(sc, (done) => sc.time.delayedCall(ms, done), fallbackMs);
 export const sleep = (sc, ms) => settle(sc, () => {}, ms);
+// A wait that never rejects: it resolves on the scene timer or, whatever happens to the scene, after fallbackMs of wall-clock
+// time. GameScene.delay() uses it, because the intro and the scripts expect to go on after a quick scene restart (the
+// scene object is the same one, alive again). Prefer delay() in new code.
+export const pause = (sc, ms, fallbackMs = ms + 400) => new Promise((r) => { sc.time.delayedCall(ms, r); setTimeout(r, fallbackMs); });

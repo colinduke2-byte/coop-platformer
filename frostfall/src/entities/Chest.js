@@ -3,9 +3,9 @@ import Phaser from 'phaser';
 import { S } from '../systems/state.js';
 import { addItem, addGold, addArrows } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
-import { runScript, say } from '../systems/dialogue.js';
+import { runScript } from '../systems/dialogue.js';
 import { dialogue } from '../systems/dialogue.js';
-import { count, removeItem } from '../systems/inventory.js';
+import { count } from '../systems/inventory.js';
 import { bus } from '../systems/bus.js';
 import { makeGenItem } from '../systems/genloot.js';
 

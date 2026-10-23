@@ -49,7 +49,12 @@ for (const [name, setup] of Object.entries(states)) {
         const D = await import('/src/data/dialogue.js');
         try {
           return await Promise.race([Promise.resolve(D.SCRIPTS[n]()).then(() => 'ok'), new Promise((res) => setTimeout(() => res('hang'), 15000))]);
-        } catch (e) { return 'threw: ' + e.message; } finally { window.__ff.game.scene.getScene('Hud')?.dialogue?.hideBox?.(); }
+        } catch (e) {
+          // a script cut off by a map change (another script's door, a fade on a scene that restarted) ends with Cancelled,
+          // which runScript swallows in the game (CH6, CH19); it is a clean end, not a crash
+          if (e?.name === 'Cancelled') return 'ok';
+          return 'threw: ' + e.message;
+        } finally { window.__ff.game.scene.getScene('Hud')?.dialogue?.hideBox?.(); }
       }, [id, 1 + run * 7919 + id.length * 31]);
       if (r !== 'ok') { problems.push(`${name}/${id}#${run}: ${r}`); break; }
     }

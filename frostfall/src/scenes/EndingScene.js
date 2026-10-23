@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { padHint } from '../systems/access.js';
-import { W, H, C } from '../config.js';
+import { W, H } from '../config.js';
 import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';

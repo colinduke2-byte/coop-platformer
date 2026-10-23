@@ -1,8 +1,6 @@
 import Phaser from 'phaser';
-import { bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
-import { TUNE } from '../data/tuning.js';
-import { norm, dir8 } from '../util.js';
+import { norm } from '../util.js';
 
 // A spectral wolf summoned by the Spirit Wolf spell: hunts the nearest foe for a while, then fades.
 export default class SpiritWolf extends Phaser.Physics.Arcade.Sprite {

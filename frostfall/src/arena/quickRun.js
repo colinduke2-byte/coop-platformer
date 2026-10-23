@@ -1,11 +1,9 @@
 // Arena Mode run logic, mixed into GameScene: combo meter, orbs, wave twists, room hazards, Boss Rush.
 // The wave loop itself is world/arenaRun.js; it calls the hooks below (onQuickFoe, quickWaveHook, quickApplyTwist...).
-import Phaser from 'phaser';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
 import { C } from '../config.js';
-import { recalc } from '../systems/stats.js';
 import { modMul } from '../data/mods.js';
 import { BOSS_CLASS } from '../world/sceneConsts.js';
 import Pickup from '../entities/Pickup.js';

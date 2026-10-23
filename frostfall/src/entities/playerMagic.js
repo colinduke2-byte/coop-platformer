@@ -6,7 +6,7 @@ import { stats } from '../systems/stats.js';
 import { keys } from '../systems/keys.js';
 import { bus } from '../systems/bus.js';
 import { bonus } from '../systems/skills.js';
-import { spellDamage, elementMult } from '../systems/damage.js';
+import { spellDamage } from '../systems/damage.js';
 import { sfx } from '../audio/sfx.js';
 import { lvl } from '../systems/skills.js';
 import Projectile from './Projectile.js';
@@ -253,7 +253,6 @@ export const magicMethods = {
     this.lockT = 0.5; this.lockMove = 0;
     this.body.setVelocity(0, 0);
     sfx.play('shout'); sc.shake(260, 0.01); sc.flashScreen(70); sc.noise(this.x, this.y, 150);
-    const col = { frost: 0x9fe8ff, cry: 0xf08a30, surge: 0x3f7050, grasp: 0x3f7050, hearthcall: 0xf4d460, cinderstep: 0xf08a30 }[id];
     if (id === 'frost') {
       sc.fx.text(this.x, this.y - 18, 'FROST BREATH', 15, 1);
       for (let i = -3; i <= 3; i++) { const a = Math.atan2(f.y, f.x) + i * 0.18; sc.fx.puff(this.x + Math.cos(a) * 30, this.y + 3 + Math.sin(a) * 30, 15, 6, 90, 0.6); sc.fx.puff(this.x + Math.cos(a) * 60, this.y + 3 + Math.sin(a) * 60, 6, 5, 70, 0.5); }

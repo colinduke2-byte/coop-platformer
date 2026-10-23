@@ -59,7 +59,7 @@ const WHERE = {
   sunscorch: [SUNSCORCH, [['sphinx', 1], ['sunobelisk', 1], ['buriedcolossus', 1]]],
 };
 
-for (const [id, [name, title, text, col, r, shape]] of Object.entries(DEFS)) {
+for (const [id, [name, title, text, col]] of Object.entries(DEFS)) {
   EXTRA_KIND_NAME[id] = name; PLACE_NAME[id] = name.replace(/^(A|AN|THE) /, ''); PLACE_COL[id] = col; LANDMARKS.add(id); STRICT.add(id);
   SMALL_GAP[id] = 24;         // a landmark is something you pass on the way, not a destination: it may sit closer to other places
   LORE['lm_' + id] = { title, text: [text] };

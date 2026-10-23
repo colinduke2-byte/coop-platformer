@@ -15,7 +15,7 @@ import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
 import { companionStory } from './companionquests.js';
-import { SETS, setSummary } from '../systems/sets.js';
+import { setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
 import { setCompanion } from '../systems/companion.js';

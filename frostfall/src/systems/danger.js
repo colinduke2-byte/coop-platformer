@@ -5,7 +5,6 @@ import { bonus } from './skills.js';
 import { armorEffect } from './damage.js';
 import { costAgainst, dangerFromCost, readyTier, DANGER_NAMES } from './powercurve.js';
 import { settings } from './settings.js';
-import { TUNE } from '../data/tuning.js';
 
 // Your damage per swing (best of sword, bow, spell), health, armour and shield, as the power model wants them.
 export function playerNow() {

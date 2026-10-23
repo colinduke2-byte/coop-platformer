@@ -34,8 +34,8 @@ export default class TitleScene extends Phaser.Scene {
     for (let x = 0; x < W; x += 2) g.fillRect(x, 125 - Math.abs(((x * 1.1 + 20) % 80) - 40) * 0.6, 2, 90);
     g.fillStyle(0xeaf2f8); g.fillRect(0, 160, W, 20);
     g.fillStyle(0xb4c7e0); g.fillRect(0, 160, W, 2);
-    const sh = txt(this, W / 2 + 2, 26, 'FROSTFALL', 2).setScale(4).setOrigin(0.5, 0);
-    const t1 = txt(this, W / 2, 24, 'FROSTFALL', 6).setScale(4).setOrigin(0.5, 0);
+    txt(this, W / 2 + 2, 26, 'FROSTFALL', 2).setScale(4).setOrigin(0.5, 0);
+    txt(this, W / 2, 24, 'FROSTFALL', 6).setScale(4).setOrigin(0.5, 0);
     const t2 = txt(this, 0, 60, 'A TALE OF THE FROZEN NORTH', 4);
     t2.x = Math.floor((W - t2.width) / 2);
     const done = listSaves().find((x) => x.info?.ending);

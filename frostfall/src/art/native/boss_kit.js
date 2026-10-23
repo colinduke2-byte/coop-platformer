@@ -27,7 +27,7 @@ function context(N, design, dirIn, frIn) {
   Object.entries(design.palette).forEach(([name, v], i) => { id[name] = i + 1; ramps[i + 1] = Array.isArray(v) ? v : ramp(v); });
   const c = { ...sh, g, k, N, id, view: dir === 'down' ? 'front' : dir === 'up' ? 'back' : 'side', pose, fr, atk: pose === 'atk' ? frIn : -1,
     stride: fr === 1 ? -1 : fr === 2 ? 1 : 0, bob: fr ? 0.35 : 0, hurt: pose === 'hurt' };
-  const { R, Q, E, T } = sh;
+  const { Q, E, T } = sh;
   // an arm hanging from (x, y); lifts for the attack windup, thrusts forward on the strike, flinches up when hurt
   c.arm = (side, x, y, len, w, part, hand = null, handR = 0.9) => {
     const sgn = side === 'R' ? 1 : -1;

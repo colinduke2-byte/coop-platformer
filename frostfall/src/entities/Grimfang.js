@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import Boss from './Boss.js';
 import Pickup from './Pickup.js';
 import { C } from '../config.js';
@@ -7,7 +6,7 @@ import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
 import { TUNE } from '../data/tuning.js';
 import { elementMult } from '../systems/damage.js';
-import { dist, norm, rand } from '../util.js';
+import { dist, norm } from '../util.js';
 import { saveGame } from '../systems/save.js';
 import { say, choose, runScript } from '../systems/dialogue.js';
 

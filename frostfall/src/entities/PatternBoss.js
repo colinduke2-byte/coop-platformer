@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import Boss from './Boss.js';
 import Enemy from './Enemy.js';
 import Pickup from './Pickup.js';
@@ -7,8 +6,7 @@ import { C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
-import { TUNE } from '../data/tuning.js';
-import { dist, rand } from '../util.js';
+import { dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
 
 // Shared base for the Heart guardians. A boss is a subclass that sets `tune` (its numbers in TUNE), `info`

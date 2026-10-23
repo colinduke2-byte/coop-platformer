@@ -22,7 +22,7 @@ import { MODS } from '../data/mods.js';
 import { damageTaken, meleeDamage, blockResult, blockStaminaCost } from '../systems/damage.js';
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
-import { burden, classMix } from '../systems/burden.js';
+import { classMix } from '../systems/burden.js';
 const P = TUNE.player;
 
 export const combatMethods = {

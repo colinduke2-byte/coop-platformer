@@ -25,7 +25,6 @@ export const PLACE_COL = { camp: 11, den: 11, champion: 11, beardn: 11, ruin: 6,
 // Tall things you can see from a long way off: a place on this list is "sighted" (the map shows a ? for it) from far away.
 export const LANDMARKS = new Set(['tower', 'lighthouse', 'standing', 'giantcairn', 'stormspire', 'stormcircle', 'fort', 'city', 'skarnhold', 'reedwick', 'throne', 'maw', 'nest', 'hartspire', 'saltgate']);
 export const SIGHT_RANGE = 42;
-export const isSighted = (mapId, p) => !!S.sighted?.[mapId + ':' + p.id];
 export const placeName = (p) => PLACE_NAME[p.kind] || p.kind.toUpperCase();
 export const discoveredCount = () => Object.keys(S.discovered || {}).length;
 const rangeOf = (p) => (HIDDEN.has(p.kind) ? 7 : p.kind === 'rest' || p.kind === 'spring' ? 12 : Math.max(15, (p.r || 8) + 4));

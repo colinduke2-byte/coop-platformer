@@ -93,7 +93,6 @@ export function slotState(slot) {
   return get(keyFor(slot)) || get(bakFor(slot)) ? 'damaged' : 'empty';
 }
 
-export function hasSave(slot = settings.slot) { return !!readSlot(slot); }
 export function anySave() { for (let i = 1; i <= SLOTS; i++) if (readSlot(i)) return true; return false; }
 
 // small per-slot summary, cached until the next write (menus redraw often)
@@ -232,13 +231,6 @@ export function importSave(text, slot = settings.slot) {
   } catch { return storage.ok ? 'COULD NOT WRITE THE SAVE' : 'THIS BROWSER BLOCKS SAVES'; }
   infoCache.delete(slot);
   return '';
-}
-
-// Total bytes of everything the game keeps in storage (for bug reports).
-export function storageBytes() {
-  let n = 0;
-  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith('frostfall')) n += (localStorage.getItem(k) || '').length; } } catch { /* blocked */ }
-  return n;
 }
 
 export const fmtTime = (sec) => {

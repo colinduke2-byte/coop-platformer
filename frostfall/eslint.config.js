@@ -1,4 +1,5 @@
-// ESLint (flat config): catches real mistakes, not style. `npm run lint` fails on errors only; warnings are informational.
+// ESLint (flat config): catches real mistakes, not style. `npm run lint` fails on errors only; warnings are informational
+// (in src/ an unused variable or import is an error).
 import globals from 'globals';
 
 const rules = {
@@ -12,6 +13,8 @@ const rules = {
 // the game only: rules that keep parallel work safe (docs/AGENT_RULES.md)
 const srcRules = {
   ...rules,
+  // CH17: src/ has no unused code; keep it that way while several agents work (tests and tools stay warnings)
+  'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', ignoreRestSiblings: true }],
   'no-restricted-syntax': ['error', {
     selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='ui'][left.property.name='modal']",
     message: 'Never write ui.modal: take a hold with ui.hold(tag) and call the release it returns (docs/AGENT_RULES.md).',

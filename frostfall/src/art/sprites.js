@@ -4,7 +4,7 @@ import { PAL, T, TILE, TILE_COUNT } from '../config.js';
 import { hash } from '../util.js';
 import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
 import { wornStyle, wornExtra, wornHelmet } from './worn.js';
-import { DAG_HI, DAG_LO, outlineCells, iconFromCells, heldFromCells, LET, Cb, col2 } from './cells.js';
+import { DAG_HI, DAG_LO, iconFromCells, heldFromCells, Cb, col2 } from './cells.js';
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');

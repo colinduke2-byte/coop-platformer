@@ -1,5 +1,5 @@
 // Hand-designed bosses, part A. Each has its own anatomy so no two share a body or head shape.
-import { bossSheet, ramp, flat } from './boss_kit.js';
+import { bossSheet, flat } from './boss_kit.js';
 import { registerNative } from '../native_registry.js';
 
 const reg = (kind, scale, design) => { const N = Math.round(16 * scale); registerNative(kind, { scale, w: N, h: N, build: (scene, key) => bossSheet(scene, key, N, design) }); };

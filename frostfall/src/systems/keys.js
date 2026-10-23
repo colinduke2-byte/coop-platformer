@@ -152,7 +152,6 @@ function setUsingPad(v) { if (usingPad === v) return; usingPad = v; for (const f
 export const touchUsed = () => { setUsingPad(false); };      // the on-screen controls were touched
 let padCapture = null;
 export const capturePad = (cb) => { padCapture = cb || null; };
-export const capturingPad = () => !!padCapture;
 const padHeld = new Set();
 const padDown = new Set();       // input ids currently active (for "newly pressed" detection)
 

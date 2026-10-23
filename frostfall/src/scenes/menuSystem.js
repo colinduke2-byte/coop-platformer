@@ -1,4 +1,4 @@
-import { C, W, H, BINDINGS } from '../config.js';
+import { C, W, BINDINGS } from '../config.js';
 import { S } from '../systems/state.js';
 import { keys, capture, capturing, setBinding, resetBindings, codeName } from '../systems/keys.js';
 import { fit, setContrast } from '../art/font.js';

@@ -5,7 +5,6 @@ import { QUESTS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { count, removeItem, addItem } from '../systems/inventory.js';
 import { addRep } from './factions.js';
-import { bus } from '../systems/bus.js';
 
 QUESTS.pelldebt = {
   title: "Pell's Lucky Pebbles", giver: 'Pell Quickpick',

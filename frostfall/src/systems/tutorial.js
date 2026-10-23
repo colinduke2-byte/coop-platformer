@@ -5,7 +5,6 @@ import { bus } from './bus.js';
 import { prompt } from './access.js';
 import { padActive } from './keys.js';
 
-export const TUT_STEPS = ['move', 'roll', 'fight', 'done'];
 const TEXT = {
   move: 'MOVE WITH {move}.\nGO ON, STRETCH YOUR LEGS.',
   roll: 'PRESS {Space} TO DODGE ROLL.\nYOU CANNOT BE HIT MID-ROLL.',
@@ -17,7 +16,6 @@ const TEXT = {
 const fill = (t) => t.replace(/\{(\w+)\}/g, (_, c) => (c === 'move' ? (padActive() ? 'THE LEFT STICK' : 'WASD OR THE ARROW KEYS') : prompt(c)));
 
 export function startTutorial() { if (!S.flags.tutDone) S.flags.tut = 'move'; }
-export const tutorialActive = () => !!S.flags.tut && S.flags.tut !== 'done';
 
 const tut = { start: null, rolls0: 0, wolf: null, said: '', t: 0, windupShown: false };
 

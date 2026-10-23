@@ -1,9 +1,8 @@
 // Round 8: three extra dungeon room kinds shared by the barrow and mine generators.
-import { TILE } from '../config.js';
 
 // Returns true when the room was dressed here. ctx: { g, add, foe, R, tier, mobs, pick, key }
 export function dressSpecialRoom(r, ctx) {
-  const { g, add, foe, R, tier, mobs, pick, key } = ctx;
+  const { add, foe, R, tier, mobs, pick, key } = ctx;
   if (r.kind === 'spikes') {
     // a hall of striking floor: three lanes of spikes with safe floor between, a chest at the far end and two sentries
     for (const ly of [r.y + 2, r.cy, r.y + r.h - 3]) add({ t: 'spiketrap', x: r.x + 2, y: ly, w: r.w - 4, h: 1, tier, dmg: 12, offset: (ly % 3) * 0.9 });

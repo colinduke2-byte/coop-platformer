@@ -64,7 +64,7 @@ const SOVEREIGN = {
   dither: [1], groups: {},
   dead: { body: 'armor', head: 'gold' },
   draw(c) {
-    const { R, E, T, Q, Y, P, id, view, bob, fr } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
+    const { R, E, T, Q, Y, P, id, view, bob } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
     const spike = (x, y, h, w, col) => Y([[x - w, y], [x + 0.1, y - h], [x + w, y]], col);
     const halo = (cx, cy) => { E(cx, cy, 5.4, 5.4, id.sun); E(cx, cy, 4.3, 4.3, 0); };
     if (!side) {

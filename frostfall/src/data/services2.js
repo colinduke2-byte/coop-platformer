@@ -99,7 +99,6 @@ export async function innMenu(who, opt = {}) {
   for (;;) {
     const c = await choose([`Room for the night (${room}G)`, `Hot meal (${meal}G)`, `News and rumours (${news}G)`, 'Leave']);
     if (c === 3) return;
-    const g = gameScene();
     if (c === 1) { if (pay(meal)) { addItem('hunters_stew'); await say(who, 'Hot and heavy. It will keep you warm in a snowstorm, or at least annoyed in one.'); } else await say(who, 'A meal costs coin, traveller.'); continue; }
     if (c === 2) { await rumour(who, news); continue; }
     if (await restRoom(who, room)) return;

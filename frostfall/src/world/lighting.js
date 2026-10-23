@@ -1,10 +1,9 @@
 // Day/night clock, weather, and the darkness layer with light cut-outs (mixed into GameScene).
-import Phaser from 'phaser';
-import { W, H, C } from '../config.js';
+import { W, H } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { tip } from '../systems/tips.js';
-import { advanceTime, isFull, isBlood, moonName } from '../systems/moon.js';
+import { advanceTime, isFull, isBlood } from '../systems/moon.js';
 
 const DAY_MIN = 1440;
 // integer RGB blend (no Color objects: this runs every frame)

@@ -1,17 +1,15 @@
 // NPC scripts: async functions. `say` shows typewriter text, `choose` returns the picked index.
 import { S } from '../systems/state.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
-import { dailyWares, noteSold } from './stock.js';
+import { dailyWares } from './stock.js';
 import { heartsHeld } from './hearts.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
-import { ITEMS } from './items.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { companionStory } from './companionquests.js';
 import { buyMenu, sellMenu, brewMenu, gearUpgradeMenu, enchantMenu, fletchMenu, repairMenu, reforgeMenu, buybackMenu } from './services.js';
 import { startTutorial } from '../systems/tutorial.js';
-import { stats as pstats } from '../systems/stats.js';
 import { setCompanion } from '../systems/companion.js';
 
 const SIGRID = 'Sigrid', BJORN = 'Bjorn', MIRRA = 'Mirra';

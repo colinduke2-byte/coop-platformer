@@ -46,7 +46,6 @@ function bladeCells(S, col) {
   (GUARDS[S.guard || 'bar'])(cells, S.guardCol ?? 13);
   return cells;
 }
-const rune = (i, j, t) => null;
 
 export const SWORD_SHAPES = {
   // --- one-handed

@@ -6,7 +6,6 @@ import { S } from '../systems/state.js';
 import { addGold } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
 import { randInt } from '../util.js';
-import { bus } from '../systems/bus.js';
 import { txtS, textW } from '../art/font.js';
 import { facingKind } from '../util.js';
 

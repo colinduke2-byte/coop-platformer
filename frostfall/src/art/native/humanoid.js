@@ -45,7 +45,6 @@ function figure(N, s, dirIn, frIn) {
     }
   };
   const P = (x, y, c) => g.detail([[X(x), X(y), c]]);
-  const px = Math.max(1, Math.round(k * 0.5));
   const eye = s.eye ?? 0;
   const armored = s.helm != null || s.chest != null;
   let pose = null, dir = dirIn;

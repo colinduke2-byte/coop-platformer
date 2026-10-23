@@ -41,7 +41,7 @@ function bearSheet(mammoth) {
 // ids: 1 body, 2 neck/head, 3 near leg, 4 far leg, 5 antler, 6 belly, 7 tail
 const ELK_R = { 1: [5, 4, 3], 2: [5, 4, 3], 3: [4, 3, 2], 4: [3, 2, 1], 5: [6, 6, 5], 6: [6, 5, 4], 7: [6, 6, 5] };
 function elkPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, Q, P } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { R, E, T, P } = shaper(g, k);
   const a = f === 1 ? 1 : f === 2 ? -1 : 0;
   const leg = (x, id, sw, lift) => { T(x, 9.6, x + sw, 14.6 - lift, 1.1, id); R(x + sw - 0.4, 14.6 - lift, 1.1, 0.8, id); };
   leg(10.3, 4, -a * 1.1, a === 1 ? 1 : 0); leg(4.2, 4, a * 1.1, a === -1 ? 1 : 0);
@@ -64,7 +64,7 @@ function elkSheet(scene, key, N) {
 // ids: 1 body, 2 stripe, 3 wing, 4 far wing, 5 beak, 6 tail, 7 claw
 const WYV_R = { 1: [13, 13, 12], 2: [6, 6, 5], 3: [4, 3, 2], 4: [3, 2, 1], 5: [12, 12, 11], 6: [13, 12, 11], 7: [12, 12, 11] };
 function wyvernPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, Q, P } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { R, E, T, P } = shaper(g, k);
   const wy = f === 0 ? 8.4 : f === 1 ? 0.6 : 4.4;               // wing tip height: down, up, level
   const wx = f === 0 ? 4.4 : f === 1 ? 3.4 : 1.4;
   T(7.4, 6.4, wx + 1.4, wy, 3.2, 4); T(wx + 1.4, wy, wx, wy + (f === 1 ? 1.2 : 0.4), 1.6, 4);   // far wing, shaded
@@ -85,7 +85,7 @@ function wyvernSheet(scene, key, N) { sheet(scene, key, N, [['side0', wyvernPix(
 // ids: 1 body, 2 belly plate, 3 head, 4 fang, 5 ridge, 6 crest
 const WORM_R = { 1: [10, 9, 1], 2: [10, 10, 9], 3: [10, 9, 1], 4: [6, 6, 5], 5: [9, 9, 1], 6: [11, 12, 11] };
 function wormPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, Q, P } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { R, E, T, P } = shaper(g, k);
   const sway = f === 1 ? 0.8 : f === 2 ? -0.8 : 0;
   T(2.5, 15.5, 4 + sway, 9, 5.6, 1); T(4 + sway, 9, 7.5 + sway, 5, 5, 1);
   for (let i = 0; i < 5; i++) { const y = 14 - i * 1.7; R(2 + i * 0.7 + (i > 2 ? sway : 0), y, 5 - i * 0.2, 0.6, 5); }

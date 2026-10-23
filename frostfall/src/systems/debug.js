@@ -24,7 +24,6 @@ export function installErrorLog() {
   window.addEventListener('error', (e) => { push(e.message + (e.filename ? ` @${e.filename.split('/').pop()}:${e.lineno}:${e.colno}` : ''), e.error); note(); });
   window.addEventListener('unhandledrejection', (e) => { push('promise: ' + (e.reason?.message || e.reason), e.reason); note(); });
 }
-export const recentErrors = () => errors.slice();
 
 // ---- keep the loop alive: Phaser schedules the next frame only after a step returns, so one throw would freeze the game.
 // Each scene's step runs in its own try/catch (one broken scene does not stop the others from updating and drawing), and

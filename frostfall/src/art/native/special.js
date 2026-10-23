@@ -9,7 +9,7 @@ const dot = (k) => Math.max(1, Math.round(k * 0.6));
 // ids: 1 bell, 2 inner glow, 3 frill, 4 tentacle, 5 pearl, 6 sheen
 const TIDE_R = { 1: [5, 15, 4], 2: [7, 7, 7], 3: [14, 14, 1], 4: [15, 15, 4], 5: [13, 13, 12], 6: [6, 6, 5] };
 function tidePix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, Q, P } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { R, E, T, P } = shaper(g, k);
   const ph = f * 2.1;
   // tentacles first so the bell overlaps their roots
   for (let i = 0; i < 6; i++) {
@@ -36,7 +36,7 @@ function tidePix(N, f) {
 // ids: 1 bark, 2 root, 3 leaf, 4 vine, 5 eye, 6 ring
 const ROOT_R = { 1: [10, 9, 1], 2: [10, 10, 9], 3: [8, 7, 1], 4: [8, 8, 7], 5: [13, 12, 11], 6: [10, 10, 9] };
 function rootPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, Q, P } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { E, T, P } = shaper(g, k);
   const sw = f === 1 ? 0.7 : f === 2 ? -0.7 : 0;
   for (const [x, dx] of [[3, -2.2], [5.5, -0.8], [8, 0.4], [10.6, 1.4], [13, 2.4]]) { T(x, 11.6, x + dx + sw, 14.6, 1.7, 2); T(x + dx + sw, 14.6, x + dx * 1.4 + sw * 1.4, 15.6, 1.1, 2); }
   T(1, 10.2, 0, 11 + sw, 0.9, 4); T(15, 10, 16, 11.4 - sw, 0.9, 4);
@@ -65,7 +65,7 @@ const WING_POSES = {
 // y of the back line at x, so spines sit on the spine
 const backY = (x) => { const pts = [[13, 17.6], [17, 15.6], [24, 14.4], [30, 13.2], [33, 10.6]]; for (let i = 0; i + 1 < pts.length; i++) if (x >= pts[i][0] && x <= pts[i + 1][0]) return pts[i][1] + ((x - pts[i][0]) / (pts[i + 1][0] - pts[i][0])) * (pts[i + 1][1] - pts[i][1]); return pts[0][1]; };
 function dragonPix(W, H, pose) {
-  const k = W / 48, g = new Grid(W, H), { R, E, T, Q, P, Y } = shaper(g, k);
+  const k = W / 48, g = new Grid(W, H), { E, T, P, Y } = shaper(g, k);
   const attack = pose === 'attack', hurt = pose === 'hurt', dead = pose === 'death';
   const wp = WING_POSES[pose === 'side1' ? 'flap' : pose === 'side2' ? 'down' : 'up'];
   const sh = [28.6, 15.2];

@@ -52,7 +52,7 @@ function hornetPix(N, f) {
 // ids: 1 stem, 2 petal, 3 mouth, 4 tooth, 5 leaf
 const BLOOM_R = { 1: [8, 7, 7], 2: [14, 14, 1], 3: [11, 9, 1], 4: [6, 6, 5], 5: [8, 8, 7] };
 function bloomPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, P, Y } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { E, T, P, Y } = shaper(g, k);
   const open = f === 1 ? 1.1 : f === 2 ? 0.55 : 0.1, sway = f === 1 ? 0.5 : f === 2 ? -0.5 : 0;
   T(7.6, 15.6, 7.6 + sway, 9, 1.9, 1);
   Y([[7.6, 14], [3.6, 12], [3.2, 14.4], [7.4, 15]], 5); Y([[8, 12.8], [12.4, 11], [12.8, 13.4], [8.2, 14.4]], 5);
@@ -81,7 +81,7 @@ function dewPix(N, f) {
 // ids: 1 stone, 2 moss, 3 arm, 4 foot
 const HULK_R = { 1: [4, 3, 2], 2: [8, 8, 7], 3: [3, 2, 1], 4: [3, 2, 1] };
 function hulkPix(N, f) {
-  const k = N / 16, g = new Grid(N, N), { R, E, T, P, Y } = shaper(g, k);
+  const k = N / 16, g = new Grid(N, N), { E, T, P, Y } = shaper(g, k);
   const s = f === 1 ? 0.8 : f === 2 ? -0.8 : 0;
   E(5.6 + s, 14, 2.2, 1.7, 4); E(10.4 - s, 14, 2.2, 1.7, 4);
   E(8, 9, 6.4, 5.2, 1);

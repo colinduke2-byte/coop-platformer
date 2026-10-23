@@ -1,7 +1,6 @@
 import PatternBoss from './PatternBoss.js';
 import { TUNE } from '../data/tuning.js';
 import { sfx } from '../audio/sfx.js';
-import Pickup from './Pickup.js';
 import { addItem } from '../systems/inventory.js';
 import { bus } from '../systems/bus.js';
 import { S } from '../systems/state.js';

@@ -1,33 +1,26 @@
 import Phaser from 'phaser';
 import { PONY_SPEED } from './Pony.js';
-import { keys, rumble, stickWalk } from '../systems/keys.js';
+import { keys, stickWalk } from '../systems/keys.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
-import { bonus, addXp, lvl } from '../systems/skills.js';
+import { bonus, addXp } from '../systems/skills.js';
 import { foodVal } from '../systems/food.js';
 import { elixirVal } from '../systems/elixir.js';
-import { modMul } from '../data/mods.js';
 import { currentCloak } from '../systems/achievements.js';
-import { wear } from '../systems/durability.js';
 import { wornHeroKey } from '../art/sprites.js';
 import { watchStuck } from '../systems/unstick.js';
-import { applyStatus, tickStatuses, statusMods, inflictOn, clearStatus } from '../systems/status.js';
+import { applyStatus, tickStatuses, statusMods } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import { dir8, facingKind, norm, walkFrame, mixin } from '../util.js';
-import Projectile from './Projectile.js';
 import { TILE } from '../config.js';
-import { tip } from '../systems/tips.js';
 import { TUNE } from '../data/tuning.js';
-import { damageTaken, meleeDamage, blockResult, blockStaminaCost, elementMult } from '../systems/damage.js';
 import { ITEMS } from '../data/items.js';
 import { magicMethods } from './playerMagic.js';
 import { combatMethods } from './playerCombat.js';
 import { bowMethods } from './playerBow.js';
 import { settings } from '../systems/settings.js';
-import { bl } from '../systems/bless.js';
 import { burden, classMix } from '../systems/burden.js';
-import { currentShout } from '../systems/shouts.js';
 
 // Feel numbers live in data/tuning.js
 export const P = TUNE.player;

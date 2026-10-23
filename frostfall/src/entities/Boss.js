@@ -14,7 +14,6 @@ import Pickup from './Pickup.js';
 // Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
 //  Phase 2: roars and summons draugr; faster; adds frost nova (ring of orbs) and a charge.
-const B = TUNE.boss;
 
 export default class Boss extends Enemy {
   constructor(scene, x, y, kind = 'boss') {
@@ -162,7 +161,6 @@ export default class Boss extends Enemy {
   makeTele(a) {
     const sc = this.scene;
     this.clearTele();
-    const f = this.face;
     if (a === 'slam') {
       const c = this.slamCenter();
       const img = sc.add.image(c.x, c.y, 'disc').setTint(C[11]).setAlpha(0.25).setScale(this.B.slam.r / 32).setDepth(5);

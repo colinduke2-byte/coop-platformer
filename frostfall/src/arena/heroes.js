@@ -4,7 +4,7 @@ import { recalc } from '../systems/stats.js';
 import { readSlot, loadGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
 import { dayStamp, dailyMods } from '../systems/daily.js';
-import { ARENAS, arenaById } from './arenas.js';
+import { ARENAS } from './arenas.js';
 
 const POTS = { hp_potion: 5, mp_potion: 3, sp_potion: 3 };
 // Each hero is plain data: gear, skill levels, perks, tomes, hearts (for shouts) and the starting spell.

@@ -11,7 +11,6 @@ import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
 import { tip } from '../systems/tips.js';
 import { brewMenu, gearUpgradeMenu, furnishMenu, cookMenu, stashMenu } from '../data/services.js';
-import { C } from '../config.js';
 import { BLESSINGS, offersFor, today, markGone } from '../systems/bless.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { boardMenu } from '../data/contracts.js';

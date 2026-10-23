@@ -2,7 +2,6 @@
 // Mixed into GameScene (see the bottom of scenes/GameScene.js).
 import Phaser from 'phaser';
 import { tierAt } from '../world/worldgen.js';
-import { ENEMIES } from '../data/enemies.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { T } from '../config.js';
 import { ITEMS } from '../data/items.js';
@@ -12,7 +11,6 @@ import { finalChoice } from '../data/chapter3.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
-import { Warlord } from '../entities/Guardians.js';
 import { runScript, say, choose } from '../systems/dialogue.js';
 import { sfx, music } from '../audio/sfx.js';
 import { addItem } from '../systems/inventory.js';

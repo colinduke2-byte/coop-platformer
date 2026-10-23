@@ -93,7 +93,7 @@ const HART = {
   dither: [1], groups: {},
   dead: { body: 'robe', head: 'skull' },
   draw(c) {
-    const { R, E, T, Q, Y, P, id, view, bob, fr } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
+    const { R, T, Q, Y, P, id, view, bob } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
     const shard = (x, y, h, w, col) => Y([[x - w, y], [x + 0.2, y - h], [x + w, y]], col);
     const rack = (cx, ox) => {   // antler rack: a main beam each side with branching tines
       for (const sx of [-1, 1]) {
@@ -143,7 +143,7 @@ const LODE = {
   dither: [1, 2], groups: {},
   dead: { body: 'stone', head: 'stone' },
   draw(c) {
-    const { R, E, T, Q, Y, P, id, view, bob, fr } = c, back = view === 'back', side = view === 'side', b = bob * 0.8;
+    const { R, E, T, Q, Y, P, id, view, bob } = c, back = view === 'back', side = view === 'side', b = bob * 0.8;
     const crystal = (x, y, h, w) => { Y([[x - w, y], [x - w * 0.3, y - h], [x, y - h - 0.8], [x + w * 0.6, y - h * 0.7], [x + w, y]], id.amber); };
     const seam = (pts, w = 0.4) => { for (let i = 0; i + 1 < pts.length; i++) T(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], w, id.lava); };
     if (!side) {

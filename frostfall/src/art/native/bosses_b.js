@@ -33,7 +33,7 @@ const SOVEREIGN = {
       for (const [x, y] of [[3.2, 14.4], [7, 15.2], [11, 14.6]]) P(x, y, 12, 1, 1);
       E(8.6, 9.4 + b, 1.5, 1.5, id.fire); E(8.6, 9.4 + b, 0.8, 0.8, id.core);
       E(8, 7 + b, 4, 1.4, id.coal); for (const [x, h, p] of [[4.4, 3.4, 0], [6.2, 4.4, 1], [11, 3, 2]]) tongue(x, 7.4 + b, h, 0.9, p, id.flame);
-      const a = c.arm('R', 8.8, 8 + b, 3.6, 1.5, id.ash, id.fire, 1.1);
+      c.arm('R', 8.8, 8 + b, 3.6, 1.5, id.ash, id.fire, 1.1);
       Q(6.6, 2.8 + b, 4.8, 4.6, id.coal, 1.8); P(10, 4.4 + b, 13, 2, 1); R(9.6, 6.4 + b, 1.8, 0.5, id.fire);
       for (const [x, h, p, w] of [[7, 3, 0, 0.5], [8.1, 5, 1, 0.55], [9.2, 6.2, 2, 0.6], [10.3, 3.6, 3, 0.5]]) tongue(x, 3.4 + b, h, w, p, id.flame);
     }
@@ -85,7 +85,7 @@ const WINTER = {
   dither: [1], groups: {},
   dead: { body: 'gown', head: 'skin' },
   draw(c) {
-    const { R, E, T, Q, Y, P, id, view, bob, fr } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
+    const { R, E, T, Q, Y, P, id, view, bob } = c, back = view === 'back', side = view === 'side', b = bob * 0.6;
     const icicle = (x, y, h, w, col) => Y([[x - w, y], [x, y + h], [x + w, y]], col);
     if (!side) {
       // long gown, narrow at the waist, a rim of icicles for a hem

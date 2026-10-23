@@ -7,7 +7,6 @@ import { T, C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
-import { TUNE } from '../data/tuning.js';
 
 const PHASE = { idle: 1.1, warn: 0.7, strike: 0.3 };
 

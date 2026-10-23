@@ -23,7 +23,7 @@ import { SPELLS, SPELL_ORDER, P } from '../entities/Player.js';
 import { iconKey } from '../data/items.js';
 import { SKILL_DEFS } from '../systems/skills.js';
 import { settings } from '../systems/settings.js';
-import { currentShout, unlockedShouts } from '../systems/shouts.js';
+import { currentShout } from '../systems/shouts.js';
 import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
