@@ -71,6 +71,11 @@ Skills level **by use** (five of them), so use what you want to improve:
 - Levels come **slowly on purpose**: level 5 is around 125 sword hits and level 10 around 900. Grinding is real, and it is rewarded.
 - Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu): each skill has a perk at level 2, then a **fork** at 5 and at 8 where you take one of two (for example Duelist or Guardian, then Rending Blow or Cleave). Changed your mind? Any **shrine** will unlearn all your perks for gold and give the points back.
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
+  - A **staff's** forge levels raise your spells, the way a sword's raise its damage; a Ruby in a staff adds spell power.
+  - Found a better weapon than your tempered one? Any smith can **transfer a temper** onto the piece you wear, for a quarter of what the levels cost.
+  - The **Great Anvil** in Emberhold can **ascend** found gear one rank (Magic to Rare to Legendary) for gold, Ember Ore and a Heart Shard.
+  - **Tamsin** fuses three gems into a **Flawless** one, and three Flawless into a **Royal** one.
+  - The pack marks gear that beats what you wear (green up) or not (red down), and the details list what would change.
 - **Sockets**: better weapons and armour have slots for **gems** and **runes**. Runes add effects (burn, chill, shock, life-drain, thorns, warding). Set them at the rune-cutter in Emberhold.
 - **Food and alchemy**: cook meals at campfires for buffs; brew potions. Always carry a few.
 - **Companions**: hire *Ragna* in Hollowfrost, or recruit *Pell* in Emberhold. One at a time. Talk to them and choose *Orders*: stay close, hold the spot, or hunt on their own.
@@ -171,7 +176,7 @@ There are many endings (36 variants in Chapter 3 alone). They depend on:
 4. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).
 5. Which faction you stand best with.
 
-After the credits you can **start New Game+** with your progress and stronger enemies. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
+After the credits you can **start New Game+** with your progress and stronger enemies: the early regions keep up, bosses grow, loot rolls higher, **Mythic** gear appears, and every boss leaves a **Winter's Echo** for the Great Anvil's Ascended tempers (+11 and +12). The **Hollow Arena** gives a prize at waves 10, 20 and 30. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
 
 ## 9. Tips and tricks
 
