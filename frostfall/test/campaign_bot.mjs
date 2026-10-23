@@ -38,6 +38,9 @@ await G(() => {
       const elapsed = (performance.now() - t0) / 1000;
       if (S.hp <= 0 || isDone() || elapsed > limit) { clearInterval(iv); ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((c) => keys._release(c)); res({ ok: S.hp > 0 && isDone(), hp: Math.round(S.hp), t: Math.round(elapsed) }); return; }
       if (p.mode === 'dead' || p.mode === 'lying') return;
+      // a question on screen (the level-up "choose an attribute" prompt) freezes the world: answer it like a player would.
+      // (Before CH3 a prompt cut off by a door left askingStat set on the scene for good, so later prompts never came.)
+      if (window.__ff.game.scene.getScene('Hud')?.dlg) { if (Math.random() < 0.5) tapK('KeyE', 50); return; }
       const foes = g.enemies.getChildren().filter((e) => !e.dead && e.active);
       let tgt = null, td = 1e9;
       for (const e of foes) { const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < td && d < 400) { td = d; tgt = e; } }
