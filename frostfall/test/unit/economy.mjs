@@ -72,5 +72,15 @@ t('PR-10: rarity raises armour and block; staves grow with tier; affixes keep gr
   }
 });
 
+const { S } = await import('../../src/systems/state.js');
+const { dailyWares } = await import('../../src/data/stock.js');
+const { STORY_FLAGS } = await import('../../src/systems/enemyscale.js');
+t('PR-11: Hilda sells no Warhammer, Bulwark Plate or Crossbow early; they appear later in the story', () => {
+  const seen = (flags) => { const got = new Set(); S.flags = flags; for (let seed = 1; seed < 400; seed++) { S.seed = seed; for (const w of dailyWares('Hilda', 3)) got.add(w.id); } return got; };
+  const early = seen({}), late = seen(Object.fromEntries(STORY_FLAGS.map((k) => [k, true])));
+  for (const id of ['warhammer', 'bulwark_plate', 'crossbow', 'bulwark_helm']) { assert.ok(!early.has(id), `${id} on sale at the start`); assert.ok(late.has(id), `${id} never on sale late`); }
+  S.flags = {};
+});
+
 console.log(failed ? 'ECONOMY FAILED' : `ECONOMY PASSED (${n} tests)`);
 process.exit(failed ? 1 : 0);
