@@ -99,6 +99,26 @@ await h.frames(10);
 check('...and gone after 15 frames', await G(() => !window.gs().fx.temp.some((e) => e.gfx)));
 await h.resume();
 
+// ---- VX-04: creatures with hurt and death frames use them; every clip frame exists on the sheet actually used
+r = await G(async () => {
+  const { ENEMIES } = await import('/src/data/enemies.js'); await import('/src/data/enemies4.js');
+  const reg = await import('/src/art/native_registry.js'), anim = await import('/src/art/anim.js');
+  const g = window.gs(), missing = [];
+  for (const [k, c] of Object.entries(ENEMIES)) {
+    const clips = anim.ANIM_CLIPS[c.tex]; if (!clips) continue;
+    const key = reg.nativeSpec(k) ? reg.ensureNative(g, k) : c.tex, t = g.textures.get(key);
+    for (const fr of Object.values(clips).flat()) if (!t.has(fr)) missing.push(`${k}:${fr}`);
+  }
+  const p = g.player, e = g.addEnemy('leech', p.x + 50, p.y); e.cfg = { ...e.cfg, detect: 0, speed: 0, chase: 0 };
+  e.flashT = 0.5; e.finish(0, 1); const hurt = e.frame.name; e.destroy();
+  const s = g.addEnemy('slimeling', p.x + 50, p.y); s.die({}); const dead = s.frame.name;
+  return { missing, hurt, dead, has: ['spr_werewolf', 'spr_ashhound', 'spr_leech', 'spr_spider', 'spr_slime', 'spr_crab', 'spr_barnacle'].every((k) => anim.hasClips(k)) };
+});
+check('the seven animal sheets have clips', r.has);
+check('every clip frame exists on the sheet each creature really uses (16px or native)', !r.missing.length, r.missing.slice(0, 8).join(','));
+check('a hit leech shows its hurt frame', r.hurt === 'hurt0', r.hurt);
+check('a dying slimeling shows its death frame (not a rotated sprite)', r.dead === 'death0', r.dead);
+
 console.log(h.errors.slice(0, 5).join('\n'));
 check('no page errors', !h.errors.length, h.errors[0]);
 await h.close();

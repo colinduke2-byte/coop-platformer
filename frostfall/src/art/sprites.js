@@ -551,10 +551,10 @@ function buildCharacters(scene) {
   animalSheet(scene, 'spr_bear', bearFrame);
   animalSheet(scene, 'spr_lynx', lynxFrame);
   animalSheet(scene, 'spr_boar', boarFrame);
-  make('spr_wisp', (ctx, x, d, f) => wispFrame(ctx, x, f), ['side']);
-  make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
-  make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
-  make('spr_wyvern', (ctx, x, d, f) => wyvernFrame(ctx, x, f), ['side']);
+  animalSheet(scene, 'spr_wisp', wispFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_worm', wormFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_mimic', mimicFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_wyvern', wyvernFrame);         // side0-2 + hurt0 + death0 (VX-04)
   buildSheet(scene, 'spr_dragon', 48, 32, [
     { name: 'side0', draw: (c, ox) => dragonBig(c, ox, 0) },
     { name: 'side1', draw: (c, ox) => dragonBig(c, ox, 1) },
@@ -569,7 +569,7 @@ function buildCharacters(scene) {
     const tmp = canvas(cw, ch), t = tmp.getContext('2d'); t.putImageData(img, 0, 0);
     ctx.save(); ctx.translate(dx, ch - 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
   });
-  make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
+  animalSheet(scene, 'spr_shroom', (ctx, x, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); });
   animalSheet(scene, 'spr_ashhound', (c, x, f) => wolfFrame(c, x, f, { fur: 1, dark: 0, light: 12, leg: 0 }));
   // a lava slime (squashes as it creeps), a wreck crab, and a frost barnacle (a turret in a shell)
   animalSheet(scene, 'spr_slime', (ctx, ox, f) => {
