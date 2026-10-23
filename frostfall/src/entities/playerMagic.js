@@ -116,12 +116,12 @@ export const magicMethods = {
         this.body.updateFromGameObject();
         this.iframes = Math.max(this.iframes, 0.3);
         sc.fx.puff(this.x, this.y, 14, 10, 40, 0.4); sc.fx.ring(this.x, this.y + 4, 0.5, 0.3, 'ring', 0x8a5aa8);
-        sfx.play('roll'); this.gainXp('sneak', 5);
+        sfx.play('blink'); this.gainXp('sneak', 5);
         break;
       }
       case 'nova': {
         const R = 58;
-        sfx.play('frost'); sc.shake(180, 0.007);
+        sfx.play('nova_ice'); sc.shake(180, 0.007);
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0x5cc8d8); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xeaf2f8);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
@@ -134,7 +134,7 @@ export const magicMethods = {
       }
       case 'embernova': {
         const R = 64;
-        sfx.play('fire'); sc.shake(200, 0.008);
+        sfx.play('ember_nova'); sc.shake(200, 0.008);
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0xf08a30); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xf4d460);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
@@ -147,7 +147,7 @@ export const magicMethods = {
       }
       case 'glacier': {
         const LEN = 128, W2 = 22;
-        sfx.play('frost'); sc.shake(150, 0.006);
+        sfx.play('glacier'); sc.shake(150, 0.006);
         for (let k = 1; k <= 8; k++) sc.fx.puff(this.x + f.x * k * 16, this.y + 3 + f.y * k * 16, 15, 5, 40, 0.4);
         for (const e of sc.enemies.getChildren()) {
           const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
@@ -162,10 +162,10 @@ export const magicMethods = {
       case 'meteor': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 70, y: this.y + 3 + f.y * 70 };
         const R = 38, dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
-        sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, R / 32, 0.9, 'ring', 0xf08a30);
+        sfx.play('meteor_fall'); sc.fx.ring(tg.x, tg.y + 4, R / 32, 0.9, 'ring', 0xf08a30);
         sc.time.delayedCall(900, () => {
           if (!sc.scene.isActive('Game')) return;
-          sc.shake(320, 0.012); sfx.play('fire'); sc.fx.puff(tg.x, tg.y, 12, 16, 80, 0.7); sc.fx.puff(tg.x, tg.y, 13, 10, 50, 0.6); sc.fx.ring(tg.x, tg.y + 4, R / 24, 0.45, 'ring', 0xf4d460);
+          sc.shake(320, 0.012); sfx.play('meteor_hit'); sc.fx.puff(tg.x, tg.y, 12, 16, 80, 0.7); sc.fx.puff(tg.x, tg.y, 13, 10, 50, 0.6); sc.fx.ring(tg.x, tg.y + 4, R / 24, 0.45, 'ring', 0xf4d460);
           for (const e of sc.enemies.getChildren()) {
             if (e.dead || Math.hypot(e.x - tg.x, e.y - tg.y) > R) continue;
             const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 190, src: 'fire', element: 'fire', stun: 0.8, forceStun: !e.isBoss, status: { type: 'burn', t: 4, dps: 6 } });
@@ -188,7 +188,7 @@ export const magicMethods = {
       }
       case 'thorns': {
         const cx = this.x + f.x * 34, cy = this.y + 3 + f.y * 34;
-        sfx.play('frost'); sc.shake(120, 0.004);
+        sfx.play('thorns'); sc.shake(120, 0.004);
         for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; sc.fx.puff(cx + Math.cos(a) * sp.r * 0.6, cy + Math.sin(a) * sp.r * 0.6, 8, 5, 20, 0.7); }
         sc.fx.ring(cx, cy + 4, sp.r / 32, 0.6, 'ring', 0x3f7050);
         for (const e of sc.enemies.getChildren()) {
@@ -200,7 +200,7 @@ export const magicMethods = {
         break;
       }
       case 'sandstorm': {
-        sfx.play('howl'); sc.shake(160, 0.005);
+        sfx.play('sand'); sc.shake(160, 0.005);
         sc.fx.ring(this.x, this.y + 4, sp.r / 32, 0.6, 'ring', 0xa07850); sc.fx.ring(this.x, this.y + 4, sp.r / 46, 0.4, 'ring', 0xf4d460);
         for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; sc.fx.puff(this.x + Math.cos(a) * sp.r * 0.7, this.y + 3 + Math.sin(a) * sp.r * 0.7, i % 2 ? 10 : 13, 6, 50, 0.5); }
         for (const e of sc.enemies.getChildren()) {
@@ -214,10 +214,10 @@ export const magicMethods = {
       case 'sunbeam': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 60, y: this.y + 3 + f.y * 60 };
         const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
-        sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, sp.r / 32, 0.5, 'ring', 0xf4d460);
+        sfx.play('sunbeam_charge'); sc.fx.ring(tg.x, tg.y + 4, sp.r / 32, 0.5, 'ring', 0xf4d460);
         sc.time.delayedCall(500, () => {
           if (!sc.scene.isActive('Game')) return;
-          sc.shake(220, 0.009); sfx.play('fire'); sc.flashScreen?.(40, 244, 212, 96);
+          sc.shake(220, 0.009); sfx.play('sunbeam'); sc.flashScreen?.(40, 244, 212, 96);
           for (let k = 0; k < 8; k++) sc.fx.puff(tg.x, tg.y - k * 9, k % 2 ? 13 : 12, 5, 30, 0.45);
           sc.fx.ring(tg.x, tg.y + 4, sp.r / 24, 0.4, 'ring', 0xf4d460);
           for (const e of sc.enemies.getChildren()) {
@@ -377,7 +377,7 @@ export const magicMethods = {
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
     const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, kind, f.x * sp.speed, f.y * sp.speed, { dmg, life: 1 });
     sc.shots.add(pr); pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
-    sfx.play(kind === 'fire' ? 'fire' : 'frost');
+    sfx.play(kind === 'fire' ? 'bolt_fire' : 'bolt_frost');
     sc.fx.puff(this.x + f.x * 8, this.y + 3 + f.y * 8, sp.col, 5, 36, 0.25);
     this.gainXp('destruction', 1);
   },

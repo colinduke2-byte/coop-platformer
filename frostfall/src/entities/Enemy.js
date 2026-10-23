@@ -166,7 +166,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         for (const o of sc.enemies.getChildren()) if (o !== this && !o.dead && !o.isBoss && !o.cfg.title && o.hp < o.maxHp * 0.85 && Math.hypot(o.x - this.x, o.y - this.y) < this.cfg.heals.range && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o;
         if (best) {
           best.hp = Math.min(best.maxHp, best.hp + best.maxHp * this.cfg.heals.pct);
-          sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('frost');
+          sc.fx.text(best.x, best.y - 18, '+HP', 15, 0.7); sc.fx.ring(best.x, best.y + 4, 0.5, 0.35, 'ring', 0x5cc8d8); sfx.play('enemy_heal');
         }
       }
     }
@@ -284,7 +284,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (sc.solidAt(x, y) || sc.solidAt(x + 6, y) || sc.solidAt(x - 6, y)) continue;
       const m = sc.addEnemy(this.cfg.raiseKind || 'draugr', x, y, { tier: this.tier });
       m.alert(true); this.minions.push(m);
-      sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('frost');
+      sc.fx.puff(x, y + 4, 4, 10, 40, 0.5); sc.fx.text(this.x, this.y - 22, 'RISE', 14, 0.8); sfx.play('raise');
       break;
     }
   }
@@ -551,7 +551,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.scene.addZone(this.castTarget.x + jx, this.castTarget.y + jy, cfg.zoneR, cfg.zoneDelay + i * 0.16, cfg.dmg, this);
       }
       this.body.setVelocity(0, 0);
-      sfx.play('frost');
+      sfx.play('frost_enemy');
       this.scene.fx.puff(this.x, this.y, 14, 8, 40, 0.3);
       return;
     }
