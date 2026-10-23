@@ -51,7 +51,8 @@ t('PR-03: nothing in any shop can be bought and sold back at a profit, on any di
 const SP = await import('../../src/systems/spellpower.js');
 t('PR-04: Emberforged Staff boosts Meteor and Ember Nova, the Long Winter boosts Glacier Spear; per-spell costs win', () => {
   const near = (a, b) => Math.abs(a - b) < 1e-9;
-  assert.ok(near(SP.spellGear('meteor', ITEMS.ember_staff), 1.3 * 1.3) && near(SP.spellGear('embernova', ITEMS.ember_staff), 1.69) && near(SP.spellGear('frost', ITEMS.ember_staff), 1.3));
+  const em = ITEMS.ember_staff.spellMul;
+  assert.ok(near(SP.spellGear('meteor', ITEMS.ember_staff), em * 1.3) && near(SP.spellGear('embernova', ITEMS.ember_staff), em * 1.3) && near(SP.spellGear('frost', ITEMS.ember_staff), em));
   assert.ok(near(SP.spellGear('glacier', ITEMS.winter_staff), ITEMS.winter_staff.spellMul * 1.1));
   assert.ok(near(SP.spellCostGear('glacier', ITEMS.frostbirch_staff), 0.85) && near(SP.spellCostGear('embernova', ITEMS.cinder_staff), 0.85) && near(SP.spellCostGear('meteor', ITEMS.cinder_staff), 0.9) && near(SP.spellCostGear('sunbeam', ITEMS.cinder_staff), 0.85));
 });
@@ -63,7 +64,7 @@ t('PR-10: rarity raises armour and block; staves grow with tier; affixes keep gr
   const shield = (r) => genItem(3, R, r, { slot: 'shield', baseName: 'Buckler' });
   assert.ok(shield(2).block > shield(0).block);
   const staff = (tier, r) => genItem(tier, R, r, { slot: 'weapon', baseName: 'Staff' }).spellMul;
-  assert.ok(staff(0, 0) < staff(2, 0) && staff(2, 0) < staff(3, 3) && staff(3, 3) <= 1.6, [staff(0, 0), staff(2, 0), staff(3, 3)].join());
+  assert.ok(staff(0, 0) < staff(2, 0) && staff(2, 0) < staff(3, 3) && staff(3, 3) <= 1.9, [staff(0, 0), staff(2, 0), staff(3, 3)].join());
   for (let i = 0; i < 200; i++) {
     const it = genItem(4, R, 3, { slot: ['weapon', 'bow', 'armor', 'shield', 'helmet', 'charm'][i % 6] });
     assert.ok(it.signature, it.name);

@@ -25,7 +25,7 @@ export const stats = {
   bow: () => eq('bow'),
   weight: () => eq('armor')?.weight || 'medium',
   // damage gems count in the item they sit in (PR-05): the weapon's (and the weapon rune's) for the weapon, the bow's for the bow
-  weaponDmg: () => { const w = eq('weapon'); return (w ? upgraded('weapon', upg(S.equip.weapon), w.dmg) + gemBonus('dmg', ['weapon']) + runeBonus('dmg') : 3) * (isBroken(S.equip.weapon) ? BROKEN_MUL.weapon : 1); },
+  weaponDmg: () => { const w = eq('weapon'); return (w ? (w.style === 'staff' ? w.dmg : upgraded('weapon', upg(S.equip.weapon), w.dmg)) + gemBonus('dmg', ['weapon']) + runeBonus('dmg') : 3) * (isBroken(S.equip.weapon) ? BROKEN_MUL.weapon : 1); },
   is2H: () => eq('weapon')?.type === 'weapon2h',
   offhand: () => eq('offhand'),
   // off-hand 1H weapon (dual wield) damage, or 0

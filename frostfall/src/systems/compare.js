@@ -2,7 +2,7 @@
 // MenuScene shows compareText() in the pack pane; addItem marks pickup toasts with upMark().
 import { S } from './state.js';
 import { ITEMS, SLOT_OF } from '../data/items.js';
-import { upgraded, KIND_OF_TYPE } from './upgrades.js';
+import { upgraded, kindOf } from './upgrades.js';
 import { socketCount } from './sockets.js';
 import { setOf, SETS, wornSets } from './sets.js';
 import { TUNE } from '../data/tuning.js';
@@ -12,8 +12,8 @@ const lvOf = (id) => S.upgrades?.[id] || 0;
 export function mainStat(id) {
   const it = ITEMS[id];
   if (!it) return { key: null, v: 0 };
-  const kd = KIND_OF_TYPE[it.type];
-  if (it.style === 'staff' && it.spellMul) return { key: 'SPELL', v: it.spellMul, pct: true };
+  const kd = kindOf(it);
+  if (kd === 'staff') return { key: 'SPELL', v: upgraded('staff', lvOf(id), it.spellMul ?? 1), pct: true };
   if (it.dmg) return { key: 'DMG', v: upgraded(kd, lvOf(id), it.dmg) };
   if (it.block != null) return { key: 'BLOCK', v: upgraded(kd, lvOf(id), it.block), pct: true };
   if (it.armor != null) return { key: 'ARMOR', v: upgraded(kd, lvOf(id), it.armor), pct: true };
@@ -60,10 +60,10 @@ export function compareLines(id) {
   if (sa !== sb && sa) { const n = (wornSets()[sa] || 0) + 1; out.push(`${SETS[sa].name.toUpperCase()} ${n}/${SETS[sa].items.length}`); }
   else if (sb && sa !== sb) out.push(`BREAKS ${SETS[sb].name.toUpperCase()}`);
   // the PR-19 tie-in: what the new piece would be at the worn piece's forge level
-  const lv = lvOf(curId), kd = KIND_OF_TYPE[it.type];
-  if (lv > lvOf(id) && kd && a.key && a.key !== 'SPELL') {
-    const base = a.key === 'DMG' ? it.dmg : a.key === 'BLOCK' ? it.block : it.armor, v = upgraded(kd, lv, base);
-    out.push(`AT +${lv}: ${a.key} ${a.pct ? Math.round(v * 100) + '%' : Math.round(v * 10) / 10}`);
+  const lv = lvOf(curId), kd = kindOf(it);
+  if (lv > lvOf(id) && kd && a.key) {
+    const base = a.key === 'SPELL' ? it.spellMul ?? 1 : a.key === 'DMG' ? it.dmg : a.key === 'BLOCK' ? it.block : it.armor, v = upgraded(kd, lv, base);
+    out.push(`AT +${lv}: ${a.key} ${a.key === 'SPELL' ? pct(v - 1) : a.pct ? Math.round(v * 100) + '%' : Math.round(v * 10) / 10}`);
   }
   return out;
 }

@@ -308,7 +308,8 @@ export const TUNE = {
     deathGoldKeep: 0.9,        // dying keeps this share of your gold
     // generated loot (PR-10): armour x rarityMult^armorPow, block x rarityMult^blockPow, affix strength grows to tier affixTierCap,
     // staves: spell power 1 + (staff[0] + staff[1] x tier) x rarityMult, at most staffMax; a Legendary helmet or charm: +legendPools
-    gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.08, 0.05], staffMax: 1.6, legendPools: 10 },
+    gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.1, 0.12], staffMax: 1.9, legendPools: 10 },
+    staffRubyPct: 0.015,       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
   },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);

@@ -18,7 +18,7 @@ export const SMITH_CAP = { village: 3, emberhold: 6, anvil: 10 };
 
 // Gain per level in each tier (index 0 = tier I). Weapons: fraction of base damage; the rest: points of armour or block.
 const GAIN = {
-  weapon: [0.05, 0.06, 0.08], bow: [0.05, 0.06, 0.08],
+  weapon: [0.05, 0.06, 0.08], bow: [0.05, 0.06, 0.08], staff: [0.05, 0.06, 0.08],     // staff: spell power (PR-01), the weapon ladder
   armor: [0.015, 0.02, 0.025], helm: [0.005, 0.007, 0.01], shield: [0.015, 0.015, 0.015],
 };
 // Total gain after `level` upgrades.
@@ -31,10 +31,13 @@ export function totalGain(kind, level) {
 }
 // The upgrade kind for an item type.
 export const KIND_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', armor: 'armor', helmet: 'helm', shield: 'shield' };
+// The upgrade kind of an item: a staff's forge levels raise its spell power, not its poke (PR-01).
+export const kindOf = (it) => (it?.style === 'staff' ? 'staff' : KIND_OF_TYPE[it?.type] || null);
 // The item's stat after upgrading: weapons and bows scale, armour/helmets/shields add points. `base` is the item's own number.
 export function upgraded(kind, level, base) {
   const g = totalGain(kind, level);
   if (kind === 'weapon' || kind === 'bow') return base * (1 + g);
+  if (kind === 'staff') return base * (1 + g);                  // base = the staff's spell multiplier
   if (kind === 'shield') return Math.min(0.9, base + g);
   return base + g;
 }
@@ -45,11 +48,13 @@ export function gainBeforeAfter(kind, level, base) {
   if (!base) return null;
   const a = upgraded(kind, level, base), b = upgraded(kind, level + 1, base);
   if (kind === 'weapon' || kind === 'bow') return `DAMAGE ${Math.round(a * 10) / 10} -> ${Math.round(b * 10) / 10}`;
+  if (kind === 'staff') return `SPELLS +${Math.round((a - 1) * 100)}% -> +${Math.round((b - 1) * 100)}%`;
   const pct = (v) => (v * 100).toFixed(1).replace('.0', '') + '%';
   return `${kind === 'shield' ? 'BLOCK' : 'ARMOR'} ${pct(a)} -> ${pct(b)}`;
 }
 // A plain-words line for the next level's gain.
 export function gainText(kind, level) {
   const next = totalGain(kind, level + 1) - totalGain(kind, level);
+  if (kind === 'staff') return `+${Math.round(next * 100)}% SPELL POWER`;
   return kind === 'weapon' || kind === 'bow' ? `+${Math.round(next * 100)}% DAMAGE` : kind === 'shield' ? `+${(next * 100).toFixed(1).replace('.0', '')}% BLOCK` : `+${(next * 100).toFixed(1).replace('.0', '')}% ARMOR`;
 }

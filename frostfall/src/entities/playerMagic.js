@@ -40,7 +40,7 @@ export const magicMethods = {
   // Spell strength: skill, the staff in hand (all spells, plus its favoured element) and its crit chance.
   spellPow() {
     const w = stats.weapon() || {};
-    let m = bonus.spell() * spellGear(S.spell, w);
+    let m = bonus.spell() * spellGear(S.spell);
     if (w.spellCrit && Math.random() < w.spellCrit) { m *= 1.6; this.scene.fx.text(this.x, this.y - 22, 'SPELL CRIT', 15, 0.7); }
     return m;
   },
@@ -374,7 +374,7 @@ export const magicMethods = {
     const w = stats.weapon() || {}, T = TUNE.player.staff, sc = this.scene, f = this.face;
     if (!this.spend(T.boltCost)) return;
     const kind = w.bolt === 'fire' ? 'fire' : 'frost', sp = SPELLS[kind];
-    const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * (w.spellMul ?? 1), perk: 1 });
+    const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * spellGear(kind), perk: 1 });
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
     const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, kind, f.x * sp.speed, f.y * sp.speed, { dmg, life: 1 });
     sc.shots.add(pr); pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);

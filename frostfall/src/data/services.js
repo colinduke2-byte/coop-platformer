@@ -17,7 +17,7 @@ import { rarityIndex, reforgeGen } from '../systems/genloot.js';
 import { setOf } from '../systems/sets.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
-import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
+import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, kindOf, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -48,8 +48,8 @@ export function statLines(id) {
   const it = ITEMS[id];
   if (!it) return [];
   const out = [];
-  const lv = S.upgrades?.[id] || 0, kd = KIND_OF_TYPE[it.type];
-  if (it.dmg) out.push([`DAMAGE ${Math.round(upgraded(kd, lv, it.dmg) * 10) / 10}${lv ? ' (+' + lv + ')' : ''}`, 6]);
+  const lv = S.upgrades?.[id] || 0, kd = kindOf(it);
+  if (it.dmg) out.push([`DAMAGE ${Math.round((kd === 'staff' ? it.dmg : upgraded(kd, lv, it.dmg)) * 10) / 10}${lv && kd !== 'staff' ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.armor) out.push([`ARMOR ${Math.round(upgraded(kd, lv, it.armor) * 1000) / 10}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.block) out.push([`BLOCKS ${Math.round(upgraded(kd, lv, it.block) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
@@ -57,7 +57,7 @@ export function statLines(id) {
   if (it.style === 'dagger') { out.push(['FAST. SNEAK AND BACK HITS HURT', 15]); if (it.pierce) out.push([`4TH HIT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]); if (it.assassinate) out.push(['SNEAK KILLS ANY NON-BOSS', 14]); if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]); for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}${f.sneakOnly ? ' ON SNEAK ATTACK' : ''}`, 11]); }
   if (it.style === 'staff') {
     out.push(['WEAK IN MELEE. HEAVY ATTACK: FREE BOLT', 15]);
-    if (it.spellMul) out.push([`SPELLS +${Math.round((it.spellMul - 1) * 100)}%`, 8]);
+    if (it.spellMul || lv) out.push([`SPELLS +${Math.round((upgraded('staff', lv, it.spellMul ?? 1) - 1) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 8]);
     for (const [k, v] of Object.entries(it.elemMul || {})) out.push([`${k.toUpperCase()} SPELLS +${Math.round((v - 1) * 100)}%`, 8]);
     for (const [k, v] of Object.entries(it.spellCost || {})) out.push([`${k.toUpperCase()} COSTS ${v <= 0.5 ? 'HALF' : '-' + Math.round((1 - v) * 100) + '%'}`, 8]);
     if (it.mpRegenMul) out.push([`MANA REGEN +${Math.round((it.mpRegenMul - 1) * 100)}%`, 8]);
@@ -187,7 +187,7 @@ export async function sellMenu(who) {
 // A requirement line that reads as one: "✓ 50 GOLD (HAVE 2374)" in green, "■ 3 FROST LILY (HAVE 1)" in red.
 export const need = (label, have, n) => [`${have >= n ? '✓' : '■'} ${n} ${label} (HAVE ${have})`, have >= n ? 8 : 11];
 // ---- gear upgrades, +1 to +10 (tables and maths in systems/upgrades.js)
-const slotKind = (id) => KIND_OF_TYPE[ITEMS[id]?.type] || null;
+const slotKind = (id) => kindOf(ITEMS[id]);
 const costReady = (c) => S.gold >= c.gold && count(c.mat) >= c.n && (!c.mat2 || count(c.mat2) >= c.n2);
 const costLines = (c) => [
   need('GOLD', S.gold, c.gold),
@@ -227,7 +227,7 @@ export async function upgradeMenu(who, slot, cap = 3) {
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
         id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
-        lines: [[gainBeforeAfter(kind, cur, ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
+        lines: [[gainBeforeAfter(kind, cur, kind === 'staff' ? ITEMS[id].spellMul ?? 1 : ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
         desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
       }];
     },

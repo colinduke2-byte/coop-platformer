@@ -7,13 +7,14 @@ import { progress, hpMul, dmgMul } from './enemyscale.js';
 import { totalGain } from './upgrades.js';
 
 // Typical gear for each tier of progress (weapon damage, armour, extra health) with its upgrade steps (see systems/upgrades.js: percent damage, points of armour).
+// staff: the spell power of the staff a mage holds at that tier (walking staff, Hazel, Frostbirch, Reed-Warden, Prism, the Long Winter).
 export const GEAR = [
-  { name: 'Starter', weapon: 9, armor: 0.08, hp: 0, shield: 0 },
-  { name: 'Iron', weapon: 13, armor: 0.18, hp: 0, shield: 0.6 },
-  { name: 'Steel', weapon: 17, armor: 0.24, hp: 0, shield: 0.72 },
-  { name: 'Nordic', weapon: 22, armor: 0.30, hp: 0, shield: 0.82 },
-  { name: 'Forged', weapon: 30, armor: 0.38, hp: 20, shield: 0.9 },
-  { name: 'Legendary', weapon: 42, armor: 0.40, hp: 30, shield: 0.9 },
+  { name: 'Starter', weapon: 9, armor: 0.08, hp: 0, shield: 0, staff: 1 },
+  { name: 'Iron', weapon: 13, armor: 0.18, hp: 0, shield: 0.6, staff: 1.1 },
+  { name: 'Steel', weapon: 17, armor: 0.24, hp: 0, shield: 0.72, staff: 1.2 },
+  { name: 'Nordic', weapon: 22, armor: 0.30, hp: 0, shield: 0.82, staff: 1.4 },
+  { name: 'Forged', weapon: 30, armor: 0.38, hp: 20, shield: 0.9, staff: 1.5 },
+  { name: 'Legendary', weapon: 42, armor: 0.40, hp: 30, shield: 0.9, staff: 2.1 },
 ];
 // A typical ordinary enemy of each region tier before the tier scaling the game applies (health, damage).
 const MOB = [[35, 13], [50, 16], [70, 20], [80, 24]];
@@ -44,6 +45,17 @@ export function playerOf({ level = 1, gear = 0, upg = 0, shield = true, offSkill
   const block = shield && g.shield ? 0.45 * g.shield : 0;                       // a shield soaks part of the hits you cannot dodge
   return { hp, armor, dmg, block, level };
 }
+
+// A mage (PR-01): Fireball damage for a Destruction level, the staff of a gear tier and its forge level (staff upgrades raise
+// spell power on the weapon ladder), with Pyromancer from level 5. Spells must stay a real build: see test/unit/mage.mjs.
+export const FIREBALL = 15;
+export function mageOf({ level = 1, gear = 0, upg = 0 }) {
+  const skill = 1 + 0.05 * (level - 1), perk = level >= 5 ? 1.15 : 1;
+  return { fireball: FIREBALL * skill * GEAR[gear].staff * (1 + totalGain('staff', upg)) * perk, level };
+}
+// Casts (or swings) to kill one ordinary enemy of a tier at the strength the game expects there.
+export const fireballsFor = (tier, o = {}) => { const e = EXPECTED[tier]; return mobOf(tier, o.diff).hp / mageOf({ level: e.level, gear: e.gear, upg: o.upg ?? e.upg }).fireball; };
+export const swingsFor = (tier, o = {}) => { const e = EXPECTED[tier]; return mobOf(tier, o.diff).hp / playerOf({ level: e.level, gear: e.gear, upg: o.upg ?? e.upg }).dmg; };
 
 // What an ordinary fight (two ordinary enemies, one after the other with some overlap) costs, as a fraction of the player's health.
 const SWINGS_PER_SEC = 1.2, CYCLE = 1.8, FIGHT_MOBS = 2, OVERLAP = 1.5;
