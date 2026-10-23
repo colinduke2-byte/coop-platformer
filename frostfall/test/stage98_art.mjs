@@ -194,6 +194,7 @@ await go('fens');
 await G(() => { const g = window.gs(); window.__ff.S.time = 12 * 60; window.__ff.S.weather = 'blizzard'; g.applyWeather(); });
 await h.frames(3);
 r = await G(async () => { const w = await import('/src/art/weather.js'); return { mode: w.skyMode('blizzard', 'fens', false), drawn: window.gs().children.list.some((o) => o.type === 'Graphics' && o.depth === 99985 && o.commandBuffer.length > 20) }; });
+check('VX-23: arriving in the Fens showed its title card (remembered for the save)', await G(() => !!window.__ff.S.flags.regionCards?.fens));
 check('the fens draw a downpour in their storm', r.mode === 'downpour' && r.drawn, JSON.stringify(r));
 r = await G(async () => { const w = await import('/src/art/weather.js'); return [w.skyMode('clear', 'vale', true), w.skyMode('snow', 'ashen', false), w.skyMode('clear', 'underdeep', false)]; });
 check('fireflies in the Vale at night, ash falls in the Peaks, spores in the Underdeep', r.join() === 'fireflies,ash,spores', r.join());
