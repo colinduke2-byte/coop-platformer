@@ -204,10 +204,10 @@ reg('sunvault');
 QUESTS.sunvault = {
   title: 'The Sealed Vault', giver: 'Sheikh Rashid',
   desc: 'The sun kings sealed something in a vault under the dunes, the answer to the Winter that they never lived to use. Rashid asks you to open it, face its guardian, and decide what to do with what is inside.',
-  short: () => (S.flags.vaultSovereignDead ? 'Tell Rashid' : S.flags.sealedvaultEntered ? 'Defeat the Vault Sovereign' : 'Find the Sealed Vault'),
+  short: () => (S.flags.vaultSovereignDead ? 'Tell Rashid' : S.flags.sealedvaultEntered ? 'Defeat the Gilded Regent' : 'Find the Sealed Vault'),
   objectives: (q) => [
     { t: 'Find the Sealed Vault', done: !!S.flags.sealedvaultEntered || q.status === 'done' },
-    { t: 'Defeat the Vault Sovereign', done: !!S.flags.vaultSovereignDead || q.status === 'done' },
+    { t: 'Defeat the Gilded Regent', done: !!S.flags.vaultSovereignDead || q.status === 'done' },
     { t: 'Tell Sheikh Rashid', done: q.status === 'done' },
   ],
 };
@@ -215,11 +215,11 @@ TARGETS.sunvault = () => { const p = poiOf('sunscorch', S.flags.vaultSovereignDe
 SCRIPTS.dune_sheikh = async function () {
   const q = S.quests.sunvault;
   if (q.status === 'inactive' && S.flags.vaultSovereignDead) {          // you opened the vault before anyone asked you to
-    await say('Rashid', 'Peace on you, traveller. They say a stranger walked out of the Sealed Vault with the Sovereign\'s seal in hand. Let us talk about what lies inside.');
+    await say('Rashid', 'Peace on you, traveller. They say a stranger walked out of the Sealed Vault with the Regent\'s seal in hand. Let us talk about what lies inside.');
     startQuest('sunvault');
   }
   if (q.status === 'active' && S.flags.vaultSovereignDead) {
-    await say('Rashid', 'The Sovereign is down, and the vault stands open. I felt the sand shift from here.');
+    await say('Rashid', 'The Regent is down, and the vault stands open. I felt the sand shift from here.');
     await say('Rashid', 'Two things lie inside. A sword that burns, and a ward that cools. The kings made both and used neither. What will you take?');
     const c = await choose(['Sunbreaker: the sword', 'Winterward: the ward', 'Neither. Seal it again']);
     if (c === 0) { S.flags.choiceVault = 'sunbreaker'; addItem('sunbreaker'); await say('Rashid', 'It is a weapon that will melt the Winter and the ice with it. The kings feared it. Perhaps they were right to.'); addGold(700); }
@@ -232,7 +232,7 @@ SCRIPTS.dune_sheikh = async function () {
     if ((await choose(['I will go.', 'Not yet.'])) === 0) { startQuest('sunvault'); await say('Rashid', 'The vault is east, among the sandstone. Take water. Take more water than you think.'); }
     return;
   }
-  if (q.status === 'active') { await say('Rashid', 'The Sealed Vault. East, in the tall stone. The Sovereign is old and patient.'); return; }
+  if (q.status === 'active') { await say('Rashid', 'The Sealed Vault. East, in the tall stone. The Regent is old and patient.'); return; }
   const ch = S.flags.choiceVault;
   await say('Rashid', ch === 'sunbreaker' ? cyc('rashidN', ['The sword is in your hand and the desert is a little warmer. I do not know if that is the sword or the weather.']) : ch === 'winterward' ? cyc('rashidN', ['The ward hums when the wind turns. I sleep better. So does the well.']) : cyc('rashidN', ['The vault is sealed. I think of it often. I do not think of it at night.']));
 };

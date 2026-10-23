@@ -46,7 +46,7 @@ export const eventMethods = {
     runScript(async () => {
       const R = 'Ragna';
       await say(R, 'Hrolf. You old fool. You held the gate for a hundred nights and did not once ask us to stay.');
-      await say(R, 'Forty names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
+      await say(R, 'Thirty-nine names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
       await say(R, 'You gave me that, Dreamer. Take the banner. I do not want to see it again. And my bow... my bow is yours, for as long as you will have it.');
       addItem('ironwatch_banner');
       S.flags.ragnaVeteran = true;

@@ -99,7 +99,7 @@ const bm = await boss('thornroot', 'blightMotherDead');
 check('the Blight Mother wakes, roots in behind pods, changes phase and falls', bm.has && bm.engaged && bm.name === 'The Blight Mother' && bm.ph >= 2 && bm.dead, JSON.stringify(bm));
 await h.shot('s77_blightmother');
 const vs = await boss('sealedvault', 'vaultSovereignDead');
-check('the Vault Sovereign wakes, calls sunbeams, changes phase and falls', vs.has && vs.engaged && vs.name === 'The Vault Sovereign' && vs.ph >= 2 && vs.sp.beam !== undefined && vs.dead, JSON.stringify(vs));
+check('the Vault Sovereign wakes, calls sunbeams, changes phase and falls', vs.has && vs.engaged && vs.name === 'The Gilded Regent' && vs.ph >= 2 && vs.sp.beam !== undefined && vs.dead, JSON.stringify(vs));
 await h.shot('s77_vaultsovereign');
 
 

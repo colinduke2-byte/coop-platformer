@@ -48,7 +48,7 @@ export async function companionStory(who) {
     if (q.status === 'active') {
       if (count('iron_ingot') < 3) { await say(who, `Three iron ingots. You have ${count('iron_ingot')}. Bandits carry them.`); return true; }
       removeItem('iron_ingot', 3); addItem('company_bow', 1, true); S.flags.ragnaBond = true; finishQuest('ragnagrave');
-      await say(who, "There. Forty names, in iron. Hrolf's bow was buried with him, but he would want it carried. Take this one; I made it from the Company's steel.");
+      await say(who, "There. Thirty-nine names, in iron, and a space at the bottom. Not yet. Hrolf's bow was buried with him, but he would want it carried. Take this one; I made it from the Company's steel.");
       return true;
     }
   }

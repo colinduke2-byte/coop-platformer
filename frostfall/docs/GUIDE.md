@@ -95,13 +95,13 @@ Three open as the story progresses (see section 6). **The Weeping Fens, the Stor
 | Region | What it is like |
 |---|---|
 | **The Ashen Peaks** | Lava, foundries, cinder enemies. Home of the forge-city **Emberhold**. |
-| **The Frozen Coast** | Wrecks, lighthouses, drowned things. Ends at **Tidebreak Hall**. |
+| **The Frozen Coast** | Wrecks, lighthouses, drowned things. Ends at **Tidebreak Cavern**. |
 | **The Old Kingdom** | Courtyards, sentinels, ghosts of a lost court. Ends in **the Sepulchre**. |
 | **The Weeping Fens** | A drowned bog of black water and boardwalks. The stilt village **Reedwick** has an inn, a smith and a chartmaker; the **Sunken Barrow** ends in the **Mire Mother**. Poison everywhere; fire works well. |
 | **The Glasswood** | A crystalline forest of ringing glass trees. **Lantern Glade** has an inn, a smith, a mapmaker and a Moon-Reader who only talks after dark; the **Hart Spire** ends in the **Hartking** (a barred gate: find the key in the first hall). Lightning and fire work well. |
 | **The Underdeep** | The caverns under the Ashen Peaks: glowing fungus, cave weavers, hollowed Delvers. **Lanternfall** has Orm's ferry up to Emberhold; the **Lode Chasm** ends in the **Lode Colossus**. Dark: carry a lantern. |
 | **The Embergreen Vale** | A warm green valley the Winter has not reached: meadows, flower fields, birch woods and ponds. **Greenhollow** has an inn, a smith, a mapmaker, a beekeeper, a bard and Elder Maeve; the **Thornroot Hollow** ends in the **Blight Mother** (she roots in behind poison pods: destroy them to tear her loose). Hornet hives, sacred groves and thorn patches each hold a named guardian. Fire works well. The gate is on the Reach's mid-road. |
-| **The Sunscorch Reach** | Dunes, oases, buried tombs and the ruins of the sun kings. **Amberwell** has an inn, a smith, a cartographer, a scholar, Sheikh Rashid and a quiet man who knows who robbed him; the **Sealed Vault** ends in the **Vault Sovereign** (sunbeams: step out of the line). Raider camps, sand pits, tomb mouths, dust spires and a thieves' den. Cutpurses steal a share of your gold and run: kill them to get it back. Frost works well. The gate is far to the east of the Reach. |
+| **The Sunscorch Reach** | Dunes, oases, buried tombs and the ruins of the sun kings. **Amberwell** has an inn, a smith, a cartographer, a scholar, Sheikh Rashid and a quiet man who knows who robbed him; the **Sealed Vault** ends in the **Gilded Regent** (sunbeams: step out of the line). Raider camps, sand pits, tomb mouths, dust spires and a thieves' den. Cutpurses steal a share of your gold and run: kill them to get it back. Frost works well. The gate is far to the east of the Reach. |
 | **Saltmarket** | The Frozen Coast's harbour city, two guilds (Tide and Smugglers: they are rivals), a tailor and sea quests. **Seaweed Cove** below ends in **Captain Brinegut**. |
 | **The Stormcrown Highlands** | Windswept heath under a storm that never leaves. **Skarn Hold** is a clan ring with an inn, a smith and a chartmaker; the **Stormspire** ends in the **Storm Giant**. Lightning everywhere; frost works well. |
 
@@ -152,9 +152,9 @@ High standing also improves shop stock, forging (the Great Anvil sometimes makes
 | **The four Heart guardians** | the four Heart dungeons | Read their telegraphs; each has a pattern you can learn in one fight. |
 | **Kragnar the Hollowed** | the Deep Mines (Emberhold) | Frost is his weakness; fire is resisted. Watch for his leaps and spikes. |
 | **The Ashen Sovereign** | Forge of the First Fire | Three phases (the Crowned, the Cinder Storm, the Pyre). Frost damage is best; fire does almost nothing. Bring faction help and plenty of potions. |
-| **Admiral Veyl** | Tidebreak Hall | Shock and fire work; frost does little. Fights get easier after his halfway phase. |
+| **Admiral Veyl** | Tidebreak Cavern | Shock and fire work; frost does little. Fights get easier after his halfway phase. |
 | **The Blight Mother** | Thornroot Hollow (the Vale) | She roots in every so often and takes a quarter damage while she mends: kill the three pods to tear her loose, then hit her while she is stunned. Fire works. |
-| **The Vault Sovereign** | the Sealed Vault (the Sunscorch) | Marked sunbeams fall in a line toward you; step sideways. Gilded guards come in the later phases. Lightning works; fire does little. What you take from the vault changes the last fight. |
+| **The Gilded Regent** | the Sealed Vault (the Sunscorch) | Marked sunbeams fall in a line toward you; step sideways. Gilded guards come in the later phases. Lightning works; fire does little. What you take from the vault changes the last fight. |
 | **The Hollow King** | the Sepulchre | Three phases (the Throne, the Court, the Memory). He hits hard and fast. Level up and bring your best gear first. |
 
 Bosses summon helpers. Kill the helpers if they crowd you; otherwise focus the boss.

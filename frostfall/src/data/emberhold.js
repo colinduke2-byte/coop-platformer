@@ -45,9 +45,9 @@ QUESTS.anvilcore = {
   ],
 };
 QUESTS.roadwatch = {
-  title: 'The Ashen Road', giver: 'Captain Hesper Vael', desc: 'Bandits and worse have overrun the road between the Hollow Reach and Emberhold. Captain Vael will not rest until three strongholds on the Ashen Peaks are cleared.',
+  title: 'The Ashen Road', giver: 'Captain Hesper Thorne', desc: 'Bandits and worse have overrun the road between the Hollow Reach and Emberhold. Captain Thorne will not rest until three strongholds on the Ashen Peaks are cleared.',
   short: () => `Clear strongholds on the Ashen Peaks ${Math.min(3, ashenCleared())}/3`,
-  objectives: () => [{ t: `Clear camps, towers or champions in the Ashen Peaks (${Math.min(3, ashenCleared())}/3)`, done: ashenCleared() >= 3 }, { t: 'Report to Captain Vael', done: S.quests.roadwatch.status === 'done' }],
+  objectives: () => [{ t: `Clear camps, towers or champions in the Ashen Peaks (${Math.min(3, ashenCleared())}/3)`, done: ashenCleared() >= 3 }, { t: 'Report to Captain Thorne', done: S.quests.roadwatch.status === 'done' }],
 };
 export const ashenCleared = () => Object.keys(S.bounty || {}).filter((k) => k.startsWith('ashen_') && S.bounty[k]).length;
 TARGETS.silence = () => (S.flags.kragnarDead ? { map: 'emberhold', x: 59, y: 43 } : { map: 'emberhold', x: EMBERHOLD.mines.x, y: EMBERHOLD.mines.y });
@@ -55,16 +55,16 @@ TARGETS.anvilcore = () => (count('kragnar_core') > 0 ? { map: 'emberhold', x: EM
 TARGETS.roadwatch = () => ({ map: 'emberhold', x: 9, y: 31 });
 
 // ---------------------------------------------------------------------------------------------------- people
-def('hesper', 'CAPT. VAEL', 'hesper'); def('corvin', 'WARDEN CORVIN', 'corvin'); def('pell', 'PELL', 'pell'); def('rook', 'ROOK', 'rook');
-def('dunmar', 'DUNMAR', 'dunmar'); def('hildsoot', 'HILD SOOT', 'hildsoot'); def('nessa', 'NESSA', 'nessa'); def('varro', 'VARRO', 'varro');
+def('hesper', 'CAPT. THORNE', 'hesper'); def('corvin', 'WARDEN CORVIN', 'corvin'); def('pell', 'PELL', 'pell'); def('rook', 'ROOK', 'rook');
+def('dunmar', 'DUNMAR', 'dunmar'); def('hildsoot', 'AGNA SOOT', 'hildsoot'); def('nessa', 'NESSA', 'nessa'); def('varro', 'VARRO', 'varro');
 def('ketil', 'KETIL', 'ketil'); def('aurel', 'SISTER AUREL', 'aurel'); def('brisa', 'MOTHER BRISA', 'brisa'); def('goran', 'OLD GORAN', 'goran');
 def('garrow', 'GARROW PITT', 'garrow'); def('ysolde', 'MATRIARCH YSOLDE', 'ysolde'); def('thessaly', 'THESSALY', 'thessaly');
-def('brannoch', 'BRANNOCH', 'brannoch'); def('isolt', 'ISOLT', 'isolt'); def('tamsin', 'TAMSIN', 'tamsin'); def('orrin', 'ORRIN', 'orrin'); def('maelis', 'MAELIS', 'maelis');
+def('brannoch', 'BRANNOCH', 'brannoch'); def('isolt', 'KERRA', 'isolt'); def('tamsin', 'TAMSIN', 'tamsin'); def('orrin', 'ORRIN', 'orrin'); def('maelis', 'MAELIS', 'maelis');
 
 const standing = () => FACTION_IDS.map((f) => `${FACTIONS[f].short}: ${repTier(f)}`).join('   ');
 
 SCRIPTS.hesper = async function hesper() {
-  const N = 'Captain Vael', q = S.quests.roadwatch;
+  const N = 'Captain Thorne', q = S.quests.roadwatch;
   if (q.status === 'active' && ashenCleared() >= 3) {
     await say(N, 'Three strongholds down. The road breathes again. You have the Wardens\' thanks, and something better than thanks.');
     addGold(250); addRep('wardens', 25); addItem('warden_pennant'); finishQuest('roadwatch'); return;
@@ -76,10 +76,10 @@ SCRIPTS.hesper = async function hesper() {
     if (c === 0) { startQuest('roadwatch'); await say(N, 'Good. Look for smoke, and for fires that do not warm anyone.'); }
     return;
   }
-  await say(N, cyc('hesperN', ['The wall holds. It always holds, until the morning it does not.', `Your standing with us: ${repTier('wardens')}.`, 'Corvin lost his company to the last Winter. Be kind to him; he will not ask.']));
+  await say(N, cyc('hesperN', ['The wall holds. It always holds, until the morning it does not.', `Your standing with us: ${repTier('wardens')}.`, 'Corvin lost his company on the wall when the cold came. Be kind to him; he will not ask.']));
 };
 SCRIPTS.corvin = async function corvin() {
-  await say('Corvin', cyc('corvinN', ['I was at the Reach when the Frost came down. We were forty. I walked home with six.', winter() === 'thaw' ? 'They say the Winter broke. It did not break. It was let go. Remember the difference.' : winter() === 'crown' ? 'The cold does not forget. Now it has a face, and the face is yours.' : 'The cold does not forget.', 'Do not thank me for the watch. Thank the ones who are not here to keep it.']));
+  await say('Corvin', cyc('corvinN', ['I was on the Ashen wall when the Frost came down. We were sixty. I walked home with nine.', winter() === 'thaw' ? 'They say the Winter broke. It did not break. It was let go. Remember the difference.' : winter() === 'crown' ? 'The cold does not forget. Now it has a face, and the face is yours.' : 'The cold does not forget.', 'Do not thank me for the watch. Thank the ones who are not here to keep it.']));
 };
 SCRIPTS.pell = async function pell() {
   const N = 'Pell';
@@ -112,7 +112,7 @@ SCRIPTS.dunmar = async function dunmar() {
   if (c === 0) await buyMenu(N, wares); else if (c === 1) await sellMenu(N);
 };
 SCRIPTS.hildsoot = async function hildsoot() {
-  const N = 'Hild Soot', wares = [{ id: 'hp_potion', price: 30 }, { id: 'mp_potion', price: 30 }, { id: 'sp_potion', price: 26 }, { id: 'hp_potion_g', price: 85 }];
+  const N = 'Agna Soot', wares = [{ id: 'hp_potion', price: 30 }, { id: 'mp_potion', price: 30 }, { id: 'sp_potion', price: 26 }, { id: 'hp_potion_g', price: 85 }];
   await say(N, 'Soot-black and proud of it. Everything in Emberhold ends up in my cauldron eventually.');
   const c = await choose(['Buy potions', 'Sell', 'Leave']);
   if (c === 0) await buyMenu(N, wares); else if (c === 1) await sellMenu(N);
@@ -184,7 +184,7 @@ SCRIPTS.ysolde = async function ysolde() {
   } else if (c === 2) await say(N, standing());
 };
 SCRIPTS.isolt = async function isolt() {
-  await say('Isolt', cyc('isoltN', ['Master Brannoch says I hit the metal like I am angry at it. I tell him that is the technique.', 'One day I will forge something that sings. For now I make nails. Excellent nails.']));
+  await say('Kerra', cyc('isoltN', ['Master Brannoch says I hit the metal like I am angry at it. I tell him that is the technique.', 'One day I will forge something that sings. For now I make nails. Excellent nails.']));
 };
 SCRIPTS.maelis = async function maelis() {
   const N = 'Maelis';

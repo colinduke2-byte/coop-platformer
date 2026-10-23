@@ -308,9 +308,16 @@ export async function ragna() {
     else if (c === 2) { if (!(await companionStory(R))) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.'])); }
     return;
   }
-  if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
+  if (heartsHeld() >= 1 && S.quests.company.status === 'inactive' && S.flags.warlordDead) {
+    // you took the Iron Heart before she ever asked: Hrolf is already down
+    await say(R, 'You carry the Iron Heart. Then you have been to the Keep, and Hrolf is down.');
+    await say(R, 'I rode with the Company, three winters ago. Forty of us rode in. I rode out. ...Walk with me a while, Dreamer. Someone has to say the names.');
+    const q = await choose(['Walk with me.', 'Not now.']);
+    if (q === 0) { startQuest('company'); setCompanion('ragna'); await say(R, 'Then my bow is yours, for nothing. Give me a quiet road and a little time.'); return; }
+    await say(R, 'The names will keep. They have kept this long.');
+  } else if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
     await say(R, 'You carry a Heart. I know that cold. I last felt it at the Ironwatch gate.');
-    await say(R, 'I rode with the Company. Forty of us. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
+    await say(R, 'I rode with the Company, three winters ago. Forty of us rode in. I rode out. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
     const q = await choose(['Come with me. We will find him together.', 'I will think about it.']);
     if (q === 0) {
       startQuest('company');

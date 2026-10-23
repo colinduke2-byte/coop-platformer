@@ -53,7 +53,7 @@ export class BlightMother extends PatternBoss {
 // The Sunscorch Reach: the Vault Sovereign, the last of the desert kings, still guarding what they sealed. Sunbeams and gilded guards.
 export class VaultSovereign extends PatternBoss {
   constructor(scene, x, y) {
-    super(scene, x, y, 'vaultsovereign', TUNE.vaultsovereign, { scale: 2.6, flag: 'vaultSovereignDead', heart: null, toast: 'THE VAULT SOVEREIGN CRUMBLES', summon: ['sunsentinel', 'wrapped', 'wrapped'], col: 13, tier: 3, phaseAt: [0.66, 0.33], phaseText: { 2: 'THE VAULT BURNS', 3: 'THE LAST SUN' } });
+    super(scene, x, y, 'vaultsovereign', TUNE.vaultsovereign, { scale: 2.6, flag: 'vaultSovereignDead', heart: null, toast: 'THE GILDED REGENT CRUMBLES', summon: ['sunsentinel', 'wrapped', 'wrapped'], col: 13, tier: 3, phaseAt: [0.66, 0.33], phaseText: { 2: 'THE VAULT BURNS', 3: 'THE LAST SUN' } });
   }
   attackPool(d) {
     const o = [];

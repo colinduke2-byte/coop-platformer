@@ -90,7 +90,7 @@ Object.assign(ENEMIES, {
     body: [8, 7, 4, 9], loot: { gold: [380, 520], drops: [['blight_heart', 1], ['hp_potion_g', 1, [2, 2]], ['thornvine', 1, [4, 4]], ['bloom_petal', 1, [3, 3]]] },
   },
   vaultsovereign: {
-    name: 'The Vault Sovereign', title: 'THE VAULT SOVEREIGN, LAST OF THE SUN KINGS', tex: 'spr_vaultsovereign', bark: 'construct', weak: { shock: 1.3, frost: 1.0, fire: 0.5 },
+    name: 'The Gilded Regent', title: 'THE GILDED REGENT, LAST OF THE SUN KINGS', tex: 'spr_vaultsovereign', bark: 'construct', weak: { shock: 1.3, frost: 1.0, fire: 0.5 },
     hp: 1150, speed: 36, chase: 46, dmg: 28, detect: 9999,
     kind: 'boss', range: 44, windup: 0.75, atkDur: 0.2, recover: 0.75, cooldown: 0.85, kbResist: 0.97,
     body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['vault_seal', 1], ['hp_potion_g', 1, [2, 2]], ['sun_gold', 1, [4, 4]], ['sand_glass', 1, [3, 3]]] },

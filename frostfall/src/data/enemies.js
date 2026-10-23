@@ -8,7 +8,7 @@ export const ENEMIES = {
     body: [12, 6, 2, 8], loot: { gold: [80, 120], drops: [['pale_pelt', 1], ['grimfang_bite', 1], ['wolf_fang', 1], ['wolf_fang', 1], ['hp_potion_g', 0.7]] },
   },
   wyrm: {
-    name: 'Glacial Wyrm', title: 'THE RIME WYRM, SERPENT OF THE MAW', tex: 'spr_wyrm', sideOnly: true, weak: { fire: 1.5, shock: 1.2, frost: 0.1 },
+    name: 'The Rime Wyrm', title: 'THE RIME WYRM, SERPENT OF THE MAW', tex: 'spr_wyrm', sideOnly: true, weak: { fire: 1.5, shock: 1.2, frost: 0.1 },
     hp: 420, speed: 34, chase: 46, dmg: 22, detect: 9999,
     kind: 'boss', range: 44, windup: 0.8, atkDur: 0.2, recover: 0.7, cooldown: 1.0, kbResist: 0.95,
     body: [14, 8, 1, 7], loot: { gold: [140, 190], drops: [['hp_potion_g', 1], ['mp_potion_g', 0.6], ['frostbirch_staff', 1]] },

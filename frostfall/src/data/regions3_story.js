@@ -48,11 +48,11 @@ function giver(cfg) {
 }
 
 // ============================================================================ Lantern Glade (Glasswood)
-NPC_DEFS.glade_warden = { name: 'WARDEN YSOLT', tex: 'spr_keeper' };
+NPC_DEFS.glade_warden = { name: 'WARDEN SOLVEIG', tex: 'spr_keeper' };
 NPC_DEFS.glade_trader = { name: 'FENN LANTERNWRIGHT', tex: 'spr_trader' };
-NPC_DEFS.glade_smith = { name: 'TAMSIN GLASSBLOWER', tex: 'spr_prospector' };
+NPC_DEFS.glade_smith = { name: 'VESNA GLASSBLOWER', tex: 'spr_prospector' };
 NPC_DEFS.glade_hunter = { name: 'KESTREL', tex: 'spr_trapper' };
-NPC_DEFS.glade_herbalist = { name: 'ORREL DEWKEEPER', tex: 'spr_fisher' };
+NPC_DEFS.glade_herbalist = { name: 'WYNN DEWKEEPER', tex: 'spr_fisher' };
 NPC_DEFS.glade_child = { name: 'PIP', tex: 'spr_child' };
 NPC_DEFS.glade_watch = { name: 'GLADE WATCH', tex: 'spr_guard' };
 NPC_DEFS.glade_inn = { name: 'MARROW, THE SINGING INN', tex: 'spr_hilda' };
@@ -60,13 +60,13 @@ NPC_DEFS.glade_map = { name: 'SPINDLE THE MAPMAKER', tex: 'spr_scribe' };
 NPC_DEFS.glade_sage = { name: 'THE MOON-READER', tex: 'spr_shaman' };
 
 QUESTS.hartking = {
-  title: 'The Hartking Wears the Wood', giver: 'Warden Ysolt',
-  desc: 'The Hartking was the forest\'s guardian before the glass took the trees. Now the glass wears him. Every winter his antlers grow, and more of the wood goes to crystal. Ysolt asks you to climb the Hart Spire and set him free of it.',
-  short: () => (S.flags.hartKingDead ? 'Tell Ysolt' : S.flags.hartspireEntered ? 'Defeat the Hartking' : 'Find the Hart Spire'),
+  title: 'The Hartking Wears the Wood', giver: 'Warden Solveig',
+  desc: 'The Hartking was the forest\'s guardian before the glass took the trees. Now the glass wears him. Every winter his antlers grow, and more of the wood goes to crystal. Solveig asks you to climb the Hart Spire and set him free of it.',
+  short: () => (S.flags.hartKingDead ? 'Tell Solveig' : S.flags.hartspireEntered ? 'Defeat the Hartking' : 'Find the Hart Spire'),
   objectives: (q) => [
     { t: 'Find the Hart Spire in the Glasswood', done: !!S.flags.hartspireEntered || q.status === 'done' },
     { t: 'Defeat the Hartking', done: !!S.flags.hartKingDead || q.status === 'done' },
-    { t: 'Tell Warden Ysolt', done: q.status === 'done' },
+    { t: 'Tell Warden Solveig', done: q.status === 'done' },
   ],
 };
 QUESTS.glimmers = {
@@ -76,10 +76,10 @@ QUESTS.glimmers = {
   objectives: (q) => [{ t: `Put out glimmerkin (${Math.min(killsSince(q, 'glimmerkin'), 8)}/8)`, done: killsSince(q, 'glimmerkin') >= 8 || q.status === 'done' }, { t: 'Tell Kestrel', done: q.status === 'done' }],
 };
 QUESTS.bloom = {
-  title: 'Glass Bloom for the Dew', giver: 'Orrel Dewkeeper',
-  desc: 'Glass bloom grows at the rim of glimmering pools, and Orrel brews a draught from it that lets the glass-dust pass through you. He needs five.',
+  title: 'Glass Bloom for the Dew', giver: 'Wynn Dewkeeper',
+  desc: 'Glass bloom grows at the rim of glimmering pools, and Wynn brews a draught from it that lets the glass-dust pass through you. He needs five.',
   short: () => `Glass bloom ${Math.min(count('glass_bloom'), 5)}/5`,
-  objectives: (q) => [{ t: `Gather glass bloom (${Math.min(count('glass_bloom'), 5)}/5)`, done: count('glass_bloom') >= 5 || q.status === 'done' }, { t: 'Bring them to Orrel', done: q.status === 'done' }],
+  objectives: (q) => [{ t: `Gather glass bloom (${Math.min(count('glass_bloom'), 5)}/5)`, done: count('glass_bloom') >= 5 || q.status === 'done' }, { t: 'Bring them to Wynn', done: q.status === 'done' }],
 };
 QUESTS.moonlit = {
   title: 'What the Moon Wants', giver: 'The Moon-Reader',
@@ -93,7 +93,7 @@ TARGETS.bloom = target('glasswood', 'glimmerpool');
 TARGETS.moonlit = () => null;
 
 SCRIPTS.glade_warden = giver({
-  who: 'Ysolt', id: 'hartking', key: 'ysoltN',
+  who: 'Solveig', id: 'hartking', key: 'ysoltN',
   intro: ['You came through the trees with your face intact. Good. They like faces here.', 'The Hartking was our guardian before the glass took the wood. He grew crystal on his antlers to hold the trees up, and the crystal grew back, and now the crystal wears him.', 'The Hart Spire is east, past the antler stones. Go up and end it. Take someone who can take a hit.'],
   yes: 'I will go.', go: 'Keep to the lantern roads. The wood hates the dark more than you do.',
   ready: () => !!S.flags.hartKingDead,
@@ -103,7 +103,7 @@ SCRIPTS.glade_warden = giver({
 });
 SCRIPTS.glade_trader = () => trade('Fenn', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Fenn', 2)],
   cyc('fennN', ['Lanterns, wicks, and one very good pair of boots that are not for sale.', 'Every lamp on the roads is mine. Every moth is also mine, by extension.', 'I charge for light. Darkness is free. Make of that what you will.']));
-SCRIPTS.glade_smith = () => smithMenu('Tamsin', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }],
+SCRIPTS.glade_smith = () => smithMenu('Vesna', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }],
   cyc('tamsinN', ['I blow glass, and sometimes I forge. The glass is prettier. The forging pays.', 'Prism steel holds an edge for a week and a grudge for a year.', 'Do not drop my glass. I will know.']));
 SCRIPTS.glade_hunter = giver({
   who: 'Kestrel', id: 'glimmers', key: 'kestrelN',
@@ -117,7 +117,7 @@ SCRIPTS.glade_hunter = giver({
   idle: ['Stags in the wood have glass in their antlers. Do not shoot the shiny ones; they are the ones that remember.', 'A fox followed me home once. It was made of light. I let it stay.'],
 });
 SCRIPTS.glade_herbalist = giver({
-  who: 'Orrel', id: 'bloom', key: 'orrelN',
+  who: 'Wynn', id: 'bloom', key: 'orrelN',
   intro: ['Glass bloom opens at the rim of the glimmering pools. Five blooms make a draught that lets the glass-dust pass through you instead of settling.', 'The pools are fey places. Be polite.'],
   yes: 'I will gather them.', go: 'Look for the pale blue ones. The yellow ones bite.',
   ready: () => count('glass_bloom') >= 5,
@@ -145,7 +145,7 @@ SCRIPTS.glade_sage = giver({
 NPC_DEFS.fall_foreman = { name: 'FOREMAN DAGNA', tex: 'spr_guard' };
 NPC_DEFS.fall_trader = { name: 'BOLLARD THE LAMPMAN', tex: 'spr_trader' };
 NPC_DEFS.fall_smith = { name: 'IRMA DEEPFORGE', tex: 'spr_prospector' };
-NPC_DEFS.fall_fungalist = { name: 'CAP THE FUNGALIST', tex: 'spr_fisher' };
+NPC_DEFS.fall_fungalist = { name: 'MOREL THE FUNGALIST', tex: 'spr_fisher' };
 NPC_DEFS.fall_scout = { name: 'TALLOW', tex: 'spr_trapper' };
 NPC_DEFS.fall_child = { name: 'GRIT', tex: 'spr_child' };
 NPC_DEFS.fall_watch = { name: 'LANTERN GUARD', tex: 'spr_guard' };
@@ -170,10 +170,10 @@ QUESTS.weavers = {
   objectives: (q) => [{ t: `Slay cave weavers (${Math.min(killsSince(q, 'caveweaver'), 8)}/8)`, done: killsSince(q, 'caveweaver') >= 8 || q.status === 'done' }, { t: 'Tell Tallow', done: q.status === 'done' }],
 };
 QUESTS.glowcaps = {
-  title: 'Lanterns Made of Mushrooms', giver: 'Cap the fungalist',
-  desc: 'When the oil ran out, the Delvers began lighting Lanternfall with glowcaps. They are running low. Cap needs five more, and he is not going into the grove himself.',
+  title: 'Lanterns Made of Mushrooms', giver: 'Morel the fungalist',
+  desc: 'When the oil ran out, the Delvers began lighting Lanternfall with glowcaps. They are running low. Morel needs five more, and he is not going into the grove himself.',
   short: () => `Glowcaps ${Math.min(count('glowcap'), 5)}/5`,
-  objectives: (q) => [{ t: `Gather glowcaps (${Math.min(count('glowcap'), 5)}/5)`, done: count('glowcap') >= 5 || q.status === 'done' }, { t: 'Bring them to Cap', done: q.status === 'done' }],
+  objectives: (q) => [{ t: `Gather glowcaps (${Math.min(count('glowcap'), 5)}/5)`, done: count('glowcap') >= 5 || q.status === 'done' }, { t: 'Bring them to Morel', done: q.status === 'done' }],
 };
 TARGETS.lodecolossus = () => { const p = poiOf('underdeep', S.flags.lodeColossusDead ? 'lanternfall' : 'lodenest'); return p ? { map: 'underdeep', x: p.x, y: p.y + 2 } : null; };
 TARGETS.weavers = target('underdeep', 'weavernest');
@@ -193,7 +193,7 @@ SCRIPTS.fall_trader = () => trade('Bollard', [{ id: 'lantern', price: 150, once:
 SCRIPTS.fall_smith = () => smithMenu('Irma', [{ id: 'steel_sword', price: 190, once: true }, { id: 'iron_greatsword', price: 230, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }, { id: 'ember_ore', price: 120 }],
   cyc('irmaN', ['Deepforge: coal from the lode, hammer from the surface, patience from nowhere.', 'The anvil rings differently down here. I have stopped asking why.', 'Bring me ore and I will make it into something that argues back.']));
 SCRIPTS.fall_fungalist = giver({
-  who: 'Cap', id: 'glowcaps', key: 'capN',
+  who: 'Morel', id: 'glowcaps', key: 'capN',
   intro: ['Do you know what glowcaps eat? Neither do I. They have been growing for a hundred years and we have never seen one hungry.', 'Five of them would light the east wall for a month. I will not go into the grove. They hum when you walk in.'],
   yes: 'I will fetch them.', go: 'Pick the blue-lit ones. The red-lit ones are saying something.',
   ready: () => count('glowcap') >= 5,
@@ -240,7 +240,7 @@ NPC_DEFS.salt_guildmaster = { name: 'GUILDMASTER ANNEKE', tex: 'spr_keeper' };
 NPC_DEFS.salt_smuggler = { name: 'NIM THE FENCE', tex: 'spr_stalker' };
 NPC_DEFS.salt_sailor = { name: 'OLD CAP\'N BRYN', tex: 'spr_fisher' };
 NPC_DEFS.salt_inn = { name: 'GULL & ANCHOR, NELL', tex: 'spr_hilda' };
-NPC_DEFS.salt_map = { name: 'ISOLDE SEA-CHARTS', tex: 'spr_scribe' };
+NPC_DEFS.salt_map = { name: 'WENNA SEA-CHARTS', tex: 'spr_scribe' };
 NPC_DEFS.salt_child = { name: 'MINNOW', tex: 'spr_child' };
 NPC_DEFS.salt_watch = { name: 'HARBOUR WATCH', tex: 'spr_guard' };
 NPC_DEFS.salt_bard = { name: 'THE SHANTY-MAN', tex: 'spr_keeper' };
@@ -363,7 +363,7 @@ SCRIPTS.salt_sailor = giver({
   idle: ['The sea has a sense of humour. It is not a good one.', 'Ships do not sink. They go somewhere else. Sailors learn this slowly.'],
 });
 SCRIPTS.salt_inn = () => innMenu('Nell', { room: 26, meal: 14, news: 30, hello: cyc('nellN', ['The Gull & Anchor: warm beds, hot chowder, and a window that looks at the harbour so you can watch your ship leave without you.', 'Rooms for the weary, rumours for the curious. Both cost.']) });
-SCRIPTS.salt_map = () => cartographerMenu('Isolde');
+SCRIPTS.salt_map = () => cartographerMenu('Wenna');
 SCRIPTS.salt_child = talk('Minnow', 'minnowN', ['I can tell what the tide will do by smelling it. It will do whatever it wants.', 'My dad says the smugglers are bad. My uncle is a smuggler. Dad and uncle do not talk at the holidays.', 'If you drop a coin off the quay, a seal catches it. I have counted.']);
 SCRIPTS.salt_watch = talk('Harbour Watch', 'swatchN', ['Papers? No, not really. Just do not start anything.', 'The east quay is closed. It is always closed. Do not ask what is on it.']);
 SCRIPTS.salt_bard = talk('Shanty-Man', 'shantyN', ['Haul away, my heart, haul away. The ice is thin and the debts are deep.', 'Seven bells, and the cargo is wrong. Seven bells, and the cargo is singing.', 'I know a song about a Hartking and a song about a lode. The one about Brinegut has fewer verses and a rude refrain.']);

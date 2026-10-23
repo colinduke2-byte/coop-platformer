@@ -81,7 +81,7 @@ export function chapter3Ending(kind) {
 export function epilogueLines() {
   const out = [];
   const trophies = Object.keys(S.trophies || {}).length;
-  if (S.flags.ragnaVeteran) out.push('Ragna burned a rafter in the lodge and said forty names over it. The lodge is quieter now, and so is she.' + (S.flags.ragnaBond ? ' An iron cairn on the Ironwatch road carries every one of them.' : ''));
+  if (S.flags.ragnaVeteran) out.push('Ragna burned a rafter in the lodge and said thirty-nine names over it. The lodge is quieter now, and so is she.' + (S.flags.ragnaBond ? ' An iron cairn on the Ironwatch road carries every one of them.' : ''));
   if (S.flags.houndGiven) out.push('Asta and her hound run the length of the palisade every morning. He has never once come back without her.');
   else if (S.flags.houndOwned) out.push('A frost hound sleeps at the foot of your bed. He does not dream of winter.');
   if (S.flags.cubOwned) out.push('The bear cub grew into a bear. She still follows you to the door, and waits.');

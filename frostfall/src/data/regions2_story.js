@@ -26,7 +26,7 @@ const killsSince = (q, kind) => Math.max(0, (S.kills[kind] || 0) - (q.base || 0)
 NPC_DEFS.wick_elder = { name: 'WARDEN-MOTHER ILSE', tex: 'spr_keeper' };
 NPC_DEFS.wick_trader = { name: 'PIM THE LAMP-SELLER', tex: 'spr_trader' };
 NPC_DEFS.wick_smith = { name: 'ODDA', tex: 'spr_prospector' };
-NPC_DEFS.wick_hunter = { name: 'BRANN', tex: 'spr_trapper' };
+NPC_DEFS.wick_hunter = { name: 'TORVI', tex: 'spr_trapper' };
 NPC_DEFS.wick_herbalist = { name: 'MAUD', tex: 'spr_fisher' };
 NPC_DEFS.wick_fisher = { name: 'OLD TOLLE', tex: 'spr_fisher' };
 NPC_DEFS.wick_child = { name: 'LISBET', tex: 'spr_child' };
@@ -43,10 +43,10 @@ QUESTS.miremother = {
   ],
 };
 QUESTS.leeches = {
-  title: 'Leech Season', giver: 'Brann the hunter',
-  desc: 'The fen leeches have grown fat and bold, and they are in the boardwalk pilings. Brann will pay for every one you drive off.',
-  short: (q) => (q.status === 'ready' ? 'Tell Brann' : `Leeches ${Math.min(killsSince(q, 'leech'), 10)}/10`),
-  objectives: (q) => [{ t: `Slay fen leeches (${Math.min(killsSince(q, 'leech'), 10)}/10)`, done: killsSince(q, 'leech') >= 10 || q.status === 'done' }, { t: 'Tell Brann', done: q.status === 'done' }],
+  title: 'Leech Season', giver: 'Torvi the hunter',
+  desc: 'The fen leeches have grown fat and bold, and they are in the boardwalk pilings. Torvi will pay for every one you drive off.',
+  short: (q) => (q.status === 'ready' ? 'Tell Torvi' : `Leeches ${Math.min(killsSince(q, 'leech'), 10)}/10`),
+  objectives: (q) => [{ t: `Slay fen leeches (${Math.min(killsSince(q, 'leech'), 10)}/10)`, done: killsSince(q, 'leech') >= 10 || q.status === 'done' }, { t: 'Tell Torvi', done: q.status === 'done' }],
 };
 QUESTS.orchids = {
   title: 'Night-Blooming', giver: 'Maud the herbalist',
@@ -79,7 +79,7 @@ SCRIPTS.wick_trader = () => trade('Pim', [{ id: 'lantern', price: 150, once: tru
 SCRIPTS.wick_smith = () => smithMenu('Odda', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Odda', 2)],
   cyc('oddaN', ['Peat iron: dark, brittle, and it holds an edge like a grudge. What do you need?', 'My forge burns peat. The smoke smells of old summers.', 'Wet steel rusts. Wetter fighters rust faster. Mind your shield.']));
 SCRIPTS.wick_hunter = async function hunter() {
-  const N = 'Brann', q = S.quests.leeches;
+  const N = 'Torvi', q = S.quests.leeches;
   if (q.status === 'active' && killsSince(q, 'leech') >= 10) { await say(N, 'Ten! The pilings are clean. Here: coin, and something I took off a drowned man.'); addGold(220); addItem('hp_potion_g', 2, true); addItem('marsh_orchid', 2, true); finishQuest('leeches'); return; }
   if (q.status === 'inactive') {
     await say(N, 'Leeches. Ten of them, fat as a fist, in the pilings under my house. I would do it myself, but I am hunting. It is a good excuse.');
@@ -111,7 +111,7 @@ NPC_DEFS.skarn_chief = { name: 'CHIEF ULFAR STORMBROW', tex: 'spr_guard' };
 NPC_DEFS.skarn_trader = { name: 'RANNVEIG', tex: 'spr_trader' };
 NPC_DEFS.skarn_smith = { name: 'GRIMHILD', tex: 'spr_prospector' };
 NPC_DEFS.skarn_shaman = { name: 'SHAMAN VEDA', tex: 'spr_shaman' };
-NPC_DEFS.skarn_herder = { name: 'HALLDOR', tex: 'spr_trapper' };
+NPC_DEFS.skarn_herder = { name: 'HAKON', tex: 'spr_trapper' };
 NPC_DEFS.skarn_scout = { name: 'SCOUT ASGER', tex: 'spr_nomad' };
 NPC_DEFS.skarn_child = { name: 'TYRA', tex: 'spr_child' };
 NPC_DEFS.skarn_bard = { name: 'THE WIND-BARD', tex: 'spr_keeper' };
@@ -134,10 +134,10 @@ QUESTS.feathers = {
   objectives: (q) => [{ t: `Gather storm feathers (${Math.min(count('storm_feather'), 5)}/5)`, done: count('storm_feather') >= 5 || q.status === 'done' }, { t: 'Bring them to Veda', done: q.status === 'done' }],
 };
 QUESTS.greytusk = {
-  title: 'Old Greytusk', giver: 'Halldor the herder',
-  desc: 'A mammoth bull the clans call Greytusk walks the highland roads and flattens everything that does not move. Halldor wants the herds safe, and the tusks for the Hold.',
-  short: () => (S.flags.rb_greytusk ? 'Tell Halldor' : 'Slay Old Greytusk'),
-  objectives: (q) => [{ t: 'Slay Old Greytusk, the Mammoth King', done: !!S.flags.rb_greytusk || q.status === 'done' }, { t: 'Tell Halldor', done: q.status === 'done' }],
+  title: 'Old Greytusk', giver: 'Hakon the herder',
+  desc: 'A mammoth bull the clans call Greytusk walks the highland roads and flattens everything that does not move. Hakon wants the herds safe, and the tusks for the Hold.',
+  short: () => (S.flags.rb_greytusk ? 'Tell Hakon' : 'Slay Old Greytusk'),
+  objectives: (q) => [{ t: 'Slay Old Greytusk, the Mammoth King', done: !!S.flags.rb_greytusk || q.status === 'done' }, { t: 'Tell Hakon', done: q.status === 'done' }],
 };
 TARGETS.stormgiant = () => { const p = poiOf('highlands', S.flags.stormGiantDead ? 'skarnhold' : 'stormspire'); return p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null; };
 TARGETS.feathers = () => { const p = poiOf('highlands', 'stormcircle'); return p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null; };
@@ -174,7 +174,7 @@ SCRIPTS.skarn_shaman = async function shaman() {
   await say(N, cyc('vedaN', ['The sky is a slow animal. You learn its habits or it learns yours.', 'Rain from the north: iron. Rain from the south: old iron.']));
 };
 SCRIPTS.skarn_herder = async function herder() {
-  const N = 'Halldor', q = S.quests.greytusk;
+  const N = 'Hakon', q = S.quests.greytusk;
   if (q.status === 'active' && S.flags.rb_greytusk) { await say(N, 'Greytusk is down, and the herd is already walking the high road. Take this, from all of us.'); addGold(380); addItem('hp_potion_g', 3, true); addItem('mammoth_tusk', 1, true); finishQuest('greytusk'); return; }
   if (q.status === 'inactive') {
     await say(N, 'Greytusk is on the roads again. Every year he gets bigger, and every year the Hold gets smaller. Slay him, and the herds can move.');
