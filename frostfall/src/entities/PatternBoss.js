@@ -172,7 +172,7 @@ export default class PatternBoss extends Boss {
     sc.onEnemyKilled(this);
     if (S.quick) { sc.setGate?.(false); return; }          // Arena Mode: no hearts, finales or saves
     sc.setGate(false);
-    music.play('crypt');
+    music.play('victory');
     bus.emit('toast', this.info.toast, 13);
     sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {

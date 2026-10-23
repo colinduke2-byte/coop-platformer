@@ -303,7 +303,7 @@ export default class Boss extends Enemy {
   victory(sc) {
     sc.onEnemyKilled(this);
     sc.setGate(false);
-    music.play('crypt');
+    music.play('victory');
     bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
     sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {
