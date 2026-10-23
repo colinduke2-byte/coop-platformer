@@ -13,6 +13,7 @@ import { ui } from '../../src/systems/ui.js';
 import { mixin } from '../../src/util.js';
 import { registerSpawner, registerTicker, registerListener, SPAWNERS, TICKERS, LISTENERS, tickerOrder } from '../../src/scenes/gameHooks.js';
 import { TILE, TILE_BLOCKS, SOLID_TILES, TILE_COUNT } from '../../src/config.js';
+import { applyStatus, clearStatus, tickStatuses } from '../../src/systems/status.js';
 
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
@@ -177,6 +178,23 @@ t('ui holds: modal while any hold is out; release only drops its own', () => {
   b(); assert.equal(ui.modal, false);
   ui.hold('x'); ui.hold('x'); ui.release('x'); assert.equal(ui.modal, false);
   ui.hold('y'); ui.modal = false; assert.equal(ui.modal, false);   // the old setter (tests): false drops every hold
+});
+
+// ---------------------------------------------------------------- hand-off events
+t("status effects announce themselves: 'status:on' (target, kind, duration) and 'status:off' (target, kind)", () => {
+  const log = [];
+  const onF = (tg, k, d) => log.push(`on ${k} ${d}`), offF = (tg, k) => log.push(`off ${k}`);
+  bus.on('status:on', onF); bus.on('status:off', offF);
+  const e = { cfg: {} };
+  applyStatus(e, 'burn', { t: 3 }); applyStatus(e, 'chill', { t: 2 });
+  applyStatus(e, 'poison', { t: 1 }); tickStatuses(e, 1.5);               // poison runs out
+  clearStatus(e, 'potion');                                               // a cure takes the burn
+  applyStatus(e, 'chill', { t: 2, stacks: 3 });                           // three stacks: the chill becomes a freeze
+  bus.off('status:on', onF); bus.off('status:off', offF);
+  assert.deepEqual(log, ['on burn 3', 'on chill 2', 'on poison 1', 'off poison', 'off burn', 'on chill 2', 'off chill', 'on freeze 1.4']);
+});
+t("the weather hand-off event is emitted where the weather is applied (bus 'weather' (kind, region))", () => {
+  assert.match(read('world/lighting.js'), /applyWeather\(\) \{[^}]*bus\.emit\('weather', S\.weather, regionOfMap\(this\.mapId\)\)/);
 });
 
 // ---------------------------------------------------------------- AU02

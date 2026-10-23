@@ -17,6 +17,7 @@ const lerpColor = (a, b, t) => {
 };
 
 import { hasMod } from '../data/mods.js';
+import { regionOfMap } from '../data/regions.js';
 import { elixirVal } from '../systems/elixir.js';
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
@@ -125,8 +126,11 @@ export const lightingMethods = {
     }
   },
 
+  // Hand-off event (Wave 0): bus 'weather' (kind, region) on every map load and every change of S.weather, so art and audio
+  // can react without touching this file. region is a REGIONS id from data/regions.js ('reach', 'sunscorch'...).
   applyWeather() {
     this.snow?.setMode(S.weather);
+    bus.emit('weather', S.weather, regionOfMap(this.mapId));
   },
 
   // Multiplier on enemies' sight: darkness and blizzards help the sneaky.

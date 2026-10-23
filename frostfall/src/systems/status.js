@@ -1,4 +1,13 @@
 import { elixirVal } from './elixir.js';
+import { bus } from './bus.js';
+
+// Hand-off events (Wave 0), for players and enemies alike, so art and audio can show and sound statuses without editing
+// combat code:  bus 'status:on' (target, kind, duration)  every time a status is applied or refreshed (duration = seconds
+// left; a chill's stacks are on target.statuses.chill), and  'status:off' (target, kind)  when it ends, is cured or is
+// replaced (chill -> freeze). A target that dies or despawns gets no 'status:off': check target.active / target.dead.
+const on = (t, kind) => bus.emit('status:on', t, kind, t.statuses[kind].t);
+const off = (t, kind) => bus.emit('status:off', t, kind);
+const drop = (st, t, kind) => { if (st[kind]) { delete st[kind]; off(t, kind); } };
 // One status-effect system for enemies and the player.
 // A target is anything with `statuses` (created on demand), `x`, `y`, and optionally `statusHit(n, col)` for damage-over-time.
 //   burn    fire damage over time                      (cleansed by frost, potions, water)
@@ -43,27 +52,29 @@ export function applyStatus(t, type, opts = {}) {
     const c = st.chill || { t: 0, stacks: 0 };
     c.stacks = Math.min(def.stacks, c.stacks + (opts.stacks || 1)); c.t = Math.max(c.t, opts.t ?? def.dur);
     st.chill = c;
+    on(t, 'chill');
     if (c.stacks >= def.stacks && !st.freeze) {
-      delete st.chill;
+      drop(st, t, 'chill');
       return applyStatus(t, 'freeze', { t: t.isBoss ? 0 : undefined });
     }
     return true;
   }
   if (type === 'freeze') {
     if (t.isBoss || t.cfg?.title) { return applyStatus(t, 'slow', { t: 2 }); }      // bosses are only slowed
-    if (st.burn) { delete st.burn; }                                                // ice puts fires out
+    drop(st, t, 'burn');                                                           // ice puts fires out
   }
-  if (type === 'burn' && (st.freeze || st.chill)) { delete st.freeze; delete st.chill; return true; }   // fire thaws instead
+  if (type === 'burn' && (st.freeze || st.chill)) { drop(st, t, 'freeze'); drop(st, t, 'chill'); return true; }   // fire thaws instead
   const cur = st[type];
   const dur = opts.t ?? def.dur;
   if (cur) { cur.t = Math.max(cur.t, dur); cur.dps = Math.max(cur.dps, opts.dps ?? def.dps ?? 0); }
   else st[type] = { t: dur, dps: opts.dps ?? def.dps ?? 0, acc: 0 };
+  on(t, type);
   return true;
 }
 
 export function clearStatus(t, group) {
   if (!t.statuses) return;
-  for (const k of group === 'all' ? Object.keys(t.statuses) : (CURES[group] || [group])) delete t.statuses[k];
+  for (const k of group === 'all' ? Object.keys(t.statuses) : (CURES[group] || [group])) drop(t.statuses, t, k);
 }
 
 // Combined effect of everything on a target.
@@ -98,7 +109,7 @@ export function tickStatuses(t, dt, moving = false) {
         if (t.dead || t.mode === 'dead') return;
       }
     }
-    if (v.t <= 0) delete st[k];
+    if (v.t <= 0) { delete st[k]; off(t, k); }
   }
 }
 

@@ -22,7 +22,7 @@ import { routePos } from '../world/roamers.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { nativeSpec, ensureNative } from '../art/native_registry.js';
 import '../art/native/index.js';
-import { applyStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
+import { applyStatus, clearStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -359,7 +359,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   // Compatibility: the damage-over-time status currently on this enemy (or null); assigning applies one.
   get dot() { const s = this.statuses; return s && (s.burn || s.bleed || s.poison) || null; }
   set dot(v) {
-    if (!v) { if (this.statuses) { delete this.statuses.burn; delete this.statuses.bleed; delete this.statuses.poison; } return; }
+    if (!v) { if (this.statuses) clearStatus(this, 'potion'); return; }   // burn, bleed, poison (and 'status:off' for each)
     applyStatus(this, v.col === 11 ? 'bleed' : v.col === 8 ? 'poison' : 'burn', { t: v.t, dps: v.dps });
   }
 

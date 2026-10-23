@@ -1,4 +1,9 @@
 // Tiny global event bus (no Phaser dependency so pure logic can be unit-tested in Node).
+// Hand-off events for parallel work (docs/AGENT_RULES.md): emitted by their owners, anyone may listen.
+//   'status:on'  (target, kind, duration)  a status effect applied or refreshed on a player or an enemy (systems/status.js)
+//   'status:off' (target, kind)            it ended, was cured or turned into another (chill -> freeze)
+//   'weather'    (kind, region)            S.weather applied: on every map load and every change (world/lighting.js)
+// In a scene, listen with listen(scene, ev, fn) below (or GameScene's this.on / registerListener), never a bare bus.on.
 const map = new Map();
 export const bus = {
   on(ev, fn) { if (!map.has(ev)) map.set(ev, new Set()); map.get(ev).add(fn); return bus; },
