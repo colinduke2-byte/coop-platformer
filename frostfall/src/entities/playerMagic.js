@@ -94,20 +94,20 @@ export const magicMethods = {
       }
       case 'shock': this.castShock(sp); break;
       case 'heal': {
-        const amt = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1));
+        const amt = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), hp0 = S.hp;
         S.hp = Math.min(S.maxHp, S.hp + amt);
         sfx.play('heal');
         sc.fx.text(this.x, this.y - 12, '+' + amt, 8);
         sc.fx.puff(this.x, this.y, 8, 10, 30, 0.7, -25);
         sc.fx.ring(this.x, this.y + 4, 0.5, 0.5, 'ring', 0x3f7050);
-        this.gainXp('restoration', 6);
+        this.gainXp('restoration', Math.round(6 * (S.hp - hp0) / amt));     // PR-15: XP for the health actually restored
         break;
       }
       case 'ward': {
         this.ward = { hp: sp.absorb * bonus.ward() * (S.perks.warding ? 1.35 : 1) * (wpn.wardMul ?? 1), t: (sp.time + (S.perks.warding ? 3 : 0)) * (wpn.wardTime ?? 1) };
         sfx.play('ward');
         sc.fx.ring(this.x, this.y + 4, 0.7, 0.5, 'ring', 0x5cc8d8);
-        this.gainXp('restoration', 5);
+        this.ward.max = this.ward.hp;                       // PR-15: Ward pays XP for what it absorbs (tickWard)
         break;
       }
       case 'blink': {
@@ -119,7 +119,7 @@ export const magicMethods = {
         this.body.updateFromGameObject();
         this.iframes = Math.max(this.iframes, 0.3);
         sc.fx.puff(this.x, this.y, 14, 10, 40, 0.4); sc.fx.ring(this.x, this.y + 4, 0.5, 0.3, 'ring', 0x8a5aa8);
-        sfx.play('roll'); this.gainXp('sneak', 5);
+        sfx.play('roll'); this.combatXp('sneak', 5);
         break;
       }
       case 'nova': {
@@ -132,7 +132,7 @@ export const magicMethods = {
           sc.fx.text(e.x, e.y - 10, String(dealt), 15); sc.fx.puff(e.x, e.y, 15, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
-        this.gainXp('destruction', 6);
+        this.combatXp('destruction', 6);
         break;
       }
       case 'embernova': {
@@ -145,7 +145,7 @@ export const magicMethods = {
           sc.fx.text(e.x, e.y - 10, String(dealt), 12); sc.fx.puff(e.x, e.y, 12, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
-        this.gainXp('destruction', 7);
+        this.combatXp('destruction', 7);
         break;
       }
       case 'glacier': {
@@ -159,7 +159,7 @@ export const magicMethods = {
           sc.fx.text(e.x, e.y - 10, String(dealt), 15);
         }
         for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < LEN) sh.finish(); }
-        this.gainXp('destruction', 6);
+        this.combatXp('destruction', 6);
         break;
       }
       case 'meteor': {
@@ -174,19 +174,19 @@ export const magicMethods = {
             const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 190, src: 'fire', element: 'fire', stun: 0.8, forceStun: !e.isBoss, status: { type: 'burn', t: 4, dps: 6 } });
             sc.fx.text(e.x, e.y - 10, String(dealt), 12);
           }
-          this.gainXp('destruction', 10);
+          this.combatXp('destruction', 10);
         });
-        this.gainXp('destruction', 4);
+        this.combatXp('destruction', 4);
         break;
       }
       case 'regrow': {
-        const total = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), ticks = sp.time, per = Math.max(1, Math.round(total / ticks));
+        const total = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), ticks = sp.time, per = Math.max(1, Math.round(total / ticks)), missing = Math.min(total, S.maxHp - S.hp);
         sfx.play('heal'); sc.fx.ring(this.x, this.y + 4, 0.5, 0.6, 'ring', 0x3f7050); sc.fx.text(this.x, this.y - 12, 'REGROWTH', 8, 0.8);
         for (let i = 1; i <= ticks; i++) sc.time.delayedCall(i * 1000, () => {
           if (!sc.scene.isActive('Game') || S.hp <= 0 || this.mode === 'dead') return;
           S.hp = Math.min(S.maxHp, S.hp + per); sc.fx.text(this.x, this.y - 12, '+' + per, 8, 0.5); sc.fx.puff(this.x, this.y, 8, 5, 20, 0.5, -20);
         });
-        this.gainXp('restoration', 8);
+        this.gainXp('restoration', Math.round(8 * missing / total));
         break;
       }
       case 'thorns': {
@@ -199,7 +199,7 @@ export const magicMethods = {
           const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: 0, ky: 0, kb: 0, src: 'poison', stun: 0.3, status: [{ type: 'root', t: 3 }, { type: 'bleed', t: 4, dps: 3 }] });
           sc.fx.text(e.x, e.y - 10, String(dealt), 8);
         }
-        this.gainXp('restoration', 7);
+        this.combatXp('restoration', 7);
         break;
       }
       case 'sandstorm': {
@@ -211,7 +211,7 @@ export const magicMethods = {
           const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 120, src: 'spell', stun: 0.5, forceStun: !e.isBoss, status: [{ type: 'fear', t: 2.2 }, { type: 'slow', t: 3 }] });
           sc.fx.text(e.x, e.y - 10, String(dealt), 10);
         }
-        this.gainXp('sneak', 8);
+        this.combatXp('sneak', 8);
         break;
       }
       case 'sunbeam': {
@@ -228,14 +228,14 @@ export const magicMethods = {
             const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 100, src: 'fire', element: 'fire', stun: 0.5, status: { type: 'burn', t: 3, dps: 5 } });
             sc.fx.text(e.x, e.y - 10, String(dealt), 13);
           }
-          this.gainXp('destruction', 7);
+          this.combatXp('destruction', 7);
         });
-        this.gainXp('destruction', 3);
+        this.combatXp('destruction', 3);
         break;
       }
       case 'wolf': {
         sc.summonSpiritWolf(this);
-        sfx.play('howl'); this.gainXp('restoration', 6);
+        sfx.play('howl'); this.combatXp('restoration', 6);
         break;
       }
       default: break;
@@ -385,11 +385,16 @@ export const magicMethods = {
     this.gainXp('destruction', 1);
   },
 
+  // PR-15: area and utility spells pay skill XP only with an alerted enemy near (no farming capstones in town)
+  combatXp(skill, n) {
+    const near = this.scene.enemies.getChildren().some((e) => !e.dead && e.alerted && Math.hypot(e.x - this.x, e.y - this.y) < TUNE.economy.xpNear);
+    if (near) this.gainXp(skill, n);
+  },
   tickWard(dt) {
     const w = this.ward;
     if (!w) { this.wardImg?.setVisible(false); return; }
     w.t -= dt;
-    if (w.t <= 0 || w.hp <= 0) { this.ward = null; this.wardImg?.setVisible(false); this.scene.fx.puff(this.x, this.y, 15, 8, 40, 0.3); return; }
+    if (w.t <= 0 || w.hp <= 0) { if (w.max) this.gainXp('restoration', Math.round(5 * Math.min(1, (w.max - Math.max(0, w.hp)) / w.max))); this.ward = null; this.wardImg?.setVisible(false); this.scene.fx.puff(this.x, this.y, 15, 8, 40, 0.3); return; }
     if (!this.wardImg) this.wardImg = this.scene.add.image(this.x, this.y, 'ring_small').setTint(0x5cc8d8);
     const pulse = 0.55 + Math.sin(this.scene.t * 6) * 0.08;
     this.wardImg.setVisible(true).setPosition(this.x, this.y + 3).setScale(0.62).setAlpha(Math.min(1, w.t) * pulse + 0.2).setDepth(this.y + 30);

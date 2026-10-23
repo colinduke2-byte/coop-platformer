@@ -50,6 +50,22 @@ const up = await h.ev(async () => {
   return { lv: Math.abs(p3 / p0 - 1.15) < 1e-9, poke: d3 === d0, ruby: Math.abs(pr / p3 - 1.045) < 1e-9, line: line === 'SPELLS +26% (+3)', got: [p0, p3, pr, line] };
 });
 check('a staff\'s forge levels raise its spells (+15% at +3), not its poke; a ruby in it adds 4.5% spell power', up.lv && up.poke && up.ruby && up.line, JSON.stringify(up));
+// ---- PR-15: no skill XP for casting at nothing
+const xp = await h.ev(async () => {
+  const S = window.__ff.S, g = window.__ff.game.scene.getScene('Game'), p = g.player;
+  g.enemies.getChildren().slice().forEach((e) => e.destroy());
+  S.equip.weapon = null; S.tomes = { ...(S.tomes || {}), blink: true, nova: true, heal: true }; S.skills.sneak.lvl = 5; S.skills.destruction.lvl = 8;
+  const xpOf = (k) => S.skills[k].xp + S.skills[k].lvl * 1e6;
+  const out = {};
+  S.mp = 999; p.heat = 0; S.spell = 'blink'; let a = xpOf('sneak'); p.cast(); out.blinkAlone = xpOf('sneak') === a;
+  S.spell = 'nova'; a = xpOf('destruction'); p.heat = 0; p.cast(); out.novaAlone = xpOf('destruction') === a;
+  S.hp = S.maxHp - 3; S.spell = 'heal'; a = S.skills.restoration.xp; p.heat = 0; p.cast(); out.healTopUp = S.skills.restoration.xp - a <= 1;
+  const e = g.addEnemy('wolf', p.x + 40, p.y, { tier: 0 }); e.alerted = true;
+  S.spell = 'blink'; a = xpOf('sneak'); p.heat = 0; S.mp = 999; p.cast(); out.blinkFight = xpOf('sneak') > a;
+  e.destroy();
+  return out;
+});
+check('PR-15: Blink and Frost Nova pay no XP with nobody around (they do in a fight); a heal pays for the health it restores', Object.values(xp).every(Boolean), JSON.stringify(xp));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'MAGE FAILED' : 'MAGE PASSED');

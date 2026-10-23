@@ -311,7 +311,8 @@ export const TUNE = {
     gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.1, 0.12], staffMax: 1.9, legendPools: 10 },
     repair: { base: 0.2, perLevel: 0.08, valueDiv: 2000, valueCap: 0.8 },   // gold per point of wear (PR-12; was 0.15 + value / 400)
     wear: { bowShot: 0.5, staffCast: 0.25 },     // bows wear per shot, staves per spell cast (PR-12; melee: 1 per landed hit)
-    staffRubyPct: 0.015,       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
+    staffRubyPct: 0.015,
+    xpNear: 180,               // area and utility spells pay skill XP only with an alerted enemy this close (px, PR-15)       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
   },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
