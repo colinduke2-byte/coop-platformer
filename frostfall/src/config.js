@@ -27,7 +27,21 @@ export const PAL = [
 ];
 export const C = PAL.map((h) => parseInt(h.slice(1), 16));
 
-// Tile ids in the generated tileset (see art/sprites.js).
+// Tile ids in the generated tileset (see art/sprites.js). CH11: ids are never reused and never renumbered (worlds and
+// saves store them). 0-74 are the core tiles. Every later id comes from its agent's reserved block in TILE_BLOCKS: add your
+// tiles on your own block's line below, take the next free id of your block, and add its picture to drawTile.
+// test/unit/foundation.mjs checks that ids are unique, inside a block, < 256, and that SOLID_TILES only names real tiles.
+export const TILE_BLOCKS = {
+  core: [0, 74],
+  W_world: [75, 89],
+  A_art: [90, 104],
+  C_combat: [105, 109],
+  E_economy: [110, 114],
+  S_story: [115, 119],
+  H_hud: [120, 124],
+  U_audio: [125, 129],
+  spare: [130, 255],          // ask the integrator before using these
+};
 export const TILE = {
   SNOW: 0, SNOW2: 1, ICE: 2, STONE: 3, PINE: 4, PATH: 5, WOODFLOOR: 6,
   WOODWALL: 7, ROOF: 8, CFLOOR: 9, CWALL: 10, ROCK: 11, PILLAR: 12,
@@ -42,6 +56,21 @@ export const TILE = {
   SAND: 60, DUNE: 61, SANDSTONE: 62, CACTUS: 63, OASIS: 64, GLYPH: 65, SANDRUIN: 66,
   // scatter terrain for the older regions: patches of snowdrift and frostbloom, boulders, ember blooms, lily pads, mossy marble, glass flowers, spores
   SNOWDRIFT: 67, FROSTBLOOM: 68, BOULDER: 69, EMBERBLOOM: 70, LILYPAD: 71, MARBLEMOSS: 72, GLASSBLOOM: 73, SPORES: 74,
+
+  // W (world) 75-89:
+
+  // A (art) 90-104:
+
+  // C (combat) 105-109:
+
+  // E (economy) 110-114:
+
+  // S (story) 115-119:
+
+  // H (hud) 120-124:
+
+  // U (audio) 125-129:
+
 };
 export const SOLID_TILES = [
   TILE.STONE, TILE.PINE, TILE.WOODWALL, TILE.ROOF, TILE.CWALL, TILE.ROCK,
@@ -49,8 +78,24 @@ export const SOLID_TILES = [
   TILE.GRAVE, TILE.SARCO, TILE.CWALL2, TILE.DEADTREE, TILE.STUMP,
   TILE.BASALT, TILE.LAVA, TILE.PACKICE, TILE.WRECK, TILE.RUINWALL, TILE.BLACKWATER, TILE.BOGTREE, TILE.BOGREED, TILE.HEATHROCK, TILE.CRYSTAL, TILE.GLOWCAP, TILE.CAVERNPOOL,
   TILE.BOULDER, TILE.BIRCH, TILE.POND, TILE.HEARTROOT, TILE.SANDSTONE, TILE.CACTUS, TILE.OASIS, TILE.SANDRUIN,
+  // solid tiles of the reserved blocks, each agent on its own line:
+  // W:
+
+  // A:
+
+  // C:
+
+  // E:
+
+  // S:
+
+  // H:
+
+  // U:
+
 ];
-export const TILE_COUNT = 75;
+// one past the highest id (unused ids inside a block draw as plain dark tiles)
+export const TILE_COUNT = Math.max(...Object.values(TILE)) + 1;
 
 // Keyboard actions -> KeyboardEvent.code
 export const BINDINGS = {

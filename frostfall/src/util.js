@@ -48,3 +48,11 @@ export function mixin(proto, groups) {
   }
   return proto;
 }
+
+// CH11: put a new id into a content table (ITEMS, ENEMIES, NPC_DEFS, SCRIPTS, QUESTS...), refusing one that is already
+// there, for ids built at run time. Plain `TABLE.id = ...` / literal entries are checked by test/unit/foundation.mjs.
+export function defineOnce(table, id, def, tableName = 'table') {
+  if (Object.prototype.hasOwnProperty.call(table, id)) throw new Error(`${tableName}.${id} is already defined`);
+  table[id] = def;
+  return def;
+}
