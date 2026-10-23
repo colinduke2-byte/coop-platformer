@@ -31,9 +31,11 @@ export const EXPECTED = [
 ];
 
 // Player strength: level L is the level of the main weapon skill; the character level and attribute points follow from the sum of skills.
-export function playerOf({ level = 1, gear = 0, upg = 0, shield = true }) {
+// A character level comes every three skill-ups in any skill (damage.charLevelFor, PR-14). offSkillUps: the skill-ups a focused
+// player picks up in the other skills along the way (blocking, sneaking, the odd arrow, a heal): about as many as the main skill.
+export function playerOf({ level = 1, gear = 0, upg = 0, shield = true, offSkillUps = level - 1 }) {
   const g = GEAR[gear];
-  const cl = Math.min(25, 1 + Math.floor((3 * (level - 1)) / 3));            // about one character level per skill level for a focused player
+  const cl = Math.min(25, 1 + Math.floor((level - 1 + offSkillUps) / 3));
   const hp = 100 + g.hp + 3 * (cl - 1);                                          // half the attribute points go to health
   const armor = armorEffect(g.armor + totalGain('armor', upg) + totalGain('helm', upg));
   const skill = 1 + 0.05 * (level - 1);
@@ -68,9 +70,10 @@ export const costFor = (tier, { dLevel = 0, dGear = 0, diff = 'normal', upg } = 
 // ---- danger: a number for "how hard is this for me right now" (1 = easy ... 5 = deadly) from a fight cost
 export const dangerFromCost = (c) => (c < 0.12 ? 1 : c < 0.28 ? 2 : c < 0.5 ? 3 : c < 0.9 ? 4 : 5);
 export const DANGER_NAMES = ['', 'EASY', 'FAIR', 'TOUGH', 'DEADLY', 'HOPELESS'];
-// Which region tier is the player ready for? The hardest tier whose ordinary fight still costs them under four fifths of their health.
+// Which region tier is the player ready for? The hardest tier whose ordinary fight still costs them under nine tenths of their health
+// (0.8 before PR-14 corrected the character level in playerOf, which had overstated health by up to 40 points).
 export function readyTier(player, diff = 'normal') {
   let best = 0;
-  for (let t = 0; t <= 3; t++) if (fightCost(player, t, diff) <= 0.8) best = t;
+  for (let t = 0; t <= 3; t++) if (fightCost(player, t, diff) <= 0.9) best = t;
   return best;
 }

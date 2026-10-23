@@ -5,7 +5,7 @@ The numbers behind "levels never make you overpowered". Generated from `src/syst
 ## The rule
 Power comes mostly from **gear** (weapon tier, armour tier, upgrades, enchants, sockets) and **preparation** (potions, food, elixirs). Levels add a modest amount:
 - Skills give **+5% damage per level** (was 7%, originally 10%), so a level 20 skill is under double a level 1 skill.
-- Character level comes **one per three skill levels** (was one per two), capped at 25, and each gives **+6** to one attribute (was +10).
+- Character level comes **one per three skill levels** in any skill (was one per two), capped at 25, and each gives **+6** to one attribute (was +10). The model counts the main skill plus about as many skill-ups in the other skills (it used to count one character level per main-skill level, which overstated health; PR-14).
 - Armour has **diminishing returns**: the first 40% counts in full, beyond that half, and nothing passes 70% (so stacking cannot make you immune).
 - Skill levels themselves are slow to earn (XP per level `25 + 12 x level^1.6`).
 
@@ -14,10 +14,10 @@ A "regular fight" is two ordinary enemies of a region tier. The cost is the shar
 
 | Region tier | Expected gear | Level | Normal | Easy | Hard | +5 levels | -5 levels | Gear -1 | Gear +1 |
 |---|---|---|---|---|---|---|---|---|---|
-| 0 | Iron +0 | 3 | 33% | 15% | 58% | 24% | 44% | 73% | 22% |
-| 1 | Steel +1 | 7 | 36% | 16% | 64% | 27% | 52% | 54% | 25% |
-| 2 | Nordic +2 | 12 | 39% | 18% | 69% | 30% | 53% | 57% | 22% |
-| 3 | Forged +3 | 15 | 31% | 14% | 55% | 25% | 41% | 54% | 22% |
+| 0 | Iron +1 | 3 | 33% | 14% | 58% | 25% | 43% | 73% | 22% |
+| 1 | Nordic +3 | 7 | 46% | 20% | 80% | 35% | 63% | 69% | 24% |
+| 2 | Forged +6 | 12 | 82% | 35% | 143% | 66% | 104% | 148% | 54% |
+| 3 | Legendary +9 | 15 | 122% | 53% | 213% | 101% | 152% | 186% | 122% |
 
 Max level (20) in starter gear against each tier (Normal):
 tier 0: 28%   tier 1: 71%   tier 2: 169%   tier 3: 301%

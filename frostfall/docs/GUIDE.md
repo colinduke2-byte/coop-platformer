@@ -62,14 +62,14 @@ Skills level **by use** (five of them), so use what you want to improve:
 
 | Skill | Gets better from | Effect per level |
 |---|---|---|
-| One-Handed | swinging a sword | +7% sword damage, cheaper swings |
-| Archery | shooting the bow | +7% arrow damage, faster draw |
-| Destruction | casting attack spells | +7% spell damage, cheaper mana |
-| Restoration | healing, wards, blocking | stronger heals and wards |
-| Sneak | sneak attacks, pickpocketing | harder to detect, stronger backstabs |
+| One-Handed | swinging any melee weapon | +5% melee damage, swings cost 3% less |
+| Archery | shooting the bow | +5% arrow damage, draws 5% faster |
+| Destruction | casting attack spells | +5% spell damage, spells cost 3% less |
+| Restoration | healing, wards, blocking | +10% healing, wards absorb 12% more |
+| Sneak | sneak attacks, pickpocketing | 3% harder to detect, sneak attacks +0.2x |
 
 - Levels come **slowly on purpose**: level 5 is around 125 sword hits and level 10 around 900. Grinding is real, and it is rewarded.
-- Every two skill levels gained make a **character level**: you get a **perk point** and an attribute choice. Perks (I menu) are in chains of three per skill, unlocked at skill levels 2, 5 and 8 (for example Keen Edge, Duelist, Rending Blow).
+- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu) are in chains of three per skill, unlocked at skill levels 2, 5 and 8 (for example Keen Edge, Duelist, Rending Blow).
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
 - **Sockets**: better weapons and armour have slots for **gems** and **runes**. Runes add effects (burn, chill, shock, life-drain, thorns, warding). Set them at the rune-cutter in Emberhold.
 - **Food and alchemy**: cook meals at campfires for buffs; brew potions. Always carry a few.
