@@ -10,6 +10,7 @@ import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
 import Projectile from './Projectile.js';
 import { tip } from '../systems/tips.js';
+import { wear } from '../systems/durability.js';
 import { ITEMS } from '../data/items.js';
 import { currentShout } from '../systems/shouts.js';
 import { TUNE } from '../data/tuning.js';
@@ -57,6 +58,7 @@ export const bowMethods = {
     this.spDelay = P.regenDelay + 0.2;
     const ammo = this.curAmmo();
     if (ammo === 'arrow') S.arrows--; else { S.inv[ammo]--; if (S.inv[ammo] <= 0) delete S.inv[ammo]; }
+    wear(S.equip.bow, TUNE.economy.wear.bowShot);            // PR-12: bows share the durability sink
     const sp = X ? X.speed : P.bow.speedMin + (P.bow.speedMax - P.bow.speedMin) * charge01;
     const dmg = stats.bowDmg() * (X ? X.dmgMul : P.bow.dmgMin + (P.bow.dmgMax - P.bow.dmgMin) * charge01) * bonus.arrow() * (charge01 >= 1 && S.perks.deadeye ? 1.35 : 1);
     const f = this.face;

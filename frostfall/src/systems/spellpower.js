@@ -5,6 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { TUNE } from '../data/tuning.js';
 import { upgraded } from './upgrades.js';
 import { socketed } from './sockets.js';
+import { isBroken, BROKEN_MUL } from './durability.js';
 
 // Which element each spell belongs to. A staff's elemMul / spellCost keyed by an element reaches every spell of it.
 export const SPELL_ELEM = { fire: 'fire', embernova: 'fire', meteor: 'fire', sunbeam: 'fire', frost: 'frost', nova: 'frost', glacier: 'frost', shock: 'shock' };
@@ -17,7 +18,7 @@ export function staffPower(id = S.equip?.weapon) {
   const w = ITEMS[id] || {};
   if (w.style !== 'staff') return w.spellMul ?? 1;
   const gems = socketed(id).reduce((a, g) => a + (ITEMS[g]?.gem?.dmg || 0), 0);
-  return upgraded('staff', S.upgrades?.[id] || 0, w.spellMul ?? 1) * (1 + gems * TUNE.economy.staffRubyPct);
+  return upgraded('staff', S.upgrades?.[id] || 0, w.spellMul ?? 1) * (1 + gems * TUNE.economy.staffRubyPct) * (isBroken(id) ? BROKEN_MUL.weapon : 1);
 }
 // The gear multiplier on a spell's damage (skill, perks and crits are applied by the caller). Pass `w` to rate an item that
 // is not the one in hand (its forge level and gems are then left out).

@@ -118,6 +118,22 @@ const cmp = await G(async (reset) => {
 }, reset);
 check('PR-21: pack rows and pickups say better or worse; the pane lists crit, element, sockets, set and the upgrade hint', Object.values(cmp).every(Boolean), JSON.stringify(cmp));
 
+// ---- PR-12: repair costs follow forge level, not just value; bows wear per shot and staves per cast
+const dur = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, D = await import('/src/systems/durability.js'), { settings } = await import('/src/systems/settings.js'), p = window.__ff.game.scene.getScene('Game').player;
+  const was = { d: settings.difficulty, on: settings.durability }; settings.difficulty = 'normal'; settings.durability = true;
+  S.inv.sunbreaker = 1; S.upgrades = { sunbreaker: 10 }; S.dur = { sunbreaker: 0 };
+  const sun = D.repairCost('sunbreaker');
+  S.inv.long_bow = 1; S.equip.bow = 'long_bow'; S.arrows = 10; S.sp = 100; S.dur = {};
+  const b0 = D.durOf('long_bow'); p.drawT = 1; p.drawing = true; p.releaseBow(1); const b1 = D.durOf('long_bow');
+  S.inv.hazel_staff = 1; S.equip.weapon = 'hazel_staff'; S.mp = 100; S.spell = 'fire'; p.heat = 0;
+  const s0 = D.durOf('hazel_staff'); p.cast(); const s1 = D.durOf('hazel_staff');
+  settings.difficulty = was.d; settings.durability = was.on; S.dur = {}; S.upgrades = {};
+  return { sun: sun > 250 && sun < 420, bow: b0 - b1 === 0.5, staff: s0 - s1 === 0.25, vals: [sun, b0, b1, s0, s1] };
+}, reset);
+check('PR-12: a full repair of a +10 Sunbreaker costs about a third of before (884 -> ~330); bows wear 0.5 a shot, staves 0.25 a cast', Object.values(dur).every(Boolean), JSON.stringify(dur));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

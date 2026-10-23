@@ -10,7 +10,7 @@ import { TUNE } from './tuning.js';
 import { FURNITURE } from './maps.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
-import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
+import { durOn, durOf, durShown, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
 import { noteSold } from './stock.js';
 import { sellPrice } from '../systems/prices.js';
 import { rarityIndex, reforgeGen } from '../systems/genloot.js';
@@ -80,7 +80,7 @@ export function statLines(id) {
     for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}`, 11]);
   }
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
-  if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'helmet' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
+  if (durOn() && ['weapon', 'weapon2h', 'bow', 'armor', 'helmet', 'shield'].includes(it.type)) out.push([`DURABILITY ${durShown(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()}${it.type === 'helmet' ? ' HELM' : ''}: ${CLASS_LINE[it.weight]}`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (itemWeight(id) >= 1) out.push([`WEIGHT ${itemWeight(id)}`, 4]);
   // speed: the item's own and its armour class together (PR-09), so a heavy piece shows what it really costs
@@ -394,7 +394,7 @@ export async function repairMenu(who) {
     title: 'REPAIR', hint: 'E REPAIR   Q REPAIR ALL   ESC DONE', empty: 'EVERYTHING YOU CARRY IS IN GOOD SHAPE',
     rows: () => damaged().map((id) => {
       const c = repairCost(id), ok = S.gold >= c;
-      return { id, name: ITEMS[id].name, tag: c + 'G', ok, tagCol: ok ? 13 : 11, sub: `${durOf(id)}/${durMax(id)}${durOf(id) <= 0 ? '  BROKEN' : ''}`, lines: statLines(id) };
+      return { id, name: ITEMS[id].name, tag: c + 'G', ok, tagCol: ok ? 13 : 11, sub: `${durShown(id)}/${durMax(id)}${durOf(id) <= 0 ? '  BROKEN' : ''}`, lines: statLines(id) };
     }),
     onSelect: (i, ui) => {
       const id = damaged()[i]; if (!id) return;

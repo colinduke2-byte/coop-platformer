@@ -31,7 +31,7 @@ export const stats = {
   // off-hand 1H weapon (dual wield) damage, or 0
   offhandDmg: () => { const o = eq('offhand'); return o && o.type === 'weapon' ? upgraded('weapon', upg(S.equip.offhand), o.dmg) + gemBonus('dmg', ['offhand']) : 0; },
   shield: () => { const o = eq('offhand'); return o && o.type === 'shield' ? { id: S.equip.offhand, block: upgraded('shield', upg(S.equip.offhand), o.block) * (isBroken(S.equip.offhand) ? BROKEN_MUL.shield : 1), cost: o.cost } : null; },
-  bowDmg: () => { const b = eq('bow'); return b ? upgraded('bow', upg(S.equip.bow), b.dmg) + gemBonus('dmg', ['bow']) : 4; },
+  bowDmg: () => { const b = eq('bow'); return b ? (upgraded('bow', upg(S.equip.bow), b.dmg) + gemBonus('dmg', ['bow'])) * (isBroken(S.equip.bow) ? BROKEN_MUL.weapon : 1) : 4; },
   // Crit chance (PR-05), capped at TUNE.economy.critCap. Melee: the weapon, an off-hand weapon, helmet, armour, charm, sets
   // and the gems in the weapons and armour. The bow: the bow, helmet, armour, charm, sets and the bow's gems.
   meleeCrit: () => critOf(['weapon', ...(eq('offhand')?.type === 'weapon' ? ['offhand'] : []), 'head', 'armor', 'charm'], ['weapon', 'offhand', 'armor']),

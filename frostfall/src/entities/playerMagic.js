@@ -13,6 +13,7 @@ import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
 import { clearStatus } from '../systems/status.js';
 import { spellGear, spellCostGear } from '../systems/spellpower.js';
+import { wear } from '../systems/durability.js';
 
 // cost = mana. skill/lvl = unlock requirement.
 export const SPELLS = {
@@ -76,6 +77,7 @@ export const magicMethods = {
     const freeCast = (S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0)) || (wpn.freeEvery && ((this.castW = (this.castW || 0) + 1) % wpn.freeEvery === 0));
     if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);
     S.mp -= freeCast ? 0 : cost; this.mpDelay = 1.2;
+    if (wpn.style === 'staff') wear(S.equip.weapon, TUNE.economy.wear.staffCast);     // PR-12: staves wear per cast
     this.heat = Math.min(TUNE.player.cast.heatMax, (this.heat || 0) + 1);
     const sc = this.scene, f = this.face;
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
