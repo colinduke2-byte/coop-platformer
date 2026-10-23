@@ -30,12 +30,12 @@ const BASES = {
   armor: [
     { name: 'Jerkin', type: 'armor', weight: 'light', icon: ['armor_leathers', 9], armor: 0.09 },
     { name: 'Hauberk', type: 'armor', weight: 'medium', icon: ['armor_hauberk', 4], armor: 0.18 },
-    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28, moveMul: 0.94 },
+    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28 },              // PR-09: the heavy class already slows
   ],
   helmet: [
     { name: 'Cap', type: 'helmet', weight: 'light', icon: ['helm_cap', 9], armor: 0.03 },
     { name: 'Helm', type: 'helmet', weight: 'medium', icon: ['helm_nasal', 4], armor: 0.06 },
-    { name: 'Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.09, moveMul: 0.97 },
+    { name: 'Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.09 },
   ],
   charm: [{ name: 'Charm', type: 'charm', icon: ['charm_bear', 12] }, { name: 'Ring', type: 'charm', icon: ['charm_manaring', 14] }, { name: 'Amulet', type: 'charm', icon: ['charm_sun', 10] }],
 };
@@ -138,7 +138,16 @@ export function registerGen(id, def) {
 onStateReset((st) => { for (const id of Object.keys(ITEMS)) if (id.startsWith('g_') && !st.gen?.[id]) delete ITEMS[id]; });
 // Re-register every generated item from a loaded save.
 export function rehydrateGen() {
-  for (const [id, def] of Object.entries(S.gen || {})) { ITEMS[id] = def; iconBuilder?.(id, def); }
+  for (const [id, def] of Object.entries(S.gen || {})) { fixOldHeavy(def); ITEMS[id] = def; iconBuilder?.(id, def); }
+}
+// PR-09: generated Plate and Greathelms from older saves carried their own speed penalty on top of the heavy class's; take it out.
+const OLD_HEAVY = { Plate: 0.94, Greathelm: 0.97 };
+function fixOldHeavy(def) {
+  const was = OLD_HEAVY[def.baseName];
+  if (!was || def.heavyFixed || def.moveMul == null) return;
+  const m = +(def.moveMul / was).toFixed(2);
+  if (Math.abs(m - 1) < 0.005) delete def.moveMul; else def.moveMul = m;
+  def.heavyFixed = true;
 }
 export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) || null;
 

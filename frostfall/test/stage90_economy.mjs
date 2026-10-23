@@ -73,6 +73,25 @@ const rew = await G(async (reset) => {
 }, reset);
 check('PR-16/CH14: a discovery under Pilgrim pays x1.3 (not x1.69); a contract pays through gold find (+10% signet)', Object.values(rew).every(Boolean), JSON.stringify(rew));
 
+// ---- PR-09: heavy armour slows once (its class), and the tooltip shows the total
+const heavy = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, { stats } = await import('/src/systems/stats.js'), { genItem, registerGen, rehydrateGen } = await import('/src/systems/genloot.js'), { statLines } = await import('/src/data/services.js'), { TUNE } = await import('/src/data/tuning.js');
+  const plate = genItem(2, Math.random, 0, { slot: 'armor', baseName: 'Plate' }), helm = genItem(2, Math.random, 0, { slot: 'helmet', baseName: 'Greathelm' });
+  registerGen('g_ecoplate', plate); registerGen('g_ecohelm', helm); S.inv.g_ecoplate = 1; S.inv.g_ecohelm = 1;
+  S.equip.armor = 'g_ecoplate'; S.equip.head = 'g_ecohelm';
+  const W = TUNE.player.weights.heavy.move, want = W * (1 + (W - 1) * 0.5) * stats.trait('moveMul') / stats.trait('moveMul');
+  const mv = stats.trait('moveMul');
+  // an old save's Plate with its own 0.94 is put right on load
+  S.gen.g_ecoold = { ...plate, moveMul: 0.94 }; rehydrateGen();
+  const old = S.gen.g_ecoold.moveMul;
+  const lines = statLines('bulwark_plate').map((l) => l[0]).join(' | ');
+  for (const k of ['g_ecoplate', 'g_ecohelm', 'g_ecoold']) { delete S.gen[k]; delete S.inv[k]; }
+  for (const k of Object.keys(S.equip)) S.equip[k] = null;
+  return { noOwn: plate.moveMul == null && helm.moveMul == null, once: Math.abs(mv - want) < 1e-9, old: old === undefined, tooltip: /SPEED -19% WITH CLASS/.test(lines), lines };
+}, reset);
+check('PR-09: generated Plate and Greathelm slow only through the heavy class; old saves are fixed; Bulwark Plate shows its total speed', Object.values(heavy).every(Boolean), JSON.stringify(heavy));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

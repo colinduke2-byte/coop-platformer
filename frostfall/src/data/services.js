@@ -39,6 +39,11 @@ export { sellPrice };
 
 // Short stat lines for the detail pane of the list screens.
 const CLASS_LINE = { light: 'FAST, QUIET', medium: 'BALANCED', heavy: 'SLOW, +CARRY' };
+// An item's speed with its armour class folded in (body armour in full, a helmet at half, like burden.classMix).
+export function totalMove(it) {
+  const W = TUNE.player.weights[it.weight], cls = W && (it.type === 'armor' || it.type === 'helmet') ? (it.type === 'helmet' ? 1 + (W.move - 1) * 0.5 : W.move) : 1;
+  return (it.moveMul ?? 1) * cls;
+}
 export function statLines(id) {
   const it = ITEMS[id];
   if (!it) return [];
@@ -77,7 +82,9 @@ export function statLines(id) {
   if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'helmet' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()}${it.type === 'helmet' ? ' HELM' : ''}: ${CLASS_LINE[it.weight]}`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (itemWeight(id) >= 1) out.push([`WEIGHT ${itemWeight(id)}`, 4]);
-  if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
+  // speed: the item's own and its armour class together (PR-09), so a heavy piece shows what it really costs
+  const mv = totalMove(it);
+  if (Math.abs(mv - 1) >= 0.005) out.push([`SPEED ${mv > 1 ? '+' : ''}${Math.round((mv - 1) * 100)}%${it.weight && it.weight !== 'medium' && (it.type === 'armor' || it.type === 'helmet') ? ' WITH CLASS' : ''}`, mv > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);
   if (it.manaCostMul) out.push(['SPELLS COST -15%', 8]);
   if (it.spRegenMul) out.push(['STAMINA REGEN -20%', 11]);

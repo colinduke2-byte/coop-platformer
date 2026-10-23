@@ -206,7 +206,7 @@ export const ITEMS = {
   glowcap: { name: 'Glowcap', type: 'ingredient', icon: ['lily', 8], value: 14, desc: 'Alchemy: a mushroom that lights itself. Sells well.' },
   weaver_silk: { name: 'Weaver Silk', type: 'ingredient', icon: ['dust', 5], value: 26, desc: 'Strong as wire and almost as sharp. Crafting and trade.' },
   lode_heart: { name: 'Heart of the Lode', type: 'quest', icon: ['gem', 12], value: 0, desc: 'A lump of living ore, warm as an oven. It was beating in the Colossus.' },
-  deep_plate: { name: 'Deepforged Plate', type: 'armor', weight: 'heavy', icon: ['armor_deepplate', 12], armor: 0.4, maxHp: 25, moveMul: 0.9, sockets: 2, value: 760, desc: 'Absorbs 40%, +25 health, -10% speed. Cold iron from the bottom of the world.' },
+  deep_plate: { name: 'Deepforged Plate', type: 'armor', weight: 'heavy', icon: ['armor_deepplate', 12], armor: 0.4, maxHp: 25, sockets: 2, value: 760, desc: 'Absorbs 40%, +25 health. Heavy. Cold iron from the bottom of the world.' },
   lode_pick: { name: 'Lode Pick', type: 'weapon2h', style: 'great', icon: ['axe_lodepick', 12], dmg: 52, elem: { type: 'fire', power: 8 }, sockets: 2, value: 1100, desc: 'Two-handed. A mining pick that has seen too much. Every blow rings.' },
   delve_key: { name: 'Delve Key', type: 'quest', icon: ['locket', 13], value: 0, desc: 'An old iron key. It fits the barred gate in front of the deepest hall of this dungeon.' },
   deep_lamp: { name: 'Deep Lamp', type: 'charm', icon: ['charm_lamp', 12], maxSp: 20, maxHp: 15, value: 420, desc: '+20 stamina, +15 health. A delver\'s lamp that does not need oil. Part of the Deepforged set.' },
