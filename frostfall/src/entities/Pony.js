@@ -3,7 +3,7 @@ import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { TILE } from '../config.js';
-import { dist } from '../util.js';
+import { dist, walkFrame } from '../util.js';
 
 export const PONY_SPEED = 1.55;                // mounted speed multiplier
 export const PONY_DRAIN = 2.5;                 // stamina per second off the roads
@@ -47,7 +47,7 @@ export default class Pony extends Phaser.GameObjects.Image {
       if (d > 220) this.setPosition(player.x - 20, player.y + 6);
       else if (d > 36) { const k = Math.min(1, 74 * dt / d); this.x += (player.x - this.x) * k; this.y += (player.y + 4 - this.y) * k; if (Math.abs(player.x - this.x) > 3) this.fx = Math.sign(player.x - this.x); }
     }
-    const walk = (S.mounted ? moving : d2(this, player) > 36) ? 1 + (Math.floor(this.t * 9) % 2) : 0;
+    const walk = (S.mounted ? moving : d2(this, player) > 36) ? walkFrame(this.t * 12) : 0;        // four beats, like the hero (VX-17)
     this.setFrame('side' + walk).setFlipX(this.fx < 0);
     this.setDepth(this.y + (S.mounted ? 4 : 5));
     this.shadow.setPosition(this.x, this.y + 6).setDepth(this.y - 1).setScale(1.3, 1);

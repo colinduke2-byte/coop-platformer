@@ -119,6 +119,19 @@ check('every clip frame exists on the sheet each creature really uses (16px or n
 check('a hit leech shows its hurt frame', r.hurt === 'hurt0', r.hurt);
 check('a dying slimeling shows its death frame (not a rotated sprite)', r.dead === 'death0', r.dead);
 
+// ---- VX-10 / VX-11: the werewolf is a native wolf-man; no creature from the audit's list is shown at a stretched scale
+r = await G(async () => {
+  const { ENEMIES } = await import('/src/data/enemies.js'); await import('/src/data/enemies4.js');
+  const reg = await import('/src/art/native_registry.js');
+  const g = window.gs(), list = ['werewolf', 'shroom', 'gloomcap', 'prism', 'caveweaver', 'lodeling', 'sunsentinel', 'redsula', 'captainkarrow', 'bearcub', 'imp', 'slimeling'];
+  const p = g.player, bad = [];
+  for (const k of list) { const e = g.addEnemy(k, p.x + 80, p.y + 40); if (e.scaleX !== 1 || !e.native) bad.push(`${k}:${e.scaleX}`); e.destroy(); }
+  const ww = g.textures.get(reg.ensureNative(g, 'werewolf'));
+  return { bad, ww: ['windup0', 'attack0', 'howl0', 'hurt0', 'death0'].every((f) => ww.has(f)) };
+});
+check('the twelve odd-scale creatures are drawn at scale 1 with native art', !r.bad.length, r.bad.join(','));
+check('the werewolf has its own windup, swipe and howl frames', r.ww);
+
 // ---- VX-06: statuses show on the enemy (driven by the status:on / status:off bus events)
 await h.pause();
 r = await G(async () => {

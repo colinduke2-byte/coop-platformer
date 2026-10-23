@@ -5,8 +5,10 @@ export const ANIM_CLIPS = {
   spr_wolf: ANIMAL, spr_grimfang: ANIMAL, spr_alpha: ANIMAL, spr_bear: ANIMAL, spr_lynx: ANIMAL, spr_boar: ANIMAL,
   spr_deer: ANIMAL, spr_elk: ANIMAL, spr_fox: ANIMAL, spr_hare: { ...ANIMAL, idle: ['side0'], walk: ['side1', 'side2', 'side0'] },
   // VX-04: these sheets always had hurt and death frames (animalSheet); now they are shown
-  spr_werewolf: ANIMAL, spr_ashhound: ANIMAL, spr_leech: ANIMAL, spr_spider: ANIMAL, spr_slime: ANIMAL, spr_crab: ANIMAL, spr_barnacle: ANIMAL,
+  spr_ashhound: ANIMAL, spr_leech: ANIMAL, spr_spider: ANIMAL, spr_slime: ANIMAL, spr_crab: ANIMAL, spr_barnacle: ANIMAL,
   spr_wisp: ANIMAL, spr_worm: ANIMAL, spr_shroom: ANIMAL, spr_wyvern: ANIMAL, spr_mimic: ANIMAL,
+  // VX-10: the native werewolf (art/native/werewolf.js) has its own swipe and, now and then while it stands, a howl
+  spr_werewolf: { idle: ['side0', 'side0', 'side0', 'side0', 'howl0', 'howl0'], walk: ['side1', 'side2'], windup: ['windup0'], attack: ['attack0'], hurt: ['hurt0'], death: ['death0'] },
   spr_dragon: { idle: ['side0', 'side0', 'side2'], walk: ['side1', 'side2'], windup: ['side1'], attack: ['attack0'], hurt: ['hurt0'], death: ['death0'] },
 };
 

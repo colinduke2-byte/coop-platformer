@@ -30,7 +30,7 @@ function bearPix(N, f, mammoth) {
   for (const [x, y] of [[4, 6], [6.5, 5], [8, 7.4], [5.2, 9], [10.5, 9.6]]) P(x, y, 4, Math.max(1, Math.round(k * 0.6)), 1);
   return render(g, BEAR_R, { dither: [1] });
 }
-function bearSheet(mammoth) {
+export function bearSheet(mammoth) {
   return (scene, key, N) => {
     const a = bearPix(N, 0, mammoth), b = bearPix(N, 1, mammoth), c = bearPix(N, 2, mammoth);
     sheet(scene, key, N, [['side0', a], ['side1', b], ['side2', c], ['hurt0', jolt(b, N, -Math.round(N / 16), -Math.round(N / 16))], ['death0', flippedV(jolt(a, N, 0, 0), N, N)]]);
