@@ -24,7 +24,7 @@ const killsSince = (q, kind) => Math.max(0, (S.kills[kind] || 0) - (q.base || 0)
 
 // ============================================================================ Reedwick, the stilt village (Weeping Fens)
 NPC_DEFS.wick_elder = { name: 'WARDEN-MOTHER ILSE', tex: 'spr_keeper' };
-NPC_DEFS.wick_trader = { name: 'PIM THE LAMP-SELLER', tex: 'spr_trader' };
+NPC_DEFS.wick_trader = { name: 'TOBIN THE LAMP-SELLER', tex: 'spr_trader' };
 NPC_DEFS.wick_smith = { name: 'ODDA', tex: 'spr_prospector' };
 NPC_DEFS.wick_hunter = { name: 'TORVI', tex: 'spr_trapper' };
 NPC_DEFS.wick_herbalist = { name: 'MAUD', tex: 'spr_fisher' };
@@ -74,7 +74,7 @@ SCRIPTS.wick_elder = async function elder() {
   }
   await say(N, cyc('ilseN', ['The lanterns are lit every dusk. We lit them even when we could not afford the oil. Especially then.', 'The wraiths hate green flame. Oil from the lamp-seller will keep them off, a little.', 'Children are told the water weeps because it is sad. The truth is worse. It weeps because it is hungry.']));
 };
-SCRIPTS.wick_trader = () => trade('Pim', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'lantern_oil', price: 40, n: 1 }, { id: 'hp_potion', price: 26 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Pim', 2)],
+SCRIPTS.wick_trader = () => trade('Tobin', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'lantern_oil', price: 40, n: 1 }, { id: 'hp_potion', price: 26 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Pim', 2)],
   cyc('pimN', ['Lamps, oil, wicks and wisdom. The wisdom is free, the wicks are not.', 'Green flame for wraiths, white flame for wolves. Red flame is for people. Do not buy the red.', 'Everything in Reedwick floats, even the prices.']));
 SCRIPTS.wick_smith = () => smithMenu('Odda', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 30, n: 1 }, ...dailyWares('Odda', 2)],
   cyc('oddaN', ['Peat iron: dark, brittle, and it holds an edge like a grudge. What do you need?', 'My forge burns peat. The smoke smells of old summers.', 'Wet steel rusts. Wetter fighters rust faster. Mind your shield.']));

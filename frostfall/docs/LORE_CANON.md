@@ -47,18 +47,18 @@ Key names in speech are tokens (`{KeyC}`), never letters.
 
 ## Name register
 
-Check a new name against this list: no first word within one letter of an existing one.
+Check a new name against this list: no first word within one letter of an existing one (test/stage94_canon.mjs checks it).
 
 | Place | People (role) |
 |---|---|
 | Hollowfrost | Elder Sigrid (elder), Bjorn (hunter), Mirra (alchemist), Hilda (smith), Ragna (archer, Ironwatch Company), Guard Haldor, Asta (child) |
 | Reach hamlets | Trapper, Fisher, Prospector, Hermit; Keeper Maren (Last Light, coast); the Scribe (Old Kingdom) |
-| Emberhold | Matriarch Ysolde (Anvil Court), Brannoch (Great Anvil), Kerra (his apprentice), Old Goran (old smith), Thessaly (archivist), Captain Hesper Thorne and Warden Corvin (Wardens), Orrin (Delvers), Pell Quickpick, Garrow Pitt, Rook, Dunmar (gem-cutter), Tamsin (gem-setter), Agna Soot (potions), Nessa (stew), Varro (pit), Ketil (bard), Sister Aurel, Mother Brisa, Maelis (the Last Lantern tavern) |
-| Reedwick (Fens) | Warden-Mother Ilse, Pim the Lamp-seller, Odda (smith), Torvi (hunter), Maud (herbalist), Old Tolle, Lisbet, Marit (Lantern Inn), Joss the Chartmaker |
-| Skarn Hold (Stormcrown) | Chief Ulfar Stormbrow, Rannveig, Grimhild (smith), Shaman Veda, Hakon (herder), Scout Asger, Tyra, the Wind-Bard, Gudrun (longhouse), Kelda the Wayfinder |
-| The Glade (Glasswood) | Warden Solveig, Fenn Lanternwright, Vesna Glassblower, Kestrel, Wynn Dewkeeper, Pip, Marrow (Singing Inn), Spindle the Mapmaker, the Moon-Reader |
-| Lanternfall (Underdeep) | Foreman Dagna, Bollard the Lampman, Irma Deepforge, Morel the Fungalist, Tallow, Grit, Oddrun (Long Bench), Quill, Orm the Ferryman |
-| Saltmarket (Coast) | Harbourmaster Vess, Rosalind Sea-Goods, Cormac Shipwright, Madam Perpetua, Guildmaster Anneke, Nim the Fence, Old Cap'n Bryn, Nell (Gull & Anchor), Wenna Sea-Charts, Minnow, the Shanty-Man |
+| Emberhold | Matriarch Ysolde (Anvil Court), Brannoch (Great Anvil), Kerra (his apprentice), Old Goran (old smith), Thessaly (archivist), Captain Hesper Thorne and Warden Corvin (Wardens), Orrin (Delvers), Pell Quickpick, Garrow Pitt, Rook, Dunmar (gem-cutter), Tamsin (gem-setter), Brenna Soot (potions), Nessa (stew), Varro (pit), Ketil (bard), Sister Aurel, Mother Brisa, Maelis (the Last Lantern tavern), Wren the Seamstress |
+| Reedwick (Fens) | Warden-Mother Ilse, Tobin the Lamp-seller, Odda (smith), Torvi (hunter), Maud (herbalist), Old Tolle, Lisbet, Marit (Lantern Inn), Joss the Chartmaker, Sedge the Netter |
+| Skarn Hold (Stormcrown) | Chief Ulfar Stormbrow, Rannveig, Grimhild (smith), Shaman Veda, Hakon (herder), Scout Asger, Tyra, the Wind-Bard, Gudrun (longhouse), Kelda the Wayfinder, Frida Furrier |
+| The Glade (Glasswood) | Warden Solveig, Aldo Lanternwright, Vesna Glassblower, Kestrel, Wynn Dewkeeper, Pip, Linnet (Singing Inn), Spindle the Mapmaker, the Moon-Reader, Lumen the Weaver |
+| Lanternfall (Underdeep) | Foreman Thora, Bollard the Lampman, Irma Deepforge, Morel the Fungalist, Tallow, Grit, Oddrun (Long Bench), Quill, Orm the Ferryman, Darning Dot |
+| Saltmarket (Coast) | Harbourmaster Vess, Rosalind Sea-Goods, Cormac Shipwright, Madam Perpetua, Guildmaster Anneke, Quist the Fence, Old Cap'n Bryn, Maddy (Gull & Anchor), Wenna Sea-Charts, Minnow, the Shanty-Man |
 | Greenhollow (Vale) | Elder Maeve, Hazel Hedgerow, Bramble, Fern, Dahlia, Clover, Mother Marigold, Thistle, Beekeeper Orla, Lark, Gardener Ash |
 | Amberwell (Sunscorch) | Sheikh Rashid, Jamila, Khalid Sunforge, Tariq Sandwalker, Scholar Nefer, Samira, Captain Nadir, Umm Hassan, Ibrahim, the quiet man, Caravan Master Basil, Red Sula |
 

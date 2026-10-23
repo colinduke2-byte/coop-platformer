@@ -177,7 +177,7 @@ r = await pair('glade_sage', 'moonlit', () => { window.__ff.S.inv.moonpetal = 3;
 check('the Moon-Reader gives her quest only after dark', dayQ === 'inactive' && r.started && r.done, JSON.stringify([dayQ, r]));
 r = await pair('fall_foreman', 'lodecolossus', () => { window.__ff.S.flags.lodeColossusDead = true; });
 const dq = await G(() => { const s = window.__ff.S; return { plate: !!s.inv.deep_plate, pick: !!s.inv.lode_pick, lamp: !!(s.inv.deep_lamp || s.equip.charm === 'deep_lamp') }; });
-check('Dagna pays Deepforged Plate, the Lode Pick and a lamp for the Colossus', r.started && r.done && dq.plate && dq.pick && dq.lamp, JSON.stringify([r, dq]));
+check('Thora pays Deepforged Plate, the Lode Pick and a lamp for the Colossus', r.started && r.done && dq.plate && dq.pick && dq.lamp, JSON.stringify([r, dq]));
 r = await pair('fall_scout', 'weavers', () => { window.__ff.S.kills.caveweaver = (window.__ff.S.kills.caveweaver || 0) + 8; });
 check('Tallow pays for eight cave weavers', r.started && r.done, JSON.stringify(r));
 r = await pair('fall_fungalist', 'glowcaps', () => { window.__ff.S.inv.glowcap = 5; });

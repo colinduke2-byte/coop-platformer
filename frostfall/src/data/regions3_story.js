@@ -49,13 +49,13 @@ function giver(cfg) {
 
 // ============================================================================ Lantern Glade (Glasswood)
 NPC_DEFS.glade_warden = { name: 'WARDEN SOLVEIG', tex: 'spr_keeper' };
-NPC_DEFS.glade_trader = { name: 'FENN LANTERNWRIGHT', tex: 'spr_trader' };
+NPC_DEFS.glade_trader = { name: 'ALDO LANTERNWRIGHT', tex: 'spr_trader' };
 NPC_DEFS.glade_smith = { name: 'VESNA GLASSBLOWER', tex: 'spr_prospector' };
 NPC_DEFS.glade_hunter = { name: 'KESTREL', tex: 'spr_trapper' };
 NPC_DEFS.glade_herbalist = { name: 'WYNN DEWKEEPER', tex: 'spr_fisher' };
 NPC_DEFS.glade_child = { name: 'PIP', tex: 'spr_child' };
 NPC_DEFS.glade_watch = { name: 'GLADE WATCH', tex: 'spr_guard' };
-NPC_DEFS.glade_inn = { name: 'MARROW, THE SINGING INN', tex: 'spr_hilda' };
+NPC_DEFS.glade_inn = { name: 'LINNET, THE SINGING INN', tex: 'spr_hilda' };
 NPC_DEFS.glade_map = { name: 'SPINDLE THE MAPMAKER', tex: 'spr_scribe' };
 NPC_DEFS.glade_sage = { name: 'THE MOON-READER', tex: 'spr_shaman' };
 
@@ -101,7 +101,7 @@ SCRIPTS.glade_warden = giver({
   pay() { addGold(660); addItem('prism_mail'); addItem('prism_helm'); addItem('shardblade'); addItem('gem_topaz', 1, true); },
   idle: ['The glass remembers what it grew around. Mind what you leave lying.', 'The lanterns are lit by hand every dusk. We do not talk about the one at the end of the south road.', 'You are always welcome at the Glade. The trees may disagree.'],
 });
-SCRIPTS.glade_trader = () => trade('Fenn', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Fenn', 2)],
+SCRIPTS.glade_trader = () => trade('Aldo', [{ id: 'lantern', price: 150, once: true, name: 'Hooded Lantern' }, { id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, ...dailyWares('Fenn', 2)],
   cyc('fennN', ['Lanterns, wicks, and one very good pair of boots that are not for sale.', 'Every lamp on the roads is mine. Every moth is also mine, by extension.', 'I charge for light. Darkness is free. Make of that what you will.']));
 SCRIPTS.glade_smith = () => smithMenu('Vesna', [{ id: 'iron_sword', price: 90, once: true }, { id: 'steel_sword', price: 190, once: true }, { id: 'iron_cuirass', price: 140, once: true }, { id: 'iron_shield', price: 120, once: true }, { id: 'iron_ingot', price: 28 }],
   cyc('tamsinN', ['I blow glass, and sometimes I forge. The glass is prettier. The forging pays.', 'Prism steel holds an edge for a week and a grudge for a year.', 'Do not drop my glass. I will know.']));
@@ -127,7 +127,7 @@ SCRIPTS.glade_herbalist = giver({
 });
 SCRIPTS.glade_child = talk('Pip', 'pipN', ['The trees sing a little louder if you whistle the tune back.', 'I found a feather made of glass. It cut my thumb. I like it.', 'The Hartking used to walk through the Glade at midwinter. Everyone hid, and everyone peeked.']);
 SCRIPTS.glade_watch = talk('Glade Watch', 'gwatchN', ['Lanterns lit, roads clear. If the lamps go out, count to twenty and shout.', 'No fires outside the Glade. The trees take it personally.']);
-SCRIPTS.glade_inn = () => innMenu('Marrow', { room: 24, meal: 12, news: 28, hello: cyc('marrowN', ['The Singing Inn: the walls hum a little when you are asleep. Nobody complains.', 'Soup. Bed. A song if you want one. The song is not a joke.']) });
+SCRIPTS.glade_inn = () => innMenu('Linnet', { room: 24, meal: 12, news: 28, hello: cyc('marrowN', ['The Singing Inn: the walls hum a little when you are asleep. Nobody complains.', 'Soup. Bed. A song if you want one. The song is not a joke.']) });
 SCRIPTS.glade_map = () => cartographerMenu('Spindle');
 SCRIPTS.glade_sage = giver({
   who: 'Moon-Reader', id: 'moonlit', key: 'moonN',
@@ -142,7 +142,7 @@ SCRIPTS.glade_sage = giver({
 });
 
 // ============================================================================ Lanternfall (the Underdeep)
-NPC_DEFS.fall_foreman = { name: 'FOREMAN DAGNA', tex: 'spr_guard' };
+NPC_DEFS.fall_foreman = { name: 'FOREMAN THORA', tex: 'spr_guard' };
 NPC_DEFS.fall_trader = { name: 'BOLLARD THE LAMPMAN', tex: 'spr_trader' };
 NPC_DEFS.fall_smith = { name: 'IRMA DEEPFORGE', tex: 'spr_prospector' };
 NPC_DEFS.fall_fungalist = { name: 'MOREL THE FUNGALIST', tex: 'spr_fisher' };
@@ -154,13 +154,13 @@ NPC_DEFS.fall_map = { name: 'QUILL THE TUNNEL-CHARTER', tex: 'spr_scribe' };
 NPC_DEFS.fall_ferry = { name: 'ORM THE FERRYMAN', tex: 'spr_fisher' };
 
 QUESTS.lodecolossus = {
-  title: 'The Colossus in the Lode', giver: 'Foreman Dagna',
-  desc: 'Something has been eating the ore at the bottom of the Underdeep. It has eaten the lanterns, then the tunnels, and now the miners. Dagna wants the Lode Colossus gone before the Delvers lose their last floor.',
-  short: () => (S.flags.lodeColossusDead ? 'Tell Dagna' : S.flags.lodenestEntered ? 'Defeat the Lode Colossus' : 'Find the Lode Chasm'),
+  title: 'The Colossus in the Lode', giver: 'Foreman Thora',
+  desc: 'Something has been eating the ore at the bottom of the Underdeep. It has eaten the lanterns, then the tunnels, and now the miners. Thora wants the Lode Colossus gone before the Delvers lose their last floor.',
+  short: () => (S.flags.lodeColossusDead ? 'Tell Thora' : S.flags.lodenestEntered ? 'Defeat the Lode Colossus' : 'Find the Lode Chasm'),
   objectives: (q) => [
     { t: 'Find the Lode Chasm in the Underdeep', done: !!S.flags.lodenestEntered || q.status === 'done' },
     { t: 'Defeat the Lode Colossus', done: !!S.flags.lodeColossusDead || q.status === 'done' },
-    { t: 'Tell Foreman Dagna', done: q.status === 'done' },
+    { t: 'Tell Foreman Thora', done: q.status === 'done' },
   ],
 };
 QUESTS.weavers = {
@@ -180,7 +180,7 @@ TARGETS.weavers = target('underdeep', 'weavernest');
 TARGETS.glowcaps = target('underdeep', 'glowcapgrove');
 
 SCRIPTS.fall_foreman = giver({
-  who: 'Dagna', id: 'lodecolossus', key: 'dagnaN',
+  who: 'Thora', id: 'lodecolossus', key: 'dagnaN',
   intro: ['A surface-walker. In my town. Pull up a crate. You look like someone who hits things.', 'Below Lanternfall there is a chasm of raw ore, and in the ore there is something that was never a man and never a stone. It eats the rock and the rock grows back wrong.', 'The Lode Chasm is east, past the weaver tunnels. Kill it, or the Delvers lose their last floor.'],
   yes: 'I will go down.', go: 'Take torches. The glowcaps lie, a little, about where the ground is.',
   ready: () => !!S.flags.lodeColossusDead,
@@ -212,7 +212,7 @@ SCRIPTS.fall_scout = giver({
   pay() { addGold(260); addItem('hp_potion_g', 2, true); addItem('weaver_silk', 3, true); },
   idle: ['Walk lightly. A weaver feels the ground, not the air.', 'Silk burns blue. If it burns blue, run.'],
 });
-SCRIPTS.fall_child = talk('Grit', 'gritN', ['I have never seen the sun. Dagna says it is like a lantern that hates you.', 'The big lantern went out once. We all held hands. It was fine. It was not fine.', 'Orm says the ferry goes up to the sun. I do not believe him.']);
+SCRIPTS.fall_child = talk('Grit', 'gritN', ['I have never seen the sun. Thora says it is like a lantern that hates you.', 'The big lantern went out once. We all held hands. It was fine. It was not fine.', 'Orm says the ferry goes up to the sun. I do not believe him.']);
 SCRIPTS.fall_watch = talk('Lantern Guard', 'lguardN', ['Keep the light between you and the dark. That is the entire job.', 'Anything that walks out of the east tunnels without a lamp gets a very short conversation.']);
 SCRIPTS.fall_inn = () => innMenu('Oddrun', { room: 25, meal: 14, news: 30, hello: cyc('oddrunN', ['The Long Bench: a bed for every Delver who comes home. You may be the first stranger.', 'Soup. Beer. Bench. The benches are older than the town.']) });
 SCRIPTS.fall_map = () => cartographerMenu('Quill');
@@ -237,9 +237,9 @@ NPC_DEFS.salt_trader = { name: 'ROSALIND SEA-GOODS', tex: 'spr_trader' };
 NPC_DEFS.salt_smith = { name: 'CORMAC SHIPWRIGHT', tex: 'spr_prospector' };
 NPC_DEFS.salt_tailor = { name: 'MADAM PERPETUA, TAILOR', tex: 'spr_hilda' };
 NPC_DEFS.salt_guildmaster = { name: 'GUILDMASTER ANNEKE', tex: 'spr_keeper' };
-NPC_DEFS.salt_smuggler = { name: 'NIM THE FENCE', tex: 'spr_stalker' };
+NPC_DEFS.salt_smuggler = { name: 'QUIST THE FENCE', tex: 'spr_stalker' };
 NPC_DEFS.salt_sailor = { name: 'OLD CAP\'N BRYN', tex: 'spr_fisher' };
-NPC_DEFS.salt_inn = { name: 'GULL & ANCHOR, NELL', tex: 'spr_hilda' };
+NPC_DEFS.salt_inn = { name: 'GULL & ANCHOR, MADDY', tex: 'spr_hilda' };
 NPC_DEFS.salt_map = { name: 'WENNA SEA-CHARTS', tex: 'spr_scribe' };
 NPC_DEFS.salt_child = { name: 'MINNOW', tex: 'spr_child' };
 NPC_DEFS.salt_watch = { name: 'HARBOUR WATCH', tex: 'spr_guard' };
@@ -268,10 +268,10 @@ QUESTS.channel = {
   objectives: (q) => [{ t: `Slay ice harpooners (${Math.min(killsSince(q, 'harpooner'), 6)}/6)`, done: killsSince(q, 'harpooner') >= 6 || q.status === 'done' }, { t: 'Tell Guildmaster Anneke', done: q.status === 'done' }],
 };
 QUESTS.saltrun = {
-  title: 'A Quiet Run', giver: 'Nim the Fence',
-  desc: 'The Smugglers\' Guild wants four salt crystals, pulled out of the shingle, and no questions. Nim does not say what they are for. The Tide Guild will not like it.',
+  title: 'A Quiet Run', giver: 'Quist the Fence',
+  desc: 'The Smugglers\' Guild wants four salt crystals, pulled out of the shingle, and no questions. Quist does not say what they are for. The Tide Guild will not like it.',
   short: () => `Salt crystals ${Math.min(count('salt_crystal'), 4)}/4`,
-  objectives: (q) => [{ t: `Gather salt crystals (${Math.min(count('salt_crystal'), 4)}/4)`, done: count('salt_crystal') >= 4 || q.status === 'done' }, { t: 'Bring them to Nim', done: q.status === 'done' }],
+  objectives: (q) => [{ t: `Gather salt crystals (${Math.min(count('salt_crystal'), 4)}/4)`, done: count('salt_crystal') >= 4 || q.status === 'done' }, { t: 'Bring them to Quist', done: q.status === 'done' }],
 };
 TARGETS.brinegut = () => { const p = poiOf('coast', S.flags.brinegutDead ? 'saltgate' : 'smugglercove'); return p ? { map: 'coast', x: p.x, y: p.y + 2 } : null; };
 TARGETS.pearls = target('coast', 'saltgate');
@@ -285,7 +285,7 @@ SCRIPTS.salt_harbourmaster = giver({
   ready: () => !!S.flags.brinegutDead,
   thanks: ['Brinegut is the colour of the harbour water, and three honest ships came in on this morning\'s tide. That is what I wanted.'],
   pay() { addGold(720); addItem('tide_blade'); addItem('tide_coat'); addItem('gem_sapphire', 1, true); addRep('tide', 30); },
-  idle: ['Every ship that docks has paid. Every ship that does not will.', 'If you want rank in the Guild, talk to Anneke. If you want a drink, talk to Nell.'],
+  idle: ['Every ship that docks has paid. Every ship that does not will.', 'If you want rank in the Guild, talk to Anneke. If you want a drink, talk to Maddy.'],
 });
 SCRIPTS.salt_trader = () => trade('Rosalind', [{ id: 'hp_potion', price: 26 }, { id: 'hp_potion_g', price: 90 }, { id: 'mp_potion', price: 30 }, { id: 'arrows', price: 14, n: 10, name: 'Arrows x10' }, { id: 'smoked_pike', price: 44 }, { id: 'grilled_trout', price: 16 }, ...dailyWares('Rosalind', 3)],
   cyc('rosN', ['Sea-goods: salt, tar, rope and rumour. The rumour is on the house.', 'Everything here has been somewhere you have not.', 'Prices are fixed by the tide. The tide is a hard negotiator.']));
@@ -333,7 +333,7 @@ SCRIPTS.salt_guildmaster = async function guildmaster() {
   }
 };
 SCRIPTS.salt_smuggler = async function fence() {
-  const N = 'Nim', q = S.quests.saltrun;
+  const N = 'Quist', q = S.quests.saltrun;
   if (q.status === 'active' && count('salt_crystal') >= 4) {
     await say(N, 'Four. Clean. You did not ask what they are for. I like you more every minute.');
     removeItem('salt_crystal', 4); addGold(340); addItem('smuggler_knife', 1, true); addRep('smugglers', 20); finishQuest('saltrun');
@@ -362,7 +362,7 @@ SCRIPTS.salt_sailor = giver({
   pay() { removeItem('pearl', 4); addGold(280); addItem('smoked_pike', 3, true); addItem('hp_potion_g', 2, true); },
   idle: ['The sea has a sense of humour. It is not a good one.', 'Ships do not sink. They go somewhere else. Sailors learn this slowly.'],
 });
-SCRIPTS.salt_inn = () => innMenu('Nell', { room: 26, meal: 14, news: 30, hello: cyc('nellN', ['The Gull & Anchor: warm beds, hot chowder, and a window that looks at the harbour so you can watch your ship leave without you.', 'Rooms for the weary, rumours for the curious. Both cost.']) });
+SCRIPTS.salt_inn = () => innMenu('Maddy', { room: 26, meal: 14, news: 30, hello: cyc('nellN', ['The Gull & Anchor: warm beds, hot chowder, and a window that looks at the harbour so you can watch your ship leave without you.', 'Rooms for the weary, rumours for the curious. Both cost.']) });
 SCRIPTS.salt_map = () => cartographerMenu('Wenna');
 SCRIPTS.salt_child = talk('Minnow', 'minnowN', ['I can tell what the tide will do by smelling it. It will do whatever it wants.', 'My dad says the smugglers are bad. My uncle is a smuggler. Dad and uncle do not talk at the holidays.', 'If you drop a coin off the quay, a seal catches it. I have counted.']);
 SCRIPTS.salt_watch = talk('Harbour Watch', 'swatchN', ['Papers? No, not really. Just do not start anything.', 'The east quay is closed. It is always closed. Do not ask what is on it.']);

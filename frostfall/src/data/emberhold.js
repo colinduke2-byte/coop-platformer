@@ -57,7 +57,7 @@ TARGETS.roadwatch = () => ({ map: 'emberhold', x: 9, y: 31 });
 
 // ---------------------------------------------------------------------------------------------------- people
 def('hesper', 'CAPT. THORNE', 'hesper'); def('corvin', 'WARDEN CORVIN', 'corvin'); def('pell', 'PELL', 'pell'); def('rook', 'ROOK', 'rook');
-def('dunmar', 'DUNMAR', 'dunmar'); def('hildsoot', 'AGNA SOOT', 'hildsoot'); def('nessa', 'NESSA', 'nessa'); def('varro', 'VARRO', 'varro');
+def('dunmar', 'DUNMAR', 'dunmar'); def('hildsoot', 'BRENNA SOOT', 'hildsoot'); def('nessa', 'NESSA', 'nessa'); def('varro', 'VARRO', 'varro');
 def('ketil', 'KETIL', 'ketil'); def('aurel', 'SISTER AUREL', 'aurel'); def('brisa', 'MOTHER BRISA', 'brisa'); def('goran', 'OLD GORAN', 'goran');
 def('garrow', 'GARROW PITT', 'garrow'); def('ysolde', 'MATRIARCH YSOLDE', 'ysolde'); def('thessaly', 'THESSALY', 'thessaly');
 def('brannoch', 'BRANNOCH', 'brannoch'); def('isolt', 'KERRA', 'isolt'); def('tamsin', 'TAMSIN', 'tamsin'); def('orrin', 'ORRIN', 'orrin'); def('maelis', 'MAELIS', 'maelis');
@@ -115,7 +115,7 @@ SCRIPTS.dunmar = async function dunmar() {
   if (c === 0) await buyMenu(N, wares); else if (c === 1) await sellMenu(N);
 };
 SCRIPTS.hildsoot = async function hildsoot() {
-  const N = 'Agna Soot', wares = [{ id: 'hp_potion', price: 30 }, { id: 'mp_potion', price: 30 }, { id: 'sp_potion', price: 26 }, { id: 'hp_potion_g', price: 85 }];
+  const N = 'Brenna Soot', wares = [{ id: 'hp_potion', price: 30 }, { id: 'mp_potion', price: 30 }, { id: 'sp_potion', price: 26 }, { id: 'hp_potion_g', price: 85 }];
   await say(N, 'Soot-black and proud of it. Everything in Emberhold ends up in my cauldron eventually.');
   const c = await choose(['Buy potions', 'Sell', 'Leave']);
   if (c === 0) await buyMenu(N, wares); else if (c === 1) await sellMenu(N);

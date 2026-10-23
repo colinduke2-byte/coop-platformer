@@ -337,9 +337,9 @@ export async function ragna() {
   await say(R, 'Lead on. I will keep to your heels and my arrows will keep to their throats.');
 }
 // The short name a person speaks under, from their sign name: "MARIT, THE LANTERN INN" -> MARIT, "ELDER SIGRID" -> SIGRID,
-// "PIM THE LAMP-SELLER" -> PIM; a group with no personal name keeps it whole ("HARBOUR WATCH").
+// "TOBIN THE LAMP-SELLER" -> TOBIN; a group with no personal name keeps it whole ("HARBOUR WATCH").
 const TITLES = new Set(['ELDER', 'GUARD', 'CAPT.', 'CAPTAIN', 'WARDEN', 'WARDEN-MOTHER', 'SISTER', 'MOTHER', 'OLD', 'MATRIARCH', 'THE', 'KEEPER', 'FOREMAN', 'GUILDMASTER', 'HARBOURMASTER', 'SCOUT', 'SHAMAN', 'CHIEF', 'MADAM', 'BEEKEEPER', 'GARDENER', 'SHEIKH', 'SCHOLAR', 'CARAVAN', 'MASTER']);
-const SPEAKER = { 'A QUIET MAN': 'QUIET MAN', 'UMM HASSAN': 'UMM HASSAN', 'GULL & ANCHOR, NELL': 'NELL', 'WANDERING SONGSTRESS': 'SONGSTRESS' };
+const SPEAKER = { 'A QUIET MAN': 'QUIET MAN', 'UMM HASSAN': 'UMM HASSAN', 'GULL & ANCHOR, MADDY': 'MADDY', 'WANDERING SONGSTRESS': 'SONGSTRESS' };
 export function speakerName(name) {
   if (SPEAKER[name]) return SPEAKER[name];
   const words = String(name || '').split(',')[0].trim().split(/\s+/);
