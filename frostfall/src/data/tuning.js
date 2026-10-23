@@ -295,4 +295,21 @@ export const TUNE = {
     normal: { dmgTaken: 1.04, enemyHp: 1.73, regen: 1, windup: 1, chase: 1, elite: 1, drops: 1, price: 1, durability: null },
     hard: { dmgTaken: 1.46, enemyHp: 2.15, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: 'hard' },
   },
+  // Audio (src/audio): mix, fades and timings. Gains are linear (0..1) on top of the Settings channels.
+  audio: {
+    rateMs: 35,                          // the same sound at most once per this many ms
+    voices: 32,                          // most effect voices at once; extra non-urgent sounds are dropped
+    limiter: { threshold: -10, knee: 6, ratio: 10, attack: 0.003, release: 0.25 },
+    vary: { pitch: 0.05, vol: 0.1, widePitch: 0.08, wideVol: 0.15, step: 0.03 },   // random pitch / volume per play (AU05)
+    near: 60, far: 1.3, pan: 0.7,        // positional sounds: full within near px, silent beyond far x screen width; pan clamp
+    fadeOut: 1.5, fadeIn: 0.8,           // song crossfade (s)
+    combatHold: 5, combatFade: 0.8,      // combat drums stay on this long after the last fight tick, and ramp over this (AU03)
+    drums: { kick: 0.08, snare: 0.05, hat: 0.025, arp: 0.022, lead: 0.05, leadFight: 0.06 },
+    silence: { loops: [2, 3], secs: [30, 90] },     // calm songs rest after a few loops (AU18)
+    night: { tempo: 0.8 }, dungeon: { tempo: 0.85 }, bossBpm: 136,
+    heartbeat: { below: 0.3, fast: 0.15, every: 1.0, everyFast: 0.62, lowpass: 1200 },
+    duck: { talk: 0.5, ramp: 0.3, pauseLowpass: 1000 },
+    statusTick: 1.0,                     // seconds between burn / poison / bleed ticks on the player
+    ambFade: 1.5,                        // ambience bed crossfade (s)
+  },
 };

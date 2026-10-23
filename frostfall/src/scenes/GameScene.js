@@ -195,6 +195,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.staticBodies);
     this.physics.add.collider(this.enemies, this.staticBodies);
     if (this.pendingBossRestore) { this.boss.restoreState(S.bossState); this.pendingBossRestore = false; }
+    music.setPlace(this.mapId, def);
     music.play(def.interior ? 'interior' : (def.music || 'village'));
     ambience.play(def.ambience || null);
     this.initFog();
