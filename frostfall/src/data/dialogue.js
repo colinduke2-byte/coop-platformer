@@ -240,7 +240,7 @@ export async function mirra() {
     S.flags.alchemy = true;
     await say(MIRRA, 'Here, for your trouble. And since you have a good eye for herbs, I will teach you to brew. Use the alchemy option at my stall.');
   }
-  await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : 'Potions, arrows, and the occasional bargain. What do you need?');
+  await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : S.flags.ending === 'sell' ? 'The cellar is cold again this morning. I have started sleeping upstairs. Do not look at me like that. What do you need?' : 'Potions, arrows, and the occasional bargain. What do you need?');
   for (;;) {
     const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Buy back', 'Leave'];
     const c = await choose(opts);

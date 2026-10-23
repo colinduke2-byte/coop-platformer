@@ -20,6 +20,7 @@ import { EMBERHOLD } from './emberhold_map.js';
 import { heartsHeld } from './hearts.js';
 import { setCompanion } from '../systems/companion.js';
 import { SEAL_QUESTS, sealCount } from './chapter3.js';
+import { TUNE } from './tuning.js';
 
 const def = (id, name, tex = id) => { NPC_DEFS[id] = { name, tex: 'spr_' + tex }; };
 const cyc = (key, lines) => { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; };
@@ -67,6 +68,8 @@ SCRIPTS.hesper = async function hesper() {
   const N = 'Captain Thorne', q = S.quests.roadwatch;
   if (q.status === 'active' && ashenCleared() >= 3) {
     await say(N, 'Three strongholds down. The road breathes again. You have the Wardens\' thanks, and something better than thanks.');
+    await say(N, 'Take the Wardens\' seal. We have not given it to an outsider in my lifetime. Ysolde will know it.');
+    addItem('seal_wardens');
     addGold(250); addRep('wardens', 25); addItem('warden_pennant'); finishQuest('roadwatch'); return;
   }
   if (q.status === 'inactive') {
@@ -140,11 +143,20 @@ SCRIPTS.brisa = async function brisa() {
   await say('Mother Brisa', 'A house on Ashfall Street, with a hearth that never dies and a bed that never creaks. Five hundred gold. The door by the stalls.');
 };
 SCRIPTS.goran = async function goran() {
-  const N = 'Old Goran';
+  const N = 'Old Goran', q = S.quests.missingpage;
+  if (q.status === 'inactive' && S.flags.metYsolde) {
+    await say(N, 'You have been asking what the chain was made of. Sit. I will tell you, because Brannoch will not, and Ysolde cannot.');
+    await say(N, 'My master\'s master\'s master cut a page from the Book of Chains, the night he finished the chain. He carried it to his forge on the Ashen Peaks and never came down.');
+    await say(N, 'That forge is a cold ruin now, an old foundry among the crags. If the page is anywhere, it is under his anvil. Read it, then tell Brannoch. It is the Court\'s shame to carry.');
+    const c = await choose(['I will find the page.', 'Not now.']);
+    if (c === 0) { startQuest('missingpage'); await say(N, 'Go gently. He was a better smith than any of us, and a worse liar.'); }
+    return;
+  }
+  if (q.status === 'active') { await say(N, S.lore?.foundry ? 'You have read it. I can see it on you. Go to Brannoch.' : 'The old foundry, on the Peaks, among the cold anvils. Under the anvil. Do not make me say it twice.'); return; }
   await say(N, cyc('goranN', [
     'My master\'s master\'s master was the Court\'s smith when the Kings came. We still keep his tongs. Do you know what he made the chain from? Not iron.',
     'The Hollow Kings brought him a sack of something grey and warm. They said: bind the Winter. He never asked what it was. Brannoch still does not know.',
-    frostheart() === 'sell' ? 'You sold the Frostheart to a potion-seller, I hear. Gold for a god\'s heart. That is an old way of ending, and it never ends.' : S.quests.anvilcore?.status === 'done' ? 'You brought Kragnar\'s core to the Anvil. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chain held for a thousand years. Ask yourself what holds a chain that long.',
+    frostheart() === 'sell' ? 'You sold the Frostheart to a potion-seller, I hear. Gold for a god\'s heart. That is an old way of ending, and it never ends.' : S.quests.missingpage?.status === 'done' ? 'You found the page. So now you know: it was never iron. The Kings chained a fire to hold a frost, and the fire has been patient ever since.' : 'The chain held for a thousand years. Ask yourself what holds a chain that long.',
   ]));
 };
 SCRIPTS.garrow = async function garrow() {
@@ -154,7 +166,7 @@ SCRIPTS.garrow = async function garrow() {
 };
 SCRIPTS.thessaly = async function thessaly() {
   const N = 'Thessaly';
-  await say(N, cyc('thessalyN', ['The archive holds every treaty, every ledger and every lie. Mostly the lies. They are better written.', S.flags.chapter3 ? 'The missing page says: when the Winter is loosed, the First Fire must be asked a question. It does not say what the question is. It says only that someone must be brave enough to answer.' : 'There is a page missing from the Book of Chains. It was cut out, cleanly, by someone who could read it.', winter() ? 'Your choice at the Throne is recorded. In pencil. Everything is pencil until a century passes.' : 'If you decide the Winter\'s fate, I would like to be the one to write it down.']));
+  await say(N, cyc('thessalyN', ['The archive holds every treaty, every ledger and every lie. Mostly the lies. They are better written.', S.quests.missingpage?.status === 'done' ? 'Goran told me where the page went. It says: when the Winter is loosed, the First Fire must be asked a question. It says only that someone must be brave enough to answer.' : 'There is a page missing from the Book of Chains. It was cut out, cleanly, by someone who could read it.', winter() ? 'Your choice at the Throne is recorded. In pencil. Everything is pencil until a century passes.' : 'If you decide the Winter\'s fate, I would like to be the one to write it down.']));
 };
 SCRIPTS.ysolde = async function ysolde() {
   const N = 'Matriarch Ysolde';
@@ -162,7 +174,7 @@ SCRIPTS.ysolde = async function ysolde() {
     S.flags.metYsolde = true;
     await say(N, 'So. The Reach sends a dreamer. I have waited a long while to see what the Hollow Kings left behind.');
     await say(N, S.flags.finale === 'thaw' ? 'You set the Winter free. Our furnaces burned three days brighter for it. Gratitude is a cheap word; you will have it anyway.' : S.flags.finale === 'warden' ? 'You bound the Winter again, and stand its warden. I am relieved, and I am afraid, and I would like it noted that both are true.' : 'You carry the Winter\'s crown. Say nothing. I am deciding whether to be afraid, and I would like to finish.');
-    await say(N, 'Hear me. The chain that held the Winter was not iron. The Court forged it from the First Fire, which the Kings buried under this mountain so the world would never burn. When you loosened the Winter, you loosened the fire that held it.');
+    await say(N, 'You will want to know what the chain was made of. Ask the Court. Watch their faces when you do.');
     await say(N, 'The Forge of the First Fire lies on the Ashen Peaks, sealed by the three houses of this city. Win a seal from each: the Delvers, the Court, the Wardens. Then come back, and I will open it.');
     return;
   }
@@ -173,7 +185,7 @@ SCRIPTS.ysolde = async function ysolde() {
     if (S.flags.forgeOpen) { await say(N, 'The door stands open on the Ashen Peaks. Go well. Bring something back, even if it is only a lesson.'); if (!bestHelp()) await say(N, 'And if you mean to bind it, you will need a house that trusts you to the end of the chain. None does yet.'); return; }
     const n = sealCount();
     if (n < 3) {
-      const miss = [['delvers', 'the Delvers (The Silent Mines)'], ['anvil', 'the Court (A Core for the Anvil)'], ['wardens', 'the Wardens (The Ashen Road)']].filter(([f]) => S.quests[SEAL_QUESTS[f]]?.status !== 'done').map((x) => x[1]).join(', ');
+      const miss = [['delvers', 'the Delvers (The Silent Mines)'], ['anvil', 'the Court (The Missing Page)'], ['wardens', 'the Wardens (The Ashen Road)']].filter(([f]) => S.quests[SEAL_QUESTS[f]]?.status !== 'done').map((x) => x[1]).join(', ');
       await say(N, `Seals ${n} of 3. I still wait on ${miss}.`);
     } else {
       await say(N, 'Three seals. Three houses behind you. That has not happened in my lifetime.');
@@ -207,6 +219,8 @@ SCRIPTS.orrin = async function orrin() {
   if (q.status === 'active' && S.flags.kragnarDead) {
     await say(N, 'Kragnar. Our King under the Lode. So that is who dug. ...He was not a monster. He was a miner who would not stop.');
     await say(N, 'The Guild owes you a debt that does not fit in a purse. Take this anyway.');
+    await say(N, 'And this. The Delvers\' seal, cut from the first lantern\'s iron. Ysolde will know it.');
+    addItem('seal_delvers');
     addGold(300); addItem('gem_ruby', 2); addRep('delvers', 25); finishQuest('silence'); return;
   }
   if (q.status === 'inactive') {
@@ -316,7 +330,14 @@ async function masterTemperMenu(who) {
 }
 
 SCRIPTS.brannoch = async function brannoch() {
-  const N = 'Brannoch', q = S.quests.anvilcore;
+  const N = 'Brannoch', q = S.quests.anvilcore, mp = S.quests.missingpage;
+  if (mp?.status === 'active' && S.lore?.foundry) {
+    await say(N, 'Goran sent you. I can tell by your face. ...Say it, then. What did the page say?');
+    await say(N, 'Not iron. We forged the chain from the First Fire, which the Kings buried under this mountain so the world would never burn. When you loosened the Winter, you loosened the fire that held it.');
+    await say(N, 'A thousand years of smiths, and not one of us asked why the chain was warm. The Court\'s seal. Take it. It is warm too. Now we both know why.');
+    addItem('seal_court'); addRep('anvil', TUNE.story.pageRep); finishQuest('missingpage');
+    return;
+  }
   if (q.status === 'active' && count('kragnar_core') > 0) {
     await say(N, 'That is it. That is the core. Warm as a heartbeat.');
     removeItem('kragnar_core', 1); S.flags.emberforged = true; addRep('anvil', 25); addItem('ember_blade'); finishQuest('anvilcore');

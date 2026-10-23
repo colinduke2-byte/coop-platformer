@@ -20,6 +20,16 @@ export const BOSS_TAUNTS = {
   dragon: { name: 'SKALDRATH', engage: 'Another small flame comes to my hoard. How it flickers.', 2: 'The sky burns because I wish it. Watch.', 3: 'EMBERS FALL WHERE I LOOK.', death: 'The last dragon... falls to a mortal spark...' },
 };
 
+// The Winter's last offer remembers what became of the first Heart.
+export function winterOffer() {
+  const lead = {
+    keep: 'But hear me, little Dreamer. Five Hearts. You kept the first for yourself; I know the feel of you already.',
+    sell: 'But hear me, little Dreamer. Four Hearts here, and the fifth hums in a potion-seller\'s cellar. How very like the Kings.',
+    give: 'But hear me, little Dreamer. Four Hearts beat in your hands, and the fifth warms a village hearth.',
+  }[S.flags.ending] || 'But hear me, little Dreamer. Four Hearts beat in your hands.';
+  return lead + ' You may release me, bind me again, or take my crown. Choose.';
+}
+
 // A villager mutters something about the world as you pass. state -> list of lines (a random one is shown).
 const hearts = () => heartsHeld();
 export const NPC_BARKS = {
@@ -81,6 +91,13 @@ export function chapter3Ending(kind) {
 export function epilogueLines() {
   const out = [];
   const trophies = Object.keys(S.trophies || {}).length;
+  // Chapter 1's choices: the Frostheart, Grimfang and Asta's locket
+  const fh = { give: 'The Frostheart still burns in the great hall at Hollowfrost. Nobody remembers the snow ever reaching the palisade.', keep: 'You still carry the Frostheart. It beats a little slower than you do, and it has never once asked to be put down.', sell: 'Mirra sleeps upstairs now. The Frostheart hums in her cellar, and the hamlet children dare each other to touch the cellar door.' }[S.flags.ending];
+  if (fh) out.push(fh);
+  if (S.flags.alphaSpared) out.push('A grey wolf watches Hollowfrost from the ridge every winter. It has never once come closer.');
+  else if (S.flags.alphaSlain) out.push('Grimfang\'s pelt hangs in Bjorn\'s lodge. The young hunters touch it for luck before they leave.');
+  if (S.flags.locketKind === true) out.push('Asta\'s mother still wears the silver locket. Asta has started telling people the wolf on it is Grimfang.');
+  else if (S.flags.locketKind === false) out.push('Asta never asked about the locket again. She asks other people for help now, and looks at them carefully first.');
   if (S.flags.ragnaVeteran) out.push('Ragna burned a rafter in the lodge and said thirty-nine names over it. The lodge is quieter now, and so is she.' + (S.flags.ragnaBond ? ' An iron cairn on the Ironwatch road carries every one of them.' : ''));
   if (S.flags.houndGiven) out.push('Asta and her hound run the length of the palisade every morning. He has never once come back without her.');
   else if (S.flags.houndOwned) out.push('A frost hound sleeps at the foot of your bed. He does not dream of winter.');

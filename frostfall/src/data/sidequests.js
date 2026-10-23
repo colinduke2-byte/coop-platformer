@@ -31,7 +31,7 @@ const mk = (id, title, giver, desc, what) => {
 mk('hamlets', 'Hamlet Rounds', 'Bjorn the Hunter', 'The hamlets scattered across the Reach have not been checked since the Winter began. Bjorn wants someone to walk the rounds: speak with a trapper, a fisher and a prospector.', 'Visit a trapper, fisher and prospector');
 mk('circles', 'Stones That Hum', 'Elder Sigrid', 'The Kings raised circles of standing stones where the roads cross. Sigrid wants to know whether they still bless. Pray at three of them.', 'Pray at standing stones');
 mk('barrows3', 'The Restless Barrows', 'Mirra the Alchemist', 'The barrows are stirring, and Mirra needs what grows only on the graves of the unquiet dead. Clear three barrows.', 'Clear barrows');
-mk('denmother', "The Den-Mother's Debt", 'Bjorn the Hunter', 'With Grimfang gone, the wolf dens have no master and no mercy. Bjorn asks you to drive three dens from the Reach before the flocks are lost.', 'Clear wolf dens');
+mk('denmother', 'The Masterless Dens', 'Bjorn the Hunter', 'With Grimfang gone, the wolf dens have no master and no mercy. Bjorn asks you to drive three dens from the Reach before the flocks are lost.', 'Clear wolf dens');
 mk('towerwatch', 'Retake the Watch', 'Guard Haldor', 'The old watchtowers once saw trouble coming for a day. Haldor would like that again. Retake three towers.', 'Retake watchtowers');
 
 // markers: the nearest place you have not cleared yet
@@ -44,7 +44,7 @@ TARGETS.barrows3 = nearest(null, 'barrow'); TARGETS.denmother = nearest(null, 'd
 
 const OFFER = {
   hamlets: { when: () => S.quests.wolves.status === 'done', lines: ['The hamlets are not on any map I trust. Walk the rounds for me: a trapper, a fisher, a prospector. Say that Bjorn sent you.'], yes: 'I will walk the rounds.' },
-  denmother: { when: () => !!S.flags.grimfangDone, lines: ['Grimfang is down, and the dens are leaderless. Leaderless wolves are worse than led ones. Clear three dens across the Reach, and I will pay in silver.'], yes: 'I will clear them.' },
+  denmother: { when: () => !!S.flags.grimfangDone, get lines() { return [S.flags.alphaSpared ? 'Grimfang went up into the high pass and left the dens to themselves. Masterless wolves are worse than led ones. Clear three dens across the Reach, and I will pay in silver.' : 'Grimfang is down, and the dens are leaderless. Masterless wolves are worse than led ones. Clear three dens across the Reach, and I will pay in silver.']; }, yes: 'I will clear them.' },
   circles: { when: () => heartsHeld() >= 1 && S.quests.king.status === 'done', lines: ['Dreamer. Something has been bothering me since the Heart. The old standing stones, where the roads cross. If they still bless, the Kings are not wholly gone. Pray at three of them for me.'], yes: 'I will pray at three.' },
   barrows3: { when: () => S.quests.herbs.status === 'done', lines: ['The barrows are waking, and what grows on the unquiet dead is the best remedy I know. Clear three barrows and I will brew you something that bites.'], yes: 'I will clear them.' },
   towerwatch: { when: () => S.quests.wolves.status === 'done', lines: ['The old watchtowers have been dark since before my father. Retake three of them and the Reach will have eyes again.'], yes: 'I will retake them.' },

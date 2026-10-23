@@ -295,4 +295,7 @@ export const TUNE = {
     normal: { dmgTaken: 1.04, enemyHp: 1.73, regen: 1, windup: 1, chase: 1, elite: 1, drops: 1, price: 1, durability: null },
     hard: { dmgTaken: 1.46, enemyHp: 2.15, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: 'hard' },
   },
+  // Story rewards (the story area). pageRep: Anvil Court standing for The Missing Page, the Court's seal quest (A Core for the Anvil keeps its own 25).
+  // asideDelay: seconds into a great fight before a companion with you speaks up.
+  story: { pageRep: 20, asideDelay: 4.5 },
 };

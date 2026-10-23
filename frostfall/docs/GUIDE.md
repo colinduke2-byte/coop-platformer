@@ -130,7 +130,7 @@ Each region has its own camps, caves, hamlets, loot and a boss. Check the **map 
 
 When you hold all four, open the **Winter Throne**, face the Long Winter, and decide its fate (three endings: thaw, warden or crown).
 
-**Chapter 3: The Ember Crown** (required for the full ending). Smoke rises on the Ashen Peaks. Take the Peak Road to **Emberhold**, speak to **Matriarch Ysolde**, and earn three **Ember Seals**, one from each faction, by finishing their quests (the Delvers' Guild: *The Silent Mines*; the Anvil Court: *A Core for the Anvil*; the Ember Wardens: *The Ashen Road*). The seals open the **Forge of the First Fire**, where the **Ashen Sovereign** waits, then comes the last choice.
+**Chapter 3: The Ember Crown** (required for the full ending). Smoke rises on the Ashen Peaks. Take the Peak Road to **Emberhold**, speak to **Matriarch Ysolde**, and earn three **Ember Seals**, one from each faction, by finishing their quests (the Delvers' Guild: *The Silent Mines*; the Anvil Court: *The Missing Page*, from Old Goran; the Ember Wardens: *The Ashen Road*). The seals open the **Forge of the First Fire**, where the **Ashen Sovereign** waits, then comes the last choice.
 
 ### The factions of Emberhold
 Reputation runs 0 to 100 with each. Helping one house can cost goodwill with another.
@@ -164,7 +164,7 @@ Bosses summon helpers. Kill the helpers if they crowd you; otherwise focus the b
 ## 8. Endings
 
 There are many endings (36 variants in Chapter 3 alone). They depend on:
-1. What you did with the Frostheart and Grimfang.
+1. What you did with the Frostheart, Grimfang and Asta's locket (each has its own line in the epilogue).
 2. How you ended the Winter (thaw, warden or crown).
 3. The choices in the new regions: **replant or keep the Heart of the Grove**, **Sunbreaker, Winterward or seal the vault** (this one changes the final fight itself), and **whether to turn Red Sula in**.
 4. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).

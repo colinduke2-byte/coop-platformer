@@ -6,6 +6,7 @@ import { startQuest, finishQuest } from '../systems/quests.js';
 import { count, removeItem, addItem } from '../systems/inventory.js';
 import { addRep } from './factions.js';
 import { bus } from '../systems/bus.js';
+import { TUNE } from './tuning.js';
 
 QUESTS.pelldebt = {
   title: "Pell's Lucky Pebbles", giver: 'Pell Quickpick',
@@ -19,6 +20,16 @@ QUESTS.ragnagrave = {
   short: () => `Bring Ragna iron ingots ${Math.min(count('iron_ingot'), 3)}/3`,
   objectives: (q) => [{ t: `Gather iron ingots (${Math.min(count('iron_ingot'), 3)}/3)`, done: count('iron_ingot') >= 3 || q.status === 'done' }, { t: 'Give them to Ragna (talk to her while she walks with you)', done: q.status === 'done' }],
 };
+
+// A companion walking with you speaks up a few seconds into the great fights. boss kind -> { Ragna, Pell }
+export const COMPANION_ASIDES = {
+  sovereign: { Ragna: 'Two arrows, one breath, Dreamer. Then the choice is yours.', Pell: 'I am behind a pillar. A very brave pillar.' },
+};
+export const companionName = () => (S.follower ? (S.companion === 'pell' ? 'Pell' : 'Ragna') : null);
+bus.on('boss:engaged', (b) => {
+  const who = companionName(), line = who && COMPANION_ASIDES[b?.kind]?.[who];
+  if (line) b.scene?.time?.delayedCall(TUNE.story.asideDelay * 1000, () => { if (b.active && !b.dead) bus.emit('say', who.toUpperCase(), line); });
+});
 
 // Returns true when it handled the chat (so the normal idle line is skipped).
 export async function companionStory(who) {

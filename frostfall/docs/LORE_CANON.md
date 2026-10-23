@@ -19,8 +19,7 @@ someone who could**: the player, found half buried on the north road, with no na
 |---|---|
 | Hearts | **Five.** The Frostheart (Valdrek's crypt) is the first. Then Rime (Glacial Maw), Iron (Ironwatch Keep), Tide (Drowned Chapel), Root (Rootvault). Sigrid's maps name them in that order, but they can be taken in any order. |
 | Chain | **One chain**, many links, warm to the touch. Forged by the Anvil Court's smith from the First Fire. "Chains" is only poetry in the mouths of the Winter and the Sovereign. |
-| Who forged it | The Court's smith **a thousand years ago**. Old Goran is that smith's apprentice line ("my master's master's master"); he did not forge it himself. |
-| The Foundry smith | Mended a link of the great chain later. He did not make a "sixth link". |
+| Who forged it | The Court's smith, **a thousand years ago**, at his own forge on the Ashen Peaks (now the old foundry). Old Goran is his apprentice line ("my master's master's master"). The smith cut a page from the Book of Chains and left it under his anvil (*The Missing Page*). There was never a "sixth link". |
 | Winter vs Fire | The Winter and the First Fire are siblings ("my brother"). Loosening the Winter loosened the Fire. |
 | Three crowns | Frost (the Winter's crown of rime), Ember (the Sovereign's crown of cinders), Memory (the Hollow King's). |
 | Titles | **The Hollow King** is only the last of the Old Kingdom's Kings (Hollow Sepulchre). **Jarl Valdrek the Frostsworn** is the Chapter 1 boss: a jarl, never a King. His quest is *The Frostsworn Jarl*, his tomb the *Crypt of the Frostsworn*. |

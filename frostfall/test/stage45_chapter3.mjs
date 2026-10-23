@@ -34,15 +34,15 @@ check('the Ashen Peaks hold the sealed Forge door and a road back to the Peak Ro
 // ---- gates
 const gates = await G(async () => {
   const C3 = await import('/src/data/chapter3.js'), St = window.__ff.S; St.flags.chapter3 = false; St.flags.forgeOpen = false;
-  St.quests.silence.status = 'inactive'; St.quests.anvilcore.status = 'inactive'; St.quests.roadwatch.status = 'inactive';
+  St.quests.silence.status = 'inactive'; St.quests.missingpage.status = 'inactive'; St.quests.roadwatch.status = 'inactive';
   const a = { road: C3.GATES.chapter3.ok(), forge: C3.GATES.forgeOpen.ok(), seals: C3.sealCount(), msg: C3.GATES.forgeOpen.msg() };
-  St.flags.chapter3 = true; St.quests.silence.status = 'done'; St.quests.anvilcore.status = 'done';
+  St.flags.chapter3 = true; St.quests.silence.status = 'done'; St.quests.missingpage.status = 'done';
   return { a, road: C3.GATES.chapter3.ok(), seals: C3.sealCount() };
 });
 check('the road and the forge stay shut until their conditions are met', !gates.a.road && !gates.a.forge && gates.a.seals === 0 && /SEALS 0\/3/.test(gates.a.msg) && gates.road && gates.seals === 2, JSON.stringify(gates));
 
 // ---- ending the Winter closes Chapter 2 and opens Chapter 3
-await S(() => { const St = window.__ff.S; St.flags.chapter3 = false; St.flags.arrivedEmberhold = false; St.flags.metYsolde = false; St.flags.forgeOpen = false; St.flags.finale = 'thaw'; St.flags.regions = {}; St.quests.crown.status = 'inactive'; St.quests.silence.status = 'inactive'; St.quests.anvilcore.status = 'inactive'; });
+await S(() => { const St = window.__ff.S; St.flags.chapter3 = false; St.flags.arrivedEmberhold = false; St.flags.metYsolde = false; St.flags.forgeOpen = false; St.flags.finale = 'thaw'; St.flags.regions = {}; St.quests.crown.status = 'inactive'; St.quests.silence.status = 'inactive'; St.quests.missingpage.status = 'inactive'; });
 await S(() => { const g = window.gs(); g.pendingEnding = 'thaw'; });
 await h.sleep(1200);
 const card = await S(() => { const e = window.__ff.game.scene.getScene('Ending'); return e && { ch2: e.ch2, pages: e.pages.length, text: e.pages.join(' ') }; });
@@ -58,7 +58,7 @@ const stages = await S(async () => {
   out.push(q.short());
   St.flags.arrivedEmberhold = true; out.push(q.short());
   St.flags.metYsolde = true; St.quests.silence.status = 'done'; out.push(q.short());
-  St.quests.anvilcore.status = 'done'; St.quests.roadwatch.status = 'done'; St.flags.forgeOpen = true; out.push(q.short());
+  St.quests.missingpage.status = 'done'; St.quests.roadwatch.status = 'done'; St.flags.forgeOpen = true; out.push(q.short());
   St.flags.forgeEntered = true; out.push(q.short());
   St.flags.sovereignDead = true; out.push(q.short());
   const objs = q.objectives(St.quests.crown).filter((o) => o.done).length;
@@ -68,14 +68,14 @@ const stages = await S(async () => {
 check('the crown quest points at the next step every time', stages.out[0].includes('Peak Road') && stages.out[1].includes('Ysolde') && stages.out[2].includes('seals 1/3') && stages.out[3].includes('Enter the Forge') && stages.out[4].includes('Sovereign') && stages.out[5].includes('Decide') && stages.objs >= 6 && stages.tg, JSON.stringify(stages));
 
 // ---- Ysolde: the briefing, the seals and opening the forge
-await S(() => { const St = window.__ff.S; St.flags.metYsolde = false; St.flags.forgeOpen = false; St.quests.silence.status = 'done'; St.quests.anvilcore.status = 'inactive'; St.quests.roadwatch.status = 'inactive'; });
+await S(() => { const St = window.__ff.S; St.flags.metYsolde = false; St.flags.forgeOpen = false; St.quests.silence.status = 'done'; St.quests.missingpage.status = 'inactive'; St.quests.roadwatch.status = 'inactive'; });
 await stub([]); await SCRIPT('ysolde');
-check('Ysolde greets you, tells the truth of the chains and names the three seals', (await S(() => window.__ff.S.flags.metYsolde)) && (await S(() => window.__said.join(' '))).includes('First Fire') && (await S(() => window.__said.join(' '))).includes('seal'));
+check('Ysolde greets you, keeps the secret of the chain and names the three seals', (await S(() => window.__ff.S.flags.metYsolde)) && (await S(() => window.__said.join(' '))).includes('First Fire') && (await S(() => window.__said.join(' '))).includes('seal'));
 await unstub();
 await stub([1]); await SCRIPT('ysolde');
 check('with seals missing she says which', (await S(() => window.__said.join(' '))).includes('Seals 1 of 3') && !(await S(() => window.__ff.S.flags.forgeOpen)));
 await unstub();
-await S(() => { const St = window.__ff.S; St.quests.anvilcore.status = 'done'; St.quests.roadwatch.status = 'done'; });
+await S(() => { const St = window.__ff.S; St.quests.missingpage.status = 'done'; St.quests.roadwatch.status = 'done'; });
 await stub([1]); await SCRIPT('ysolde');
 check('with all three seals she opens the Forge of the First Fire', await S(() => !!window.__ff.S.flags.forgeOpen));
 await unstub();
@@ -141,7 +141,7 @@ const combos = await S(async () => {
 check('all 36 final-ending combinations exist and are distinct', combos.variants === 36 && combos.problems.length === 0, JSON.stringify(combos));
 
 // ---- trophies for the new beats
-const tr = await S(async () => { const A = await import('/src/systems/achievements.js'), St = window.__ff.S; St.flags.arrivedEmberhold = true; St.flags.kragnarDead = true; St.flags.sovereignDead = true; St.flags.finalChoice = 'quench'; St.quests.silence.status = 'done'; St.quests.anvilcore.status = 'done'; St.quests.roadwatch.status = 'done'; A.checkTrophies?.(); return ['emberhold', 'kragnar', 'threeseals', 'sovereign', 'ember_end'].map((id) => !!St.trophies?.[id]); });
+const tr = await S(async () => { const A = await import('/src/systems/achievements.js'), St = window.__ff.S; St.flags.arrivedEmberhold = true; St.flags.kragnarDead = true; St.flags.sovereignDead = true; St.flags.finalChoice = 'quench'; St.quests.silence.status = 'done'; St.quests.missingpage.status = 'done'; St.quests.roadwatch.status = 'done'; A.checkTrophies?.(); return ['emberhold', 'kragnar', 'threeseals', 'sovereign', 'ember_end'].map((id) => !!St.trophies?.[id]); });
 check('the new milestones earn trophies', tr.every(Boolean), JSON.stringify(tr));
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join('\n'));
 await h.close();

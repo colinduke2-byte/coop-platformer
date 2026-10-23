@@ -9,7 +9,7 @@ import { MAPS } from '../data/maps.js';
 import { rehydrateGen } from './genloot.js';
 
 export const SLOTS = 3;
-export const SAVE_VERSION = 3;           // 3: fog stored run-length encoded, unused generated-item definitions pruned
+export const SAVE_VERSION = 4;           // 3: fog stored run-length encoded, unused generated-item definitions pruned; 4: the Court's seal is The Missing Page
 const keyFor = (slot) => (slot === 1 ? 'frostfall_save_v1' : `frostfall_save_s${slot}`);
 const bakFor = (slot) => keyFor(slot) + '_bak';
 const sesFor = (slot) => keyFor(slot) + '_session';
@@ -61,6 +61,8 @@ function serialise() {
 // Older saves are brought up to date here, one version at a time.
 const MIGRATIONS = {
   2: (d) => d,                                            // v2 -> v3: nothing to convert (fog decoding accepts both forms)
+  // v3 -> v4: the Anvil Court's seal used to come with A Core for the Anvil; a save that earned it that way keeps it
+  3: (d) => { const q = d.s?.quests; if (q?.anvilcore?.status === 'done' && q.missingpage?.status !== 'done') q.missingpage = { status: 'done' }; return d; },
 };
 function migrate(d) {
   let v = d.v || 2;

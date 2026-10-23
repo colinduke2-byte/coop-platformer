@@ -9,6 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { S } from '../systems/state.js';
 import { saveGame } from '../systems/save.js';
 import { finalChoice } from '../data/chapter3.js';
+import { winterOffer } from '../data/story.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
@@ -123,7 +124,7 @@ export const eventMethods = {
   startFinale() {
     runScript(async () => {
       await say('The Winter', 'You have broken the chain the Kings laid on me. I was cold before the first star, and I will be cold after the last.');
-      await say('The Winter', 'But hear me, little Dreamer. Four Hearts beat in your hands. You may release me, bind me again, or take my crown. Choose.');
+      await say('The Winter', winterOffer());
       const c = await choose(['Let it go. Let the Winter end.', 'Bind it again, with you as warden.', 'Take the crown. Rule the cold.']);
       const kind = ['thaw', 'warden', 'crown'][c];
       S.flags.finale = kind; S.flags.ending = S.flags.ending || 'give';

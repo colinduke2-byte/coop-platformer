@@ -24,7 +24,7 @@ export const TROPHIES = [
   { id: 'winter', name: 'Break the Winter', desc: 'Defeat the Long Winter.', test: () => !!S.flags.winterDead },
   { id: 'emberhold', name: 'City of Embers', desc: 'Climb the Peak Road and enter Emberhold.', test: () => !!S.flags.arrivedEmberhold },
   { id: 'kragnar', name: 'Under the Lode', desc: 'Defeat Kragnar the Hollowed.', test: () => !!S.flags.kragnarDead },
-  { id: 'threeseals', name: 'Three Houses', desc: 'Win a seal from the Delvers, the Anvil Court and the Wardens.', test: () => ['silence', 'anvilcore', 'roadwatch'].every((q) => S.quests[q]?.status === 'done') },
+  { id: 'threeseals', name: 'Three Houses', desc: 'Win a seal from the Delvers, the Anvil Court and the Wardens.', test: () => ['silence', 'missingpage', 'roadwatch'].every((q) => S.quests[q]?.status === 'done') },
   { id: 'sovereign', name: 'Crown of Cinders', desc: 'Defeat the Ashen Sovereign in the Forge of the First Fire.', test: () => !!S.flags.sovereignDead },
   { id: 'ember_end', name: 'The Last Choice', desc: 'Decide the fate of the First Fire.', test: () => !!S.flags.finalChoice },
   { id: 'coastgone', name: 'Down With the Ship', desc: 'Defeat Admiral Veyl in Tidebreak Cavern.', test: () => !!S.flags.admiralDead },

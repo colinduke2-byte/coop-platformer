@@ -40,7 +40,7 @@ export const LORE = {
   court0: { title: 'The Court of Marble', text: ['In the Court of Marble, the Kings sat in a ring, so that none would sit at the head.', 'It was the last argument they won. The next one, about the Winter, ended with five Hearts, one chain, and no ring at all.'] },
   court1: { title: "A Herald's Scroll", text: ['BE IT KNOWN: THE KING WILL RECEIVE NO PETITIONS ON THE DAY OF THE BINDING.', 'BE IT FURTHER KNOWN: THE KING WILL RECEIVE NO ONE ON THE DAY AFTER EITHER.'] },
   court2: { title: "The Queen's Question", text: ['The last Queen of the Hollow Kings asked one thing of the Binding: who will remember us?', 'Nobody answered. She wrote it on the wall of the court, in her own hand, and left it for the moss.'] },
-  foundry: { title: "A Smith's Lament", text: ['I mended a link of the great chain. They told me it was for a gate. It was warm in my hands, and it whispered while I worked.', 'I have not forged since. My anvil still rings when the wind is right, and the ring is a name I do not know.'] },
+  foundry: { title: "A Smith's Lament", text: ['I forged the great chain, link by link, for the Kings. They told me it was for a gate. It was warm in my hands, and it whispered while I worked.', 'I have not forged since. My anvil still rings when the wind is right, and the ring is a name I do not know.', 'Under the anvil, a page cut from the Book of Chains: WHEN THE WINTER IS LOOSED, THE FIRST FIRE MUST BE ASKED A QUESTION. LET WHOEVER ASKS IT BE BRAVE ENOUGH TO HEAR THE ANSWER.'] },
 };
 
 for (const r of RELICS) LORE[r.id] = { title: r.name, text: r.text };
