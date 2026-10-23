@@ -284,6 +284,8 @@ export const TUNE = {
   autosave: 240,                 // seconds between quiet autosaves while exploring (out of combat)
   burden: { base: 180, perSp: 1, pony: 60, equipHalf: 0.5, burdened: { move: 0.85, regen: 0.8 }, over: 1.25, overMove: 0.65, floor: 0.7, overFloor: 0.5, overRegen: 0.64 },
   mobs: { hp: 1.3, dmg: 1.15 },
+  // art (visuals only): seconds between status particles on an enemy (features/art_status.js)
+  art: { status: { burn: 0.11, drip: 0.28, chill: 0.2, shock: 0.32 } },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
   bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },

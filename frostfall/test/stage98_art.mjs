@@ -119,6 +119,31 @@ check('every clip frame exists on the sheet each creature really uses (16px or n
 check('a hit leech shows its hurt frame', r.hurt === 'hurt0', r.hurt);
 check('a dying slimeling shows its death frame (not a rotated sprite)', r.dead === 'death0', r.dead);
 
+// ---- VX-06: statuses show on the enemy (driven by the status:on / status:off bus events)
+await h.pause();
+r = await G(async () => {
+  const m = await import('/src/systems/status.js');
+  const g = window.gs(), p = g.player;
+  g.enemies.getChildren().slice().forEach((e) => e.destroy());
+  const mk = (x) => { const e = g.addEnemy('wolf', p.x + x, p.y + 20); e.cfg = { ...e.cfg, detect: 0, speed: 0, chase: 0, dmg: 0 }; e.maxHp = e.hp = 99999; return e; };
+  window.__b = mk(-40); window.__f = mk(40); window.__c = mk(0);
+  m.applyStatus(window.__b, 'burn', { t: 30, dps: 0.01 }); m.applyStatus(window.__f, 'freeze', { t: 30 });
+  m.applyStatus(window.__c, 'chill', { t: 30 }); m.applyStatus(window.__c, 'chill', { t: 30 });
+  window.__n0 = g.fx.parts.length;
+  return 1;
+});
+await h.frames(30);
+r = await G(() => {
+  const g = window.gs(), parts = g.fx.parts.map((q) => q.sp.texture.key);
+  return { fire: parts.filter((k) => k === 'p12' || k === 'p13' || k === 'p11').length, frozen: window.__f.texture.key, burnKey: window.__b.texture.key };
+});
+check('a burning enemy gives off fire pixels', r.fire >= 3, JSON.stringify(r));
+check('a frozen enemy is drawn pale ice (a baked copy of its sheet)', r.frozen.startsWith('~m') && r.burnKey === 'spr_wolf', r.frozen);
+r = await G(async () => { const m = await import('/src/systems/status.js'); m.clearStatus(window.__f, 'all'); return 1; });
+await h.frames(2);
+check('the ice look ends with the freeze', await G(() => window.__f.texture.key === 'spr_wolf'), await G(() => window.__f.texture.key));
+await h.resume();
+
 console.log(h.errors.slice(0, 5).join('\n'));
 check('no page errors', !h.errors.length, h.errors[0]);
 await h.close();
