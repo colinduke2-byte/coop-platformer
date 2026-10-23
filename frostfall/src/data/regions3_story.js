@@ -6,6 +6,7 @@ import { NPC_DEFS, SCRIPTS } from './dialogue.js';
 import { buyMenu, sellMenu } from './services.js';
 import { dailyWares } from './stock.js';
 import { QUESTS, TARGETS } from './quests.js';
+import { huntTarget, gatherTarget } from '../world/questwhere.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count, removeItem } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
@@ -88,9 +89,9 @@ QUESTS.moonlit = {
   objectives: (q) => [{ t: `Gather moonpetals at night (${Math.min(count('moonpetal'), 3)}/3)`, done: count('moonpetal') >= 3 || q.status === 'done' }, { t: 'Bring them to the Moon-Reader (after dark)', done: q.status === 'done' }],
 };
 TARGETS.hartking = () => { const p = poiOf('glasswood', S.flags.hartKingDead ? 'lanternglade' : 'hartspire'); return p ? { map: 'glasswood', x: p.x, y: p.y + 2 } : null; };
-TARGETS.glimmers = target('glasswood', 'lanternglade');
-TARGETS.bloom = target('glasswood', 'glimmerpool');
-TARGETS.moonlit = () => null;
+TARGETS.glimmers = (q) => (q?.status !== 'ready' && huntTarget('glasswood', 'glimmerkin')) || target('glasswood', 'lanternglade')();   // WQ5
+TARGETS.bloom = () => (count('glass_bloom') >= 5 ? target('glasswood', 'lanternglade')() : gatherTarget('glasswood', 'glass_bloom') || target('glasswood', 'glimmerpool')());
+TARGETS.moonlit = () => (count('moonpetal') >= 3 ? target('glasswood', 'lanternglade')() : gatherTarget('reach', 'moonpetal'));   // WQ5: the Reach's moonpetals bloom after dark
 
 SCRIPTS.glade_warden = giver({
   who: 'Ysolt', id: 'hartking', key: 'ysoltN',
@@ -176,8 +177,8 @@ QUESTS.glowcaps = {
   objectives: (q) => [{ t: `Gather glowcaps (${Math.min(count('glowcap'), 5)}/5)`, done: count('glowcap') >= 5 || q.status === 'done' }, { t: 'Bring them to Cap', done: q.status === 'done' }],
 };
 TARGETS.lodecolossus = () => { const p = poiOf('underdeep', S.flags.lodeColossusDead ? 'lanternfall' : 'lodenest'); return p ? { map: 'underdeep', x: p.x, y: p.y + 2 } : null; };
-TARGETS.weavers = target('underdeep', 'weavernest');
-TARGETS.glowcaps = target('underdeep', 'glowcapgrove');
+TARGETS.weavers = (q) => (q?.status !== 'ready' && huntTarget('underdeep', 'caveweaver')) || target('underdeep', 'lanternfall')();
+TARGETS.glowcaps = () => (count('glowcap') >= 5 ? target('underdeep', 'lanternfall')() : gatherTarget('underdeep', 'glowcap') || target('underdeep', 'glowcapgrove')());
 
 SCRIPTS.fall_foreman = giver({
   who: 'Dagna', id: 'lodecolossus', key: 'dagnaN',
@@ -274,9 +275,9 @@ QUESTS.saltrun = {
   objectives: (q) => [{ t: `Gather salt crystals (${Math.min(count('salt_crystal'), 4)}/4)`, done: count('salt_crystal') >= 4 || q.status === 'done' }, { t: 'Bring them to Nim', done: q.status === 'done' }],
 };
 TARGETS.brinegut = () => { const p = poiOf('coast', S.flags.brinegutDead ? 'saltgate' : 'smugglercove'); return p ? { map: 'coast', x: p.x, y: p.y + 2 } : null; };
-TARGETS.pearls = target('coast', 'saltgate');
-TARGETS.channel = target('coast', 'saltgate');
-TARGETS.saltrun = target('coast', 'saltgate');
+TARGETS.pearls = () => (count('pearl') >= 4 ? target('coast', 'saltgate')() : gatherTarget('coast', 'pearl') || target('coast', 'saltgate')());
+TARGETS.channel = (q) => (q?.status !== 'ready' && huntTarget('coast', 'harpooner')) || target('coast', 'saltgate')();
+TARGETS.saltrun = () => (count('salt_crystal') >= 4 ? target('coast', 'saltgate')() : gatherTarget('coast', 'salt_crystal') || target('coast', 'saltgate')());
 
 SCRIPTS.salt_harbourmaster = giver({
   who: 'Vess', id: 'brinegut', key: 'vessN',

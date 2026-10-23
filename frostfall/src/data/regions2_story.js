@@ -6,6 +6,7 @@ import { NPC_DEFS, SCRIPTS } from './dialogue.js';
 import { buyMenu, sellMenu } from './services.js';
 import { dailyWares } from './stock.js';
 import { QUESTS, TARGETS } from './quests.js';
+import { huntTarget, droppers, roamerTarget } from '../world/questwhere.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count } from '../systems/inventory.js';
 import { getRegion } from './maps.js';
@@ -55,8 +56,8 @@ QUESTS.orchids = {
   objectives: (q) => [{ t: `Gather marsh orchids (${Math.min(count('marsh_orchid'), 5)}/5)`, done: count('marsh_orchid') >= 5 || q.status === 'done' }, { t: 'Bring them to Maud', done: q.status === 'done' }],
 };
 TARGETS.miremother = () => { const p = poiOf('fens', S.flags.mireMotherDead ? 'reedwick' : 'mirebarrow'); return p ? { map: 'fens', x: p.x, y: p.y + 2 } : null; };
-TARGETS.leeches = () => { const p = poiOf('fens', 'reedwick'); return p ? { map: 'fens', x: p.x, y: p.y + 2 } : null; };
-TARGETS.orchids = () => { const p = poiOf('fens', 'peatfire'); return p ? { map: 'fens', x: p.x, y: p.y + 2 } : null; };
+TARGETS.leeches = (q) => { const p = poiOf('fens', 'reedwick'); return (q?.status !== 'ready' && huntTarget('fens', 'leech')) || (p ? { map: 'fens', x: p.x, y: p.y + 2 } : null); };   // WQ5: where leeches live, then Reedwick
+TARGETS.orchids = () => { const p = poiOf('fens', count('marsh_orchid') >= 5 ? 'reedwick' : 'peatfire'); return p ? { map: 'fens', x: p.x, y: p.y + 2 } : null; };
 
 SCRIPTS.wick_elder = async function elder() {
   const N = 'Ilse', q = S.quests.miremother;
@@ -140,8 +141,8 @@ QUESTS.greytusk = {
   objectives: (q) => [{ t: 'Slay Old Greytusk, the Mammoth King', done: !!S.flags.rb_greytusk || q.status === 'done' }, { t: 'Tell Halldor', done: q.status === 'done' }],
 };
 TARGETS.stormgiant = () => { const p = poiOf('highlands', S.flags.stormGiantDead ? 'skarnhold' : 'stormspire'); return p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null; };
-TARGETS.feathers = () => { const p = poiOf('highlands', 'stormcircle'); return p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null; };
-TARGETS.greytusk = () => { const p = poiOf('highlands', 'skarnhold'); return p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null; };
+TARGETS.feathers = () => { const p = poiOf('highlands', 'skarnhold'); return (count('storm_feather') < 5 && huntTarget('highlands', droppers('storm_feather'))) || (p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null); };   // WQ5: the birds, then Skarn Hold
+TARGETS.greytusk = () => { const p = poiOf('highlands', 'skarnhold'); return (!S.flags.rb_greytusk && roamerTarget('highlands', 'greytusk')) || (p ? { map: 'highlands', x: p.x, y: p.y + 2 } : null); };
 
 SCRIPTS.skarn_chief = async function chief() {
   const N = 'Ulfar', q = S.quests.stormgiant;
