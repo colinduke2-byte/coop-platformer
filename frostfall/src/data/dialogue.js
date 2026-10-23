@@ -362,7 +362,7 @@ export async function child() {
     S.flags.houndResolved = true;
     if (hc === 0) {
       S.flags.houndGiven = true; S.flags.houndOwned = false; if (S.pet === 'hound') S.pet = S.flags.cubOwned ? 'cub' : null;
-      S.gold += 200; addItem('hound_collar');
+      addGold(200); addItem('hound_collar');
       bus.emit('toast', 'THE HOUND GOES HOME', 13);
       await say(C, 'Thank you thank you thank you! Here, this is his collar. He will wear a new one. He will always be yours too, a little.');
       const gs = dialogue.hud?.scene?.get?.('Game'); gs?.hound?.destroy?.(); if (gs) gs.hound = null;

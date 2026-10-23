@@ -4,9 +4,9 @@
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
-import { modMul } from '../data/mods.js';
 import { addGold } from '../systems/inventory.js';
 import { noteDiscovered } from '../systems/notes.js';
+import { TUNE } from '../data/tuning.js';
 
 export const HIDDEN = new Set(['cache', 'hermit', 'ancient']);
 export const PLACE_NAME = {
@@ -55,9 +55,9 @@ export const discoveryMethods = {
     S.discovered = S.discovered || {};
     if (S.discovered[id]) return false;
     S.discovered[id] = 1;
-    const reward = HIDDEN.has(p.kind) ? 20 + 12 * (p.tier || 0) : 4 + 4 * (p.tier || 0);
-    addGold(Math.round(reward * modMul('goldMul')));
-    bus.emit('discover', { name: placeName(p), top: how, line: `+${Math.round(reward * modMul('goldMul'))} GOLD  ${discoveredCount()} PLACES FOUND` });
+    const R = TUNE.economy.rewards[HIDDEN.has(p.kind) ? 'discoverHidden' : 'discover'];
+    const paid = addGold(R[0] + R[1] * (p.tier || 0), { quiet: true });      // PR-16: addGold applies the modifiers once
+    bus.emit('discover', { name: placeName(p), top: how, line: `+${paid} GOLD  ${discoveredCount()} PLACES FOUND` });
     sfx.play('quest');
     noteDiscovered(this.mapId, p);
     return true;

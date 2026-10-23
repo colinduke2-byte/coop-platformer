@@ -296,6 +296,16 @@ export const TUNE = {
     goldFindCap: 0.6,          // gold-find bonuses from gear, sets, Pell and blessings add up to at most +60% (PR-25)
     pellGold: 0.1,             // Pell at your side: +10% gold
     plenty: [0.1, 0.025],      // the generated "of Plenty" affix: +10% gold, +2.5% per tier step (k = min(2, tier)): 10 / 12.5 / 15%
+    // Gold rewards (CH14): [base, per tier] unless noted. All are paid through addGold, so gold find applies.
+    rewards: {
+      bloodAlpha: [120, 80], campRetaken: [15, 12], worldBoss: [150, 100],
+      nemesis: [80, 60, 40],               // base, per kill it made, per tier
+      bounty: [40, 30], bountyChampion: 1.6, // a champion's bounty pays x1.6
+      wounded: [45, 35], hunt: 20, raid: [60, 40],
+      arenaWave: [20, 12], gauntlet: 1.4,  // base, per wave; the Gauntlet pays x1.4
+      discoverHidden: [20, 12], discover: [4, 4],
+    },
+    deathGoldKeep: 0.9,        // dying keeps this share of your gold
   },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);

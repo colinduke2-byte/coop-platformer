@@ -44,6 +44,35 @@ const gold = await G(async (reset) => {
 }, reset);
 check('PR-06/PR-25: the Court set adds +15% gold; gold-find sources add up and stop at +60%', Object.values(gold).every(Boolean), JSON.stringify(gold));
 
+// ---- PR-07: selling the last Legendary or set piece asks first; Magic items have their own durability
+const sell = await G(async (reset) => {
+  eval(reset);
+  const { isPrecious } = await import('/src/data/services.js'), { makeGenItem } = await import('/src/systems/genloot.js'), { durMax } = await import('/src/systems/durability.js');
+  const leg = makeGenItem(2, Math.random, 3), mag = makeGenItem(2, Math.random, 1), rare = makeGenItem(2, Math.random, 2);
+  const magIt = window.__ff.S.gen[mag];
+  return { leg: isPrecious(leg), rare: isPrecious(rare), set: isPrecious('court_signet'), notMagic: !isPrecious(mag), notPlain: !isPrecious('iron_sword'), magicDur: durMax(mag) === 80 && magIt.rarity === 'magic' };
+}, reset);
+check('PR-07: Legendary, Rare and set pieces ask before the last one is sold; Magic durability is 80', Object.values(sell).every(Boolean), JSON.stringify(sell));
+
+// ---- PR-16 / CH14: discovery gold counts the modifiers once; world rewards go through addGold (gold find applies)
+const rew = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { TUNE } = await import('/src/data/tuning.js');
+  S.mods = { pilgrim: true }; S.gold = 0;
+  sc.discover({ id: 'eco_test', kind: 'cache', tier: 0, x: 0, y: 0 }, 'eco:test');
+  const disc = S.gold;
+  S.mods = null; S.gold = 0;
+  for (const id of ['court_signet']) S.inv[id] = 1;
+  S.equip.charm = 'court_signet';
+  const { completeContract } = await import('/src/data/contracts.js');
+  S.contracts = { active: ['eco_c'], done: {}, offers: [{ id: 'eco_c', gold: 100, gear: 0, x: 0, y: 0 }] };
+  completeContract('eco_c', null);
+  const contract = S.gold;
+  S.equip.charm = null; delete S.discovered['eco:test'];
+  return { disc: disc === Math.round(TUNE.economy.rewards.discoverHidden[0] * 1.3), contract: contract === 110, vals: [disc, contract] };
+}, reset);
+check('PR-16/CH14: a discovery under Pilgrim pays x1.3 (not x1.69); a contract pays through gold find (+10% signet)', Object.values(rew).every(Boolean), JSON.stringify(rew));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

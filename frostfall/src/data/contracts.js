@@ -7,6 +7,7 @@ import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { START } from '../world/worldgen.js';
+import { addGold } from '../systems/inventory.js';
 
 const KIND = {
   camp: { verb: 'Clear the bandit camp', short: 'CLEAR CAMP' },
@@ -67,7 +68,7 @@ export function completeContract(poiId, scene) {
   if (!o) return false;
   c.done[poiId] = true;
   c.active = c.active.filter((x) => x !== poiId);
-  S.gold += o.gold;
+  addGold(o.gold, { quiet: true });
   if (scene) scene.pickups.push(new scene.PickupClass(scene, scene.player.x, scene.player.y - 12, { type: 'item', id: makeGenItem(o.gear, Math.random, o.gear > 1 ? 1 : null) }));
   bus.emit('toast', `CONTRACT DONE  +${o.gold} GOLD`, 13);
   if (S.flags.waypoint && S.flags.waypoint.x === o.x && S.flags.waypoint.y === o.y) delete S.flags.waypoint;

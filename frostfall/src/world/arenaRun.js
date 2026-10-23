@@ -10,7 +10,9 @@ import { maybeRelic } from '../systems/relics.js';
 import { arenaWave } from '../world/arena.js';
 import { runScript, choose } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
-import { modMul, BOONS, BOON_IDS } from '../data/mods.js';
+import { BOONS, BOON_IDS } from '../data/mods.js';
+import { addGold } from '../systems/inventory.js';
+import { TUNE } from '../data/tuning.js';
 
 export const arenaMethods = {
   // ---- the Hollow Arena
@@ -58,8 +60,7 @@ export const arenaMethods = {
         S.arena.modes = S.arena.modes || {}; S.arena.modes[a.mode] = Math.max(S.arena.modes[a.mode] || 0, w);
         if (S.quick) { bus.emit('toast', `WAVE ${w} CLEARED`, 13); sfx.play('quest'); this.quickWaveCleared(w); }
         else {
-        const gold = Math.round((20 + w * 12) * modMul('goldMul') * (a.mode === 'gauntlet' ? 1.4 : 1));
-        S.gold += gold;
+        const R = TUNE.economy.rewards, gold = addGold((R.arenaWave[0] + w * R.arenaWave[1]) * (a.mode === 'gauntlet' ? R.gauntlet : 1), { quiet: true });
         bus.emit('toast', `WAVE ${w} CLEARED  +${gold} GOLD`, 13); sfx.play('quest');
         }
         if (!S.quick && (w % 3 === 0 || w % 5 === 0)) this.pickups.push(new Pickup(this, this.player.x, this.player.y - 14, { type: 'item', id: makeGenItem(Math.min(3, Math.floor(w / 3)), Math.random, w % 5 === 0 ? 1 : null) }));

@@ -465,7 +465,7 @@ export default class HudScene extends Phaser.Scene {
     if (dead && !this.deadShown) {
       // the death card says what happened and what it costs, once, when it appears
       this.deadShown = true;
-      const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * 0.9), r = S.respawn || { map: 'village' };
+      const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * TUNE.economy.deathGoldKeep), r = S.respawn || { map: 'village' };
       const lines = [[this.deadWhy, by ? fit('SLAIN BY ' + String(by).toUpperCase(), 48) : 'YOU FELL'], [this.deadCost, S.quick ? '' : loss > 0 ? `YOU DROP ${loss} GOLD (10%)` : ''], [this.deadWake, S.quick ? 'THE RUN IS OVER' : fit('YOU WAKE AT ' + (r.x != null ? 'THE LAST BRAZIER IN ' : '') + (MAPS[r.map]?.name || 'THE VILLAGE').toUpperCase(), 48)]];
       for (const [t, v] of lines) { t.setText(v); t.x = Math.round((W - t.width) / 2); }
     } else if (!dead) this.deadShown = false;

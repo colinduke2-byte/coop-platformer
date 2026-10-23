@@ -60,7 +60,7 @@ export default class Pickup extends Phaser.GameObjects.Image {
     this.done = true;
     const s = this.spec;
     if (s.type === 'orb') { this.scene.collectOrb?.(s.kind); sfx.play('pickup'); }
-    else if (s.type === 'gold') { if (s.raw) { S.gold += s.n; bus.emit('toast', `+${s.n} GOLD`, 13); } else addGold(s.n); sfx.play('coin'); }
+    else if (s.type === 'gold') { addGold(s.n, { mul: !s.raw }); sfx.play('coin'); }
     else if (s.type === 'arrows') { addArrows(s.n); sfx.play('pickup'); }
     else if (s.type === 'heart') { S.hearts = S.hearts || {}; S.hearts[s.id] = true; recalc(); sfx.play('levelup'); bus.emit('toast', HEARTS[s.id].name.toUpperCase() + ' CLAIMED', 15); bus.emit('heart', s.id); }
     else { addItem(s.id, s.n || 1); sfx.play('pickup'); }
