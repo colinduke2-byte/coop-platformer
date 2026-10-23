@@ -16,6 +16,9 @@ export const musicLevel = () => (settings.music ? 0.5 * (settings.musicVol ?? 1)
 let hidden = false;
 export const isHidden = () => hidden;
 
+// Run fn once the AudioContext exists (timers start then, never at import: Node tests import this module too).
+const ready = [];
+export function onContext(fn) { if (nodes.ctx) fn(); else ready.push(fn); }
 export function ac() {
   let ctx = nodes.ctx;
   if (!ctx) {
@@ -35,6 +38,7 @@ export function ac() {
     nodes.musicBus = ctx.createGain(); nodes.musicBus.gain.value = musicLevel(); nodes.musicBus.connect(nodes.musicDuck);
     nodes.ambDuck = ctx.createGain(); nodes.ambDuck.connect(master);
     nodes.ambBus = ctx.createGain(); nodes.ambBus.gain.value = settings.ambVol ?? 1; nodes.ambBus.connect(nodes.ambDuck);
+    ready.splice(0).forEach((fn) => { try { fn(); } catch { /* ignore */ } });
   }
   if ((ctx.state === 'suspended' || ctx.state === 'interrupted') && !hidden) ctx.resume();
   return ctx;

@@ -4,6 +4,7 @@ import { TUNE } from '../data/tuning.js';
 import { ITEMS } from '../data/items.js';
 import { settings } from './settings.js';
 import { bus } from './bus.js';
+import { sfx } from '../audio/sfx.js';
 
 export const durOn = () => { const d = TUNE.difficulty[settings.difficulty]?.durability; return d === 'hard' ? settings.durabilityHard !== false : d == null ? !!settings.durability : d; };   // Easy: off, Hard: on, Normal: your option
 const BASE = { common: 60, uncommon: 80, rare: 100, legend: 140 };
@@ -17,7 +18,7 @@ export function wear(id, n = 1) {
   S.dur = S.dur || {};
   const was = durOf(id);
   S.dur[id] = Math.max(0, was - n);
-  if (was > 0 && S.dur[id] === 0) bus.emit('toast', `YOUR ${ITEMS[id].name.toUpperCase()} IS BROKEN`, 11);
+  if (was > 0 && S.dur[id] === 0) { bus.emit('toast', `YOUR ${ITEMS[id].name.toUpperCase()} IS BROKEN`, 11); sfx.play('break'); }
   else if (was > durMax(id) * 0.25 && S.dur[id] <= durMax(id) * 0.25) bus.emit('toast', `${ITEMS[id].name.toUpperCase()} IS WEARING THIN`, 12);
 }
 export const repairCost = (id) => Math.ceil((durMax(id) - durOf(id)) * (0.15 + (ITEMS[id]?.value || 10) / 400));

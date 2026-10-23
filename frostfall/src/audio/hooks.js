@@ -11,7 +11,7 @@ import { S } from '../systems/state.js';
 import { ui } from '../systems/ui.js';
 import { settings } from '../systems/settings.js';
 import { TUNE } from '../data/tuning.js';
-import { nodes, ramp, isHidden } from './core.js';
+import { nodes, ramp, isHidden, onContext } from './core.js';
 import { sfx, audioLog } from './play.js';
 import { music } from './music.js';
 import { ambience } from './ambience.js';
@@ -54,14 +54,14 @@ bus.on('boss:engaged', (boss) => { where.bossKind = boss?.kind || null; music.st
 bus.on('charlevel', () => { sfx.play('char_level'); music.duck(2.2, 0.3); });
 
 // status ticks: one soft tick per second for each damage-over-time status on the player
-setInterval(() => {
+onContext(() => setInterval(() => {
   if (!nodes.ctx || isHidden() || !onPlayer.size) return;
   for (const k of DOT) {
     if (!onPlayer.has(k)) continue;
     if (player && player.statuses && !player.statuses[k]) { onPlayer.delete(k); continue; }
     sfx.play('tick_' + k);
   }
-}, Math.max(250, A().statusTick * 1000));
+}, Math.max(250, A().statusTick * 1000)));
 
 // the 4 Hz watch
 const mix = { low: false, paused: false, talk: false, nextBeat: 0 };
@@ -79,5 +79,5 @@ function watch() {
   const talk = tags.includes('script') || t - audioLog.lastTalk < 700;
   if (talk !== mix.talk) { mix.talk = talk; ramp(nodes.musicDuck.gain, talk ? D.talk : 1, D.ramp); ramp(nodes.ambDuck.gain, talk ? D.talk : 1, D.ramp); }
 }
-setInterval(watch, 250);
+onContext(() => setInterval(watch, 250));
 export const hookState = () => ({ ...mix, onPlayer: [...onPlayer], inGame });
