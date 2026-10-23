@@ -3,7 +3,7 @@ import { S } from '../systems/state.js';
 import { TROPHIES, trophyCount } from '../systems/achievements.js';
 import { wrap, fit } from '../art/font.js';
 import { settings } from '../systems/settings.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 import { FACTIONS, FACTION_IDS, rep, repTier } from '../data/factions.js';
 
 // Trophies tab: every milestone, greyed out until earned.

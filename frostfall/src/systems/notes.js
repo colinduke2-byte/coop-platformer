@@ -5,7 +5,7 @@ import { sfx } from '../audio/sfx.js';
 import { startQuest, finishQuest } from './quests.js';
 import { getRegion } from '../data/maps.js';
 import { regionOfMap } from '../data/regions.js';
-import { HIDDEN } from '../world/discovery.js';
+import { HIDDEN, onPlaceDiscovered } from '../world/discovery.js';
 import { addGold, addItem } from './inventory.js';
 import { makeGenItem } from './genloot.js';
 
@@ -46,4 +46,5 @@ export function noteDiscovered(mapId, p) {
     if (S.flags.waypoint && S.flags.waypoint.x === p.x && S.flags.waypoint.y === p.y) delete S.flags.waypoint;
   }
 }
+onPlaceDiscovered(noteDiscovered);
 export { HIDDEN };

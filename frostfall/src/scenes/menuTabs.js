@@ -6,7 +6,7 @@ import { bus } from '../systems/bus.js';
 import { keys } from '../systems/keys.js';
 import { wrap, textW, fit } from '../art/font.js';
 import { logLines } from '../systems/msglog.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 import { systemTab } from './menuSystem.js';
 import { mapTab } from './menuMap.js';
 import { perksTab } from './menuPerks.js';

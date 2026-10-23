@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { bus, listen } from '../../src/systems/bus.js';
 import { ui } from '../../src/systems/ui.js';
 import { mixin } from '../../src/util.js';
@@ -195,6 +196,13 @@ t("status effects announce themselves: 'status:on' (target, kind, duration) and 
 });
 t("the weather hand-off event is emitted where the weather is applied (bus 'weather' (kind, region))", () => {
   assert.match(read('world/lighting.js'), /applyWeather\(\) \{[^}]*bus\.emit\('weather', S\.weather, regionOfMap\(this\.mapId\)\)/);
+});
+
+// ---------------------------------------------------------------- CH12
+t('no new import cycles: only the documented stats cycle remains (tools/cycles.mjs)', () => {
+  const out = execFileSync(process.execPath, [new URL('../../tools/cycles.mjs', import.meta.url).pathname], { encoding: 'utf8' });
+  const cycles = out.split('\n').filter((l) => l.startsWith('cycle of')).map((l) => l.replace(/^cycle of \d+: /, '').split(' ').sort().join(' '));
+  assert.deepEqual(cycles, ['systems/food.js systems/inventory.js systems/relics.js systems/sockets.js systems/stats.js'], 'a new import cycle (docs/AGENT_RULES.md, section 8):\n' + out);
 });
 
 // ---------------------------------------------------------------- AU02

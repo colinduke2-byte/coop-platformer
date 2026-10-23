@@ -6,7 +6,7 @@ import { SKILL_DEFS, perkState, buyPerk, lvl } from '../systems/skills.js';
 import { wrap, textW, fit } from '../art/font.js';
 import { settings } from '../systems/settings.js';
 import { sfx } from '../audio/sfx.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 
 export function perksTab(m) {
   const ROWS = 11;

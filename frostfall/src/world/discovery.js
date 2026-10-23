@@ -6,7 +6,6 @@ import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
 import { modMul } from '../data/mods.js';
 import { addGold } from '../systems/inventory.js';
-import { noteDiscovered } from '../systems/notes.js';
 
 export const HIDDEN = new Set(['cache', 'hermit', 'ancient']);
 export const PLACE_NAME = {
@@ -30,6 +29,11 @@ export const isSighted = (mapId, p) => !!S.sighted?.[mapId + ':' + p.id];
 export const placeName = (p) => PLACE_NAME[p.kind] || p.kind.toUpperCase();
 export const discoveredCount = () => Object.keys(S.discovered || {}).length;
 const rangeOf = (p) => (HIDDEN.has(p.kind) ? 7 : p.kind === 'rest' || p.kind === 'spring' ? 12 : Math.max(15, (p.r || 8) + 4));
+
+// Who wants to hear about a place found for the first time (systems/notes.js: treasure notes pointing at it). A hook
+// instead of an import keeps discovery out of the maps / quests / notes import cycle (CH12).
+const placeHooks = [];
+export const onPlaceDiscovered = (fn) => { placeHooks.push(fn); };
 
 export const discoveryMethods = {
   discoverTick() {
@@ -59,7 +63,7 @@ export const discoveryMethods = {
     addGold(Math.round(reward * modMul('goldMul')));
     bus.emit('discover', { name: placeName(p), top: how, line: `+${Math.round(reward * modMul('goldMul'))} GOLD  ${discoveredCount()} PLACES FOUND` });
     sfx.play('quest');
-    noteDiscovered(this.mapId, p);
+    for (const fn of placeHooks) fn(this.mapId, p);
     return true;
   },
 };

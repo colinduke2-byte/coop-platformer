@@ -12,7 +12,7 @@ import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
 import { PAD_ACTIONS, padMap, setPadBinding, resetPadMap, getPadInfo, capturePad } from '../systems/keys.js';
 import { textW } from '../art/font.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 import { MAPS } from '../data/maps.js';
 import { CVD_MODES, applyCvd, padLabel } from '../systems/access.js';
 import { padActive } from '../systems/keys.js';

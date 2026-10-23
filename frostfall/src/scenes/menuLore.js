@@ -10,7 +10,7 @@ import { wrap, fit, textW } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ITEMS } from '../data/items.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 
 // Lore tab: books you have read, then a bestiary that fills in as you meet and defeat creatures.
 export function loreTab(m) {

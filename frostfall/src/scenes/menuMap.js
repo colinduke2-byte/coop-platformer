@@ -3,7 +3,7 @@ import { PLACE_COL, placeName } from '../world/discovery.js';
 import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
 import { TARGETS, trackedId } from '../data/quests.js';
-import { panel } from './MenuScene.js';
+import { panel } from '../ui/panel.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';

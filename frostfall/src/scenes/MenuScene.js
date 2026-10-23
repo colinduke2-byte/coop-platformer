@@ -18,6 +18,7 @@ import { stats } from '../systems/stats.js';
 import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
+import { panel } from '../ui/panel.js';
 import { RARITY } from '../systems/genloot.js';
 import { eatFood } from '../systems/food.js';
 import { readTome } from '../systems/tomes.js';
@@ -31,11 +32,7 @@ const FILTERS = [['ALL', null], ['GEAR', ['weapon', 'weapon2h', 'shield', 'bow',
 const SORTS = ['TYPE', 'NAME', 'VALUE', 'WEIGHT'];
 const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'common' ? RARITY.find((x) => x.id === r).col : null; };
 
-export function panel(g, x, y, w, h, fill = 1) {
-  g.fillStyle(C[0]); g.fillRect(x, y, w, h);
-  g.fillStyle(C[3]); g.fillRect(x + 1, y + 1, w - 2, h - 2);
-  g.fillStyle(C[fill]); g.fillRect(x + 2, y + 2, w - 4, h - 4);
-}
+export { panel };                                  // it lives in ui/panel.js now (CH12)
 
 export default class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
