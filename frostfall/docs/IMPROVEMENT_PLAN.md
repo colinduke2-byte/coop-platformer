@@ -48,6 +48,12 @@ The plan has four waves:
 
 Wave 0 and Wave 1 don't need any of these. Each question has my recommendation; the ids point to the details.
 
+**Approved 2026-10-23: Colin said "go with your recommendations and start everything".** Every recommendation below is a
+yes, with these details:
+- WQ25 (hub people keep hours) is in.
+- The shout's new word (NP13) is ours to choose.
+- Story text and new music go in now; Colin reviews them in the build afterwards rather than before.
+
 **Combat**
 1. **Heavy enemies resist stagger** (CB1, CB9). Trolls, giants, golems and mini-bosses keep winding up through light
    hits, and mini-bosses can't be one-shot from stealth or executed at 28%. *Recommend: yes.*
