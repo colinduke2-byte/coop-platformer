@@ -5,6 +5,7 @@ import { txt, wrap } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ui } from '../systems/ui.js';
+import { EndingTableau } from '../art/scenery.js';
 import { epilogueLines, chapter3Ending, CH2_TAIL } from '../data/story.js';
 
 const ENDINGS = {
@@ -47,10 +48,11 @@ export default class EndingScene extends Phaser.Scene {
     this.cameras.main.fadeIn(800, 11, 14, 26);
     sfx.play('ending');
     txt(this, W / 2, 18, e.title, e.col).setScale(2).setOrigin(0.5, 0);
-    this.body = txt(this, 14, 48, '', 5);
+    this.tableau = new EndingTableau(this, this.kind, e.col, 36, 48);     // VX-26: a picture of the outcome above the text
+    this.body = txt(this, 14, 90, '', 5);
     const epi = epilogueLines();
     const lines = wrap(e.text + (ch2 ? '\n\n' + CH2_TAIL : '') + (epi.length ? '\n\n' + epi.join('\n\n') : ''), 49).split('\n');
-    const PER = 13;                                               // lines that fit under the title
+    const PER = 9;                                                // lines that fit under the picture
     this.pages = [];
     for (let i = 0; i < lines.length; i += PER) this.pages.push(lines.slice(i, i + PER).join('\n'));
     this.pi = 0; this.full = this.pages[0];
@@ -60,6 +62,7 @@ export default class EndingScene extends Phaser.Scene {
   }
   update(_, ms) {
     const dt = ms / 1000;
+    this.tableau.update(dt);
     if (this.warm > 0) { this.warm--; return; }
     if (this.n < this.full.length) {
       this.t += dt;

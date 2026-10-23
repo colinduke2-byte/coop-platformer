@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { W, H, BINDINGS, VERSION, BUILD } from '../config.js';
 import { txt } from '../art/font.js';
 import { SnowFx } from '../art/snow.js';
+import { TitleBackdrop, frostLogo } from '../art/scenery.js';
 import { keys, padActive } from '../systems/keys.js';
 import { S, resetState, startNgPlus } from '../systems/state.js';
 import { recalc } from '../systems/stats.js';
@@ -25,17 +26,12 @@ export default class TitleScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor(0x0b0e1a);
-    this.add.rectangle(0, 0, W, H, 0x1c2338).setOrigin(0).setAlpha(0.6);
-    // distant mountains, drawn in code
-    const g = this.add.graphics();
-    g.fillStyle(0x2e3a5c);
-    for (let x = 0; x < W; x += 2) g.fillRect(x, 100 - Math.abs(((x * 0.7) % 60) - 30) - 8 * Math.sin(x / 23), 2, 90);
-    g.fillStyle(0x4a5c86);
-    for (let x = 0; x < W; x += 2) g.fillRect(x, 125 - Math.abs(((x * 1.1 + 20) % 80) - 40) * 0.6, 2, 90);
+    // VX-24: drifting mountains, an aurora, the hero by a campfire on a rise, and a hand-shaded logo (art/scenery.js)
+    this.backdrop = new TitleBackdrop(this);
+    const g = this.add.graphics().setDepth(0);
     g.fillStyle(0xeaf2f8); g.fillRect(0, 160, W, 20);
     g.fillStyle(0xb4c7e0); g.fillRect(0, 160, W, 2);
-    const sh = txt(this, W / 2 + 2, 26, 'FROSTFALL', 2).setScale(4).setOrigin(0.5, 0);
-    const t1 = txt(this, W / 2, 24, 'FROSTFALL', 6).setScale(4).setOrigin(0.5, 0);
+    this.add.image(W / 2, 20, frostLogo(this)).setOrigin(0.5, 0);
     const t2 = txt(this, 0, 60, 'A TALE OF THE FROZEN NORTH', 4);
     t2.x = Math.floor((W - t2.width) / 2);
     const done = listSaves().find((x) => x.info?.ending);
@@ -302,6 +298,7 @@ export default class TitleScene extends Phaser.Scene {
     const dt = ms / 1000;
     this.t += dt;
     this.snow.update(dt);
+    this.backdrop.update(dt);
     this.footer();
     if (overlayOpen()) return;                       // a save-tools panel is open over the canvas
     if (this.slotMode) { this.updateSlots(); return; }

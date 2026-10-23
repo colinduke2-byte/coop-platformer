@@ -191,6 +191,25 @@ check('the fens draw a downpour in their storm', r.mode === 'downpour' && r.draw
 r = await G(async () => { const w = await import('/src/art/weather.js'); return [w.skyMode('clear', 'vale', true), w.skyMode('snow', 'ashen', false), w.skyMode('clear', 'underdeep', false)]; });
 check('fireflies in the Vale at night, ash falls in the Peaks, spores in the Underdeep', r.join() === 'fireflies,ash,spores', r.join());
 
+// ---- VX-24/25/26: title, intro and ending pictures
+r = await G(async () => {
+  const gm = window.__ff.game, g = window.gs();
+  g.scene.launch('Ending', { kind: 'crown' });
+  await new Promise((res) => setTimeout(res, 300));
+  const e = gm.scene.getScene('Ending'), out = { tab: !!e.tableau, end: gm.textures.exists('end_crown') };
+  g.scene.stop('Ending');
+  return out;
+});
+check('an ending shows its tableau (the crown of rime)', r.tab && r.end, JSON.stringify(r));
+await h.open('scene=intro');
+await h.sleep(600);
+r = await G(async () => { const sc = window.__ff.game.scene.getScene('Intro'); const shown = []; for (const i of [0, 1, 2]) { sc.vig.show(i); sc.vig.update(0.1); shown.push(sc.vig.img.texture.key); } return shown; });
+check('the intro has a picture for each of its three lines', r.join() === 'intro_0,intro_1,intro_2', r.join());
+await h.open('seed=424242');
+await h.sleep(900);
+r = await G(() => { const sc = window.__ff.game.scene.getScene('Title'); return { logo: window.__ff.game.textures.exists('logo_frost'), bd: !!sc.backdrop, hero: sc.backdrop?.hero?.texture.key }; });
+check('the title has a hand-shaded logo and a living backdrop with the hero', r.logo && r.bd && r.hero === 'spr_player', JSON.stringify(r));
+
 console.log(h.errors.slice(0, 5).join('\n'));
 check('no page errors', !h.errors.length, h.errors[0]);
 await h.close();
