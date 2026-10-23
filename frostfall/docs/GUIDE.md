@@ -153,8 +153,8 @@ High standing also improves shop stock, forging (the Great Anvil sometimes makes
 | **Grimfang** | Frostwind Pass | Fast. Fire hurts him. You can spare him (see his quest). |
 | **The four Heart guardians** | the four Heart dungeons | Read their telegraphs; each has a pattern you can learn in one fight. |
 | **Kragnar the Hollowed** | the Deep Mines (Emberhold) | Frost is his weakness; fire is resisted. Watch for his leaps and spikes. |
-| **The Ashen Sovereign** | Forge of the First Fire | Three phases (the Crowned, the Cinder Storm, the Pyre). Frost damage is best; fire does almost nothing. Bring faction help and plenty of potions. |
-| **Admiral Veyl** | Tidebreak Cavern | Shock and fire work; frost does little. Fights get easier after his halfway phase. |
+| **The Ashen Sovereign** | Forge of the First Fire | Three phases (the Ember Crown, the Cinder Storm, the Pyre). Frost damage is best; fire does almost nothing. Bring faction help and plenty of potions. |
+| **Admiral Veyl** | Tidebreak Cavern | Shock and fire work; frost does little. His drowned crew answers his call, and past half the ice comes up through the floor. |
 | **The Blight Mother** | Thornroot Hollow (the Vale) | She roots in every so often and takes a quarter damage while she mends: kill the three pods to tear her loose, then hit her while she is stunned. Fire works. |
 | **The Gilded Regent** | the Sealed Vault (the Sunscorch) | Marked sunbeams fall in a line toward you; step sideways. Gilded guards come in the later phases. Lightning works; fire does little. What you take from the vault changes the last fight. |
 | **The Hollow King** | the Sepulchre | Three phases (the Throne, the Court, the Memory). He hits hard and fast. Level up and bring your best gear first. |
