@@ -19,6 +19,13 @@ const lerpColor = (a, b, t) => {
 import { hasMod } from '../data/mods.js';
 import { regionOfMap } from '../data/regions.js';
 import { elixirVal } from '../systems/elixir.js';
+import { REGION_SKY, clampKind } from '../art/weather.js';
+
+// VX-15: each region has its own night (indigo desert, green-black fens, red-black ash), and a storm washes the screen in its own
+// colour (sand, ash, rain). Dusk warms toward orange then purple; dawn is cool. Visuals only.
+const NIGHT_OF = { reach: 0x0b1536, coast: 0x0b1536, highlands: 0x0b1536, sunscorch: 0x1a1446, fens: 0x08180f, ashen: 0x1c0a10, glasswood: 0x061a24, vale: 0x0c1430, kingdom: 0x10122c };
+const STORM_OF = { sunscorch: C[10], ashen: C[2], fens: C[2] };
+const DUSK_WARM = C[12], DUSK_PURPLE = C[14], DAWN_COOL = C[4];
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
 // CH4: THE definition of night for gameplay (spawns, events, merchants, music, stealth): an outdoor map between 20:30 and
@@ -53,15 +60,18 @@ export const lightingMethods = {
     let color = 0x0b0e1a, alpha = base;
     if ((this.def.snow || this.def.outdoors)) {
       const h = hourOf();
-      let night = 0, dusk = 0;
+      let night = 0, dusk = 0, dawn = 0, duskK = 0;
       if (h >= 20.5 || h < 5) night = 1;
-      else if (h >= 18) { night = (h - 18) / 2.5; dusk = Math.sin(Math.min(1, (h - 18) / 2.5) * Math.PI); }
-      else if (h < 7) { night = 1 - (h - 5) / 2; dusk = Math.sin(((h - 5) / 2) * Math.PI) * 0.6; }
-      const nAlpha = 0.52 * night;
-      color = lerpColor(0x0b0e1a, 0x0b1536, night);
-      if (dusk > 0.05) { color = lerpColor(color, 0x3a1a2a, dusk * 0.5); }
+      else if (h >= 18) { night = (h - 18) / 2.5; duskK = Math.min(1, (h - 17.5) / 3); dusk = Math.sin(duskK * Math.PI); }
+      else if (h >= 17.5) { duskK = (h - 17.5) / 3; dusk = Math.sin(duskK * Math.PI); }
+      else if (h < 7) { night = 1 - (h - 5) / 2; dawn = Math.sin(((h - 5) / 2) * Math.PI); }
+      const nAlpha = 0.52 * night, region = this._skyRegion ??= regionOfMap(this.mapId);
+      color = lerpColor(0x0b0e1a, NIGHT_OF[region] ?? 0x0b1536, night);
       alpha = Math.max(base, nAlpha * (1 - elixirVal('nightsight', 0)));
-      if (S.weather === 'blizzard') { color = lerpColor(color, 0x7b8fb5, 0.7 * (1 - night)); alpha = Math.max(alpha, 0.2 + 0.2 * night); }
+      // dusk: a warm wash that turns from orange to purple as the sun goes; dawn: a cool one
+      if (dusk > 0.05) { color = lerpColor(color, lerpColor(DUSK_WARM, DUSK_PURPLE, Math.max(0, duskK * 1.6 - 0.4)), Math.min(1, dusk * 1.2)); alpha = Math.max(alpha, 0.3 * dusk); }
+      if (dawn > 0.05) { color = lerpColor(color, DAWN_COOL, dawn * 0.8); alpha = Math.max(alpha, 0.22 * dawn); }
+      if (S.weather === 'blizzard') { color = lerpColor(color, STORM_OF[region] ?? 0x7b8fb5, 0.7 * (1 - night)); alpha = Math.max(alpha, (STORM_OF[region] ? 0.28 : 0.2) + 0.2 * night); }
       if (S.weather === 'whiteout') { color = lerpColor(0xe4ecf6, 0x3a4a6a, night * 0.8); alpha = Math.max(alpha, 0.56); }
     }
     return { color, alpha };
@@ -115,10 +125,13 @@ export const lightingMethods = {
       let next0 = S.weather === 'blizzard' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 + eb ? 'clear' : r < 0.42 + eb * 0.2 ? 'blizzard' : 'snow';
       let next = hasMod('winter') ? 'blizzard' : next0;
       if (!hasMod('winter') && this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
+      const sky = !this.def.snow && REGION_SKY[regionOfMap(this.mapId)];     // VX-12: a snowless region rolls its own weather
+      if (sky) next = clampKind(next, regionOfMap(this.mapId));
       if (next !== S.weather) {
         S.weather = next;
         this.applyWeather();
-        if (next === 'blizzard') bus.emit('toast', 'A BLIZZARD ROLLS IN', 15);
+        if (sky) { const t = sky.toast?.[next]; if (t) bus.emit('toast', t[0], t[1]); }
+        else if (next === 'blizzard') bus.emit('toast', 'A BLIZZARD ROLLS IN', 15);
         else if (next === 'whiteout') bus.emit('toast', 'WHITEOUT: YOU CAN HARDLY SEE', 15);
         else if (next === 'aurora') { bus.emit('toast', 'THE AURORA SHIMMERS: SPELLS COST LESS', 8); this.auroraWisps(); }
         else if (next === 'clear') bus.emit('toast', 'THE SNOW THINS', 5);
@@ -129,6 +142,9 @@ export const lightingMethods = {
   // Hand-off event (Wave 0): bus 'weather' (kind, region) on every map load and every change of S.weather, so art and audio
   // can react without touching this file. region is a REGIONS id from data/regions.js ('reach', 'sunscorch'...).
   applyWeather() {
+    this._skyRegion = regionOfMap(this.mapId);
+    // VX-12: no blizzard, whiteout or aurora where it does not snow; each region keeps the weather kinds it can have
+    if (!this.def.snow && REGION_SKY[this._skyRegion] && !hasMod('winter')) S.weather = clampKind(S.weather, this._skyRegion);
     this.snow?.setMode(S.weather);
     bus.emit('weather', S.weather, regionOfMap(this.mapId));
   },

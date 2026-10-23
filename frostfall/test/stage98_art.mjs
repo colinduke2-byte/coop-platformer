@@ -144,6 +144,19 @@ await h.frames(2);
 check('the ice look ends with the freeze', await G(() => window.__f.texture.key === 'spr_wolf'), await G(() => window.__f.texture.key));
 await h.resume();
 
+// ---- VX-12 / VX-19: snowless regions get their own weather picture; no blizzard, whiteout or aurora there
+await go('sunscorch');
+r = await G(() => { const g = window.gs(), S = window.__ff.S; S.weather = 'whiteout'; g.applyWeather(); const a = S.weather; S.weather = 'aurora'; g.applyWeather(); return { a, b: S.weather, snow: !!g.snow }; });
+check('a whiteout in the desert becomes its sandstorm (blizzard kind), an aurora becomes clear', r.a === 'blizzard' && r.b === 'clear', JSON.stringify(r));
+check('no snowfall in the desert', !r.snow);
+await go('fens');
+await G(() => { const g = window.gs(); window.__ff.S.time = 12 * 60; window.__ff.S.weather = 'blizzard'; g.applyWeather(); });
+await h.frames(3);
+r = await G(async () => { const w = await import('/src/art/weather.js'); return { mode: w.skyMode('blizzard', 'fens', false), drawn: window.gs().children.list.some((o) => o.type === 'Graphics' && o.depth === 99985 && o.commandBuffer.length > 20) }; });
+check('the fens draw a downpour in their storm', r.mode === 'downpour' && r.drawn, JSON.stringify(r));
+r = await G(async () => { const w = await import('/src/art/weather.js'); return [w.skyMode('clear', 'vale', true), w.skyMode('snow', 'ashen', false), w.skyMode('clear', 'underdeep', false)]; });
+check('fireflies in the Vale at night, ash falls in the Peaks, spores in the Underdeep', r.join() === 'fireflies,ash,spores', r.join());
+
 console.log(h.errors.slice(0, 5).join('\n'));
 check('no page errors', !h.errors.length, h.errors[0]);
 await h.close();

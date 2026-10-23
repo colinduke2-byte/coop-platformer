@@ -119,9 +119,10 @@ export const ambientMethods = {
     const g = this.auroraG; g.clear();
     if (S.weather !== 'aurora') return;
     this.auroraT += dt;
-    const t = this.auroraT, bands = [[8, 0.2, 22], [14, 0.14, 26], [15, 0.12, 18]];
+    // VX-15: lower (below the HUD bars, y ~20-60) and brighter than before, stepped through palette 15 / 8 / 14
+    const t = this.auroraT, bands = [[15, 0.3, 14], [8, 0.34, 18], [14, 0.26, 16]];
     bands.forEach(([col, a, hgt], i) => {
-      const base = 14 + i * 12;
+      const base = 24 + i * 11;
       for (let x = 0; x < W; x += 4) {
         const y = base + Math.sin(x * 0.03 + t * (0.5 + i * 0.2) + i * 2) * 9 + Math.sin(x * 0.07 - t * 0.8) * 3;
         g.fillStyle(C[col], a * (0.6 + 0.4 * Math.sin(x * 0.05 + t + i)));
