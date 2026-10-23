@@ -1,8 +1,13 @@
-// Gear upgrades, +1 to +10, in three material tiers. Pure maths and tables: no game state in here (see data/services.js for the smiths).
+// Gear upgrades, +1 to +10 (+12 in New Game+), in three material tiers. Pure maths and tables; the only game state read is the
+// NG+ cycle, for the Ascended levels (see data/services.js for the smiths).
+import { ngLevel } from './ngplus.js';
 //   weapons and bows: more damage (a percent of the item's own damage)
 //   body armour, helmets, shields: more armour / block (points)
 // Tier I (+1 to +3) is the village smith, tier II (+4 to +6) the Emberhold smith, tier III (+7 to +10) the Great Anvil. See docs/UPGRADE_PLAN.md.
 export const MAX_LEVEL = 10;
+// New Game+ (PR-17): the Great Anvil's Ascended tempers, +11 and +12, need a Winter's Echo (only NG+ bosses drop it).
+export const ASCENDED_MAX = 12;
+export const maxLevel = (ng = ngLevel()) => (ng > 0 ? ASCENDED_MAX : MAX_LEVEL);
 export const TIER_OF = (lv) => (lv <= 3 ? 1 : lv <= 6 ? 2 : 3);
 
 // What buying level `lv` (1..10) costs: gold, a material and how many, and an optional second material.
@@ -12,6 +17,7 @@ export const UPGRADE_COST = [
   { gold: 220, mat: 'ash_iron', n: 2 }, { gold: 300, mat: 'ash_iron', n: 3 }, { gold: 400, mat: 'ash_iron', n: 4 },
   { gold: 550, mat: 'ember_ore', n: 2 }, { gold: 700, mat: 'ember_ore', n: 3 },
   { gold: 900, mat: 'ember_ore', n: 4, mat2: 'heart_shard', n2: 1 }, { gold: 1200, mat: 'ember_ore', n: 5, mat2: 'heart_shard', n2: 1 },
+  { gold: 1800, mat: 'ember_ore', n: 6, mat2: 'winters_echo', n2: 1 }, { gold: 2500, mat: 'ember_ore', n: 8, mat2: 'winters_echo', n2: 2 },
 ];
 // The highest level each kind of smith can do.
 export const SMITH_CAP = { village: 3, emberhold: 6, anvil: 10 };
@@ -26,7 +32,7 @@ export function totalGain(kind, level) {
   const g = GAIN[kind];
   if (!g) return 0;
   let sum = 0;
-  for (let lv = 1; lv <= Math.min(MAX_LEVEL, Math.max(0, level | 0)); lv++) sum += g[TIER_OF(lv) - 1];
+  for (let lv = 1; lv <= Math.min(maxLevel(), Math.max(0, level | 0)); lv++) sum += g[TIER_OF(lv) - 1];
   return sum;
 }
 // The upgrade kind for an item type.

@@ -6,7 +6,7 @@ import { settings } from './settings.js';
 import { bus } from './bus.js';
 
 export const durOn = () => { const d = TUNE.difficulty[settings.difficulty]?.durability; return d === 'hard' ? settings.durabilityHard !== false : d == null ? !!settings.durability : d; };   // Easy: off, Hard: on, Normal: your option
-const BASE = { common: 60, magic: 80, rare: 100, legend: 140 };   // generated rarities (PR-07: was 'uncommon', which no item has)
+const BASE = { common: 60, magic: 80, rare: 100, legend: 140, mythic: 160 };   // generated rarities (PR-07: was 'uncommon', which no item has)
 export const durMax = (id) => { const it = ITEMS[id]; return it ? (BASE[it.rarity] || 70) + (S.upgrades?.[id] || 0) * 12 : 0; };
 export const durOf = (id) => (S.dur && S.dur[id] != null ? S.dur[id] : durMax(id));
 export const durShown = (id) => Math.ceil(durOf(id));            // bows and staves wear by fractions (PR-12)

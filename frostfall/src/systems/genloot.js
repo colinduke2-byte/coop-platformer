@@ -4,12 +4,15 @@
 import { ITEMS } from '../data/items.js';
 import { S, onStateReset } from './state.js';
 import { TUNE } from '../data/tuning.js';
+import { ngLevel, ngLootTiers } from './ngplus.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
   { id: 'magic', name: 'Magic', col: 15, affixes: 1, mult: 1.12, weight: 28 },
   { id: 'rare', name: 'Rare', col: 13, affixes: 2, mult: 1.25, weight: 11 },
   { id: 'legend', name: 'Legendary', col: 14, affixes: 3, mult: 1.45, weight: 3 },
+  // PR-17: New Game+ only (weight 0 until then): three affixes at full strength, the Legendary signature and a Mythic one
+  { id: 'mythic', name: 'Mythic', col: 12, affixes: 3, mult: 1.7, weight: 0, ngOnly: true },
 ];
 
 // slot -> base templates (stats at tier 0; they grow with tier)
@@ -73,7 +76,8 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
   // rarity: higher tiers shift odds upward
   let rar = forceRarity != null ? RARITY[forceRarity] : null;
   if (!rar) {
-    const ws = RARITY.map((r, i) => [r, r.weight * (i === 0 ? Math.max(0.3, 1 - 0.2 * tier) : 1 + 0.55 * tier * i)]);
+    const ng = opts.ng ?? ngLevel();
+    const ws = RARITY.map((r, i) => [r, (r.ngOnly ? TUNE.economy.ng.mythicWeight * ng : r.weight) * (i === 0 ? Math.max(0.3, 1 - 0.2 * tier) : 1 + 0.55 * tier * i)]);
     rar = pickW(ws, rnd());
   }
   const scale = 1 + 0.22 * tier, E = TUNE.economy.gen;
@@ -90,7 +94,7 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
   const pool = AFFIXES.filter((a) => a.slots.includes(slot));
   const used = [];
   const prefixes = [], suffixes = [];
-  const k = Math.min(E.affixTierCap, tier);
+  const k = Math.min(E.affixTierCap, tier) + (rar.id === 'mythic' ? 1 : 0);
   while (used.length < rar.affixes && pool.length) {
     const free = (a) => (a.pre ? !prefixes.length : !suffixes.length);
     const ok = pool.filter((a) => !(a.group && used.some((u) => u.group === a.group)));
@@ -103,12 +107,18 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
     if (free(a)) (a.pre ? prefixes : suffixes).push(a.pre || a.suf);
   }
   // PR-10: a Legendary carries a signature no fixed item has: one more socket (below), or (helmets and charms) +10 to every pool
-  if (rar.id === 'legend' && (slot === 'helmet' || slot === 'charm')) { for (const p of ['maxHp', 'maxMp', 'maxSp']) it[p] = (it[p] || 0) + E.legendPools; it.signature = `+${E.legendPools} HEALTH, MANA, STAMINA`; }
+  if ((rar.id === 'legend' || rar.id === 'mythic') && (slot === 'helmet' || slot === 'charm')) { for (const p of ['maxHp', 'maxMp', 'maxSp']) it[p] = (it[p] || 0) + E.legendPools; it.signature = `+${E.legendPools} HEALTH, MANA, STAMINA`; }
   it.affixLines = used.map((a) => a.line(it));
   it.name = `${prefixes[0] ? prefixes[0] + ' ' : ''}${it.name}${suffixes[0] ? ' ' + suffixes[0] : ''}`;
   if (slot === 'charm' && !prefixes.length) it.name = `${['Frost', 'Wolf', 'Raven', 'Ember', 'Oak'][Math.floor(rnd() * 5)]} ${it.name}`;
   it.value = Math.round(((it.dmg || 0) * 6 + (it.armor || 0) * 400 + (it.block || 0) * 120 + (it.maxHp || 0) + (it.maxMp || 0) + (it.maxSp || 0) + ((it.spellMul || 1) - 1) * 600 + 20) * (1 + used.length * 0.5));
-  if (rar.id === 'legend' && slot !== 'helmet' && slot !== 'charm') { it.sockets = (it.value >= 250 ? 2 : it.value >= 90 ? 1 : 0) + 1; it.signature = 'ONE MORE SOCKET'; }
+  if ((rar.id === 'legend' || rar.id === 'mythic') && slot !== 'helmet' && slot !== 'charm') { it.sockets = (it.value >= 250 ? 2 : it.value >= 90 ? 1 : 0) + 1; it.signature = 'ONE MORE SOCKET'; }
+  // the Mythic mark: what you carry out of another winter (+8% damage, armour, block or spell power on top)
+  if (rar.id === 'mythic') {
+    if (it.dmg) it.dmg = Math.round(it.dmg * 1.08); if (it.armor != null) it.armor = +(it.armor + 0.03).toFixed(2); if (it.block != null) it.block = +Math.min(0.9, it.block + 0.03).toFixed(2); if (it.spellMul) it.spellMul = +(it.spellMul * 1.08).toFixed(2);
+    it.signature = (it.signature ? it.signature + '. ' : '') + 'WINTERBORN';
+    it.value = Math.round(it.value * 1.3);
+  }
   it.icon = [it.icon[0], rar.id === 'common' ? it.icon[1] : rar.col];
   it.desc = describe(it);
   return it;
@@ -131,7 +141,7 @@ function describe(it) {
 
 // Create, register and return the id of a freshly generated item.
 export function makeGenItem(tier = 0, rnd = Math.random, forceRarity = null) {
-  const it = genItem(tier, rnd, forceRarity);
+  const it = genItem(tier + ngLootTiers(), rnd, forceRarity);         // PR-17: NG+ loot rolls higher tiers
   const id = `g_${Date.now().toString(36)}${(counter++).toString(36)}`;
   registerGen(id, it);
   return id;
@@ -162,6 +172,18 @@ export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) |
 
 const SLOT_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', shield: 'shield', helmet: 'helmet', armor: 'armor', charm: 'charm' };
 export const rarityIndex = (it) => Math.max(0, RARITY.findIndex((r) => r.id === it.rarity));
+// PR-26: raise a generated item one rarity in place (same id, slot, base and tier), re-rolling its affixes with the higher count.
+// Mythic only in New Game+. Returns false when it cannot go higher.
+export function ascendGen(id) {
+  const old = ITEMS[id];
+  if (!old || !old.gen) return false;
+  const next = rarityIndex(old) + 1;
+  if (next >= RARITY.length || (RARITY[next].ngOnly && !ngLevel())) return false;
+  const fresh = genItem(old.tier || 0, Math.random, next, { slot: old.slot || SLOT_OF_TYPE[old.type], baseName: old.baseName || old.name });
+  fresh.ascended = (old.ascended || 0) + 1; fresh.reforged = old.reforged || 0;
+  registerGen(id, fresh);
+  return true;
+}
 // Re-roll a generated item's stats and affixes in place (same id, slot, base, tier and rarity, so equipment stays equipped).
 export function reforgeGen(id) {
   const old = ITEMS[id];

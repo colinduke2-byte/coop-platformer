@@ -9,11 +9,12 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { ITEMS } from './items.js';
 import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
-import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines } from './services.js';
+import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines, ascendMenu } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
 import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
+import { maxLevel } from '../systems/upgrades.js';
 import { companionStory } from './companionquests.js';
 import { SETS, setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
@@ -302,15 +303,15 @@ export function masterTemper(slot) {
   const id = S.equip[slot]; if (!id) return 'none';
   const lv = S.upgrades[id] || 0;
   if (lv < 6) return 'early';
-  if (lv >= 10) return 'max';
+  if (lv >= maxLevel()) return 'max';
   if (rep('anvil') < 45) return 'locked';
-  return buyUpgrade(slot, 10);
+  return buyUpgrade(slot, maxLevel());
 }
 async function masterTemperMenu(who) {
   if (!S.flags.emberforged) { await say(who, 'The Great Anvil is still asleep. Wake it first.'); return; }
   if (rep('anvil') < 45) { await say(who, 'The Anvil Court does not trust you with the Great Anvil yet. Earn their trust first.'); return; }
   await say(who, 'Past +6 the metal needs the Anvil\'s own fire: Ember Ore, and a Heart Shard for the last two. Bring me what is worth tempering.');
-  await gearUpgradeMenu(who, 10);
+  await gearUpgradeMenu(who, maxLevel());
 }
 
 SCRIPTS.brannoch = async function brannoch() {
@@ -334,7 +335,7 @@ SCRIPTS.brannoch = async function brannoch() {
     else if (c === 1) await gearUpgradeMenu(N, 6);
     else if (c === 2) { const s = await choose(['Repair', 'Reforge', 'Back']); if (s === 0) await repairMenu(N); else if (s === 1) await reforgeMenu(N); }
     else if (c === 3) await enchantMenu(N);
-    else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); }
+    else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Ascend gear', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); else if (a === 2) { if (!S.flags.emberforged) await say(N, 'The Great Anvil is still asleep. Wake it first.'); else await ascendMenu(N); } }
     else return;
   }
 };

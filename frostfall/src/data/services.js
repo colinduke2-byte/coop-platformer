@@ -13,11 +13,12 @@ import { sfx } from '../audio/sfx.js';
 import { durOn, durOf, durShown, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
 import { noteSold } from './stock.js';
 import { sellPrice } from '../systems/prices.js';
-import { rarityIndex, reforgeGen } from '../systems/genloot.js';
+import { rarityIndex, reforgeGen, ascendGen, RARITY } from '../systems/genloot.js';
+import { ngLevel } from '../systems/ngplus.js';
 import { setOf } from '../systems/sets.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
-import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, kindOf, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
+import { maxLevel, UPGRADE_COST, UPGRADE_SLOTS, kindOf, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -201,7 +202,7 @@ export function buyUpgrade(slot, cap = 3) {
   if (!id || !slotKind(id)) return 'none';
   S.upgrades = S.upgrades || {};
   const lv = S.upgrades[id] || 0;
-  if (lv >= MAX_LEVEL) return 'max';
+  if (lv >= maxLevel()) return 'max';
   if (lv >= cap) return 'cap';
   const c = UPGRADE_COST[lv + 1];
   if (!costReady(c)) return 'short';
@@ -215,20 +216,20 @@ export async function upgradeMenu(who, slot, cap = 3) {
   if (!id || !slotKind(id)) { await say(who, 'You have nothing equipped there that I can improve.'); return; }
   S.upgrades = S.upgrades || {};
   const kind = slotKind(id);
-  if ((S.upgrades[id] || 0) >= MAX_LEVEL) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
+  if ((S.upgrades[id] || 0) >= maxLevel()) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
   if ((S.upgrades[id] || 0) >= cap) { await say(who, CAP_LINE[cap] || 'I cannot take it further.'); return; }
   await listScreen({
     title: 'FORGE: ' + (UPGRADE_SLOTS.find(([k]) => k === slot)?.[1] || 'GEAR'),
     hint: 'E UPGRADE   ESC DONE',
     rows: () => {
       const cur = S.upgrades[id] || 0;
-      if (cur >= MAX_LEVEL) return [{ id, name: ITEMS[id].name + ` +${MAX_LEVEL}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
+      if (cur >= maxLevel()) return [{ id, name: ITEMS[id].name + ` +${maxLevel()}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
       if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'FORGE LIMIT REACHED', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
         id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
         lines: [[gainBeforeAfter(kind, cur, kind === 'staff' ? ITEMS[id].spellMul ?? 1 : ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
-        desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
+        desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : c.mat2 === 'winters_echo' ? 'An Ascended temper. A Winter\'s Echo lingers where a boss falls in New Game+.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
       }];
     },
     onSelect: (i, ui) => {
@@ -427,6 +428,35 @@ export async function reforgeMenu(who) {
       if (S.gold < c.gold || count('iron_ingot') < c.ingots) { sfx.play('nostamina'); ui.say(`NEED ${c.gold} GOLD AND ${c.ingots} INGOT${c.ingots > 1 ? 'S' : ''}`, 11); return; }
       S.gold -= c.gold; removeItem('iron_ingot', c.ingots);
       reforgeGen(id); recalc(); sfx.play('upgrade'); ui.say('REFORGED: ' + ITEMS[id].name.toUpperCase(), 8);
+    },
+  });
+}
+
+// ---- PR-26: Ascend a generated item one rarity at the Great Anvil (Magic -> Rare -> Legendary, and Mythic in New Game+)
+export const ascendCost = (id) => { const nx = RARITY[rarityIndex(ITEMS[id]) + 1]; return nx ? TUNE.economy.ascend[nx.id] || null : null; };
+const ascendable = () => Object.keys(S.inv).filter((id) => ITEMS[id]?.gen && S.inv[id] > 0 && ascendCost(id) && rarityIndex(ITEMS[id]) >= 1 && (!RARITY[rarityIndex(ITEMS[id]) + 1].ngOnly || ngLevel() > 0));
+const costOk = (c) => Object.entries(c).every(([k, n]) => (k === 'gold' ? S.gold : count(k)) >= n);
+export function ascendItem(id) {
+  const c = ascendCost(id);
+  if (!c || !ascendable().includes(id)) return 'no';
+  if (!costOk(c)) return 'short';
+  for (const [k, n] of Object.entries(c)) if (k === 'gold') S.gold -= n; else removeItem(k, n);
+  ascendGen(id); recalc();
+  return 'ok';
+}
+export async function ascendMenu(who) {
+  if (!ascendable().length) { await say(who, 'The Anvil raises found gear a rank: Magic to Rare, Rare to Legendary. Bring me some.'); return; }
+  await listScreen({
+    title: 'ASCEND', hint: 'E ASCEND   ESC DONE',
+    rows: () => ascendable().map((id) => {
+      const c = ascendCost(id), ok = costOk(c), nx = RARITY[rarityIndex(ITEMS[id]) + 1];
+      return { id, name: ITEMS[id].name, tag: `${c.gold}G`, ok, tagCol: ok ? 13 : 11, sub: `TO ${nx.name.toUpperCase()}`, lines: [...Object.entries(c).filter(([k]) => k !== 'gold').map(([k, n]) => need(ITEMS[k].name.toUpperCase(), count(k), n)), need('GOLD', S.gold, c.gold), ...statLines(id)], desc: 'A higher rank and new affixes, rolled again. ' + (ITEMS[id].desc || '') };
+    }),
+    onSelect: (i, ui) => {
+      const id = ascendable()[i]; if (!id) return;
+      const r = ascendItem(id);
+      if (r !== 'ok') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
+      sfx.play('levelup'); ui.say('ASCENDED: ' + ITEMS[id].name.toUpperCase(), 14);
     },
   });
 }

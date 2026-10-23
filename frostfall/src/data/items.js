@@ -159,6 +159,11 @@ export const ITEMS = {
   trollbone_mace: { name: 'Trollbone Mace', type: 'weapon', style: 'mace', icon: ['mace_trollbone', 8], dmg: 27, costMul: 1.25, lifesteal: 0.05, value: 420, desc: 'Hilda\'s masterwork. Breaks guards, and drinks a little of what it spills.' },
   // Emberhold: ores, gems and Emberforged gear
   ash_iron: { name: 'Ash Iron', type: 'misc', bulk: true, icon: ['ingot', 3], value: 30, desc: 'Dark iron smelted from the Deep Mines. Emberforged gear starts here.' },
+  // Hollow Arena prizes (PR-24): best wave 10, 20 and 30. Found nowhere else.
+  arena_token: { name: "Victor's Token", type: 'charm', icon: ['charm_sun', 13], crit: 0.05, maxHp: 20, maxSp: 20, unique: true, value: 420, desc: 'Struck for those who outlast ten waves of the Hollow Arena. +5% crit, +20 health, +20 stamina.' },
+  arena_crown: { name: 'Crown of the Pit', type: 'helmet', weight: 'light', icon: ['helm_cap', 13], armor: 0.07, maxHp: 30, crit: 0.04, unique: true, value: 800, desc: 'Twenty waves, and the crowd stood up. Light. Absorbs 7%, +30 health, +4% crit.' },
+  champion_blade: { name: "Champion's Edge", type: 'weapon', icon: ['sword_nordic', 13], dmg: 44, crit: 0.08, sockets: 2, unique: true, value: 1500, desc: 'The arena keeps one blade for whoever survives thirty waves. Nobody had claimed it in a lifetime.' },
+  winters_echo: { name: "Winter's Echo", type: 'misc', icon: ['ore', 6], value: 300, desc: 'A breath of the Long Winter that never melted. Only in New Game+: the Great Anvil tempers past +10 with it.' },
   heart_shard: { name: 'Heart Shard', type: 'misc', icon: ['ore', 15], value: 150, desc: 'A sliver of a fallen guardian\'s heart, still cold. The Great Anvil needs one for each of the last two tempers.' },
   ember_ore: { name: 'Emberheart Ore', type: 'misc', bulk: true, icon: ['ore', 12], value: 80, desc: 'Ore that still holds a little of the first fire. Warm to the touch.' },
   kragnar_core: { name: "Kragnar's Core", type: 'misc', icon: ['ore', 13], value: 200, desc: 'The heart of the miner-king, still glowing. Master smiths pay dearly for it.' },

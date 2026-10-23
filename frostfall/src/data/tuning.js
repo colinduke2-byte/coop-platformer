@@ -311,6 +311,11 @@ export const TUNE = {
     gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.1, 0.12], staffMax: 1.9, legendPools: 10 },
     repair: { base: 0.2, perLevel: 0.08, valueDiv: 2000, valueCap: 0.8 },   // gold per point of wear (PR-12; was 0.15 + value / 400)
     wear: { bowShot: 0.5, staffCast: 0.25 },     // bows wear per shot, staves per spell cast (PR-12; melee: 1 per landed hit)
+    // New Game+ (PR-17): ordinary enemies' progress floor (floor[0] + floor[1] x (ng - 1)); bosses +bossHp / +bossDmg per cycle;
+    // generated loot +lootTiers per cycle; the Mythic rarity's weight per cycle (Legendary is 3)
+    ng: { floor: [0.5, 0.25], bossHp: 0.35, bossDmg: 0.12, lootTiers: 1, mythicWeight: 1.5 },
+    // the Great Anvil's Ascend (PR-26), by the rarity it goes TO: Rare, Legendary, Mythic (NG+ only)
+    ascend: { rare: { gold: 600, ember_ore: 2 }, legend: { gold: 1500, ember_ore: 3, heart_shard: 1 }, mythic: { gold: 3000, ember_ore: 5, winters_echo: 1 } },
     staffRubyPct: 0.015,
     xpNear: 180,               // area and utility spells pay skill XP only with an alerted enemy this close (px, PR-15)       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
   },
