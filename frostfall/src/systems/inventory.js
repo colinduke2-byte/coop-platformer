@@ -7,6 +7,7 @@ import { recalc, stats } from './stats.js';
 import { sfx } from '../audio/sfx.js';
 import { tip } from './tips.js';
 import { burden } from './burden.js';
+import { upMark } from './compare.js';
 
 export const count = (id) => S.inv[id] || 0;
 
@@ -16,7 +17,7 @@ const warnWeight = () => burden.invalidate();
 export function addItem(id, n = 1, quiet = false) {
   S.inv[id] = (S.inv[id] || 0) + n;
   (S.found ||= {})[id] = true;
-  if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}`, 6);
+  if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}${upMark(id)}`, 6);     // ▲ / ▼: better or worse than what you wear (PR-21)
   bus.emit('item:added', id, n);
   warnWeight();
 }

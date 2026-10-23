@@ -104,6 +104,20 @@ const el = await G(async (reset) => {
 }, reset);
 check('PR-13: weapons show which element they hit as; the target bar knows WEAK and RESISTS; enchants say what they do', Object.values(el).every(Boolean), JSON.stringify(el));
 
+// ---- PR-21: the comparison against what you wear
+const cmp = await G(async (reset) => {
+  eval(reset);
+  const S = window.__ff.S, C = await import('/src/systems/compare.js'), { addItem } = await import('/src/systems/inventory.js'), { bus } = await import('/src/systems/bus.js');
+  for (const id of ['iron_sword', 'steel_sword', 'ember_blade', 'rusty_sword']) S.inv[id] = 1;
+  S.equip.weapon = 'steel_sword'; S.upgrades = { steel_sword: 6 };
+  const better = C.upDown('ember_blade'), worse = C.upDown('rusty_sword'), worn = C.upDown('steel_sword');
+  const lines = C.compareLines('ember_blade');
+  let toast = ''; const off = (m) => { toast = m; }; bus.on('toast', off); addItem('nordic_blade', 1); bus.off('toast', off);
+  S.upgrades = {}; S.equip.weapon = null;
+  return { better: better === 1, worse: worse === -1, worn: worn === 0, crit: lines.some((l) => /^CRIT \+/.test(l)), elem: lines.includes('HITS AS FIRE'), sockets: lines.some((l) => /^SOCKETS/.test(l)), hint: lines.some((l) => /^AT \+6: DMG/.test(l)), set: lines.some((l) => /EMBERFORGED 1\//.test(l)), toast: /▲|▼/.test(toast), lines, t: toast };
+}, reset);
+check('PR-21: pack rows and pickups say better or worse; the pane lists crit, element, sockets, set and the upgrade hint', Object.values(cmp).every(Boolean), JSON.stringify(cmp));
+
 // @@MORE@@
 
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
