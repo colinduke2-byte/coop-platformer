@@ -5,7 +5,7 @@ import { perkById } from '../data/perks.js';
 
 export const MAX_LVL = 20;
 export const SKILL_DEFS = {
-  oneHanded: { name: 'One-Handed', short: '1H', perk: 'Sword damage +5%, swings cost 3% less stamina' },
+  oneHanded: { name: 'One-Handed', short: '1H', perk: 'Melee damage +5%, swings cost 3% less stamina' },
   archery: { name: 'Archery', short: 'ARC', perk: 'Arrow damage +5%, bow draws 5% faster' },
   destruction: { name: 'Destruction', short: 'DES', perk: 'Spell damage +5%, spells cost 3% less mana' },
   restoration: { name: 'Restoration', short: 'RES', perk: 'Healing +10%, wards absorb 12% more' },

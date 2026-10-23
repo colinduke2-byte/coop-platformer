@@ -12,6 +12,7 @@ import { lvl } from '../systems/skills.js';
 import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
 import { clearStatus } from '../systems/status.js';
+import { spellGear, spellCostGear } from '../systems/spellpower.js';
 
 // cost = mana. skill/lvl = unlock requirement.
 export const SPELLS = {
@@ -39,13 +40,13 @@ export const magicMethods = {
   // Spell strength: skill, the staff in hand (all spells, plus its favoured element) and its crit chance.
   spellPow() {
     const w = stats.weapon() || {};
-    let m = bonus.spell() * (w.spellMul ?? 1) * (w.elemMul?.[S.spell] ?? 1);
+    let m = bonus.spell() * spellGear(S.spell, w);
     if (w.spellCrit && Math.random() < w.spellCrit) { m *= 1.6; this.scene.fx.text(this.x, this.y - 22, 'SPELL CRIT', 15, 0.7); }
     return m;
   },
   spellCost(sp) {
     const w = stats.weapon() || {};
-    return sp.cost * (w.manaCostMul ?? 1) * (w.spellCost?.[S.spell] ?? 1) * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
+    return sp.cost * spellCostGear(S.spell, w) * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
   },
 
   quickCast() {
@@ -125,7 +126,7 @@ export const magicMethods = {
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0x5cc8d8); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xeaf2f8);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4, stun: 0.6 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4 + (S.perks.frostbite ? 2 : 0), stun: 0.6 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15); sc.fx.puff(e.x, e.y, 15, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
@@ -152,7 +153,7 @@ export const magicMethods = {
         for (const e of sc.enemies.getChildren()) {
           const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
           if (e.dead || along < 0 || along > LEN || across > W2 / 2) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3, stun: 0.35 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3 + (S.perks.frostbite ? 2 : 0), stun: 0.35 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15);
         }
         for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < LEN) sh.finish(); }

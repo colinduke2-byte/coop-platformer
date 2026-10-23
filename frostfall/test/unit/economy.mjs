@@ -48,5 +48,13 @@ t('PR-03: nothing in any shop can be bought and sold back at a profit, on any di
   assert.deepEqual(bad, []);
 });
 
+const SP = await import('../../src/systems/spellpower.js');
+t('PR-04: Emberforged Staff boosts Meteor and Ember Nova, the Long Winter boosts Glacier Spear; per-spell costs win', () => {
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  assert.ok(near(SP.spellGear('meteor', ITEMS.ember_staff), 1.3 * 1.3) && near(SP.spellGear('embernova', ITEMS.ember_staff), 1.69) && near(SP.spellGear('frost', ITEMS.ember_staff), 1.3));
+  assert.ok(near(SP.spellGear('glacier', ITEMS.winter_staff), ITEMS.winter_staff.spellMul * 1.1));
+  assert.ok(near(SP.spellCostGear('glacier', ITEMS.frostbirch_staff), 0.85) && near(SP.spellCostGear('embernova', ITEMS.cinder_staff), 0.85) && near(SP.spellCostGear('meteor', ITEMS.cinder_staff), 0.9) && near(SP.spellCostGear('sunbeam', ITEMS.cinder_staff), 0.85));
+});
+
 console.log(failed ? 'ECONOMY FAILED' : `ECONOMY PASSED (${n} tests)`);
 process.exit(failed ? 1 : 0);

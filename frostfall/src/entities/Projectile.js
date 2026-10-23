@@ -84,7 +84,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       if (this.hitSet?.has(e)) return;
       (this.hitSet ||= new Set()).add(e);
       const sneak = !e.alerted && pl.sneaking;
-      const mult = (sneak ? 2 + bonus.sneakAttack() * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
+      const mult = (sneak ? 2 + (bonus.sneakAttack() + (S.perks.backstab ? 0.5 : 0) + (S.perks.assassin ? 1 : 0)) * 0.5 : 1) * (S.perks.eagleeye && !e.alerted ? 1.25 : 1);
       const special = this.ammo;
       const crit = Math.random() < stats.bowCrit();
       const dealt = e.takeHit({
