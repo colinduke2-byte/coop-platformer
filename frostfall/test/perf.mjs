@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Performance budgets: CPU cost of the game update loop with a crowd, and scene object counts.
 // Also measured (with the same crowd): render time per frame, depth sorts per frame, and the JS allocation rate.
 // test/run.mjs runs this file alone, so the timings are not disturbed by other tests.

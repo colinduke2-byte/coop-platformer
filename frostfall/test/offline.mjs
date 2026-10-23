@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Published build: run tools/publish.mjs into a fresh temp dir (exactly what goes to GitHub Pages), serve it, play once so the
 // service worker caches it, go offline, reload: the game must still start. Also boots the artifact copy from file:// and
 // enters the Game scene, so a broken Phaser alias or bundle shows up here.

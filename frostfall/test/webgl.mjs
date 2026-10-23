@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Smoke test with the default (WebGL) renderer.
 const pw = await import('playwright').catch(() => import('/opt/node-tools/node_modules/playwright/index.mjs'));
 const { chromium } = pw;

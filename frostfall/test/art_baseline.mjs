@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Art regression: every generated character/creature sheet is hashed and compared with test/baseline/sprites.json.
 // An intentional art change: run with UPDATE=1 to refresh the baseline (and eyeball test/out/ sheets first).
 import fs from 'fs';

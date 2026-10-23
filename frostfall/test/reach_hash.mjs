@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Guards world generation: the Hollow Reach must come out identical for a given seed.
 // UPDATE=1 node test/reach_hash.mjs  rewrites test/baseline/reach.json after an intentional change.
 import fs from 'fs';

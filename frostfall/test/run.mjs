@@ -18,7 +18,16 @@ import { spawn } from 'node:child_process';
 import os from 'node:os';
 import fs from 'node:fs';
 
-const TESTS = ['unit/unit', 'unit/world', 'unit/power', 'unit/spacing', 'unit/reach', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8', 'stage9_death', 'stage10_polish', 'stage11_combat', 'stage12_progress', 'stage13_world', 'stage14_ux', 'stage15_controls', 'stage16_tutorial', 'stage17_ui', 'stage18_enemies', 'stage19_dungeon', 'stage20_home', 'stage21_companion', 'stage22_openworld', 'stage23_combat2', 'stage24_pad', 'stage25_maw', 'stage26_guardians', 'stage27_powers', 'stage28_poses', 'stage29_bestiary', 'stage30_dragon', 'stage31_life', 'stage32_arena', 'stage33_status', 'stage34_audio', 'stage35_polish', 'stage36_combat3', 'stage37_world4', 'stage38_items', 'stage39_story', 'stage40_replay', 'stage41_access', 'reach_hash', 'stage42_regions', 'stage43_emberhold', 'stage44_bigworld', 'stage45_chapter3', 'stage46_regions3', 'stage47_campaign', 'stage48_breadth', 'stage49_arena', 'stage50_arena2', 'monkey_arena', 'stage51_rotate', 'stage52_death', 'stage53_danger', 'stage54_pony', 'stage55_discovery', 'stage56_living', 'stage57_night', 'stage58_regions4', 'stage59_setpieces', 'stage60_builds', 'stage61_title', 'stage62_quests', 'stage63_sets', 'stage64_town', 'stage65_regions5', 'stage66_native', 'stage67_daggers', 'stage68_staves_halberds', 'stage69_gear_art', 'stage70_helmets', 'stage71_cast_exits', 'stage72_ng_confirm', 'stage73_unstick', 'stage74_scaling', 'stage75_upgrades', 'stage76_burden', 'stage77_expansion', 'stage78_quests', 'stage79_dialogue', 'stage80_refine', 'stage81_ui', 'stage82_pad_ui', 'stage83_saves', 'campaign_bot', 'offline', 'perf', 'stress_transitions', 'art_baseline', 'webgl'];
+// Test files are discovered, not listed (CH20): every test/stage*.mjs, every test/unit/*.mjs, and any other test/*.mjs whose
+// first lines carry the mark `@suite`. A new test is a new file; nothing here needs editing.
+const here0 = new URL('.', import.meta.url).pathname;
+const isSuite = (f) => { try { return fs.readFileSync(here0 + f, 'utf8').slice(0, 300).includes('@suite'); } catch { return false; } };
+const byNum = (a, b) => a.localeCompare(b, 'en', { numeric: true });
+const TESTS = [
+  ...fs.readdirSync(here0 + 'unit').filter((f) => f.endsWith('.mjs')).sort(byNum).map((f) => 'unit/' + f.slice(0, -4)),
+  ...fs.readdirSync(here0).filter((f) => /^stage\d.*\.mjs$/.test(f)).sort(byNum).map((f) => f.slice(0, -4)),
+  ...fs.readdirSync(here0).filter((f) => f.endsWith('.mjs') && !f.startsWith('stage') && isSuite(f)).sort(byNum).map((f) => f.slice(0, -4)),
+];
 // Long bots / soak runs: skipped by --fast (npm run test:fast), run in their own CI job.
 // (measured: campaign_bot ~15 min, stage79_dialogue fuzz ~3.5 min, monkey_arena ~2.5 min; everything else is under 1.5 min)
 const LONG = ['campaign_bot', 'stage79_dialogue', 'monkey_arena'];
@@ -31,12 +40,11 @@ const list = (v) => (typeof v === 'string' ? v.split(',').map((s) => s.trim()).f
 const jobs = Math.max(1, Number(args.jobs) || Math.max(2, Math.floor(os.cpus().length / 2)));
 const timeoutMin = Number(args.timeout) || 15;
 const only = list(args.only), skip = list(args.skip);
-// a listed file that does not exist (yet) on this branch is skipped, not counted as a failure
-let files = TESTS.filter((t) => fs.existsSync(new URL(`./${t}.mjs`, import.meta.url).pathname)).filter((t) => (!only.length || only.some((s) => t.includes(s))) && !skip.some((s) => t.includes(s)) && !(args.fast && LONG.includes(t)) && !(args.long && !LONG.includes(t)));
+let files = TESTS.filter((t) => (!only.length || only.some((s) => t.includes(s))) && !skip.some((s) => t.includes(s)) && !(args.fast && LONG.includes(t)) && !(args.long && !LONG.includes(t)));
 if (args.list) { console.log(files.join('\n')); process.exit(0); }
 if (!files.length) { console.log('no test files match'); process.exit(1); }
 
-const here = new URL('.', import.meta.url).pathname;
+const here = here0;
 const timingsFile = here + 'out/timings.json';
 let timings = {};
 try { timings = JSON.parse(fs.readFileSync(timingsFile, 'utf8')); } catch { /* first run */ }

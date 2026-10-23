@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Hammer scene changes while text, toasts and effects are in flight; any exception fails.
 import { launch, check, failCount } from './harness.mjs';
 const h = await launch();

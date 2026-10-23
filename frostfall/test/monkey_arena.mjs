@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Random-input soak of Arena Mode: every room, plus Boss Rush, must run without errors or broken state.
 import { launch, check, failCount } from './harness.mjs';
 const h = await launch();

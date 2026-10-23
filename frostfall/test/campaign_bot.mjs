@@ -1,3 +1,4 @@
+// @suite (test/run.mjs runs this file; stage*.mjs and unit/*.mjs are found without the mark)
 // Campaign bot: plays the opening of the real campaign with the real scripts and the real world, no quest flags faked.
 //   new game -> Elder Sigrid -> Bjorn's wolf hunt (the bot walks up to real wolves and fights them with the balance bot's
 //   fighting loop) -> back to Bjorn -> Mirra's herbs (picks real herbs) -> back to Mirra -> Hilda's shop.
