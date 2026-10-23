@@ -36,6 +36,10 @@ someone who could**: the player, found half buried on the north road, with no na
 - **Now**: Chapter 1 (the Frostheart), Chapter 2 (the five Hearts, the Winter Throne), Chapter 3 (the three seals of
   Emberhold, the Forge), then the last road: the Old Kingdom and the Crown of Memory.
 
+## The shout
+
+The shout's word is **HROM!**, the old tongue's word for a horn blast: the sound the Kings' heralds made to stop a battle. Use only this word for a shout; never borrow one.
+
 ## The player
 
 No name, no stated gender: write "they", "stranger", "Dreamer", "friend". Never "him/her", "lad", "gentleman".

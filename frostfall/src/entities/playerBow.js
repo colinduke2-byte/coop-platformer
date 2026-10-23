@@ -82,7 +82,7 @@ export const bowMethods = {
     const sc = this.scene;
     sc.fx.ring(this.x, this.y + 4, P.shout.radius / 32 * 1.05, 0.5, 'ring');
     sc.fx.ring(this.x, this.y + 4, P.shout.radius / 32 * 0.7, 0.4, 'ring', 0x5cc8d8);
-    sc.fx.text(this.x, this.y - 18, 'FUS!', 13, 1);
+    sc.fx.text(this.x, this.y - 18, 'HROM!', 13, 1);
     sc.shake(320, 0.014);
     sc.flashScreen(90);
     sc.noise(this.x, this.y, 150);
