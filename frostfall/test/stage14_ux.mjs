@@ -117,7 +117,7 @@ check('first alert shows the sneak tip', (await S('tips.sneak')) === true);
 await wait(1300);
 check('combat music layer switches on during a fight', (await G(() => window.__music.intensity())) === 1);
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); });
-await wait(1500);
+await wait(1500 + 5000 + 300);      // the drums are held TUNE.audio.combatHold (5 s) after the last fight tick (AU03)
 check('...and off afterwards', (await G(() => window.__music.intensity())) === 0);
 await G(() => { window.__ff.S.time = 22 * 60; });
 await wait(1500);
