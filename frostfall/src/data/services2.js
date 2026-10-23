@@ -12,6 +12,7 @@ import { getRegion } from './maps.js';
 import { regionOfMap } from './regions.js';
 import { fogDims } from '../scenes/menuMap.js';
 import { HIDDEN, placeName } from '../world/discovery.js';
+import { fadeOut, fadeIn, sleep } from '../systems/fade.js';
 
 const DIRS8 = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
 const gameScene = () => dialogue.hud?.scene?.get('Game');
@@ -71,15 +72,14 @@ export async function restRoom(who, price) {
   const g = gameScene();
   if (!pay(price)) { await say(who, 'Beds are not free, even in winter.'); return false; }
   if (!g) return true;
-  const cam = g.cameras.main;
-  await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); setTimeout(r, 1600); });   // the timer: a throttled tab may never send the fade event
+  await fadeOut(g, 900, [0, 0, 0], 1600);
   S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
   advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
   S.respawn = { map: g.mapId, x: Math.round(g.player.x), y: Math.round(g.player.y) };
   saveGame(g);
-  await new Promise((r) => setTimeout(r, 700));      // real time: the scene clock may be held by the open conversation
+  await sleep(g, 700);      // real time: the scene clock may be held by the open conversation
   bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
-  await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); setTimeout(r, 1600); });
+  await fadeIn(g, 900, [0, 0, 0], 1600);
   return true;
 }
 

@@ -18,6 +18,8 @@ await h.sleep(400);
 for (let i = 0; i < 6; i++) { await tap('KeyE', 40); await h.sleep(60); }     // read the notice, accept "Buy it"
 await G(async () => { await window.__dp; });
 check('cannot buy without enough gold', !(await G(() => window.__ff.S.flags.houseBought)));
+// the spare E taps above walked into the door again and opened a second notice; conversations now queue (CH6), so close it
+await G(async () => (await import('/src/systems/dialogue.js')).cancelScript());
 await G(() => { window.__ff.S.gold = 500; });
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); const d = g.interactables.find((i) => i.e && i.e.price); window.__dp = d.interact(); });
 await h.sleep(400);

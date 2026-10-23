@@ -21,6 +21,7 @@ import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
+import { fadeOut } from '../systems/fade.js';
 
 export const eventMethods = {
   // Companion and side-quest bookkeeping, twice a second at most.
@@ -157,8 +158,8 @@ export const eventMethods = {
     if (S.hp <= 0 || this.player?.statuses && Object.keys(this.player.statuses).some((k) => ['bleed', 'poison', 'burn'].includes(k))) { bus.emit('toast', 'NOT WHILE YOU ARE HURTING', 11); return false; }   // a bleed must not finish you off mid-journey
     this.leaving = true;
     const cam = this.cameras.main;
-    const after = (fn) => { let d = false; const go = () => { if (d) return; d = true; fn(); }; cam.once('camerafadeoutcomplete', go); setTimeout(go, 1100); };   // with a fallback timer
-    cam.fadeOut(350, 11, 14, 26);
+    const faded = fadeOut(this, 350, undefined, 1100);
+    const after = (fn) => faded.then(fn, () => {});
     // the journey takes time: the walk you skipped, at the clock's pace (2 game minutes per second walked)
     const tiles = f.map && f.map !== this.mapId ? 160 : Math.hypot(f.x - this.player.x, f.y - this.player.y) / 16, mins = Math.round(tiles / 4.5 * 2);
     advanceTime(mins); this.travelMins = mins;

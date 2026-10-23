@@ -3,6 +3,7 @@ import { ITEMS } from '../data/items.js';
 import { bus } from '../systems/bus.js';
 import { say, choose, runScript } from '../systems/dialogue.js';
 import { saveGame } from '../systems/save.js';
+import { fadeOut, fadeIn } from '../systems/fade.js';
 import { sfx } from '../audio/sfx.js';
 import Phaser from 'phaser';
 import { addItem } from '../systems/inventory.js';
@@ -50,7 +51,7 @@ export class RestSpot {
   }
   label() { return 'E: REST'; }
   async interact() {
-    const sc = this.scene, cam = sc.cameras.main;
+    const sc = this.scene;
     await runScript(async () => {
       const outdoors = sc.def.snow || sc.def.outdoors, h = (S.time % 1440) / 60, night = h >= 20.5 || h < 5.5;
       const opts = ['Rest by the fire'], acts = ['rest'];
@@ -62,15 +63,15 @@ export class RestSpot {
       if (act === 'cook') { await cookMenu(); return; }
       sfx.play('select');
       if (act === 'wait') {
-        await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); setTimeout(r, 1300); });
+        await fadeOut(sc, 600);
         const target = night ? 6 * 60 : 20.5 * 60;
         advanceTime(((target - S.time) % 1440 + 1440) % 1440 || 1440);
         await sc.delay(500);
         bus.emit('toast', night ? 'DAWN BREAKS' : 'DUSK GATHERS', 13);
-        await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); setTimeout(r, 1300); });
+        await fadeIn(sc, 600);
         return;
       }
-      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(600, 11, 14, 26); setTimeout(r, 1300); });
+      await fadeOut(sc, 600);
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       clearStatus(sc.player, 'rest');
       sc.player.invuln = 0.5;
@@ -79,7 +80,7 @@ export class RestSpot {
       saveGame(sc);
       bus.emit('toast', 'RESTED BY THE FIRE', 12);
       tip('rest');
-      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(600, 11, 14, 26); setTimeout(r, 1300); });
+      await fadeIn(sc, 600);
       sfx.play('potion');
       sc.fx.puff(sc.player.x, sc.player.y, 12, 8, 30, 0.6, -20);
     });
@@ -211,11 +212,11 @@ export class Bed {
   canInteract() { return !this.scene.enemies.getChildren().some((e) => e.alerted && !e.dead); }
   label() { return 'E: SLEEP'; }
   async interact() {
-    const sc = this.scene, cam = sc.cameras.main;
+    const sc = this.scene;
     await runScript(async () => {
       const c = await choose(['Sleep until morning', 'Cancel']);
       if (c !== 0) return;
-      await new Promise((r) => { cam.once('camerafadeoutcomplete', r); cam.fadeOut(900, 0, 0, 0); setTimeout(r, 1600); });
+      await fadeOut(sc, 900, [0, 0, 0]);
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       advanceTime(S.time >= 7 * 60 ? 1440 - S.time + 7 * 60 : 7 * 60 - S.time);
       S.respawn = { map: sc.mapId, x: Math.round(sc.player.x), y: Math.round(sc.player.y) };
@@ -223,7 +224,7 @@ export class Bed {
       await sc.delay(700);
       bus.emit('toast', 'YOU SLEPT WELL. GAME SAVED', 13);
       if (sc.mapId === 'cottage') { S.flags.restedUntil = S.playtime + 600; recalc(); bus.emit('toast', 'WELL RESTED: +25 MAX HEALTH FOR 10 MIN', 8); }
-      await new Promise((r) => { cam.once('camerafadeincomplete', r); cam.fadeIn(900, 0, 0, 0); setTimeout(r, 1600); });
+      await fadeIn(sc, 900, [0, 0, 0]);
     });
   }
 }

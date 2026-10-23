@@ -85,6 +85,7 @@ import '../data/sidequests.js';
 import { GATES, startChapter3 } from '../data/chapter3.js';
 import { tip } from '../systems/tips.js';
 import { cullScene, culled } from '../systems/perf.js';
+import { fadeOut, delay } from '../systems/fade.js';
 import { SPAWNERS, TICKERS, LISTENERS } from './gameHooks.js';
 import './gameSpawners.js';
 import './gameTickers.js';
@@ -437,17 +438,12 @@ export default class GameScene extends Phaser.Scene {
     this.leaving = true;
     sfx.play(sound);
     ui.hold('changeMap');                                    // released by the next create()
-    let done = false;
     const go = () => {
-      if (done) return; done = true;
-      if (!this.alive()) return;                              // quit to the title while fading
       S.map = to; S.spawn = spawn; S.x = S.y = null;
       saveGame(this, { auto: true });
       this.scene.restart({ map: to, spawn });
     };
-    this.cameras.main.fadeOut(280, 11, 14, 26);              // the timer below is a fallback if the fade event never arrives (throttled tab)
-    this.cameras.main.once('camerafadeoutcomplete', go);
-    setTimeout(go, 1200);
+    fadeOut(this, 280, undefined, 1200).then(go, () => {});  // (quit to the title while fading: nothing happens)
   }
 
   drawBars() {
@@ -477,18 +473,18 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  delay(ms) { return new Promise((r) => { this.time.delayedCall(ms, r); setTimeout(r, ms + 400); }); }   // the timer: a held scene clock must not stall a script
+  delay(ms) { return delay(this, ms); }   // scene time with a wall-clock fallback; rejects (Cancelled) if the scene shuts down
 
   async startIntro() {
     const pl = this.player;
     pl.mode = 'lying';
     pl.setPosition(pl.x, pl.y);
     this.cameras.main.fadeIn(1600, 0, 0, 0);
-    await this.delay(2400);
+    try { await this.delay(2400); } catch { return; }       // the scene was left during the intro
     if (!this.scene.isActive('Game')) return;
     sfx.play('select');
     pl.mode = 'free';
-    await this.delay(500);
+    try { await this.delay(500); } catch { return; }
     await runScript(introScript);
     bus.emit('hint', ['WASD MOVE  SPACE ROLL  C SNEAK  E TALK', 'J SWORD  K BOW  L SPELL  Q SWAP  R SHOUT'].map((l) => padHint(l)).join('\n'));
     const sigrid = this.npcs.find((n) => n.id === 'sigrid');
@@ -563,12 +559,7 @@ export default class GameScene extends Phaser.Scene {
   // Arena Mode: falling ends the run and shows the results card (nothing is saved).
   // Run `go` once, when the fade-out ends or, if that event never arrives (a throttled tab, a paused scene), after a short timer.
   afterFade(go) {
-    let done = false;
-    const once = () => { if (done) return; done = true; if (this.alive()) go(); };
-    if (!this.alive()) return;
-    this.cameras.main.fadeOut(500, 11, 14, 26);
-    this.cameras.main.once('camerafadeoutcomplete', once);
-    setTimeout(once, 1500);
+    fadeOut(this, 500, undefined, 1500).then(go, () => {});
   }
 
   // Arena Mode: falling ends the run and shows the results card (nothing is saved).
