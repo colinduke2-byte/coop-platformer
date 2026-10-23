@@ -133,11 +133,11 @@ export default class TitleScene extends Phaser.Scene {
   // that matter before the first fight. The full list lives in Pause > System.
   openOptions() {
     this.optMode = true; this.optSel = 0; this.warm = 4;
-    this.optRows = ['DIFFICULTY', 'CHALLENGE', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE', 'FLASHES', 'SCREEN SHAKE', 'REDUCE MOTION', 'SAVES & BUG REPORT'];
+    this.optRows = ['DIFFICULTY', 'CHALLENGE', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMB LVL', 'FULLSCREEN', 'LARGE UI', 'COLOUR MODE', 'FLASHES', 'SCREEN SHAKE', 'REDUCE MOTION', 'SAVES & BUG REPORT'];
     this.optBox = this.add.rectangle(W / 2, 89, 290, 160, 0x0b0e1a, 0.96);
     this.optHead = txt(this, 0, 14, 'OPTIONS', 13); this.optHead.x = Math.floor((W - this.optHead.width) / 2);
-    this.optTxt = this.optRows.map((r, i) => txt(this, 44, 26 + i * 10, r, 6));
-    this.optVal = this.optRows.map((r, i) => txt(this, 0, 26 + i * 10, '', 5));
+    this.optTxt = this.optRows.map((r, i) => txt(this, 44, 26 + i * 9, r, 6));
+    this.optVal = this.optRows.map((r, i) => txt(this, 0, 26 + i * 9, '', 5));
     this.optDesc = txt(this, 44, 148, '', 3);
     this.optFoot = txt(this, 0, 158, padHint('W/S MOVE   A/D ADJUST   ESC BACK'), 4); this.optFoot.x = Math.floor((W - this.optFoot.width) / 2);
     this.lift(this.optBox, this.optHead, this.optTxt, this.optVal, this.optDesc, this.optFoot);
@@ -149,7 +149,7 @@ export default class TitleScene extends Phaser.Scene {
     switch (r) {
       case 'DIFFICULTY': return [settings.difficulty.toUpperCase(), { easy: 8, normal: 5, hard: 11 }[settings.difficulty]];
       case 'CHALLENGE': return [settings.challenge ? MODS[settings.challenge].name.toUpperCase() : 'NONE', settings.challenge ? 11 : 4];
-      case 'VOLUME': return [lvl('volume') + '/10', 15]; case 'MUSIC LVL': return [lvl('musicVol') + '/10', 15]; case 'SFX LVL': return [lvl('sfxVol') + '/10', 15];
+      case 'VOLUME': return [lvl('volume') + '/10', 15]; case 'MUSIC LVL': return [lvl('musicVol') + '/10', 15]; case 'SFX LVL': return [lvl('sfxVol') + '/10', 15]; case 'AMB LVL': return [lvl('ambVol') + '/10', 15];
       case 'FULLSCREEN': return document.fullscreenEnabled === false ? ['NOT HERE', 3] : [document.fullscreenElement ? 'ON' : 'OFF', 4];
       case 'LARGE UI': return [settings.largeUi ? 'ON' : 'OFF', settings.largeUi ? 8 : 4];
       case 'COLOUR MODE': return [String(settings.cvd).toUpperCase(), settings.cvd === 'off' ? 4 : 8];
@@ -164,6 +164,7 @@ export default class TitleScene extends Phaser.Scene {
       case 'DIFFICULTY': return 'EASY / NORMAL / HARD. CHANGE IT ANY TIME IN PAUSE.';
       case 'CHALLENGE': return settings.challenge ? fit(MODS[settings.challenge].desc.toUpperCase(), 40) : 'AN OPTIONAL TWIST FOR THE NEXT NEW GAME.';
       case 'FULLSCREEN': return document.fullscreenEnabled === false ? 'NOT AVAILABLE HERE. ADD TO HOME SCREEN.' : '';
+      case 'AMB LVL': return 'WIND, WATER, BIRDS AND TOWN SOUNDS.';
       case 'LARGE UI': return 'BIGGER BARS AND NUMBERS ON THE HUD.';
       case 'COLOUR MODE': return 'COLOUR-BLIND FRIENDLY PALETTES.';
       case 'FLASHES': return 'SCREEN FLASHES AND THE LOW-HEALTH PULSE.';
@@ -187,6 +188,7 @@ export default class TitleScene extends Phaser.Scene {
     else if (r === 'VOLUME') setVolume(Math.round((settings.volume + dir * 0.1) * 10) / 10);
     else if (r === 'MUSIC LVL') setChannel('music', Math.round(((settings.musicVol ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'SFX LVL') setChannel('sfx', Math.round(((settings.sfxVol ?? 1) + dir * 0.1) * 10) / 10);
+    else if (r === 'AMB LVL') setChannel('amb', Math.round(((settings.ambVol ?? 1) + dir * 0.1) * 10) / 10);
     else if (r === 'FULLSCREEN') { if (document.fullscreenEnabled !== false) this.scale.toggleFullscreen(); }
     else if (r === 'LARGE UI') settings.largeUi = !settings.largeUi;
     else if (r === 'COLOUR MODE') { settings.cvd = CVD_MODES[(CVD_MODES.indexOf(settings.cvd) + dir + CVD_MODES.length) % CVD_MODES.length]; applyCvd(); }
