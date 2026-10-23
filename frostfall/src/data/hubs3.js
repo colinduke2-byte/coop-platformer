@@ -54,7 +54,7 @@ export function buildLanternfall() {
   g.set(34, 24, TILE.FIRE); g.add({ t: 'fire', x: 34, y: 24, rest: true, id: 'fallfire' }); g.add({ t: 'glow', x: 34, y: 24, r: 70, col: 12 });
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'underdeep', spawn: 'lanternfall', fx: 'door' });
-  g.add({ t: 'sign', x: 8, y: 24, text: ['LANTERNFALL.', 'THE LAST LANTERN OF THE DELVERS. IT HAS BURNED SINCE BEFORE THEY BUILT THE FIRST TUNNEL ABOVE.'] });
+  g.add({ t: 'sign', x: 8, y: 24, text: ['LANTERNFALL.', 'THE FIRST LANTERN OF THE DELVERS. IT HAS BURNED SINCE THE FIRST DELVERS CAME DOWN.'] });
   g.add({ t: 'sign', x: 39, y: 29, text: ['THE UNDERGROUND FERRY.', 'ORM TAKES PASSENGERS ACROSS THE BLACK WATER AND UP THE LONG STAIR TO EMBERHOLD. TWENTY GOLD, OR A GOOD STORY.'] });
   people(g, [['fall_foreman', 36, 20], ['fall_trader', 30, 28], ['fall_smith', 44, 28], ['fall_fungalist', 24, 33], ['fall_scout', 48, 20], ['fall_child', 32, 31], ['fall_watch', 12, 26], ['fall_tailor', 30, 32], ['fall_inn', 26, 13], ['fall_map', 46, 12], ['fall_ferry', 39, 31]]);
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 28, 'barrel']]) g.add({ t: 'pot', x, y, skin });

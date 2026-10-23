@@ -61,7 +61,7 @@ NPC_DEFS.glade_sage = { name: 'THE MOON-READER', tex: 'spr_shaman' };
 
 QUESTS.hartking = {
   title: 'The Hartking Wears the Wood', giver: 'Warden Ysolt',
-  desc: 'The Hartking was the forest\'s guardian before the glass took the trees. Now the glass wears him. Every winter his antlers grow, and more of the wood goes to crystal. Ysolt asks you to end it, one way or another.',
+  desc: 'The Hartking was the forest\'s guardian before the glass took the trees. Now the glass wears him. Every winter his antlers grow, and more of the wood goes to crystal. Ysolt asks you to climb the Hart Spire and set him free of it.',
   short: () => (S.flags.hartKingDead ? 'Tell Ysolt' : S.flags.hartspireEntered ? 'Defeat the Hartking' : 'Find the Hart Spire'),
   objectives: (q) => [
     { t: 'Find the Hart Spire in the Glasswood', done: !!S.flags.hartspireEntered || q.status === 'done' },
@@ -77,7 +77,7 @@ QUESTS.glimmers = {
 };
 QUESTS.bloom = {
   title: 'Glass Bloom for the Dew', giver: 'Orrel Dewkeeper',
-  desc: 'Glass bloom grows at the rim of glimmering pools, and Orrel brews a draught from it that keeps the wood from getting into your lungs. He needs five.',
+  desc: 'Glass bloom grows at the rim of glimmering pools, and Orrel brews a draught from it that lets the glass-dust pass through you. He needs five.',
   short: () => `Glass bloom ${Math.min(count('glass_bloom'), 5)}/5`,
   objectives: (q) => [{ t: `Gather glass bloom (${Math.min(count('glass_bloom'), 5)}/5)`, done: count('glass_bloom') >= 5 || q.status === 'done' }, { t: 'Bring them to Orrel', done: q.status === 'done' }],
 };
@@ -97,7 +97,7 @@ SCRIPTS.glade_warden = giver({
   intro: ['You came through the trees with your face intact. Good. They like faces here.', 'The Hartking was our guardian before the glass took the wood. He grew crystal on his antlers to hold the trees up, and the crystal grew back, and now the crystal wears him.', 'The Hart Spire is east, past the antler stones. Go up and end it. Take someone who can take a hit.'],
   yes: 'I will go.', go: 'Keep to the lantern roads. The wood hates the dark more than you do.',
   ready: () => !!S.flags.hartKingDead,
-  thanks: ['The trees are quiet. I do not know the last time I heard them quiet.'],
+  thanks: ['Look at the lantern by the gate: a moth. A soft one, not glass. The wood is breathing again.'],
   pay() { addGold(660); addItem('prism_mail'); addItem('prism_helm'); addItem('shardblade'); addItem('gem_topaz', 1, true); },
   idle: ['The glass remembers what it grew around. Mind what you leave lying.', 'The lanterns are lit by hand every dusk. We do not talk about the one at the end of the south road.', 'You are always welcome at the Glade. The trees may disagree.'],
 });
@@ -107,7 +107,7 @@ SCRIPTS.glade_smith = () => smithMenu('Tamsin', [{ id: 'iron_sword', price: 90, 
   cyc('tamsinN', ['I blow glass, and sometimes I forge. The glass is prettier. The forging pays.', 'Prism steel holds an edge for a week and a grudge for a year.', 'Do not drop my glass. I will know.']));
 SCRIPTS.glade_hunter = giver({
   who: 'Kestrel', id: 'glimmers', key: 'kestrelN',
-  intro: ['The glimmerkin are getting bold. Eight on the road last night, spitting light at my hounds. They never used to come this close.', 'Put out eight and I will make it worth the oil.'],
+  intro: ['The glimmerkin are getting bold. Eight on the road last night, spitting light at my hounds. They never used to come this close.', 'Put out eight and I will fill your lamp for a year.'],
   yes: 'I will thin them.', go: 'They flicker. Hit them when they stop flickering.',
   onStart(q) { q.base = S.kills.glimmerkin || 0; },
   ready: () => killsSince(S.quests.glimmers, 'glimmerkin') >= 8,
@@ -118,10 +118,10 @@ SCRIPTS.glade_hunter = giver({
 });
 SCRIPTS.glade_herbalist = giver({
   who: 'Orrel', id: 'bloom', key: 'orrelN',
-  intro: ['Glass bloom opens at the rim of the glimmering pools. Five blooms make a draught that keeps the shards out of your lungs.', 'The pools are fey places. Be polite.'],
+  intro: ['Glass bloom opens at the rim of the glimmering pools. Five blooms make a draught that lets the glass-dust pass through you instead of settling.', 'The pools are fey places. Be polite.'],
   yes: 'I will gather them.', go: 'Look for the pale blue ones. The yellow ones bite.',
   ready: () => count('glass_bloom') >= 5,
-  thanks: ['Five! Look at the veins: bright as a window. Here, take the draught I promised, and my thanks.'],
+  thanks: ['Five, and not one cracked. You carry glass better than most people carry eggs. The draught is yours.'],
   pay() { removeItem('glass_bloom', 5); addGold(190); addItem('hp_potion_g', 3, true); addItem('mp_potion_g', 2, true); },
   idle: ['I talk to the plants. The plants rarely answer. This is a mercy.', 'Dewdrop tea is for the brave. Or the thirsty.'],
 });
@@ -181,10 +181,10 @@ TARGETS.glowcaps = target('underdeep', 'glowcapgrove');
 
 SCRIPTS.fall_foreman = giver({
   who: 'Dagna', id: 'lodecolossus', key: 'dagnaN',
-  intro: ['A surface-walker. In my town. Sit. Eat. You look like someone who hits things.', 'Below Lanternfall there is a chasm of raw ore, and in the ore there is something that was never a man and never a stone. It eats the rock and the rock grows back wrong.', 'The Lode Chasm is east, past the weaver tunnels. Kill it, or the Delvers lose their last floor.'],
+  intro: ['A surface-walker. In my town. Pull up a crate. You look like someone who hits things.', 'Below Lanternfall there is a chasm of raw ore, and in the ore there is something that was never a man and never a stone. It eats the rock and the rock grows back wrong.', 'The Lode Chasm is east, past the weaver tunnels. Kill it, or the Delvers lose their last floor.'],
   yes: 'I will go down.', go: 'Take torches. The glowcaps lie, a little, about where the ground is.',
   ready: () => !!S.flags.lodeColossusDead,
-  thanks: ['The floor stopped humming. Do you hear that? That is silence. I had forgotten it.'],
+  thanks: ['The floor stopped humming. My crews are singing on the lift instead. Badly. I have never heard anything better.'],
   pay() { addGold(780); addItem('deep_plate'); addItem('deep_helm'); addItem('lode_pick'); addItem('deep_lamp'); addItem('gem_onyx', 1, true); addRep('delvers', 20); },
   idle: ['The Delvers do not retire. We go down until we are the tunnel.', 'The lamps burn glowcap oil now. It smells of old cellars and good decisions.', 'Lanternfall has never fallen. We are very careful with the word.'],
 });
@@ -247,7 +247,7 @@ NPC_DEFS.salt_bard = { name: 'THE SHANTY-MAN', tex: 'spr_keeper' };
 
 QUESTS.brinegut = {
   title: 'Captain Brinegut\'s Cargo', giver: 'Harbourmaster Vess',
-  desc: 'Captain Brinegut runs half the Coast\'s contraband out of Seaweed Cove, and the Harbour Watch cannot touch him without losing a hand of sailors. Vess wants the Cove closed, the Captain stopped, and his ledger brought back.',
+  desc: 'Captain Brinegut runs half the Coast\'s contraband out of Seaweed Cove, and the Harbour Watch cannot touch him without losing a hand of sailors. Vess wants the Cove closed and the Captain stopped.',
   short: () => (S.flags.brinegutDead ? 'Tell Vess' : S.flags.smugglercoveEntered ? 'Defeat Captain Brinegut' : 'Find Seaweed Cove'),
   objectives: (q) => [
     { t: 'Find Seaweed Cove on the Frozen Coast', done: !!S.flags.smugglercoveEntered || q.status === 'done' },
@@ -280,10 +280,10 @@ TARGETS.saltrun = target('coast', 'saltgate');
 
 SCRIPTS.salt_harbourmaster = giver({
   who: 'Vess', id: 'brinegut', key: 'vessN',
-  intro: ['Stay to the quays, stranger, and you will not need me.', 'Brinegut is a captain with a ship he never takes out. His crew works under the cliff, in a cove he calls a warehouse. Half the Coast\'s contraband goes through it.', 'Close it. Bring me his ledger and I will see the Guild pays what it should.'],
+  intro: ['Stay to the quays, stranger, and you will not need me.', 'Brinegut is a captain with a ship he never takes out. His crew works under the cliff, in a cove he calls a warehouse. Half the Coast\'s contraband goes through it.', 'Close it. Stop him, and I will see the Guild pays what it should.'],
   yes: 'I will close the Cove.', go: 'It is on the coast, under the cliff, east of here. The tide hides the door.',
   ready: () => !!S.flags.brinegutDead,
-  thanks: ['The Cove is quiet. Brinegut is the colour of the harbour water. That is what I wanted.'],
+  thanks: ['Brinegut is the colour of the harbour water, and three honest ships came in on this morning\'s tide. That is what I wanted.'],
   pay() { addGold(720); addItem('tide_blade'); addItem('tide_coat'); addItem('gem_sapphire', 1, true); addRep('tide', 30); },
   idle: ['Every ship that docks has paid. Every ship that does not will.', 'If you want rank in the Guild, talk to Anneke. If you want a drink, talk to Nell.'],
 });

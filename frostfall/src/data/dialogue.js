@@ -171,7 +171,7 @@ export async function bjorn() {
   }
   const tq = S.quests.trail;
   if (tq.status === 'ready') {
-    await say(BJORN, 'You did it. You actually did it. Frostbrow himself.');
+    await say(BJORN, 'Frostbrow himself. My grandfather would have walked to the Peaks to see this.');
     await say(BJORN, 'The antlers are a hundred winters old. I can make you a bow from that, or I can sell the antlers to Mirra\'s stranger friends for four hundred gold. Your kill, your pick.');
     const c = await choose(['Make me a bow.', 'Sell them. Gold is gold.']);
     if (c === 0) { addItem('antler_bow'); await say(BJORN, 'Come back in an hour and it will be strung. ...No, I lied. It is already strung. I started the moment you left.'); S.flags.trailBow = true; }
@@ -309,9 +309,9 @@ export async function ragna() {
     return;
   }
   if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
-    await say(R, 'You carry a Heart. I can smell the winter on it, and under that, Ironwatch.');
+    await say(R, 'You carry a Heart. I know that cold. I last felt it at the Ironwatch gate.');
     await say(R, 'I rode with the Company. Forty of us. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
-    const q = await choose(['I will take you to him. Free of charge.', 'I will think about it.']);
+    const q = await choose(['Come with me. We will find him together.', 'I will think about it.']);
     if (q === 0) {
       startQuest('company');
       S.gold += 0;
@@ -327,6 +327,14 @@ export async function ragna() {
   if (S.gold < 150) { sfx.play('nostamina'); await say(R, 'Come back with coin.'); return; }
   S.gold -= 150; setCompanion('ragna');
   await say(R, 'Lead on. I will keep to your heels and my arrows will keep to their throats.');
+}
+// The short name a person speaks under, from their sign name: "MARIT, THE LANTERN INN" -> MARIT, "ELDER SIGRID" -> SIGRID,
+// "PIM THE LAMP-SELLER" -> PIM; a group with no personal name keeps it whole ("HARBOUR WATCH").
+const TITLES = new Set(['ELDER', 'GUARD', 'CAPT.', 'CAPTAIN', 'WARDEN', 'WARDEN-MOTHER', 'SISTER', 'MOTHER', 'OLD', 'MATRIARCH', 'THE', 'KEEPER', 'FOREMAN', 'GUILDMASTER', 'HARBOURMASTER', 'SCOUT', 'SHAMAN', 'CHIEF']);
+export function speakerName(name) {
+  const words = String(name || '').split(',')[0].trim().split(/\s+/);
+  if (/^(WATCH|GUARD|TRADER)$/.test(words[words.length - 1]) && words.length === 2) return words.join(' ');
+  return words.find((w) => !TITLES.has(w)) || words[words.length - 1];
 }
 function cycleLine(key, lines) { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; }
 
@@ -372,7 +380,7 @@ export async function child() {
     } else {
       S.flags.houndKept = true;
       await say(C, '...Oh. Okay. He does look happy. Look after him? Please?');
-      await say(C, '(She wipes her nose on her sleeve and walks away very straight.)');
+      await say('', '(She wipes her nose on her sleeve and walks away very straight.)');
     }
     return;
   }
@@ -393,7 +401,7 @@ export async function child() {
     } else {
       S.flags.locketKind = false;
       await say(C, '...Oh. I understand. Everyone needs gold.');
-      await say(C, '(Her eyes are wet. You can sell the locket to Mirra when you like.)');
+      await say('', '(Her eyes are wet. You can sell the locket to Mirra when you like.)');
       lq.status = 'sell';
     }
     return;

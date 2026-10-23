@@ -34,7 +34,7 @@ NPC_DEFS.wick_watch = { name: 'LANTERN-WARDEN', tex: 'spr_guard' };
 
 QUESTS.miremother = {
   title: 'The Mire Mother Weeps', giver: 'Warden-Mother Ilse',
-  desc: 'The water has risen a hand every year since the Mire Mother began to weep. Reedwick is on its last boards. Ilse asks you to go down into the Sunken Barrow and end it, one way or another.',
+  desc: 'The water has risen a hand every year since the Mire Mother began to weep. Reedwick is on its last boards. Ilse asks you to go down into the Sunken Barrow and let the fen stop weeping.',
   short: () => (S.flags.mireMotherDead ? 'Tell Ilse' : S.flags.mirebarrowEntered ? 'Defeat the Mire Mother' : 'Find the Sunken Barrow'),
   objectives: (q) => [
     { t: 'Find the Sunken Barrow in the Weeping Fens', done: !!S.flags.mirebarrowEntered || q.status === 'done' },
@@ -61,7 +61,7 @@ TARGETS.orchids = () => { const p = poiOf('fens', 'peatfire'); return p ? { map:
 SCRIPTS.wick_elder = async function elder() {
   const N = 'Ilse', q = S.quests.miremother;
   if (q.status === 'active' && S.flags.mireMotherDead) {
-    await say(N, 'The boards are drying. Listen: no weeping. For the first time in my life, the fens are quiet.');
+    await say(N, 'The boards are drying. Listen: frogs. There have not been frogs in Reedwick since my mother was a girl.');
     addGold(520); addItem('peat_mail'); addItem('drowned_hook'); addItem('gem_emerald', 1, true); finishQuest('miremother'); return;
   }
   if (q.status === 'inactive') {
@@ -103,7 +103,7 @@ SCRIPTS.wick_herbalist = async function herbalist() {
 };
 SCRIPTS.wick_fisher = () => trade('Tolle', [{ id: 'raw_trout', price: 8 }, { id: 'grilled_trout', price: 16 }, { id: 'smoked_pike', price: 44 }, { id: 'hp_potion', price: 26 }],
   cyc('tolleN', ['Fish here have no eyes. They do not need them. Neither do I, in fog.', 'My father fished the Mire Mother\'s cradle-song out of the water once. I will not tell you the tune.']));
-SCRIPTS.wick_child = async function child() { await say('Lisbet', cyc('lisbetN', ['If you hear the bell, do not turn around. Not even to check. That is the rule.', 'I counted the lanterns. There are always one more than yesterday.', 'The wraiths are shy. They only come when you are sad.'])); };
+SCRIPTS.wick_child = async function child() { await say('Lisbet', cyc('lisbetN', ['If you hear the bell, do not turn around. Not even to check. That is the rule.', 'I counted the lanterns. There is always one more than yesterday.', 'The wraiths are shy. They only come when you are sad.'])); };
 SCRIPTS.wick_watch = async function watch() { await say('Lantern-Warden', cyc('wardenN', ['I keep the poles lit. If the lights go out, count to ten and run.', 'No weapons drawn on the boards. The boards are old and so are the grudges.', 'There is a rest-fire by the well. Use it; the watch will not mind.'])); };
 
 // ============================================================================ Skarn Hold (Stormcrown Highlands)
@@ -146,11 +146,11 @@ TARGETS.greytusk = () => { const p = poiOf('highlands', 'skarnhold'); return p ?
 SCRIPTS.skarn_chief = async function chief() {
   const N = 'Ulfar', q = S.quests.stormgiant;
   if (q.status === 'active' && S.flags.stormGiantDead) {
-    await say(N, 'Look up. Look up! The clouds are moving. I have not seen a cloud move since I was a boy.');
+    await say(N, 'Look up. Look up! The clouds are moving. No one in the Hold has ever seen a cloud move. Look!');
     addGold(640); addItem('clan_furs'); addItem('clan_skull'); addItem('giants_maul'); addItem('gem_sapphire', 1, true); finishQuest('stormgiant'); return;
   }
   if (q.status === 'inactive') {
-    await say(N, 'A stranger, walking in from the pass without lightning in her hair. Sit. Eat. Then listen.');
+    await say(N, 'A stranger who walked up the pass and kept the lightning out of their hair. Sit by the fire. Then listen.');
     await say(N, 'The Storm Giant keeps the storm. Why, nobody remembers. The Stormspire is in the north-east, where the cloud touches the ground. Break the giant and the storm may follow.');
     const c = await choose(['I will go.', 'Not yet.']);
     if (c === 0) { startQuest('stormgiant'); await say(N, 'Bring a shield and fire. And someone who does not mind being hit by clouds.'); }
@@ -175,7 +175,7 @@ SCRIPTS.skarn_shaman = async function shaman() {
 };
 SCRIPTS.skarn_herder = async function herder() {
   const N = 'Halldor', q = S.quests.greytusk;
-  if (q.status === 'active' && S.flags.rb_greytusk) { await say(N, 'You did it. You actually did it. The herd walks again. Take this, from all of us.'); addGold(380); addItem('hp_potion_g', 3, true); addItem('mammoth_tusk', 1, true); finishQuest('greytusk'); return; }
+  if (q.status === 'active' && S.flags.rb_greytusk) { await say(N, 'Greytusk is down, and the herd is already walking the high road. Take this, from all of us.'); addGold(380); addItem('hp_potion_g', 3, true); addItem('mammoth_tusk', 1, true); finishQuest('greytusk'); return; }
   if (q.status === 'inactive') {
     await say(N, 'Greytusk is on the roads again. Every year he gets bigger, and every year the Hold gets smaller. Slay him, and the herds can move.');
     const c = await choose(['I will hunt him.', 'Not today.']);
@@ -197,5 +197,5 @@ NPC_DEFS.skarn_inn = { name: 'GUDRUN OF THE LONGHOUSE', tex: 'spr_hilda' };
 NPC_DEFS.skarn_map = { name: 'KELDA THE WAYFINDER', tex: 'spr_scribe' };
 SCRIPTS.wick_inn = () => innMenu('Marit', { room: 22, meal: 12, news: 28, hello: cyc('maritN', ['The Lantern Inn: dry beds on stilts, soup that has never once been fish. Mostly.', 'No one has complained of the damp since we put the beds up a floor.']) });
 SCRIPTS.wick_map = () => cartographerMenu('Joss');
-SCRIPTS.skarn_inn = () => innMenu('Gudrun', { room: 25, meal: 14, news: 30, hello: cyc('gudrunN', ['The longhouse is warm and the mead is honest. The beds are for guests; the benches are for friends.', 'Sit. Eat. The storm has not stopped in a hundred years; it will not stop for you.']) });
+SCRIPTS.skarn_inn = () => innMenu('Gudrun', { room: 25, meal: 14, news: 30, hello: cyc('gudrunN', ['The longhouse is warm and the mead is honest. The beds are for guests; the benches are for friends.', 'Shake the hail off at the door. The storm has not stopped in a hundred years; it will not stop for you.']) });
 SCRIPTS.skarn_map = () => cartographerMenu('Kelda');

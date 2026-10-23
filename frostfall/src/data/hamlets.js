@@ -89,7 +89,7 @@ TARGETS.hollowking = () => { const p = poiOf('kingdom', 'sepulchre'); return p ?
 SCRIPTS.keeper = async function keeper() {
   const N = 'Maren', q = S.quests.admiral;
   if (q.status === 'active' && S.flags.admiralDead) {
-    await say(N, 'The bell has stopped. Listen. Do you hear it? No. Nothing. Oh, nothing at all. Thank you, stranger.');
+    await say(N, 'The bell has stopped. Listen: gulls. They have come back to the light. I had forgotten they were so rude. Thank you, stranger.');
     addGold(450); addItem('sealskin_mail'); addItem('gem_sapphire', 1, true); finishQuest('admiral'); return;
   }
   if (q.status === 'inactive') {

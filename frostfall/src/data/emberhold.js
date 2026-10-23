@@ -87,7 +87,7 @@ SCRIPTS.pell = async function pell() {
     const c = await choose(['Wait here in Emberhold', 'Keep following', 'Chat', 'Orders']);
     if (c === 3) { const { giveOrders } = await import('./dialogue.js'); await giveOrders(N); return; }
     if (c === 0) { setCompanion(null); await say(N, 'I will be at the Last Lantern. Whistle, and I will come running. Probably.'); }
-    else if (c === 2) { if (!(await companionStory(N))) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a gentleman.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.'])); }
+    else if (c === 2) { if (!(await companionStory(N))) await say(N, cyc('pellFN', ['I count steps. Forty-one since the last torch. Forty-two. This is how I stay calm.', 'Do I get a cut of the gold? I get a cut of the gold. Excellent. You are a saint.', 'Do not tell Orrin I left the shaft. Tell him I was scouting. Boldly.'])); }
     return;
   }
   if (S.quests.silence.status === 'done' || rep('delvers') >= 20) {
@@ -122,7 +122,7 @@ SCRIPTS.nessa = async function nessa() {
   if (!S.flags.nessaFed) { S.flags.nessaFed = true; S.hp = S.maxHp; bus.emit('toast', 'A WARM BOWL OF STEW', 8); }
 };
 SCRIPTS.varro = async function varro() {
-  await say('Varro', cyc('varroN', ['The pit is closed on holy days. Today is not a holy day. Today is a payday.', 'I fought forty bouts. Won thirty-nine. Do not ask about the fortieth.', 'The Hollow Arena in the village is mine too. Distant cousin. We both like the sound of a crowd.']));
+  await say('Varro', cyc('varroN', ['The pit is closed on holy days. Today is not a holy day. Today is a payday.', 'I fought forty bouts. Won thirty-nine. Do not ask about the fortieth.', 'The Hollow Arena in the village belongs to my cousin. Distant cousin. Loud family.']));
 };
 SCRIPTS.ketil = async function ketil() {
   const lines = [

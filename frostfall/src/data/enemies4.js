@@ -11,22 +11,22 @@ const loot = (gold, drops) => ({ gold, drops });
 Object.assign(ENEMIES, {
   // ======================================================================= the Embergreen Vale
   thornling: {
-    name: 'Thornling', tex: 'spr_spider', sideOnly: true, ambush: true, bark: 'wolf', weak: { fire: 1.8, frost: 0.9 }, hp: 50, speed: 34, chase: 80, dmg: 13, detect: 70,
+    name: 'Thornling', tex: 'spr_spider', sideOnly: true, ambush: true, bark: 'plant', weak: { fire: 1.8, frost: 0.9 }, hp: 50, speed: 34, chase: 80, dmg: 13, detect: 70,
     kind: 'lunge', range: 40, windup: 0.42, atkDur: 0.25, recover: 0.7, cooldown: 0.9, kbResist: 0.2, lunge: 165,
     body: [10, 8, 3, 7], loot: loot([8, 20], [['thornvine', 0.6], ['hide', 0.1], ['hp_potion', 0.1]]),
   },
   hornet: {
-    name: 'Meadow Hornet', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'wolf', weak: { fire: 1.5, frost: 1.2 }, hp: 14, speed: 58, chase: 118, dmg: 7, detect: 110,
+    name: 'Meadow Hornet', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'critter', weak: { fire: 1.5, frost: 1.2 }, hp: 14, speed: 58, chase: 118, dmg: 7, detect: 110,
     kind: 'lunge', range: 54, windup: 0.3, atkDur: 0.2, recover: 0.5, cooldown: 0.7, kbResist: 0, lunge: 230,
     body: [8, 6, 4, 6], loot: loot([1, 5], [['honeycomb', 0.2], ['stinger', 0.1]]),
   },
   blightbloom: {
-    name: 'Blightbloom', tex: 'spr_shroom', sideOnly: true, stationary: true, bark: 'undead', weak: { fire: 1.8, frost: 0.9 }, hp: 58, speed: 0, chase: 0, dmg: 14, detect: 104,
+    name: 'Blightbloom', tex: 'spr_shroom', sideOnly: true, stationary: true, bark: 'plant', weak: { fire: 1.8, frost: 0.9 }, hp: 58, speed: 0, chase: 0, dmg: 14, detect: 104,
     kind: 'cast', range: 110, keep: 0, zoneR: 20, zoneN: 3, zoneDelay: 0.95, windup: 0.8, atkDur: 0.1, recover: 0.6, cooldown: 2.4, kbResist: 0.9,
     body: [12, 8, 2, 7], loot: loot([8, 20], [['bloom_petal', 0.7], ['thornvine', 0.2]]),
   },
   dewsprite: {
-    name: 'Dew Sprite', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'undead', weak: { shock: 1.4, fire: 1.2 }, hp: 24, speed: 30, chase: 52, dmg: 8, detect: 108,
+    name: 'Dew Sprite', tex: 'spr_wisp', sideOnly: true, fly: true, bark: 'fey', weak: { shock: 1.4, fire: 1.2 }, hp: 24, speed: 30, chase: 52, dmg: 8, detect: 108,
     kind: 'cast', range: 104, keep: 72, zoneR: 14, zoneN: 1, zoneDelay: 0.8, windup: 0.8, atkDur: 0.1, recover: 0.7, cooldown: 2.6, kbResist: 0.1, heals: { every: 3, range: 100, pct: 0.1 },
     body: [8, 7, 4, 7], loot: loot([8, 18], [['dew_essence', 0.5], ['mp_potion', 0.2]]),
   },
@@ -36,28 +36,28 @@ Object.assign(ENEMIES, {
     body: [8, 7, 4, 9], loot: loot([14, 30], [['thornvine', 0.3], ['iron_ingot', 0.3], ['hp_potion', 0.25]]),
   },
   mosshulk: {
-    name: 'Mosshulk', tex: 'spr_golem', sideOnly: true, regenRate: 0.02, bark: 'undead', weak: { fire: 1.6, frost: 1.1, shock: 0.8 }, hp: 190, speed: 18, chase: 30, dmg: 28, detect: 66,
+    name: 'Mosshulk', tex: 'spr_golem', sideOnly: true, regenRate: 0.02, bark: 'plant', weak: { fire: 1.6, frost: 1.1, shock: 0.8 }, hp: 190, speed: 18, chase: 30, dmg: 28, detect: 66,
     kind: 'melee', range: 26, windup: 1.0, atkDur: 0.18, recover: 0.9, cooldown: 0.9, kbResist: 0.8, crush: true,
     body: [12, 9, 2, 7], loot: loot([22, 44], [['moss_heart', 0.4], ['iron_ingot', 0.4], ['hp_potion_g', 0.1]]),
   },
   // ======================================================================= the Sunscorch Reach
   sandburrower: {
-    name: 'Sand Burrower', tex: 'spr_worm', sideOnly: true, burrow: true, bark: 'wolf', weak: { frost: 1.3, shock: 1.1 }, hp: 74, speed: 40, chase: 86, dmg: 22, detect: 130,
+    name: 'Sand Burrower', tex: 'spr_worm', sideOnly: true, burrow: true, bark: 'beast', weak: { frost: 1.3, shock: 1.1 }, hp: 74, speed: 40, chase: 86, dmg: 22, detect: 130,
     kind: 'melee', range: 22, windup: 0.5, atkDur: 0.2, recover: 0.7, cooldown: 0.8, kbResist: 0.5,
     body: [12, 8, 2, 7], loot: loot([10, 22], [['sand_glass', 0.3], ['bone_dust', 0.4], ['stinger', 0.1]]),
   },
   scorpion: {
-    name: 'Sunscorch Scorpion', tex: 'spr_spider', sideOnly: true, bark: 'wolf', weak: { frost: 1.3, shock: 1.1 }, hp: 62, speed: 40, chase: 88, dmg: 17, detect: 86,
+    name: 'Sunscorch Scorpion', tex: 'spr_spider', sideOnly: true, bark: 'critter', weak: { frost: 1.3, shock: 1.1 }, hp: 62, speed: 40, chase: 88, dmg: 17, detect: 86,
     kind: 'lunge', range: 40, windup: 0.4, atkDur: 0.25, recover: 0.7, cooldown: 0.9, kbResist: 0.3, lunge: 185,
     body: [10, 7, 3, 8], loot: loot([8, 20], [['stinger', 0.6], ['bone_dust', 0.2]]),
   },
   dustdevil: {
-    name: 'Dust Devil', tex: 'spr_wisp', sideOnly: true, bark: 'wolf', weak: { frost: 1.3, shock: 1.2, fire: 0.8 }, hp: 42, speed: 44, chase: 100, dmg: 12, detect: 100,
+    name: 'Dust Devil', tex: 'spr_wisp', sideOnly: true, bark: 'construct', weak: { frost: 1.3, shock: 1.2, fire: 0.8 }, hp: 42, speed: 44, chase: 100, dmg: 12, detect: 100,
     kind: 'melee', range: 20, windup: 0.3, atkDur: 0.2, recover: 0.5, cooldown: 0.4, kbResist: 0.05,
     body: [10, 12, 3, 3], loot: loot([6, 16], [['dust_shard', 0.5], ['sand_glass', 0.1]]),
   },
   sunsentinel: {
-    name: 'Sun Sentinel', tex: 'spr_sunsentinel', scale: 1.35, armored: true, bark: 'undead', weak: { shock: 1.4, frost: 1.0, fire: 0.4 }, hp: 140, speed: 18, chase: 32, dmg: 28, detect: 70,
+    name: 'Sun Sentinel', tex: 'spr_sunsentinel', scale: 1.35, armored: true, bark: 'construct', weak: { shock: 1.4, frost: 1.0, fire: 0.4 }, hp: 140, speed: 18, chase: 32, dmg: 28, detect: 70,
     kind: 'melee', range: 26, windup: 0.95, atkDur: 0.18, recover: 0.9, cooldown: 0.9, kbResist: 0.8, crush: true,
     body: [8, 7, 4, 9], loot: loot([22, 44], [['sun_gold', 0.3], ['sand_glass', 0.3], ['iron_ingot', 0.3]]),
   },
@@ -84,13 +84,13 @@ Object.assign(ENEMIES, {
 
   // ======================================================================= bosses
   blightmother: {
-    name: 'The Blight Mother', title: 'THE BLIGHT MOTHER, KEEPER OF THE ROT', tex: 'spr_blightmother', bark: 'undead', weak: { fire: 1.6, shock: 1.1, frost: 0.8 },
+    name: 'The Blight Mother', title: 'THE BLIGHT MOTHER, KEEPER OF THE ROT', tex: 'spr_blightmother', bark: 'plant', weak: { fire: 1.6, shock: 1.1, frost: 0.8 },
     hp: 900, speed: 36, chase: 46, dmg: 24, detect: 9999,
     kind: 'boss', range: 42, windup: 0.7, atkDur: 0.2, recover: 0.7, cooldown: 0.9, kbResist: 0.96,
     body: [8, 7, 4, 9], loot: { gold: [380, 520], drops: [['blight_heart', 1], ['hp_potion_g', 1, [2, 2]], ['thornvine', 1, [4, 4]], ['bloom_petal', 1, [3, 3]]] },
   },
   vaultsovereign: {
-    name: 'The Vault Sovereign', title: 'THE VAULT SOVEREIGN, LAST OF THE SUN KINGS', tex: 'spr_vaultsovereign', bark: 'undead', weak: { shock: 1.3, frost: 1.0, fire: 0.5 },
+    name: 'The Vault Sovereign', title: 'THE VAULT SOVEREIGN, LAST OF THE SUN KINGS', tex: 'spr_vaultsovereign', bark: 'construct', weak: { shock: 1.3, frost: 1.0, fire: 0.5 },
     hp: 1150, speed: 36, chase: 46, dmg: 28, detect: 9999,
     kind: 'boss', range: 44, windup: 0.75, atkDur: 0.2, recover: 0.75, cooldown: 0.85, kbResist: 0.97,
     body: [8, 7, 4, 9], loot: { gold: [440, 600], drops: [['vault_seal', 1], ['hp_potion_g', 1, [2, 2]], ['sun_gold', 1, [4, 4]], ['sand_glass', 1, [3, 3]]] },

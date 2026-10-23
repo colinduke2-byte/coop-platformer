@@ -44,12 +44,20 @@ TARGETS.barrows3 = nearest(null, 'barrow'); TARGETS.denmother = nearest(null, 'd
 
 const OFFER = {
   hamlets: { when: () => S.quests.wolves.status === 'done', lines: ['The hamlets are not on any map I trust. Walk the rounds for me: a trapper, a fisher, a prospector. Say that Bjorn sent you.'], yes: 'I will walk the rounds.' },
-  denmother: { when: () => !!S.flags.grimfangDone, lines: ['Grimfang is down, and the dens are leaderless. Leaderless wolves are worse than led ones. Clear three dens across the Reach, and I will make it worth your while.'], yes: 'I will clear them.' },
+  denmother: { when: () => !!S.flags.grimfangDone, lines: ['Grimfang is down, and the dens are leaderless. Leaderless wolves are worse than led ones. Clear three dens across the Reach, and I will pay in silver.'], yes: 'I will clear them.' },
   circles: { when: () => heartsHeld() >= 1 && S.quests.king.status === 'done', lines: ['Dreamer. Something has been bothering me since the Heart. The old standing stones, where the roads cross. If they still bless, the Kings are not wholly gone. Pray at three of them for me.'], yes: 'I will pray at three.' },
   barrows3: { when: () => S.quests.herbs.status === 'done', lines: ['The barrows are waking, and what grows on the unquiet dead is the best remedy I know. Clear three barrows and I will brew you something that bites.'], yes: 'I will clear them.' },
   towerwatch: { when: () => S.quests.wolves.status === 'done', lines: ['The old watchtowers have been dark since before my father. Retake three of them and the Reach will have eyes again.'], yes: 'I will retake them.' },
 };
 const WHO = { hamlets: 'Bjorn', denmother: 'Bjorn', circles: 'Sigrid', barrows3: 'Mirra', towerwatch: 'Haldor' };
+// each giver says their own thank-you
+const THANKS = {
+  hamlets: 'Trapper, fisher, prospector, and you came back with all your fingers. The rounds are walked. This is yours.',
+  denmother: 'Three dens empty. The flocks can graze the high meadow again. Take this, and the shepherds\' thanks with it.',
+  circles: 'Three stones, and they still bless. Then the Kings are not wholly gone. I do not know yet whether that comforts me. Take this.',
+  barrows3: 'Grave-moss, and plenty. The unquiet dead make the best medicine; do not tell them. Here, as promised: it bites.',
+  towerwatch: 'Fires on three towers. I can see the whole Reach from the palisade tonight. Take this, watchman.',
+};
 
 // wrap the givers' scripts: a finished quest is reported first, then an offer, then the normal talk
 for (const giver of ['bjorn', 'sigrid', 'mirra', 'guard']) {
@@ -60,7 +68,7 @@ for (const giver of ['bjorn', 'sigrid', 'mirra', 'guard']) {
       if (d.giver !== giver) continue;
       const q = S.quests[id];
       if (q.status === 'active' && d.count() >= d.need) {
-        await say(WHO[id], 'You did it. All of it. Here, this is yours, and my thanks.');
+        await say(WHO[id], THANKS[id]);
         d.reward(); finishQuest(id); return;
       }
     }
