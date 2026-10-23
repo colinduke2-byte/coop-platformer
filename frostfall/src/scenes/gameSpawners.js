@@ -9,7 +9,6 @@ import { hash } from '../util.js';
 import { diff } from '../systems/difficulty.js';
 import { progress, eliteMul } from '../systems/enemyscale.js';
 import { modMul } from '../data/mods.js';
-import { tierAt } from '../world/worldgen.js';
 import { routePos } from '../world/roamers.js';
 import { hourOf, isNightHour } from '../world/lighting.js';
 import { TILE_DOOR, BOSS_CLASS, BOSS_FLAG } from '../world/sceneConsts.js';
@@ -39,7 +38,7 @@ registerSpawner('node', (sc, e, wx, wy) => {
   if (!sc.propBodies) sc.propBodies = sc.physics.add.staticGroup();
   sc.propBodies.add(nd);
 });
-registerSpawner('dig', (sc, e, wx, wy) => { const key = `${sc.mapId}:d${e._i}`; if (!isGone(key)) sc.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(sc, wx, wy, key, tierAt(e.x, e.y)) : new DigSpot(sc, wx, wy, key, tierAt(e.x, e.y))); });
+registerSpawner('dig', (sc, e, wx, wy) => { const key = `${sc.mapId}:d${e._i}`; if (!isGone(key)) sc.interactables.push(S.flags.treasure && !S.flags.treasure.done && S.flags.treasure.i === e._i ? new TreasureSpot(sc, wx, wy, key, sc.tierHere(e.x, e.y)) : new DigSpot(sc, wx, wy, key, sc.tierHere(e.x, e.y))); });
 registerSpawner('hound', (sc, e, wx, wy) => { if (!S.flags.houndOwned) sc.interactables.push(new WoundedHound(sc, wx, wy)); });
 registerSpawner('arenamaster', (sc, e, wx, wy) => { const am = new ArenaMaster(sc, wx, wy); sc.interactables.push(am); if (!sc.propBodies) sc.propBodies = sc.physics.add.staticGroup(); sc.propBodies.add(am); });
 registerSpawner('spring', (sc, e, wx, wy) => { const sp = new SoakSpot(sc, wx, wy); sc.interactables.push(sp); sc.springs = (sc.springs || []).concat(sp); });
@@ -50,7 +49,7 @@ registerSpawner('roamboss', (sc, e) => {
   const p = routePos(e.route, S.playtime || 0, e.phase || 0);
   sc.pend.push({ spec: { kind: e.kind, tier: e.tier, roamRoute: e.route, roamPhase: e.phase || 0, rid: e.id }, key, wx: p.x, wy: p.y, live: null, kind: e.kind });
 });
-registerSpawner('fish', (sc, e, wx, wy) => { sc.interactables.push(new FishHole(sc, wx, wy, tierAt(e.x, e.y))); });
+registerSpawner('fish', (sc, e, wx, wy) => { sc.interactables.push(new FishHole(sc, wx, wy, sc.tierHere(e.x, e.y))); });
 registerSpawner('shrine', (sc, e, wx, wy) => {
   const sh = new Shrine(sc, wx, wy, e.id);
   sc.interactables.push(sh);

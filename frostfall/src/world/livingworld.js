@@ -4,7 +4,8 @@ import { T } from '../config.js';
 import { S, onStateReset } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
-import { tierAt } from './worldgen.js';
+import { tierIn } from './worldgen.js';
+import { regionOfMap } from '../data/regions.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
 import { addItem } from '../systems/inventory.js';
@@ -62,9 +63,11 @@ onStateReset(() => { memory.bloodDay = null; });             // another save, an
 export const livingMethods = {
   get bloodDay() { return memory.bloodDay; },
   set bloodDay(v) { memory.bloodDay = v; },
+  // WQ1: the danger tier at a tile of the map you are on, by its own region's bands (x, y in tiles)
+  tierHere(x, y) { return tierIn(regionOfMap(this.mapId), x, y); },
   // Called when the random-event timer fires (replaces the old two-way choice).
   rollEvent() {
-    const r = Math.random(), tier = tierAt(this.player.x / T, this.player.y / T), night = this.isNight();   // CH4: the same night that later sends the Pale Merchant away
+    const r = Math.random(), tier = this.tierHere(this.player.x / T, this.player.y / T), night = this.isNight();   // CH4: the same night that later sends the Pale Merchant away
     if (night && isBlood() && this.bloodDay !== Math.floor(S.days)) return this.spawnBloodAlpha(tier);
     if (night && !this.ghostEvt && r < 0.2) return this.spawnGhostMerchant();
     if (r < 0.28) return this.spawnAmbush();
@@ -107,7 +110,7 @@ export const livingMethods = {
     this.npcs.push(npc); this.interactables.push(npc);
     if (!this.npcBodies) { this.npcBodies = this.physics.add.staticGroup(); this.physics.add.collider(this.player, this.npcBodies); }
     this.npcBodies.add(npc);
-    this.ghostEvt = { npc, tier: tierAt(p.x / T, p.y / T), life: 200, done: false };
+    this.ghostEvt = { npc, tier: this.tierHere(p.x / T, p.y / T), life: 200, done: false };
     bus.emit('toast', 'A PALE LIGHT FLICKERS NEARBY...', 13); sfx.play('quest');
   },
   removeGhostMerchant() {

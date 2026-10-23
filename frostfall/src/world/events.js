@@ -1,7 +1,6 @@
 // Quest beats, wandering world events, travel and the finale.
 // Mixed into GameScene (see the bottom of scenes/GameScene.js).
 import Phaser from 'phaser';
-import { tierAt } from '../world/worldgen.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { T } from '../config.js';
 import { ITEMS } from '../data/items.js';
@@ -68,7 +67,7 @@ export const eventMethods = {
     this.rollEvent();
   },
   spawnAmbush() {
-    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const tier = this.tierHere(this.player.x / T, this.player.y / T);
     const night = this.isNight();                      // the gameplay night (CH4), not how dark it looks
     const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : ['wolf', 'bandit', 'wolf', 'fencer'];
     const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
@@ -83,7 +82,7 @@ export const eventMethods = {
   },
   spawnTrader() {
     const p = this.freeSpotNear(80, 130); if (!p) return;
-    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const tier = this.tierHere(this.player.x / T, this.player.y / T);
     const npc = new Npc(this, p.x, p.y, 'trader');
     npc.home = { x: p.x, y: p.y };
     this.npcs.push(npc); this.interactables.push(npc);

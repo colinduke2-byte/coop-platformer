@@ -783,4 +783,7 @@ KINGDOM.extras = regionExtras({ start: KING_START, exitTo: 'ashen', exitSpawn: '
   sign: ['THE OLD KINGDOM.', 'THE ROAD WEST RETURNS TO THE ASHEN PEAKS. WHAT STANDS HERE WAS BUILT TO OUTLAST THE KINGS.'], roamers: [['lastknight', 'knight', 3, 2, 5]] });
 
 export const REGION_DEFS = { reach: REACH, ashen: ASHEN, coast: COAST, kingdom: KINGDOM };
+// WQ1: the danger tier at a tile of a region. Each region has its own bands (the Reach's formula, measured from the Reach's
+// entrance, never gets past tier 0-1 on a 260x190 map), so events, traders, digs and fishing ask this, not tierAt.
+export const tierIn = (regionId, x, y) => (REGION_DEFS[regionId]?.tierAt ?? tierAt)(x, y);
 
