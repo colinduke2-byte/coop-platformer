@@ -10,6 +10,7 @@ import { S } from '../systems/state.js';
 import { saveGame } from '../systems/save.js';
 import { finalChoice } from '../data/chapter3.js';
 import { winterOffer } from '../data/story.js';
+import { prompt } from '../systems/access.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
@@ -22,7 +23,6 @@ import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
-import { prompt } from '../systems/access.js';
 
 export const eventMethods = {
   // Companion and side-quest bookkeeping, twice a second at most.
