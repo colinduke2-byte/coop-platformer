@@ -34,10 +34,13 @@ export function removeItem(id, n = 1) {
   return true;
 }
 
-export function addGold(n) {
-  n = Math.round(n * stats.mul('goldMul') * modMul('goldMul'));
+// Every gold reward goes through here (CH14): gold find from gear (stats.goldFind) and the run's challenge modifiers apply,
+// unless { mul: false } (a flat payment). { quiet: true } skips the toast when the caller shows its own. Returns what was paid.
+export function addGold(n, { mul = true, quiet = false } = {}) {
+  n = Math.round(n * (mul ? stats.goldFind() * modMul('goldMul') : 1));
   S.gold += n;
-  bus.emit('toast', `+${n} GOLD`, 13);
+  if (!quiet) bus.emit('toast', `+${n} GOLD`, 13);
+  return n;
 }
 
 export function addArrows(n) {

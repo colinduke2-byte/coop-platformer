@@ -3,6 +3,7 @@
 // so they survive saving and loading.
 import { ITEMS } from '../data/items.js';
 import { S, onStateReset } from './state.js';
+import { TUNE } from '../data/tuning.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
@@ -56,7 +57,7 @@ const AFFIXES = [
   { id: 'ward', slots: ['armor', 'shield', 'helmet'], suf: 'of the Bear', apply: (it, k) => { if (it.armor != null) it.armor = +(it.armor + 0.04 + 0.02 * k).toFixed(2); else it.block = +Math.min(0.9, it.block + 0.06).toFixed(2); }, line: () => 'TOUGHER' },
   { id: 'shadow', slots: ['armor', 'charm', 'helmet'], suf: 'of Shadows', apply: (it) => { it.detectMul = 0.8; }, line: () => 'HARDER TO SPOT' },
   { id: 'steady', slots: ['shield'], pre: 'Steady', apply: (it) => { it.cost = +((it.cost || 1) * 0.8).toFixed(2); }, line: () => 'BLOCKING COSTS LESS' },
-  { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it) => { it.goldMul = 1.25; }, line: () => '+25% GOLD FOUND' },
+  { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it, k) => { it.goldMul = +(1 + TUNE.economy.plenty[0] + TUNE.economy.plenty[1] * k).toFixed(3); }, line: (it) => `+${Math.round((it.goldMul - 1) * 1000) / 10}% GOLD FOUND` },
 ];
 
 const pickW = (list, r) => { let t = list.reduce((a, [, w]) => a + w, 0) * r; for (const [v, w] of list) { t -= w; if (t <= 0) return v; } return list[0][0]; };
