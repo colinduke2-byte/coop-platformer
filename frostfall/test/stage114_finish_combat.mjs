@@ -77,7 +77,23 @@ check('VX-05: a weak hit is a bigger orange number, a resisted one a small grey 
 check('VX-05: with damage numbers off the WEAK word still shows', vx.offWords === 1, JSON.stringify(vx));
 await G(() => { const g = window.__ff.game.scene.getScene('Game'), fx = g.fx, p = g.player; fx.markNum(p.x - 30, p.y - 20, 'weak'); fx.text(p.x - 30, p.y - 30, '42', 12, 3); fx.markNum(p.x, p.y - 20, 'resist'); fx.text(p.x, p.y - 30, '7', 15, 3); fx.text(p.x + 30, p.y - 30, '18', 6, 3); });
 await h.frames(2); await h.shot('s114_numbers');
-//@@MORE@@
+// ---- the nemesis card is keyed by the nemesis id, not by a name another foe shares
+const card = async (killer) => {
+  await G((k) => {
+    const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, pl = g.player, hud = window.__ff.game.scene.getScene('Hud');
+    window.__nemOld = g.def.stream; g.def.stream = true; S.charLevel = Math.max(3, S.charLevel || 1);
+    const a = { kind: 'wolf', tier: 0, x: 5, y: 5, cfg: { name: 'Wolf' }, nemesis: k === 'nemesis' };
+    pl.noteKiller(a); pl.lastHitBy = 'Wolf'; hud.deadShown = false; window.__hp = S.hp; S.hp = 0;
+  }, killer);
+  await h.frames(3);
+  return G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, hud = window.__ff.game.scene.getScene('Hud'); const r = { text: hud.deadNem.text, kills: S.nemesis?.kills, id: S.nemesis?.id, mine: g.player.nemesisDeath }; S.hp = window.__hp; g.def.stream = window.__nemOld; return r; });
+};
+await G(() => { delete window.__ff.S.nemesis; });
+const n1 = await card('first'), n2 = await card('sameName'), n3 = await card('nemesis');
+await G(() => { delete window.__ff.S.nemesis; });
+check('nemesis: the first killer becomes it (with an id) and the card says it remembers you', !!n1.id && n1.mine === n1.id && /REMEMBERS YOU/.test(n1.text), JSON.stringify(n1));
+check('nemesis: another wolf with the same name does not feed it, and the card stays quiet', n2.kills === 1 && n2.mine === null && n2.text === '', JSON.stringify(n2));
+check('nemesis: the nemesis itself grows stronger, and the card says so', n3.kills === 2 && n3.mine === n1.id && /GROWS STRONGER \(2\)/.test(n3.text), JSON.stringify(n3));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'FINISH COMBAT FAILED' : 'FINISH COMBAT PASSED');

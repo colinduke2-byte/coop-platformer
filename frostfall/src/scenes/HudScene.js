@@ -520,7 +520,7 @@ export default class HudScene extends Phaser.Scene {
       const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * TUNE.economy.deathGoldKeep), r = S.respawn || { map: 'village' };
       const lines = [[this.deadWhy, by ? fit('SLAIN BY ' + String(by).toUpperCase(), 48) : 'YOU FELL'], [this.deadCost, S.quick ? '' : loss > 0 ? `YOU DROP ${loss} GOLD (10%)` : ''], [this.deadWake, S.quick ? 'THE RUN IS OVER' : fit('YOU WAKE AT ' + (r.x != null ? 'THE LAST BRAZIER IN ' : '') + (MAPS[r.map]?.name || 'THE VILLAGE').toUpperCase(), 48)]];
       // NP10: when the killer becomes (or feeds) your nemesis, the card says so
-      const nm = S.nemesis, nemNew = nm && !S.quick && by && String(by).toUpperCase() === String(nm.name || '').toUpperCase();
+      const nm = S.nemesis, nemNew = nm && !S.quick && !!nm.id && pl?.nemesisDeath === nm.id;      // keyed by the nemesis id, not its name
       lines.push([this.deadNem, nemNew ? fit(nm.kills > 1 ? `YOUR NEMESIS GROWS STRONGER (${nm.kills})` : `THE ${String(nm.name).toUpperCase()} REMEMBERS YOU. IT WILL WAIT, STRONGER.`, 52) : '']);
       for (const [t, v] of lines) { t.setText(v); t.x = Math.round((W - t.width) / 2); }
     } else if (!dead) this.deadShown = false;
