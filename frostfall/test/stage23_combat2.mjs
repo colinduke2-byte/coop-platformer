@@ -69,7 +69,10 @@ await G(async () => {
   window.__ff.S.inv[id] = 1; window.__ff.S.equip.weapon = id; window.__ff.S.hp = 50;
 });
 await dummy('draugr', 16);
+// crit chance is capped (TUNE.economy.critCap, 0.5): pin the roll low for this one blow so a crit is certain
+await G(() => { window.__rnd = Math.random; Math.random = () => 0.01; });
 await tap('KeyJ', 40); await wait(350);
+await G(() => { Math.random = window.__rnd; });
 check('gear lifesteal heals on hit', (await G(() => window.__ff.S.hp)) > 50);
 const crits = await G(() => window.__ff.game.scene.getScene('Game').fx.texts.some((t) => t.t.main && t.t.main.text === 'CRIT'));
 check('gear crit chance shows CRIT', crits);
