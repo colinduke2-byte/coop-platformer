@@ -1,5 +1,5 @@
 // Round 4: the world goes on without you. Extra wandering events (a wounded traveller, wolves hunting a deer,
-// raiders at a hamlet), plus camps that get reoccupied. Mixed into GameScene; hooked from worldEvents().
+// raiders at a hamlet). Cleared camps are retaken every few days (WQ15/WQ20: world/reoccupy.js). Mixed into GameScene; hooked from worldEvents().
 import { T } from '../config.js';
 import { S, onStateReset } from '../systems/state.js';
 import { bus } from '../systems/bus.js';

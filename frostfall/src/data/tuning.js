@@ -323,4 +323,7 @@ TUNE.world = {
   minor: { cairnSecs: 120, foxGold: 15 },
   // WQ18: a landmark's secret pays gold + perTier per tier (and a rare piece of gear for the bigger ones); a warming one lasts warmSecs
   secret: { gold: 90, perTier: 60, warmSecs: 300 },
+  // WQ20: every everyDays game days perRegion cleared places per region are retaken (crew one tier up and a lieutenant);
+  // clearing them again pays clearGold [base, per tier]; a hub board contract pays boardGold [base, per tier] on top
+  retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
 };

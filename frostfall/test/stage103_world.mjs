@@ -172,6 +172,24 @@ const sec = await G(async () => {
 });
 check('WQ18: the Reach\'s landmarks carry secrets; a riddle pays only for the right answer; fire thaws the Frozen Fall', sec.kinds.length >= 4 && (sec.wrong ?? 0) === 0 && (sec.right ?? 1) > 0 && (sec.thaw ?? 1) > 0, JSON.stringify(sec));
 
+// ---- WQ20: cleared camps are retaken every few days by a tougher crew with a named lieutenant; hub boards post them
+await G(async () => {
+  const S = window.__ff.S, M = await import('/src/data/maps.js');
+  const camp = M.getReach().pois.find((p) => p.kind === 'camp' && p.tier === 0) || M.getReach().pois.find((p) => p.kind === 'camp');
+  window.__camp = camp.id; S.bounty[camp.id] = true; S.flags.retakeDay = Math.floor(S.days || 0) - 10;
+  window.__ff.game.scene.getScene('Game').scene.restart({ map: 'forest', spawn: 'start' });
+});
+await h.sleep(2500);
+const ret = await G(async () => {
+  const S = window.__ff.S, R = await import('/src/world/reoccupy.js'), sc = window.__ff.game.scene.getScene('Game');
+  const held = R.retakenOn('forest'), r = held.find((x) => x.id === window.__camp) || held[0];
+  const crew = sc.pend.filter((p) => p.spec.camp === r?.id), lt = sc.pend.find((p) => p.key?.includes(':lt:'));
+  const board = R.boardOf('fens');
+  return { held: held.length, r, crewTier: crew.map((p) => p.spec.tier), base: (await import('/src/data/maps.js')).getReach().pois.find((p) => p.id === r?.id)?.tier, lt: lt?.spec.named, board: board.offers.length };
+});
+check('WQ20: a cleared camp is retaken: its crew is a tier tougher, with a named lieutenant', ret.held >= 1 && ret.crewTier.length > 0 && ret.crewTier.every((t) => t > ret.base || t === 3) && !!ret.lt, JSON.stringify(ret));
+check('WQ20: the Fens board (Reedwick) posts contracts for its region', ret.board > 0, JSON.stringify(ret));
+
 // ---- WQ3 / WQ19: weather belongs to its region
 const reachW = await G(async () => {
   const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');
@@ -197,6 +215,11 @@ for (const [map, allowed] of [['sunscorch', ['clear', 'sandstorm']], ['fens', ['
 }
 const sand = await G(() => window.__ff.game.scene.getScene('Game').stealthEnv());
 check('WQ19: a storm of the region hides you (stealth multiplier below 1)', sand < 1, String(sand));
+
+await h.open('scene=game&map=reedwick&spawn=entry&seed=8919');
+await h.sleep(1500);
+const hubBoard = await G(() => window.__ff.game.scene.getScene('Game').interactables.filter((i) => i.rid === 'fens' && i.label?.() === 'E: BOUNTY BOARD').length);
+check('WQ20: Reedwick has a bounty board for the Fens', hubBoard === 1, String(hubBoard));
 
 await h.close();
 console.log(failCount() ? 'STAGE 103 FAILED' : 'STAGE 103 PASSED');
