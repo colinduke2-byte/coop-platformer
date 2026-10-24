@@ -132,7 +132,8 @@ const chain = await G(async () => {
   bus.off('toast', on);
   return { before, after, ready: toasts.filter((t) => /QUEST READY/.test(t)) };
 });
-check('a met chain goal points the marker at the giver in Amberwell and says so once', chain.before === null && chain.after?.map === 'amberwell' && chain.ready.length === 1, JSON.stringify(chain));
+// before the goal is met the marker may point at the hunting ground (world's target lines), never at the giver
+check('a met chain goal points the marker at the giver in Amberwell and says so once', chain.before?.map !== 'amberwell' && chain.after?.map === 'amberwell' && chain.ready.length === 1, JSON.stringify(chain));
 
 // ---- dying twice: the second fall respawns too (the respawn flag used to survive the map reload, leaving you at 0 health for good)
 await G(() => { const S = window.__ff.S; S.flags.introDone = true; S.respawn = { map: 'village', spawn: 'start' }; for (const pk of window.gs().pickups.slice()) pk.collect?.(); });

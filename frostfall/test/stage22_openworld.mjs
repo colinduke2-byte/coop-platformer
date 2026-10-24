@@ -120,8 +120,9 @@ await h.sleep(300);
 check('an ambush surrounds you with alerted enemies', await G(() => window.__ff.game.scene.getScene('Game').enemies.getChildren().filter((e) => e.alerted).length >= 2));
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.getChildren().forEach((e) => e.destroy()); g.spawnTrader(); });
 await h.sleep(300);
-const tr = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { has: !!g.trader, wares: g.traderWares.length, gear: g.traderWares.filter((w) => w.id.startsWith('g_')).length, wp: !!window.__ff.S.flags.waypoint }; });
-check('a travelling trader appears with generated gear and a waypoint', tr.has && tr.gear === 3 && tr.wp, JSON.stringify(tr));
+const tr = await G(async () => {     // WQ6: the trader gets its own event marker, never the player's waypoint
+ const g = window.__ff.game.scene.getScene('Game'); return { has: !!g.trader, wares: g.traderWares.length, gear: g.traderWares.filter((w) => w.id.startsWith('g_')).length, wp: (await import('/src/world/questmarks.js')).eventMark()?.tag === 'trader' }; });
+check('a travelling trader appears with generated gear and its own event marker', tr.has && tr.gear === 3 && tr.wp, JSON.stringify(tr));
 await G(() => window.__ff.game.scene.getScene('Game').removeTrader());
 check('the trader can leave again', await G(() => !window.__ff.game.scene.getScene('Game').trader));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

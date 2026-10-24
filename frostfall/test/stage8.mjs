@@ -12,8 +12,9 @@ await h.open('');
 await G(() => localStorage.clear());
 await h.page.reload(); await h.page.waitForFunction(() => window.__ff && window.__ff.game.isBooted);
 await h.sleep(600);
-let t = await G(() => { const s = window.__ff.game.scene.getScene('Title'); return s && { sel: s.sel, off: s.items[1].off }; });
-check('title shows with Continue disabled when no save exists', t && t.off === true && t.sel === 0, JSON.stringify(t));
+// NP27: a first-time player gets NEW GAME (START HERE) first and no Continue entry at all
+let t = await G(() => { const s = window.__ff.game.scene.getScene('Title'); return s && { sel: s.sel, cont: s.items.some((i) => i.id === 'continue' && !i.off) }; });
+check('title shows without Continue when no save exists', t && t.cont === false && t.sel === 0, JSON.stringify(t));
 await h.shot('s8_title');
 
 // ---- new game -> play -> save via pause menu
@@ -78,8 +79,8 @@ check('all sound effects play without throwing', au > 15);
 // ---- title Continue works from a fresh page load
 await h.page.reload(); await h.page.waitForFunction(() => window.__ff && window.__ff.game.isBooted);
 await h.sleep(700);
-t = await G(() => { const s = window.__ff.game.scene.getScene('Title'); return s && { sel: s.sel, off: s.items[1].off }; });
-check('Continue is enabled after saving', t && t.off === false && t.sel === 1, JSON.stringify(t));
+t = await G(() => { const s = window.__ff.game.scene.getScene('Title'); return s && { sel: s.sel, id: s.items[1].id, off: !!s.items[1].off }; });
+check('Continue is enabled after saving', t && t.id === 'continue' && t.off === false && t.sel === 1, JSON.stringify(t));
 await tap('KeyE');
 await h.sleep(1200);
 const cont = await G(() => ({ map: window.__ff.S.map, gold: window.__ff.S.gold, sc: window.__ff.game.scene.getScenes(true).map((s) => s.scene.key) }));

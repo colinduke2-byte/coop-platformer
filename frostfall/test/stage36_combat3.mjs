@@ -135,7 +135,7 @@ check('a badly hurt bandit flees, then drinks a healing draught', await G(() => 
 await arena();
 const nem = await G(async () => {
   const g = window.gs(), p = g.player, S = window.__ff.S;
-  delete S.nemesis;
+  delete S.nemesis; S.charLevel = Math.max(S.charLevel || 1, 3);     // NP10: no nemesis below level 3
   const e = g.addEnemy('bear', p.x + 20, p.y); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0 };
   p.invuln = 0; p.iframes = 0; p.mode = 'free'; S.hp = 1; p.hurt(60, e.x, e.y, { attacker: e });
   const made = S.nemesis ? { kind: S.nemesis.kind, kills: S.nemesis.kills } : null;

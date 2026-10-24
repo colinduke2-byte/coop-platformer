@@ -1,7 +1,7 @@
 // Procedural barrow dungeons: a chain of rooms (fight, trap, treasure, mini-boss) generated from the run seed.
 // The layout and contents differ for every barrow and every new game.
 import { Grid } from '../data/mapkit.js';
-import { TILE } from '../config.js';
+import { TILE, SOLID_TILES } from '../config.js';
 import { rng } from './worldgen.js';
 import { dressSpecialRoom, runeCarving } from './roomkinds.js';
 
@@ -117,6 +117,8 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     return null;
   };
   const mid = rooms.filter((r, i) => i > 0 && r.kind !== 'boss' && r.kind !== 'trap');
+  // the first open floor cell of a room from its top-left corner (its corner can be pillar or wall), with no entity on it
+  const openCell = (r) => { for (let yy = r.y + 1; yy < r.y + r.h - 1; yy++) for (let xx = r.x + 1; xx < r.x + r.w - 1; xx++) if (!SOLID_TILES.includes(g.t[yy][xx]) && !ents.some((e) => e.x === xx && e.y === yy)) return { x: xx, y: yy }; return null; };
   const branchRoom = mid[0], keyRoom = rooms[rooms.length - 2], secretRoom = mid[mid.length - 1];
   if (branchRoom && keyRoom && keyRoom !== branchRoom && keyRoom.kind !== 'entry') {
     const a = alcove(branchRoom);
@@ -125,7 +127,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
       add({ t: 'chest', id: `bt${idx}_8`, x: a.ax + 1, y: branchRoom.cy, loot: [{ gen: tier + 1, rarity: 1 }, { gold: 50 + tier * 30 }, { item: 'hp_potion_g' }] });
       let kp = null;
       for (let yy = keyRoom.y + 1; yy < keyRoom.y + keyRoom.h - 1 && !kp; yy++) for (let xx = keyRoom.x + 1; xx < keyRoom.x + keyRoom.w - 1; xx++) if (g.t[yy][xx] === TILE.CFLOOR && !ents.some((e) => Math.abs(e.x - xx) < 2 && Math.abs(e.y - yy) < 2)) { kp = { x: xx, y: yy }; break; }
-      if (kp) { add({ t: 'chest', id: `bt${idx}_key`, x: kp.x, y: kp.y, loot: [{ item: 'delve_key' }, { gold: 20 + tier * 10 }] }); add({ t: 'sign', x: branchRoom.x + 1, y: branchRoom.y + 1, text: ['A BARRED SIDE DOOR.', 'THE KEY WENT DEEPER WITH THE LAST KEEPER. HE DID NOT COME BACK UP.'] }); }
+      if (kp) { add({ t: 'chest', id: `bt${idx}_key`, x: kp.x, y: kp.y, loot: [{ item: 'delve_key' }, { gold: 20 + tier * 10 }] }); const sp = openCell(branchRoom); if (sp) add({ t: 'sign', x: sp.x, y: sp.y, text: ['A BARRED SIDE DOOR.', 'THE KEY WENT DEEPER WITH THE LAST KEEPER. HE DID NOT COME BACK UP.'] }); }
       else { ents.splice(ents.findIndex((e) => e.t === 'keygate' && e.id.startsWith('bk_')), 1); }
     }
   }

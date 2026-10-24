@@ -171,7 +171,8 @@ await tap('KeyE'); await h.sleep(200);
 // ---------------- follower
 await G(() => { window.__ff.game.scene.getScene('Game').scene.restart({ map: 'forest', spawn: 'west' }); });
 await h.sleep(900);
-await G(() => { window.__ff.S.gold = 300; });
+// level 3: the newcomer's safe zone at the village exit (NP11) would push the test wolf out of the follower's reach
+await G(() => { window.__ff.S.gold = 300; window.__ff.S.charLevel = Math.max(window.__ff.S.charLevel || 1, 3); });
 await stub([0]);
 await G(async () => { await window.__dia.ragna(); });
 unstub();

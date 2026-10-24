@@ -481,7 +481,8 @@ export default class HudScene extends Phaser.Scene {
   // A fight is on when an alerted foe is close (or you are locked on); it lingers a moment so the hint does not jump about.
   inFight(pl, dt) {
     const gs = this.gs, R = TUNE.hud.fightR;
-    const now = !!pl && (!!pl.target || this.bossOn || gs.enemies.getChildren().some((e) => e.alerted && !e.dead && Math.abs(e.x - pl.x) < R && Math.abs(e.y - pl.y) < R));
+    const foes = gs.enemies?.children ? gs.enemies.getChildren() : [];      // the group is gone while the Game scene restarts
+    const now = !!pl && (!!pl.target || this.bossOn || foes.some((e) => e.alerted && !e.dead && Math.abs(e.x - pl.x) < R && Math.abs(e.y - pl.y) < R));
     this.fightT = now ? TUNE.hud.fightHold : Math.max(0, (this.fightT || 0) - dt);
     return this.fightT > 0;
   }
