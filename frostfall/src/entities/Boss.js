@@ -12,6 +12,7 @@ import { saveGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
 import Pickup from './Pickup.js';
 import { dangerMark } from './danger.js';
+import { planAttack, fireSig, afterFire, trackPlayer } from './bossMoves.js';
 
 // Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
@@ -87,6 +88,7 @@ export default class Boss extends Enemy {
     const d = dist(this.cx, this.cy, player.body.center.x, player.body.center.y);
     const to = norm(player.body.center.x - this.cx, player.body.center.y - this.cy);
     const slow = this.slowT > 0 ? 0.7 : 1;
+    trackPlayer(this, player, dt);
 
     switch (this.state) {
       case 'roar':
@@ -114,7 +116,7 @@ export default class Boss extends Enemy {
       case 'windup':
         b.setVelocity(0, 0);
         this.telegraphTick(dt, player);
-        if (this.stateT <= 0) this.fireAttack(player);
+        if (this.stateT <= 0) { this.fireAttack(player); afterFire(this, this.atk); }     // CB21: the last phase's rule
         break;
       case 'attack':
         if (this.isDash()) this.chargeTick(dt, player);
@@ -147,8 +149,11 @@ export default class Boss extends Enemy {
 
   pickAttack(d, to) {
     const opts = this.attackPool(d);
-    let a = opts[Math.floor(Math.random() * opts.length)];
-    if (a === this.lastAtk && Math.random() < 0.6) a = opts[Math.floor(Math.random() * opts.length)];
+    let a = planAttack(this, opts);                                  // CB21: a string, or the boss's signature
+    if (!a) {
+      a = opts[Math.floor(Math.random() * opts.length)];
+      if (a === this.lastAtk && Math.random() < 0.6) a = opts[Math.floor(Math.random() * opts.length)];
+    }
     this.lastAtk = a;
     this.atk = a;
     this.dir = { x: to.x, y: to.y };
@@ -163,12 +168,13 @@ export default class Boss extends Enemy {
   // CB7 / CB26 / CB28: each phase tightens the tell (phase 3 too, no longer back to phase 1's timing); Hard tightens it a
   // little more. A shortened tell never drops below the floor (melee moves keep a little more).
   windupFor(a) {
+    if (a === 'sig') return TUNE.combat.sig.windup;
     const BP = TUNE.combat.bossPhase, base = this.B[a].windup, ph = Math.min(3, this.bphase || 1);
     let w = base * BP.windup[ph - 1] * (settings.difficulty === 'hard' ? BP.hardWindup : 1);
     if (w < base) w = Math.max(w, Math.min(base, BP.MELEE.includes(a) && ph >= 2 ? BP.meleeFloor : BP.floor));
     return w;
   }
-  recoverFor(a) { return this.B[a].recover * TUNE.combat.bossPhase.recover[Math.min(3, this.bphase || 1) - 1]; }
+  recoverFor(a) { if (a === 'sig') return TUNE.combat.sig.recover; return this.B[a].recover * TUNE.combat.bossPhase.recover[Math.min(3, this.bphase || 1) - 1]; }
   // CB26: on Hard the second phase starts earlier
   get phase2At() { return settings.difficulty === 'hard' ? TUNE.combat.bossPhase.hardPhase2 : 0.5; }
 
@@ -186,8 +192,8 @@ export default class Boss extends Enemy {
       const len = this.B.charge.speed * this.B.charge.time;
       const img = sc.add.rectangle(this.cx + this.dir.x * len / 2, this.cy + this.dir.y * len / 2, len, 14, C[11], 0.25).setRotation(Math.atan2(this.dir.y, this.dir.x)).setDepth(5);
       this.tele.push(img);
-    } else if (a === 'nova') {
-      const rg = sc.add.image(this.cx, this.cy, 'ring').setTint(C[15]).setAlpha(0.8).setScale(0.3).setDepth(6);
+    } else if (a === 'nova' || a === 'sig') {
+      const rg = sc.add.image(this.cx, this.cy, 'ring').setTint(C[a === 'sig' ? 13 : 15]).setAlpha(0.8).setScale(0.3).setDepth(6);
       this.tele.push(rg);
     }
   }
@@ -197,7 +203,7 @@ export default class Boss extends Enemy {
     this.blink -= dt;
     if (this.blink <= 0) { this.blink = 0.08; this.blinkOn = !this.blinkOn; }
     for (const t of this.tele) {
-      if (t.texture?.key === 'ring' && this.atk === 'nova') t.setScale(0.3 + k * 2.2).setAlpha(0.9 - k * 0.5);
+      if (t.texture?.key === 'ring' && (this.atk === 'nova' || this.atk === 'sig')) t.setScale(0.3 + k * 2.2).setAlpha(0.9 - k * 0.5);
       else t.setAlpha((t.ringy || t.texture?.key === 'ring' ? 0.5 : 0.18) + k * 0.4);
     }
     // Tracking: volley/charge keep aiming until the last third
@@ -222,6 +228,7 @@ export default class Boss extends Enemy {
     const sc = this.scene, a = this.atk;
     this.clearTele();
     this.marker?.destroy(); this.marker = null;
+    if (a === 'sig') { fireSig(this, player); return; }
     this.setState('attack', 0.25);
     const pc = player.body.center;
     if (a === 'slam') {

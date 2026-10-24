@@ -327,6 +327,9 @@ TUNE.combat = {
   // CB22: late foes (progress f from systems/enemyscale.js): three attack slots past slotsAt, cooldown x(1 - cooldown*f),
   // a follow-up swing past followAt (chance rises to `follow` at f = 1), behaviour affixes past affixAt
   late: { slotsAt: 0.6, cooldown: 0.25, followAt: 0.4, follow: 0.35, followWind: 0.75, affixAt: 0.4, duelStun: 0.45 },
+  // CB21 / CB26: boss signatures (first use `first` s after the fight starts, then every `cd` s, from phase `fromPhase`;
+  // phase 1 on Hard), the chance that a pick starts a scripted string, and the phase-3 echo / trail burst delays
+  sig: { windup: 0.7, recover: 0.8, first: 7, cd: 13, fromPhase: 2, string: 0.25, stringHard: 0.4, echo: 0.5, trail: 0.7, pull: 150 },
   great: { charge: [0.45, 0.9], hold: 0.6, mult: [1, 1.35, 1.75], move: 0.3 },     // CB24: hold heavy to charge (seconds per level, damage per level)
   axe: { keep: 2.5, maxStacks: 5, bleedT: 4, dpsPerStack: 1.5 },                   // CB24: axe blows on one foe stack its bleeding          // CB6: arrows and bolts bend toward a foe this many degrees off your facing
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
