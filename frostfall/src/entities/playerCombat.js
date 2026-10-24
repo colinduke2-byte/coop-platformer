@@ -24,6 +24,7 @@ import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
 import { classMix } from '../systems/burden.js';
 import Projectile from './Projectile.js';
+import { diff } from '../systems/difficulty.js';
 import { startWarp } from './bulletTime.js';
 const P = TUNE.player;
 const nemesisId = () => 'nem_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
@@ -324,7 +325,7 @@ export const combatMethods = {
       }
     }
 
-    let taken = damageTaken(incoming, stats.armor(), TUNE.difficulty[settings.difficulty].dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1) * elixirVal('takenMul', 1) * modMul('takenMul'));
+    let taken = damageTaken(incoming, stats.armor(), diff().dmgTaken * bl('takenMul', 1) * (1 + 0.06 * (S.ngPlus || 0)) * (this.statuses ? statusMods(this).takenMul : 1) * elixirVal('takenMul', 1) * modMul('takenMul'));
 
     // ---- ward absorbs first
     if (this.ward && this.ward.hp > 0) {

@@ -20,6 +20,7 @@ import { magicMethods } from './playerMagic.js';
 import { combatMethods } from './playerCombat.js';
 import { bowMethods } from './playerBow.js';
 import { settings } from '../systems/settings.js';
+import { diff } from '../systems/difficulty.js';
 import { burden, classMix } from '../systems/burden.js';
 
 // Feel numbers live in data/tuning.js
@@ -333,7 +334,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const sc = this.scene;
     if (sc.t - this.lastHurt < 6) return;
     if (sc.enemies.getChildren().some((e) => e.alerted && !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < 170)) return;
-    S.hp = Math.min(S.maxHp, S.hp + 0.6 * TUNE.difficulty[settings.difficulty].regen * (S.perks.hardy ? 1.8 : 1) * dt);
+    S.hp = Math.min(S.maxHp, S.hp + 0.6 * diff().regen * (S.perks.hardy ? 1.8 : 1) * dt);
   }
 
   heal(n) { S.hp = Math.min(S.maxHp, S.hp + n); }

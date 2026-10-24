@@ -50,7 +50,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     } else this.body.setSize(bw, bh).setOffset(ox, oy);
     this.shadow = scene.add.image(x, y, 'shadow');
     const regular = !cfg.title && !cfg.passive && cfg.kind !== 'boss';
-    this.maxHp = Math.round(cfg.hp * TUNE.difficulty[settings.difficulty].enemyHp * (regular ? TUNE.mobs.hp : 1));
+    this.maxHp = Math.round(cfg.hp * diff().enemyHp * (regular ? TUNE.mobs.hp : 1));
     if (regular) this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * TUNE.mobs.dmg) };
     this.tier = spec.tier || 0;
     this.poise = 0;

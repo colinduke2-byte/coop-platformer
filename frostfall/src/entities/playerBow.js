@@ -13,6 +13,7 @@ import { tip } from '../systems/tips.js';
 import { wear } from '../systems/durability.js';
 import { ITEMS } from '../data/items.js';
 import { currentShout } from '../systems/shouts.js';
+import { arrowDamage } from '../systems/damage.js';
 import { TUNE } from '../data/tuning.js';
 const P = TUNE.player;
 
@@ -60,7 +61,9 @@ export const bowMethods = {
     if (ammo === 'arrow') S.arrows--; else { S.inv[ammo]--; if (S.inv[ammo] <= 0) delete S.inv[ammo]; }
     wear(S.equip.bow, TUNE.economy.wear.bowShot);            // PR-12: bows share the durability sink
     const sp = X ? X.speed : P.bow.speedMin + (P.bow.speedMax - P.bow.speedMin) * charge01;
-    const dmg = stats.bowDmg() * (X ? X.dmgMul : P.bow.dmgMin + (P.bow.dmgMax - P.bow.dmgMin) * charge01) * bonus.arrow() * (charge01 >= 1 && S.perks.deadeye ? 1.35 : 1) * (charge01 >= 1 && S.perks.longshot ? 1.2 : 1);
+    // CH15: one arrow formula (systems/damage.js); a crossbow bolt has a fixed multiplier instead of a charge curve
+    const full = charge01 >= 1, perk = (full && S.perks.deadeye ? 1.35 : 1) * (full && S.perks.longshot ? 1.2 : 1);
+    const dmg = arrowDamage({ bow: stats.bowDmg(), charge: charge01, skill: bonus.arrow(), perk, dmgMin: X ? X.dmgMul : P.bow.dmgMin, dmgMax: X ? X.dmgMul : P.bow.dmgMax });
     const f = this.aimVec();
     const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, 'arrow', f.x * sp, f.y * sp, { dmg, charge: charge01, life: 0.4 + 0.5 * charge01 + 0.5, ammo, pierce: X ? X.pierce : 0 });
     if (X) this.xbowT = X.reload;
