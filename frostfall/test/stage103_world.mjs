@@ -79,6 +79,17 @@ const way = await G(async () => {
 });
 check('WQ8: from the village, "Tell Ilse" leads to the Reach, then the Fen Road, then the Reedwick gate', way.a === 'forest' && way.b === 'fens' && way.c === 'reedwick', JSON.stringify(way));
 
+// ---- WQ10: hamlets outside the Reach have their own people
+const folk = await G(async () => {
+  const M = await import('/src/data/maps.js'), D = await import('/src/data/dialogue.js'), out = {};
+  for (const rid of ['ashen', 'fens', 'highlands', 'glasswood', 'vale', 'kingdom']) {
+    const ids = M.getRegion(rid).entities.filter((e) => e.t === 'npc' && /^hf_|^(trapper|fisher|prospector)$/.test(e.id)).map((e) => e.id);
+    out[rid] = ids.map((id) => id + (D.NPC_DEFS[id] && typeof D.SCRIPTS[id] === 'function' ? '' : '!'));
+  }
+  return out;
+});
+check('WQ10: hamlets outside the Reach have their own folk with a name and a script', Object.values(folk).flat().every((x) => x.startsWith('hf_') && !x.endsWith('!')) && Object.values(folk).flat().length >= 5, JSON.stringify(folk));
+
 // ---- WQ6: a random event marks itself, and never touches the player's waypoint
 await h.open('scene=game&map=forest&spawn=start&seed=8919');
 await h.sleep(1500);

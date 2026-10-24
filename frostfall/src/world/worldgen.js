@@ -7,6 +7,7 @@ import { TILE, SOLID_TILES } from '../config.js';
 const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 import { buildLoop, trackSpots } from './roamers.js';
+import { hamletFolk } from './hamletfolk.js';
 
 export const REACH_W = 540;
 export const REACH_H = 378;
@@ -339,13 +340,14 @@ export function buildRegion(def, region, seed) {
       add({ t: 'lore', id: 'court' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'hamlet') {
-      const who = ['trapper', 'fisher', 'prospector'][Number((p.id.match(/\d+$/) || ['0'])[0]) % 3];
+      const num = Number((p.id.match(/\d+$/) || ['0'])[0]), folk = hamletFolk(def.id, num);       // WQ10: the region's own hamlet folk
+      const who = folk ? folk.id : ['trapper', 'fisher', 'prospector'][num % 3];
       clearing(p, 18, 12);
       for (const dx of [-7, 3]) { g.rect(p.x + dx, p.y - 5, 5, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 3, 5, 2, TILE.WOODWALL); g.set(p.x + dx + 2, p.y - 3, TILE.WINDOW); g.set(p.x + dx + 2, p.y - 2, TILE.DOOR); }
       g.set(p.x, p.y + 1, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 56, col: 12 });
       add({ t: 'npc', id: who, x: p.x + 2, y: p.y + 3 });
-      add({ t: 'sign', x: p.x - 3, y: p.y + 3, text: [{ trapper: "A TRAPPER'S HAMLET. FURS ON EVERY FENCE.", fisher: "A FISHERS' HAMLET. NETS DRY IN THE WIND.", prospector: "A PROSPECTORS' CAMP. THE ORE COMES UP COLD." }[who], 'TRAVELLERS WELCOME. KEEP YOUR SWORD SHEATHED.'] });
+      add({ t: 'sign', x: p.x - 3, y: p.y + 3, text: [folk ? folk.sign : { trapper: "A TRAPPER'S HAMLET. FURS ON EVERY FENCE.", fisher: "A FISHERS' HAMLET. NETS DRY IN THE WIND.", prospector: "A PROSPECTORS' CAMP. THE ORE COMES UP COLD." }[who], 'TRAVELLERS WELCOME. KEEP YOUR SWORD SHEATHED.'] });
       chest(p, 5, 4, p.tier, 'med');
       potsAround(p, 4, 6, 'barrel');
     } else if (p.kind === 'standing') {

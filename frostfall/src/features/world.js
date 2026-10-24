@@ -8,6 +8,12 @@ import { regionOfMap } from '../data/regions.js';
 import { applyStatus } from '../systems/status.js';
 import { Herb } from '../entities/Props.js';
 import { ART_SKY } from '../world/weather.js';
+import { HAMLET_FOLK } from '../world/hamletfolk.js';
+import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
+import { say, choose } from '../systems/dialogue.js';
+import { buyMenu, sellMenu } from '../data/services.js';
+import { restRoom } from '../data/services2.js';
+import { dailyWares } from '../data/stock.js';
 import { notePlayer, clearEventMark } from '../world/questmarks.js';
 
 // quest markers measure "nearest" from where you stand (WQ2, WQ4, WQ5)
@@ -63,4 +69,18 @@ const ART = Object.values(import.meta.glob('../art/weather.js', { eager: true })
 if (ART?.REGION_SKY) for (const [rid, modes] of Object.entries(ART_SKY)) {
   const r = ART.REGION_SKY[rid]; if (!r) continue;
   for (const [kind, mode] of Object.entries(modes)) { r[kind] ??= mode; if (r.kinds && !r.kinds.includes(kind)) r.kinds.push(kind); }
+}
+
+// ---- WQ10: the hamlet folk of the other regions (data in world/hamletfolk.js)
+for (const folk of Object.values(HAMLET_FOLK).flat()) {
+  NPC_DEFS[folk.id] = { name: folk.name, tex: folk.tex };
+  SCRIPTS[folk.id] = async () => {
+    const who = folk.name.charAt(0) + folk.name.slice(1).toLowerCase(), key = folk.id + 'N';
+    const n = S.flags[key] || 0; S.flags[key] = n + 1;
+    await say(who, folk.lines[n % folk.lines.length]);
+    for (;;) {
+      const c = await choose(['Buy', 'Sell', 'Rent a bed (20g)', 'Leave']);
+      if (c === 0) await buyMenu(who, [...folk.wares, ...dailyWares(who, 1)]); else if (c === 1) await sellMenu(who); else if (c === 2) { if (await restRoom(who, 20)) return; } else return;
+    }
+  };
 }
