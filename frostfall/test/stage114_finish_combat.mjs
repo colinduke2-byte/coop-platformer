@@ -53,10 +53,30 @@ const sw = await G(() => {
   const g = window.__ff.game.scene.getScene('Game'), [a, b] = window.__wz, zo = g.zones[a], zn = g.zones[b];
   return { owned: zo?.t, plain: zn?.t, foeTween: window.__wt.progress, other: window.__wct.progress, fired: window.__w.fired, plainT: window.__w.plain, ts: window.__wt.timeScale };
 });
-await h.frames(60);
-const sw2 = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const r = { ts: window.__wt.timeScale, fired: window.__w.fired }; window.__we.destroy(); g.player.invuln = 0; return r; });
+for (let i = 0; i < 30 && (await G(() => window.__wt.timeScale)) !== 1; i++) await h.frames(10);     // a frozen frame (a tip) delays the end
+const sw2 = await G(async () => { const g = window.__ff.game.scene.getScene('Game'), { ui } = await import('/src/systems/ui.js'); const r = { ts: window.__wt.timeScale, fired: window.__w.fired, holds: ui.holdTags?.() }; window.__we.destroy(); g.player.invuln = 0; return r; });
 check('slow motion: an enemy zone, an enemy tween and an enemy delayed blow run at 0.3x; a weather zone, other tweens and timers do not', sw.owned > 0.8 && sw.plain < 0.6 && sw.foeTween < 0.25 && sw.other > 0.4 && sw.fired === 0 && sw.plainT === 1 && Math.abs(sw.ts - 0.3) < 1e-6, JSON.stringify(sw));
 check('after the slow motion the enemy tween runs at full speed again', sw2.ts === 1, JSON.stringify(sw2));
+// ---- VX-05: WEAK / RESIST fold into the damage number
+const vx = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), fx = g.fx, { settings } = await import('/src/systems/settings.js');
+  const e = g.addEnemy('draugr', g.player.x + 160, g.player.y + 60, { tier: 0 }); e.update = () => {}; e.maxHp = e.hp = 9999;
+  const hit = (element, col) => { const d = e.takeHit({ dmg: 20, kx: 1, ky: 0, kb: 0, src: 'fire', element }); fx.text(e.x, e.y - 10, String(d), col); return fx.texts.at(-1); };
+  const words = () => fx.texts.filter((o) => o.str === 'WEAK' || o.str === 'RESIST').length;
+  const out = {};
+  const w = hit('fire', 12); out.weak = { kind: w.kind, col: w.col, scale: w.t.main.scaleX, words: words() };
+  for (const o of fx.texts.splice(0)) fx.freeText(o.t);
+  const r = hit('frost', 15); out.resist = { kind: r.kind, col: r.col, font: r.t.main.font, words: words() };
+  for (const o of fx.texts.splice(0)) fx.freeText(o.t);
+  const n = hit(null, 6); out.plain = { kind: n.kind, scale: n.t.main.scaleX, font: n.t.main.font };
+  for (const o of fx.texts.splice(0)) fx.freeText(o.t);
+  settings.dmgNumbers = false; e.takeHit({ dmg: 20, kx: 1, ky: 0, kb: 0, src: 'fire', element: 'fire' }); out.offWords = words(); settings.dmgNumbers = true;
+  e.destroy(); return out;
+});
+check('VX-05: a weak hit is a bigger orange number, a resisted one a small grey one, with no WEAK / RESIST word stacked on top', vx.weak.kind === 'weak' && vx.weak.col === 12 && vx.weak.scale === 2 && vx.weak.words === 0 && vx.resist.kind === 'resist' && [3, 4].includes(vx.resist.col) && vx.resist.font === 'fsmall' + vx.resist.col && vx.resist.words === 0 && vx.plain.kind === null && vx.plain.scale === 1 && vx.plain.font === 'f6', JSON.stringify(vx));
+check('VX-05: with damage numbers off the WEAK word still shows', vx.offWords === 1, JSON.stringify(vx));
+await G(() => { const g = window.__ff.game.scene.getScene('Game'), fx = g.fx, p = g.player; fx.markNum(p.x - 30, p.y - 20, 'weak'); fx.text(p.x - 30, p.y - 30, '42', 12, 3); fx.markNum(p.x, p.y - 20, 'resist'); fx.text(p.x, p.y - 30, '7', 15, 3); fx.text(p.x + 30, p.y - 30, '18', 6, 3); });
+await h.frames(2); await h.shot('s114_numbers');
 //@@MORE@@
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();

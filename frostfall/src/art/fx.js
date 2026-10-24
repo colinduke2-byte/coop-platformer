@@ -5,6 +5,7 @@ import { baseKey, nearestPal } from './tintbake.js';
 import { ring as drawRing } from './sprites.js';
 import { TILE } from '../config.js';
 import { TUNE } from '../data/tuning.js';
+import { NUM_STYLE, smallFont } from '../entities/hitNumbers.js';
 
 // Hit sparks by element (VX-08): the colours a blow throws, by info.element (or a poison dot).
 export const SPARK_COLS = { fire: [12, 11, 13], frost: [15, 6, 15], shock: [13, 6, 13], poison: [8, 7, 8], none: [13, 13, 15] };
@@ -38,13 +39,18 @@ export class Fx {
     this.gfxPool = [];
   }
   // a floating text from the pool
-  getText(x, y, str, col) {
-    const o = this.textPool.pop();
-    if (!o) return txtS(this.s, x, y, str, col, 0).setDepth(99500);
-    o.main.setFont(fontKey(col)); o.setText(str).setPosition(x, y).setAlpha(1);
+  getText(x, y, str, col, st = null) {
+    const o = this.textPool.pop() || txtS(this.s, x, y, str, col, 0).setDepth(99500);
+    // VX-05: a styled number (hitNumbers.js) is bigger, or in the small digits; a pooled text is reset to the plain look
+    const sz = st?.small ? 4 : 6;           // the cell width: setFont keeps the old size (and so a scale) unless told
+    o.main.setFont(st?.small ? smallFont(this.s, col) : fontKey(col), sz); o.shadow.setFont(st?.small ? smallFont(this.s, 0) : fontKey(0), sz);
+    o.main.setScale(st?.scale || 1); o.shadow.setScale(st?.scale || 1);
+    o.setText(str).setPosition(x, y).setAlpha(1);
     o.main.setVisible(true); o.shadow.setVisible(true);
     return o;
   }
+  // VX-05: Enemy.takeHit marks where a weak or resisted hit landed; the number printed there this frame takes that style
+  markNum(x, y, kind) { (this.marks ||= []).push({ x, y, kind }); }
   freeText(o) { o.main.setVisible(false); o.shadow.setVisible(false); this.textPool.push(o); }
   getImg(key, x, y, depth) {
     const l = this.imgPool[key];
@@ -112,12 +118,17 @@ export class Fx {
     str = String(str);
     const isNum = /^\d+$/.test(str);
     if (settings.dmgNumbers === false && isNum) return;       // option: hide damage numbers
-    if (col === 15 && SNOWY.has(this.s.layer?.getTileAtWorldXY(x, y + 12)?.index)) col = 3;      // frost on snow: steel
+    let kind = null;
+    if (isNum && this.marks?.length) {
+      const i = this.marks.findIndex((m) => Math.abs(m.x - x) < 14 && Math.abs(m.y - 10 - y) < 14);
+      if (i >= 0) { kind = this.marks[i].kind; this.marks.splice(i, 1); col = NUM_STYLE[kind].col; }
+    }
+    if ((col === 15 || kind === 'resist') && SNOWY.has(this.s.layer?.getTileAtWorldXY(x, y + 12)?.index)) col = 3;      // frost (or a grey resisted number) on snow: steel
     // damage numbers pile up in crowd fights: merge close ones into a running total and fade sooner
     if (isNum && life === 0.8) {
-      const near = this.texts.find((o) => o.num != null && o.col === col && o.life > o.t0 * 0.35 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
+      const near = this.texts.find((o) => o.num != null && o.col === col && o.kind === kind && o.life > o.t0 * 0.35 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
       if (near) {
-        near.num += Number(str); near.life = near.t0; near.t.setText(String(near.num)).setPosition(Math.round(near.x - String(near.num).length * 3), Math.round(near.y));
+        near.num += Number(str); near.life = near.t0; near.t.setText(String(near.num)).setPosition(Math.round(near.x - String(near.num).length * near.half), Math.round(near.y));
         return;
       }
       if (this.texts.length > 9) { const old = this.texts.shift(); this.freeText(old.t); }
@@ -130,8 +141,9 @@ export class Fx {
       if (same) { same.life = same.t0; return; }
     }
     if (this.texts.length >= TUNE.hud.maxTexts) { const old = this.texts.shift(); this.freeText(old.t); }
-    const t = this.getText(Math.round(x - str.length * 3), Math.round(y), str, col);
-    this.texts.push({ t, y, x, y0: y, t0: life, life, col, str, num: isNum ? Number(str) : null });
+    const st = kind && NUM_STYLE[kind], half = st?.small ? 2 : 3 * (st?.scale || 1);
+    const t = this.getText(Math.round(x - str.length * half), Math.round(y - (st?.scale ? 4 : 0)), str, col, st);
+    this.texts.push({ t, y: y - (st?.scale ? 4 : 0), x, y0: y, t0: life, life, col, str, kind, half, num: isNum ? Number(str) : null });
   }
 
   slash(x, y, angle, flip = false, scale = 1) {
@@ -179,6 +191,7 @@ export class Fx {
       p.sp.x += p.vx * dt; p.sp.y += p.vy * dt;
       p.sp.setAlpha(Math.min(1, (p.t / p.life) * 1.6));
     }
+    if (this.marks) this.marks.length = 0;          // a mark is for the number printed in the same frame only
     for (let i = this.texts.length - 1; i >= 0; i--) {
       const f = this.texts[i];
       f.life -= dt;
