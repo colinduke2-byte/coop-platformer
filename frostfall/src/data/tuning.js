@@ -286,7 +286,7 @@ export const TUNE = {
   mobs: { hp: 1.3, dmg: 1.15 },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
-  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },
+  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.8 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.42 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.36 }, blightmother: { hp: 0.46 }, vaultsovereign: { hp: 0.6 }, winter: { hp: 1.1 } },
   scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 4.4, dmg: 2.9, gold: 2.0, elite: 0.5 },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
@@ -329,7 +329,7 @@ TUNE.combat = {
   late: { slotsAt: 0.6, cooldown: 0.25, followAt: 0.4, follow: 0.35, followWind: 0.75, affixAt: 0.4, duelStun: 0.45 },
   // CB21 / CB26: boss signatures (first use `first` s after the fight starts, then every `cd` s, from phase `fromPhase`;
   // phase 1 on Hard), the chance that a pick starts a scripted string, and the phase-3 echo / trail burst delays
-  sig: { windup: 0.7, recover: 0.8, first: 7, cd: 13, fromPhase: 2, string: 0.25, stringHard: 0.4, echo: 0.5, trail: 0.7, pull: 150 },
+  sig: { windup: 0.7, recover: 0.8, first: 7, cd: 13, fromPhase: 2, string: 0.15, stringHard: 0.4, echo: 0.5, trail: 0.7, pull: 150 },
   great: { charge: [0.45, 0.9], hold: 0.6, mult: [1, 1.35, 1.75], move: 0.3 },     // CB24: hold heavy to charge (seconds per level, damage per level)
   axe: { keep: 2.5, maxStacks: 5, bleedT: 4, dpsPerStack: 1.5 },                   // CB24: axe blows on one foe stack its bleeding          // CB6: arrows and bolts bend toward a foe this many degrees off your facing
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor

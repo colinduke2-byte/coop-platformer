@@ -69,17 +69,17 @@ export const rule3 = (b) => (b.bphase >= 3 ? RULE3[b.kind] || null : null);
 
 // The next move: the rest of a string, the signature when it is due, or (sometimes) the start of a string. null = the pool.
 export function planAttack(b, opts) {
-  const sc = b.scene, sig = sigOf(b), S = T();
+  const sc = b.scene, sig = sigOf(b), ST = T();
   if (b.queue?.length) { const a = b.queue.shift(); if (a === 'sig' || b.B[a]) return a; }
-  b.sigReady ??= sc.t + S.first;
-  if (sig && b.bphase >= (hard() ? 1 : S.fromPhase) && sc.t >= b.sigReady) {
-    b.sigReady = sc.t + S.cd * (rule3(b) === 'sigOften' ? 0.5 : 1);
+  b.sigReady ??= sc.t + ST.first;
+  if (sig && b.bphase >= (hard() ? 1 : ST.fromPhase) && sc.t >= b.sigReady) {
+    b.sigReady = sc.t + ST.cd * (rule3(b) === 'sigOften' ? 0.5 : 1);
     b.queue = [...(sig.then || [])];
     if (rule3(b) === 'sigOften') b.queue.push(...pickString(b, opts) || []);
     return 'sig';
   }
   const strs = STRINGS[b.kind];
-  if (strs && Math.random() < (hard() ? S.stringHard : S.string)) {
+  if (strs && Math.random() < (hard() ? ST.stringHard : ST.string)) {
     const s = pickString(b, opts);
     if (s) { b.queue = s.slice(1); return s[0]; }
   }
