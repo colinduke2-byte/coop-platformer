@@ -21,12 +21,12 @@ Dev URL flags: `?scene=game` skips the title, `&map=village|forest|crypt|pass|ha
 
 Hollowfrost Village (four enterable houses, a bounty board) -> **the Hollow Reach**, a seeded open world (540x378 tiles: camps,
 dens, ruins, standing stones, hamlets, watchtowers, champions, procedural barrow dungeons, a travelling trader) with the
-Crypt of the Hollow King (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie five more seeded regions,
+Crypt of the Frostsworn (Jarl Valdrek) and Frostwind Pass (Grimfang). Beyond the Reach lie five more seeded regions,
 three opened by the story and two you can walk to from the start (if you dare): the **Ashen Peaks** (lava, foundries, the forge-city **Emberhold** with its three factions:
-the Anvil Court, the Delvers' Guild and the Ember Wardens), the **Frozen Coast** (wrecks, lighthouses, the drowned Tidebreak Hall)
+the Anvil Court, the Delvers' Guild and the Ember Wardens), the **Frozen Coast** (wrecks, lighthouses, the drowned Tidebreak Cavern)
 the **Old Kingdom** (courtyards, the Sepulchre), the **Weeping Fens** (a drowned bog; the stilt village Reedwick; the Mire Mother) and the **Stormcrown Highlands** (storm, clans, giants; Skarn Hold; the Storm Giant). Chapter 3, "The Ember Crown", is needed for the full ending
 (36 ending variants). A 12-minute day/night cycle, an eight-phase moon and changing weather change who lives in the world: wolves become werewolves, the dead become ghosts, a blood moon brings a great wolf. Three difficulty levels (Easy, Normal, Hard) and optional challenge modifiers.
-Bosses: Valdrek, Grimfang, the Frost Wyrm, Kragnar, the Ashen Sovereign, Admiral Veyl, the Hollow King, the Mire Mother, the Storm Giant. See `docs/GUIDE.md` for the player's guide and `CHANGELOG.md` for everything added.
+Bosses: Valdrek, Grimfang, the Rime Wyrm, Kragnar, the Ashen Sovereign, Admiral Veyl, the Hollow King, the Mire Mother, the Storm Giant. See `docs/GUIDE.md` for the player's guide and `CHANGELOG.md` for everything added.
 See `docs/EMBERHOLD.md`, `docs/CHAPTER3.md`, `docs/world_map.png`, `docs/creatures.png`.
 
 ## Controls

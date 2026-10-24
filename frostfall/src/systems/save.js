@@ -10,7 +10,7 @@ import { rehydrateGen } from './genloot.js';
 import { migrateInstances } from './instances.js';
 
 export const SLOTS = 3;
-export const SAVE_VERSION = 4;           // 3: fog stored run-length encoded, unused generated-item definitions pruned; 4: per-item gear state (PR-08)
+export const SAVE_VERSION = 5;           // 3: fog stored run-length encoded, unused generated-item definitions pruned; 4: the Court's seal is The Missing Page; 5: per-item gear state (PR-08)
 const keyFor = (slot) => (slot === 1 ? 'frostfall_save_v1' : `frostfall_save_s${slot}`);
 const bakFor = (slot) => keyFor(slot) + '_bak';
 const sesFor = (slot) => keyFor(slot) + '_session';
@@ -62,7 +62,9 @@ function serialise() {
 // Older saves are brought up to date here, one version at a time.
 const MIGRATIONS = {
   2: (d) => d,                                            // v2 -> v3: nothing to convert (fog decoding accepts both forms)
-  3: (d) => { if (d.s) migrateInstances(d.s); return d; },  // v3 -> v4: upgrades, enchants, gems and wear move to one copy of the item
+  // v3 -> v4: the Anvil Court's seal used to come with A Core for the Anvil; a save that earned it that way keeps it
+  3: (d) => { const q = d.s?.quests; if (q?.anvilcore?.status === 'done' && q.missingpage?.status !== 'done') q.missingpage = { status: 'done' }; return d; },
+  4: (d) => { if (d.s) migrateInstances(d.s); return d; },  // v4 -> v5: upgrades, enchants, gems and wear move to one copy of the item
 };
 function migrate(d) {
   let v = d.v || 2;
@@ -105,7 +107,7 @@ if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { i
 export function saveInfo(slot = settings.slot) {
   if (infoCache.has(slot)) return infoCache.get(slot);
   const r = readSlot(slot);
-  const info = r ? { t: r.data.t, map: r.data.s.map, playtime: r.data.s.playtime, level: r.data.s.charLevel || 1, recovered: r.recovered, ending: !!r.data.s.flags?.ending, ngPlus: r.data.s.ngPlus || 0, newer: r.newer } : null;
+  const info = r ? { t: r.data.t, map: r.data.s.map, playtime: r.data.s.playtime, level: r.data.s.charLevel || 1, recovered: r.recovered, ending: !!r.data.s.flags?.ending3, ngPlus: r.data.s.ngPlus || 0, newer: r.newer } : null;
   infoCache.set(slot, info);
   return info;
 }

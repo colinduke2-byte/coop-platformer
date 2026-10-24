@@ -8,6 +8,8 @@ import { ITEMS } from '../data/items.js';
 import { S } from '../systems/state.js';
 import { saveGame } from '../systems/save.js';
 import { finalChoice } from '../data/chapter3.js';
+import { winterOffer } from '../data/story.js';
+import { prompt } from '../systems/access.js';
 import { bus } from '../systems/bus.js';
 import { ui } from '../systems/ui.js';
 import Npc from '../entities/Npc.js';
@@ -44,7 +46,7 @@ export const eventMethods = {
     runScript(async () => {
       const R = 'Ragna';
       await say(R, 'Hrolf. You old fool. You held the gate for a hundred nights and did not once ask us to stay.');
-      await say(R, 'Forty names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
+      await say(R, 'Thirty-nine names. I carved them on a rafter in the lodge the year it happened. Tonight I will burn the rafter, and say them all, and not look away.');
       await say(R, 'You gave me that, Dreamer. Take the banner. I do not want to see it again. And my bow... my bow is yours, for as long as you will have it.');
       addItem('ironwatch_banner');
       S.flags.ragnaVeteran = true;
@@ -120,8 +122,8 @@ export const eventMethods = {
   // The Long Winter has fallen: decide what becomes of it.
   startFinale() {
     runScript(async () => {
-      await say('The Winter', 'You have broken the chains the kings forged. I was cold before the first star, and I will be cold after the last.');
-      await say('The Winter', 'But hear me, little Dreamer. Four Hearts beat in your hands. You may release me, bind me again, or take my crown. Choose.');
+      await say('The Winter', 'You have broken the chain the Kings laid on me. I was cold before the first star, and I will be cold after the last.');
+      await say('The Winter', winterOffer());
       const c = await choose(['Let it go. Let the Winter end.', 'Bind it again, with you as warden.', 'Take the crown. Rule the cold.']);
       const kind = ['thaw', 'warden', 'crown'][c];
       S.flags.finale = kind; S.flags.ending = S.flags.ending || 'give';
@@ -146,7 +148,7 @@ export const eventMethods = {
     for (const f of this.fires) {
       if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
       S.flags.fires[f.key] = true;
-      bus.emit('toast', 'CAMPFIRE FOUND - FAST TRAVEL ON THE MAP (F)', 12); sfx.play('quest');
+      bus.emit('toast', `CAMPFIRE FOUND - FAST TRAVEL: ${prompt('KeyM')} MAP, THEN ${prompt('KeyF')}`, 12); sfx.play('quest');
     }
   },
   fastTravel(f) {

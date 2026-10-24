@@ -7,7 +7,7 @@ import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
 import { txt, textW, wrap, normText, fit, fontKey } from '../art/font.js';
-import { padHint, prompt } from '../systems/access.js';
+import { padHint, prompt, keyText } from '../systems/access.js';
 import { logLine } from '../systems/msglog.js';
 import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
@@ -155,6 +155,7 @@ export default class HudScene extends Phaser.Scene {
   // ------------------------------------------------------- dialogue API
   say(name, text) {
     if (this.skipTalk) return Promise.resolve();        // the cast button was pressed: read nothing more until a choice or the end
+    text = keyText(text);                               // {KeyC} -> the player's own key or pad button
     this.lastSay = text;
     logLine('talk', (name ? name + ': ' : '') + text, 6);
     return quiet(new Promise((res, rej) => {

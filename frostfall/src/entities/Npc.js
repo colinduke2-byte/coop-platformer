@@ -1,6 +1,6 @@
 import { NPC_BARKS } from '../data/story.js';
 import Phaser from 'phaser';
-import { SCRIPTS, NPC_DEFS } from '../data/dialogue.js';
+import { SCRIPTS, NPC_DEFS, speakerName } from '../data/dialogue.js';
 import { runScript, say } from '../systems/dialogue.js';
 import { S } from '../systems/state.js';
 import { addGold } from '../systems/inventory.js';
@@ -39,7 +39,7 @@ export default class Npc extends Phaser.GameObjects.Sprite {
 
   async interact() {
     const p = this.scene.player;
-    if (this.angryT > 0) { await runScript(() => say(NPC_DEFS[this.id].name.split(' ').pop(), 'I have nothing to say to a thief.')); return; }
+    if (this.angryT > 0) { await runScript(() => say(speakerName(NPC_DEFS[this.id].name), 'I have nothing to say to a thief.')); return; }
     if (p.sneaking && this.id !== 'ragna') { await this.pickpocket(p); return; }
     this.lookAt(p.x, p.y);
     await runScript(() => SCRIPTS[this.id]());
@@ -58,7 +58,7 @@ export default class Npc extends Phaser.GameObjects.Sprite {
       sfx.play('hurt');
       const fine = Math.min(S.gold, 15); S.gold -= fine;
       p.gainXp('sneak', 3);
-      await runScript(() => say(NPC_DEFS[this.id].name.split(' ').pop(), 'THIEF! Hands off! That will cost you ' + fine + ' gold.'));
+      await runScript(() => say(speakerName(NPC_DEFS[this.id].name), 'THIEF! Hands off! That will cost you ' + fine + ' gold.'));
     }
   }
 

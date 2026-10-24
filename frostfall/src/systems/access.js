@@ -64,6 +64,8 @@ export function padLabel(code) {
 }
 // What to show the player for a virtual key right now: the pad button if a controller was used last, else the key.
 export function prompt(code) { return (padActive() && padLabel(code)) || keyLabel(code); }
+// Text with {KeyC}-style tokens (speech, item descriptions) filled in with the keys the player actually uses.
+export const keyText = (s) => String(s).replace(/\{(\w+)\}/g, (_, c) => prompt(c));
 
 // Keyboard hints like "E USE  F OFFHAND  ESC CLOSE" or "E: TALK", rewritten for the controller when it was used last:
 // each hint's leading key becomes the button that sends it ("A USE  X OFFHAND  START CLOSE"). Mouse-only hints are dropped.

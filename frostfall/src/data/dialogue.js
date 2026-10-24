@@ -2,7 +2,7 @@
 import { S } from '../systems/state.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
 import { dailyWares } from './stock.js';
-import { heartsHeld } from './hearts.js';
+import { heartsHeld, HEART_ORDER } from './hearts.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
@@ -23,7 +23,7 @@ export async function intro() {
   else await say(SIGRID, 'Hollowfrost, the last hearth south of the pines.');
   await say(SIGRID, 'I am Sigrid, elder here. You have a sword and a bow, and you survived what should have killed you. That makes you the most useful stranger we have met this winter.');
   await say(SIGRID, 'Talk to Bjorn at the lodge. Wolves have been thinning our flocks. Mirra sells potions at her stall. Then come and see me.');
-  await say(SIGRID, 'Hold C or Shift to creep. Press I for your pack, O for your journal. And mind the cold.');
+  await say(SIGRID, 'Hold {KeyC} to sneak. Press {KeyI} for your pack, {KeyO} for your journal. And mind the cold.');
   S.flags.introDone = true;
   startTutorial();
 }
@@ -36,14 +36,15 @@ async function heartsTalk() {
     if (S.flags.finalChoice) { await say(SIGRID, 'The smoke has cleared from the Peaks. Whatever you decided up there, the sky is quiet. That is a gift I did not expect to live to see.'); return true; }
     if (!S.flags.arrivedEmberhold) {
       await say(SIGRID, 'Smoke on the Peaks, Dreamer. The Winter loosed its hold, and something older than the Winter has woken to fill the silence.');
-      await say(SIGRID, 'The Peak Road runs from the north-east of the Reach up to Emberhold, the forge-city of the Anvil Court. It has been drifted shut for a thousand years. It is open now. Go, and ask them what the chains were made of.');
+      await say(SIGRID, 'The Peak Road runs from the north-east of the Reach up to Emberhold, the forge-city of the Anvil Court. It has been drifted shut for a thousand years. It is open now. Go, and ask them what the chain was made of.');
     } else await say(SIGRID, 'Emberhold is not Hollowfrost. Its people measure trust in what you will hold for them. Win their seals, and mind the fire.');
     return true;
   }
   if (q.status === 'inactive') {
     await say(SIGRID, 'Dreamer. Sit. What I have to tell you is older than the village.');
+    await say(SIGRID, 'You know why the hunters call you that? For three nights after we found you, you talked in your sleep. About thrones, in a tongue none of us knew.');
     await say(SIGRID, 'The Frostheart was never alone. The Hollow Kings bound the Long Winter, a thing older than snow, with five Hearts, and set a guardian to keep each one.');
-    await say(SIGRID, S.flags.ending === 'give' ? 'Our hearth is warm tonight, but only because one Heart is spent. The other four still hold the cold in place, and the Winter is waking.' : 'You carry the first, and the cold follows you for it. The other four still hold the Winter in place, and it is waking.');
+    await say(SIGRID, S.flags.ending === 'give' ? 'Our hearth is warm tonight, but only because one Heart is spent. The other four still hold the cold in place, and the Winter is waking.' : S.flags.ending === 'sell' ? 'The first is in Mirra\'s cellar now, humming. The other four still hold the Winter in place, and it is waking.' : 'You carry the first, and the cold follows you for it. The other four still hold the Winter in place, and it is waking.');
     await say(SIGRID, 'The old maps are faded. I can read only the nearest: the Glacial Maw, where the east freezes under the mountain. A serpent of rime sleeps there with the second Heart.');
     const c = await choose(['I will find it.', 'What is the Winter?', 'Not yet.']);
     if (c === 1) { await say(SIGRID, 'Some say a god the kings betrayed. Some say a hunger the kings fed. The Hearts keep it asleep, or keep it chained. I have never known which.'); }
@@ -60,12 +61,15 @@ async function heartsTalk() {
       await say(SIGRID, 'Its door opens only to someone who holds all four. Go. And whatever the Winter asks of you... remember that it is older than mercy.');
     } else if (n === 0) await say(SIGRID, 'The Glacial Maw lies far to the east, where the ice meets the mountains. Follow the roads and the fires. The marker on your map will help.');
     else {
-      const lines = {
-        1: 'The cold bends around you now. My maps show Ironwatch Keep next, a fortress the Hollow Kings left to a warden who never stopped marching. Look for black stone and old banners.',
-        2: 'Two Hearts. The ground trembles less, I think. The third lies under the lakes: the Drowned Chapel, where a congregation prayed until the water took them.',
-        3: 'Three. The last Heart lies where the trees have died and keep growing anyway: the Rootvault, in the blight. Be ready. It is the largest of the guardians.',
-      };
-      await say(SIGRID, lines[n]);
+      // the first Heart you do not hold yet, whatever order you took the others in
+      const lead = { 1: 'The cold bends around you now.', 2: 'Two Hearts. The ground trembles less, I think.', 3: 'Three. I can hear them when the fire is low.' }[n];
+      const site = {
+        rime: 'The Glacial Maw still waits far to the east, where the ice meets the mountains. A serpent of rime sleeps there.',
+        iron: 'My maps show Ironwatch Keep. A company held its gate when the cold came, and the gate is holding them still. Look for black stone and old banners.',
+        tide: 'The Drowned Chapel still waits under the lakes, where a congregation prayed until the water took them.',
+        root: 'The Rootvault still waits in the blight, where the trees have died and keep growing anyway. It is the largest of the guardians.',
+      }[HEART_ORDER.find((k) => !S.hearts?.[k])];
+      await say(SIGRID, lead + ' ' + (site || 'The old maps are blurring. Follow your marker.'));
     }
     return true;
   }
@@ -86,7 +90,7 @@ export async function sigrid() {
   }
   if (k.status === 'inactive') {
     await say(SIGRID, 'You return. Good. Hollowfrost is dying by inches, and I think I know why.');
-    await say(SIGRID, 'Beneath the pines lies the crypt of Jarl Valdrek, the Hollow King. Our grandmothers said he sleeps with the Frostheart in his hands. Now the draugr walk and the winter has not broken in three years.');
+    await say(SIGRID, 'Beneath the pines lies the crypt of Jarl Valdrek the Frostsworn, who swore himself to the cold. Our grandmothers said he sleeps with the Frostheart in his hands. Now the draugr walk and the winter has not broken in three years.');
     for (;;) {
       const c = await choose(['I will go.', 'Tell me more about the Frostheart.', 'Not yet.']);
       if (c === 0) {
@@ -147,9 +151,9 @@ export async function bjorn() {
     if (c === 0) {
       startQuest('wolves');
       addArrows(10);
-      await say(BJORN, 'Take these arrows. Draw the bow slowly, a held shot hits hard but costs breath. Wolves lunge after a growl. Roll through it with Space.');
+      await say(BJORN, 'Take these arrows. Draw the bow slowly, a held shot hits hard but costs breath. Wolves lunge after a growl. Roll through it with {Space}.');
     } else if (c === 1) {
-      await say(BJORN, 'Crouch with C and move slow. Wolves notice you late, and a blade in an unaware back does triple damage.');
+      await say(BJORN, 'Sneak with {KeyC} and move slow. Wolves notice you late, and a blade in an unaware back does triple damage.');
     } else await say(BJORN, 'The wolves are not going anywhere. Neither are our sheep, for now.');
     return;
   }
@@ -166,7 +170,7 @@ export async function bjorn() {
   }
   const tq = S.quests.trail;
   if (tq.status === 'ready') {
-    await say(BJORN, 'You did it. You actually did it. Frostbrow himself.');
+    await say(BJORN, 'Frostbrow himself. My grandfather would have walked to the Peaks to see this.');
     await say(BJORN, 'The antlers are a hundred winters old. I can make you a bow from that, or I can sell the antlers to Mirra\'s stranger friends for four hundred gold. Your kill, your pick.');
     const c = await choose(['Make me a bow.', 'Sell them. Gold is gold.']);
     if (c === 0) { addItem('antler_bow'); await say(BJORN, 'Come back in an hour and it will be strung. ...No, I lied. It is already strung. I started the moment you left.'); S.flags.trailBow = true; }
@@ -223,7 +227,7 @@ export async function mirra() {
     const c = await choose(['I will gather them.', 'Just browsing.']);
     if (c === 0) {
       startQuest('herbs');
-      await say(MIRRA, 'Five snowberries and three frost lilies. They grow on the forest trails, small and bright. Pick them with E.');
+      await say(MIRRA, 'Five snowberries and three frost lilies. They grow on the forest trails, small and bright. Pick them with {KeyE}.');
       checkHerbs();
       return;
     }
@@ -235,7 +239,7 @@ export async function mirra() {
     S.flags.alchemy = true;
     await say(MIRRA, 'Here, for your trouble. And since you have a good eye for herbs, I will teach you to brew. Use the alchemy option at my stall.');
   }
-  await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : 'Potions, arrows, and the occasional bargain. What do you need?');
+  await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : S.flags.ending === 'sell' ? 'The cellar is cold again this morning. I have started sleeping upstairs. Do not look at me like that. What do you need?' : 'Potions, arrows, and the occasional bargain. What do you need?');
   for (;;) {
     const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Buy back', 'Leave'];
     const c = await choose(opts);
@@ -303,10 +307,17 @@ export async function ragna() {
     else if (c === 2) { if (!(await companionStory(R))) await say(R, cycleLine('ragnaN', ['I never miss twice.', 'Wolves smell fear. I do not give it off.', 'The crypt? I would rather fight a hundred wolves.'])); }
     return;
   }
-  if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
-    await say(R, 'You carry a Heart. I can smell the winter on it, and under that, Ironwatch.');
-    await say(R, 'I rode with the Company. Forty of us. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
-    const q = await choose(['I will take you to him. Free of charge.', 'I will think about it.']);
+  if (heartsHeld() >= 1 && S.quests.company.status === 'inactive' && S.flags.warlordDead) {
+    // you took the Iron Heart before she ever asked: Hrolf is already down
+    await say(R, 'You carry the Iron Heart. Then you have been to the Keep, and Hrolf is down.');
+    await say(R, 'I rode with the Company, three winters ago. Forty of us rode in. I rode out. ...Walk with me a while, Dreamer. Someone has to say the names.');
+    const q = await choose(['Walk with me.', 'Not now.']);
+    if (q === 0) { startQuest('company'); setCompanion('ragna'); await say(R, 'Then my bow is yours, for nothing. Give me a quiet road and a little time.'); return; }
+    await say(R, 'The names will keep. They have kept this long.');
+  } else if (heartsHeld() >= 1 && S.quests.company.status === 'inactive') {
+    await say(R, 'You carry a Heart. I know that cold. I last felt it at the Ironwatch gate.');
+    await say(R, 'I rode with the Company, three winters ago. Forty of us rode in. I rode out. Hrolf Ironmarch held the gate when the cold came, and the gate held him. He is still up there, wearing the dead like armour.');
+    const q = await choose(['Come with me. We will find him together.', 'I will think about it.']);
     if (q === 0) {
       startQuest('company');
       S.gold += 0;
@@ -322,6 +333,16 @@ export async function ragna() {
   if (S.gold < 150) { sfx.play('nostamina'); await say(R, 'Come back with coin.'); return; }
   S.gold -= 150; setCompanion('ragna');
   await say(R, 'Lead on. I will keep to your heels and my arrows will keep to their throats.');
+}
+// The short name a person speaks under, from their sign name: "MARIT, THE LANTERN INN" -> MARIT, "ELDER SIGRID" -> SIGRID,
+// "TOBIN THE LAMP-SELLER" -> TOBIN; a group with no personal name keeps it whole ("HARBOUR WATCH").
+const TITLES = new Set(['ELDER', 'GUARD', 'CAPT.', 'CAPTAIN', 'WARDEN', 'WARDEN-MOTHER', 'SISTER', 'MOTHER', 'OLD', 'MATRIARCH', 'THE', 'KEEPER', 'FOREMAN', 'GUILDMASTER', 'HARBOURMASTER', 'SCOUT', 'SHAMAN', 'CHIEF', 'MADAM', 'BEEKEEPER', 'GARDENER', 'SHEIKH', 'SCHOLAR', 'CARAVAN', 'MASTER']);
+const SPEAKER = { 'A QUIET MAN': 'QUIET MAN', 'UMM HASSAN': 'UMM HASSAN', 'GULL & ANCHOR, MADDY': 'MADDY', 'WANDERING SONGSTRESS': 'SONGSTRESS' };
+export function speakerName(name) {
+  if (SPEAKER[name]) return SPEAKER[name];
+  const words = String(name || '').split(',')[0].trim().split(/\s+/);
+  if (/^(WATCH|GUARD|TRADER)$/.test(words[words.length - 1]) && words.length === 2) return words.join(' ');
+  return words.find((w) => !TITLES.has(w)) || words[words.length - 1];
 }
 function cycleLine(key, lines) { const n = S.flags[key] || 0; S.flags[key] = n + 1; return lines[n % lines.length]; }
 
@@ -344,9 +365,9 @@ export async function guard() {
   if (S.flags.ending) return say(G, 'Eyes on the pines, friend. Something is watching the village.');
   await say(G, cycle('guardN', [
     'The east gate leads to the Pine Forest. Wolves on the trail, bandits in the camp past the bend.',
-    'Hold Shift or C to creep. Enemies spot a sneaking dreamer from half as far, and a blade in the back hits three times as hard.',
-    'Warm yourself at a campfire. Press E beside the flames to rest, heal and save your progress.',
-    'The stone gate in the north-east of the forest is the crypt of the Hollow King. Do not go in underequipped.',
+    'Hold {KeyC} to sneak. Enemies spot a sneaking dreamer from half as far, and a blade in the back hits three times as hard.',
+    'Warm yourself at a campfire. Press {KeyE} beside the flames to rest, heal and save your progress.',
+    'The stone gate in the north-east of the forest is the Frostsworn\'s crypt. Do not go in underequipped.',
     'Crates and pots sometimes hold coin. Smash them with your sword.',
   ]));
 }
@@ -367,7 +388,7 @@ export async function child() {
     } else {
       S.flags.houndKept = true;
       await say(C, '...Oh. Okay. He does look happy. Look after him? Please?');
-      await say(C, '(She wipes her nose on her sleeve and walks away very straight.)');
+      await say('', '(She wipes her nose on her sleeve and walks away very straight.)');
     }
     return;
   }
@@ -388,7 +409,7 @@ export async function child() {
     } else {
       S.flags.locketKind = false;
       await say(C, '...Oh. I understand. Everyone needs gold.');
-      await say(C, '(Her eyes are wet. You can sell the locket to Mirra when you like.)');
+      await say('', '(Her eyes are wet. You can sell the locket to Mirra when you like.)');
       lq.status = 'sell';
     }
     return;
@@ -400,7 +421,7 @@ export async function child() {
   await say(C, cycle('childN', [
     'I am not scared of wolves. I am scared of the dark. And wolves in the dark.',
     'The pond is frozen solid. Mirra says you can skate on it if you do not mind the cold.',
-    'Elder Sigrid tells the best stories. Mostly about the Hollow King. Mostly the scary parts.',
+    'Elder Sigrid tells the best stories. Mostly about the old Kings. Mostly the scary parts.',
   ]));
 }
 SCRIPTS.guard = guard;

@@ -121,9 +121,9 @@ export const QUESTS = {
     ],
   },
   king: {
-    title: 'The Hollow King',
+    title: 'The Frostsworn Jarl',
     giver: 'Elder Sigrid',
-    desc: 'Something old has woken in the crypt beneath the pines, and the winter will not break. Sigrid believes the Draugr lord Valdrek holds the Frostheart, the crystal that feeds the cold.',
+    desc: 'Something old has woken in the crypt beneath the pines, and the winter will not break. Sigrid believes Jarl Valdrek, who swore himself to the cold, holds the Frostheart, the crystal that feeds the cold.',
     short: (q) => (q.status === 'relic' ? 'Bring the Frostheart to Sigrid' : S.flags.crypt ? 'Defeat Jarl Valdrek' : 'Find the crypt in the forest'),
     objectives: (q) => [
       { t: 'Find the crypt gate in the Pine Forest', done: !!S.flags.crypt },

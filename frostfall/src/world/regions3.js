@@ -21,7 +21,7 @@ Object.assign(EXTRA_GATES, {
   lanternglade: { to: 'lanternglade', col: 15, stone: TILE.WOODWALL, spawn: 'lanternglade', text: ['LANTERN GLADE.', 'LAMPS HUNG FROM THE CRYSTAL TREES. EVERY LAMP IS LIT BY SOMEONE WHO REMEMBERS IT.'] },
   hartspire: { to: 'hartspire', col: 15, stone: TILE.CRYSTAL, spawn: 'hartspire', text: ['THE HART SPIRE.', 'A TOWER OF GLASS GROWN AROUND AN ANTLER THE SIZE OF A MILL. SOMETHING WEARS THE REST OF IT.'] },
   deepdoor: { to: 'underdeep', col: 12, stone: TILE.BASALT, spawn: 'deepdoor', text: ['THE DEEP STAIR.', 'THE MINERS CAPPED IT WITH IRON AND A PRAYER. THE CAP HAS BEEN LIFTED FROM BELOW.'] },
-  lanternfall: { to: 'lanternfall', col: 12, stone: TILE.STONE, spawn: 'lanternfall', text: ['LANTERNFALL.', 'THE LAST LANTERN OF THE DELVERS WHO WENT DOWN AND DID NOT STOP.'] },
+  lanternfall: { to: 'lanternfall', col: 12, stone: TILE.STONE, spawn: 'lanternfall', text: ['LANTERNFALL.', 'THE FIRST LANTERN OF THE DELVERS WHO WENT DOWN AND DID NOT STOP.'] },
   lodenest: { to: 'lodenest', col: 11, stone: TILE.BASALT, spawn: 'lodenest', text: ['THE LODE CHASM.', 'THE ORE HERE RUNS LIKE A VEIN IN A LIVING THING. IT IS WARM. IT IS MOVING.'] },
   saltgate: { to: 'saltmarket', col: 13, stone: TILE.STONE, spawn: 'saltgate', text: ['SALTMARKET.', 'THE HARBOUR THE ICE ALLOWS. SMOKE, GULLS AND THE NOISE OF A THOUSAND BARGAINS.'] },
   smugglercove: { to: 'smugglercove', col: 15, stone: TILE.PACKICE, spawn: 'smugglercove', text: ['SEAWEED COVE.', 'A SEA CAVE THAT SMELLS OF TAR AND SOMEONE ELSE\'S CARGO. THE BOATS ARE STILL WARM.'] },

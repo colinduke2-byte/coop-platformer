@@ -169,14 +169,14 @@ SCRIPTS.vale_bard = talk('Lark', 'larkN', ['I am working on a song about the gro
 chain({ id: 'hornets', npc: 'vale_beekeeper', who: 'Orla', giver: 'Beekeeper Orla', key: 'orlaN', idle: ['The hum is back to normal. Thank you. I could weep.', 'My bees named a flower after you. I will not tell you which one.'], steps: [
   { title: 'Too Many Wings', label: 'Swat meadow hornets', goal: { kills: ['hornet', 6, 'hornets'] }, desc: 'The hornets of the Vale have grown bold. Orla needs six of them swatted before they reach the hives.',
     intro: ['The hornets have been through the apiary again. They do not eat the honey; they just break it.', 'Six should teach the rest. Please.'], go: 'Fire is best. Do not run; they like it when you run.', progress: 'Six hornets. Keep your back to a wall.', thanks: ['That is the sound I like: quiet.'], pay() { addGold(180); addItem('honeycomb', 2, true); } },
-  { title: 'The Queen\'s Court', label: 'Clear a hornet hive', goal: { cleared: [/^vale_hive\d+$/, 1, 'hives'], poi: ['vale', 'hive'] }, desc: 'The hornets follow a queen. If she falls, the wasps scatter. Find a hornet hive and clear it.',
-    intro: ['They answer to a queen. She lives in a ring of birches, and she is the size of a hound.', 'Clear the hive and the Vale gets its summer back.'], go: 'Take a shield. The wasps do not care about shields but the queen does.', progress: 'A hornet hive. Look for birch rings and a hum.', thanks: ['She is gone? The sky feels larger.'], pay() { addGold(300); addItem('hp_potion_g', 2, true); } },
+  { title: 'The Queen\'s Court', label: 'Clear a hornet hive', goal: { cleared: [/^vale_hive\d+$/, 1, 'hives'], poi: ['vale', 'hive'] }, desc: 'The hornets follow a queen. If she falls, the hornets scatter. Find a hornet hive and clear it.',
+    intro: ['They answer to a queen. She lives in a ring of birches, and she is the size of a hound.', 'Clear the hive and the Vale gets its summer back.'], go: 'Take a shield. The hornets do not care about shields but the queen does.', progress: 'A hornet hive. Look for birch rings and a hum.', thanks: ['She is gone? The sky feels larger.'], pay() { addGold(300); addItem('hp_potion_g', 2, true); } },
   { title: 'Honey for the Winter', label: 'Bring wild honeycomb', goal: { have: ['honeycomb', 4, 'honeycomb'] }, desc: 'The honey stores are low for the cold months. Orla needs four fresh combs, from the hornets\' own stores.',
     intro: ['One more thing, if you are willing. The winter is coming and my stores are low.', 'Four combs. Hornets keep their honey in the most inconvenient places.'], go: 'The queen\'s hive, the flower fields. They carry some. I will not ask where.', progress: 'Four combs. The hornets are not generous.', thanks: ['Gold from the flowers. Thank you, dreamer.'], pay() { addGold(260); addItem('quicksilver_tonic', 1, true); } },
 ] });
 chain({ id: 'dew', npc: 'vale_herbalist', who: 'Dahlia', giver: 'Dahlia the herbalist', key: 'dahliaN', idle: ['The garden is happier. So am I.', 'Your dew potion helped the Warden\'s knee. He has not forgiven me for noticing.'], steps: [
-  { title: 'Roots for the Dew', label: 'Gather valeroot', goal: { have: ['valeroot', 5, 'valeroot'] }, desc: 'Dahlia brews a draught from valeroot that keeps the Winter out of the lungs. She needs five roots from the meadows.',
-    intro: ['I brew a dew that keeps the cold out of the bones. I am out of valeroot.', 'Five, from the meadows. They look like weeds. They are, but sweet ones.'], go: 'Look in the flower fields, at the edge of the paths.', progress: 'Five valeroot.', thanks: ['Fresh! You have the eye.'], pay() { addGold(120); addItem('hp_potion', 3, true); } },
+  { title: 'Roots for the Dew', label: 'Gather valeroot', goal: { have: ['valeroot', 5, 'valeroot'] }, desc: 'Dahlia brews a morning dew from valeroot that wakes the blood. She needs five roots from the meadows.',
+    intro: ['I brew a dew that wakes the blood like a slap of sunlight. I am out of valeroot.', 'Five, from the meadows. They look like weeds. They are, but sweet ones.'], go: 'Look in the flower fields, at the edge of the paths.', progress: 'Five valeroot.', thanks: ['Fresh! You have the eye. Here: crush the root, never chop it, or it sulks. Now you know my whole secret.'], pay() { addGold(120); addItem('hp_potion', 3, true); } },
   { title: 'Sunpetals at Noon', label: 'Gather sunpetals', goal: { have: ['sunpetal', 5, 'sunpetal'] }, desc: 'Sunpetals follow the light and make the draught sing. Five are needed.',
     intro: ['Now the second ingredient. Sunpetals. They face the sun, so look where the light falls.', 'Five more. And thank you for the first five.'], go: 'Noon is best. They sulk at dusk.', progress: 'Five sunpetals.', thanks: ['Golden! Not a bruise on them.'], pay() { addGold(160); addItem('mp_potion_g', 2, true); } },
   { title: 'The Thieving Sprites', label: 'Catch dew sprites', goal: { kills: ['dewsprite', 6, 'dew sprites'] }, desc: 'Dew sprites steal the morning dew from the garden to mend their wounded. Dahlia wants six of them gone.',
@@ -186,7 +186,7 @@ chain({ id: 'thorns', npc: 'vale_gardener', who: 'Ash', giver: 'Gardener Ash', k
   { title: 'Thorns in the Hedge', label: 'Cut thornlings', goal: { kills: ['thornling', 8, 'thornlings'] }, desc: 'Thornlings have been waking in the hedges. Ash wants eight cut down before they reach the village.',
     intro: ['The hedges walk. Not all of them, but enough to be worrying.', 'Eight thornlings. Cut them at the knee; fire if you have it.'], go: 'They lie still in the bushes until you are close. Watch the hedges.', progress: 'Eight thornlings.', thanks: ['The hedge is just a hedge again. For now.'], pay() { addGold(200); addItem('hp_potion', 3, true); } },
   { title: 'The Thorn Patch', label: 'Clear a thorn patch', goal: { cleared: [/^vale_thornpatch\d+$/, 1, 'thorn patches'], poi: ['vale', 'thornpatch'] }, desc: 'The oldest briar in the Vale has woken. Ash asks you to clear a thorn patch and its elder.',
-    intro: ['The patch to the east has an old briar in it. Older than the village. It has woken, and it is not happy.', 'End it, if you can.'], go: 'Stay on the path. The briars do not draw a difference between walkers and prey.', progress: 'A thorn patch, east of here.', thanks: ['The Elder Thornwood, down! The garden cheers.'], pay() { addGold(340); addItem('hp_potion_g', 2, true); } },
+    intro: ['The patch to the east has an old briar in it. Older than the village. It has woken, and it is not happy.', 'End it, if you can.'], go: 'Stay on the path. The briars do not know the difference between walkers and prey.', progress: 'A thorn patch, east of here.', thanks: ['The Elder Thornwood, down! The garden cheers.'], pay() { addGold(340); addItem('hp_potion_g', 2, true); } },
   { title: 'Cuttings', label: 'Bring thornvine', goal: { have: ['thornvine', 6, 'thornvine'] }, desc: 'Ash makes a rope of thornvine that nothing can chew. Six lengths, please.',
     intro: ['The rope I make from thornvine is the best you can buy. I need six lengths.', 'They drop from thornlings, thornboar and the elders.'], go: 'Gloves help.', progress: 'Six lengths of thornvine.', thanks: ['Strong as anything. You have my thanks and my best rope.'], pay() { addGold(260); addItem('leaf_cowl'); } },
 ] });
@@ -204,10 +204,10 @@ reg('sunvault');
 QUESTS.sunvault = {
   title: 'The Sealed Vault', giver: 'Sheikh Rashid',
   desc: 'The sun kings sealed something in a vault under the dunes, the answer to the Winter that they never lived to use. Rashid asks you to open it, face its guardian, and decide what to do with what is inside.',
-  short: () => (S.flags.vaultSovereignDead ? 'Tell Rashid' : S.flags.sealedvaultEntered ? 'Defeat the Vault Sovereign' : 'Find the Sealed Vault'),
+  short: () => (S.flags.vaultSovereignDead ? 'Tell Rashid' : S.flags.sealedvaultEntered ? 'Defeat the Gilded Regent' : 'Find the Sealed Vault'),
   objectives: (q) => [
     { t: 'Find the Sealed Vault', done: !!S.flags.sealedvaultEntered || q.status === 'done' },
-    { t: 'Defeat the Vault Sovereign', done: !!S.flags.vaultSovereignDead || q.status === 'done' },
+    { t: 'Defeat the Gilded Regent', done: !!S.flags.vaultSovereignDead || q.status === 'done' },
     { t: 'Tell Sheikh Rashid', done: q.status === 'done' },
   ],
 };
@@ -215,11 +215,11 @@ TARGETS.sunvault = () => { const p = poiOf('sunscorch', S.flags.vaultSovereignDe
 SCRIPTS.dune_sheikh = async function () {
   const q = S.quests.sunvault;
   if (q.status === 'inactive' && S.flags.vaultSovereignDead) {          // you opened the vault before anyone asked you to
-    await say('Rashid', 'Peace on you, traveller. They say a stranger walked out of the Sealed Vault with the Sovereign\'s seal in hand. Let us talk about what lies inside.');
+    await say('Rashid', 'Peace on you, traveller. They say a stranger walked out of the Sealed Vault with the Regent\'s seal in hand. Let us talk about what lies inside.');
     startQuest('sunvault');
   }
   if (q.status === 'active' && S.flags.vaultSovereignDead) {
-    await say('Rashid', 'The Sovereign is down, and the vault stands open. I felt the sand shift from here.');
+    await say('Rashid', 'The Regent is down, and the vault stands open. I felt the sand shift from here.');
     await say('Rashid', 'Two things lie inside. A sword that burns, and a ward that cools. The kings made both and used neither. What will you take?');
     const c = await choose(['Sunbreaker: the sword', 'Winterward: the ward', 'Neither. Seal it again']);
     if (c === 0) { S.flags.choiceVault = 'sunbreaker'; addItem('sunbreaker'); await say('Rashid', 'It is a weapon that will melt the Winter and the ice with it. The kings feared it. Perhaps they were right to.'); addGold(700); }
@@ -232,7 +232,7 @@ SCRIPTS.dune_sheikh = async function () {
     if ((await choose(['I will go.', 'Not yet.'])) === 0) { startQuest('sunvault'); await say('Rashid', 'The vault is east, among the sandstone. Take water. Take more water than you think.'); }
     return;
   }
-  if (q.status === 'active') { await say('Rashid', 'The Sealed Vault. East, in the tall stone. The Sovereign is old and patient.'); return; }
+  if (q.status === 'active') { await say('Rashid', 'The Sealed Vault. East, in the tall stone. The Regent is old and patient.'); return; }
   const ch = S.flags.choiceVault;
   await say('Rashid', ch === 'sunbreaker' ? cyc('rashidN', ['The sword is in your hand and the desert is a little warmer. I do not know if that is the sword or the weather.']) : ch === 'winterward' ? cyc('rashidN', ['The ward hums when the wind turns. I sleep better. So does the well.']) : cyc('rashidN', ['The vault is sealed. I think of it often. I do not think of it at night.']));
 };
@@ -263,13 +263,13 @@ chain({ id: 'tombs', npc: 'dune_scholar', who: 'Nefer', giver: 'Scholar Nefer', 
   { title: 'Sunglass Lens', label: 'Bring sunglass', goal: { have: ['sand_glass', 4, 'sunglass'] }, desc: 'Nefer needs four lumps of sunglass to read the vault glyphs by sunlight.',
     intro: ['One more. Sunglass focuses the glyphs so they can be read. Four lumps.', 'It is in the sand where the old fires burned.'], go: 'Sentinels and burrowers carry it.', progress: 'Four lumps of sunglass.', thanks: ['Clear! The glyphs are as clear as day. They say: do not open this door.'], pay() { addGold(380); addItem('ankhet_ring'); } },
 ] });
-chain({ id: 'raiders', npc: 'dune_guard', who: 'Captain Nadir', giver: 'Captain Nadir', key: 'nadirN', idle: ['The roads are quiet. I hear you did that.'], steps: [
+chain({ id: 'raiders', npc: 'dune_guard', who: 'Captain Nadir', giver: 'Captain Nadir', key: 'nadirN', idle: ['Caravans on the roads again. I hear you did that.'], steps: [
   { title: 'Raiders on the Road', label: 'Defeat dune raiders', goal: { kills: ['duneraider', 6, 'raiders'] }, desc: 'Dune raiders have been taking caravans. Captain Nadir wants six of them dealt with.',
     intro: ['Raiders on the road. Sand-coloured, fast, and they run when hurt. Six, if you can.', 'I pay by the head.'], go: 'Do not chase the ones who flee. They come back.', progress: 'Six raiders.', thanks: ['Six! The caravan master sends his thanks and a bottle.'], pay() { addGold(240); addItem('hp_potion_g', 2, true); } },
   { title: 'The Raider Camp', label: 'Clear a raider camp', goal: { cleared: [/^sunscorch_raidercamp\d+$/, 1, 'camps'], poi: ['sunscorch', 'raidercamp'] }, desc: 'The raiders have a camp under a captain\'s banner. Clear it.',
     intro: ['Their camp is under a banner. The captain is a man called Karrow. He is good, and he is loud.', 'Take the camp. Take the banner.'], go: 'Kill the warchanters first. They shout the others stronger.', progress: 'A raider camp. Look for a banner on a column.', thanks: ['Karrow\'s banner, in the sand. Amberwell breathes.'], pay() { addGold(420); addItem('hp_potion_g', 3, true); } },
   { title: 'Silence the Chanters', label: 'Defeat warchanters', goal: { kills: ['warchanter', 3, 'warchanters'] }, desc: 'The last of the war-drummers must go. Three warchanters.',
-    intro: ['Three more drummers remain. They bring the others back.', 'Cut them down and the desert is quiet.'], go: 'They keep their distance. Use arrows.', progress: 'Three warchanters.', thanks: ['Silence. At last.'], pay() { addGold(460); addItem('karrow_blade'); } },
+    intro: ['Three more drummers remain. They bring the others back.', 'Cut them down and the desert is quiet.'], go: 'They keep their distance. Use arrows.', progress: 'Three warchanters.', thanks: ['No drums. The caravans are singing their own songs again.'], pay() { addGold(460); addItem('karrow_blade'); } },
 ] });
 chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', giver: 'The quiet man of Amberwell', key: 'quietN', idle: ['I see nothing, hear nothing, and keep my hand on my purse. Wise, yes?'], steps: [
   { title: 'The Red Purse', label: 'Catch cutpurses', goal: { kills: ['cutpurse', 4, 'cutpurses'] }, desc: 'A quiet man in Amberwell says Red Sula\'s cutpurses took his savings. He wants four of them caught.',
@@ -283,7 +283,7 @@ chain({ id: 'purse', npc: 'dune_thief', who: 'The quiet man', giver: 'The quiet 
       else { S.flags.choiceSula = 'freed'; addItem('gem_amber', 2); addItem('lockpick', 5, true); await say('The quiet man', 'She left these for whoever let her walk. She will remember it. That is either very good or very bad.'); }
     }, pay() { addGold(200); } },
 ] });
-chain({ id: 'burrowers', npc: 'dune_hunter', who: 'Tariq', giver: 'Tariq Sandwalker', key: 'tariqN', idle: ['The sand is quieter. I owe you a drink and a story.'], steps: [
+chain({ id: 'burrowers', npc: 'dune_hunter', who: 'Tariq', giver: 'Tariq Sandwalker', key: 'tariqN', idle: ['The dunes lie flat at night now. I owe you a drink and a story.'], steps: [
   { title: 'The Shifting Sand', label: 'Slay sand burrowers', goal: { kills: ['sandburrower', 5, 'burrowers'] }, desc: 'Sand burrowers have been dragging camels down. Tariq needs five of them dead.',
     intro: ['The sand moves against the wind. That is a burrower. Five, if you can.', 'They dig in, mark the spot, and bite. Move when the sand swells.'], go: 'When you see the ring, roll out of it.', progress: 'Five burrowers.', thanks: ['Five! My camels will live.'], pay() { addGold(280); addItem('hp_potion_g', 2, true); } },
   { title: 'The Sand Pit', label: 'Clear a sand pit', goal: { cleared: [/^sunscorch_burrowpit\d+$/, 1, 'sand pits'], poi: ['sunscorch', 'burrowpit'] }, desc: 'The Sandmaw hunts in a sand pit. Clear one and end it.',

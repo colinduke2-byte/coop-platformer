@@ -134,7 +134,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     sc.lastBark = sc.t;
     const lines = set[kind];
     sc.fx.text(this.x, this.y - 24, lines[Math.floor(Math.random() * lines.length)], this.cfg.bark === 'undead' ? 15 : 13, 1.0);
-    sfx.play('bark_' + this.cfg.bark);
+    const voice = 'sfx' in set ? set.sfx : this.cfg.bark; if (voice) sfx.play('bark_' + voice);
   }
 
   setState(s, t = 0) { this.state = s; this.stateT = t; }

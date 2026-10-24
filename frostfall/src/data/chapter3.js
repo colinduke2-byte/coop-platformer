@@ -14,8 +14,23 @@ import { unlockRegion } from './regions.js';
 import { EMBERHOLD } from './emberhold_map.js';
 
 // ---- seals: one from each house, earned by finishing its quest
-export const SEAL_QUESTS = { delvers: 'silence', anvil: 'anvilcore', wardens: 'roadwatch' };
+export const SEAL_QUESTS = { delvers: 'silence', anvil: 'missingpage', wardens: 'roadwatch' };
 export const sealCount = () => Object.values(SEAL_QUESTS).filter((q) => S.quests[q]?.status === 'done').length;
+
+// The Anvil Court's seal: Goran's confession, the page under the old foundry's anvil on the Ashen Peaks, and Brannoch.
+QUESTS.missingpage = {
+  title: 'The Missing Page', giver: 'Old Goran',
+  desc: 'A page was cut from the Book of Chains a thousand years ago. Goran says the smith who forged the chain took it to his forge on the Ashen Peaks. Read it, and tell Brannoch what the Court made.',
+  short: () => (S.lore?.foundry ? 'Tell Brannoch what the page said' : 'Find the page at the old foundry on the Ashen Peaks'),
+  objectives: (q) => [
+    { t: 'Find the page at the old foundry on the Ashen Peaks', done: !!S.lore?.foundry || q.status === 'done' },
+    { t: 'Tell Brannoch Redhammer what it said', done: q.status === 'done' },
+  ],
+};
+TARGETS.missingpage = () => {
+  if (S.lore?.foundry) return { map: 'emberhold', x: EMBERHOLD.forge.x, y: EMBERHOLD.forge.y };
+  const p = poi('ashen', 'foundry'); return p ? { map: 'ashen', x: p.x, y: p.y + 2 } : null;
+};
 
 // ---- exits that need something: key -> { ok(), msg() }
 export const GATES = {
@@ -28,7 +43,7 @@ export const GATES = {
 // ---- the quest
 QUESTS.crown = {
   title: 'The Ember Crown', giver: 'Elder Sigrid',
-  desc: 'The Winter is decided, but the chains that held it were forged from the First Fire, and the First Fire is waking under Emberhold. Win the trust of the three houses of the forge-city, open the Forge, and face what wears the crown of cinders.',
+  desc: 'The Winter is decided, but the chain that held it was forged from the First Fire, and the First Fire is waking under Emberhold. Win the trust of the three houses of the forge-city, open the Forge, and face what wears the crown of cinders.',
   short: () => {
     if (!S.flags.arrivedEmberhold) return 'Climb the Peak Road to Emberhold';
     if (!S.flags.metYsolde) return 'Speak with Matriarch Ysolde';
@@ -40,7 +55,7 @@ QUESTS.crown = {
     { t: 'Climb the Peak Road (north-east of the Reach) to Emberhold', done: !!S.flags.arrivedEmberhold || q.status === 'done' },
     { t: 'Speak with Matriarch Ysolde', done: !!S.flags.metYsolde || q.status === 'done' },
     { t: "Win the Delvers' seal (The Silent Mines)", done: S.quests.silence?.status === 'done' },
-    { t: "Win the Anvil Court's seal (A Core for the Anvil)", done: S.quests.anvilcore?.status === 'done' },
+    { t: "Win the Anvil Court's seal (The Missing Page)", done: S.quests.missingpage?.status === 'done' },
     { t: "Win the Wardens' seal (The Ashen Road)", done: S.quests.roadwatch?.status === 'done' },
     { t: 'Have Ysolde open the Forge of the First Fire', done: !!S.flags.forgeOpen },
     { t: 'Defeat the Ashen Sovereign', done: !!S.flags.sovereignDead || q.status === 'done' },
@@ -72,11 +87,12 @@ export function finalChoice() {
   return runScript(async () => {
     unlockRegion('kingdom');
     await say('The Sovereign', 'You have broken my crown. I am only the first fire now, and the first fire is only a question.');
-    await say('The Sovereign', 'Winter was my brother, and you freed him, or bound him, or wore him. What will you do with me?');
+    const bro = { thaw: 'you set him free', warden: 'you keep him on a leash', crown: 'you wear him' }[S.flags.finale] || 'you freed him, or bound him, or wore him';
+    await say('The Sovereign', `Winter was my brother, and ${bro}. What will you do with me?`);
     let pick = null;
     while (!pick) {
       const c = await choose(['Quench the Flame.', 'Wear the Ember Crown.', 'Bind it to the Anvil.']);
-      if (c === 2 && !bestHelp()) { await say('Ysolde', 'A binding needs hands to hold it. No house of Emberhold yet trusts you that far. Earn it, or choose another way.'); continue; }
+      if (c === 2 && !bestHelp()) { await say('The Sovereign', 'A binding needs hands at the other end of the chain. No house of the mountain would hold it for you. Choose again.'); continue; }
       pick = FINAL_CHOICES[c];
     }
     S.flags.finalChoice = pick;

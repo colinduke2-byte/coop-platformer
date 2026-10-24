@@ -186,7 +186,7 @@ export default class Grimfang extends Boss {
     const sc = this.scene;
     if (!sc || !sc.scene.isActive('Game') || this.dead || sc.player?.mode === 'dead' || S.hp <= 0) return;
     await runScript(async () => {
-      await say('Grimfang', '*The great wolf lowers its head. Its flanks heave. It does not look away.*');
+      await say('', '(The great wolf lowers its head. Its flanks heave. It does not look away.)');
       const c = await choose(['Finish him.', 'Let him go.']);
       if (c === 0) {
         this.invulnerable = false; this.yieldDone = true;

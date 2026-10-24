@@ -25,7 +25,7 @@ export function wireQuests() {
     const q = S.quests.king;
     if (id === 'frostheart' && q.status === 'active') {
       q.status = 'relic';
-      bus.emit('toast', 'QUEST UPDATED: THE HOLLOW KING', 13);
+      bus.emit('toast', 'QUEST UPDATED: THE FROSTSWORN JARL', 13);
       sfx.play('quest');
     }
   });

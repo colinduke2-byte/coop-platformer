@@ -34,7 +34,7 @@ const cq = await G(async () => {
   const out = {};
   out.start = (await C.companionStory('Pell')) && S.quests.pelldebt.status === 'active';
   S.inv.ember_ore = 4; await C.companionStory('Pell'); out.done = S.quests.pelldebt.status; out.inv = [S.inv.pell_charm, S.equip.charm, S.inv.ember_ore];
-  out.ragnaLocked = (await C.companionStory('Ragna')) === false;
+  await C.companionStory('Ragna'); out.ragnaLocked = S.quests.ragnagrave.status === 'inactive';   // she may share a story beat, but her quest waits for the Company
   S.quests.company.status = 'done'; await C.companionStory('Ragna'); out.rstart = S.quests.ragnagrave.status === 'active';
   S.inv.iron_ingot = 3; await C.companionStory('Ragna'); out.rdone = S.quests.ragnagrave.status === 'done' && S.inv.company_bow === 1;
   out.items = !!ITEMS.pell_charm && !!ITEMS.company_bow;

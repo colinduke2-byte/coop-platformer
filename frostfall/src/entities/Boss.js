@@ -11,7 +11,7 @@ import { music } from '../audio/sfx.js';
 import { saveGame } from '../systems/save.js';
 import Pickup from './Pickup.js';
 
-// Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
+// Jarl Valdrek, the Frostsworn. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
 //  Phase 2: roars and summons draugr; faster; adds frost nova (ring of orbs) and a charge.
 
@@ -302,7 +302,7 @@ export default class Boss extends Enemy {
     sc.onEnemyKilled(this);
     sc.setGate(false);
     music.play('crypt');
-    bus.emit('toast', 'THE HOLLOW KING FALLS', 13);
+    bus.emit('toast', 'THE FROSTSWORN JARL FALLS', 13);
     sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {
       if (!sc.scene.isActive('Game')) return;
