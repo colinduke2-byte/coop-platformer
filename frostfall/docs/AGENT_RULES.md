@@ -117,7 +117,7 @@ The audio agent has no block. Unused ids inside a block draw as plain dark tiles
 To add a tile:
 1. Add `NAME: id` on **your block's line** in `TILE`, taking the next free id of your block.
 2. If it is solid, add it on your line in `SOLID_TILES`.
-3. Draw it in `drawTile` (`art/sprites.js`). That file belongs to the art agent, so send the drawing to them.
+3. Draw it in `drawTile` (`art/sprites/tiles.js`). That file belongs to the art agent, so send the drawing to them.
 
 `TILE_COUNT` follows by itself. `test/unit/foundation.mjs` fails on a duplicate id, an id outside every block, or a
 solid tile that does not exist.
@@ -246,7 +246,7 @@ One owner per file. A shared file goes through its owner; everyone else sends a 
 | `data/items.js`, `data/enemies.js` | Append-only. Put new content in your own file, registered like `items4.js` / `enemies4.js`. |
 | `data/maps.js` | One owner (W). A new map goes in its own module that sets `MAPS.x`, as `regions2-4` do. |
 | `config.js` (`TILE`, `SOLID_TILES`, `BINDINGS`) | Your tile block only (section 4). Keys: ask the H agent. |
-| `art/sprites.js` + `test/baseline/sprites.json` | A only. |
+| `art/sprites.js`, `art/sprites/*` + `test/baseline/sprites.json` | A only. |
 | `world/worldgen.js`, `world/landmarks.js` + `test/baseline/reach.json` | W only: any change shifts the Reach hash for everyone. |
 | `systems/stats.js` (`recalc`) | E owns it. A new stat source is one term in the same expressions: careful merge. |
 | `systems/keys.js` | One owner (H) for new actions. |
