@@ -36,7 +36,7 @@ export function own(id, slot = null) {
 export function rehydrateInst() { for (const [id, base] of Object.entries(S.inst || {})) register(id, base); }
 onStateReset((st) => { for (const id of Object.keys(ITEMS)) if (id.startsWith('i_') && !st.inst?.[id]) delete ITEMS[id]; });
 
-// Save migration v3 -> v4 (systems/save.js): state that older saves keyed by a handcrafted item's id moves to one instance of it,
+// Save migration v4 -> v5 (systems/save.js): state that older saves keyed by a handcrafted item's id moves to one instance of it,
 // the worn copy first (so of two Glass Daggers, the main-hand one keeps the +5). Things you no longer own lose it.
 export function migrateInstances(s) {
   const bases = new Set();

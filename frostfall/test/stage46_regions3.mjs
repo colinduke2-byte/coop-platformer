@@ -17,9 +17,10 @@ const SCRIPT = (name) => G(async (n) => { await import('/src/data/hamlets.js'); 
 const tiles = await G(async () => {
   const CF = await import('/src/config.js'), tex = window.__ff.game.textures.get('tiles').getSourceImage(), T = CF.T, sig = [];
   const cv = document.createElement('canvas'); cv.width = tex.width; cv.height = tex.height; const x = cv.getContext('2d'); x.drawImage(tex, 0, 0);
-  for (let i = 0; i < CF.TILE_COUNT; i++) { const d = x.getImageData(i * T, 0, T, T).data; let h = 0; for (let k = 0; k < d.length; k += 4) h = (h * 31 + d[k] + d[k + 1] * 3 + d[k + 2] * 7 + d[k + 3]) >>> 0; sig.push(h); }
+  const ids = [...new Set(Object.values(CF.TILE))];      // defined tiles only: unused ids of the reserved blocks all draw as the same dark tile
+  for (const i of ids) { const d = x.getImageData(i * T, 0, T, T).data; let h = 0; for (let k = 0; k < d.length; k += 4) h = (h * 31 + d[k] + d[k + 1] * 3 + d[k + 2] * 7 + d[k + 3]) >>> 0; sig.push(h); }
   const fresh = ['ASH', 'BASALT', 'LAVA', 'ICESHELF', 'PACKICE', 'SHINGLE', 'WRECK', 'MARBLE', 'RUINWALL', 'MOSS'].map((k) => CF.TILE[k]);
-  return { n: CF.TILE_COUNT, distinct: new Set(sig).size, solid: ['BASALT', 'LAVA', 'PACKICE', 'WRECK', 'RUINWALL'].every((k) => CF.SOLID_TILES.includes(CF.TILE[k])), walk: ['ASH', 'ICESHELF', 'SHINGLE', 'MARBLE', 'MOSS'].every((k) => !CF.SOLID_TILES.includes(CF.TILE[k])), fresh: fresh.every((id) => id < CF.TILE_COUNT) };
+  return { n: ids.length, distinct: new Set(sig).size, solid: ['BASALT', 'LAVA', 'PACKICE', 'WRECK', 'RUINWALL'].every((k) => CF.SOLID_TILES.includes(CF.TILE[k])), walk: ['ASH', 'ICESHELF', 'SHINGLE', 'MARBLE', 'MOSS'].every((k) => !CF.SOLID_TILES.includes(CF.TILE[k])), fresh: fresh.every((id) => id < CF.TILE_COUNT) };
 });
 check('ten new terrain tiles are drawn, distinct, and solid or walkable as intended', tiles.n >= 55 && tiles.distinct === tiles.n && tiles.solid && tiles.walk && tiles.fresh, JSON.stringify(tiles));
 

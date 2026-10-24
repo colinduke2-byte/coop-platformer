@@ -67,15 +67,15 @@ await h.shot('s15_shop');
 await closeShop();
 check('buying spends gold and gives the item', (await S('inv.hp_potion')) === hp0 + 1 && (await S('gold')) === 475);
 
-// ---------------- forge: upgrade + enchant
+// ---------------- forge: upgrade + enchant (PR-08: the worn sword becomes its own instance, so look it up by S.equip.weapon)
 await G(() => { const S = window.__ff.S; S.gold = 500; S.inv.iron_ingot = 5; S.inv.iron_sword = 1; S.equip.weapon = 'iron_sword'; S.inv.bone_dust = 3; });
 const d0 = await G(() => window.__stats.weaponDmg());
 await openShop('upgradeMenu', ['H', 'weapon']);
 await tap('KeyE', 60); await h.sleep(150); await closeShop();
-check('smith upgrades the weapon (+5% damage at the first level)', Math.abs((await G(() => window.__stats.weaponDmg())) - d0 * 1.05) < 0.01 && (await S('upgrades.iron_sword')) === 1);
+check('smith upgrades the weapon (+5% damage at the first level)', Math.abs((await G(() => window.__stats.weaponDmg())) - d0 * 1.05) < 0.01 && (await G(() => { const S = window.__ff.S; return S.upgrades[S.equip.weapon]; })) === 1);
 await openShop('enchantMenu', ['H']);
 await tap('KeyE', 60); await h.sleep(150); await closeShop();
-check('smith enchants the weapon (flame)', (await S('enchants.iron_sword.type')) === 'fire' && (await S('inv.bone_dust')) === undefined);
+check('smith enchants the weapon (flame)', (await G(() => { const S = window.__ff.S; return S.enchants[S.equip.weapon]?.type; })) === 'fire' && (await S('inv.bone_dust')) === undefined);
 // enchant applies in combat
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.clear(); const p = g.player; p.setPosition(300, 250); p.face = { x: 1, y: 0 }; p.mode = 'free'; p.lockT = 0; p.invuln = 99; window.__ff.S.sp = 100; const e = g.addEnemy('draugr', 314, 250); e.cfg = { ...e.cfg, detect: 0, speed: 0 }; });
 await tap('KeyJ', 60); await h.sleep(250);

@@ -94,7 +94,8 @@ const forge = await G(async () => {
   out.locked = E.forgeEmber('ember_blade');
   S0.flags.emberforged = true;
   out.axeNoRep = E.forgeEmber('ember_axe');
-  out.blade = E.forgeEmber('ember_blade'); out.bladeHave = !!S0.inv.ember_blade; out.iron = S0.inv.ash_iron; out.gold = S0.gold;
+  // a masterwork comes out as its own instance (PR-08), so the blade may sit in S.inv under an instance id
+  out.blade = E.forgeEmber('ember_blade'); out.bladeHave = Object.keys(S0.inv).some((k) => k === 'ember_blade' || S0.inst?.[k] === 'ember_blade'); out.iron = S0.inv.ash_iron; out.gold = S0.gold;
   F.addRep('delvers', 25, true); out.axe = E.forgeEmber('ember_axe');
   S0.gold = 10; out.poor = E.forgeEmber('ember_spear');
   return out;

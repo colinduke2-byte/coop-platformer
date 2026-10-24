@@ -29,8 +29,9 @@ check('at night wolves become werewolves (mostly on a full moon), the dead becom
 // the creatures exist and behave
 const mk = await G(() => {
   const g = window.__ff.game.scene.getScene('Game'), p = g.player, out = {};
+  // vs: the on-screen scale (native art draws a bigger sheet at scale 1)
   const w = g.addEnemy('werewolf', p.x + 90, p.y, { tier: 0 }), gh = g.addEnemy('ghost', p.x - 90, p.y, { tier: 0 });
-  out.w = w.maxHp > 48 && w.scaleX > 1.2; out.g = gh.cfg.ghostly === true && gh.alpha < 1.01;
+  out.w = w.maxHp > 48 && w.vs > 1.2; out.g = gh.cfg.ghostly === true && gh.alpha < 1.01;
   return out;
 });
 check('werewolves are bigger and tougher; ghosts are translucent', mk.w && mk.g, JSON.stringify(mk));
