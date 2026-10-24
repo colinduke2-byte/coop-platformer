@@ -1,3 +1,4 @@
+import { LATE_AFFIXES, lateAffixesFor } from './enemyMoves.js';
 // Elite enemies: a regular enemy with one or two random affixes that change how the fight plays.
 export const AFFIXES = {
   swift: { name: 'Swift', tint: 0x9fe8ff, hint: 'FASTER', apply: (e) => { e.cfg.chase *= 1.3; e.cfg.speed *= 1.2; e.cfg.cooldown *= 0.7; } },
@@ -11,16 +12,18 @@ export const AFFIXES = {
 export const AFFIX_IDS = Object.keys(AFFIXES);
 
 export function applyElite(en, rnd, count = 1) {
-  const pool = [...AFFIX_IDS];
+  const late = lateAffixesFor(en);                                  // CB22: late in the game, affixes that change behaviour
+  const pool = [...AFFIX_IDS, ...late];
   en.affixes = [];
   for (let i = 0; i < count && pool.length; i++) {
     const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
     en.affixes.push(id);
-    AFFIXES[id].apply(en);
+    (AFFIXES[id] || LATE_AFFIXES[id]).apply(en);
   }
   en.elite = true;
-  en.cfg = { ...en.cfg, tint: AFFIXES[en.affixes[0]].tint };
-  en.displayName = en.affixes.map((a) => AFFIXES[a].name).join(' ') + ' ' + en.cfg.name;
+  const A = (id) => AFFIXES[id] || LATE_AFFIXES[id];
+  en.cfg = { ...en.cfg, tint: A(en.affixes[0]).tint };
+  en.displayName = en.affixes.map((a) => A(a).name).join(' ') + ' ' + en.cfg.name;
   en.maxHp = Math.round(en.maxHp * 1.8); en.hp = en.maxHp;
   en.cfg.loot = en.cfg.loot ? { ...en.cfg.loot, gold: [en.cfg.loot.gold[0] * 3, en.cfg.loot.gold[1] * 3] } : en.cfg.loot;
 }

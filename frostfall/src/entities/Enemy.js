@@ -22,6 +22,7 @@ import '../art/native/index.js';
 import { applyStatus, clearStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 import { tip } from '../systems/tips.js';
 import { warpable } from './bulletTime.js';
+import { chooseAlt, altAttack, shotDir, followUp, duel } from './enemyMoves.js';
 
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -64,6 +65,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * dmgMul(f)) };
       if (this.cfg.loot?.gold) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * goldMul(f)), Math.round(this.cfg.loot.gold[1] * goldMul(f))] };
       this.maxHp = Math.round(this.maxHp * hpMul(f));
+      if (this.cfg.cooldown) this.cfg = { ...this.cfg, cooldown: this.cfg.cooldown * (1 - TUNE.combat.late.cooldown * f) };   // CB22: late foes attack more often
     }
     if (cfg.title) {                             // bosses: their own health and damage tuning (TUNE.bosses)
       const bt = { ...TUNE.bosses.default, ...(TUNE.bosses[kind] || {}) };
@@ -465,11 +467,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (this.blink <= 0) { this.blink = this.cfg.crush ? 0.11 : 0.07; this.blinkOn = !this.blinkOn; }
         // roll-punishers hold the swing while you are mid-roll and strike as you land
         if (cfg.punishRoll && this.stateT <= 0.08 && player.mode === 'roll' && (this.holdT = (this.holdT || 0) + dt) < 0.8) { this.stateT = 0.08; break; }
+        if (this.stateT <= 0 && this.feint) { this.feint = false; this.setState('chase'); this.cd = TUNE.combat.alt.feintCd; this.mark('?', 13, 0.4); break; }   // CB23: a feint
         if (this.stateT <= 0) { this.holdT = 0; this.startAttack(player, to); }
         break;
       }
       case 'attack': {
         this.attackTick(dt, player);
+        if (this.stateT <= 0 && followUp(this, player)) break;          // CB22 / CB23: a second swing
         if (this.stateT <= 0) { this.setState('recover', cfg.recover); b.setVelocity(0, 0); this.cd = cfg.cooldown; }
         break;
       }
@@ -482,6 +486,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   canAttack() { return true; }
+  attackSlots() { return (this.progressF || 0) > TUNE.combat.late.slotsAt ? 3 : 2; }      // CB22: late in the game three may strike at once
   // inside the camera's view, a few pixels in from the edge
   onCamera() {
     const v = this.scene.cameras.main.worldView, m = TUNE.combat.camInset;
@@ -531,16 +536,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     return sum > 0 ? -1 : sum < 0 ? 1 : (Math.random() < 0.5 ? 1 : -1);
   }
 
-  startWindup(to) {
+  startWindup(to, wind = null) {
+    wind ??= chooseAlt(this, Math.hypot(this.scene.player.x - this.x, this.scene.player.y - this.y));      // CB23: maybe the second move
     if (this.cfg.flank) for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && o.alerted && o.cfg.flank && o.cd > 0.25 && Math.hypot(o.x - this.x, o.y - this.y) < 80) o.cd = 0.25;   // the pack pounces together
-    this.setState('windup', this.cfg.windup);
+    this.setState('windup', wind);
     this.face = dir8(to.x, to.y);
     this.dashDir = to;
     this.castTarget = { x: this.scene.player.x, y: this.scene.player.y + 3 };
     this.hitDone = false;
     this.blinkOn = true; this.blink = 0.07;
-    const crush = !!this.cfg.crush && this.cfg.kind !== 'shoot' && this.cfg.kind !== 'cast';
-    this.mark(crush ? '!!' : '!', crush ? 12 : 11, this.cfg.windup + 0.1);       // CB13: a shield-crushing blow has its own mark, tint and sound
+    const crush = (!!this.cfg.crush || this.altCrush) && this.cfg.kind !== 'shoot' && this.cfg.kind !== 'cast';
+    this.mark(crush ? '!!' : '!', crush ? 12 : 11, wind + 0.1);       // CB13: a shield-crushing blow has its own mark, tint and sound
     sfx.play('telegraph'); if (crush) { sfx.play('smash'); tip('crush'); }
   }
 
@@ -559,6 +565,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.explodes = false; this.dead = false; this.hp = 0; this.die({ suicide: true });
       return;
     }
+    if (altAttack(this, player)) return;                 // CB23: the ground slam and the ring of bursts
     if (cfg.kind === 'cast') {
       const zn = cfg.zoneN || 1;
       for (let i = 0; i < zn; i++) {
@@ -571,8 +578,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     if (cfg.kind === 'shoot') {
-      const f = this.dashDir;
       const spd = cfg.projSpeed || 125;
+      const f = shotDir(this, player, spd);              // CB23: every third shot (always for a Marksman) leads you
       const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2, owner: this });
       pr.inflict = cfg.inflicts;
       if (cfg.pull) { pr.pull = true; pr.org = { x: this.x, y: this.y }; }
@@ -602,7 +609,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
       const hp0 = S.hp;
-      const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this });
+      const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this, crush: this.altCrush });
       if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
       // a thief only steals on a clean hit: not through a parry, a block or a ward, and not if the hit's thorns killed it
       if (landed && S.hp < hp0 && !this.dead && this.cfg.steals && !this.stolen && S.gold > 0) {
@@ -700,6 +707,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       }
     }
     if (this.hidden) return 0;                       // a burrowed worm cannot be hit
+    if (duel(this, info)) return 0;                  // CB22: a Duellist turns your third combo blow aside
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);

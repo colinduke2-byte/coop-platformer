@@ -287,7 +287,7 @@ export const TUNE = {
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
   bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },
-  scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 5.2, dmg: 2.9, gold: 2.0, elite: 0.5 },
+  scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 4.4, dmg: 2.9, gold: 2.0, elite: 0.5 },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
     // elite: how often elite and champion enemies appear; drops: food and potion drop chance; price: shop buy prices; durability: gear wear (null = the player's own setting, 'hard' = on unless switched off in the Hard setting)
@@ -322,6 +322,11 @@ TUNE.combat = {
   strafeFlip: 0.5,                                          // CB19: seconds between turns when a waiting foe circles into a wall
   camInset: 6,
   relock: 0.4,                                              // CB16: seconds after a kill in which the lock moves to the next foe                                              // CB15: a ranged foe only starts its tell this far inside the screen
+  // CB23: second moves of key enemies (every Nth attack); slam = a crushing ground zone, string / bash = a crushing blow
+  alt: { every: 3, slamRange: 40, slamR: 30, slamDelay: 0.45, slamDmg: 1.1, slamWind: 1.15, crushWind: 1.15, feintWind: 0.7, feintCd: 0.35, ringN: 6, ringR: 30 },
+  // CB22: late foes (progress f from systems/enemyscale.js): three attack slots past slotsAt, cooldown x(1 - cooldown*f),
+  // a follow-up swing past followAt (chance rises to `follow` at f = 1), behaviour affixes past affixAt
+  late: { slotsAt: 0.6, cooldown: 0.25, followAt: 0.4, follow: 0.35, followWind: 0.75, affixAt: 0.4, duelStun: 0.45 },
   great: { charge: [0.45, 0.9], hold: 0.6, mult: [1, 1.35, 1.75], move: 0.3 },     // CB24: hold heavy to charge (seconds per level, damage per level)
   axe: { keep: 2.5, maxStacks: 5, bleedT: 4, dpsPerStack: 1.5 },                   // CB24: axe blows on one foe stack its bleeding          // CB6: arrows and bolts bend toward a foe this many degrees off your facing
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
