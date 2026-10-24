@@ -57,6 +57,9 @@ const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
   city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE',
   fenroad: 'THE ROAD TO THE WEEPING FENS', stormroad: 'THE ROAD TO THE STORMCROWN', reedwick: 'A STILT VILLAGE', mirebarrow: 'A SUNKEN BARROW', skarnhold: 'A NOMAD HOLD', stormspire: 'A STORM-STRUCK SPIRE' };
+// WQ9: [ring, heart] of the ancient tree per region (the Reach, the Coast and the Stormcrown keep their pines)
+const BIG_TREE = { ashen: [TILE.DEADTREE, TILE.DEADTREE], kingdom: [TILE.DEADTREE, TILE.PILLAR], fens: [TILE.BOGTREE, TILE.BOGTREE], glasswood: [TILE.CRYSTAL, TILE.CRYSTAL],
+  underdeep: [TILE.GLOWCAP, TILE.GLOWCAP], vale: [TILE.BIRCH, TILE.HEARTROOT], sunscorch: [TILE.CACTUS, TILE.CACTUS] };
 export const SMALL_GAP = { rest: 24, spring: 30, cache: 30, hermit: 36, ancient: 36 };
 export const HIDDEN_KINDS = new Set(['cache', 'hermit', 'ancient']);   // no road leads to these: you find them by looking
 const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall', 'pool', 'cliff']);   // biomes nothing is placed in (solid or open water)
@@ -200,7 +203,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'sign', x: p.x - 6, y: p.y + 2, text: ['A BEAR DEN. CLAW MARKS ON EVERY TREE.', 'THE MOTHER DOES NOT FORGIVE ANYONE WHO HURTS HER CUBS.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'beardn' });
     } else if (p.kind === 'spring') {
-      clearing(p, 9, 7, TILE.SNOW2);
+      clearing(p, 9, 7);
       add({ t: 'spring', x: p.x, y: p.y }); add({ t: 'glow', x: p.x, y: p.y, r: 40, col: 15 });
       add({ t: 'sign', x: p.x - 4, y: p.y + 2, text: ['A HOT SPRING. SOAK TO HEAL, CLEAR YOUR WOUNDS AND WARM UP.'] });
       for (let i = 0; i < 2; i++) add({ t: 'deer', x: p.x + (i ? 4 : -4), y: p.y + 3, kind: 'fox' });
@@ -354,13 +357,13 @@ export function buildRegion(def, region, seed) {
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A CIRCLE OF STANDING STONES.', 'THE AIR HUMS. SOMETHING OLD BLESSES THOSE WHO PAUSE HERE.'] });
     } else if (p.kind === 'cache') {
       // a hollow in the rock or a collapsed lean-to: a locked chest, a note, one or two sleepers
-      clearing(p, 7, 6, TILE.SNOW2);
+      clearing(p, 7, 6);
       g.set(p.x - 4, p.y - 1, TILE.ROCK); g.set(p.x + 4, p.y - 1, TILE.ROCK); g.set(p.x - 3, p.y - 2, TILE.ROCK); g.set(p.x + 3, p.y - 2, TILE.ROCK);
       chest(p, 0, -1, p.tier + 1, 'hard');
       add({ t: 'sign', x: p.x - 2, y: p.y + 2, text: ['A SCRAWLED NOTE.', pickOf(['SOMEONE HID THEIR SAVINGS HERE. THEY NEVER CAME BACK.', 'IF YOU FOUND THIS, IT IS YOURS. DO NOT WAKE THE WATCHMAN.', 'THE LAST OF THE WINTER STORES. TAKE ONE AND LEAVE THE REST.'])] });
       for (let i = 0; i < 1 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(m.melee), p.x + (i ? 3 : -3), p.y + 2, p.tier, { camp: p.id });
     } else if (p.kind === 'hermit') {
-      clearing(p, 9, 7, TILE.SNOW2);
+      clearing(p, 9, 7);
       g.set(p.x, p.y + 1, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 50, col: 12 });
       add({ t: 'npc', id: 'hermit', x: p.x + 2, y: p.y + 2 });
@@ -368,9 +371,10 @@ export function buildRegion(def, region, seed) {
       potsAround(p, 3, 4, 'barrel');
     } else if (p.kind === 'ancient') {
       // a huge old tree ringed by smaller ones, with a blessing at its roots
-      clearing(p, 11, 9, TILE.SNOW2);
-      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), TILE.PINE); }
-      g.set(p.x, p.y - 1, TILE.DEADTREE);
+      clearing(p, 11, 9);
+      const tree = BIG_TREE[def.id] ?? [TILE.PINE, TILE.DEADTREE];      // WQ9: the region's own trees, not a snowy pine ring in the dunes
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), tree[0]); }
+      g.set(p.x, p.y - 1, tree[1]);
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y + 1 }); add({ t: 'glow', x: p.x, y: p.y, r: 52, col: 14 });
       add({ t: 'lore', id: 'stone' + ((p.id.length + p.x) % 3), tex: 'book', x: p.x + 2, y: p.y + 2 });
     } else if (p.kind === 'rest') {
