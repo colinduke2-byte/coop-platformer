@@ -70,28 +70,39 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   // ---------------------------------------------------------------- lock-on
-  // Best foe within range: nearest, with a small bonus for the one we are already facing.
-  pickTarget(range = P.lock.range, skip = null) {
-    let best = null, bs = 1e9;
-    for (const e of this.scene.enemies.getChildren()) {
-      if (e.dead || e === skip || !e.active) continue;
+  // Best foe within range: nearest, with a small bonus for the one we are already facing (CB16: in sight only; deer, hares
+  // and prisms only when nothing else is near). With `dir`, only foes that way count (switching targets).
+  pickTarget(range = P.lock.range, skip = null, dir = null) {
+    let best = null, bs = 1e9, minor = null, ms = 1e9;
+    const f = dir || this.face, sc = this.scene;
+    for (const e of sc.enemies.getChildren()) {
+      if (e.dead || e === skip || !e.active || e.hidden) continue;
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (d > range) continue;
-      const dot = ((e.x - this.x) * this.face.x + (e.y - this.y) * this.face.y) / (d || 1);
-      const sc = d * (1.25 - 0.25 * dot);
-      if (sc < bs) { bs = sc; best = e; }
+      const dot = ((e.x - this.x) * f.x + (e.y - this.y) * f.y) / (d || 1);
+      if (dir && dot < 0.35) continue;
+      if (!sc.hasLOS(this.x, this.y + 3, e.body ? e.body.center.x : e.x, e.body ? e.body.center.y : e.y)) continue;
+      const score = dir ? d * (2 - dot) : d * (1.25 - 0.25 * dot);
+      if (e.cfg?.passive || e.kind === 'prism') { if (score < ms) { ms = score; minor = e; } } else if (score < bs) { bs = score; best = e; }
     }
-    return best;
+    return best || minor;
   }
 
   updateLock() {
     const t = this.target;
     if (keys.pressed('lockon') && this.mode !== 'lying') {
-      if (t) { this.target = null; sfx.play('select'); }
+      const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0), iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
+      if (t && (ix || iy)) { const nt = this.pickTarget(P.lock.range, t, norm(ix, iy)); if (nt) { this.target = nt; sfx.play('select'); } }   // CB16: switch
+      else if (t) { this.target = null; this.relockUntil = 0; sfx.play('select'); }
       else { this.target = this.pickTarget(); if (this.target) sfx.play('select'); }
     }
     const tg = this.target;
+    if (tg && tg.dead) this.relockUntil = this.scene.t + TUNE.combat.relock;          // CB16: a kill hands the lock to the next foe
     if (tg && (tg.dead || !tg.active || Math.hypot(tg.x - this.x, tg.y - this.y) > P.lock.drop || this.mode === 'dead')) this.target = null;
+    if (!this.target && this.scene.t <= (this.relockUntil ?? 0) && this.mode !== 'dead') {
+      const nt = this.pickTarget();
+      if (nt && !nt.cfg?.passive && nt.kind !== 'prism') { this.target = nt; this.relockUntil = 0; }
+    }
     this.drawLock();
   }
 
@@ -105,6 +116,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const cx = t.x + sx * r, cy = t.y + 2 + sy * r;
       g.lineBetween(cx, cy, cx - sx * 3, cy); g.lineBetween(cx, cy, cx, cy - sy * 3);
     }
+  }
+
+  // CB6: the exact direction a shot or bolt flies. Facing stays 8-way for the sprites; projectiles aim at the locked target,
+  // at the mouse pointer, or (a gentle assist) at a foe within a few degrees of where you face.
+  aimVec() {
+    const ox = this.x, oy = this.y + 3, t = this.target;
+    const at = (e) => norm(e.body ? e.body.center.x - ox : e.x - ox, e.body ? e.body.center.y - oy : e.y - oy);
+    if (t && !t.dead && t.active) return at(t);
+    if (settings.mouse && this.mouseAim && (this.mouseAim.x || this.mouseAim.y)) return this.mouseAim;
+    const f = norm(this.face.x, this.face.y), A = TUNE.combat.aimAssist;
+    let best = null, bd = A.range;
+    for (const e of this.scene.enemies.getChildren()) {
+      if (e.dead || !e.active || e.cfg?.passive || e.hidden) continue;
+      const n = at(e), d = Math.hypot(e.x - ox, e.y - oy);
+      if (d < bd && n.x * f.x + n.y * f.y >= Math.cos(A.deg * Math.PI / 180)) { bd = d; best = n; }
+    }
+    return best || f;
   }
 
   get hurtRect() { const b = this.body; return (this._hurtR ||= new Phaser.Geom.Rectangle()).setTo(b.x - 1, b.y - 3, b.width + 2, b.height + 3); }   // reused: read it, do not keep it
@@ -136,6 +164,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   gainXp(skill, amt) { addXp(skill, amt); }
 
+  // CB2: presses made during a hit-stop freeze (when update() does not run) are kept for when the world moves again
+  bufferInputs() {
+    if (keys.pressed('roll')) this.bufRoll = P.buffer;
+    if (keys.pressed('sword')) this.bufSword = P.buffer;
+    if (keys.pressed('heavy')) this.bufHeavy = P.buffer;
+  }
+
   update(dt) {
     burden.watch();
     this.currentDt = dt;
@@ -151,6 +186,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // input buffer: a roll or a swing pressed a moment too early (mid-roll, mid-stun) still happens the instant you can act
     this.bufRoll = keys.pressed('roll') ? P.buffer : Math.max(0, (this.bufRoll || 0) - dt);
     this.bufSword = keys.pressed('sword') ? P.buffer : Math.max(0, (this.bufSword || 0) - dt);
+    this.bufHeavy = keys.pressed('heavy') ? P.buffer : Math.max(0, (this.bufHeavy || 0) - dt);
 
     const ix = (keys.isDown('right') ? 1 : 0) - (keys.isDown('left') ? 1 : 0);
     const iy = (keys.isDown('down') ? 1 : 0) - (keys.isDown('up') ? 1 : 0);
@@ -167,6 +203,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const ptr = this.scene.input.activePointer;
       const cam = this.scene.cameras.main;           // pointer.worldX is shared with the HUD camera, so convert here
       this.face = dir8(cam.scrollX + ptr.x - this.x, cam.scrollY + ptr.y - (this.y + 3));
+      this.mouseAim = norm(cam.scrollX + ptr.x - this.x, cam.scrollY + ptr.y - (this.y + 3));
     }
 
     if (this.mode === 'hurt' && this.stunT <= 0) this.mode = 'free';
@@ -268,7 +305,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.rollDir = ix || iy ? norm(ix, iy) : { ...this.face };
       this.face = dir8(this.rollDir.x, this.rollDir.y);
       this.drawing = false; this.aim.setVisible(false);
-      this.swing = null;
+      this.swing = null; this.charging = null;
       sfx.play('roll');
       this.scene.fx.puff(this.x, this.y + 6, 5, 4, 25, 0.3);
       return;
@@ -277,7 +314,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.lockT > 0) return;
     this.bowInput();
     if (this.drawing) return;
-    if (keys.pressed('heavy')) this.startHeavy();
+    if (keys.pressed('heavy') || this.bufHeavy > 0) { this.bufHeavy = 0; this.startHeavy(); }
     else if (keys.pressed('sword') || (this.bufSword > 0 && !this.swing) || (settings.holdChain && keys.isDown('sword') && this.comboT > 0 && !this.swing)) { this.bufSword = 0; this.startSwing(); }
     else if (keys.pressed('spell')) this.cast();
     else if (this.quickCast()) { /* cast chosen spell directly */ }

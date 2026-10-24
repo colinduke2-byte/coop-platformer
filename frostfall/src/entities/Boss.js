@@ -9,7 +9,9 @@ import { dist, norm, dir8, rand } from '../util.js';
 import { TUNE } from '../data/tuning.js';
 import { music } from '../audio/sfx.js';
 import { saveGame } from '../systems/save.js';
+import { settings } from '../systems/settings.js';
 import Pickup from './Pickup.js';
+import { dangerMark } from './danger.js';
 
 // Jarl Valdrek, the Hollow King. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
@@ -55,7 +57,7 @@ export default class Boss extends Enemy {
   takeHit(info) {
     if (this.invulnerable || !this.engaged) { this.scene.fx.puff(this.x, this.y, 4, 3, 30, 0.2); return 0; }
     const dealt = super.takeHit(info);
-    if (!this.dead && this.bphase === 1 && this.hp <= this.maxHp * 0.5) this.enterPhase2();
+    if (!this.dead && this.bphase === 1 && this.hp <= this.maxHp * this.phase2At) this.enterPhase2();
     return dealt;
   }
 
@@ -116,7 +118,7 @@ export default class Boss extends Enemy {
         break;
       case 'attack':
         if (this.isDash()) this.chargeTick(dt, player);
-        else if (this.stateT <= 0) this.setState('recover', this.B[this.atk].recover * (this.bphase === 2 ? 0.75 : 1));
+        else if (this.stateT <= 0) this.setState('recover', this.recoverFor(this.atk));
         break;
       case 'recover':
         b.setVelocity(0, 0);
@@ -151,21 +153,31 @@ export default class Boss extends Enemy {
     this.atk = a;
     this.dir = { x: to.x, y: to.y };
     this.face = dir8(to.x, to.y);
-    this.setState('windup', this.B[a].windup * (this.bphase === 2 ? 0.8 : 1));
+    this.setState('windup', this.windupFor(a));
     this.windTotal = this.stateT;
     this.makeTele(a);
     sfx.play('telegraph');
     this.mark('!', 11, this.stateT + 0.05);
   }
 
+  // CB7 / CB26 / CB28: each phase tightens the tell (phase 3 too, no longer back to phase 1's timing); Hard tightens it a
+  // little more. A shortened tell never drops below the floor (melee moves keep a little more).
+  windupFor(a) {
+    const BP = TUNE.combat.bossPhase, base = this.B[a].windup, ph = Math.min(3, this.bphase || 1);
+    let w = base * BP.windup[ph - 1] * (settings.difficulty === 'hard' ? BP.hardWindup : 1);
+    if (w < base) w = Math.max(w, Math.min(base, BP.MELEE.includes(a) && ph >= 2 ? BP.meleeFloor : BP.floor));
+    return w;
+  }
+  recoverFor(a) { return this.B[a].recover * TUNE.combat.bossPhase.recover[Math.min(3, this.bphase || 1) - 1]; }
+  // CB26: on Hard the second phase starts earlier
+  get phase2At() { return settings.difficulty === 'hard' ? TUNE.combat.bossPhase.hardPhase2 : 0.5; }
+
   makeTele(a) {
     const sc = this.scene;
     this.clearTele();
     if (a === 'slam') {
       const c = this.slamCenter();
-      const img = sc.add.image(c.x, c.y, 'disc').setTint(C[11]).setAlpha(0.25).setScale(this.B.slam.r / 32).setDepth(5);
-      const rg = sc.add.image(c.x, c.y, 'ring').setTint(C[11]).setAlpha(0.8).setScale(this.B.slam.r / 32).setDepth(6);
-      this.tele.push(img, rg);
+      this.tele.push(...dangerMark(sc, c.x, c.y, this.B.slam.r, C[11], 0.25));
     } else if (a === 'sweep') {
       const r = this.sweepRect();
       const img = sc.add.rectangle(r.x + r.width / 2, r.y + r.height / 2, r.width, r.height, C[11], 0.3).setDepth(5);
@@ -186,7 +198,7 @@ export default class Boss extends Enemy {
     if (this.blink <= 0) { this.blink = 0.08; this.blinkOn = !this.blinkOn; }
     for (const t of this.tele) {
       if (t.texture?.key === 'ring' && this.atk === 'nova') t.setScale(0.3 + k * 2.2).setAlpha(0.9 - k * 0.5);
-      else t.setAlpha((t.texture?.key === 'ring' ? 0.5 : 0.18) + k * 0.4);
+      else t.setAlpha((t.ringy || t.texture?.key === 'ring' ? 0.5 : 0.18) + k * 0.4);
     }
     // Tracking: volley/charge keep aiming until the last third
     if (k < 0.6 && (this.atk === 'volley' || this.atk === 'charge')) {
@@ -226,7 +238,7 @@ export default class Boss extends Enemy {
       sc.shake(150, 0.008);
       sc.fx.slash(this.cx + this.face.x * 8, this.cy + this.face.y * 8, Math.atan2(this.face.y, this.face.x));
       sc.fx.puff(r.centerX, r.centerY, 15, 8, 60, 0.3);
-      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) player.hurt(this.B.sweep.dmg, this.cx, this.cy, { kb: 150 });
+      if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) player.hurt(this.B.sweep.dmg, this.cx, this.cy, { kb: 150, attacker: this });
     } else if (a === 'volley') {
       sfx.play('frost');
       const base = Math.atan2(this.dir.y, this.dir.x);
@@ -248,7 +260,7 @@ export default class Boss extends Enemy {
   }
 
   orb(angle, speed, dmg) {
-    const pr = new Projectile(this.scene, this.cx + Math.cos(angle) * 14, this.cy + Math.sin(angle) * 14, 'eshot', Math.cos(angle) * speed, Math.sin(angle) * speed, { dmg, life: 3 });
+    const pr = new Projectile(this.scene, this.cx + Math.cos(angle) * 14, this.cy + Math.sin(angle) * 14, 'eshot', Math.cos(angle) * speed, Math.sin(angle) * speed, { dmg, life: 3, owner: this });
     this.scene.eshots.add(pr);
     pr.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
   }

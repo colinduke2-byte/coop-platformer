@@ -296,3 +296,34 @@ export const TUNE = {
     hard: { dmgTaken: 1.46, enemyHp: 2.15, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: 'hard' },
   },
 };
+
+// ---- C: combat (feel numbers for the combat pass; see docs/audit/combat.md)
+TUNE.combat = {
+  aimAssist: { deg: 12, range: 150 },
+  parryLockout: 0.4,                           // CB10: seconds after a parry that caught nothing before the next raise can parry again
+  deflect: { mul: 1, bossMul: 0.5, speed: 160, life: 1.2 },   // CB25: a parried shot flies back with this share of its damage
+  sword: { riposteAdd: 0.4 },                  // CB24: a sword's riposte window is longer
+  // CB3: when each style's blow lands, as fractions of the swing's length (start, end); the blade art crosses its middle at the start
+  hitWin: { dagger: [0.25, 0.6], sword: [0.2, 0.6], staff: [0.2, 0.6], spear: [0.3, 0.6], axe: [0.35, 0.65], mace: [0.35, 0.65], halberd: [0.35, 0.65], great: [0.4, 0.7], hammer: [0.5, 0.75] },
+  hitStopCap: 0.09,                            // CB4: hit-stop of an ordinary (non-finisher) hit never exceeds this
+  namedExec: 0.1,                              // CB9: a named foe is only executed below this share of health, and only while staggered
+  // CB24: each style's heavy attack (over TUNE.player.heavy); arc = half-angle in degrees, r = radius, shock = ground shock ahead
+  heavy: {
+    dagger: { cost: 22, windup: 0.12, total: 0.4, dmg: 1.9, kb: 120, size: 20, stun: 0.6, range: 52, step: 14 },
+    axe: { windup: 0.34, total: 0.7, dmg: 2.0, arc: 135, r: 30, stun: 0.8 },
+    spear: { windup: 0.28, total: 0.6, dmg: 2.1, size: 30, reach: 34, narrow: 0.45, root: 0.6, lunge: 170, stun: 0.6 },
+    halberd: { windup: 0.36, total: 0.76, dmg: 1.9, arc: 180, r: 36, tip: 0.65, tipMul: 1.3, kb: 260 },
+    mace: { windup: 0.36, total: 0.7, dmg: 2.1, shock: { r: 28, ahead: 14 }, stun: 0.9 },
+    hammer: { windup: 0.42, total: 0.82, dmg: 2.4, shock: { r: 34, ahead: 16 }, stun: 1.0, crushGuard: true },
+  },
+  minWindup: { easy: 0.4, normal: 0.4, hard: 0.36 },       // CB12: no regular enemy's tell is shorter than this
+  windupArmor: 0.12, armorKb: 0.6,                          // CB1: foes with kbResist >= armorKb (and mini-bosses) keep their swing unless one hit's poise passes this share of max health
+  namedPoise: 2,                                            // CB9: mini-bosses need this much more poise damage to stagger
+  strafeFlip: 0.5,                                          // CB19: seconds between turns when a waiting foe circles into a wall
+  camInset: 6,
+  relock: 0.4,                                              // CB16: seconds after a kill in which the lock moves to the next foe                                              // CB15: a ranged foe only starts its tell this far inside the screen
+  great: { charge: [0.45, 0.9], hold: 0.6, mult: [1, 1.35, 1.75], move: 0.3 },     // CB24: hold heavy to charge (seconds per level, damage per level)
+  axe: { keep: 2.5, maxStacks: 5, bleedT: 4, dpsPerStack: 1.5 },                   // CB24: axe blows on one foe stack its bleeding          // CB6: arrows and bolts bend toward a foe this many degrees off your facing
+  // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
+  bossPhase: { windup: [1, 0.8, 0.75], recover: [1, 0.75, 0.7], floor: 0.38, meleeFloor: 0.4, MELEE: ['slam', 'sweep', 'tail', 'charge'], hardWindup: 0.9, hardPhase2: 0.6 },
+};

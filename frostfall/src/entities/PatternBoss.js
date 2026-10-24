@@ -8,6 +8,7 @@ import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
 import { dist } from '../util.js';
 import { saveGame } from '../systems/save.js';
+import { dangerMark } from './danger.js';
 
 // Shared base for the Heart guardians. A boss is a subclass that sets `tune` (its numbers in TUNE), `info`
 // (flag / heart / toast / summon kind) and an attackPool(d). The moves themselves live here:
@@ -19,7 +20,7 @@ export default class PatternBoss extends Boss {
     this.B = tune;
     this.info = info;
     this.setScale(info.scale || 3);
-    this.phaseAt = info.phaseAt || [0.5];
+    this.phaseAt = (info.phaseAt || [0.5]).map((v, i) => (i === 0 && v === 0.5 ? this.phase2At : v));     // CB26: earlier on Hard
     this.leaping = false;
   }
 
@@ -57,7 +58,7 @@ export default class PatternBoss extends Boss {
     } else if (a === 'tail') {
       this.clearTele();
       const r = this.B.tail.r;
-      this.tele.push(sc.add.image(this.cx, this.cy + 4, 'disc').setTint(C[11]).setAlpha(0.25).setScale(r / 32).setDepth(5), sc.add.image(this.cx, this.cy + 4, 'ring').setTint(C[11]).setAlpha(0.8).setScale(r / 32).setDepth(6));
+      this.tele.push(...dangerMark(sc, this.cx, this.cy + 4, r, C[11], 0.25));
     } else if (a === 'spikes') {
       this.clearTele();
       this.tele.push(sc.add.image(this.cx, this.cy, 'ring').setTint(C[15]).setAlpha(0.7).setScale(0.4).setDepth(6));
@@ -65,7 +66,7 @@ export default class PatternBoss extends Boss {
       this.clearTele();
       const p = sc.player.body.center;
       this.leapTo = { x: p.x, y: p.y };
-      this.tele.push(sc.add.image(p.x, p.y, 'disc').setTint(C[11]).setAlpha(0.22).setScale(this.B.leap.r / 32).setDepth(5), sc.add.image(p.x, p.y, 'ring').setTint(C[11]).setAlpha(0.8).setScale(this.B.leap.r / 32).setDepth(6));
+      this.tele.push(...dangerMark(sc, p.x, p.y, this.B.leap.r, C[11], 0.22));
     } else super.makeTele(a);
   }
 

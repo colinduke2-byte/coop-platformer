@@ -14,7 +14,7 @@ import { wear } from '../systems/durability.js';
 import { statusMods, inflictOn, applyStatus } from '../systems/status.js';
 import { stats } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
-import { norm } from '../util.js';
+import { norm, dir8 } from '../util.js';
 import { tip } from '../systems/tips.js';
 import { TUNE } from '../data/tuning.js';
 import { runeThorns } from '../systems/sockets.js';
@@ -23,10 +23,12 @@ import { damageTaken, meleeDamage, blockResult, blockStaminaCost } from '../syst
 import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
 import { classMix } from '../systems/burden.js';
+import Projectile from './Projectile.js';
 const P = TUNE.player;
+const styleOf = (w) => w?.style || (w?.type === 'weapon2h' ? 'great' : 'sword');
 
 export const combatMethods = {
-  perfectDodge(attacker) {
+  perfectDodge(attacker, ranged = false) {
     const sc = this.scene;
     rumble(120, 0.4, 0.6);
     this.lastPerfect = sc.t; this.counterT = P.perfect.counter;
@@ -35,8 +37,10 @@ export const combatMethods = {
     sc.fx.text(this.x, this.y - 22, 'PERFECT DODGE', 15, 1.1);
     sc.fx.ring(this.x, this.y + 4, 1.1, 0.5, 'ring', 0x5cc8d8);
     sfx.play('parry');
-    attacker.stun = Math.max(attacker.stun || 0, attacker.isBoss ? 0.25 : 0.7);
-    if (attacker.state === 'attack' || attacker.state === 'windup') attacker.setState('recover', 0.7);
+    if (!ranged) {                                               // CB8: a dodged arrow or orb does not stun the one who loosed it
+      if (!attacker.isBoss) attacker.stun = Math.max(attacker.stun || 0, 0.7);          // CB20: a boss has no stun; its recover is the opening
+      if (attacker.state === 'attack' || attacker.state === 'windup') attacker.setState('recover', 0.7);
+    }
     this.gainXp('sneak', 3);
     if (S.hearts?.rime) {                                          // the Rime Heart: a burst of cold on every perfect dodge
       sc.fx.ring(this.x, this.y + 4, 2, 0.6, 'ring', 0x9fe8ff);
@@ -60,6 +64,7 @@ export const combatMethods = {
     const off = stats.offhandDmg() > 0;
     const c0 = set[n];
     const c = { ...c0, total: c0.total * (w.swing || 1), size: c0.size + (w.sizeAdd || 0) };
+    this.hitWindow(c, styleOf(w), n === set.length - 1);
     const cost = P.sword.cost * c.cost * (w.costMul || 1) * (off ? 1.3 : 1) * bonus.swingCost();
     if (!this.spend(cost)) { this.comboT = 0; return; }
     this.comboN = n;
@@ -76,24 +81,110 @@ export const combatMethods = {
     this.body.velocity.x += this.face.x * (fin ? 70 : 40); this.body.velocity.y += this.face.y * (fin ? 70 : 40);
   },
   // Heavy attack: a slow, telegraphed overhead blow that staggers and breaks guards.
+  // CB24: each weapon style has its own heavy (TUNE.combat.heavy[style] over TUNE.player.heavy); a greatsword's is held to charge.
   startHeavy() {
-    const H = P.heavy, w = stats.weapon() || {};
-    if (w.style === 'staff') { this.staffBolt(); return; }
+    const w = stats.weapon() || {}, style = styleOf(w);
+    if (style === 'staff') { this.staffBolt(); return; }
+    const H = this.heavyCfg(style);
+    if (style === 'great' && !this.charging) {
+      if (S.sp < H.cost * (w.costMul || 1) * bonus.swingCost()) { this.spend(H.cost * (w.costMul || 1) * bonus.swingCost()); return; }
+      this.charging = { t: 0, lvl: 0 }; this.lockT = 0.1; this.lockMove = TUNE.combat.great.move;
+      sfx.play('draw'); this.scene.fx.ring(this.x, this.y + 4, 0.4, 0.3, 'ring', 0xf4d460);
+      return;
+    }
+    this.heavyBlow(style, w, H, 1);
+  },
+  heavyCfg(style) {
+    const set = P.styles[style] || P.combo, fin = set[set.length - 1];
+    return { reach: fin.reach, narrow: fin.narrow, wide: fin.wide, ...P.heavy, ...(TUNE.combat.heavy[style] || {}) };       // CB11: the style's reach
+  },
+  heavyBlow(style, w, H, mult) {
     if (!this.spend(H.cost * (w.costMul || 1) * bonus.swingCost())) return;
-    const c = { dmg: H.dmg, kb: H.kb, size: H.size + (w.sizeAdd || 0), total: H.total * (w.swing || 1), cost: 1, flip: false, scale: 1.6, stun: H.stun, hs: H.windup * (w.swing || 1), he: H.windup * (w.swing || 1) + 0.16, poise: H.poise, heavyAtk: true };
+    const sw = w.swing || 1;
+    const c = { dmg: H.dmg * mult, kb: H.kb, size: H.size + (w.sizeAdd || 0), reach: H.reach, narrow: H.narrow, wide: H.wide, total: H.total * sw, cost: 1, flip: false, scale: 1.6, stun: H.stun, hs: H.windup * sw, he: H.windup * sw + 0.16, poise: H.poise * mult, heavyAtk: true, fin: true,
+      arc: H.arc, r: H.r, shock: H.shock, root: H.root, lunge: H.lunge, tip: H.tip, tipMul: H.tipMul, crushGuard: H.crushGuard, level: mult };
     this.comboN = 0; this.comboT = 0;
+    if (style === 'dagger') this.shadowStep(c, H);
     this.swing = { t: 0, hit: new Set(), c };
     this.lockT = c.total; this.lockMove = 0.12;
     sfx.play('telegraph');
-    this.scene.fx.ring(this.x + this.face.x * 6, this.y + 3 + this.face.y * 6, 0.35, H.windup, 'ring', 0xf4d460);
+    this.scene.fx.ring(this.x + this.face.x * 6, this.y + 3 + this.face.y * 6, c.r || c.shock?.r ? 0.6 : 0.35, c.hs, 'ring', 0xf4d460);
+  },
+  // CB24 dagger heavy: slip behind the nearest foe in front of you; the blow counts as a backstab
+  shadowStep(c, H) {
+    const sc = this.scene;
+    let e = this.target && !this.target.dead ? this.target : null;
+    if (!e) {
+      let bd = H.range;
+      for (const o of sc.enemies.getChildren()) {
+        if (o.dead || o.hidden || o.cfg?.passive) continue;
+        const d = Math.hypot(o.x - this.x, o.y - this.y);
+        if (d < bd && ((o.x - this.x) * this.face.x + (o.y - this.y) * this.face.y) / (d || 1) > 0.2) { bd = d; e = o; }
+      }
+    }
+    if (!e || Math.hypot(e.x - this.x, e.y - this.y) > H.range) return;
+    const n = norm(e.x - this.x, e.y - this.y), x = e.x + n.x * H.step, y = e.y + n.y * H.step;
+    if (sc.solidAt(x, y + 4) || sc.solidAt(x - 4, y + 4) || sc.solidAt(x + 4, y + 4)) return;
+    sc.fx.puff(this.x, this.y, 14, 6, 30, 0.3);
+    this.setPosition(x, y); this.body.reset(x, y);
+    this.face = dir8(e.x - x, e.y - (y + 3));
+    sc.fx.puff(x, y, 14, 6, 30, 0.3); sfx.play('roll');
+    c.backstab = true;
+  },
+  // CB3 / CB4: when the blow lands inside the swing (fractions of its length, per style); only the last step is a finisher
+  hitWindow(c, style, fin) {
+    const win = TUNE.combat.hitWin[style] || TUNE.combat.hitWin.sword;
+    if (c.hs == null) { c.hs = c.total * win[0]; c.he = c.total * win[1]; }
+    c.fin = fin;
+  },
+  // CB24: area heavies (axe cleave, halberd sweep, mace / hammer ground shock) hit everything in a circle or an arc
+  inArea(c, e) {
+    const cx = this.x + (c.shock ? this.face.x * c.shock.ahead : 0), cy = this.y + 3 + (c.shock ? this.face.y * c.shock.ahead : 0);
+    const R = c.shock ? c.shock.r : c.r, er = e.body ? Math.max(e.body.width, e.body.height) / 2 : 6;
+    const dx = e.cx - cx, dy = e.cy - cy, d = Math.hypot(dx, dy);
+    if (d > R + er) return false;
+    if (c.shock || !c.arc || c.arc >= 180 || d < er) return true;
+    return (dx * this.face.x + dy * this.face.y) / (d || 1) >= Math.cos(c.arc * Math.PI / 180);
+  },
+  // extra damage from the style rules (the halberd's tip)
+  styleDmgMul(c, e) {
+    if (!c.tip) return 1;
+    return Math.hypot(e.cx - this.x, e.cy - (this.y + 3)) >= c.r * c.tip ? c.tipMul : 1;
+  },
+  // what a landed blow does on top of its damage, per style (CB24)
+  styleOnHit(c, e, wp) {
+    const sc = this.scene, A = TUNE.combat.axe, style = styleOf(wp);
+    if (style === 'axe' && !e.dead) {                       // the axe: blows on the same foe deepen its bleeding
+      e.axeStacks = sc.t - (e.axeT ?? -9) < A.keep ? Math.min(A.maxStacks, (e.axeStacks || 0) + 1) : 1; e.axeT = sc.t;
+      applyStatus(e, 'bleed', { t: A.bleedT, dps: A.dpsPerStack * e.axeStacks });
+      if (e.axeStacks >= 3) sc.fx.text(e.x, e.y - 28, 'BLEED x' + e.axeStacks, 11, 0.6);
+    }
+    if (c.root && !e.dead && !e.isBoss) { applyStatus(e, 'root', { t: c.root }); sc.fx.text(e.x, e.y - 28, 'PINNED', 8, 0.7); }
+    if (c.crushGuard && !e.dead) { e.guardBroken = Math.max(e.guardBroken || 0, 1.6); if (e.cfg.armored) e.openT = Math.max(e.openT || 0, 1.5); }
+    if (c.shock && !e.dead && !e.isBoss) e.stun = Math.max(e.stun || 0, c.stun);
+  },
+  // CB24: a greatsword heavy charges while the key is held (two levels, hyper-armour), and swings on release
+  tickCharge(dt) {
+    const ch = this.charging, G = TUNE.combat.great;
+    if (!ch) return;
+    if (this.mode !== 'free') { this.charging = null; return; }
+    ch.t += dt; this.lockT = Math.max(this.lockT, 0.05); this.lockMove = G.move;
+    const lvl = ch.t >= G.charge[1] ? 2 : ch.t >= G.charge[0] ? 1 : 0;
+    if (lvl > ch.lvl) { ch.lvl = lvl; sfx.play('telegraph'); this.scene.fx.ring(this.x, this.y + 4, 0.5 + lvl * 0.3, 0.3, 'ring', 0xf4d460); this.scene.fx.text(this.x, this.y - 18, lvl === 2 ? 'II' : 'I', 13, 0.5); }
+    if (ch.t >= G.charge[1] + G.hold || !keys.isDown('heavy')) {
+      this.charging = null; this.lockT = 0;
+      const w = stats.weapon() || {};
+      this.heavyBlow('great', w, this.heavyCfg('great'), G.mult[ch.lvl]);
+    }
   },
   tickSwing(dt) {
+    this.tickCharge(dt);
     const s = this.swing;
     if (!s) { if (!this.blocking) this.heldImg.setVisible(false); return; }
     s.t += dt;
     {
       // animate the held blade through its arc
-      const f = this.face, k = Math.min(1, s.t / s.c.total);
+      const f = this.face, m = Math.min(0.9, (s.c.hs ?? P.sword.hitStart) / s.c.total), u = Math.min(1, s.t / s.c.total), k = u < m ? 0.5 * u / m : 0.5 + 0.5 * (u - m) / (1 - m);
       const key = heldKey(S.equip.weapon);
       const sweep = 1.25 - 2.5 * k;
       const ang = Math.atan2(f.y, f.x) + (s.c.flip ? -sweep : sweep);
@@ -105,7 +196,9 @@ export const combatMethods = {
       if (s.c.heavyAtk && !s.fired) {
         s.fired = true; sfx.play('sword'); this.scene.shake(160, 0.007);
         this.scene.fx.slash(this.x + this.face.x * 6, this.y + 2 + this.face.y * 6, Math.atan2(this.face.y, this.face.x), false, 1.7);
-        this.body.velocity.x += this.face.x * 90; this.body.velocity.y += this.face.y * 90;
+        this.body.velocity.x += this.face.x * (s.c.lunge || 90); this.body.velocity.y += this.face.y * (s.c.lunge || 90);
+        if (s.c.shock) { const k = s.c.shock; this.scene.fx.ring(this.x + this.face.x * k.ahead, this.y + 4 + this.face.y * k.ahead, k.r / 32 * 1.1, 0.35, 'ring', 0xeaf2f8); this.scene.fx.puff(this.x + this.face.x * k.ahead, this.y + 4 + this.face.y * k.ahead, 5, 10, 60, 0.4); }
+        else if (s.c.arc) this.scene.fx.ring(this.x, this.y + 4, s.c.r / 32 * 1.1, 0.3, 'ring', 0xeaf2f8);
       }
       this.swordHit(s);
     }
@@ -122,11 +215,11 @@ export const combatMethods = {
     this.scene.breakRect(r);
     const en = stats.enchant();
     const off = stats.offhandDmg();
-    const heavy = s.c.scale > 1;
+    const heavy = !!(s.c.fin || s.c.heavyAtk);           // CB4: only combo finishers and heavy attacks
     const wp = stats.weapon() || {}, isDagger = wp.style === 'dagger', DG = TUNE.player.dagger;
     for (const e of this.scene.enemies.getChildren()) {
       if (e.dead || s.hit.has(e)) continue;
-      if (!Phaser.Geom.Intersects.RectangleToRectangle(r, e.rect)) continue;
+      if (!(s.c.arc || s.c.shock ? this.inArea(s.c, e) : Phaser.Geom.Intersects.RectangleToRectangle(r, e.rect))) continue;
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
       if (heavy && S.perks.unbroken && !s.refunded) { s.refunded = true; S.sp = Math.min(S.maxSp, S.sp + 12); this.scene.fx.text(this.x, this.y - 16, '+STAMINA', 8, 0.6); }
@@ -138,9 +231,11 @@ export const combatMethods = {
       // a dagger in the back: the enemy is facing away from you
       let backstab = false;
       if (isDagger && !sneak && e.face) { const bx = e.x - this.x, by = e.y - this.y, bl2 = Math.hypot(bx, by) || 1; if ((e.face.x * bx + e.face.y * by) / bl2 > DG.backDot) { dmg *= DG.backMul; backstab = true; } }
-      const assassinate = wp.assassinate && sneak && !e.isBoss && !e.cfg?.title;
+      const assassinate = wp.assassinate && sneak && !e.isBoss && !e.named;          // CB9: never a named foe
       // finishing blow: a staggered, nearly-dead foe is executed outright
-      const exec = !e.isBoss && !sneak && e.stun > 0 && e.hp <= e.maxHp * 0.28;
+      const exec = !e.isBoss && !sneak && e.stun > 0 && (e.named ? e.staggerT > 0 && e.hp <= e.maxHp * TUNE.combat.namedExec : e.hp <= e.maxHp * 0.28);   // CB9
+      if (s.c.backstab && !backstab && !sneak) { dmg *= DG.backMul; backstab = true; }      // CB24: the dagger heavy steps behind
+      dmg *= this.styleDmgMul(s.c, e);
       if (en) dmg += en.power;
       dmg *= curseMul(this.scene, e, S.equip.weapon, ITEMS);
       if (wp.vsUndead && e.cfg?.bark === 'undead') dmg *= wp.vsUndead;
@@ -156,6 +251,7 @@ export const combatMethods = {
       });
       if (dealt <= 0) { s.hit.add(e); continue; }       // blocked by a shield
       wear(S.equip.weapon, wp.wearMul || 1);
+      this.styleOnHit(s.c, e, wp);
       if (wp.pull && !e.isBoss && !e.dead) { const px = this.x - e.x, py = this.y - e.y, pd = Math.hypot(px, py) || 1; e.body.velocity.x += (px / pd) * wp.pull * 9; e.body.velocity.y += (py / pd) * wp.pull * 9; }
       if (e.dead && wp.killFreeze) for (const o of this.scene.enemies.getChildren()) if (o !== e && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) < wp.killFreeze) applyStatus(o, 'freeze', {});
       if (wp.inflict) inflictOn(e, wp.inflict.filter((f) => !f.sneakOnly || sneak));
@@ -181,22 +277,23 @@ export const combatMethods = {
     const w = stats.weapon(), F = TUNE.player.hitFeel;
     const f = F[w?.style] || (w?.type === 'weapon2h' ? F.great : F.sword);
     const m = (heavy ? 1.6 : 1) * (crit ? 1.25 : 1);
-    return { stop: settings.hitStop === false ? 0 : f.stop * m, ms: Math.round(f.ms * m), amt: f.amt * m };
+    return { stop: settings.hitStop === false ? 0 : heavy ? f.stop * m : Math.min(TUNE.combat.hitStopCap, f.stop * m), ms: Math.round(f.ms * m), amt: f.amt * m };   // CB4: ordinary hits stay short
   },
   // ------------------------------------------------------------------ hurt
   hurt(dmg, sx, sy, opts = {}) {
     if (this.mode === 'dead' || this.mode === 'lying') return false;
     if (this.iframes > 0 || this.invuln > 0) {
       // rolling at the very last moment is a perfect dodge: slow motion, stamina back, and a counter-attack bonus
-      if (this.mode === 'roll' && opts.attacker && !opts.attacker.dead && this.scene.t - (this.rollStart ?? -9) <= P.perfect.window && this.scene.t - (this.lastPerfect ?? -9) > 0.7) this.perfectDodge(opts.attacker);
+      if (this.mode === 'roll' && opts.attacker && !opts.attacker.dead && this.scene.t - (this.rollStart ?? -9) <= P.perfect.window && this.scene.t - (this.lastPerfect ?? -9) > 0.7) this.perfectDodge(opts.attacker, !!opts.ranged);
       return false;
     }
     const sc = this.scene;
     // remembered for the death screen ("SLAIN BY ...")
     this.lastHitBy = opts.attacker ? (opts.attacker.displayName || opts.attacker.cfg?.title || opts.attacker.cfg?.name || null) : opts.by || this.lastHitBy;
     if (this.swing && stats.weapon()?.swingGuard) dmg *= 1 - stats.weapon().swingGuard;
+    const armoured = !!this.charging;                       // CB24: a charging greatsword shrugs off the flinch (not the damage)
     let incoming = dmg, knock = (opts.kb ?? P.hurt.kb) * classMix().knock, blocked = false;
-    const crush = !!(opts.crush || opts.attacker?.cfg?.crush);
+    const crush = !!(opts.crush || (!opts.ranged && opts.attacker?.cfg?.crush));
 
     // ---- shield block / parry
     const sh = this.blocking ? stats.shield() : null;
@@ -210,7 +307,7 @@ export const combatMethods = {
         facing: this.face, from: n, reduction: sh.block, arc: P.block.arc,
       });
       if (r.blocked) {
-        if (r.parried) { this.onParry(opts.attacker, sx, sy); return true; }
+        if (r.parried) { this.onParry(opts.attacker, sx, sy, opts.proj); return true; }
         const cost = blockStaminaCost(incoming, sh.cost);
         if (S.sp >= cost) {
           S.sp -= cost; this.spDelay = P.regenDelay + 0.3;
@@ -244,13 +341,14 @@ export const combatMethods = {
     S.hp -= taken;
     if (!blocked && opts.attacker && !opts.attacker.dead && runeThorns() > 0) opts.attacker.takeHit({ dmg: runeThorns(), kx: opts.attacker.x - this.x, ky: opts.attacker.y - this.y, kb: 30, src: 'thorns' });
     if (!blocked) { wear(S.equip.armor, 1); wear(S.equip.head, 0.5); } else wear(S.equip.offhand, 1);
-    if (!blocked && opts.attacker?.cfg?.inflicts) inflictOn(this, opts.attacker.cfg.inflicts);
+    if (!blocked && !opts.ranged && opts.attacker?.cfg?.inflicts) inflictOn(this, opts.attacker.cfg.inflicts);
     if (!blocked && Object.keys(S.mods || {}).some((m) => S.mods[m] && MODS[m]?.burnOnHit)) inflictOn(this, [{ type: 'burn', chance: 1, t: 2.5, dps: 3 }]);
     if (!blocked && opts.inflict) inflictOn(this, opts.inflict);
     this.lastHurt = sc.t;
     this.flashT = 0.12;
     this.invuln = blocked ? 0.3 : P.hurt.invuln;
-    if (!blocked) {
+    if (armoured) knock = 0;
+    if (!blocked && !armoured) {
       this.stunT = Math.max(this.stunT, P.hurt.stun);
       this.mode = 'hurt';
       this.swing = null; this.drawing = false; this.aim.setVisible(false); this.lockT = 0;
@@ -286,29 +384,52 @@ export const combatMethods = {
     this.scene.fx.text(this.x, this.y - 10, String(n), col, 0.5);
     if (S.hp <= 0) { S.hp = 0; this.mode = 'dead'; this.body.setVelocity(0, 0); sfx.play('die'); bus.emit('player:dead'); }
   },
-  onParry(attacker, sx, sy) {
+  onParry(attacker, sx, sy, proj = null) {
     const sc = this.scene;
+    this.parried = true;                                     // CB10: this raise of the shield caught something
     sfx.play('parry'); rumble(90, 0.5, 0.5);
-    this.riposteT = P.riposte.window;                        // strike back now
+    this.riposteT = P.riposte.window + (styleOf(stats.weapon()) === 'sword' ? TUNE.combat.sword.riposteAdd : 0);   // strike back now (CB24: longer with a sword)
     this.invuln = 0.35;
     sc.fx.ring(this.x + this.face.x * 9, this.y + 3 + this.face.y * 9, 0.5, 0.3, 'ring', 0xeaf2f8);
     sc.fx.text(this.x, this.y - 14, 'PARRY!', 13, 0.8);
     sc.hitStop(0.1); sc.shake(120, 0.006);
     this.gainXp('oneHanded', 5);
+    if (proj) { this.deflect(proj, attacker); return; }     // CB25: a parried shot flies back; the shooter is not staggered at range
     if (attacker && !attacker.dead) {
-      attacker.staggered = true; attacker.openT = 1.8;
-      attacker.stun = Math.max(attacker.stun || 0, attacker.isBoss ? 0.5 : 1.1);
+      attacker.openT = 1.8;
+      if (!attacker.isBoss) attacker.stun = Math.max(attacker.stun || 0, 1.1);      // CB20: bosses use the recover below
       if (attacker.state === 'windup' || attacker.state === 'attack') { attacker.setState('recover', 0.6); attacker.marker?.destroy(); attacker.marker = null; }
       attacker.body.setVelocity(0, 0);
       sc.fx.text(attacker.x, attacker.y - 16, 'STAGGER', 12, 0.8);
     }
   },
+  // CB25: a parried arrow or orb flies back at whoever loosed it (boss orbs at half strength)
+  deflect(proj, owner) {
+    const sc = this.scene, C = TUNE.combat.deflect;
+    const tx = owner && !owner.dead && owner.active ? owner.body.center.x : proj.x - proj.body.velocity.x;
+    const ty = owner && !owner.dead && owner.active ? owner.body.center.y : proj.y - proj.body.velocity.y;
+    const n = norm(tx - proj.x, ty - proj.y), sp = Math.max(C.speed, Math.hypot(proj.body.velocity.x, proj.body.velocity.y));
+    const dmg = Math.max(1, Math.round(proj.dmg * (owner?.isBoss ? C.bossMul : C.mul)));
+    const pr = new Projectile(sc, proj.x, proj.y, 'arrow', n.x * sp, n.y * sp, { dmg, life: C.life, ally: true });
+    pr.noLoot = true; pr.deflected = true;
+    if (proj.texture?.key && proj.texture.key !== 'arrow') pr.setTexture(proj.texture.key).setTint(0xf4d460);
+    sc.shots.add(pr); pr.body.setVelocity(n.x * sp, n.y * sp);
+    sc.fx.text(this.x, this.y - 22, 'DEFLECT', 13, 0.8);
+  },
   // ---------------------------------------------------------------- block
   tickBlock(dt) {
     const sh = stats.shield();
+    // CB24: a sword can drop out of any combo step straight into the shield
+    if (sh && this.swing && !this.swing.c.heavyAtk && styleOf(stats.weapon()) === 'sword' && keys.pressed('block') && this.mode === 'free') { this.swing = null; this.lockT = 0; }
     const want = !!sh && keys.isDown('block') && this.mode === 'free' && this.lockT <= 0 && !this.drawing && !this.swing;
-    if (want && !this.blocking) { this.blocking = true; this.blockT = 0; sfx.play('move'); }
-    else if (!want && this.blocking) this.blocking = false;
+    const win = P.block.parry + (S.perks.duelist ? 0.1 : 0);
+    if (want && !this.blocking) {
+      // CB10: a parry that caught nothing locks out the next parry window for a moment (the plain block still works)
+      this.blocking = true; this.parried = false; this.blockT = this.scene.t < (this.parryLockUntil ?? -9) ? win + 0.01 : 0; sfx.play('move');
+    } else if (!want && this.blocking) {
+      this.blocking = false;
+      if (this.blockT <= win && !this.parried) this.parryLockUntil = this.scene.t + TUNE.combat.parryLockout;
+    }
     if (this.blocking) {
       this.blockT += dt;
       this.spDelay = Math.max(this.spDelay, 0.25);

@@ -82,6 +82,7 @@ export const magicMethods = {
       case 'fire':
       case 'frost': {
         const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer && S.spell === 'fire' ? 1.15 : 1 });
+        const f = this.aimVec();
         const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, S.spell, f.x * sp.speed, f.y * sp.speed, { dmg, life: S.spell === 'fire' ? 1.1 : 1.3 });
         sc.shots.add(pr);
         pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
@@ -369,7 +370,7 @@ export const magicMethods = {
 
   // A staff's heavy attack: a weak bolt of its own element that costs stamina, not mana.
   staffBolt() {
-    const w = stats.weapon() || {}, T = TUNE.player.staff, sc = this.scene, f = this.face;
+    const w = stats.weapon() || {}, T = TUNE.player.staff, sc = this.scene, f = this.aimVec();
     if (!this.spend(T.boltCost)) return;
     const kind = w.bolt === 'fire' ? 'fire' : 'frost', sp = SPELLS[kind];
     const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * (w.spellMul ?? 1), perk: 1 });
