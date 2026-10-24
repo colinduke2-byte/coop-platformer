@@ -20,6 +20,7 @@ import { respec, respecCost } from '../systems/skills.js';
 import { maybeRelic } from '../systems/relics.js';
 import { clearStatus } from '../systems/status.js';
 import { advanceTime } from '../systems/moon.js';
+import { TUNE } from '../data/tuning.js';
 
 // A readable wooden sign.
 export class Sign extends Phaser.GameObjects.Image {
@@ -331,7 +332,7 @@ export class DigSpot extends Phaser.GameObjects.Image {
     markGone(this.key, true);
     sc.fx.puff(this.x, this.y, 10, 10, 45, 0.5); sfx.play('smash');
     sc.interactables = sc.interactables.filter((i) => i !== this);
-    const gold = 20 + Math.round(Math.random() * 30) + this.tier * 25;
+    const D = TUNE.world.dig, gold = D.base + Math.round(Math.random() * D.rand) + this.tier * D.perTier;   // paid as a gold pickup (addGold)
     if (r < 0.25) {
       bus.emit('toast', 'SOMETHING STIRS BELOW!', 11);
       for (let i = 0; i < 2 + (this.tier > 1 ? 1 : 0); i++) { const e = sc.addEnemy('draugr', this.x + (i - 1) * 14, this.y + 10, { tier: this.tier }); e.alert(true); }

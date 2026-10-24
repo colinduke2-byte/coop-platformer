@@ -10,6 +10,9 @@ import { registerListener, SPAWNERS } from '../scenes/gameHooks.js';
 import { S } from '../systems/state.js';
 import { TILE } from '../config.js';
 import { hash } from '../util.js';
+import { SCRIPTS } from '../data/dialogue.js';
+import { say } from '../systems/dialogue.js';
+import { AFTER_BOSS } from '../world/aftermath.js';
 
 const near = (sc, kind) => sc.built?.pois?.find((p) => p.kind === kind);
 function swap(sc, c, r, from, to, share, salt) {
@@ -37,3 +40,19 @@ export function applyChanges(sc) {
 }
 registerListener('scene:game', (sc) => { sc.wq26 = applyChanges(sc); }, 'worldChanges');
 
+
+// WQ26 (talk): hub people who talk about the fallen boss (lines in world/aftermath.js), on every other visit
+let talkWrapped = false;
+registerListener('scene:game', () => {
+  if (talkWrapped) return; talkWrapped = true;
+  for (const [npc, [who, flag, lines, svc]] of Object.entries(AFTER_BOSS)) {
+    const orig = SCRIPTS[npc]; if (!orig) continue;
+    SCRIPTS[npc] = async (...a) => {
+      if (!S.flags[flag]) return orig(...a);
+      const key = 'after_' + npc, n = S.flags[key] || 0; S.flags[key] = n + 1;
+      if (n % 2) return orig(...a);
+      await say(who, lines[(n / 2) % lines.length]);
+      if (svc) return orig(...a);
+    };
+  }
+}, 'worldAfterBoss');

@@ -1,5 +1,5 @@
 // WQ17: the interactive minor finds (placed by world/minorfinds.js): a cairn you add a stone to, and a snared fox to free.
-import { registerSpawner, registerListener } from '../scenes/gameHooks.js';
+import { registerSpawner, registerListener, registerTicker } from '../scenes/gameHooks.js';
 import { T } from '../config.js';
 import { regionOfMap } from '../data/regions.js';
 import { Sign } from '../entities/Props.js';
@@ -105,3 +105,63 @@ registerSpawner('crackwall', (sc, e) => {
   if (S.flags[e.id]) { sc.layer.putTileAt(TILE_FLOOR, e.x, e.y); sc.solid[e.y][e.x] = false; return; }
   sc.breakables.push(new CrackWall(sc, e));
 });
+
+// ---- WQ23: the brazier puzzle (world/barrowgen.js). Light the three braziers in the carved order: a blow, an arrow, a fire
+// spell or E (a torch) lights one; a frost spell puts a lit one out. A wrong order puts them all out and wakes a guardian;
+// the right one opens the sealed alcove for good.
+class Brazier {
+  constructor(sc, e, wx, wy) {
+    this.scene = sc; this.e = e; this.beast = e.beast; this.lit = false; this.broken = false;
+    this.x = this.cx = this.ix = wx; this.cy = this.iy = wy; this.y = wy - 4;
+    this.g = sc.add.graphics().setDepth(wy + 6); this.draw();
+  }
+  draw() {
+    const g = this.g, x = this.cx, y = this.cy; g.clear();
+    g.fillStyle(C[0]); g.fillRect(x - 5, y - 4, 10, 10); g.fillStyle(C[3]); g.fillRect(x - 1, y - 1, 2, 6); g.fillRect(x - 3, y + 4, 6, 2);
+    g.fillStyle(C[4]); g.fillRect(x - 4, y - 3, 8, 3);
+    if (this.lit) { g.fillStyle(C[11]); g.fillRect(x - 3, y - 8, 6, 5); g.fillStyle(C[12]); g.fillRect(x - 2, y - 11, 4, 5); g.fillStyle(C[13]); g.fillRect(x - 1, y - 7, 2, 3); }
+  }
+  // breakables: any blow or shot that reaches it strikes a spark; the brazier itself never breaks
+  smash() { if (this.scene.shots.getChildren().some((sh) => sh.kind === 'frost' && Math.hypot(sh.x - this.cx, sh.y - this.cy) < 16)) this.snuff(); else this.light(); }
+  canInteract() { return !this.scene.brz?.solved && !this.lit; }
+  label() { return `E: LIGHT THE ${this.beast.toUpperCase()} BRAZIER`; }
+  interact() { this.light(); }
+  light() {
+    const P = this.scene.brz;
+    if (!P || P.solved || this.lit) return;
+    this.lit = true; this.draw(); sfx.play('select'); this.scene.fx.puff(this.cx, this.cy - 8, 12, 6, -20, 0.4);
+    P.lit.push(this.beast);
+    if (P.order[P.lit.length - 1] !== this.beast) return wrongOrder(this.scene, P);
+    if (P.lit.length === P.order.length) solveBraziers(this.scene, P);
+  }
+  snuff() { if (!this.lit || this.scene.brz?.solved) return; this.lit = false; this.draw(); const P = this.scene.brz; P.lit = P.lit.filter((b) => b !== this.beast); this.scene.fx.puff(this.cx, this.cy - 6, 15, 6, -10, 0.4); }
+}
+function openAlcove(sc, P) { sc.layer.putTileAt(TILE_FLOOR, P.wx, P.wy); sc.solid[P.wy][P.wx] = false; }
+function solveBraziers(sc, P) {
+  P.solved = true; S.flags[P.id] = true; openAlcove(sc, P);
+  sc.shake(250, 0.006); sfx.play('door');
+  bus.emit('toast', 'THE THREE FIRES BURN TOGETHER. A SEALED DOOR GRINDS OPEN', 13);
+}
+function wrongOrder(sc, P) {
+  for (const b of P.braziers) { b.lit = false; b.draw(); }
+  P.lit = [];
+  sfx.play('nostamina'); bus.emit('toast', 'THE FIRES GUTTER OUT TOGETHER. SOMETHING STIRS', 11);
+  if (!P.woke) { P.woke = true; const b = P.braziers[1]; const e = sc.addEnemy(P.guard, b.cx, b.cy + 24, { tier: P.tier }); e.alert?.(true); }
+}
+registerSpawner('brazierorder', (sc, e) => {
+  sc.brz = { id: e.id, order: e.order, wx: e.wx, wy: e.wy, guard: e.guard, tier: e.tier, lit: [], braziers: [], solved: !!S.flags[e.id] };
+  if (sc.brz.solved) openAlcove(sc, sc.brz);
+});
+registerSpawner('brazier', (sc, e, wx, wy) => {
+  const b = new Brazier(sc, e, wx, wy);
+  if (sc.brz?.solved) { b.lit = true; b.draw(); }
+  sc.brz?.braziers.push(b); sc.breakables.push(b); sc.interactables.push(b);
+});
+// fire spells light a brazier they pass; frost spells put one out
+registerTicker('worldBraziers', (sc) => {
+  const P = sc.brz; if (!P || P.solved) return;
+  for (const sh of sc.shots.getChildren()) {
+    if (sh.kind !== 'fire' && sh.kind !== 'frost') continue;
+    for (const b of P.braziers) if (Math.hypot(sh.x - b.cx, sh.y - b.cy) < 12) { if (sh.kind === 'fire') b.light(); else b.snuff(); }
+  }
+}, 1060);
