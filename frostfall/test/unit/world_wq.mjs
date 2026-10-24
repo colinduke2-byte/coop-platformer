@@ -46,4 +46,12 @@ t('WQ14: the rune order is carved in an earlier room, not printed beside the pla
   }
   assert.ok(n14 >= 5, 'enough trap rooms checked: ' + n14);
 });
+t('WQ7: Amberwell, Lanternfall and Greenhollow sit near their gate, nearer than the boss dungeon', () => {
+  for (const [rid, hub, boss] of [['sunscorch', 'amberwell', 'sealedvault'], ['underdeep', 'lanternfall', 'lodenest'], ['vale', 'greenhollow', 'thornroot']]) for (const seed of [1000, 8919, 16838]) {
+    S.seed = seed; const r = getRegion(rid), h = r.pois.find((p) => p.kind === hub), b = r.pois.find((p) => p.kind === boss), st = { x: 6, y: 64 };
+    const dh = Math.hypot(h.x - st.x, h.y - st.y), db = Math.hypot(b.x - st.x, b.y - st.y);
+    assert.ok(dh < 80 && dh < db / 2, `${rid} ${seed}: hub ${dh} boss ${db}`);
+  }
+});
+
 console.log(`${n} world WQ tests passed`);

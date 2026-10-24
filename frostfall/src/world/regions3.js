@@ -140,7 +140,7 @@ export const UNDERDEEP = {
   nodes: [{ x: DEEP_START.x + 8, y: DEEP_START.y }],
   taken: [{ x: DEEP_START.x, y: DEEP_START.y, r: 14 }],
   plan(place, mustHave) {
-    mustHave('lanternfall', 12, 1);
+    mustHave('lanternfall', 12, 1, null, { x: DEEP_START.x + 45, y: DEEP_START.y, r: 30 });      // WQ7: the town before the boss, near the gate
     mustHave('lodenest', 12, 3, null, { x: 205, y: 95, r: 55 });
     place('cave', 3, 7); place('camp', 3, 11); place('ruin', 3, 10); place('champion', 3, 8); place('foundry', 2, 11);
     place('glowcapgrove', 4, 8); place('weavernest', 3, 9); place('lodevein', 3, 9);
