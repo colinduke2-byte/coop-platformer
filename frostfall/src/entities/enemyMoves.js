@@ -101,3 +101,11 @@ export function duel(e, info) {
   e.scene.fx.text(e.x, e.y - 22, 'PARRIED', 13, 0.8); sfx.play('parry');
   return true;
 }
+
+// CB13: the bestiary's warning for foes whose blows break a raised shield ('' for the rest). Every blow (cfg.crush), or only
+// the second move (a slam, a crushing overhead, a shield bash), which shows an orange '!!' as it winds up.
+export function crushNote(id, cfg) {
+  if (cfg?.crush && cfg.kind !== 'shoot' && cfg.kind !== 'cast') return 'CRUSHES SHIELDS: BLOCKING WILL NOT STOP IT. ROLL.';
+  if (['slam', 'string', 'bash'].includes(ALT[id])) return 'CAN CRUSH SHIELDS: ROLL WHEN IT SHOWS AN ORANGE !!.';
+  return '';
+}

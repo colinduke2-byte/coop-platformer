@@ -26,6 +26,7 @@ import { classMix } from '../systems/burden.js';
 import Projectile from './Projectile.js';
 import { startWarp } from './bulletTime.js';
 const P = TUNE.player;
+const nemesisId = () => 'nem_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
 const styleOf = (w) => w?.style || (w?.type === 'weapon2h' ? 'great' : 'sword');
 
 export const combatMethods = {
@@ -372,19 +373,22 @@ export const combatMethods = {
     return true;
   },
   // Whoever finishes you off in the open world becomes your nemesis: it comes back stronger, where you fell.
+  // nemesisDeath: the id of the nemesis this death made or fed (the death card keys "GROWS STRONGER" by it, not by a name that
+  // another foe of the same kind shares), or null.
   noteKiller(a) {
     const sc = this.scene;
+    this.nemesisDeath = null;
     if (!a || a.isBoss || !a.kind || !sc.def.stream) return;
     if ((S.charLevel || 1) < TUNE.hud.nemesisLevel && !S.nemesis) return;     // NP10: no nemesis from a newcomer's first deaths
-    if (a.nemesis && S.nemesis) { S.nemesis.kills++; S.nemesis.x = Math.round(a.x); S.nemesis.y = Math.round(a.y); return; }
-    if (!S.nemesis) S.nemesis = { kind: a.kind, tier: a.tier || 0, x: Math.round(a.x), y: Math.round(a.y), kills: 1, name: a.cfg.name };
+    if (a.nemesis && S.nemesis) { S.nemesis.kills++; S.nemesis.x = Math.round(a.x); S.nemesis.y = Math.round(a.y); this.nemesisDeath = (S.nemesis.id ||= nemesisId()); return; }
+    if (!S.nemesis) { S.nemesis = { kind: a.kind, tier: a.tier || 0, x: Math.round(a.x), y: Math.round(a.y), kills: 1, name: a.cfg.name, id: nemesisId() }; this.nemesisDeath = S.nemesis.id; }
   },
   // Damage-over-time from statuses (burn, bleed, poison).
   statusHit(n, col) {
     if (this.mode === 'dead' || this.mode === 'lying' || this.invuln > 90) return;
     S.hp -= n; this.flashT = 0.06;
     this.scene.fx.text(this.x, this.y - 10, String(n), col, 0.5);
-    if (S.hp <= 0) { S.hp = 0; this.mode = 'dead'; this.body.setVelocity(0, 0); sfx.play('die'); bus.emit('player:dead'); }
+    if (S.hp <= 0) { S.hp = 0; this.nemesisDeath = null; this.mode = 'dead'; this.body.setVelocity(0, 0); sfx.play('die'); bus.emit('player:dead'); }
   },
   onParry(attacker, sx, sy, proj = null) {
     const sc = this.scene;

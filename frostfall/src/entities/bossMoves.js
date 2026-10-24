@@ -5,6 +5,7 @@ import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
 import { settings } from '../systems/settings.js';
 import { sfx } from '../audio/sfx.js';
+import { enemyTimer } from './bulletTime.js';
 
 const T = () => TUNE.combat.sig;
 const base = (b) => (b.B.spikes || b.B.slam || b.B.tail || b.B.nova).dmg;
@@ -12,7 +13,7 @@ const zone = (b, x, y, r, delay, dmg) => { if (!b.scene.solidAt(x, y)) b.scene.a
 const line = (b, x0, y0, ang, n, step, r, d0, dd, dmg, from = 1) => { for (let i = from; i < from + n; i++) zone(b, x0 + Math.cos(ang) * i * step, y0 + Math.sin(ang) * i * step, r, d0 + (i - from) * dd, dmg); };
 const ring = (b, cx, cy, R, n, r, delay, dmg, ph = 0) => { for (let i = 0; i < n; i++) { const a = ph + (i / n) * Math.PI * 2; zone(b, cx + Math.cos(a) * R, cy + Math.sin(a) * R, r, delay, dmg); } };
 const shot = (b, x, y, vx, vy, dmg, life = 2.4) => { const pr = new Projectile(b.scene, x, y, 'eshot', vx, vy, { dmg, life, owner: b }); b.scene.eshots.add(pr); pr.body.setVelocity(vx, vy); };
-const later = (b, s, fn) => b.scene.time.delayedCall(s * 1000, () => { if (!b.dead && b.scene) fn(); });
+const later = (b, s, fn) => enemyTimer(b.scene, s * 1000, () => { if (!b.dead && b.scene) fn(); });     // slowed by a perfect dodge
 const toP = (b, p) => Math.atan2(p.y - b.cy, p.x - b.cx);
 
 // name shown as a callout; fire(b, playerCentre)

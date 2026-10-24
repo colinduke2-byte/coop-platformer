@@ -24,8 +24,18 @@ export const mobOf = (tier, diff = 'normal') => {
   const D = TUNE.difficulty[diff];
   const [hp, dmg] = MOB[Math.min(3, tier)];
   const f = progress(tier, STORY_AT[Math.min(3, tier)]);
-  return { hp: hp * D.enemyHp * TUNE.mobs.hp * hpMul(f), dmg: dmg * TUNE.mobs.dmg * dmgMul(f) };
+  return { hp: hp * D.enemyHp * TUNE.mobs.hp * hpMul(f), dmg: dmg * TUNE.mobs.dmg * dmgMul(f), f };
 };
+// CB22: late ordinary foes attack more often (cooldown x (1 - late.cooldown * f), Enemy.js) and string a second swing after
+// the first (enemyMoves.followUp). How much faster their hits come than an early foe's, at progress f. The cooldown is about
+// 60% of an ordinary enemy's attack cycle (enemies.js averages), and about half of the follow-up swings land on a player who
+// is already rolling away. Without this the danger colours read late foes as gentler than they are.
+export const CD_SHARE = 0.6, FOLLOW_LANDS = 0.5;
+export function pace(f = 0) {
+  const L = TUNE.combat.late;
+  const follow = f > L.followAt ? L.follow * Math.min(1, (f - L.followAt) / (1 - L.followAt)) : 0;
+  return (1 + follow * FOLLOW_LANDS) / (1 - CD_SHARE * L.cooldown * f);
+}
 // What the game expects a player to have when they reach a region tier.
 export const EXPECTED = [
   { gear: 1, upg: 1, level: 3 }, { gear: 3, upg: 3, level: 7 }, { gear: 4, upg: 6, level: 12 }, { gear: 5, upg: 9, level: 15 },
@@ -64,14 +74,14 @@ function rawCost(p, mob, diff) {
   const D = TUNE.difficulty[diff];
   const ttk = mob.hp / (p.dmg * SWINGS_PER_SEC);
   const perHit = Math.max(1, mob.dmg * (1 - p.armor) * D.dmgTaken * (1 - p.block));
-  const dps = (perHit / CYCLE) * OVERLAP;
+  const dps = (perHit / CYCLE) * OVERLAP * pace(mob.f || 0);
   return (FIGHT_MOBS * ttk * dps) / p.hp;
 }
 // The tuning constant stands for how often hits land: calibrated so the expected player on Normal in the first tier loses a third of their health.
 K = 0.33 / rawCost(playerOf({ level: EXPECTED[0].level, gear: EXPECTED[0].gear, upg: EXPECTED[0].upg }), mobOf(0), 'normal');
 
 export const fightCost = (player, tier, diff = 'normal') => K * rawCost(player, mobOf(tier, diff), diff);
-// The same for one specific enemy (its real health and damage; difficulty health is already in `hp`).
+// The same for one specific enemy (its real health and damage; difficulty health is already in `hp`; `f` its progress, CB22).
 export const costAgainst = (player, mob, diff = 'normal') => K * rawCost(player, mob, diff);
 export const costFor = (tier, { dLevel = 0, dGear = 0, diff = 'normal', upg } = {}) => {
   const e = EXPECTED[tier];

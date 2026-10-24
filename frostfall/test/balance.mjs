@@ -2,10 +2,15 @@
 // fights each encounter several times. It is a *lower bound* on human skill, so use the
 // numbers as a sanity check on difficulty, not as a target.
 //   node test/balance.mjs [trials=4] [only=substring]      (DIFF=easy|normal|hard picks the difficulty)
+// PROFILE=masher (CB28): a second bot that mashes the sword key and never rolls or blocks, only drinking potions. It is the
+// floor under the floor: where the masher wins as often as the normal bot, the fight does not ask for dodging, and stun-lock
+// exploits (hitting a foe out of every wind-up) show up as masher wins.
 import { launch } from './harness.mjs';
 
 const trials = Number(process.argv[2] || 4);
 const only = process.argv[3] || '';
+const profile = process.env.PROFILE === 'masher' ? 'masher' : 'normal';
+console.log(`balance bot: profile ${profile}, ${trials} trials, ${process.env.DIFF || 'normal'}`);
 
 const SCENARIOS = [
   { name: 'wolf pack (start gear)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 40,
@@ -69,7 +74,7 @@ for (const sc of SCENARIOS) {
     await h.open(`scene=game&map=${sc.map}&spawn=${sc.spawn}`);
     await h.sleep(700);
     await h.page.evaluate(async (d) => { (await import('/src/systems/settings.js')).settings.difficulty = d; }, process.env.DIFF || 'normal');
-    const r = await h.page.evaluate(async ({ sc, trial }) => {
+    const r = await h.page.evaluate(async ({ sc, trial, profile }) => {
       const S = window.__ff.S;
       S.flags.introDone = true;
       new Function('S', sc.setup)(S); for (const f of sc.story || []) S.flags[f] = true;
@@ -112,7 +117,11 @@ for (const sc of SCENARIOS) {
             else e.__w = 0;
           }
           const move = (vx, vy) => { keys[vx < -0.3 ? '_press' : '_release']('KeyA'); keys[vx > 0.3 ? '_press' : '_release']('KeyD'); keys[vy < -0.3 ? '_press' : '_release']('KeyW'); keys[vy > 0.3 ? '_press' : '_release']('KeyS'); };
-          const dodgeRange = tgt.isBoss ? 70 : 34;
+          if (profile === 'masher') {               // CB28: walk in and mash; never roll, never block
+            if (d > 20) move(nx, ny);
+            else { move(0, 0); p.face = { x: Math.abs(nx) > 0.38 ? Math.sign(nx) : 0, y: Math.abs(ny) > 0.38 ? Math.sign(ny) : 0 }; if (p.face.x === 0 && p.face.y === 0) p.face = { x: 1, y: 0 }; if (p.lockT <= 0) tapK('KeyJ', 50); }
+            return;
+          }
           if (telegraph && p.rollCd <= 0 && S.sp >= 22 && p.mode === 'free') {
             move(-ny * (trial % 2 ? 1 : -1), nx * (trial % 2 ? 1 : -1)); tapK('Space', 60);       // roll sideways
           } else if (d > 20) move(nx, ny);
@@ -126,7 +135,7 @@ for (const sc of SCENARIOS) {
           if (S.sp > 10 && telegraph) { keys._press('KeyF'); } else keys._release('KeyF');
         }, 60);
       });
-    }, { sc, trial: t }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
+    }, { sc, trial: t, profile }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
     results.push(r); if (process.env.BALDBG) console.log("  dbg", JSON.stringify(r.dbg), "maxHp", r.maxHp, "fin", JSON.stringify(r.fin), r.px, "hits", JSON.stringify(r.hits));
   }
   const wins = results.filter((r) => r.won).length;

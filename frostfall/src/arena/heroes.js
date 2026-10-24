@@ -5,6 +5,10 @@ import { readSlot, loadGame } from '../systems/save.js';
 import { settings } from '../systems/settings.js';
 import { dayStamp, dailyMods } from '../systems/daily.js';
 import { ARENAS } from './arenas.js';
+import { loadRecords, saveRecords, recordKey, bestWave } from './records.js';
+import { ARENA_CLOAKS, cloakOpen, arenaModById, modOpen, lastPick } from './unlocks.js';
+
+export { loadRecords, recordKey, bestWave };
 
 const POTS = { hp_potion: 5, mp_potion: 3, sp_potion: 3 };
 // Each hero is plain data: gear, skill levels, perks, tomes, hearts (for shouts) and the starting spell.
@@ -60,28 +64,37 @@ export function beginQuickRun(heroId, opts = {}) {
   S.flags.introDone = true; S.flags.tutDone = true;
   S.quick = { hero: heroId, mode, arena, startedAt: Date.now() };
   if (mode === 'daily') { S.quick.daily = day; S.mods = Object.fromEntries(dailyMods(day).map((m) => [m, true])); }
+  else applyUnlocks(opts);
   recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
   return true;
 }
 
+// PR-24: the cloak and the modifier you picked (or the last ones you used), if your records have opened them
+function applyUnlocks(opts) {
+  const pick = lastPick(), r = loadRecords();
+  const cloak = ARENA_CLOAKS.find((c) => c.col === (opts.cloak ?? pick.cloak));
+  if (cloak && cloakOpen(cloak, r) && (S.quick.hero !== 'own' || opts.cloak != null)) { S.quick.cloak = cloak.col; S.cloak = cloak.col; }
+  const mod = arenaModById(opts.mod ?? pick.mod);
+  if (mod.id !== 'none' && modOpen(mod, r)) {
+    S.quick.mod = mod.id; S.quick.scoreMul = mod.mul;
+    S.mods = { ...(S.mods || {}), ...Object.fromEntries((mod.mods || []).map((m) => [m, true])) };
+  }
+}
+
 // Rooms open as you reach waves in any run (Boss Rush does not count). One constant to change if this feels too slow.
 export const ARENA_UNLOCK = { pit: 0, lake: 5, foundry: 8, court: 10 };
-export const bestWave = () => Object.entries(loadRecords()).filter(([k]) => !k.endsWith(':rush')).reduce((m, [, v]) => Math.max(m, v.waves || 0), 0);
 export const arenaUnlocked = (id) => bestWave() >= (ARENA_UNLOCK[id] || 0);
 export const nextRoomAt = () => Object.values(ARENA_UNLOCK).filter((w) => w > bestWave()).sort((a, b) => a - b)[0] || 0;
 
 export const hasOwnHero = () => !!readSlot(settings.slot);
 
 // ---- score and records (this device only)
-// waves cleared (or bosses felled x5), the combo-weighted points from kills, and champions
-export const quickScore = (waves, pts, champions, mode = 'survival') => waves * (mode === 'rush' ? 500 : 100) + pts + champions * 40;
-const KEY = 'frostfall_arena_records';
-export function loadRecords() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } }
-export const recordKey = (heroId, mode) => `${heroId}:${mode}`;
+// waves cleared (or bosses felled x5), the combo-weighted points from kills, and champions; x the run modifier's bonus
+export const quickScore = (waves, pts, champions, mode = 'survival') => Math.round((waves * (mode === 'rush' ? 500 : 100) + pts + champions * 40) * (S.quick?.scoreMul || 1));
 export function submitRecord(heroId, score, waves, mode = 'survival') {
   const key = recordKey(heroId, mode), r = loadRecords(), cur = r[key] || { score: 0, waves: 0, runs: 0 };
   const isBest = score > cur.score;
   r[key] = { score: Math.max(cur.score, score), waves: Math.max(cur.waves, waves), runs: cur.runs + 1 };
-  try { localStorage.setItem(KEY, JSON.stringify(r)); } catch { /* storage blocked */ }
+  saveRecords(r);
   return { isBest, best: r[key] };
 }
