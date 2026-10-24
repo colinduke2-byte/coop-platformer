@@ -1,7 +1,7 @@
 // One-time tutorial hints shown the first time a mechanic matters.
 import { S } from './state.js';
 import { bus } from './bus.js';
-import { prompt } from './access.js';
+import { prompt, padHint } from './access.js';
 
 export const TIPS = {
   sneak: 'HOLD {KeyC} TO SNEAK: UNAWARE FOES TAKE 3X DAMAGE.\nROLL ({Space}) THROUGH A TELEGRAPHED HIT.',
@@ -35,9 +35,50 @@ export const TIPS = {
   sandburrower: 'SAND BURROWER: IT TUNNELS UNSEEN.\nWHEN THE SAND SWELLS UNDER YOU, ROLL AWAY.',
   sunsentinel: 'SUN SENTINEL: GOLD ARMOUR. PARRY IT, STAGGER IT,\nOR USE LIGHTNING.',
   quest: 'PRESS {KeyO} FOR THE JOURNAL.\nPRESS {KeyE} ON A QUEST TO TRACK IT.',
+  danger: 'NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU:\nGREEN EASY, WHITE FAIR, YELLOW TOUGH, ORANGE DEADLY, RED HOPELESS.',
+  // first visit to a crafting service: shown on the service's own message line (one short line each, NP16)
+  cook: 'A MEAL HEALS AND BUFFS YOU. EAT IT FROM THE PACK.',
+  brew: 'BREW POTIONS FROM THE HERBS YOU PICK IN THE WILD.',
+  forge: 'EACH FORGE STEP MAKES A PIECE OF GEAR STRONGER.',
+  enchant: 'AN ENCHANTMENT ADDS FIRE, FROST OR SHOCK TO A WEAPON.',
+  reforge: 'REFORGING ROLLS NEW BONUSES ON A PIECE OF GEAR.',
+  fletch: 'ARROWS + A MATERIAL = SPECIAL AMMO. {KeyV} SWITCHES.',
+  furnish: 'BOUGHT FURNITURE APPEARS IN THE COTTAGE AT ONCE.',
+  repair: 'GEAR WEARS DOWN AS YOU FIGHT. MEND IT HERE.',
 };
+// The Field Guide (Lore > GUIDE, NP21) lists every tip you have seen, grouped. Anything not named here is a creature.
+export const TIP_GROUP = {
+  block: 'COMBAT', stamina: 'COMBAT', potion: 'COMBAT', bow: 'COMBAT', perks: 'COMBAT', danger: 'COMBAT',
+  sneak: 'STEALTH', night: 'STEALTH', lock: 'STEALTH',
+  cook: 'CRAFTING', brew: 'CRAFTING', forge: 'CRAFTING', enchant: 'CRAFTING', reforge: 'CRAFTING', fletch: 'CRAFTING', furnish: 'CRAFTING', repair: 'CRAFTING',
+  rest: 'TRAVEL', burden: 'TRAVEL', quest: 'TRAVEL', tracks: 'TRAVEL',
+};
+export const tipGroup = (id) => TIP_GROUP[id] || 'CREATURES';
+export const GROUP_ORDER = ['COMBAT', 'STEALTH', 'CRAFTING', 'TRAVEL', 'CREATURES'];
+export const TIP_TITLE = {
+  sneak: 'SNEAKING', stamina: 'STAMINA', perks: 'PERK POINTS', lock: 'LOCKPICKING', block: 'BLOCK AND PARRY', bow: 'THE BOW',
+  night: 'NIGHT', potion: 'POTIONS', rest: 'RESTING', quest: 'THE JOURNAL', tracks: 'GIANT TRACKS', burden: 'A HEAVY PACK',
+  danger: 'DANGER COLOURS', cook: 'COOKING', brew: 'BREWING', forge: 'THE FORGE', enchant: 'ENCHANTING', reforge: 'REFORGING',
+  fletch: 'FLETCHING', furnish: 'FURNISHING', repair: 'REPAIRS',
+};
+// a tip's text with {KeyX} filled in for the keys or pad buttons in use right now
+export const tipText = (id) => (TIPS[id] || '').replace(/\{(\w+)\}/g, (_, c) => prompt(c));
+// Tips folded into another screen (the level-up card already says how to spend a perk point, NP9): they are marked seen
+// for the Field Guide without a hint of their own.
+const SILENT = new Set(['perks']);
+// tips that matter right now replace the current hint instead of queueing behind it (NP1, NP5)
+const URGENT = new Set(['potion']);
 export function tip(id) {
   if (S.tips[id] || !TIPS[id]) return;
   S.tips[id] = true;
-  bus.emit('hint', TIPS[id].replace(/\{(\w+)\}/g, (_, c) => prompt(c)));
+  if (!SILENT.has(id)) bus.emit('hint', tipText(id), URGENT.has(id));
 }
+// For a screen that shows the tip itself (a shop's message line): marks it seen and returns its text, once.
+export function takeTip(id) {
+  if (S.tips[id] || !TIPS[id]) return null;
+  S.tips[id] = true;
+  return tipText(id);
+}
+
+// The controls card: shown when the intro ends, at the start of a first Arena or Daily run, and in the Field Guide.
+export const controlsCard = () => ['WASD MOVE  SPACE ROLL  C SNEAK  E TALK', 'J SWORD  K BOW  L SPELL  Q SWAP  R SHOUT'].map((l) => padHint(l)).join('\n');

@@ -18,7 +18,6 @@ import { boardMenu } from '../data/contracts.js';
 import { recalc as recalcStats } from '../systems/stats.js';
 import { respec, respecCost } from '../systems/skills.js';
 import { maybeRelic } from '../systems/relics.js';
-import { COOKABLE } from '../systems/food.js';
 import { clearStatus } from '../systems/status.js';
 import { advanceTime } from '../systems/moon.js';
 
@@ -56,7 +55,7 @@ export class RestSpot {
     await runScript(async () => {
       const outdoors = sc.def.snow || sc.def.outdoors, h = (S.time % 1440) / 60, night = h >= 20.5 || h < 5.5;
       const opts = ['Rest by the fire'], acts = ['rest'];
-      if (COOKABLE().length) { opts.push('Cook a meal'); acts.push('cook'); }
+      opts.push('Cook a meal'); acts.push('cook');      // always offered, so you learn that fires cook (NP16); with nothing to cook it says what to bring
       if (outdoors) { opts.push(night ? 'Wait until dawn' : 'Wait until dusk'); acts.push('wait'); }
       if (!S.quick && !sc.def.arena) { opts.push('Travel to another fire'); acts.push('travel'); }      // NP4 / WQ13
       opts.push('Cancel');

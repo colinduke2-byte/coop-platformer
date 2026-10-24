@@ -387,3 +387,23 @@ TUNE.world = {
   rquest: { gold: 450, tier: 3 },
   retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
 };
+
+// ---- H: HUD and first hour
+TUNE.hud = {
+  // hints: seconds on screen; a new tip waits while the current one has more than `keep` s left, trims it to `trim` s,
+  // and at most `queue` wait. Urgent hints (tutorial steps, low-health potion tip) replace the current one at once (NP1).
+  hintLife: 12, hintKeep: 4, hintTrim: 6, hintQueue: 3,
+  // the hint docks at the bottom while an alerted foe is this close (px), and for `fightHold` s after (VX-05)
+  fightR: 220, fightHold: 2,
+  // VX-05: at most this many floating combat texts at once; an enemy's small HP bar shows for `barHold` s after it is hit
+  // (always while it is your lock-on target)
+  maxTexts: 12, barHold: 2,
+  // NP5: the sneak tip fires when an unaware foe is this close (px); NP24: foes name themselves in their danger colour
+  // up to this character level (DANGER NAMES: AUTO), for this many seconds
+  sneakTipR: 140, dangerNamesLevel: 5, dangerNameLife: 1.5,
+  nemesisLevel: 3,               // NP10: a killer becomes your nemesis only from this character level on
+  // NP11: below this character level, foes within safeR px of a village exit are moved out to that radius on arrival
+  safeLevel: 3, safeR: 400, safeWindow: 1.5,
+  storyNudgeRuns: 3,             // NP26: Arena runs before the title points a player with no story save at NEW GAME
+  shopTip: 7,                    // seconds a first-visit tip stays on a crafting service's message line (NP16)
+};

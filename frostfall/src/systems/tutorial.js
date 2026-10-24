@@ -19,7 +19,8 @@ export function startTutorial() { if (!S.flags.tutDone) S.flags.tut = 'move'; }
 
 const tut = { start: null, rolls0: 0, wolf: null, said: '', t: 0, windupShown: false };
 
-function say(key) { tut.said = key; tut.t = 10; bus.emit('hint', fill(TEXT[key])); }
+// tutorial steps are urgent hints: they replace whatever tip is showing at once, so a lesson arrives when it is needed (NP1)
+function say(key) { tut.said = key; tut.t = 10; bus.emit('hint', fill(TEXT[key]), true); }
 
 export function updateTutorial(gs, dt) {
   const step = S.flags.tut;
@@ -39,7 +40,8 @@ export function updateTutorial(gs, dt) {
       if (tut.wolf && tut.wolf.dead) {
         S.flags.tut = 'done'; S.flags.tutDone = true; tut.wolf = null;
         bus.emit('toast', 'YOU ARE READY. SEE BJORN AT THE LODGE', 13);
-        bus.emit('hint', fill(TEXT.ready));
+        bus.emit('hint', fill(TEXT.ready), true);
+        bus.emit('tutorial:done');            // features/hud_starter.js starts the starter quest (NP3)
         return;
       }
       // spawn the lone wolf a short way off, weakened so the first fight is about learning

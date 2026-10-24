@@ -153,6 +153,7 @@ react.
 | `status:on` | `(target, kind, duration)` | `systems/status.js` | a status effect is applied to, or refreshed on, a player or an enemy (`duration` = seconds left; a chill's stacks are in `target.statuses.chill.stacks`) |
 | `status:off` | `(target, kind)` | `systems/status.js` | it runs out, is cured, or turns into another (chill -> freeze) |
 | `weather` | `(kind, region)` | `world/lighting.js` (`applyWeather`) | on every map load and every change of `S.weather`; `region` is a `REGIONS` id (`'reach'`, `'sunscorch'`...) |
+| `titlecard` | `(name)` | `features/art_titlecard.js` | a region's title card is shown on arrival; the HUD drops its place-name plate for it |
 
 A target that dies or despawns gets no `status:off`, so check `target.active` / `target.dead`. Other useful events that
 already exist are `toast`, `hint`, `say`, `discover`, `area`, `levelup`, `enemy:killed`, `item:added`, `boss:engaged`,

@@ -1,3 +1,4 @@
+import { tip } from '../systems/tips.js';
 import { maybeRelic } from '../systems/relics.js';
 import Phaser from 'phaser';
 import { S } from '../systems/state.js';
@@ -42,7 +43,7 @@ export default class Chest extends Phaser.GameObjects.Image {
   async interact() {
     if (this.spec.mimic && !S.flags[this.flag]) { this.reveal(); return; }
     if (this.locked) {
-      if (!count('lockpick')) { bus.emit('toast', 'LOCKED - NEED LOCKPICKS', 11); sfx.play('deny'); return; }
+      if (!count('lockpick')) { bus.emit('toast', 'LOCKED. MIRRA SELLS LOCKPICKS', 11); sfx.play('deny'); tip('lock'); return; }   // NP15: where to get them, and the tip at the lock
       let ok = false;
       await runScript(async () => { ok = await dialogue.hud.lockpick(this.spec.lock); });
       if (!ok) return;

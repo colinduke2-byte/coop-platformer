@@ -276,6 +276,7 @@ export const combatMethods = {
   noteKiller(a) {
     const sc = this.scene;
     if (!a || a.isBoss || !a.kind || !sc.def.stream) return;
+    if ((S.charLevel || 1) < TUNE.hud.nemesisLevel && !S.nemesis) return;     // NP10: no nemesis from a newcomer's first deaths
     if (a.nemesis && S.nemesis) { S.nemesis.kills++; S.nemesis.x = Math.round(a.x); S.nemesis.y = Math.round(a.y); return; }
     if (!S.nemesis) S.nemesis = { kind: a.kind, tier: a.tier || 0, x: Math.round(a.x), y: Math.round(a.y), kills: 1, name: a.cfg.name };
   },

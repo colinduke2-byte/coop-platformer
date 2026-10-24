@@ -4,6 +4,7 @@ import { C } from '../config.js';
 import { baseKey, nearestPal } from './tintbake.js';
 import { ring as drawRing } from './sprites.js';
 import { TILE } from '../config.js';
+import { TUNE } from '../data/tuning.js';
 
 // Hit sparks by element (VX-08): the colours a blow throws, by info.element (or a poison dot).
 export const SPARK_COLS = { fire: [12, 11, 13], frost: [15, 6, 15], shock: [13, 6, 13], poison: [8, 7, 8], none: [13, 13, 15] };
@@ -122,8 +123,15 @@ export class Fx {
       if (this.texts.length > 9) { const old = this.texts.shift(); this.freeText(old.t); }
       if (this.texts.length > 4) life = 0.55;
     }
+    // VX-05: a word (WEAK, RESIST, ARMORED...) already floating over the same foe is refreshed, not stacked; and a crowd
+    // fight never shows more than TUNE.hud.maxTexts floating texts in all
+    if (!isNum) {
+      const same = this.texts.find((o) => o.str === str && o.life > 0 && Math.abs(o.x - x) < 14 && Math.abs(o.y - y) < 14);
+      if (same) { same.life = same.t0; return; }
+    }
+    if (this.texts.length >= TUNE.hud.maxTexts) { const old = this.texts.shift(); this.freeText(old.t); }
     const t = this.getText(Math.round(x - str.length * 3), Math.round(y), str, col);
-    this.texts.push({ t, y, x, y0: y, t0: life, life, col, num: isNum ? Number(str) : null });
+    this.texts.push({ t, y, x, y0: y, t0: life, life, col, str, num: isNum ? Number(str) : null });
   }
 
   slash(x, y, angle, flip = false, scale = 1) {

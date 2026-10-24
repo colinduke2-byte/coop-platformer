@@ -7,6 +7,7 @@ import { W, C } from '../config.js';
 import { txt } from '../art/font.js';
 import { S } from '../systems/state.js';
 import { REGIONS, regionOfMap } from '../data/regions.js';
+import { bus } from '../systems/bus.js';
 
 const LOOK = {
   reach: { col: 6, fl: [5, 6, 4] }, ashen: { col: 12, fl: [2, 12, 13] }, coast: { col: 5, fl: [6, 15, 4] }, kingdom: { col: 13, fl: [5, 13, 4] },
@@ -33,6 +34,7 @@ registerListener('area', (sc, name) => {
   const card = { t: 0, life: first ? 2.6 : 1.2, parts, line, band, txt: t, fx: sc.add.graphics().setScrollFactor(0).setDepth(99997), y0, hgt,
     done() { band.destroy(); line.destroy(); t.destroy(); this.fx.destroy(); cards.delete(sc); } };
   cards.set(sc, card);
+  bus.emit('titlecard', name);          // the HUD drops its place-name plate for this arrival (no double banner)
 }, 'artTitleCard');
 
 registerTicker('artTitleCard', (sc, dt) => {

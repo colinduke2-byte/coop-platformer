@@ -30,12 +30,14 @@ import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
 import { quickScore } from '../arena/heroes.js';
+import { tip, takeTip } from '../systems/tips.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
   { key: 'mp', max: 'maxMp', col: 15, hi: 6, label: 'MP', flash: 'nomana' },
   { key: 'sp', max: 'maxSp', col: 8, hi: 5, label: 'SP', flash: 'nostamina' },
 ];
+const SHOP_TIPS = [[/^CAMPFIRE/, 'cook'], [/^ALCHEMY/, 'brew'], [/^FORGE/, 'forge'], [/^ENCHANT/, 'enchant'], [/^REFORGE/, 'reforge'], [/^FLETCHING/, 'fletch'], [/^FURNISH/, 'furnish'], [/^REPAIR/, 'repair']];
 // a cancelled line that nobody awaited must not show up as an unhandled rejection (awaiting it still sees Cancelled)
 const quiet = (p) => { p.catch(() => {}); return p; };
 const POTIONS = [['hp_potion', '1'], ['mp_potion', '2'], ['sp_potion', '3']];
@@ -47,7 +49,7 @@ export default class HudScene extends Phaser.Scene {
 
   create() {
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
-    this.quickTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
+    this.quickTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = this.slotKeys = null;
     this.g = this.add.graphics();
     this.flash = { hp: 0, mp: 0, sp: 0 };
     this.labels = BARS.map((b, i) => txt(this, 3, 3 + i * 8, b.label, 5));
@@ -67,15 +69,25 @@ export default class HudScene extends Phaser.Scene {
     });
 
     this.toasts = [];
-    this.area = null;
+    this.area = null; this.cardFor = null;
     // the same message twice in a row stacks ("x2") instead of pushing older news off the screen
+    this.toastHold = [];
     this.onToast = (text, col = 6) => {
+      if (this.intro) { this.toastHold.push([text, col]); return; }    // VX-13: news waits until the boss card has gone
       const same = this.toasts.find((ts) => ts.text === text && ts.life > 0.3);
       if (same) { same.n++; same.life = 2.4; same.t.setText(`${text} X${same.n}`); return; }
       this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4, text, n: 1 });
       if (this.toasts.length > 5) this.toasts.shift().t.destroy();
     };
-    this.onArea = (name) => { this.area?.destroy(); this.area = txt(this, 0, 36, name, 5); this.area.x = Math.round((W - this.area.width) / 2); this.areaT = 3; };
+    // the place name on arrival: snow-white on a dark plate with thin rules, readable over snow and dark ground alike (VX-14)
+    this.onArea = (name) => {
+      if (this.cardFor === name) { this.cardFor = null; return; }          // art's region title card already shows this name
+      this.area?.destroy(); this.area = txt(this, 0, 36, name, 6); this.area.x = Math.round((W - this.area.width) / 2); this.areaT = 3; this.areaName = name;
+    };
+    // a region's title card (features/art_titlecard.js, bus 'titlecard') replaces the plate: one banner on arrival, whichever
+    // of the two 'area' listeners runs first
+    this.onCard = (name) => { if (this.area && this.areaName === name) { this.area.destroy(); this.area = null; } else this.cardFor = name; };
+    listen(this, 'titlecard', this.onCard);
     // a small "saved" mark (top right, under the clock) whenever progress is written, quiet autosaves included
     this.savedT = 0; this.savedTxt = txt(this, 0, 35, 'SAVED', 8).setVisible(false);
     this.onSaved = () => { this.savedT = 1.6; };
@@ -113,12 +125,24 @@ export default class HudScene extends Phaser.Scene {
     });
     this.questTxt = [txt(this, 0, 26, '', 4), txt(this, 0, 35, '', 4)];
     this.hint = null;
-    // tips wait their turn instead of replacing one another; they sit under the status row, clear of the bars and the purse
+    // tips wait their turn instead of replacing one another; they sit under the status row, clear of the bars and the purse.
+    // An urgent hint (the tutorial's steps, the low-health potion tip) replaces what is showing at once (NP1): a tip it
+    // pushes aside comes back after it, and an older urgent line still waiting in the queue is dropped (it is stale).
     this.hintQ = [];
-    this.showHint = (text) => { this.hint?.destroy(); this.hint = txt(this, 0, 0, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = 12; this.hintH = text.split('\n').length * 9 + 3; this.hintText = text; };
-    this.onHint = (text) => {
-      if (this.hint && this.hintText === text) { this.hintT = 12; return; }
-      if (this.hint && this.hintT > 4) { if (!this.hintQ.includes(text)) this.hintQ.push(text); if (this.hintQ.length > 3) this.hintQ.shift(); this.hintT = Math.min(this.hintT, 6); return; }
+    this.showHint = (text, urgent = false) => { this.hint?.destroy(); this.hint = txt(this, 0, 0, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = TUNE.hud.hintLife; this.hintH = text.split('\n').length * 9 + 3; this.hintText = text; this.hintUrgent = !!urgent; };
+    this.onHint = (text, urgent = false) => {
+      if (this.hint && this.hintText === text) { this.hintT = TUNE.hud.hintLife; return; }
+      if (urgent) {
+        this.hintQ = this.hintQ.filter((q) => !q.urgent && q.text !== text);
+        if (this.hint && !this.hintUrgent && this.hintT > TUNE.hud.hintKeep) this.hintQ.unshift({ text: this.hintText, urgent: false });
+        this.showHint(text, true); return;
+      }
+      if (this.hint && (this.hintUrgent || this.hintT > TUNE.hud.hintKeep)) {
+        if (!this.hintQ.some((q) => q.text === text)) this.hintQ.push({ text, urgent: false });
+        if (this.hintQ.length > TUNE.hud.hintQueue) this.hintQ.shift();
+        if (!this.hintUrgent) this.hintT = Math.min(this.hintT, TUNE.hud.hintTrim);
+        return;
+      }
       this.showHint(text);
     };
     listen(this, 'hint', this.onHint);
@@ -130,8 +154,8 @@ export default class HudScene extends Phaser.Scene {
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, W / 2, 60, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
     // what happened and what it costs: who did it, the gold you drop, where you wake
-    this.deadWhy = txt(this, 0, 92, '', 6); this.deadCost = txt(this, 0, 104, '', 12); this.deadWake = txt(this, 0, 116, '', 4);
-    this.dead.add([d1, this.deadWhy, this.deadCost, this.deadWake]);
+    this.deadWhy = txt(this, 0, 92, '', 6); this.deadCost = txt(this, 0, 104, '', 12); this.deadWake = txt(this, 0, 116, '', 4); this.deadNem = txt(this, 0, 128, '', 11);
+    this.dead.add([d1, this.deadWhy, this.deadCost, this.deadWake, this.deadNem]);
     this.deadShown = false;
 
     // boss intro card: letterbox bars slide in and the boss's name appears
@@ -150,6 +174,11 @@ export default class HudScene extends Phaser.Scene {
     listen(this, 'boss:engaged', this.onBossIntro);
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; listen(this, b.flash, this.handlers[b.flash]); }
+    // NP16: the first visit to a crafting service explains it, once, on that service's own message line
+    const shop = this.scene.get('Shop');
+    const onShop = (sh) => { const hit = SHOP_TIPS.find(([re]) => re.test(sh.cfg?.title || '')); const t = hit && takeTip(hit[1]); if (t) { sh.say(t, 13); sh.msgT = TUNE.hud.shopTip; } };
+    shop?.events.on('create', onShop);
+    this.events.once('shutdown', () => shop?.events.off('create', onShop));
     // bus handlers above go through listen(), which removes them on shutdown by itself (CH13): never bus.on in a scene
     this.events.once('shutdown', () => { if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
@@ -319,6 +348,7 @@ export default class HudScene extends Phaser.Scene {
   // runScript swallows), so a conversation cut off by a door or a death never leaves a script hanging (CH6).
   hideBox() {
     this.skipTalk = false;
+    this.name = ''; this.lastSay = '';       // the next conversation's first choice never shows this one's speaker and line (NP7)
     const d = this.dlg;
     this.dlg = null;
     d?.rej?.(new Cancelled());
@@ -411,13 +441,13 @@ export default class HudScene extends Phaser.Scene {
   // Spoken lines: a name and a sentence over the bottom of the screen for a few seconds.
   updateSub(dt) {
     const s = this.sub;
-    if (!s || S.hp <= 0) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
+    if (!s || S.hp <= 0 || this.intro) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }   // a line waits for the boss card (VX-13)
     s.t += dt;
     const lines = wrap(s.text, 52);
     this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont(fontKey(s.col));
     const h = lines.split('\n').length * 9;
     // above the boss bar and above the newest toasts, so the three never print over each other
-    const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? H - 36 - (this.toasts.length - 1) * 9 - 4 : H);
+    const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? H - 36 - (this.hintDock || 0) - (this.toasts.length - 1) * 9 - 4 : H, this.hintDock ? (this.bossOn ? H - 26 : H - 22) - this.hintDock : H);
     this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = floor - 10 - h;
     this.subTxt.x = Math.round((W - this.subTxt.width) / 2); this.subTxt.y = floor - h;
     const a = s.t < 0.3 ? s.t / 0.3 : s.t > 3.4 ? Math.max(0, (3.8 - s.t) / 0.4) : 1;
@@ -437,7 +467,23 @@ export default class HudScene extends Phaser.Scene {
     this.introTxt.setVisible(show).setText(it.title); this.introSub.setVisible(show && !!it.sub).setText(it.sub);
     this.introTxt.x = Math.round((W - this.introTxt.width) / 2); this.introTxt.y = 5;
     this.introSub.x = Math.round((W - this.introSub.width) / 2); this.introSub.y = H - 13;
-    if (it.t >= T) this.intro = null;
+    if (it.t >= T) { this.intro = null; for (const [t, c] of this.toastHold.splice(0)) this.onToast(t, c); }
+  }
+
+  nextStep() {
+    const Q = S.quests;
+    if (Q.king?.status === 'inactive') return 'NEXT: TALK TO ELDER SIGRID';
+    if (Q.wolves?.status === 'inactive') return 'NEXT: BJORN NEEDS A HUNTER';
+    if (Q.herbs?.status === 'inactive') return 'NEXT: MIRRA NEEDS HERBS';
+    return 'NEXT: EXPLORE. CAMPFIRES ARE SAFE';
+  }
+
+  // A fight is on when an alerted foe is close (or you are locked on); it lingers a moment so the hint does not jump about.
+  inFight(pl, dt) {
+    const gs = this.gs, R = TUNE.hud.fightR;
+    const now = !!pl && (!!pl.target || this.bossOn || gs.enemies.getChildren().some((e) => e.alerted && !e.dead && Math.abs(e.x - pl.x) < R && Math.abs(e.y - pl.y) < R));
+    this.fightT = now ? TUNE.hud.fightHold : Math.max(0, (this.fightT || 0) - dt);
+    return this.fightT > 0;
   }
 
   // Time of day and the moon, top right under the purse (outdoors only, since time stands still inside).
@@ -472,6 +518,9 @@ export default class HudScene extends Phaser.Scene {
       this.deadShown = true;
       const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * TUNE.economy.deathGoldKeep), r = S.respawn || { map: 'village' };
       const lines = [[this.deadWhy, by ? fit('SLAIN BY ' + String(by).toUpperCase(), 48) : 'YOU FELL'], [this.deadCost, S.quick ? '' : loss > 0 ? `YOU DROP ${loss} GOLD (10%)` : ''], [this.deadWake, S.quick ? 'THE RUN IS OVER' : fit('YOU WAKE AT ' + (r.x != null ? 'THE LAST BRAZIER IN ' : '') + (MAPS[r.map]?.name || 'THE VILLAGE').toUpperCase(), 48)]];
+      // NP10: when the killer becomes (or feeds) your nemesis, the card says so
+      const nm = S.nemesis, nemNew = nm && !S.quick && by && String(by).toUpperCase() === String(nm.name || '').toUpperCase();
+      lines.push([this.deadNem, nemNew ? fit(nm.kills > 1 ? `YOUR NEMESIS GROWS STRONGER (${nm.kills})` : `THE ${String(nm.name).toUpperCase()} REMEMBERS YOU. IT WILL WAIT, STRONGER.`, 52) : '']);
       for (const [t, v] of lines) { t.setText(v); t.x = Math.round((W - t.width) / 2); }
     } else if (!dead) this.deadShown = false;
     if (S.quick) {
@@ -490,6 +539,7 @@ export default class HudScene extends Phaser.Scene {
     // the boss fight owns the bottom centre (its bar) and pushes spoken lines up; see updateSub
     const bs = this.gs.boss;
     this.bossOn = !!(bs && bs.engaged && !bs.dead);
+    this.fightNow = this.inFight(pl, dt);
     // panels
     const big = !!settings.largeUi, rs = big ? 11 : 8, bh = big ? 8 : 5, wk = big ? 0.8 : 0.62;
     const nums = settings.hudNumbers || big;
@@ -522,7 +572,11 @@ export default class HudScene extends Phaser.Scene {
     // gold + arrows
     const gold = String(S.gold), ar = String(S.arrows);
     const gw = textW(gold), aw = textW(ar);
-    g.fillStyle(C[0], 0.62); g.fillRect(W - 14 - Math.max(gw, aw) - 6, 0, Math.max(gw, aw) + 20, 23);
+    this.purseX = W - 14 - Math.max(gw, aw) - 6;
+    // gold means nothing in an Arena or Daily run: only the arrows show there (NP17)
+    const noGold = !!S.quick;
+    this.goldTxt.setVisible(!noGold); this.coinImg.setVisible(!noGold);
+    g.fillStyle(C[0], 0.62); g.fillRect(this.purseX, noGold ? 11 : 0, Math.max(gw, aw) + 20, noGold ? 12 : 23);
     if (!this.ammoTxt) this.ammoTxt = txt(this, 0, 23, '', 12);
     const ak = pl.curAmmo();
     if (ak !== 'arrow') {
@@ -560,6 +614,14 @@ export default class HudScene extends Phaser.Scene {
       p.cnt.setText(n ? String(n) : ''); p.cnt.x = p.x + 18 - p.cnt.width; p.cnt.y = H - 10;      // inside the slot, bottom right
     });
 
+    // each slot names its key (or pad button) in its top-left corner (NP14)
+    if (!this.slotKeys) this.slotKeys = [0, 1, 2, 3, 4].map(() => txt(this, 0, 0, '', 13));
+    [[4, 'KeyL'], [25, 'KeyR'], ...this.potIcons.map((p, i) => [p.x + 1, 'Digit' + (i + 1)])].forEach(([x, code], i) => {
+      const t = this.slotKeys[i];
+      t.setText(fit(prompt(code), 3)).setVisible(!dead); t.x = x; t.y = H - 20;
+      if (t.visible) { g.fillStyle(C[0], 0.8); g.fillRect(x - 1, H - 21, t.width + 2, 8); }
+    });
+
     // toasts stack above the bottom-left slots
     for (let i = this.toasts.length - 1; i >= 0; i--) {
       const ts = this.toasts[i];
@@ -569,7 +631,7 @@ export default class HudScene extends Phaser.Scene {
     this.toasts.forEach((ts, i) => {
       ts.t.setVisible(!dead);
       if (dead) return;
-      ts.t.y = H - 36 - (this.toasts.length - 1 - i) * 9;
+      ts.t.y = H - 36 - (this.hintDock || 0) - (this.toasts.length - 1 - i) * 9;
       ts.t.setAlpha(Math.min(1, ts.life * 2.5));
       g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, 9);
     });
@@ -577,7 +639,11 @@ export default class HudScene extends Phaser.Scene {
       if (!this.bannerObj) this.areaT -= dt;          // waits while a level-up banner holds the middle of the screen
       this.area.setVisible(!this.bannerObj && !dead);
       this.area.setAlpha(Math.max(0, Math.min(1, this.areaT)));
-      g.fillStyle(C[0], 0.5 * Math.max(0, Math.min(1, this.areaT))); g.fillRect(this.area.x - 4, 34, this.area.width + 8, 11);
+      if (this.area.visible) {
+        const aa = Math.max(0, Math.min(1, this.areaT)), ax = this.area.x - 6, aw = this.area.width + 12;
+        g.fillStyle(C[0], 0.78 * aa); g.fillRect(ax, 33, aw, 13);
+        g.fillStyle(C[4], aa); g.fillRect(ax + 2, 33, aw - 4, 1); g.fillRect(ax + 2, 45, aw - 4, 1);
+      }
       if (this.areaT <= 0) { this.area.destroy(); this.area = null; }
     }
 
@@ -598,13 +664,25 @@ export default class HudScene extends Phaser.Scene {
     const tid = trackedId();
     const act = activeQuestIds();
     const ids = [tid, ...act.filter((x) => x !== tid)].filter(Boolean).slice(0, 2);
+    // the tracker starts under the clock when the clock is showing (outdoors), never on top of it (NP2)
+    const ty0 = this.clockTxt?.visible ? 36 : 26;
+    let shownQ = 0;
     this.questTxt.forEach((t, i) => {
       const id = ids[i];
       if (!id || ui.modal || dead) { t.setText(''); return; }
       const line = fit((id === tid ? '> ' : '') + QUESTS[id].short(S.quests[id]), 30);
-      t.setText(line); t.setFont(id === tid ? 'f13' : fontKey(4)); t.x = W - 4 - t.width; t.y = 26 + i * 9;
+      t.setText(line); t.setFont(id === tid ? 'f13' : fontKey(4)); t.x = W - 4 - t.width; t.y = ty0 + i * 9;
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
+      shownQ = i + 1;
     });
+    // NP20: the tracker is never empty: with nothing active it suggests a next step
+    if (!shownQ && !S.quick && !S.daily && !ui.modal && !dead && S.flags.tutDone) {
+      const t = this.questTxt[0], line = fit(this.nextStep(), 32);
+      t.setText(line).setFont(fontKey(4)); t.x = W - 4 - t.width; t.y = ty0;
+      g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
+      shownQ = 1;
+    }
+    this.trackBottom = shownQ ? ty0 + shownQ * 9 : 0;
     this.drawQuestMarker(g, tid, dt);
     const wp = S.flags.waypoint;
     if (wp && wp.map === this.gs.mapId && !ui.modal && !this.dlg) {
@@ -615,22 +693,27 @@ export default class HudScene extends Phaser.Scene {
     if (em && em.map === this.gs.mapId && !ui.modal && !this.dlg) this.markerAt(g, em, EVENT_MARK_COL, dt);
     if (this.hint) {
       this.hintT -= dt;
-      // under the status row and the quest tracker; below the banner while one is showing
-      const hy = this.bannerObj ? 88 : Math.max(statBottom + 3, 46);
-      this.hint.y = hy + 2; this.hint.setVisible(!dead);
-      if (!dead) { g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, hy, this.hint.width + 8, this.hintH); }
+      // under the status row and the quest tracker; below the banner while one is showing. During a fight it docks at the
+      // bottom, clear of the action and the telegraphs (VX-05); it stays hidden under the lockpick panel (NP15).
+      const fight = this.fightNow;
+      const hy = fight ? (this.bossOn ? H - 26 : H - 22) - this.hintH : this.bannerObj ? 88 : Math.max(statBottom + 3, this.trackBottom + 2, 46);
+      this.hintDock = fight ? this.hintH + 2 : 0;
+      const show = !dead && !this.lock && !this.intro;
+      this.hint.y = hy + 2; this.hint.setVisible(show);
+      if (show) { g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, hy, this.hint.width + 8, this.hintH); }
       this.hint.setAlpha(Math.min(1, this.hintT));
-      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; if (this.hintQ.length) this.showHint(this.hintQ.shift()); }
-    }
+      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; this.hintUrgent = false; this.hintDock = 0; const nx = this.hintQ.shift(); if (nx) this.showHint(nx.text, nx.urgent); }
+    } else this.hintDock = 0;
     // the "saved" mark
     if (this.savedT > 0) {
       this.savedT -= dt;
-      const st = this.savedTxt; st.setVisible(!dead && !ui.modal).setAlpha(Math.min(1, this.savedT * 2)); st.x = W - 4 - st.width; st.y = this.clockTxt?.visible ? 35 : 25;
+      const st = this.savedTxt; st.setVisible(!dead && !ui.modal).setAlpha(Math.min(1, this.savedT * 2)); st.x = this.purseX - 4 - st.width; st.y = 3;      // left of the purse, clear of the clock and the tracker (NP2)
       if (st.visible) { g.fillStyle(C[0], 0.6 * Math.min(1, this.savedT * 2)); g.fillRect(st.x - 9, st.y - 1, st.width + 11, 9); g.fillStyle(C[8], Math.min(1, this.savedT * 2)); g.fillRect(st.x - 7, st.y + 1, 5, 5); }
     } else this.savedTxt.setVisible(false);
 
     // level-up banner (queue)
-    if (!this.bannerObj && this.banners.length) {
+    // one thing at a time (NP9): a banner waits while a conversation or choice box is open, and pauses if one opens
+    if (!this.bannerObj && this.banners.length && !this.dlg) {
       const b = this.banners.shift();
       const d = b.custom ? { name: b.title, perk: b.line } : SKILL_DEFS[b.skill];
       const c = this.add.container(0, 0);
@@ -642,8 +725,8 @@ export default class HudScene extends Phaser.Scene {
     }
     if (this.bannerObj) {
       const b = this.bannerObj;
-      b.t -= dt;
-      const a = Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
+      if (!this.dlg) b.t -= dt;
+      const a = this.dlg ? 0 : Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
       b.c.setAlpha(dead ? 0 : a);
       g.fillStyle(C[0], 0.7 * a); g.fillRect((W - b.w) / 2, 40, b.w, 44);
       g.fillStyle(C[13], a); g.fillRect((W - b.w) / 2, 40, b.w, 1); g.fillRect((W - b.w) / 2, 83, b.w, 1);
@@ -651,7 +734,7 @@ export default class HudScene extends Phaser.Scene {
     }
 
     // boss bar: bottom centre, between the spell and potion slots, clear of your own bars
-    if (this.bossOn && !dead) {
+    if (this.bossOn && !dead && !this.intro) {        // the bar waits for the intro card to finish (VX-13)
       const bw = 170, bx = Math.round((W - bw) / 2), by0 = H - 24;
       g.fillStyle(C[0], 0.75); g.fillRect(bx - 6, by0, bw + 12, 22);
       g.fillStyle(C[0]); g.fillRect(bx - 1, by0 + 11, bw + 2, 9);
@@ -677,6 +760,7 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[12]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 1);
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
+      if (dg && dg !== 2) tip('danger');            // the first foe that is not a fair fight explains the colours (NP6)
       this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg && dg !== 2 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont(fontKey(dg ? DANGER_COL[dg] : 6)).setVisible(true);
       const ev = stats.elemVs(tg.cfg); if (ev) { const was = this.tgtTxt.text; this.tgtTxt.setText(was + '  ' + ev); if (this.tgtTxt.width > tw + 6) this.tgtTxt.setText(was); }   // PR-13: your weapon's element against it
       this.tgtTxt.x = Math.round(tx + (tw - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;

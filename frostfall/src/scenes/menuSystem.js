@@ -51,7 +51,7 @@ const HINTS = {
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'SCREEN FLASHES AND THE LOW-HEALTH PULSE', 'PIXEL SCALE': 'INTEGER IS CRISP. FIT FILLS THE WINDOW',
   'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD SWORD TO KEEP THE COMBO GOING',
   'LARGE UI': 'BIGGER HUD BARS, NUMBERS AND TARGET BAR', 'ROTATE VIEW': 'PHONE HELD UPRIGHT: TURN THE PICTURE',
-  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
+  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES', 'DANGER NAMES': 'NAME A FOE IN ITS DANGER COLOUR WHEN IT SEES YOU',
   'DURABILITY': 'GEAR WEARS OUT. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES',
   'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD, SEE WHAT IT SENDS', 'QUIT TO TITLE': 'SAVES, THEN GOES BACK TO THE TITLE',
   'REDUCE MOTION': 'STILL MARKERS, NO BLINKING, LESS SNOW', 'HIGH CONTRAST': 'BRIGHTER TEXT ON THE DARK PANELS', 'BAR NUMBERS': 'NUMBERS ON THE HEALTH, MAGIC, STAMINA BARS',
@@ -63,7 +63,7 @@ export function systemTab(m) {
   // The list is long, so it is grouped into pages, in this order. Q jumps to the first row of the next page.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
     ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'HEARTBEAT']],
-    ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']],
+    ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DANGER NAMES', 'CLOAK']],
     ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'CONTROLS', 'CONTROLLER']]];
   const rows = PAGES.flatMap(([, l]) => l).filter((r) => !(S.quick || S.daily) || !['SAVE GAME', 'LOAD GAME', 'SLOT'].includes(r));   // no saving inside Arena or a Daily run
   let armed = null;           // 'LOAD GAME' / 'QUIT TO TITLE' wait for a second press
@@ -73,8 +73,8 @@ export function systemTab(m) {
   const pc = { cursor: 0, scroll: 0 };
   let waiting = null;         // action being rebound
   const ctrl = { cursor: 0, scroll: 0 };
-  const SLIDERS = ['COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'TEXT SPEED', 'FRAME RATE', 'STICK DEADZONE'];
-  const SPEEDS = ['slow', 'normal', 'fast', 'instant'], RATES = [0, 60, 30];
+  const SLIDERS = ['DANGER NAMES', 'COLOUR MODE', 'CLOAK', 'VOLUME', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'SLOT', 'DIFFICULTY', 'SCREEN SHAKE', 'TEXT SPEED', 'FRAME RATE', 'STICK DEADZONE'];
+  const SPEEDS = ['slow', 'normal', 'fast', 'instant'], RATES = [0, 60, 30], MARKS = ['auto', 'always', 'off'];
   const CHANNEL = { 'MUSIC LVL': ['music', 'musicVol'], 'SFX LVL': ['sfx', 'sfxVol'], 'AMBIENT': ['amb', 'ambVol'] };
 
   const adjust = (dir) => {
@@ -88,6 +88,7 @@ export function systemTab(m) {
     else if (r === 'SCREEN SHAKE') settings.shake = SHAKES[(SHAKES.indexOf(settings.shake) + dir + 3) % 3];
     else if (r === 'TEXT SPEED') settings.textSpeed = SPEEDS[(SPEEDS.indexOf(settings.textSpeed) + dir + 4) % 4];
     else if (r === 'FRAME RATE') { settings.fpsCap = RATES[(RATES.indexOf(settings.fpsCap) + dir + 3) % 3]; window.__applyFps?.(); }
+    else if (r === 'DANGER NAMES') settings.dangerNames = MARKS[(MARKS.indexOf(settings.dangerNames) + dir + 3) % 3];
     else if (r === 'STICK DEADZONE') settings.deadzone = Math.round(Math.max(0.2, Math.min(0.7, (settings.deadzone ?? 0.45) + dir * 0.05)) * 100) / 100;
     else return;
     saveSettings(); sfx.play('select'); m.dirty = true;
@@ -303,6 +304,7 @@ export function systemTab(m) {
         else if (r === 'DURABILITY') { const on = durOn(); v = settings.difficulty === 'easy' ? 'OFF (EASY)' : on ? 'ON' : 'OFF'; vc = on ? 13 : 4; }
         else if (r === 'HIT STOP') { v = settings.hitStop === false ? 'OFF' : 'ON'; vc = settings.hitStop === false ? 11 : 8; }
         else if (r === 'DAMAGE NUMBERS') { v = settings.dmgNumbers === false ? 'OFF' : 'ON'; vc = settings.dmgNumbers === false ? 11 : 8; }
+        else if (r === 'DANGER NAMES') { v = settings.dangerNames === 'auto' ? 'EARLY LEVELS' : settings.dangerNames.toUpperCase(); vc = settings.dangerNames === 'off' ? 4 : 8; }
         else if (r === 'FLASHES') { v = settings.flashes ? 'ON' : 'OFF'; vc = settings.flashes ? 8 : 11; }
         else if (r === 'PIXEL SCALE') { v = settings.intScale ? 'INTEGER' : 'FIT'; }
         else if (r === 'MOUSE') { v = settings.mouse ? 'ON' : 'OFF'; vc = settings.mouse ? 8 : 4; }

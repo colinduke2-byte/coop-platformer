@@ -27,7 +27,8 @@ import { StashChest, GardenPlot, TrophyWall, CookPot, Prop, Cauldron, PLATE_COL,
 import { intro as introScript } from '../data/dialogue.js';
 import { runScript, say, choose, cancelScript } from '../systems/dialogue.js';
 import { keys } from '../systems/keys.js';
-import { padHint } from '../systems/access.js';
+import { padHint, prompt } from '../systems/access.js';
+import { controlsCard } from '../systems/tips.js';
 import { txtS } from '../art/font.js';
 import { sfx, music, ambience } from '../audio/sfx.js';
 import { pathingMethods } from '../world/pathing.js';
@@ -438,7 +439,7 @@ export default class GameScene extends Phaser.Scene {
         g.beginPath(); g.moveTo(Math.round(e.x), Math.round(e.y + 3)); g.lineTo(Math.round(e.x + e.dashDir.x * 90), Math.round(e.y + 3 + e.dashDir.y * 90)); g.strokePath();
       }
       const pz = e.poise > e.maxHp * 0.06 || e.staggerT > 0;
-      if (e.dead || (e.hp >= e.maxHp && !pz) || e.isBoss) continue;
+      if (e.dead || (e.hp >= e.maxHp && !pz) || e.isBoss || (!pz && !(e.barT > 0) && e !== pl.target)) continue;   // VX-05: features/hud_combat.js sets barT
       const w = e.elite ? 20 : 14, x = Math.round(e.x - w / 2), y = Math.round(e.y - 14);
       g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, w + 2, pz ? 6 : 4);
       g.fillStyle(C[1]); g.fillRect(x, y, w, 2);
@@ -460,17 +461,18 @@ export default class GameScene extends Phaser.Scene {
     pl.mode = 'free';
     await this.delay(500);
     await runScript(introScript);
-    bus.emit('hint', ['WASD MOVE  SPACE ROLL  C SNEAK  E TALK', 'J SWORD  K BOW  L SPELL  Q SWAP  R SHOUT'].map((l) => padHint(l)).join('\n'));
+    bus.emit('hint', controlsCard());      // the tutorial's urgent steps push it aside; it comes back after them (NP1)
     const sigrid = this.npcs.find((n) => n.id === 'sigrid');
     if (sigrid) sigrid.walkTo(sigrid.home.x, sigrid.home.y);
   }
 
-  // After a character level-up, offer +10 to an attribute (only when no fight is happening).
+  // After a character level-up, offer +6 to an attribute (only when no fight is happening). The same card says where the
+  // perk point goes (NP9), and the HUD's level banner waits until it is closed.
   async askStat() {
     this.askingStat = true;
     await runScript(async () => {
       while (S.pendingStat > 0) {
-        await say('LEVEL ' + S.charLevel, 'You grow a little stronger. Gear and preparation will carry you further. Choose an attribute.');
+        await say('LEVEL ' + S.charLevel, `Choose an attribute to raise by 6. You also earned a perk point: open the pack (${prompt('KeyI')}), then PERKS.`);
         const c = await choose(['+6 HEALTH', '+6 MAGIC', '+6 STAMINA']);
         if (c === 0) S.bonusHp += 6; else if (c === 1) S.bonusMp += 6; else S.bonusSp += 6;
         S.pendingStat--;

@@ -35,6 +35,15 @@ const rarityCol = (id) => { const r = ITEMS[id]?.rarity; return r && r !== 'comm
 
 export { panel };                                  // it lives in ui/panel.js now (CH12)
 
+// NP18: every tab's help line ends the same way, with how to change tab and how to close (when there is room for it)
+function navHelp(h, special) {
+  if (special) return h;
+  const tab = /A\/D TAB/.test(h), esc = /\bESC\b/.test(h);
+  if (!esc) h += !tab && h.length + 20 <= 51 ? '  A/D TAB  ESC CLOSE' : '  ESC CLOSE';
+  else if (!tab && h.length + 9 <= 51) h = h.replace(/(\s+ESC\b)/, '  A/D TAB$1');
+  return h;
+}
+
 export default class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
 
@@ -236,7 +245,7 @@ export default class MenuScene extends Phaser.Scene {
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
     this.help = null; this.helpCol = null; this.paneMore = 0;
     this.tabs[this.tab].render();
-    const help = padHint(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', 51);
+    const help = padHint(navHelp(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', !!this.helpCol), 51);
     this.T(8, H - 12, fit(help, 51), this.helpCol || (settings.highContrast ? 6 : 4));
   }
 

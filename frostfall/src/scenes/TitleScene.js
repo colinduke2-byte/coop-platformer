@@ -20,6 +20,19 @@ import { MODS, MOD_IDS } from '../data/mods.js';
 import { settings, saveSettings } from '../systems/settings.js';
 import { setVolume, setChannel } from '../audio/sfx.js';
 import { CVD_MODES, applyCvd, padHint, prompt } from '../systems/access.js';
+import { loadRecords } from '../arena/heroes.js';
+import { TUNE } from '../data/tuning.js';
+
+// NP26: after a few Arena runs without a story save, the title says (once) where the rest of the game is
+function storyNudge() {
+  try {
+    if (localStorage.getItem('frostfall_story_nudge')) return false;
+    const runs = Object.values(loadRecords()).reduce((n, r) => n + (r.runs || 0), 0);
+    if (runs < TUNE.hud.storyNudgeRuns) return false;
+    localStorage.setItem('frostfall_story_nudge', '1');
+    return true;
+  } catch { return false; }
+}
 
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
@@ -36,11 +49,15 @@ export default class TitleScene extends Phaser.Scene {
     t2.x = Math.floor((W - t2.width) / 2);
     const done = listSaves().find((x) => x.info?.ending);
     this.ngSlot = done ? done.slot : null;
-    this.items = [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE', off: !anySave() && !rescueInfo() }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }, { id: 'options', label: 'OPTIONS' }, { id: 'howto', label: 'HOW TO PLAY' }];
+    // NP27: a first-time player (no save) sees where to start; the Arena and the Daily wait under MORE MODES
+    const fresh = !anySave() && !rescueInfo();
+    this.items = fresh
+      ? [{ id: 'new', label: 'NEW GAME (START HERE)' }, { id: 'howto', label: 'HOW TO PLAY' }, { id: 'options', label: 'OPTIONS' }, { id: 'more', label: '- MORE MODES -', off: true }, { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }]
+      : [{ id: 'new', label: 'NEW GAME' }, { id: 'continue', label: 'CONTINUE' }, ...(done ? [{ id: 'ng', label: 'NEW GAME+' }] : []), { id: 'arena', label: 'ARENA' }, { id: 'daily', label: 'DAILY CHALLENGE' }, { id: 'options', label: 'OPTIONS' }, { id: 'howto', label: 'HOW TO PLAY' }];
     // the menu sits above the snow line (y 160) however many entries there are
     const top = 76, step = this.items.length > 7 ? 10 : 11;
     this.menuBox = this.add.rectangle(W / 2, top + (this.items.length * step) / 2 - 1, 128, this.items.length * step + 8, 0x0b0e1a, 0.6);
-    this.sel = this.items[1].off ? 0 : 1;
+    this.sel = fresh ? 0 : 1;
     this.texts = this.items.map((it, i) => {
       const t = txt(this, 0, top + i * step, it.label, 6);
       t.x = Math.floor((W - t.width) / 2);
@@ -50,6 +67,7 @@ export default class TitleScene extends Phaser.Scene {
     // why saving may not work here, said up front
     const warn = !storage.ok ? 'SAVES ARE OFF IN THIS BROWSER: USE OPTIONS > SAVES' : tabs.other ? 'OPEN IN ANOTHER TAB: THIS TAB WILL NOT SAVE' : '';
     if (warn) { const w = txt(this, 0, 66, warn, 11); w.x = Math.floor((W - w.width) / 2); }
+    else if (fresh && storyNudge()) { const w = txt(this, 0, 66, 'THE ARENA IS A TASTE. THE STORY STARTS HERE.', 13); w.x = Math.floor((W - w.width) / 2); }   // NP26
     const hint = txt(this, 0, 172, '', 2);           // dark text: it sits on the snow
     this.hintTxt = hint;
     this.footPad = null;                        // the footer follows the device in use (redrawn in update when it changes)
@@ -157,7 +175,7 @@ export default class TitleScene extends Phaser.Scene {
   }
   optHelp(r) {
     switch (r) {
-      case 'DIFFICULTY': return 'EASY / NORMAL / HARD. CHANGE IT ANY TIME IN PAUSE.';
+      case 'DIFFICULTY': return 'EASY, NORMAL OR HARD. CHANGE IT IN PAUSE.';
       case 'CHALLENGE': return settings.challenge ? fit(MODS[settings.challenge].desc.toUpperCase(), 40) : 'AN OPTIONAL TWIST FOR THE NEXT NEW GAME.';
       case 'FULLSCREEN': return document.fullscreenEnabled === false ? 'NOT AVAILABLE HERE. ADD TO HOME SCREEN.' : '';
       case 'AMB LVL': return 'WIND, WATER, BIRDS AND TOWN SOUNDS.';
@@ -175,7 +193,7 @@ export default class TitleScene extends Phaser.Scene {
       this.optTxt[i].setFont(i === this.optSel ? 'f13' : 'f6');
       const [v, c] = this.optValue(r); this.optVal[i].setText(v).setFont(fontKey(c)); this.optVal[i].x = W - 44 - this.optVal[i].width;
     });
-    this.optDesc.setText(this.optHelp(this.optRows[this.optSel]));
+    this.optDesc.setText(fit(this.optHelp(this.optRows[this.optSel]), 43));     // one line inside the box (NP18)
   }
   optAdjust(dir) {
     const r = this.optRows[this.optSel], DIFFS = ['easy', 'normal', 'hard'];

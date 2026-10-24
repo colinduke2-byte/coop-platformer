@@ -10,6 +10,7 @@ export const settings = {
   durability: false,      // gear wears out and needs repairs (optional; Normal difficulty)
   durabilityHard: true,   // the same switch for Hard, where gear wear starts on
   dmgNumbers: true,       // floating damage numbers
+  dangerNames: 'auto',    // a foe's name in its danger colour when it notices you: auto (early levels) | always | off (NP24)
   hitStop: true,          // brief freeze on landed hits
   flashes: true,          // screen flashes
   intScale: false,        // integer pixel scaling
@@ -32,7 +33,7 @@ export const settings = {
 // Stored settings are checked field by field: a damaged value falls back to the default instead of breaking audio or saves.
 const DEFAULTS = JSON.parse(JSON.stringify(settings));
 const RANGES = { volume: [0, 1], musicVol: [0, 1], sfxVol: [0, 1], ambVol: [0, 1], shake: [0, 1], slot: [1, 3], deadzone: [0.2, 0.7] };
-const CHOICES = { difficulty: ['easy', 'normal', 'hard'], cvd: ['off', 'deutan', 'protan', 'tritan'], textSpeed: ['slow', 'normal', 'fast', 'instant'], fpsCap: [0, 30, 60] };
+const CHOICES = { difficulty: ['easy', 'normal', 'hard'], cvd: ['off', 'deutan', 'protan', 'tritan'], textSpeed: ['slow', 'normal', 'fast', 'instant'], fpsCap: [0, 30, 60], dangerNames: ['auto', 'always', 'off'] };
 export function sanitiseSettings(raw) {
   const out = {};
   for (const [k, v] of Object.entries(raw || {})) {

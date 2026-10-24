@@ -9,17 +9,17 @@ import { ARENAS } from './arenas.js';
 const POTS = { hp_potion: 5, mp_potion: 3, sp_potion: 3 };
 // Each hero is plain data: gear, skill levels, perks, tomes, hearts (for shouts) and the starting spell.
 export const HEROES = [
-  { id: 'warden', name: 'WARDEN', col: 6, blurb: ['IRON SWORD AND SHIELD.', 'BLOCK, PARRY, HOLD THE LINE.'],
+  { id: 'warden', keys: 'J SWORD  F BLOCK  R SHOUT', name: 'WARDEN', col: 6, blurb: ['IRON SWORD AND SHIELD.', 'BLOCK, PARRY, HOLD THE LINE.'],
     equip: { weapon: 'iron_sword', offhand: 'iron_shield', armor: 'iron_cuirass' }, skills: { oneHanded: 7, restoration: 2 }, perks: ['keenedge', 'duelist'], spell: 'heal', hearts: {} },
-  { id: 'reaver', name: 'REAVER', col: 12, blurb: ['GREATSWORD. SLOW, HUGE HITS.', 'BATTLE CRY ON R.'],
+  { id: 'reaver', keys: 'J SWING  U HEAVY  R BATTLE CRY', name: 'REAVER', col: 12, blurb: ['GREATSWORD. SLOW, HUGE HITS.', 'BATTLE CRY ON R.'],
     equip: { weapon: 'iron_greatsword', armor: 'iron_cuirass' }, skills: { oneHanded: 7 }, perks: ['keenedge'], spell: 'heal', hearts: { iron: true }, shout: 'cry' },
-  { id: 'ranger', name: 'RANGER', col: 8, blurb: ['LONGBOW AND FIRE ARROWS.', 'KITE THEM. BLINK AWAY.'],
+  { id: 'ranger', keys: 'K BOW  V AMMO  L BLINK', name: 'RANGER', col: 8, blurb: ['LONGBOW AND FIRE ARROWS.', 'KITE THEM. BLINK AWAY.'],
     equip: { weapon: 'hunting_knife', bow: 'long_bow', armor: 'hunter_garb' }, skills: { archery: 9, sneak: 4, oneHanded: 3 }, perks: ['steadyhand', 'eagleeye', 'piercing'], spell: 'blink', arrows: 60, extra: { fire_arrow: 40 } },
-  { id: 'frostmage', name: 'FROSTMAGE', col: 15, blurb: ['GLACIER SPEAR, FROST AND WARD.', 'FROST BREATH ON R.'],
+  { id: 'frostmage', keys: 'L SPEAR  Q SWAP  R FROST BREATH', name: 'FROSTMAGE', col: 15, blurb: ['GLACIER SPEAR, FROST AND WARD.', 'FROST BREATH ON R.'],
     equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, mp: 40, skills: { destruction: 8, restoration: 3 }, perks: ['spellweaver'], spell: 'glacier', tomes: { glacier: true }, hearts: { rime: true }, shout: 'frost' },
-  { id: 'pyromancer', name: 'PYROMANCER', col: 11, blurb: ['FIREBALL, EMBER NOVA, METEOR.', 'BURN EVERYTHING.'],
+  { id: 'pyromancer', keys: 'L CAST  Q SWAP SPELL  R SHOUT', name: 'PYROMANCER', col: 11, blurb: ['FIREBALL, EMBER NOVA, METEOR.', 'BURN EVERYTHING.'],
     equip: { weapon: 'hunting_knife', armor: 'mage_robe' }, mp: 40, skills: { destruction: 7 }, perks: ['spellweaver', 'pyromancer'], spell: 'fire', tomes: { embernova: true, meteor: true } },
-  { id: 'shadow', name: 'SHADOW', col: 14, blurb: ['TWIN DAGGERS. SNEAK, STRIKE.', 'BLINK AND CINDERSTEP.'],
+  { id: 'shadow', keys: 'C SNEAK  L BLINK  R CINDERSTEP', name: 'SHADOW', col: 14, blurb: ['TWIN DAGGERS. SNEAK, STRIKE.', 'BLINK AND CINDERSTEP.'],
     equip: { weapon: 'hunting_knife', offhand: 'hunting_knife', armor: 'hunter_garb' }, skills: { sneak: 8, oneHanded: 7 }, perks: ['shadowstep', 'ghost', 'keenedge'], spell: 'blink', flags: { kragnarDead: true }, shout: 'cinderstep' },
 ];
 export const heroById = (id) => HEROES.find((h) => h.id === id);
