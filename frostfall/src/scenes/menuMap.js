@@ -3,6 +3,8 @@ import { PLACE_COL, placeName } from '../world/discovery.js';
 import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
 import { TARGETS, trackedId } from '../data/quests.js';
+import { travelMenu } from '../world/travel.js';
+import { runScript } from '../systems/dialogue.js';
 import { eventMark, EVENT_MARK_COL } from '../world/questmarks.js';
 import { panel } from '../ui/panel.js';
 import { keys } from '../systems/keys.js';
@@ -82,7 +84,7 @@ export function mapTab(m) {
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,
-    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'Q ZOOM  R REGION  E CURSOR  A/D TAB  ESC CLOSE'; },
+    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'Q ZOOM  R REGION  E CURSOR  F TRAVEL  ESC'; },
     captureLR: () => curMode,
     busy: () => curMode,                            // in cursor mode ESC (or B) leaves the cursor, not the whole menu
     input() {
@@ -116,6 +118,7 @@ export function mapTab(m) {
           const f = fires[(at + 1) % fires.length]; cur = { x: f.tx, y: f.ty }; sfx.play('move');
         } else { bus.emit('toast', 'NO CAMPFIRES FOUND HERE YET', 4); sfx.play('nostamina'); }
       }
+      if (!curMode && keys.pressed('block')) { m.close(); runScript(() => travelMenu(gs)); return; }     // WQ13: F with no cursor: the travel list
       if (curMode && keys.pressed('block')) {
         const f = vw.fires.find((q) => S.flags.fires?.[q.key] && Math.abs(q.tx - cur.x) <= 1 && Math.abs(q.ty - cur.y) <= 1);
         if (f) { m.close(); gs.fastTravel(f); return; }

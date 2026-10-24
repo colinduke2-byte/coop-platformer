@@ -6,6 +6,7 @@ import { saveGame } from '../systems/save.js';
 import { fadeOut, fadeIn } from '../systems/fade.js';
 import { sfx } from '../audio/sfx.js';
 import Phaser from 'phaser';
+import { travelMenu } from '../world/travel.js';
 import { addItem } from '../systems/inventory.js';
 import { recalc } from '../systems/stats.js';
 import { LORE } from '../data/lore.js';
@@ -56,10 +57,12 @@ export class RestSpot {
       const opts = ['Rest by the fire'], acts = ['rest'];
       if (COOKABLE().length) { opts.push('Cook a meal'); acts.push('cook'); }
       if (outdoors) { opts.push(night ? 'Wait until dawn' : 'Wait until dusk'); acts.push('wait'); }
+      if (!S.quick && !sc.def.arena) { opts.push('Travel to another fire'); acts.push('travel'); }      // NP4 / WQ13
       opts.push('Cancel');
       const act = opts.length === 2 ? 'rest' : acts[await choose(opts)];
       if (!act) return;
       if (act === 'cook') { await cookMenu(); return; }
+      if (act === 'travel') { await travelMenu(sc); return; }
       sfx.play('select');
       if (act === 'wait') {
         await fadeOut(sc, 600);

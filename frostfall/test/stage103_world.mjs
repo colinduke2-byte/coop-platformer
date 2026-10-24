@@ -116,6 +116,20 @@ const surv = await G(async () => {
 });
 check('WQ12/WQ24: half the Fens charted is a milestone, and the Reedwick chartmaker pays it once and reports the survey', surv.fresh.includes('half') && surv.paid > 0 && surv.again === 0 && surv.said.some((t) => /survey/i.test(t)), JSON.stringify(surv));
 
+// ---- WQ13 / NP4: fast travel from the campfire menu lists every fire you found, the village and dungeon fires included
+const trav = await G(async () => {
+  const S = window.__ff.S, TR = await import('/src/world/travel.js');
+  S.flags.fires = { 'forest:46,23': true, 'maw:14,51': true, 'reedwick:5,5': true };
+  const all = TR.knownFires(), sc = window.__ff.game.scene.getScene('Game');
+  const { RestSpot } = await import('/src/entities/Props.js'), dlg = await import('/src/systems/dialogue.js'), real = dlg.dialogue.hud;
+  const offered = []; let n = 0;
+  dlg.dialogue.hud = { say: async () => {}, choose: async (o) => { offered.push(o); n++; return n === 1 ? o.indexOf('Travel to another fire') : n === 2 ? 0 : o.length - 1; }, hideBox() {}, scene: real.scene };
+  await new RestSpot(sc, 100, 100).interact();
+  dlg.dialogue.hud = real; S.flags.fires = {};
+  return { regions: Object.keys(all), reach: all.reach?.map((f) => f.name), offered };
+});
+check('NP4/WQ13: the fire menu offers "Travel to another fire", then the regions, then the fires (Hollowfrost and a dungeon fire included)', trav.offered[0]?.includes('Travel to another fire') && trav.reach?.includes('HOLLOWFROST') && trav.reach.length === 3 && trav.offered[1]?.length >= 2, JSON.stringify(trav));
+
 // ---- WQ6: a random event marks itself, and never touches the player's waypoint
 await h.open('scene=game&map=forest&spawn=start&seed=8919');
 await h.sleep(1500);

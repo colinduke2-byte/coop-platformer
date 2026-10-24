@@ -128,3 +128,6 @@ TROPHIES.push(
   { id: 'surveyor', name: 'Surveyor', desc: 'Chart every place of one region.', test: () => fullySurveyed() >= 1 },
   { id: 'cartographer', name: 'Cartographer', desc: 'Chart every place of five regions.', test: () => fullySurveyed() >= 5 },
 );
+
+// ---- WQ13: fires on every map count for fast travel (the village, the hubs, the fires inside the dungeons), not only overworld ones
+registerTicker('worldFires', (sc, dt) => { if (sc.def.stream || !sc.fires?.length || sc.def.arena || S.quick) return; sc.wfT = (sc.wfT || 0) - dt; if (sc.wfT <= 0) { sc.wfT = 0.6; sc.discoverFires(); } }, 1050);
