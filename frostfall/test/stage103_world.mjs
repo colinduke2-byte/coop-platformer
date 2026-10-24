@@ -257,5 +257,16 @@ const crack = await G(() => {
 });
 check('WQ23: a barrow\'s cracked wall breaks open to its secret room, and the boss room has a way out', crack.none || (crack.before && !crack.after && crack.flag && crack.exit), JSON.stringify(crack));
 
+// ---- WQ26: the Vale shows the Blight Mother's fall; the Fens lose their fog after the Mire Mother
+await h.open('scene=game&map=vale&spawn=entry&seed=8919');
+await h.sleep(1200);
+const changes = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), C = await import('/src/features/world_changes.js'), W = await import('/src/world/weather.js');
+  const before = C.applyChanges(sc).flowers; S.flags.blightMotherDead = true; const after = C.applyChanges(sc).flowers;
+  S.flags.mireMotherDead = true; const fog = W.weatherAfter('fens', 'fog');
+  return { before, after, fog };
+});
+check('WQ26: after the Blight Mother flowers spread round the Thornroot; after the Mire Mother no more fog', !changes.before && changes.after > 20 && changes.fog === 'clear', JSON.stringify(changes));
+
 await h.close();
 console.log(failCount() ? 'STAGE 103 FAILED' : 'STAGE 103 PASSED');

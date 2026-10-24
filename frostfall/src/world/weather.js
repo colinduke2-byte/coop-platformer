@@ -5,6 +5,7 @@
 //   wind)  |  Old Kingdom rain  |  Underdeep none (it has tremors instead).
 // The bus event 'weather' (kind, region) carries these names; art and audio draw and play them.
 import { TUNE } from '../data/tuning.js';
+import { S } from '../systems/state.js';
 
 export const SNOW_KINDS = ['clear', 'snow', 'blizzard', 'whiteout', 'aurora'];
 export const SNOWY_REGIONS = new Set(['reach', 'coast', 'highlands']);
@@ -64,3 +65,11 @@ export const ART_SKY = {
   ashen: { ash: 'ash' }, fens: { rain: 'rain', fog: 'mist' }, sunscorch: { sandstorm: 'sandstorm' }, vale: { rain: 'rain' },
   glasswood: { chime: 'glitter' }, kingdom: { rain: 'drizzle' },
 };
+
+// WQ26: // the weather remembers: no fog in the Fens once the Mire Mother is gone; the Stormcrown clears for a day after its giant
+export function weatherAfter(region, next) {
+  const F = S.flags, day = Math.floor(S.days || 0);
+  if (region === 'fens' && F.mireMotherDead && next === 'fog') return 'clear';
+  if (region === 'highlands' && F.stormGiantDead && F.stormBreakDay != null && day - F.stormBreakDay <= 1) return 'clear';
+  return next;
+}

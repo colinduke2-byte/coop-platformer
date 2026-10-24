@@ -19,7 +19,7 @@ import { hasMod } from '../data/mods.js';
 import { regionOfMap } from '../data/regions.js';
 import { elixirVal } from '../systems/elixir.js';
 import { TUNE } from '../data/tuning.js';
-import { SNOWY_REGIONS, rollRegion, heavyOf, arrive, snowMode, stealthMul, TOASTS, clearToast } from './weather.js';
+import { SNOWY_REGIONS, rollRegion, heavyOf, arrive, snowMode, stealthMul, TOASTS, clearToast, weatherAfter } from './weather.js';
 // WQ19: [colour, how much of it, the least darkness] for the regions' own weather
 const WEATHER_TINT = { sandstorm: [0xc89048, 0.75, 0.3], fog: [0x8a9496, 0.8, 0.34], ash: [0x4a2c2a, 0.6, 0.22], rain: [0x3a4a6a, 0.5, 0.16], storm: [0x2a3048, 0.7, 0.3], chime: [0x9ad8e8, 0.35, 0.08] };
 export const hourOf = () => (S.time % DAY_MIN) / 60;
@@ -126,6 +126,7 @@ export const lightingMethods = {
         if (!hasMod('winter') && this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
         if (region === 'highlands' && next === 'blizzard' && Math.random() < TUNE.world.weather.stormShare) next = 'storm';     // WQ19: the Stormcrown's thunder
       } else next = hasMod('winter') ? heavyOf(region, snowy) : rollRegion(region, S.weather);   // WQ3 / WQ19: the region's own weather, never a blizzard
+      next = weatherAfter(region, next);
       if (next !== S.weather) {
         const was = S.weather;
         S.weather = next;
