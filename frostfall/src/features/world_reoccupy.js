@@ -103,10 +103,11 @@ class RegionBoard extends BountyBoard {
 }
 registerListener('scene:game', (sc) => {
   const rid = HUB_REGION[sc.mapId]; if (!rid) return;
-  const sp = sc.built.entities.find((e) => e.t === 'spawn' && (e.name === 'entry' || e.name === 'gate')); if (!sp) return;
-  for (const [dx, dy] of [[3, -2], [3, 2], [-3, -2], [4, 0], [2, -3], [5, -2]]) {
-    const x = (sp.x + dx + 0.5) * T, y = (sp.y + dy + 0.5) * T;
-    if (sc.solidAt(x, y) || sc.solidAt(x + 8, y) || sc.solidAt(x - 8, y)) continue;
+  // beside the hub's campfire (every hub has one in its square), on the first open spot
+  const f = sc.built.entities.find((e) => e.t === 'fire' && e.rest) || sc.built.entities.find((e) => e.t === 'spawn'); if (!f) return;
+  for (let r = 2; r <= 7; r++) for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [r, r], [-r, r], [r, -r], [-r, -r], [0, -r]]) {
+    const x = (f.x + dx + 0.5) * T, y = (f.y + dy + 0.5) * T;
+    if (sc.solidAt(x, y) || sc.solidAt(x + 10, y) || sc.solidAt(x - 10, y) || sc.solidAt(x, y + 12) || sc.interactables.some((i) => Math.hypot(i.ix - x, i.iy - y) < 20)) continue;
     const bd = new RegionBoard(sc, x, y, rid); sc.interactables.push(bd);
     if (!sc.propBodies) sc.propBodies = sc.physics.add.staticGroup();
     sc.propBodies.add(bd);
