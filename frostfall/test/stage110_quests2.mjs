@@ -100,7 +100,7 @@ check('WQ21 Vale: One Good Turn: watch -> Ash -> Orla -> a meadow sprig -> Orla 
 
 // ---- the Sunscorch: The Quiet Ledger
 await go('amberwell');
-await G(async () => { await window.__talk('dune_guard'); });
+const gated = await G(async () => { const S = window.__ff.S; await window.__talk('dune_guard'); const st = S.quests.quietledger.status; for (const k of Object.keys(S.quests)) if (/^raiders\d$/.test(k)) S.quests[k].status = 'done'; await window.__talk('dune_guard'); return st; });
 await restart('sunscorch');
 const tq = await target('quietledger');
 const seen = await G(async () => {
@@ -113,8 +113,8 @@ await restart('sunscorch');
 const took = await G(async () => { const sc = window.__ff.game.scene.getScene('Game'); sc.interactables.find((i) => i.label?.() === 'E: LIFT THE LEDGER').interact(); return window.__ff.S.quests.quietledger.status; });
 await restart('amberwell');
 const sunDone = await G(async () => { await window.__talk('dune_guard'); return window.__ff.S.quests.quietledger.status; });
-check('WQ21 Sunscorch: The Quiet Ledger: a seen theft bars the box until you come back; an unseen one pays at Nadir',
-  tq.map === 'sunscorch' && seen.n >= 3 && seen.barred && seen.st === 'active' && took === 'ready' && sunDone === 'done', JSON.stringify({ tq, seen, took, sunDone }));
+check('WQ21 Sunscorch: The Quiet Ledger: a seen theft bars the box until you come back; an unseen one pays at Nadir (offered once his raider hunt is done)',
+  gated === 'inactive' && tq.map === 'sunscorch' && seen.n >= 3 && seen.barred && seen.st === 'active' && took === 'ready' && sunDone === 'done', JSON.stringify({ gated, tq, seen, took, sunDone }));
 
 await h.close();
 console.log(failCount() ? 'STAGE 110 FAILED' : 'STAGE 110 PASSED');

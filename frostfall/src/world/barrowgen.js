@@ -154,7 +154,7 @@ export function buildBarrow(seed, idx, tier, o = {}) {
       add({ t: 'brazierorder', id, order, wx: a.wx, wy: brzRoom.cy, guard: mobs[k0 % mobs.length], tier });
       BRAZIER_BEASTS.forEach((beast, k) => add({ t: 'brazier', id, beast, x: brzRoom.x + 3 + Math.floor(k * (brzRoom.w - 7) / 2), y: brzRoom.y + 2 }));
       add({ t: 'sign', x: sp.x, y: sp.y, text: brazierCarving(order) });
-      add({ t: 'chest', id: `bt${idx}_bz`, x: a.ax + 1, y: brzRoom.cy, loot: [{ gen: tier + 1, rarity: 1 }, { gold: 50 + tier * 30 }, { item: 'sp_potion' }] });
+      add({ t: 'chest', id: `bt${idx}_7`, x: a.ax + 1, y: brzRoom.cy, loot: [{ gen: tier + 1, rarity: 1 }, { gold: 50 + tier * 30 }, { item: 'sp_potion' }] });
     }
   }
   const boss = rooms[rooms.length - 1];
