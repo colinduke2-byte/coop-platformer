@@ -19,7 +19,8 @@ export const settings = {
   sneakToggle: false,     // sneak key toggles instead of hold
   holdChain: true,        // holding the sword key keeps chaining the combo
   cvd: 'off',             // colour-blind assist: off | deutan | protan | tritan
-  largeUi: false,         // bigger HUD bars and text
+  largeUi: false,         // bigger HUD bars, bar numbers and target bar
+  largeText: false,       // A1: hints, toasts, dialogue, spoken lines and the menu help line at twice the size
   reduceMotion: false,    // still markers, no blinking or pulsing, lighter snow
   highContrast: false,    // brighter text on dark panels (hints, locked rows, empty slots)
   hudNumbers: false,      // numbers on the health / magic / stamina bars

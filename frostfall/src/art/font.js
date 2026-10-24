@@ -2,6 +2,7 @@
 // colour (so text is always crisp and palette-pure; no browser fonts involved).
 import Phaser from 'phaser';
 import { PAL } from '../config.js';
+import { settings } from '../systems/settings.js';
 
 export const G = {        // the glyphs, exported for the title logo (art/scenery.js)
   A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
@@ -84,6 +85,11 @@ const PER_ROW = 16;
 let contrast = false;
 export const setContrast = (on) => { contrast = !!on; };
 export const fontKey = (col) => 'f' + (contrast && (col === 3 || col === 4) ? col + 1 : col);
+// A1: LARGE TEXT draws the important HUD text (hints, toasts, dialogue, spoken lines) and the menu help line with the same
+// glyphs at twice the size: 12x16 px per character, so a line holds 26 characters instead of 53.
+export const bigKey = (col) => 'g' + (contrast && (col === 3 || col === 4) ? col + 1 : col);
+export const largeText = () => !!settings.largeText;
+export const BIG_W = 12, BIG_H = 16;
 
 // Build font textures for all 16 palette colours.
 export function buildFonts(scene) {
@@ -101,13 +107,26 @@ export function buildFonts(scene) {
       const oy = Math.floor(i / PER_ROW) * CH;
       for (let y = 0; y < 7; y++) for (let x = 0; x < 5; x++) if (g[y][x] === '#') ctx.fillRect(ox + x, oy + y, 1, 1);
     });
-    const key = fontKey(col);
+    const key = 'f' + col;        // the raw colour (not fontKey: with high contrast on at boot that would skip a colour)
     scene.textures.addCanvas(key, cv);
     const data = Phaser.GameObjects.RetroFont.Parse(scene, {
       image: key, width: CW, height: CH, chars: CHARS, charsPerRow: PER_ROW,
       spacing: { x: 0, y: 0 }, lineSpacing: 0, offset: { x: 0, y: 0 },
     });
     scene.cache.bitmapFont.add(key, data);
+    // the 2x copy for LARGE TEXT
+    const cv2 = document.createElement('canvas');
+    cv2.width = PER_ROW * CW * 2;
+    cv2.height = rows * CH * 2;
+    const c2 = cv2.getContext('2d');
+    c2.imageSmoothingEnabled = false;
+    c2.drawImage(cv, 0, 0, cv2.width, cv2.height);
+    const key2 = 'g' + col;
+    scene.textures.addCanvas(key2, cv2);
+    scene.cache.bitmapFont.add(key2, Phaser.GameObjects.RetroFont.Parse(scene, {
+      image: key2, width: CW * 2, height: CH * 2, chars: CHARS, charsPerRow: PER_ROW,
+      spacing: { x: 0, y: 0 }, lineSpacing: 0, offset: { x: 0, y: 0 },
+    }));
   }
 }
 
@@ -159,3 +178,11 @@ export function wrap(str, maxChars) {
   return out.join('\n');
 }
 export const textW = (s) => String(s).length * CW;
+// The width / line height of text in the font chosen for it (big = the LARGE TEXT font).
+export const textWB = (s, big) => String(s).length * (big ? BIG_W : CW);
+// Create a pixel-font text in the large font when LARGE TEXT is on (else exactly txt()).
+export function txtL(scene, x, y, str, col = 6) {
+  const t = txt(scene, x, y, str, col);
+  if (largeText()) t.setFont(bigKey(col), BIG_W);
+  return t;
+}
