@@ -46,12 +46,13 @@ export const TIPS = {
   fletch: 'ARROWS + A MATERIAL = SPECIAL AMMO. {KeyV} SWITCHES.',
   furnish: 'BOUGHT FURNITURE APPEARS IN THE COTTAGE AT ONCE.',
   repair: 'GEAR WEARS DOWN AS YOU FIGHT. MEND IT HERE.',
+  socket: 'SOCKETS HOLD GEMS: EACH ADDS A BONUS WHILE WORN.\nTAKING ONE OUT IS FREE. R MARKS A RUNE SLOT.',
 };
 // The Field Guide (Lore > GUIDE, NP21) lists every tip you have seen, grouped. Anything not named here is a creature.
 export const TIP_GROUP = {
   block: 'COMBAT', stamina: 'COMBAT', potion: 'COMBAT', bow: 'COMBAT', perks: 'COMBAT', danger: 'COMBAT',
   sneak: 'STEALTH', night: 'STEALTH', lock: 'STEALTH',
-  cook: 'CRAFTING', brew: 'CRAFTING', forge: 'CRAFTING', enchant: 'CRAFTING', reforge: 'CRAFTING', fletch: 'CRAFTING', furnish: 'CRAFTING', repair: 'CRAFTING',
+  cook: 'CRAFTING', brew: 'CRAFTING', forge: 'CRAFTING', enchant: 'CRAFTING', reforge: 'CRAFTING', fletch: 'CRAFTING', furnish: 'CRAFTING', repair: 'CRAFTING', socket: 'CRAFTING',
   rest: 'TRAVEL', burden: 'TRAVEL', quest: 'TRAVEL', tracks: 'TRAVEL',
 };
 export const tipGroup = (id) => TIP_GROUP[id] || 'CREATURES';
@@ -60,7 +61,7 @@ export const TIP_TITLE = {
   sneak: 'SNEAKING', stamina: 'STAMINA', perks: 'PERK POINTS', lock: 'LOCKPICKING', block: 'BLOCK AND PARRY', bow: 'THE BOW',
   night: 'NIGHT', potion: 'POTIONS', rest: 'RESTING', quest: 'THE JOURNAL', tracks: 'GIANT TRACKS', burden: 'A HEAVY PACK',
   danger: 'DANGER COLOURS', cook: 'COOKING', brew: 'BREWING', forge: 'THE FORGE', enchant: 'ENCHANTING', reforge: 'REFORGING',
-  fletch: 'FLETCHING', furnish: 'FURNISHING', repair: 'REPAIRS',
+  fletch: 'FLETCHING', furnish: 'FURNISHING', repair: 'REPAIRS', socket: 'GEMS AND SOCKETS',
 };
 // a tip's text with {KeyX} filled in for the keys or pad buttons in use right now
 export const tipText = (id) => (TIPS[id] || '').replace(/\{(\w+)\}/g, (_, c) => prompt(c));

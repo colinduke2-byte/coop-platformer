@@ -7,13 +7,14 @@ import { wrap, textW, fit } from '../art/font.js';
 import { settings } from '../systems/settings.js';
 import { sfx } from '../audio/sfx.js';
 import { panel } from '../ui/panel.js';
+import { MAX_CHAR_LEVEL } from '../systems/damage.js';
 
 export function perksTab(m) {
   const ROWS = 11;
   return {
     name: 'PERKS',
     badge: () => (S.perkPoints || 0) > 0,
-    get help() { return `W/S MOVE  E BUY PERK${m.paneMore ? '  G MORE' : ''}  A/D TAB  SHRINES UNLEARN`; },
+    get help() { return `W/S MOVE  E BUY${m.paneMore ? '  G MORE' : ''}  A/D TAB  ESC CLOSE${m.paneMore ? '' : '  SHRINES UNLEARN'}`; },
     input() {
       m.cursor = Math.min(m.cursor, PERKS.length - 1);
       m.nav(PERKS.length, ROWS);
@@ -52,7 +53,9 @@ export function perksTab(m) {
       m.T(184, Math.min(112, y + 4), st === 'owned' ? 'OWNED' : st === 'available' ? 'E: BUY' : st === 'nopoints' ? 'NO PERK POINTS' : st === 'taken' ? 'YOU TOOK ' + fit(perkById[mate].name.toUpperCase(), 11) : mate ? 'LOCKED. ONE OF TWO' : 'LOCKED', st === 'available' ? 15 : st === 'owned' ? 8 : 4);
       m.T(184, 124, 'LEVEL ' + (S.charLevel || 1), 13);
       m.T(184, 133, 'PERK POINTS ' + (S.perkPoints || 0), (S.perkPoints || 0) > 0 ? 15 : 4);
-      m.T(184, 142, 'SKILL-UPS ' + (S.skillUps || 0), 4);
+      // NP18: every third skill level-up is a character level (and a perk point); say how many are still to go
+      const togo = 3 - ((S.skillUps || 0) % 3);
+      m.T(184, 142, (S.charLevel || 1) >= MAX_CHAR_LEVEL ? 'TOP LEVEL' : `NEXT: ${togo} SKILL LEVEL${togo > 1 ? 'S' : ''}`, 4);
     },
   };
 }
