@@ -352,3 +352,38 @@ export const TUNE = {
     ambFade: 1.5,                        // ambience bed crossfade (s)
   },
 };
+
+// ---- W: world
+TUNE.world = {
+  // WQ19: weather per region. roll = weights for the next weather when the weather timer fires (snowy maps keep their old roll).
+  // stealth: enemies' sight multiplier; wind: sideways push on arrows (px/s). Hazards: a telegraphed circle every [min, max]
+  // seconds near you while that weather lasts (ash embers on the Peaks, lightning on the Stormcrown heath, rockfall in the Underdeep).
+  weather: {
+    roll: {
+      ashen: { clear: 0.62, ash: 0.38 }, fens: { clear: 0.45, rain: 0.3, fog: 0.25 }, sunscorch: { clear: 0.72, sandstorm: 0.28 },
+      vale: { clear: 0.7, rain: 0.3 }, glasswood: { clear: 0.68, chime: 0.32 }, kingdom: { clear: 0.7, rain: 0.3 }, underdeep: { clear: 1 },
+    },
+    stormShare: 0.5,               // highlands: share of blizzards that are thunderstorms instead
+    stealth: { blizzard: 0.75, whiteout: 0.5, sandstorm: 0.5, fog: 0.6, rain: 0.9, ash: 0.85, storm: 0.8 },
+    wind: { blizzard: 14, whiteout: 42, sandstorm: 36, storm: 18 },
+    ember: { every: [7, 12], r: 14, delay: 1.1, dmg: 6, perTier: 4 },
+    lightning: { every: [6, 11], r: 18, delay: 1.3, dmg: 10, perTier: 5, safeR: 7 },
+    tremor: { every: [70, 130], rocks: 3, r: 16, delay: 1.2, dmg: 8, perTier: 4 },
+    chime: { every: 6, slow: 1.4, r: 150 },
+    rainRegrow: { every: 14, r: 260, max: 3 },
+    fireInRain: 0.8,               // fire damage multiplier in rain (weatherMul('fire'); for the combat code to use)
+  },
+  // WQ12 / WQ24: what a chartmaker or hermit pays per region milestone: [gold, + gold per tier of the region's entrance]
+  survey: { half: [120, 40], landmarks: [150, 50], full: [400, 120] },
+  // WQ17: minor finds. A cairn makes you rested (+25 max health) for cairnSecs, once a day; a freed fox pays foxGold
+  minor: { cairnSecs: 120, foxGold: 15, trailGold: 300 },        // WQ22: a trail's box pays trailGold once every relic is found
+  // WQ18: a landmark's secret pays gold + perTier per tier (and a rare piece of gear for the bigger ones); a warming one lasts warmSecs
+  secret: { gold: 90, perTier: 60, warmSecs: 300 },
+  // WQ20: every everyDays game days perRegion cleared places per region are retaken (crew one tier up and a lieutenant);
+  // clearing them again pays clearGold [base, per tier]; a hub board contract pays boardGold [base, per tier] on top
+  // WQ25: hub people check the clock every `every` seconds (dusk 20:30 to the inn, dawn 5:30 back)
+  hours: { every: 2 },
+  // WQ21: what each new-shape regional quest pays (gold, and a rare piece of gear of this tier)
+  rquest: { gold: 450, tier: 3 },
+  retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
+};

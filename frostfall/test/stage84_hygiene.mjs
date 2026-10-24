@@ -102,23 +102,23 @@ const keysOf = () => G(() => Object.keys(window.__ff.game.scene.getScene('Game')
 const go = async (map, spawn = 'start', ms = 1500) => { await G(([m, sp]) => { window.__ff.game.scene.getScene('Game').scene.restart({ map: m, spawn: sp }); }, [map, spawn]); await h.wait(ms); };
 const fresh = await keysOf();
 await go('forest');
-const forest1 = await G(() => {
+const forest1 = await G(async () => {
   const g = window.__ff.game.scene.getScene('Game');
   g.spawnGhostMerchant(); g.spawnTrader();
   g.slowmo(4, 5000);
-  return { ghost: !!g.ghostEvt, trader: !!g.trader, tracks: (g.trackPts || []).length, wp: window.__ff.S.flags.waypoint };
+  return { ghost: !!g.ghostEvt, trader: !!g.trader, tracks: (g.trackPts || []).length, wp: (await import('/src/world/questmarks.js')).eventMark() };     // WQ6: events have their own marker
 });
 await go('village');
-const village = await G(() => {
+const village = await G(async () => {
   const g = window.__ff.game.scene.getScene('Game');
-  return { ghost: !!g.ghostEvt, trader: !!g.trader, tracks: (g.trackPts || []).length, wp: window.__ff.S.flags.waypoint || null, slow: g.slowT || 0, tweens: g.tweens.timeScale };
+  return { ghost: !!g.ghostEvt, trader: !!g.trader, tracks: (g.trackPts || []).length, wp: (await import('/src/world/questmarks.js')).eventMark() || null, slow: g.slowT || 0, tweens: g.tweens.timeScale };
 });
 const villageKeys = await keysOf();
 await go('forest');
 const forest2 = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { ghost: !!g.ghostEvt, tracks: (g.trackPts || []).length }; });
 await h.wait(300);
 check('a ghost merchant and a trader do not follow you to the next map', forest1.ghost && forest1.trader && !village.ghost && !village.trader && !forest2.ghost, JSON.stringify({ forest1, village, forest2 }));
-check("the trader's waypoint goes with the trader", forest1.wp?.evt && village.wp === null, JSON.stringify({ a: forest1.wp, b: village.wp }));
+check("the trader's marker goes with the trader", forest1.wp?.tag === 'trader' && village.wp === null, JSON.stringify({ a: forest1.wp, b: village.wp }));
 check('hoofprints stay in the Reach and are not added again on every visit', forest1.tracks > 20 && village.tracks === 0 && forest2.tracks === forest1.tracks, JSON.stringify({ forest1, village, forest2 }));
 check('bullet time does not carry over to the next map', village.slow === 0 && village.tweens === 1, JSON.stringify(village));
 check('after forest -> village the scene has exactly the fields of a fresh village load', JSON.stringify(villageKeys) === JSON.stringify(fresh),

@@ -18,13 +18,16 @@ const lerpColor = (a, b, t) => {
 import { hasMod } from '../data/mods.js';
 import { regionOfMap } from '../data/regions.js';
 import { elixirVal } from '../systems/elixir.js';
-import { REGION_SKY, clampKind } from '../art/weather.js';
 
 // VX-15: each region has its own night (indigo desert, green-black fens, red-black ash), and a storm washes the screen in its own
 // colour (sand, ash, rain). Dusk warms toward orange then purple; dawn is cool. Visuals only.
 const NIGHT_OF = { reach: 0x0b1536, coast: 0x0b1536, highlands: 0x0b1536, sunscorch: 0x1a1446, fens: 0x08180f, ashen: 0x1c0a10, glasswood: 0x061a24, vale: 0x0c1430, kingdom: 0x10122c };
 const STORM_OF = { sunscorch: C[10], ashen: C[2], fens: C[2] };
 const DUSK_WARM = C[12], DUSK_PURPLE = C[14], DAWN_COOL = C[4];
+import { TUNE } from '../data/tuning.js';
+import { SNOWY_REGIONS, rollRegion, heavyOf, arrive, snowMode, stealthMul, TOASTS, clearToast, weatherAfter } from './weather.js';
+// WQ19: [colour, how much of it, the least darkness] for the regions' own weather
+const WEATHER_TINT = { sandstorm: [0xc89048, 0.75, 0.3], fog: [0x8a9496, 0.8, 0.34], ash: [0x4a2c2a, 0.6, 0.22], rain: [0x3a4a6a, 0.5, 0.16], storm: [0x2a3048, 0.7, 0.3], chime: [0x9ad8e8, 0.35, 0.08] };
 export const hourOf = () => (S.time % DAY_MIN) / 60;
 export const isNightHour = (h) => h >= 20.5 || h < 5.5;
 // CH4: THE definition of night for gameplay (spawns, events, merchants, music, stealth): an outdoor map between 20:30 and
@@ -72,6 +75,9 @@ export const lightingMethods = {
       if (dawn > 0.05) { color = lerpColor(color, DAWN_COOL, dawn * 0.8); alpha = Math.max(alpha, 0.22 * dawn); }
       if (S.weather === 'blizzard') { color = lerpColor(color, STORM_OF[region] ?? 0x7b8fb5, 0.7 * (1 - night)); alpha = Math.max(alpha, (STORM_OF[region] ? 0.28 : 0.2) + 0.2 * night); }
       if (S.weather === 'whiteout') { color = lerpColor(0xe4ecf6, 0x3a4a6a, night * 0.8); alpha = Math.max(alpha, 0.56); }
+      // WQ19: the regions' own weather darkens the day in its own colour (the particles are the art overlay's)
+      const wt = WEATHER_TINT[S.weather];
+      if (wt) { color = lerpColor(color, wt[0], wt[1] * (1 - night * 0.6)); alpha = Math.max(alpha, wt[2] + 0.15 * night); }
     }
     return { color, alpha };
   },
@@ -119,21 +125,24 @@ export const lightingMethods = {
     this.weatherT -= dt;
     if (this.weatherT <= 0) {
       this.weatherT = 150 + Math.random() * 120;
-      const r = Math.random();
-      const eb = S.flags.finale === 'thaw' ? 0.25 : S.flags.finale === 'crown' ? -0.2 : 0;     // after the finale the weather remembers
-      let next0 = S.weather === 'blizzard' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 + eb ? 'clear' : r < 0.42 + eb * 0.2 ? 'blizzard' : 'snow';
-      let next = hasMod('winter') ? 'blizzard' : next0;
-      if (!hasMod('winter') && this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
-      const sky = !this.def.snow && REGION_SKY[regionOfMap(this.mapId)];     // VX-12: a snowless region rolls its own weather
-      if (sky) next = clampKind(next, regionOfMap(this.mapId));
+      const region = regionOfMap(this.mapId), snowy = !!this.def.snow;
+      let next;
+      if (snowy || SNOWY_REGIONS.has(region) || !TUNE.world.weather.roll[region]) {
+        const r = Math.random();
+        const eb = S.flags.finale === 'thaw' ? 0.25 : S.flags.finale === 'crown' ? -0.2 : 0;     // after the finale the weather remembers
+        const next0 = S.weather === 'blizzard' || S.weather === 'storm' ? (r < 0.3 ? 'whiteout' : 'snow') : S.weather === 'whiteout' || S.weather === 'aurora' ? 'snow' : r < 0.22 + eb ? 'clear' : r < 0.42 + eb * 0.2 ? 'blizzard' : 'snow';
+        next = hasMod('winter') ? 'blizzard' : next0;
+        if (!hasMod('winter') && this.isNight() && next !== 'blizzard' && next !== 'whiteout' && Math.random() < 0.3) next = 'aurora';
+        if (region === 'highlands' && next === 'blizzard' && Math.random() < TUNE.world.weather.stormShare) next = 'storm';     // WQ19: the Stormcrown's thunder
+      } else next = hasMod('winter') ? heavyOf(region, snowy) : rollRegion(region, S.weather);   // WQ3 / WQ19: the region's own weather, never a blizzard
+      next = weatherAfter(region, next);
       if (next !== S.weather) {
+        const was = S.weather;
         S.weather = next;
         this.applyWeather();
-        if (sky) { const t = sky.toast?.[next]; if (t) bus.emit('toast', t[0], t[1]); }
-        else if (next === 'blizzard') bus.emit('toast', 'A BLIZZARD ROLLS IN', 15);
-        else if (next === 'whiteout') bus.emit('toast', 'WHITEOUT: YOU CAN HARDLY SEE', 15);
-        else if (next === 'aurora') { bus.emit('toast', 'THE AURORA SHIMMERS: SPELLS COST LESS', 8); this.auroraWisps(); }
-        else if (next === 'clear') bus.emit('toast', 'THE SNOW THINS', 5);
+        const t = next === 'clear' ? clearToast(was, region) : TOASTS[next];
+        if (t) bus.emit('toast', t[0], t[1]);
+        if (next === 'aurora') this.auroraWisps();
       }
     }
   },
@@ -141,16 +150,16 @@ export const lightingMethods = {
   // Hand-off event (Wave 0): bus 'weather' (kind, region) on every map load and every change of S.weather, so art and audio
   // can react without touching this file. region is a REGIONS id from data/regions.js ('reach', 'sunscorch'...).
   applyWeather() {
-    this._skyRegion = regionOfMap(this.mapId);
-    // VX-12: no blizzard, whiteout or aurora where it does not snow; each region keeps the weather kinds it can have
-    if (!this.def.snow && REGION_SKY[this._skyRegion] && !hasMod('winter')) S.weather = clampKind(S.weather, this._skyRegion);
-    this.snow?.setMode(S.weather);
+    // WQ3: a weather carried in from another region turns into one this region can have (no blizzard in the desert)
+    const region = this._skyRegion = regionOfMap(this.mapId), snowy = !!this.def.snow;     // _skyRegion: ambientNow's region night colours
+    if (this.def.snow || this.def.outdoors || this.def.stream) S.weather = hasMod('winter') ? heavyOf(region, snowy) : arrive(S.weather, region, snowy);
+    this.snow?.setMode(snowMode(S.weather));
     bus.emit('weather', S.weather, regionOfMap(this.mapId));
   },
 
   // Multiplier on enemies' sight: darkness and blizzards help the sneaky.
   stealthEnv() {
     if (!(this.def.snow || this.def.outdoors)) return 1;
-    return (this.isNight() ? 0.85 : 1) * (S.weather === 'blizzard' ? 0.75 : S.weather === 'whiteout' ? 0.5 : 1);
+    return (this.isNight() ? 0.85 : 1) * stealthMul(S.weather);
   },
 };

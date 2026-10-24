@@ -7,6 +7,8 @@ import { TILE, SOLID_TILES } from '../config.js';
 const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 import { buildLoop, trackSpots } from './roamers.js';
+import { hamletFolk } from './hamletfolk.js';
+import { placeMinorFinds, propsPass } from './minorfinds.js';
 
 export const REACH_W = 540;
 export const REACH_H = 378;
@@ -57,6 +59,9 @@ const KIND_NAME = { camp: 'A BANDIT CAMP', den: 'A WOLF DEN', ruin: 'OLD RUINS',
   cave: 'A CAVE', foundry: 'AN OLD FOUNDRY', wreck: 'A WRECKED SHIP', lighthouse: 'A LIGHTHOUSE', courtyard: 'A BROKEN COURTYARD', fort: 'A GREAT KEEP', temple: 'A DROWNED CHAPEL', rootvault: 'A VAULT UNDER THE ROOTS', throne: 'THE WINTER THRONE', maw: 'THE GLACIAL MAW', nest: 'A DRAGON\'S NEST',
   city: 'A FORGE-CITY', forge: 'A FURNACE OF THE FIRST FIRE', peakroad: 'THE ROAD TO THE ASHEN PEAKS', coastroad: 'THE ROAD TO THE FROZEN COAST', kingroad: 'THE OLD KINGS\' ROAD', tidebreak: 'A SEA CAVERN', sepulchre: 'A SEPULCHRE',
   fenroad: 'THE ROAD TO THE WEEPING FENS', stormroad: 'THE ROAD TO THE STORMCROWN', reedwick: 'A STILT VILLAGE', mirebarrow: 'A SUNKEN BARROW', skarnhold: 'A NOMAD HOLD', stormspire: 'A STORM-STRUCK SPIRE' };
+// WQ9: [ring, heart] of the ancient tree per region (the Reach, the Coast and the Stormcrown keep their pines)
+const BIG_TREE = { ashen: [TILE.DEADTREE, TILE.DEADTREE], kingdom: [TILE.DEADTREE, TILE.PILLAR], fens: [TILE.BOGTREE, TILE.BOGTREE], glasswood: [TILE.CRYSTAL, TILE.CRYSTAL],
+  underdeep: [TILE.GLOWCAP, TILE.GLOWCAP], vale: [TILE.BIRCH, TILE.HEARTROOT], sunscorch: [TILE.CACTUS, TILE.CACTUS] };
 export const SMALL_GAP = { rest: 24, spring: 30, cache: 30, hermit: 36, ancient: 36 };
 export const HIDDEN_KINDS = new Set(['cache', 'hermit', 'ancient']);   // no road leads to these: you find them by looking
 const BLOCKED = new Set(['lake', 'mountain', 'lava', 'pack', 'wall', 'pool', 'cliff']);   // biomes nothing is placed in (solid or open water)
@@ -130,36 +135,94 @@ export function buildRegion(def, region, seed) {
   };
   def.plan(place, mustHave, placeBest, pois);
 
-  // roads: connect each poi to its nearest connected node (nearest-first)
-  const connect = (a, b) => g.path([[a.x, a.y], [Math.round((a.x + b.x) / 2), a.y], [Math.round((a.x + b.x) / 2), b.y], [b.x, b.y]], 2, TILE.PATH);
-  const edges = [];
+  // roads: connect each poi to its nearest connected node (nearest-first). WQ16: the roads run straight (with a slight
+  // bend) instead of in right angles, a few extra links close the loops the tree leaves open, and every junction of three or
+  // more roads has a waystone naming each way.
+  const line = (x0, y0, x1, y1) => {           // a 2-wide road; 4-connected because the brush covers x and x+1
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+    for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); g.rect(x, y, 2, 2, TILE.PATH); }
+  };
+  const connect = (a, b) => {
+    const d = Math.hypot(b.x - a.x, b.y - a.y), w = d > 12 ? (R() - 0.5) * Math.min(8, d * 0.15) : 0;
+    const mx = Math.round((a.x + b.x) / 2 - (b.y - a.y) / (d || 1) * w), my = Math.round((a.y + b.y) / 2 + (b.x - a.x) / (d || 1) * w);
+    line(a.x, a.y, mx, my); line(mx, my, b.x, b.y);
+  };
+  const edges = [], links = [];               // links: road graph edges between node indices, with their length
   const remaining = pois.filter((p) => !HIDDEN_KINDS.has(p.kind)).sort((p, q) => Math.hypot(p.x - def.nodes[0].x, p.y - def.nodes[0].y) - Math.hypot(q.x - def.nodes[0].x, q.y - def.nodes[0].y));
   remaining.sort((p, q) => (STRICT.has(p.kind) ? 1 : 0) - (STRICT.has(q.kind) ? 1 : 0));   // landmarks join the road net last, so they never shorten the roads between real destinations
   const FACADE = new Set(['fort', 'temple', 'rootvault', 'throne', 'nest', 'maw', 'city', 'tower', 'peakroad', 'forge', 'coastroad', 'kingroad', 'tidebreak', 'sepulchre', 'fenroad', 'stormroad', 'reedwick', 'mirebarrow', 'skarnhold', 'stormspire', ...FACADE_EXTRA]);   // a stone front sits north of the door: roads end below it
-  for (const p of remaining) {
-    const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
-    let best = nodes[0], bd = 1e9;
-    for (const n of nodes) { const d = Math.hypot(n.x - tgt.x, n.y - tgt.y); if (d < bd) { bd = d; best = n; } }
+  const join = (best, p, tgt) => {
     if (FACADE.has(p.kind)) {              // come in from beside and below, never through the stone front
       const sx = p.x + (best.x >= p.x ? 8 : -8);
       g.path([[best.x, best.y], [sx, best.y], [sx, tgt.y], [tgt.x, tgt.y]], 2, TILE.PATH);
     } else connect(best, tgt);
-    nodes.push({ x: tgt.x, y: tgt.y });
+  };
+  for (const p of remaining) {
+    const tgt = FACADE.has(p.kind) ? { x: p.x, y: p.y + (p.kind === 'tower' ? 4 : 3) } : p;
+    let best = nodes[0], bd = 1e9;
+    for (const n of nodes) { const d = Math.hypot(n.x - tgt.x, n.y - tgt.y); if (d < bd) { bd = d; best = n; } }
+    join(best, p, tgt);
+    nodes.push({ x: tgt.x, y: tgt.y, p });
+    links.push([nodes.indexOf(best), nodes.length - 1, bd]);
     if (Math.hypot(best.x - tgt.x, best.y - tgt.y) > 36 && !SMALL_GAP[p.kind]) edges.push({ a: best, p });
   }
+  // extra links: near pairs whose way round by road is more than twice the straight line get a road of their own
+  {
+    const roadDist = (from) => {                // Dijkstra over the road graph (small: one node per place)
+      const dist = nodes.map(() => Infinity), done = nodes.map(() => false); dist[from] = 0;
+      for (;;) {
+        let u = -1; for (let i = 0; i < nodes.length; i++) if (!done[i] && (u < 0 || dist[i] < dist[u])) u = i;
+        if (u < 0 || dist[u] === Infinity) break; done[u] = true;
+        for (const [a, b, l] of links) { const v = a === u ? b : b === u ? a : -1; if (v >= 0 && dist[u] + l < dist[v]) dist[v] = dist[u] + l; }
+      }
+      return dist;
+    };
+    const cand = [];
+    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (a.p && b.p && d > 14 && d < (def.loopR ?? 70) && !STRICT.has(a.p.kind) && !STRICT.has(b.p.kind) && !FACADE.has(a.p.kind) && !FACADE.has(b.p.kind)) cand.push([i, j, d]);
+    }
+    cand.sort((x, y) => x[2] - y[2]);
+    let made = 0;
+    for (const [i, j, d] of cand) {
+      if (made >= (def.extraRoads ?? 6)) break;
+      if (roadDist(i)[j] <= 2 * d) continue;
+      const a = nodes[i], b = nodes[j];
+      let blocked = 0;                          // no roads across a lake or through a mountain range
+      for (let k = 1; k < 20; k++) { const x = Math.round(a.x + (b.x - a.x) * k / 20), y = Math.round(a.y + (b.y - a.y) * k / 20); if (BLOCKED.has(bio[y][x])) blocked++; }
+      if (blocked > 2) continue;
+      connect(a, b); links.push([i, j, d]); made++;
+    }
+  }
+  // junction waystones: where three or more roads meet, a stone names what lies down each one
+  const DIRS = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
+  const dirOf = (from, to) => DIRS[(Math.round(Math.atan2(to.y - from.y, to.x - from.x) / (Math.PI / 4)) + 8) % 8];
+  const nameOf = (p) => KIND_NAME[p.kind] || EXTRA_KIND_NAME[p.kind] || 'A PLACE OF NOTE';
+  const signSpot = (cx, cy) => {
+    for (let r = 0; r <= 10; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const x = Math.round(cx) + dx, y = Math.round(cy) + dy;
+      if (x < 4 || y < 4 || x >= W - 4 || y >= H - 4 || g.t[y][x] !== TILE.PATH) continue;
+      for (const [ox, oy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const sx = x + ox, sy = y + oy; if (!SOLID_SET.has(g.t[sy][sx]) && g.t[sy][sx] !== TILE.PATH && !BLOCKED.has(bio[sy][sx])) return { x: sx, y: sy }; }
+    }
+    return null;
+  };
+  const junctions = [];
+  nodes.forEach((n, i) => {
+    if (!n.p || SMALL_GAP[n.p.kind] || STRICT.has(n.p.kind)) return;
+    const ways = links.filter(([a, b]) => a === i || b === i).map(([a, b]) => nodes[a === i ? b : a]).filter((o) => o.p && Math.hypot(o.x - n.x, o.y - n.y) > 16);
+    if (ways.length < 3) return;
+    const spot = signSpot(n.x + (n.x < W / 2 ? 6 : -6), n.y + 5);
+    if (!spot || junctions.some((j) => Math.hypot(j.x - spot.x, j.y - spot.y) < 20)) return;
+    junctions.push(spot);
+    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A CROSSROADS STONE.', ...ways.slice(0, 4).map((o) => `${dirOf(spot, o)}: ${nameOf(o.p)}.`)] });
+  });
   // waystones: a sign beside the long roads says what lies ahead and how far, so a journey always tells you something
   for (const { a, p } of edges) {
     const f = 0.35 + 0.3 * R(), cx = a.x + (p.x - a.x) * f, cy = a.y + (p.y - a.y) * f;
-    let spot = null;
-    for (let r = 0; r <= 10 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) {
-      const x = Math.round(cx) + dx, y = Math.round(cy) + dy;
-      if (x < 4 || y < 4 || x >= W - 4 || y >= H - 4 || g.t[y][x] !== TILE.PATH) continue;
-      for (const [ox, oy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const sx = x + ox, sy = y + oy; if (!SOLID_SET.has(g.t[sy][sx]) && g.t[sy][sx] !== TILE.PATH && !BLOCKED.has(bio[sy][sx])) { spot = { x: sx, y: sy }; break; } }
-    }
+    const spot = signSpot(cx, cy);
     if (!spot) continue;
-    const ang = Math.atan2(p.y - spot.y, p.x - spot.x), DIRS = ['EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST', 'NORTH', 'NORTH-EAST'];
-    const dir = DIRS[(Math.round(ang / (Math.PI / 4)) + 8) % 8], paces = Math.round(Math.hypot(p.x - spot.x, p.y - spot.y) / 5) * 5;
-    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${KIND_NAME[p.kind] || EXTRA_KIND_NAME[p.kind] || 'A PLACE OF NOTE'}, ABOUT ${paces} PACES.`] });
+    const dir = dirOf(spot, p), paces = Math.round(Math.hypot(p.x - spot.x, p.y - spot.y) / 5) * 5;
+    add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${nameOf(p)}, ABOUT ${paces} PACES.`] });
   }
   // keep forest/lake/mountain from covering roads
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g.t[y][x] === TILE.PATH) g.res[y][x] = true;
@@ -200,7 +263,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'sign', x: p.x - 6, y: p.y + 2, text: ['A BEAR DEN. CLAW MARKS ON EVERY TREE.', 'THE MOTHER DOES NOT FORGIVE ANYONE WHO HURTS HER CUBS.'] });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'beardn' });
     } else if (p.kind === 'spring') {
-      clearing(p, 9, 7, TILE.SNOW2);
+      clearing(p, 9, 7);
       add({ t: 'spring', x: p.x, y: p.y }); add({ t: 'glow', x: p.x, y: p.y, r: 40, col: 15 });
       add({ t: 'sign', x: p.x - 4, y: p.y + 2, text: ['A HOT SPRING. SOAK TO HEAL, CLEAR YOUR WOUNDS AND WARM UP.'] });
       for (let i = 0; i < 2; i++) add({ t: 'deer', x: p.x + (i ? 4 : -4), y: p.y + 3, kind: 'fox' });
@@ -336,13 +399,14 @@ export function buildRegion(def, region, seed) {
       add({ t: 'lore', id: 'court' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 2, y: p.y - 1 });
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'hamlet') {
-      const who = ['trapper', 'fisher', 'prospector'][Number((p.id.match(/\d+$/) || ['0'])[0]) % 3];
+      const num = Number((p.id.match(/\d+$/) || ['0'])[0]), folk = hamletFolk(def.id, num);       // WQ10: the region's own hamlet folk
+      const who = folk ? folk.id : ['trapper', 'fisher', 'prospector'][num % 3];
       clearing(p, 18, 12);
       for (const dx of [-7, 3]) { g.rect(p.x + dx, p.y - 5, 5, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 3, 5, 2, TILE.WOODWALL); g.set(p.x + dx + 2, p.y - 3, TILE.WINDOW); g.set(p.x + dx + 2, p.y - 2, TILE.DOOR); }
       g.set(p.x, p.y + 1, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 56, col: 12 });
       add({ t: 'npc', id: who, x: p.x + 2, y: p.y + 3 });
-      add({ t: 'sign', x: p.x - 3, y: p.y + 3, text: [{ trapper: "A TRAPPER'S HAMLET. FURS ON EVERY FENCE.", fisher: "A FISHERS' HAMLET. NETS DRY IN THE WIND.", prospector: "A PROSPECTORS' CAMP. THE ORE COMES UP COLD." }[who], 'TRAVELLERS WELCOME. KEEP YOUR SWORD SHEATHED.'] });
+      add({ t: 'sign', x: p.x - 3, y: p.y + 3, text: [folk ? folk.sign : { trapper: "A TRAPPER'S HAMLET. FURS ON EVERY FENCE.", fisher: "A FISHERS' HAMLET. NETS DRY IN THE WIND.", prospector: "A PROSPECTORS' CAMP. THE ORE COMES UP COLD." }[who], 'TRAVELLERS WELCOME. KEEP YOUR SWORD SHEATHED.'] });
       chest(p, 5, 4, p.tier, 'med');
       potsAround(p, 4, 6, 'barrel');
     } else if (p.kind === 'standing') {
@@ -354,13 +418,14 @@ export function buildRegion(def, region, seed) {
       add({ t: 'sign', x: p.x - 5, y: p.y + 1, text: ['A CIRCLE OF STANDING STONES.', 'THE AIR HUMS. SOMETHING OLD BLESSES THOSE WHO PAUSE HERE.'] });
     } else if (p.kind === 'cache') {
       // a hollow in the rock or a collapsed lean-to: a locked chest, a note, one or two sleepers
-      clearing(p, 7, 6, TILE.SNOW2);
+      clearing(p, 7, 6);
       g.set(p.x - 4, p.y - 1, TILE.ROCK); g.set(p.x + 4, p.y - 1, TILE.ROCK); g.set(p.x - 3, p.y - 2, TILE.ROCK); g.set(p.x + 3, p.y - 2, TILE.ROCK);
       chest(p, 0, -1, p.tier + 1, 'hard');
       add({ t: 'sign', x: p.x - 2, y: p.y + 2, text: ['A SCRAWLED NOTE.', pickOf(['SOMEONE HID THEIR SAVINGS HERE. THEY NEVER CAME BACK.', 'IF YOU FOUND THIS, IT IS YOURS. DO NOT WAKE THE WATCHMAN.', 'THE LAST OF THE WINTER STORES. TAKE ONE AND LEAVE THE REST.'])] });
       for (let i = 0; i < 1 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(m.melee), p.x + (i ? 3 : -3), p.y + 2, p.tier, { camp: p.id });
+      add({ t: 'lore', id: 'hidden' + ((p.x + p.y) % 10), tex: 'book', x: p.x + 2, y: p.y + 1 });
     } else if (p.kind === 'hermit') {
-      clearing(p, 9, 7, TILE.SNOW2);
+      clearing(p, 9, 7);
       g.set(p.x, p.y + 1, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 50, col: 12 });
       add({ t: 'npc', id: 'hermit', x: p.x + 2, y: p.y + 2 });
@@ -368,11 +433,12 @@ export function buildRegion(def, region, seed) {
       potsAround(p, 3, 4, 'barrel');
     } else if (p.kind === 'ancient') {
       // a huge old tree ringed by smaller ones, with a blessing at its roots
-      clearing(p, 11, 9, TILE.SNOW2);
-      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), TILE.PINE); }
-      g.set(p.x, p.y - 1, TILE.DEADTREE);
+      clearing(p, 11, 9);
+      const tree = BIG_TREE[def.id] ?? [TILE.PINE, TILE.DEADTREE];      // WQ9: the region's own trees, not a snowy pine ring in the dunes
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), tree[0]); }
+      g.set(p.x, p.y - 1, tree[1]);
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y + 1 }); add({ t: 'glow', x: p.x, y: p.y, r: 52, col: 14 });
-      add({ t: 'lore', id: 'stone' + ((p.id.length + p.x) % 3), tex: 'book', x: p.x + 2, y: p.y + 2 });
+      add({ t: 'lore', id: 'hidden' + ((p.id.length + p.x) % 10), tex: 'book', x: p.x + 2, y: p.y + 2 });      // WQ11: hidden places have their own pages
     } else if (p.kind === 'rest') {
       clearing(p, 5, 5);
       g.set(p.x, p.y, TILE.FIRE);
@@ -388,6 +454,9 @@ export function buildRegion(def, region, seed) {
       def.dressers[p.kind]({ p, g, add, enemy, chest, clearing, potsAround, pickOf, R, m, bio, FL, ORE });
     }
   }
+
+  // ---- WQ17: minor finds in the empty stretches (no icon, no toast; see world/minorfinds.js)
+  placeMinorFinds({ def, g, add, chest, pois, R, W, H, tierAt, blocked: (x, y) => BLOCKED.has(bio[y]?.[x]), solid: (x, y) => SOLID_SET.has(g.t[y]?.[x]) || g.t[y]?.[x] === TILE.PATH });
 
   // ---- wild creatures, nodes and herbs along the roads and in the wilds --------------------------
   for (let i = 0; i < (def.wild || 120); i++) {
@@ -424,6 +493,8 @@ export function buildRegion(def, region, seed) {
   def.scenery(g, bio, W, H);
   for (const d of def.dress) g.dress(d);
   def.finish?.(g, bio, W, H);
+  propsPass(def, g, { tree: [TILE.PINE, TILE.DEADTREE, TILE.BOGTREE, TILE.BIRCH, TILE.CACTUS, TILE.CRYSTAL, TILE.GLOWCAP], stump: [TILE.STUMP], rock: [TILE.ROCK, TILE.BASALT, TILE.HEATHROCK, TILE.BOULDER, TILE.SANDSTONE],
+    pillar: [TILE.PILLAR], reed: [TILE.BOGREED], ground: [def.ground, def.ground2] }, hash);      // VX-22: the art props, per region
 
   // ---- repair: every place must be walkable from the entrance. Carve a road through whatever sealed one in
   {
@@ -783,4 +854,7 @@ KINGDOM.extras = regionExtras({ start: KING_START, exitTo: 'ashen', exitSpawn: '
   sign: ['THE OLD KINGDOM.', 'THE ROAD WEST RETURNS TO THE ASHEN PEAKS. WHAT STANDS HERE WAS BUILT TO OUTLAST THE KINGS.'], roamers: [['lastknight', 'knight', 3, 2, 5]] });
 
 export const REGION_DEFS = { reach: REACH, ashen: ASHEN, coast: COAST, kingdom: KINGDOM };
+// WQ1: the danger tier at a tile of a region. Each region has its own bands (the Reach's formula, measured from the Reach's
+// entrance, never gets past tier 0-1 on a 260x190 map), so events, traders, digs and fishing ask this, not tierAt.
+export const tierIn = (regionId, x, y) => (REGION_DEFS[regionId]?.tierAt ?? tierAt)(x, y);
 

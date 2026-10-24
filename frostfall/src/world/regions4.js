@@ -49,7 +49,7 @@ export const VALE = {
   nodes: [{ x: VALE_START.x + 8, y: VALE_START.y }],
   taken: [{ x: VALE_START.x, y: VALE_START.y, r: 14 }],
   plan(place, mustHave) {
-    mustHave('greenhollow', 12, 1);
+    mustHave('greenhollow', 12, 1, null, { x: VALE_START.x + 45, y: VALE_START.y, r: 30 });      // WQ7: the town before the boss, near the gate
     mustHave('thornroot', 12, 2, null, { x: 205, y: 100, r: 60 });
     place('cave', 3, 7); place('camp', 3, 11); place('hamlet', 1, 9); place('ruin', 2, 10); place('den', 2, 9);
     place('flowerfield', 4, 9); place('hive', 2, 9); place('heartgrove', 2, 10); place('thornpatch', 2, 9);
@@ -142,7 +142,7 @@ export const SUNSCORCH = {
   nodes: [{ x: SUN_START.x + 8, y: SUN_START.y }],
   taken: [{ x: SUN_START.x, y: SUN_START.y, r: 14 }],
   plan(place, mustHave) {
-    mustHave('amberwell', 12, 2);
+    mustHave('amberwell', 12, 2, null, { x: SUN_START.x + 45, y: SUN_START.y, r: 30 });      // WQ7
     mustHave('sealedvault', 12, 3, null, { x: 205, y: 100, r: 60 });
     place('cave', 3, 7); place('camp', 2, 11); place('ruin', 3, 10); place('courtyard', 1, 11);
     place('oasis', 3, 9); place('raidercamp', 2, 11); place('burrowpit', 2, 9); place('tombmouth', 2, 9); place('dustspire', 2, 9); place('thiefden', 1, 9);

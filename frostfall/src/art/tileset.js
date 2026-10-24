@@ -145,6 +145,6 @@ export function varyGround(layer) {
   for (let k = 0; k < cells.length; k += 2) {
     const t = data[(cells[k] / w) | 0][cells[k] % w], c = cells[k + 1];
     t.index = TILE_COUNT + c; t.flipX = t.flipY = false;
-    if (combos[c].prop != null) t.setCollision(true, true, true, true, false);     // a prop stays solid on its new ground
+    if (combos[c].prop != null && SOLID_TILES.includes(combos[c].prop)) t.setCollision(true, true, true, true, false);     // a solid prop stays solid on its new ground (bones, a walkable prop, do not)
   }
 }

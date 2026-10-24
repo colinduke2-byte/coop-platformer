@@ -1,7 +1,6 @@
 // Quest beats, wandering world events, travel and the finale.
 // Mixed into GameScene (see the bottom of scenes/GameScene.js).
 import Phaser from 'phaser';
-import { tierAt } from '../world/worldgen.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { T } from '../config.js';
 import { ITEMS } from '../data/items.js';
@@ -21,6 +20,9 @@ import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
+import { regionOfMap } from '../data/regions.js';
+import { REGION_DEFS } from './worldgen.js';
+import { setEventMark, clearEventMark } from './questmarks.js';
 import { fadeOut } from '../systems/fade.js';
 
 export const eventMethods = {
@@ -70,9 +72,10 @@ export const eventMethods = {
     this.rollEvent();
   },
   spawnAmbush() {
-    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const tier = this.tierHere(this.player.x / T, this.player.y / T);
     const night = this.isNight();                      // the gameplay night (CH4), not how dark it looks
-    const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : ['wolf', 'bandit', 'wolf', 'fencer'];
+    const rid = regionOfMap(this.mapId), M = rid !== 'reach' && REGION_DEFS[rid]?.mobs?.[Math.min(3, tier)];     // WQ27: the region's own creatures by day
+    const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : M ? [M.wild[0], M.melee[0], M.wild[1] || M.wild[0], M.melee[1] || M.melee[0]] : ['wolf', 'bandit', 'wolf', 'fencer'];
     const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
     let made = 0;
     for (let i = 0; i < n; i++) {
@@ -85,7 +88,7 @@ export const eventMethods = {
   },
   spawnTrader() {
     const p = this.freeSpotNear(80, 130); if (!p) return;
-    const tier = tierAt(this.player.x / T, this.player.y / T);
+    const tier = this.tierHere(this.player.x / T, this.player.y / T);
     const npc = new Npc(this, p.x, p.y, 'trader');
     npc.home = { x: p.x, y: p.y };
     this.npcs.push(npc); this.interactables.push(npc);
@@ -97,7 +100,7 @@ export const eventMethods = {
     });
     this.traderWares.push({ id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 12, n: 8, name: 'Arrows x8' });
     this.trader = { npc, life: 200 };
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T), evt: true };
+    setEventMark(this.mapId, Math.floor(p.x / T), Math.floor(p.y / T), 'trader');      // WQ6: its own marker, never the player's waypoint
     bus.emit('toast', 'A TRAVELLING TRADER IS NEARBY', 13); sfx.play('quest');
     this.fx.puff(p.x, p.y, 13, 8, 30, 0.5);
   },
@@ -108,7 +111,7 @@ export const eventMethods = {
     this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
     this.fx.puff(npc.x, npc.y, 13, 8, 30, 0.5);
     npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
-    if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
+    clearEventMark('trader');
   },
   freeSpotNear(minD, maxD) {
     for (let i = 0; i < 160; i++) {
@@ -148,7 +151,7 @@ export const eventMethods = {
     for (const f of this.fires) {
       if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
       S.flags.fires[f.key] = true;
-      bus.emit('toast', `CAMPFIRE FOUND - FAST TRAVEL: ${prompt('KeyM')} MAP, THEN ${prompt('KeyF')}`, 12); sfx.play('discover');
+      bus.emit('toast', `CAMPFIRE FOUND: TRAVEL FROM ANY FIRE, OR MAP (${prompt('KeyM')}) > ${prompt('KeyF')}`, 12); sfx.play('discover');
     }
   },
   fastTravel(f) {

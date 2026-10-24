@@ -3,7 +3,7 @@
 import { Grid } from '../data/mapkit.js';
 import { TILE } from '../config.js';
 import { rng } from './worldgen.js';
-import { dressSpecialRoom } from './roomkinds.js';
+import { dressSpecialRoom, runeCarving } from './roomkinds.js';
 
 const THEMES = [
   { id: 'draugr', name: 'Barrow of the Restless', mobs: ['draugr', 'warden', 'wight'] },
@@ -81,8 +81,10 @@ export function buildBarrow(seed, idx, tier, o = {}) {
       // three rune plates and a sealed chest alcove: a quick order puzzle
       const order = ['moon', 'crown', 'wolf'].sort(() => R() - 0.5);
       add({ t: 'plateorder', order });
-      const names = { moon: 'MOON (BLUE)', crown: 'CROWN (GOLD)', wolf: 'WOLF (RED)' };
-      add({ t: 'sign', x: r.x + 2, y: r.y + 2, text: [`THE RUNES REMEMBER: ${order.map((o) => names[o]).join(', THEN ')}.`] });
+      // WQ14: the order is carved in the room before, as a little story; this room only says that it was
+      const pr = rooms[i - 1];
+      add({ t: 'sign', x: pr.x + pr.w - 3, y: pr.y + 2, text: runeCarving(order) });
+      add({ t: 'sign', x: r.x + 2, y: r.y + 2, text: ['THREE RUNE PLATES, AND A SEALED DOOR.', 'THE ORDER WAS CARVED ON THE WAY IN. A WRONG STEP BITES.'] });
       ['moon', 'crown', 'wolf'].forEach((rune, k) => add({ t: 'plate', rune, x: r.x + 2 + k * Math.floor((r.w - 4) / 2), y: r.cy + 1 }));
       // the sealed alcove goes on whichever side of the room has space for it
       const east = r.x + r.w + 4 < W - 1, wx = east ? r.x + r.w : r.x - 1, ax = east ? r.x + r.w + 1 : r.x - 4;
@@ -102,5 +104,44 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     }
   });
   add({ t: 'sign', x: e0.cx - 3, y: e0.y + e0.h - 3, text: [theme.name.toUpperCase(), 'THE DEAD HERE ARE NOT THE ONES YOU MET BEFORE.'] });
+  // ---- WQ23: a shape to the delve. A side room barred by a gate whose key waits deeper in; a cracked wall that breaks to a
+  // secret room; and a stair in the boss room that takes you straight back out (no walk back through every room).
+  const solidAll = (x0, y0, w, h) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1 || g.t[y][x] !== TILE.CWALL && g.t[y][x] !== TILE.CWALL2) return false; return true; };
+  const alcove = (r) => {
+    for (const east of [R() < 0.5, true, false]) {
+      const wx = east ? r.x + r.w : r.x - 1, ax = east ? r.x + r.w + 1 : r.x - 4;
+      if (!solidAll(east ? wx : ax - 1, r.cy - 2, 5, 5) || ents.some((e) => e.t === 'vaultwall' && e.y === r.cy && Math.abs(e.x - wx) < 6)) continue;
+      g.rect(ax, r.cy - 1, 3, 3, TILE.CFLOOR);
+      return { wx, ax };
+    }
+    return null;
+  };
+  const mid = rooms.filter((r, i) => i > 0 && r.kind !== 'boss' && r.kind !== 'trap');
+  const branchRoom = mid[0], keyRoom = rooms[rooms.length - 2], secretRoom = mid[mid.length - 1];
+  if (branchRoom && keyRoom && keyRoom !== branchRoom && keyRoom.kind !== 'entry') {
+    const a = alcove(branchRoom);
+    if (a) {
+      add({ t: 'keygate', id: `bk_${theme.id}${idx}_${tier}`, x: a.wx, y: branchRoom.cy, w: 1 });
+      add({ t: 'chest', id: `bt${idx}_8`, x: a.ax + 1, y: branchRoom.cy, loot: [{ gen: tier + 1, rarity: 1 }, { gold: 50 + tier * 30 }, { item: 'hp_potion_g' }] });
+      let kp = null;
+      for (let yy = keyRoom.y + 1; yy < keyRoom.y + keyRoom.h - 1 && !kp; yy++) for (let xx = keyRoom.x + 1; xx < keyRoom.x + keyRoom.w - 1; xx++) if (g.t[yy][xx] === TILE.CFLOOR && !ents.some((e) => Math.abs(e.x - xx) < 2 && Math.abs(e.y - yy) < 2)) { kp = { x: xx, y: yy }; break; }
+      if (kp) { add({ t: 'chest', id: `bt${idx}_key`, x: kp.x, y: kp.y, loot: [{ item: 'delve_key' }, { gold: 20 + tier * 10 }] }); add({ t: 'sign', x: branchRoom.x + 1, y: branchRoom.y + 1, text: ['A BARRED SIDE DOOR.', 'THE KEY WENT DEEPER WITH THE LAST KEEPER. HE DID NOT COME BACK UP.'] }); }
+      else { ents.splice(ents.findIndex((e) => e.t === 'keygate' && e.id.startsWith('bk_')), 1); }
+    }
+  }
+  if (secretRoom && secretRoom !== branchRoom) {
+    const a = alcove(secretRoom);
+    if (a) {
+      add({ t: 'crackwall', id: `cw_${theme.id}${idx}_${tier}_${secretRoom.cy}`, x: a.wx, y: secretRoom.cy });
+      add({ t: 'chest', id: `bt${idx}_9`, x: a.ax + 1, y: secretRoom.cy, loot: [{ gen: tier + 1, rarity: 2 }, { gold: 60 + tier * 40 }] });
+    }
+  }
+  const boss = rooms[rooms.length - 1];
+  if (boss.kind === 'boss') {
+    const sx = boss.x + 1, sy = boss.y + boss.h - 2;
+    g.set(sx, sy, TILE.STAIRS);
+    add({ t: 'exit', x: sx, y: sy, w: 1, h: 1, to: o.home || 'forest', spawn: o.spawn || 'barrow' + idx, fx: 'door', shortcut: true });
+    add({ t: 'sign', x: sx + 1, y: sy - 1, text: ['A NARROW STAIR UP.', 'THE KEEPERS\' OWN WAY OUT. IT ONLY GOES ONE WAY.'] });
+  }
   return { ...out, entities: ents, title: theme.name };
 }

@@ -6,6 +6,7 @@ import { NPC_DEFS, SCRIPTS } from './dialogue.js';
 import { buyMenu, sellMenu } from './services.js';
 import { dailyWares } from './stock.js';
 import { QUESTS, TARGETS } from './quests.js';
+import { goalWhere } from '../world/questwhere.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { addItem, addGold, count, removeItem } from '../systems/inventory.js';
 import { getRegion, MAPS } from './maps.js';
@@ -85,7 +86,7 @@ function chain(c) {
     TARGETS[id] = (q) => {
       if (q && goalDone(st.goal, q)) return giverSpot(c.npc);
       if (st.goal.cleared && st.goal.poi) { const p = getRegion(st.goal.poi[0]).pois.find((x) => x.kind === st.goal.poi[1] && !S.bounty[x.id]); return p ? { map: st.goal.poi[0], x: p.x, y: p.y + 2 } : null; }
-      return null;
+      return goalWhere(st.goal, c.npc.startsWith('vale_') ? 'vale' : 'sunscorch');     // WQ5: where that creature lives, or where that item grows or drops
     };
   });
   SCRIPTS[c.npc] = async function () {

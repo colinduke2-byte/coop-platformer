@@ -9,6 +9,7 @@ import { GLASSWOOD, UNDERDEEP } from './regions3.js';
 import { VALE, SUNSCORCH } from './regions4.js';
 import { PLACE_NAME, PLACE_COL, LANDMARKS } from './discovery.js';
 import { LORE } from '../data/lore.js';
+import { SECRETS } from './lmsecrets.js';
 
 const L = {
   R: TILE.ROCK, S: TILE.STONE, P: TILE.PILLAR, B: TILE.BRAZIER, G: TILE.GRAVE, D: TILE.DEADTREE, T: TILE.PINE, I: TILE.PACKICE, M: TILE.MARBLE, W: TILE.WRECK,
@@ -75,7 +76,9 @@ const dresser = (id) => {
     for (let i = 0; i < 1 + (p.tier > 0 ? 1 : 0) + (p.tier > 2 ? 1 : 0); i++) enemy(pickOf(m.melee), p.x - 4 + i * 4, p.y + 3, p.tier, { camp: p.id });
     chest(p, (w >> 1) + 2, 2, p.tier, p.tier >= 2 ? 'hard' : 'med');
     add({ t: 'lore', id: 'lm_' + id, tex: 'book', x: p.x + 1, y: p.y + 2 });
-    add({ t: 'sign', x: p.x - (w >> 1) - 2, y: p.y + 1, text: [name + '.', 'A LANDMARK. YOU CAN SEE IT FROM FAR AWAY; THAT WAS THE POINT.'] });
+    const sec = SECRETS[id];               // WQ18: each landmark has its own secret; the sign hints at it
+    add({ t: 'sign', x: p.x - (w >> 1) - 2, y: p.y + 1, text: [name + '.', sec ? sec.hint : 'A LANDMARK. YOU CAN SEE IT FROM FAR AWAY; THAT WAS THE POINT.'] });
+    if (sec) add({ t: 'lmsecret', id: p.id, lm: id, x: p.x, y: p.y + 1, tier: p.tier });
     add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
   };
 };
