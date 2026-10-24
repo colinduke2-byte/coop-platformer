@@ -4,6 +4,7 @@ import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
 import { TARGETS, trackedId } from '../data/quests.js';
 import { panel } from '../ui/panel.js';
+import { NPC_DEFS } from '../data/dialogue.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
@@ -178,7 +179,12 @@ export function mapTab(m) {
           const tx = e.x + e.w / 2 - 0.5, ty = e.y + e.h / 2 - 0.5;
           dot(tx, ty, 15, Math.max(3, sc + 1), 'hollow');
           if (seen(Math.floor(tx), Math.floor(ty)) && MAPS[e.to]) labels.push([tx, ty, 'TO ' + MAPS[e.to].name.toUpperCase()]);
-        } else if (e.t === 'npc') dot(e.x, e.y, 6);
+        } else if (e.t === 'npc') {
+          dot(e.x, e.y, 6);
+          // NP23: on a town map, people you are sent to find are named (BJORN, MIRRA, HILDA...)
+          const nm = !MAPS[vid].stream && NPC_DEFS[e.id]?.name;
+          if (nm && seen(Math.floor(e.x), Math.floor(e.y))) labels.push([e.x, e.y, nm.split(' ').pop(), 6]);
+        }
         else if (e.t === 'chest' && !S.flags['chest_' + e.id]) dot(e.x, e.y, 13);
         else if (e.t === 'fire' && e.rest) { const found = S.flags.fires?.[`${vid}:${e.x},${e.y}`]; if (found || !MAPS[vid].stream) dot(e.x, e.y, 12, sc + 2); }
         else if (e.t === 'shrine') dot(e.x, e.y, 14, sc + 1);
@@ -231,7 +237,7 @@ export function mapTab(m) {
       }
       // exit labels (only the ones that fit in the view)
       const placed = [];
-      for (const [tx, ty, text] of labels) {
+      for (const [tx, ty, text, lcol = 15] of labels) {
         if (sc < 1 && labels.length > 3) continue;
         const [px, py] = spot(tx, ty, sc);
         const lw = text.length * 6, lx = Math.max(VX, Math.min(VX + VW - lw, px - lw / 2));
@@ -242,7 +248,7 @@ export function mapTab(m) {
         if (placed.some((r) => lx < r.x + r.w + 4 && lx + lw + 4 > r.x && Math.abs(ly - r.y) < 10)) continue;   // nor over another label
         placed.push({ x: lx, y: ly, w: lw });
         go.fillStyle(C[0], 0.7); go.fillRect(lx - 1, ly - 1, lw + 2, 9);
-        m.T(lx, ly, text, 15);
+        m.T(lx, ly, text, lcol);
       }
       const zl = sc < 1 ? 'OVERVIEW' : sc + 'X';
       m.T(10, 26, (MAPS[vid].name.toUpperCase().slice(0, 28) + '  ' + zl), 13);
