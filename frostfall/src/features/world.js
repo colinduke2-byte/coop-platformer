@@ -4,12 +4,18 @@ import { T } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { TUNE } from '../data/tuning.js';
-import { regionOfMap } from '../data/regions.js';
 import { applyStatus } from '../systems/status.js';
 import { Herb, Lore } from '../entities/Props.js';
 import { ART_SKY } from '../world/weather.js';
 import { HAMLET_FOLK } from '../world/hamletfolk.js';
 import { freshPages } from '../world/lorepool.js';
+import { onPlaceDiscovered } from '../world/discovery.js';
+import { REGIONS, regionOfMap } from '../data/regions.js';
+import { newMilestones, owed, payOf, markPaid, surveyOf, reached, fullySurveyed } from '../world/survey.js';
+import { addGold, addItem } from '../systems/inventory.js';
+import { makeGenItem } from '../systems/genloot.js';
+import { sfx } from '../audio/sfx.js';
+import { TROPHIES } from '../systems/achievements.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
 import { buyMenu, sellMenu } from '../data/services.js';
@@ -88,3 +94,37 @@ for (const folk of Object.values(HAMLET_FOLK).flat()) {
 
 // ---- WQ11: a lore book you have read shows an unread page of its family instead, when one is left
 registerListener('scene:game', (sc) => freshPages(sc.interactables.filter((i) => i instanceof Lore)));
+
+// ---- WQ12 / WQ24: region surveys. A milestone is announced when it is reached; chartmakers and hermits pay what is owed.
+onPlaceDiscovered((mapId) => {
+  const rid = regionOfMap(mapId);
+  if (REGIONS[rid]?.map !== mapId) return;
+  for (const m of newMilestones(rid)) bus.emit('toast', `${REGIONS[rid].name.toUpperCase()}: ${{ half: 'HALF CHARTED', landmarks: 'EVERY LANDMARK FOUND', full: 'FULLY CHARTED' }[m]}. A CHARTMAKER WILL PAY`, 13);
+});
+async function paySurveys(who) {
+  for (const [rid, m] of owed()) {
+    const pay = payOf(rid, m), name = REGIONS[rid].name;
+    await say(who, { half: `Half of ${name} walked and noted. That is worth paper and coin.`, landmarks: `Every landmark of ${name}. You have the eye for it.`, full: `All of ${name}, every place, charted. I will frame a copy. Take this, and the finished chart.` }[m]);
+    addGold(pay.gold);
+    if (pay.gear) addItem(makeGenItem(pay.tier + 1, Math.random, 2));
+    markPaid(rid, m);
+    bus.emit('toast', `SURVEY PAID: +${pay.gold} GOLD${pay.gear ? ' AND A RARE FIND' : ''}`, 13); sfx.play('quest');
+  }
+}
+const CHARTMAKERS = { vale_map: 'Thistle', dune_map: 'Ibrahim', wick_map: 'Joss', skarn_map: 'Kelda', glade_map: 'Spindle', fall_map: 'Quill', salt_map: 'Isolde', hermit: 'Hermit' };
+let wrapped = false;
+registerListener('scene:game', () => {
+  if (wrapped) return; wrapped = true;
+  for (const [id, who] of Object.entries(CHARTMAKERS)) {
+    const orig = SCRIPTS[id]; if (!orig) continue;
+    SCRIPTS[id] = async (...a) => {
+      await paySurveys(who);
+      if (id !== 'hermit') { const rid = regionOfMap(S.map), s = surveyOf(rid); if (!reached(rid).includes('full')) await say(who, `Your survey of ${REGIONS[rid].name}: ${s.found} of ${s.total} places, ${s.lmFound} of ${s.lmTotal} landmarks. Find them all and I pay well.`); }
+      return orig(...a);
+    };
+  }
+}, 'worldSurveyWrap');
+TROPHIES.push(
+  { id: 'surveyor', name: 'Surveyor', desc: 'Chart every place of one region.', test: () => fullySurveyed() >= 1 },
+  { id: 'cartographer', name: 'Cartographer', desc: 'Chart every place of five regions.', test: () => fullySurveyed() >= 5 },
+);

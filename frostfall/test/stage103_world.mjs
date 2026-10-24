@@ -101,6 +101,21 @@ const pages = await G(async () => {
 });
 check('WQ11: a read page gives way to an unread one of its family, never twice the same', pages[0] === 'stone2' && pages[1] === 'stone1' && pages[2].startsWith('hidden') && pages[2] !== 'hidden0' && pages[3] === 'ruin0', JSON.stringify(pages));
 
+// ---- WQ12 / WQ24: charting half a region is announced, and a chartmaker pays it
+const surv = await G(async () => {
+  const S = window.__ff.S, M = await import('/src/data/maps.js'), SV = await import('/src/world/survey.js'), D = await import('/src/data/dialogue.js'), dlg = await import('/src/systems/dialogue.js');
+  const pois = M.getRegion('fens').pois; S.discovered = {};
+  pois.slice(0, Math.ceil(pois.length / 2)).forEach((p) => { S.discovered['fens:' + p.id] = 1; });
+  const fresh = SV.newMilestones('fens'), gold0 = S.gold, said = [], real = dlg.dialogue.hud;
+  dlg.dialogue.hud = { say: async (n, t) => { said.push(t); }, choose: async (o) => o.length - 1, hideBox() {}, scene: real.scene };
+  await D.SCRIPTS.wick_map();
+  dlg.dialogue.hud = real;
+  const paid = S.gold - gold0, again = SV.owed().length;
+  S.discovered = {}; delete S.flags.survey;
+  return { fresh, paid, again, said: said.slice(0, 2) };
+});
+check('WQ12/WQ24: half the Fens charted is a milestone, and the Reedwick chartmaker pays it once and reports the survey', surv.fresh.includes('half') && surv.paid > 0 && surv.again === 0 && surv.said.some((t) => /survey/i.test(t)), JSON.stringify(surv));
+
 // ---- WQ6: a random event marks itself, and never touches the player's waypoint
 await h.open('scene=game&map=forest&spawn=start&seed=8919');
 await h.sleep(1500);
