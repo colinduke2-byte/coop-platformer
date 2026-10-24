@@ -384,7 +384,14 @@ TUNE.world = {
   // WQ25: hub people check the clock every `every` seconds (dusk 20:30 to the inn, dawn 5:30 back)
   hours: { every: 2 },
   // WQ21: what each new-shape regional quest pays (gold, and a rare piece of gear of this tier)
-  rquest: { gold: 450, tier: 3 },
+  rquest: { gold: 450, tier: 3,
+    // the Wall Fires relay: seconds to reach the next beacon = base + perTile x tiles between them; a beacon lights within near px
+    relay: { base: 20, perTile: 0.45, near: 22 },
+    // Lamps in the Deep: foes waiting round each lost lamp-carrier, on a ring this many tiles out
+    rescue: { foes: 3, ring: 3 },
+    // The Quiet Ledger: sentries round the strongbox (ring in tiles), who never chase further than leash px from their post
+    heist: { sentries: 4, ring: 4, leash: 70 },
+  },
   retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
   // CH14: a dig spot's gold: base + random 0..rand + perTier x its tier (doubled when it is only coin); paid as a gold pickup
   dig: { base: 20, rand: 30, perTier: 25 },
