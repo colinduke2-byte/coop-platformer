@@ -1,6 +1,7 @@
 // Items of the Embergreen Vale and the Sunscorch Reach: materials, boss and mini-boss gear, shop stock. Same shapes as items.js (icons reuse the
 // generated gear shapes with a palette colour: ['sword_nordic', 15] is that sword in cyan).
 import { ITEMS } from './items.js';
+import { addHeavyLines } from './items_heavy.js';
 
 Object.assign(ITEMS, {
   // ---- materials
@@ -46,3 +47,6 @@ Object.assign(ITEMS, {
   sula_dagger: { name: "Red Sula's Kris", type: 'weapon', style: 'dagger', icon: ['dagger_kris', 11], dmg: 21, swing: 0.7, costMul: 0.75, crit: 0.22, goldMul: 1.1, value: 540, desc: 'A wavy blade for reaching into purses. +10% gold found.' },
   karrow_blade: { name: "Karrow's Talwar", type: 'weapon', icon: ['sword_steel', 13], dmg: 35, crit: 0.06, value: 620, desc: 'A well-kept captain\'s sword with a gold-wrapped hilt.' },
 });
+
+// CB24: every fixed weapon (items.js and above) says what its heavy attack does
+addHeavyLines(ITEMS);

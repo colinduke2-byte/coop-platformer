@@ -6,6 +6,7 @@ import { S, onStateReset } from './state.js';
 import { TUNE } from '../data/tuning.js';
 import { ngLevel, ngLootTiers } from './ngplus.js';
 import { rehydrateInst } from './instances.js';
+import { heavyLine } from '../data/items_heavy.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
@@ -137,6 +138,7 @@ function describe(it) {
   if (it.maxHp && !said.some((l) => l.includes('HEALTH'))) parts.push(`+${it.maxHp} HEALTH`);
   if (it.maxMp && !said.some((l) => l.includes('MANA'))) parts.push(`+${it.maxMp} MANA`);
   if (it.maxSp && !said.some((l) => l.includes('STAMINA'))) parts.push(`+${it.maxSp} STAMINA`);
+  const hv = heavyLine(it); if (hv) parts.push(hv.replace(/\.$/, '').toUpperCase());        // CB24: what its heavy does
   return `${(RARITY.find((r) => r.id === it.rarity) || RARITY[0]).name.toUpperCase()}. ` + parts.join('. ') + '.';
 }
 
