@@ -190,6 +190,20 @@ const ret = await G(async () => {
 check('WQ20: a cleared camp is retaken: its crew is a tier tougher, with a named lieutenant', ret.held >= 1 && ret.crewTier.length > 0 && ret.crewTier.every((t) => t > ret.base || t === 3) && !!ret.lt, JSON.stringify(ret));
 check('WQ20: the Fens board (Reedwick) posts contracts for its region', ret.board > 0, JSON.stringify(ret));
 
+// ---- WQ22: three hidden places form a trail of marks in words; the last hides a relic box
+const trail = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), dlg = await import('/src/systems/dialogue.js'), real = dlg.dialogue.hud, TR = await import('/src/world/trails.js');
+  dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene };
+  const stops = TR.trailOf('reach'), marks = sc.interactables.filter((i) => i.lines?.[0]?.startsWith('A WEATHERED MARK'));
+  const text = marks.map((m) => m.lines[1]);
+  for (const m of marks.sort((a, b) => stops.findIndex((p) => Math.abs((p.x + 2.5) * 16 - a.ix) < 1) - stops.findIndex((p) => Math.abs((p.x + 2.5) * 16 - b.ix) < 1))) await m.interact();
+  const box = sc.interactables.find((i) => i.label?.() === 'E: DIG UP THE BOX');
+  const relics0 = Object.keys(S.lore || {}).length; box?.interact();
+  dlg.dialogue.hud = real;
+  return { stops: stops.map((p) => p.kind), marks: marks.length, step: TR.trailStep('reach'), box: !!box, relic: Object.keys(S.lore || {}).length > relics0, words: text[0] };
+});
+check('WQ22: the Reach\'s trail: three marks in words lead to a box with a Hollow Relic', trail.marks === 3 && trail.step === 3 && trail.box && trail.relic && /PACES/.test(trail.words), JSON.stringify(trail));
+
 // ---- WQ3 / WQ19: weather belongs to its region
 const reachW = await G(async () => {
   const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');

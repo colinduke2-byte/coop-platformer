@@ -1,5 +1,10 @@
 // WQ17: the interactive minor finds (placed by world/minorfinds.js): a cairn you add a stone to, and a snared fox to free.
-import { registerSpawner } from '../scenes/gameHooks.js';
+import { registerSpawner, registerListener } from '../scenes/gameHooks.js';
+import { T } from '../config.js';
+import { regionOfMap } from '../data/regions.js';
+import { Sign } from '../entities/Props.js';
+import { grantRelic } from '../systems/relics.js';
+import { trailOf, trailStep, readMark, markText, trailDone, markBox } from '../world/trails.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx } from '../audio/sfx.js';
@@ -51,3 +56,29 @@ class Snare {
 
 registerSpawner('cairn', (sc, e, wx, wy) => { sc.interactables.push(new Cairn(sc, wx, wy, e)); });
 registerSpawner('snare', (sc, e, wx, wy) => { if (!done(sc, e)) sc.interactables.push(new Snare(sc, wx, wy, e)); });
+
+// ---- WQ22: the treasure trail marks and the box at the end (world/trails.js)
+class TrailBox {
+  constructor(sc, x, y, rid) { this.scene = sc; this.ix = x; this.iy = y; this.rid = rid; this.img = sc.add.image(x, y, 'chest').setDepth(y + 6).setTint(0xc8a060); }
+  canInteract() { return !trailDone(this.rid); }
+  label() { return 'E: DIG UP THE BOX'; }
+  interact() {
+    markBox(this.rid);
+    if (!grantRelic(this.scene)) { addGold(TUNE.world.minor.trailGold); bus.emit('toast', `THE BOX HOLDS GOLD: +${TUNE.world.minor.trailGold}`, 13); }
+    sfx.play('levelup'); this.scene.fx.puff(this.ix, this.iy, 13, 12, 40, 0.6); this.img.setAlpha(0.4);
+  }
+}
+registerListener('scene:game', (sc) => {
+  if (!sc.def.stream) return;
+  const rid = regionOfMap(sc.mapId), stops = trailOf(rid); if (!stops.length) return;
+  stops.forEach((p, i) => {
+    const step = trailStep(rid);
+    if (i < 2 || step < 3) {
+      const sg = new Sign(sc, (p.x + 2.5) * T, (p.y - 1.5) * T, markText(stops, i));
+      const read = sg.interact.bind(sg);
+      sg.interact = async (...a) => { const r = await read(...a); const was = trailStep(rid); readMark(rid, i); if (trailStep(rid) > was) { bus.emit('toast', i < 2 ? 'A TRAIL MARK: IT POINTS TO ANOTHER HIDDEN PLACE' : 'THE END OF THE TRAIL', 15); sfx.play('quest'); if (trailStep(rid) === 3) sc.interactables.push(new TrailBox(sc, (p.x - 1.5) * T, (p.y + 1.5) * T, rid)); } return r; };
+      sc.interactables.push(sg);
+    }
+    if (i === 2 && step >= 3 && !trailDone(rid)) sc.interactables.push(new TrailBox(sc, (p.x - 1.5) * T, (p.y + 1.5) * T, rid));
+  });
+}, 'worldTrails');
