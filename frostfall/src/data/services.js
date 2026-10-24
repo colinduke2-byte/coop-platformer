@@ -116,9 +116,9 @@ export async function buyMenu(who, wares) {
       // R picks how many (1, 5, 10 or as many as you can afford); stops at the first thing that runs out
       let bought = 0;
       for (let k = 0; k < (w.once ? 1 : ui.qty ?? 1); k++) {
-        if (w.once && count(w.id)) { if (!bought) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('nostamina'); } break; }
-        if (S.gold < bp(w)) { if (!bought) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('nostamina'); } break; }
-        if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { if (!bought) { ui.say('QUIVER IS FULL', 4); sfx.play('nostamina'); } break; }
+        if (w.once && count(w.id)) { if (!bought) { ui.say('YOU ALREADY CARRY ONE', 4); sfx.play('deny'); } break; }
+        if (S.gold < bp(w)) { if (!bought) { ui.say('NOT ENOUGH GOLD', 11); sfx.play('deny'); } break; }
+        if (w.id === 'arrows' && S.arrows >= TUNE.player.bow.maxArrows) { if (!bought) { ui.say('QUIVER IS FULL', 4); sfx.play('deny'); } break; }
         S.gold -= bp(w);
         if (w.id === 'arrows') addArrows(w.n);
         else addItem(w.id, w.n || 1);
@@ -236,9 +236,9 @@ export async function upgradeMenu(who, slot, cap = 3) {
     onSelect: (i, ui) => {
       const r = buyUpgrade(slot, cap);
       const id = S.equip[slot], cur = S.upgrades[id] || 0;
-      if (r === 'short') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
+      if (r === 'short') { sfx.play('deny'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
       if (r !== 'ok') return;
-      sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur}`, 13);
+      sfx.play('forge'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur}`, 13);
       ui.say('UPGRADED TO +' + cur, 8);
     },
   });
@@ -273,8 +273,8 @@ async function transferMenu(who, cap) {
     onSelect: (i, ui) => {
       const id = transferSources(slot)[i]; if (!id) return;
       const r = transferTemper(id, slot, cap);
-      if (r !== 'ok') { sfx.play('nostamina'); ui.say(r === 'cap' ? 'BEYOND THIS FORGE' : 'NOT ENOUGH GOLD', 11); return; }
-      sfx.play('levelup'); ui.say(`${ITEMS[to].name.toUpperCase()} IS NOW +${S.upgrades[to]}`, 8);
+      if (r !== 'ok') { sfx.play('deny'); ui.say(r === 'cap' ? 'BEYOND THIS FORGE' : 'NOT ENOUGH GOLD', 11); return; }
+      sfx.play('forge'); ui.say(`${ITEMS[to].name.toUpperCase()} IS NOW +${S.upgrades[to]}`, 8);
     },
   });
 }
@@ -314,12 +314,12 @@ export async function enchantMenu(who) {
     title: 'ENCHANT: ' + ITEMS[id].name.toUpperCase(), hint: 'E ENCHANT   ESC DONE', rows,
     onSelect: (i, ui) => {
       const e = ENCHANTS[i];
-      if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
+      if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('deny'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
       const ownEl = ITEMS[id].elem;            // PR-13: overwriting the weapon's own element asks first
       if (ownEl && ownEl.type !== e.type && !S.enchants[S.equip.weapon] && !ui.confirm('ench:' + id + e.type, `REPLACE ITS OWN ${ownEl.type.toUpperCase()}? E AGAIN`)) return;
       S.gold -= e.gold; removeItem(e.mat, e.n);
       S.enchants[own(S.equip.weapon, 'weapon')] = { type: e.type, power: e.power };
-      sfx.play('levelup');
+      sfx.play('forge');
       bus.emit('toast', `${ITEMS[id].name.toUpperCase()} ENCHANTED: ${e.name.toUpperCase()}`, 15);
       ui.say(e.name.toUpperCase() + ' ENCHANT APPLIED', 15);
     },
@@ -356,7 +356,7 @@ export async function brewMenu(who = 'Alchemy') {
     }),
     onSelect: (i, ui) => {
       const r = RECIPES[i];
-      if (!canBrew(r)) { sfx.play('nostamina'); ui.say('MISSING INGREDIENTS (HERBS AND REGION FINDS)', 11); return; }
+      if (!canBrew(r)) { sfx.play('deny'); ui.say('MISSING INGREDIENTS (HERBS AND REGION FINDS)', 11); return; }
       for (const [k, n] of Object.entries(r.needs)) removeItem(k, n);
       addItem(r.id);
       ui.say('BREWED ' + ITEMS[r.id].name.toUpperCase(), 8);
@@ -380,7 +380,7 @@ export async function fletchMenu() {
     })),
     onSelect: (i, ui) => {
       const f = FLETCH[i];
-      if (!can(f)) { sfx.play('nostamina'); ui.say('NEED ARROWS, A MATERIAL AND GOLD', 11); return; }
+      if (!can(f)) { sfx.play('deny'); ui.say('NEED ARROWS, A MATERIAL AND GOLD', 11); return; }
       S.arrows -= f.arrows; removeItem(f.mat, f.matN); S.gold -= f.gold; addItem(f.id, f.n);
       ui.say('CRAFTED ' + f.n + ' ' + ITEMS[f.id].name.toUpperCase(), 8); sfx.play('potion');
     },
@@ -399,7 +399,7 @@ export async function furnishMenu(scene) {
     onSelect: (i, ui) => {
       const f = FURNITURE[i];
       if (S.flags.furn[f.id]) { ui.say('YOU ALREADY HAVE THAT', 4); return; }
-      if (S.gold < f.price) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      if (S.gold < f.price) { sfx.play('deny'); ui.say('NOT ENOUGH GOLD', 11); return; }
       S.gold -= f.price; S.flags.furn[f.id] = true;
       scene.addFurniture(f);
       sfx.play('coin'); ui.say('PLACED: ' + f.name.toUpperCase(), 8);
@@ -419,7 +419,7 @@ export async function cookMenu() {
     },
     onSelect: (i, ui) => {
       const l = COOKABLE();
-      if (!l[i]) { sfx.play('nostamina'); return; }
+      if (!l[i]) { sfx.play('deny'); return; }
       cook(l[i]);
       ui.say('COOKED ' + ITEMS[l[i].to].name.toUpperCase(), 8);
     },
@@ -438,13 +438,13 @@ export async function repairMenu(who) {
     onSelect: (i, ui) => {
       const id = damaged()[i]; if (!id) return;
       const c = repairCost(id);
-      if (S.gold < c) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      if (S.gold < c) { sfx.play('deny'); ui.say('NOT ENOUGH GOLD', 11); return; }
       S.gold -= c; repairItem(id); sfx.play('upgrade'); ui.say('REPAIRED ' + ITEMS[id].name.toUpperCase(), 8);
     },
     onAlt: (i, ui) => {
       const all = damaged(), total = all.reduce((a, id) => a + repairCost(id), 0);
       if (!all.length) return;
-      if (S.gold < total) { sfx.play('nostamina'); ui.say(`NEED ${total} GOLD FOR EVERYTHING`, 11); return; }
+      if (S.gold < total) { sfx.play('deny'); ui.say(`NEED ${total} GOLD FOR EVERYTHING`, 11); return; }
       S.gold -= total; all.forEach(repairItem); sfx.play('upgrade'); ui.say('ALL GEAR REPAIRED', 8);
     },
   });
@@ -463,7 +463,7 @@ export async function reforgeMenu(who) {
     onSelect: (i, ui) => {
       const id = reforgeable()[i]; if (!id) return;
       const c = reforgeCost(id);
-      if (S.gold < c.gold || count('iron_ingot') < c.ingots) { sfx.play('nostamina'); ui.say(`NEED ${c.gold} GOLD AND ${c.ingots} INGOT${c.ingots > 1 ? 'S' : ''}`, 11); return; }
+      if (S.gold < c.gold || count('iron_ingot') < c.ingots) { sfx.play('deny'); ui.say(`NEED ${c.gold} GOLD AND ${c.ingots} INGOT${c.ingots > 1 ? 'S' : ''}`, 11); return; }
       S.gold -= c.gold; removeItem('iron_ingot', c.ingots);
       reforgeGen(id); recalc(); sfx.play('upgrade'); ui.say('REFORGED: ' + ITEMS[id].name.toUpperCase(), 8);
     },
@@ -493,8 +493,8 @@ export async function ascendMenu(who) {
     onSelect: (i, ui) => {
       const id = ascendable()[i]; if (!id) return;
       const r = ascendItem(id);
-      if (r !== 'ok') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
-      sfx.play('levelup'); ui.say('ASCENDED: ' + ITEMS[id].name.toUpperCase(), 14);
+      if (r !== 'ok') { sfx.play('deny'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
+      sfx.play('forge'); ui.say('ASCENDED: ' + ITEMS[id].name.toUpperCase(), 14);
     },
   });
 }
@@ -508,7 +508,7 @@ export async function buybackMenu(who) {
     onSelect: (i, ui) => {
       const r = list()[i]; if (!r) return;
       const p = Math.max(1, Math.round(r.paid / r.n * 1.2));
-      if (S.gold < p) { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD', 11); return; }
+      if (S.gold < p) { sfx.play('deny'); ui.say('NOT ENOUGH GOLD', 11); return; }
       S.gold -= p; r.paid -= Math.round(r.paid / r.n); r.n--; addItem(r.id); sfx.play('coin'); ui.say('BOUGHT BACK ' + ITEMS[r.id].name.toUpperCase(), 8);
     },
   });

@@ -28,6 +28,6 @@ export function readMap(id, gs) {
   }
   S.flags.waypoint = { map: 'forest', x: e.x, y: e.y };
   bus.emit('toast', 'TREASURE MARKED ON YOUR MAP!', 13);
-  sfx.play('quest');
+  sfx.play('discover');
   return true;
 }

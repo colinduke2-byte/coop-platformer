@@ -155,7 +155,7 @@ export default class Boss extends Enemy {
     this.setState('windup', this.B[a].windup * (this.bphase === 2 ? 0.8 : 1));
     this.windTotal = this.stateT;
     this.makeTele(a);
-    sfx.play('telegraph');
+    sfx.play('telegraph_boss');
     this.mark('!', 11, this.stateT + 0.05);
   }
 
@@ -229,7 +229,7 @@ export default class Boss extends Enemy {
       sc.fx.puff(r.centerX, r.centerY, 15, 8, 60, 0.3);
       if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) player.hurt(this.B.sweep.dmg, this.cx, this.cy, { kb: 150 });
     } else if (a === 'volley') {
-      sfx.play('frost');
+      sfx.play('frost_enemy');
       const base = Math.atan2(this.dir.y, this.dir.x);
       for (const off of [-this.B.volley.spread, 0, this.B.volley.spread]) this.orb(base + off, this.B.volley.speed, this.B.volley.dmg);
     } else if (a === 'nova') {
@@ -302,7 +302,7 @@ export default class Boss extends Enemy {
   victory(sc) {
     sc.onEnemyKilled(this);
     sc.setGate(false);
-    music.play('crypt');
+    music.play('victory');
     bus.emit('toast', 'THE FROSTSWORN JARL FALLS', 13);
     sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {

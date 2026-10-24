@@ -62,7 +62,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     if (this.done) return;
     if (this.kind === 'fire') return this.explode();
     if (this.kind === 'arrow' || this.kind === 'bolt') {
-      sfx.play('arrowhit'); this.scene.fx.puff(this.x, this.y, 5, 3, 25, 0.25);
+      sfx.play('arrowhit', this); this.scene.fx.puff(this.x, this.y, 5, 3, 25, 0.25);
       if (this.kind === 'arrow' && Math.random() < 0.55) this.scene.spawnLoot(this.x - this.body.velocity.x * 0.02, this.y - this.body.velocity.y * 0.02, null, [['arrows', 1, [1, 1]]]);
     }
     if (this.kind === 'frost' || this.kind === 'eshot') this.scene.fx.puff(this.x, this.y, 15, 6, 35, 0.3);
@@ -77,7 +77,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     if (this.kind === 'arrow') {
       if (this.ally) {
         const d = e.takeHit({ dmg: this.dmg, kx, ky, kb: 50, src: 'arrow', stun: 0.15 });
-        if (d > 0) { sc.fx.text(e.x, e.y - 10, String(d), 5); sfx.play('hit'); }
+        if (d > 0) { sc.fx.text(e.x, e.y - 10, String(d), 5); sfx.play('hit', e); }
         this.finish();
         return;
       }
@@ -107,7 +107,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       if (dealt > 0 && Math.random() < (stats.weapon()?.rootChance || 0)) applyStatus(e, 'root', { t: 2 });
       sc.fx.text(e.x, e.y - 10, String(dealt), 15);
       sc.fx.puff(e.x, e.y, 15, 8, 40, 0.4);
-      sfx.play('hit');
+      sfx.play('hit', e);
       pl.gainXp('destruction', 3 + (e.dead ? 3 : 0));
       this.finish();
     } else if (this.kind === 'fire') {
@@ -120,7 +120,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.done = true;
     const sc = this.scene, pl = sc.player;
     const R = 24;
-    sfx.play('boom');
+    sfx.play('boom', this);
     sc.fx.ring(this.x, this.y, 0.6, 0.3, 'ring', 0xf08a30);
     sc.fx.puff(this.x, this.y, 12, 10, 60, 0.45);
     sc.fx.puff(this.x, this.y, 13, 6, 45, 0.35);

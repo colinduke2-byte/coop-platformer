@@ -24,7 +24,7 @@ export default class Breakable extends Phaser.GameObjects.Image {
     const col = this.skin === 'urn' ? 4 : 10;
     sc.fx.puff(this.x, this.y, col, 8, 55, 0.5, 120);
     sc.fx.puff(this.x, this.y, 9, 5, 40, 0.45, 120);
-    sfx.play('smash');
+    sfx.play('smash', this);
     sc.spawnLoot(this.x, this.y + 2, this.skin === 'urn' ? { gold: [2, 9], chance: 0.8 } : { gold: [1, 5], chance: 0.55 }, [['arrows', 0.14, [2, 3]], ['hp_potion', 0.05], ['sp_potion', 0.05], ['mp_potion', 0.04]]);
     sc.breakBodies.remove(this);
     this.shadow.destroy();

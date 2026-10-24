@@ -206,21 +206,20 @@ t('no new import cycles: only the documented stats cycle remains (tools/cycles.m
 });
 
 // ---------------------------------------------------------------- AU02
-// AU01: Repair and Reforge play 'upgrade', which src/audio does not define yet. The audio agent (U) adds the sound and
-// removes it from this list; nothing else may be added here.
-const KNOWN_GAPS = new Set(['upgrade']);
+// The audio module (src/audio) exports its effect table (SOUNDS, sfx.has) and its songs (SONGS). ambience.play takes a place
+// kind: 'crypt' (caves) or 'wind' (anywhere else; the region and weather pick the layers). music.play('victory') is the
+// silence after a won fight (music.resolve). The AU01 gap ('upgrade') is closed: no known gaps are left.
+const AUDIO = await import('../../src/audio/sfx.js');
+const AUDIO_SONGS = await import('../../src/audio/songs.js');
+const KNOWN_GAPS = new Set();
 t('every sound, song and ambience name used in src/ exists in src/audio (AU02)', () => {
-  const audio = read('audio/sfx.js');
-  const sounds = new Set(literalKeys(audio, audio.indexOf('{', audio.indexOf('const SOUNDS = {'))));
-  const songs = new Set(literalKeys(audio, audio.indexOf('{', audio.indexOf('const SONGS = {'))));
-  for (const m of audio.matchAll(/^SOUNDS\.(\w+)\s*=/gm)) sounds.add(m[1]);
-  for (const m of audio.matchAll(/^SONGS\.(\w+)\s*=/gm)) songs.add(m[1]);
-  const amb = new Set([...audio.slice(audio.indexOf('export const ambience')).matchAll(/kind === '(\w+)'/g)].map((m) => m[1]));
-  assert.ok(sounds.size > 40 && songs.size > 15 && amb.size >= 2, 'the audio scan found too few names');
+  const sounds = { has: (name) => AUDIO.sfx.has(name), size: Object.keys(AUDIO.SOUNDS).length };
+  const songs = new Set([...Object.keys(AUDIO_SONGS.SONGS), 'victory']);
+  const amb = new Set(['crypt', 'wind']);
+  assert.ok(sounds.size > 40 && songs.size > 15, 'the audio scan found too few names');
   const missing = [];
   const need = (set, kind, name, where) => { if (!set.has(name) && !KNOWN_GAPS.has(name)) missing.push(`${kind} '${name}' (${where})`); };
   for (const f of srcFiles(SRC)) {
-    if (f.endsWith('audio/sfx.js')) continue;
     const s = fs.readFileSync(f, 'utf8'), rel = path.relative(SRC, f);
     // sfx.play('x'), and both names of sfx.play(cond ? 'a' : 'b')
     for (const m of s.matchAll(/\b(sfx|music|ambience)\.play\(([^()]*)\)/g)) {

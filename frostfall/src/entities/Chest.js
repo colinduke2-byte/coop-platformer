@@ -42,7 +42,7 @@ export default class Chest extends Phaser.GameObjects.Image {
   async interact() {
     if (this.spec.mimic && !S.flags[this.flag]) { this.reveal(); return; }
     if (this.locked) {
-      if (!count('lockpick')) { bus.emit('toast', 'LOCKED - NEED LOCKPICKS', 11); sfx.play('nostamina'); return; }
+      if (!count('lockpick')) { bus.emit('toast', 'LOCKED - NEED LOCKPICKS', 11); sfx.play('deny'); return; }
       let ok = false;
       await runScript(async () => { ok = await dialogue.hud.lockpick(this.spec.lock); });
       if (!ok) return;

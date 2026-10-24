@@ -12,7 +12,7 @@ export function wireQuests() {
     const q = S.quests.wolves;
     if (q.status === 'active' && kind === 'wolf') {
       q.kills++;
-      if (q.kills >= 3) { q.status = 'ready'; bus.emit('toast', 'QUEST READY: RETURN TO BJORN', 13); sfx.play('quest'); }
+      if (q.kills >= 3) { q.status = 'ready'; bus.emit('toast', 'QUEST READY: RETURN TO BJORN', 13); sfx.play('quest_update'); }
       else bus.emit('toast', `WOLVES SLAIN ${q.kills}/3`, 13);
     }
   });
@@ -20,13 +20,13 @@ export function wireQuests() {
     if (id === 'snowberry' || id === 'frost_lily') checkHerbs();
     if (id === 'silver_locket') {
       const lq = S.quests.locket;
-      if (lq.status === 'inactive' || lq.status === 'active') { lq.status = 'relic'; bus.emit('toast', 'YOU FOUND THE LOCKET', 13); sfx.play('quest'); }
+      if (lq.status === 'inactive' || lq.status === 'active') { lq.status = 'relic'; bus.emit('toast', 'YOU FOUND THE LOCKET', 13); sfx.play('quest_update'); }
     }
     const q = S.quests.king;
     if (id === 'frostheart' && q.status === 'active') {
       q.status = 'relic';
       bus.emit('toast', 'QUEST UPDATED: THE FROSTSWORN JARL', 13);
-      sfx.play('quest');
+      sfx.play('quest_update');
     }
   });
 }
@@ -34,7 +34,7 @@ export function wireQuests() {
 export function checkHerbs() {
   const q = S.quests.herbs;
   if (q.status === 'active' && (S.inv.snowberry || 0) >= 5 && (S.inv.frost_lily || 0) >= 3) {
-    q.status = 'ready'; bus.emit('toast', 'QUEST READY: RETURN TO MIRRA', 13); sfx.play('quest');
+    q.status = 'ready'; bus.emit('toast', 'QUEST READY: RETURN TO MIRRA', 13); sfx.play('quest_update');
   }
 }
 
@@ -43,10 +43,10 @@ export function startQuest(id) {
   q.status = 'active';
   if (id === 'wolves') q.kills = 0;
   bus.emit('toast', 'QUEST STARTED: ' + QUESTS[id].title.toUpperCase(), 13);
-  sfx.play('quest');
+  sfx.play('quest_start');
 }
 export function finishQuest(id) {
   S.quests[id].status = 'done';
   bus.emit('toast', 'QUEST COMPLETE: ' + QUESTS[id].title.toUpperCase(), 13);
-  sfx.play('quest');
+  sfx.play('quest_done');
 }

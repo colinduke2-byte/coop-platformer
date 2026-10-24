@@ -212,7 +212,7 @@ SCRIPTS.maelis = async function maelis() {
   const c = await choose(['Hear a rumour', 'Rest (30G)', 'Leave']);
   if (c === 0) await say(N, cyc('maelisN', rumours));
   else if (c === 1) {
-    if (S.gold < 30) { sfx.play('nostamina'); await say(N, 'Thirty. I do not run a charity. I run a tavern.'); return; }
+    if (S.gold < 30) { sfx.play('deny'); await say(N, 'Thirty. I do not run a charity. I run a tavern.'); return; }
     S.gold -= 30; S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp; sfx.play('levelup'); bus.emit('toast', 'YOU REST AT THE LAST LANTERN', 8);
   }
 };
@@ -278,9 +278,9 @@ export async function emberforgeMenu(who) {
     }),
     onSelect: (i, ui) => {
       const res = forgeEmber(EMBERFORGE[i].id);
-      if (res === 'locked') { sfx.play('nostamina'); ui.say('THE FORGE WILL NOT WAKE FOR YOU YET', 11); }
-      else if (res === 'short') { sfx.play('nostamina'); ui.say('NEED MORE MATERIALS OR GOLD', 11); }
-      else { sfx.play('levelup'); bus.emit('toast', 'EMBERFORGED: ' + ITEMS[EMBERFORGE[i].id].name.toUpperCase(), 12); ui.say('FORGED', 8); }
+      if (res === 'locked') { sfx.play('deny'); ui.say('THE FORGE WILL NOT WAKE FOR YOU YET', 11); }
+      else if (res === 'short') { sfx.play('deny'); ui.say('NEED MORE MATERIALS OR GOLD', 11); }
+      else { sfx.play('forge'); bus.emit('toast', 'EMBERFORGED: ' + ITEMS[EMBERFORGE[i].id].name.toUpperCase(), 12); ui.say('FORGED', 8); }
     },
   });
 }
@@ -310,9 +310,9 @@ export async function armouryMenu(who, only = null) {
     }),
     onSelect: (i, ui) => {
       const res = buyArmoury(list[i].id);
-      if (res === 'locked') { sfx.play('nostamina'); ui.say('THEY DO NOT TRUST YOU ENOUGH', 11); }
-      else if (res === 'short') { sfx.play('nostamina'); ui.say('NEED MORE GOLD', 11); }
-      else { sfx.play('levelup'); ui.say('BOUGHT', 8); }
+      if (res === 'locked') { sfx.play('deny'); ui.say('THEY DO NOT TRUST YOU ENOUGH', 11); }
+      else if (res === 'short') { sfx.play('deny'); ui.say('NEED MORE GOLD', 11); }
+      else { sfx.play('buy'); ui.say('BOUGHT', 8); }
     },
   });
 }
@@ -384,7 +384,7 @@ export async function socketMenu(who) {
         const rs = runeList(id);
         if (!rs.length) { await say(who, 'You have no rune that fits this. Weapons take weapon runes, armour takes armour runes.'); continue; }
         const r = await pick(rs.map((x) => `${ITEMS[x].name} x${count(x)}`), 'Back');
-        if (r >= 0 && setRune(id, rs[r])) { recalc(); sfx.play('levelup'); bus.emit('toast', `${ITEMS[rs[r]].name.toUpperCase()} SET`, 15); }
+        if (r >= 0 && setRune(id, rs[r])) { recalc(); sfx.play('forge'); bus.emit('toast', `${ITEMS[rs[r]].name.toUpperCase()} SET`, 15); }
         continue;
       }
       if (a[k]) { removeGem(id, k); recalc(); sfx.play('equip'); continue; }
@@ -392,7 +392,7 @@ export async function socketMenu(who) {
       if (!gems.length) { await say(who, 'You have no gems. Dunmar sells them. The mines give them.'); continue; }
       const g = await pick(gems.map((x) => `${ITEMS[x].name} x${count(x)}`), 'Back');
       if (g < 0) continue;
-      if (insertGem(id, gems[g])) { recalc(); sfx.play('levelup'); bus.emit('toast', `${ITEMS[gems[g]].name.toUpperCase()} SET`, 15); }
+      if (insertGem(id, gems[g])) { recalc(); sfx.play('forge'); bus.emit('toast', `${ITEMS[gems[g]].name.toUpperCase()} SET`, 15); }
     }
   }
 }
@@ -403,7 +403,7 @@ async function fuseMenu(who) {
   await listScreen({
     title: 'FUSE GEMS', hint: 'E FUSE THREE   ESC DONE', empty: 'NO GEMS TO FUSE',
     rows: () => list().map((g) => { const nx = nextGrade(g), ok = count(g) >= 3 && S.gold >= fuseCost(g); return { id: g, name: ITEMS[g].name, tag: fuseCost(g) + 'G', ok, tagCol: ok ? 13 : 11, sub: 'INTO ' + ITEMS[nx].name.toUpperCase(), lines: [[`HAVE ${count(g)} / 3`, count(g) >= 3 ? 8 : 11], [ITEMS[nx].desc.toUpperCase().slice(0, 38), 5]] }; }),
-    onSelect: (i, ui) => { const g = list()[i]; if (!g) return; const nx = fuseGems(g); if (!nx) { sfx.play('nostamina'); ui.say('NEED THREE AND THE GOLD', 11); return; } sfx.play('levelup'); ui.say('FUSED: ' + ITEMS[nx].name.toUpperCase(), 15); },
+    onSelect: (i, ui) => { const g = list()[i]; if (!g) return; const nx = fuseGems(g); if (!nx) { sfx.play('deny'); ui.say('NEED THREE AND THE GOLD', 11); return; } sfx.play('forge'); ui.say('FUSED: ' + ITEMS[nx].name.toUpperCase(), 15); },
   });
 }
 SCRIPTS.tamsin = async function tamsin() {

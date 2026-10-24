@@ -18,7 +18,7 @@ export function grantRelic(scene) {
   S.lore[r.id] = true;
   addItem(r.id, 1, true);
   const n = relicCount();
-  bus.emit('toast', `RELIC FOUND: ${r.name.toUpperCase()} (${n}/8)`, 13); sfx.play('quest');
+  bus.emit('toast', `RELIC FOUND: ${r.name.toUpperCase()} (${n}/8)`, 13); sfx.play('achievement');
   if (n === 3) bus.emit('toast', 'RELIC SET: +10 MAX HEALTH', 8);
   if (n === 6) bus.emit('toast', 'RELIC SET: +15 MAX MANA', 8);
   if (n === 8) { addItem('hollow_crown', 1); bus.emit('toast', 'THE HOLLOW CROWN IS YOURS', 13); }

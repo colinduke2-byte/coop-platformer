@@ -198,7 +198,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (moving) {
       const before = Math.floor(this.phase);
       this.phase += this.speedNow * dt * 0.24;
-      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking && walkFrame(this.phase) !== 0) sfx.play(this.stepSound());
+      if (Math.floor(this.phase) !== before && this.mode === 'free' && !this.sneaking && walkFrame(this.phase) !== 0) sfx.play(S.mounted ? 'step_hoof' : this.stepSound());
     }
     this.animate(moving);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);

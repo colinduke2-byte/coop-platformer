@@ -390,7 +390,7 @@ export default class HudScene extends Phaser.Scene {
     if (d.n < page.length) {
       if (step === 0) d.n = page.length;
       d.t += dt;
-      while (d.t > step && d.n < page.length) { d.t -= step; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play('blip'); }
+      while (d.t > step && d.n < page.length) { d.t -= step; d.n++; if (d.n % 2 === 0 && page[d.n - 1] !== ' ' && page[d.n - 1] !== '\n') sfx.play(sfx.talk(d.name)); }
       if (d.age > 2 && keys.pressed('interact')) d.n = page.length;
     } else if (d.age > 2) {
       this.dMore.setVisible(settings.reduceMotion || Math.floor(this.time.now / 300) % 2 === 0).setPosition(W - 22, H - 16);

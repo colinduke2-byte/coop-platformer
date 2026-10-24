@@ -162,7 +162,7 @@ export const quickMethods = {
       for (const e of a.foes) if (e.active && !e.dead) e.despawn?.();
       a.foes = [];
       S.hp = Math.min(S.maxHp, S.hp + S.maxHp * 0.35); S.sp = S.maxSp;
-      bus.emit('toast', `BOSS ${a.cleared} DOWN`, 13); sfx.play('quest'); music.play('crypt');
+      bus.emit('toast', `BOSS ${a.cleared} DOWN`, 13); sfx.play('quest'); music.play('victory');
       this.offerBoons(a);
       return;
     }

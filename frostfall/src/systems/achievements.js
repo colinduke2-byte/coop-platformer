@@ -69,7 +69,7 @@ export function checkTrophies() {
     if (ok) {
       S.trophies[t.id] = true;
       bus.emit('toast', 'TROPHY: ' + t.name.toUpperCase(), 13);
-      sfx.play('quest');
+      sfx.play('achievement');
     }
   }
 }

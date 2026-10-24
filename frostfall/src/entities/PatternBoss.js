@@ -96,7 +96,7 @@ export default class PatternBoss extends Boss {
     this.clearTele(); this.marker?.destroy(); this.marker = null;
     if (a === 'breath') {
       this.setState('attack', 0.5);
-      sfx.play('frost'); sc.shake(200, 0.008);
+      sfx.play('frost_enemy'); sc.shake(200, 0.008);
       const base = Math.atan2(this.dir.y, this.dir.x), n = this.B.breath.count, sp = this.B.breath.spread;
       for (let i = 0; i < n; i++) this.orb(base + (i - (n - 1) / 2) * sp, this.B.breath.speed + (i % 2) * 14, this.B.breath.dmg);
       sc.fx.puff(this.cx + this.dir.x * 14, this.cy + this.dir.y * 14, this.info.col ?? 15, 10, 70, 0.4);
@@ -170,7 +170,7 @@ export default class PatternBoss extends Boss {
     sc.onEnemyKilled(this);
     if (S.quick) { sc.setGate?.(false); return; }          // Arena Mode: no hearts, finales or saves
     sc.setGate(false);
-    music.play('crypt');
+    music.play('victory');
     bus.emit('toast', this.info.toast, 13);
     sc.time.delayedCall(3000, () => { if (sc.scene.isActive('Game') && S.hp > 0 && sc.player?.mode !== 'dead') saveGame(sc, { auto: false }); });
     sc.time.delayedCall(1500, () => {

@@ -5,6 +5,7 @@ import { TUNE } from '../data/tuning.js';
 import { ITEMS } from '../data/items.js';
 import { S } from './state.js';
 import { bus } from './bus.js';
+import { sfx } from '../audio/sfx.js';
 import { tip } from './tips.js';
 
 const BY_TYPE = {
@@ -59,7 +60,7 @@ export const invalidate = () => { cacheT = -1; };
 export function watch() {
   const l = level();
   if (l !== lastSeen && l !== 'ok') tip('burden');
-  if (l !== lastSeen && l !== 'ok' && (lastSeen === 'ok' || l === 'over')) bus.emit('toast', l === 'over' ? 'OVERLOADED: NO ROLLING. SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12);
+  if (l !== lastSeen && l !== 'ok' && (lastSeen === 'ok' || l === 'over')) { bus.emit('toast', l === 'over' ? 'OVERLOADED: NO ROLLING. SELL OR STASH SOMETHING' : 'BURDENED: YOU MOVE SLOWER', 12); sfx.play('heavy'); }
   lastSeen = l;
 }
 export const moveMul = () => { const l = level(), B = TUNE.burden; return l === 'ok' ? 1 : l === 'burdened' ? B.burdened.move : B.overMove; };

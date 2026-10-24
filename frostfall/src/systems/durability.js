@@ -5,6 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { settings } from './settings.js';
 import { bus } from './bus.js';
 import { own } from './instances.js';
+import { sfx } from '../audio/sfx.js';
 
 export const durOn = () => { const d = TUNE.difficulty[settings.difficulty]?.durability; return d === 'hard' ? settings.durabilityHard !== false : d == null ? !!settings.durability : d; };   // Easy: off, Hard: on, Normal: your option
 const BASE = { common: 60, magic: 80, rare: 100, legend: 140, mythic: 160 };   // generated rarities (PR-07: was 'uncommon', which no item has)
@@ -20,7 +21,7 @@ export function wear(id, n = 1) {
   const was = durOf(id);
   id = own(id);                                          // PR-08: wear belongs to this copy
   S.dur[id] = Math.max(0, was - n);
-  if (was > 0 && S.dur[id] === 0) bus.emit('toast', `YOUR ${ITEMS[id].name.toUpperCase()} IS BROKEN`, 11);
+  if (was > 0 && S.dur[id] === 0) { bus.emit('toast', `YOUR ${ITEMS[id].name.toUpperCase()} IS BROKEN`, 11); sfx.play('break'); }
   else if (was > durMax(id) * 0.25 && S.dur[id] <= durMax(id) * 0.25) bus.emit('toast', `${ITEMS[id].name.toUpperCase()} IS WEARING THIN`, 12);
 }
 // Repair (PR-12): per point of wear, a base plus a share per forge level plus a little of the item's value (capped), about a

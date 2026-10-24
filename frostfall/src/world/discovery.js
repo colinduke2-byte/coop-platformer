@@ -61,7 +61,7 @@ export const discoveryMethods = {
     const R = TUNE.economy.rewards[HIDDEN.has(p.kind) ? 'discoverHidden' : 'discover'];
     const paid = addGold(R[0] + R[1] * (p.tier || 0), { quiet: true });      // PR-16: addGold applies the modifiers once
     bus.emit('discover', { name: placeName(p), top: how, line: `+${paid} GOLD  ${discoveredCount()} PLACES FOUND` });
-    sfx.play('quest');
+    sfx.play('discover');
     for (const fn of placeHooks) fn(this.mapId, p);
     return true;
   },
