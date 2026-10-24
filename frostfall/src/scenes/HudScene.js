@@ -15,6 +15,7 @@ import { dialogue, Cancelled } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
 import { QUESTS, activeQuestIds, TARGETS, trackedId } from '../data/quests.js';
 import { eventMark, EVENT_MARK_COL } from '../world/questmarks.js';
+import { exitToward } from '../world/exitgraph.js';
 import { MAPS } from '../data/maps.js';
 import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
@@ -289,7 +290,9 @@ export default class HudScene extends Phaser.Scene {
       const label = fit('GO TO ' + (MAPS[T.map]?.name || T.map).toUpperCase(), 34);
       this.qm.setText(label).setFont('f15'); this.qm.x = Math.round((W - this.qm.width) / 2); this.qm.y = H - 13;
       g.fillStyle(C[0], 0.6); g.fillRect(this.qm.x - 3, this.qm.y - 2, this.qm.width + 6, 11);
-      return;
+      const ex = exitToward(gs.mapId, T.map);       // WQ8: and an arrow to the first door or road on the way there
+      if (!ex) return;
+      T = { map: gs.mapId, x: ex.x, y: ex.y };
     }
     const cam = gs.cameras.main.worldView;
     const wx = (T.x + 0.5) * 16, wy = (T.y + 0.5) * 16;

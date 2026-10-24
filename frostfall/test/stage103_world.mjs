@@ -71,6 +71,14 @@ const where = await G(async () => {
 check('WQ5: kill and collect quests in the older regions point at the creature or the item', where.none.length === 0 && where.leeches?.map === 'fens' && where.moon?.map === 'forest', JSON.stringify(where));
 check('WQ5: every kill and collect step in the Vale and Sunscorch chains has a marker', where.chainSteps >= 15 && where.chainNull.length === 0, JSON.stringify(where));
 
+// ---- WQ8: a marker on another map points at the first exit on the way there
+const way = await G(async () => {
+  const X = await import('/src/world/exitgraph.js');
+  const t0 = performance.now(), a = X.exitToward('village', 'reedwick'), b = X.exitToward('forest', 'reedwick'), c = X.exitToward('fens', 'reedwick');
+  return { a: a?.to, b: b?.to, c: c?.to, ms: Math.round(performance.now() - t0) };
+});
+check('WQ8: from the village, "Tell Ilse" leads to the Reach, then the Fen Road, then the Reedwick gate', way.a === 'forest' && way.b === 'fens' && way.c === 'reedwick', JSON.stringify(way));
+
 // ---- WQ6: a random event marks itself, and never touches the player's waypoint
 await h.open('scene=game&map=forest&spawn=start&seed=8919');
 await h.sleep(1500);
