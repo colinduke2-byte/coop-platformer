@@ -58,4 +58,17 @@ t('WQ16: roads meet at crossroads stones that name each way', () => {
   for (const rid of ['reach', 'fens', 'ashen']) { S.seed = 8919; const c = getRegion(rid).entities.filter((e) => e.t === 'sign' && e.text[0] === 'A CROSSROADS STONE.'); assert.ok(c.length >= 4 && c.every((e) => e.text.length >= 4), `${rid}: ${c.length}`); }
 });
 
+t('WQ23: delves have a shortcut out of the boss room, often a barred side room with its key deeper in, and a cracked wall', () => {
+  let shortcut = 0, branch = 0, crack = 0, all = 0;
+  for (let seed = 1; seed <= 40; seed++) for (let idx = 0; idx < 3; idx++) {
+    const b = buildBarrow(seed * 977, idx, 1); all++;
+    if (b.entities.some((e) => e.t === 'exit' && e.shortcut)) shortcut++;
+    const gate = b.entities.find((e) => e.t === 'keygate'), key = b.entities.find((e) => e.t === 'chest' && /_key$/.test(e.id));
+    if (gate && key) { branch++; assert.ok(key.y < gate.y, 'the key is deeper in (further up) than the barred door'); }
+    if (b.entities.some((e) => e.t === 'crackwall')) crack++;
+  }
+  assert.equal(shortcut, all, 'every delve has a way out of the boss room');
+  assert.ok(branch > all * 0.5 && crack > all * 0.5, `branches ${branch}/${all}, cracked walls ${crack}/${all}`);
+});
+
 console.log(`${n} world WQ tests passed`);

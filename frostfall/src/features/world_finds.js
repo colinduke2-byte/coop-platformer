@@ -4,6 +4,7 @@ import { T } from '../config.js';
 import { regionOfMap } from '../data/regions.js';
 import { Sign } from '../entities/Props.js';
 import { grantRelic } from '../systems/relics.js';
+import { TILE_FLOOR } from '../world/sceneConsts.js';
 import { trailOf, trailStep, readMark, markText, trailDone, markBox } from '../world/trails.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
@@ -82,3 +83,25 @@ registerListener('scene:game', (sc) => {
     if (i === 2 && step >= 3 && !trailDone(rid)) sc.interactables.push(new TrailBox(sc, (p.x - 1.5) * T, (p.y + 1.5) * T, rid));
   });
 }, 'worldTrails');
+
+// ---- WQ23: a cracked wall in a delve: strike it (a blow, an arrow, a spell) and it falls open onto a secret room
+class CrackWall {
+  constructor(sc, e) {
+    this.scene = sc; this.e = e; this.broken = false;
+    this.x = this.cx = (e.x + 0.5) * T; this.y = (e.y + 0.3) * T; this.cy = (e.y + 0.5) * T;
+    const g = sc.add.graphics().setDepth(this.cy + 2);        // a zig-zag crack over the wall tile
+    g.lineStyle(1, C[0], 0.9); g.beginPath(); g.moveTo(this.cx - 2, this.cy - 7); g.lineTo(this.cx + 1, this.cy - 2); g.lineTo(this.cx - 1, this.cy + 2); g.lineTo(this.cx + 2, this.cy + 7); g.strokePath();
+    this.g = g;
+  }
+  smash() {
+    if (this.broken) return;
+    this.broken = true; S.flags[this.e.id] = true; this.g.destroy();
+    this.scene.layer.putTileAt(TILE_FLOOR, this.e.x, this.e.y); this.scene.solid[this.e.y][this.e.x] = false;
+    this.scene.shake(250, 0.008); this.scene.fx.puff(this.cx, this.cy, 5, 12, 40, 0.6); sfx.play('door');
+    bus.emit('toast', 'THE CRACKED WALL GIVES WAY: A HIDDEN ROOM', 13);
+  }
+}
+registerSpawner('crackwall', (sc, e) => {
+  if (S.flags[e.id]) { sc.layer.putTileAt(TILE_FLOOR, e.x, e.y); sc.solid[e.y][e.x] = false; return; }
+  sc.breakables.push(new CrackWall(sc, e));
+});

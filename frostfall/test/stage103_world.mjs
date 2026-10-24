@@ -237,5 +237,16 @@ await h.sleep(1500);
 const hubBoard = await G(() => window.__ff.game.scene.getScene('Game').interactables.filter((i) => i.rid === 'fens' && i.label?.() === 'E: BOUNTY BOARD').length);
 check('WQ20: Reedwick has a bounty board for the Fens', hubBoard === 1, String(hubBoard));
 
+// ---- WQ23: a cracked wall in a barrow breaks open when struck
+await h.open('scene=game&map=barrow0&spawn=entry&seed=8919');
+await h.sleep(1500);
+const crack = await G(() => {
+  const sc = window.__ff.game.scene.getScene('Game'), cw = sc.breakables.find((b) => b.e?.id?.startsWith('cw_'));
+  if (!cw) return { none: true };
+  const before = sc.solid[cw.e.y][cw.e.x]; sc.breakAt(cw.cx, cw.cy, 8);
+  return { before, after: sc.solid[cw.e.y][cw.e.x], flag: !!window.__ff.S.flags[cw.e.id], exit: sc.exits.some((x) => x.shortcut) };
+});
+check('WQ23: a barrow\'s cracked wall breaks open to its secret room, and the boss room has a way out', crack.none || (crack.before && !crack.after && crack.flag && crack.exit), JSON.stringify(crack));
+
 await h.close();
 console.log(failCount() ? 'STAGE 103 FAILED' : 'STAGE 103 PASSED');
