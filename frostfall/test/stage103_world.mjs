@@ -181,7 +181,7 @@ await G(async () => {
 });
 await h.sleep(2500);
 const ret = await G(async () => {
-  const S = window.__ff.S, R = await import('/src/world/reoccupy.js'), sc = window.__ff.game.scene.getScene('Game');
+  const R = await import('/src/world/reoccupy.js'), sc = window.__ff.game.scene.getScene('Game');
   const held = R.retakenOn('forest'), r = held.find((x) => x.id === window.__camp) || held[0];
   const crew = sc.pend.filter((p) => p.spec.camp === r?.id), lt = sc.pend.find((p) => p.key?.includes(':lt:'));
   const board = R.boardOf('fens');

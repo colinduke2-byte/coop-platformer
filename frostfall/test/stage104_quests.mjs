@@ -46,7 +46,7 @@ check('WQ21 Glasswood: six ringing prints lead to the Shardmother; putting her d
 await go('coast');
 await G(async () => { await window.__talk('salt_watch'); });
 await wait(300);
-await G(async () => { const M = await import('/src/data/maps.js'), sc = window.__ff.game.scene.getScene('Game'), R = await import('/src/world/regionquests.js'), L = R.lighthouse(); sc.player.setPosition((L.x + 0.5) * 16, (L.y + 2.5) * 16); });
+await G(async () => { const sc = window.__ff.game.scene.getScene('Game'), R = await import('/src/world/regionquests.js'), L = R.lighthouse(); sc.player.setPosition((L.x + 0.5) * 16, (L.y + 2.5) * 16); });
 await wait(1500);
 const coast = await G(async () => { const S = window.__ff.S, st = S.quests.pilgrimlight.status; await window.__talk('salt_watch'); return { ready: st, done: S.quests.pilgrimlight.status, pilgrim: !!window.__ff.game.scene.getScene('Game').rqPilgrim }; });
 check('WQ21 Coast: the pilgrim follows you, and reaching the lighthouse with her finishes the escort', coast.pilgrim && coast.ready === 'ready' && coast.done === 'done', JSON.stringify(coast));
