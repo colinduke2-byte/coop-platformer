@@ -3,7 +3,7 @@
 import { Grid } from '../data/mapkit.js';
 import { TILE } from '../config.js';
 import { rng } from './worldgen.js';
-import { dressSpecialRoom } from './roomkinds.js';
+import { dressSpecialRoom, runeCarving } from './roomkinds.js';
 
 const THEMES = [
   { id: 'draugr', name: 'Barrow of the Restless', mobs: ['draugr', 'warden', 'wight'] },
@@ -81,8 +81,10 @@ export function buildBarrow(seed, idx, tier, o = {}) {
       // three rune plates and a sealed chest alcove: a quick order puzzle
       const order = ['moon', 'crown', 'wolf'].sort(() => R() - 0.5);
       add({ t: 'plateorder', order });
-      const names = { moon: 'MOON (BLUE)', crown: 'CROWN (GOLD)', wolf: 'WOLF (RED)' };
-      add({ t: 'sign', x: r.x + 2, y: r.y + 2, text: [`THE RUNES REMEMBER: ${order.map((o) => names[o]).join(', THEN ')}.`] });
+      // WQ14: the order is carved in the room before, as a little story; this room only says that it was
+      const pr = rooms[i - 1];
+      add({ t: 'sign', x: pr.x + pr.w - 3, y: pr.y + 2, text: runeCarving(order) });
+      add({ t: 'sign', x: r.x + 2, y: r.y + 2, text: ['THREE RUNE PLATES, AND A SEALED DOOR.', 'THE ORDER WAS CARVED ON THE WAY IN. A WRONG STEP BITES.'] });
       ['moon', 'crown', 'wolf'].forEach((rune, k) => add({ t: 'plate', rune, x: r.x + 2 + k * Math.floor((r.w - 4) / 2), y: r.cy + 1 }));
       // the sealed alcove goes on whichever side of the room has space for it
       const east = r.x + r.w + 4 < W - 1, wx = east ? r.x + r.w : r.x - 1, ax = east ? r.x + r.w + 1 : r.x - 4;

@@ -29,3 +29,7 @@ export function dressSpecialRoom(r, ctx) {
   }
   return false;
 }
+
+// WQ14: the rune order told as a carving (moon = blue, crown = gold, wolf = red), placed a room before the plates
+const RUNE_LINE = { moon: 'THE BLUE MOON ROSE', crown: 'THE GOLD CROWN FELL', wolf: 'THE RED WOLF FED' };
+export const runeCarving = (order) => ['A CARVING ON THE WALL:', `FIRST ${RUNE_LINE[order[0]]}, THEN ${RUNE_LINE[order[1]]}, AND LAST ${RUNE_LINE[order[2]]}.`];

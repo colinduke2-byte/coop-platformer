@@ -4,6 +4,7 @@ import { S } from '../../src/systems/state.js';
 import { getRegion } from '../../src/data/maps.js';
 import { tierIn, tierAt } from '../../src/world/worldgen.js';
 import { TILE } from '../../src/config.js';
+import { buildBarrow } from '../../src/world/barrowgen.js';
 
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log('  ok   ' + name); };
@@ -31,4 +32,18 @@ t('WQ9: hidden places in warm regions are not dressed in snow and pines', () => 
   }
 });
 
+t('WQ14: the rune order is carved in an earlier room, not printed beside the plates', () => {
+  let n14 = 0;
+  for (let seed = 1; seed < 400 && n14 < 12; seed++) for (let idx = 0; idx < 3; idx++) {
+    const b = buildBarrow(seed * 31, idx, 1);
+    const po = b.entities.find((e) => e.t === 'plateorder'); if (!po) continue;
+    const plate = b.entities.find((e) => e.t === 'plate'), carv = b.entities.find((e) => e.t === 'sign' && e.text[0] === 'A CARVING ON THE WALL:');
+    assert.ok(carv && carv.y > plate.y + 3, 'the carving is in the room before the plates');
+    assert.ok(!b.entities.some((e) => e.t === 'sign' && /MOON \(BLUE\)/.test(e.text.join(' '))), 'no sign prints the answer');
+    const at = (k) => carv.text[1].indexOf({ moon: 'MOON', crown: 'CROWN', wolf: 'WOLF' }[k]);
+    assert.ok(at(po.order[0]) < at(po.order[1]) && at(po.order[1]) < at(po.order[2]), 'the carving tells the order');
+    n14++;
+  }
+  assert.ok(n14 >= 5, 'enough trap rooms checked: ' + n14);
+});
 console.log(`${n} world WQ tests passed`);
