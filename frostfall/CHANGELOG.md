@@ -3,6 +3,28 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## Finishing pass
+- **Five more new quests**, one per region that still lacked one:
+  - The Wall Fires (Corvin, Emberhold): a timed beacon relay across the Ashen Peaks.
+  - The Unfinished Verse (the Scribe, Old Kingdom): a riddle.
+  - Lamps in the Deep (Lanternfall): a rescue.
+  - One Good Turn (Greenhollow): a trade chain.
+  - The Quiet Ledger (Nadir, Amberwell): a stealth theft.
+- **Delves:** about half the dungeons have a brazier puzzle (hawk, stag, serpent). The right order opens a sealed room.
+- **Charts:** finished region surveys give framed charts that hang over your Trophy Wall.
+- **Hub folk** have new lines after their region's boss falls.
+- **Arena Mode unlocks** come from your best score and wave: cloaks, plus run modifiers with score bonuses (Glass Cannon, Brittle Bones, Emberfall, Chaos, Frail).
+- **Combat:**
+  - Weak hits show big orange numbers and resisted hits small grey ones.
+  - Every weapon's description says what its heavy does, and the bestiary says which foes crush shields.
+  - The perfect dodge also slows enemy ground zones and leaps.
+  - The danger colours count smarter late foes.
+- **LARGE TEXT option:** a 2× font for dialogue, hints, toasts and menu help.
+- **The intro fades to white.**
+- **Menu text:** sockets and skill-ups are explained.
+- **The artifact copy** hides "Export file" (the viewer blocks downloads) and points to "Copy save code".
+- **Balance:** Vault Sovereign health 0.6 → 0.32. A second balance bot (the "masher") gives a lower bound.
+
 ## The big improvement pass (docs/IMPROVEMENT_PLAN.md, 204 items from an 8-area audit)
 Full lists: `docs/STORY_CHANGES.md` (every changed line), `docs/ECONOMY_CHANGES.md` (every number), `docs/LORE_CANON.md`,
 `docs/BALANCE_TABLE.md` (boss results before/after).
