@@ -73,3 +73,41 @@ phase-2 melee tell floor 0.4 s, hyper-armour, then the boss HP retune below). Th
 Boss HP: boss 0.92 -> 0.8, sovereign 0.62 -> 0.42, hollowking 0.5 -> 0.36, blightmother 0.5 -> 0.46, vaultsovereign 0.65 -> 0.6,
 winter (new) 1.1: the Long Winter is the late spike (no bot scenario yet). The bot only reacts to wind-ups, not to ground
 zones, so the zone-based signatures cost it more than they cost a player.
+
+## Finish pass: the masher profile (CB28), 2026-10-24
+
+`test/balance.mjs` has a second profile: `PROFILE=masher node test/balance.mjs N` walks in and mashes the sword key, never rolls
+and never raises the shield (it still drinks potions below 40%). It is the floor under the floor. Both profiles, 4 trials each
+on Normal, after the combat pass (CB22 smarter late foes, CB23 second moves, boss signatures). "HP left" is the bot's health
+on wins; "boss left" is the boss's health on losses.
+
+| Fight | Normal bot | Masher | Notes |
+|---|---|---|---|
+| Wolf pack (start) | 4/4 | 4/4 | |
+| Bandit camp (iron) | 2/4 | 4/4 | masher better |
+| Crypt hall (steel) | 3/4 | 3/4 | |
+| Jarl Valdrek (iron) | 1/4, boss 24% left | 3/4, boss 11% left | masher better |
+| Grimfang (iron) | 0/4, boss 36% left | 1/4, boss 37% left | hard first-act boss; watch it |
+| Kragnar (ember) | 1/4, boss 10% left | 2/4, boss 9% left | |
+| Ashen Sovereign (ember) | 3/4 | 1/4 | the one fight dodging clearly pays |
+| Admiral Veyl (ember) | 2/4 | 1/4 | |
+| Hollow King (ember) | 0/4, boss 25% left | 2/4, boss 10% left | masher better |
+| Vale patrol (nordic +4) | 2/4 | 1/4 | |
+| Sunscorch patrol (forged +6) | 0/4 (87 s, time-outs) | 3/4 | the normal bot rolls out of reach and times out |
+| Blight Mother (nordic +5) | 1/4, boss 26% left | 2/4, boss 17% left | |
+| Vault Sovereign (forged +7) | **0/4, boss 49% left** | **0/4, boss 51% left** | out of line: retuned below |
+| Tier 1 patrol (nordic +3) | 3/4 | 3/4 | |
+| Tier 2 patrol (forged +6) | 2/4 | 2/4 | was 20/20 before CB22 |
+| Tier 3 patrol (legendary +9) | 0/4 (120 s, time-outs) | 0/4 (120 s, time-outs) | no deaths and no potions: the bot never finishes the conjurer before the limit |
+
+Retune, re-run at 8 trials:
+- `TUNE.bosses.vaultsovereign.hp`: 0.6 -> 0.42: normal 1/8 (boss 36% left), still a wall.
+- `TUNE.bosses.vaultsovereign.hp`: 0.42 -> **0.32** (kept): normal 3/8 (boss 25% left), masher 3/8 (boss 21% left). Inside the
+  late target of 20-40%. The fights are short (31 s): the bot dies to his damage, so if he still feels like a wall the next knob
+  is his damage (`TUNE.bosses.vaultsovereign.dmg`), not more health.
+
+**Flagged for Colin (not changed):** the masher wins as often as, or more often than, the dodging bot in most fights (bandit
+camp, Valdrek, Hollow King, Sunscorch). Mashing still pays: hits interrupt wind-ups often enough that rolling costs more damage
+than it saves. Only the Ashen Sovereign clearly rewards dodging. The knobs are `TUNE.combat.windupArmor` (hyper-armour share,
+now 0.12) and `armorKb`, so more foes keep their swing through a flurry. The tier 3 patrol needs a longer limit in the bot (or a
+bot that chases casters) before its numbers mean anything.

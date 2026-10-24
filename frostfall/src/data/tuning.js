@@ -288,7 +288,7 @@ export const TUNE = {
   art: { status: { burn: 0.11, drip: 0.28, chill: 0.2, shock: 0.32 } },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
-  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.8 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.42 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.36 }, blightmother: { hp: 0.46 }, vaultsovereign: { hp: 0.6 }, winter: { hp: 1.1 } },
+  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.8 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.42 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.36 }, blightmother: { hp: 0.46 }, vaultsovereign: { hp: 0.32 }, winter: { hp: 1.1 } },
   scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 4.4, dmg: 2.9, gold: 2.0, elite: 0.5 },
   // The economy (PR-03 and on): what shops pay, gold rewards, gold find. Owned by the economy pass.
   economy: {
