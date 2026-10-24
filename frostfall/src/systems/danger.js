@@ -14,12 +14,13 @@ export function playerNow() {
   const sh = stats.shield();
   return { hp: Math.max(40, S.maxHp), armor: armorEffect(stats.armor()), dmg: Math.max(melee, bow, spell), block: sh ? 0.45 * sh.block : 0 };
 }
-// 1 (easy) to 5 (hopeless) for fighting two of this enemy: `hp` is its full health, `dmg` its hit.
-export function dangerOf(hp, dmg) {
+// 1 (easy) to 5 (hopeless) for fighting two of this enemy: `hp` is its full health, `dmg` its hit, `f` its progress (CB22:
+// late foes attack faster, see powercurve.pace).
+export function dangerOf(hp, dmg, f = 0) {
   const d = settings.difficulty;
-  return dangerFromCost(costAgainst(playerNow(), { hp, dmg }, d), d);
+  return dangerFromCost(costAgainst(playerNow(), { hp, dmg, f }, d), d);
 }
-export const dangerOfEnemy = (e) => dangerOf(e.maxHp, e.cfg.dmg);
+export const dangerOfEnemy = (e) => dangerOf(e.maxHp, e.cfg.dmg, e.progressF || 0);
 export const dangerName = (n) => DANGER_NAMES[n] || '';
 // Danger band colours (palette indexes): easy green, fair white, tough yellow, deadly orange, hopeless red.
 export const DANGER_COL = [0, 8, 6, 13, 12, 11];

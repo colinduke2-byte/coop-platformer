@@ -2,7 +2,7 @@
 // slow motion on enemy zones and tweens, the nemesis keyed by id.
 import { launch, check, failCount } from './harness.mjs';
 const h = await launch();
-await h.open('map=village');
+await h.open('scene=game&map=forest&spawn=west');
 await h.sleep(1500);
 const G = (fn, a) => h.ev(fn, a);
 
@@ -24,6 +24,18 @@ const hv = await G(async () => {
   return out;
 });
 check('CB24: every weapon (fixed and generated) names its heavy once: sword overhead, dagger backstab, greatsword charge, halberd sweep, staff bolt', !hv.missing.length && !hv.twice.length && /overhead/.test(hv.sword) && /back/.test(hv.knife) && /charge/.test(hv.gs) && /sweep/.test(hv.halberd) && /frost bolt/.test(hv.staff) && /HEAVY: /.test(hv.gen || ''), JSON.stringify(hv));
+// ---- CB22: the danger colour of a real foe counts its late pace
+const dg = await G(async () => {
+  const D = await import('/src/systems/danger.js'), g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S;
+  S.flags.sovereignDead = true; S.flags.hollowKingDead = true;
+  const e = g.addEnemy('knight', g.player.x + 200, g.player.y, { tier: 3 }); const f = e.progressF;
+  // a foe whose cost sits just under a band edge at pace 1 reads one band higher at its late pace
+  const out = { f, same: D.dangerOfEnemy(e) === D.dangerOf(e.maxHp, e.cfg.dmg, f) };
+  out.never = true; out.up = false;
+  for (let hp = 5; hp < 3000; hp += 5) { const a = D.dangerOf(hp, 6, 0), b = D.dangerOf(hp, 6, f); if (b < a) out.never = false; if (b > a) out.up = true; }
+  e.destroy(); return out;
+});
+check('CB22: a late foe\'s danger colour includes its faster attacks (never lower, a band up near each edge)', dg.f > 0.6 && dg.same && dg.up && dg.never, JSON.stringify(dg));
 //@@MORE@@
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
