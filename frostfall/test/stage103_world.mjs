@@ -144,6 +144,16 @@ const ev = await G(async () => {
 });
 check('WQ6: a trader marks itself in its own marker and leaves your waypoint alone', ev.during.wp.x === 30 && ev.during.em?.map === 'forest' && ev.after?.x === 30 && !ev.emAfter && ev.wounded === 'wounded', JSON.stringify(ev));
 
+// ---- WQ17: minor finds fill the Reach: a cairn rests you, a snared fox can be freed
+const finds = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game');
+  const ents = sc.built.entities, cairns = ents.filter((e) => e.t === 'cairn').length, snares = ents.filter((e) => e.t === 'snare').length, packs = ents.filter((e) => e.t === 'chest' && /minor/.test(e.id)).length;
+  const c = sc.interactables.find((i) => i.label?.() === 'E: ADD A STONE'), f = sc.interactables.find((i) => i.label?.() === 'E: FREE THE FOX');
+  const g0 = S.gold; c?.interact(); f?.interact();
+  return { cairns, snares, packs, rested: S.flags.restedUntil > S.playtime, again: c?.canInteract(), gold: S.gold - g0 };
+});
+check('WQ17: the Reach has minor finds; a cairn rests you once a day and a freed fox pays', finds.cairns + finds.snares + finds.packs >= 20 && finds.rested && finds.again === false && finds.gold > 0, JSON.stringify(finds));
+
 // ---- WQ3 / WQ19: weather belongs to its region
 const reachW = await G(async () => {
   const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');

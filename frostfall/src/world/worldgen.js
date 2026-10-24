@@ -8,6 +8,7 @@ const SOLID_SET = new Set(SOLID_TILES);
 import { hash } from '../util.js';
 import { buildLoop, trackSpots } from './roamers.js';
 import { hamletFolk } from './hamletfolk.js';
+import { placeMinorFinds, propsPass } from './minorfinds.js';
 
 export const REACH_W = 540;
 export const REACH_H = 378;
@@ -454,6 +455,9 @@ export function buildRegion(def, region, seed) {
     }
   }
 
+  // ---- WQ17: minor finds in the empty stretches (no icon, no toast; see world/minorfinds.js)
+  placeMinorFinds({ def, g, add, chest, pois, R, W, H, tierAt, blocked: (x, y) => BLOCKED.has(bio[y]?.[x]), solid: (x, y) => SOLID_SET.has(g.t[y]?.[x]) || g.t[y]?.[x] === TILE.PATH });
+
   // ---- wild creatures, nodes and herbs along the roads and in the wilds --------------------------
   for (let i = 0; i < (def.wild || 120); i++) {
     const x = 6 + Math.floor(R() * (W - 12)), y = 6 + Math.floor(R() * (H - 12));
@@ -489,6 +493,8 @@ export function buildRegion(def, region, seed) {
   def.scenery(g, bio, W, H);
   for (const d of def.dress) g.dress(d);
   def.finish?.(g, bio, W, H);
+  propsPass(def, g, { tree: [TILE.PINE, TILE.DEADTREE, TILE.BOGTREE, TILE.BIRCH, TILE.CACTUS, TILE.CRYSTAL, TILE.GLOWCAP], stump: [TILE.STUMP], rock: [TILE.ROCK, TILE.BASALT, TILE.HEATHROCK, TILE.BOULDER, TILE.SANDSTONE],
+    pillar: [TILE.PILLAR], reed: [TILE.BOGREED], ground: [def.ground, def.ground2] }, hash);      // VX-22: the art props, per region
 
   // ---- repair: every place must be walkable from the entrance. Carve a road through whatever sealed one in
   {

@@ -319,4 +319,6 @@ TUNE.world = {
   },
   // WQ12 / WQ24: what a chartmaker or hermit pays per region milestone: [gold, + gold per tier of the region's entrance]
   survey: { half: [120, 40], landmarks: [150, 50], full: [400, 120] },
+  // WQ17: minor finds. A cairn makes you rested (+25 max health) for cairnSecs, once a day; a freed fox pays foxGold
+  minor: { cairnSecs: 120, foxGold: 15 },
 };
