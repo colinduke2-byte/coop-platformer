@@ -386,6 +386,8 @@ TUNE.world = {
   // WQ21: what each new-shape regional quest pays (gold, and a rare piece of gear of this tier)
   rquest: { gold: 450, tier: 3 },
   retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
+  // CH14: a dig spot's gold: base + random 0..rand + perTier x its tier (doubled when it is only coin); paid as a gold pickup
+  dig: { base: 20, rand: 30, perTier: 25 },
 };
 
 // ---- H: HUD and first hour
