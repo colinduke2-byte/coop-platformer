@@ -12,6 +12,8 @@ import { maybeRelic, grantRelic } from '../systems/relics.js';
 import { OrphanCub } from '../entities/Props.js';
 import { sfx, music } from '../audio/sfx.js';
 import { tip } from '../systems/tips.js';
+import { addGold } from '../systems/inventory.js';
+import { TUNE } from '../data/tuning.js';
 
 export const killMethods = {
   // Persist a world kill; clearing every enemy of a camp pays a bounty.
@@ -23,12 +25,12 @@ export const killMethods = {
     if (sp.nemesis) this.onNemesisDown(en);
     if (sp.roamRoute) this.onWorldBossDown(en);
     if (sp.mother) this.onMotherDown(en);
-    if (sp.blood) { const g = 120 + 80 * (sp.tier || 0); S.gold += g; S.flags.bloodAlphas = (S.flags.bloodAlphas || 0) + 1; this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((sp.tier || 1) + 1, Math.random, 3) })); bus.emit('toast', `THE BLOOD MOON ALPHA FALLS  +${g} GOLD`, 13); sfx.play('quest'); }
+    if (sp.blood) { const R = TUNE.economy.rewards.bloodAlpha, g = addGold(R[0] + R[1] * (sp.tier || 0), { quiet: true }); S.flags.bloodAlphas = (S.flags.bloodAlphas || 0) + 1; this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((sp.tier || 1) + 1, Math.random, 3) })); bus.emit('toast', `THE BLOOD MOON ALPHA FALLS  +${g} GOLD`, 13); sfx.play('quest'); }
     if (sp.camp && !S.bounty[sp.camp]) {
       const left = this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i);
       if (!left) this.time.delayedCall(700, () => this.payBounty(sp.camp, sp.tier || 0));
     } else if (sp.camp && S.bounty[sp.camp] && !this.built.entities.some((x) => x.t === 'enemy' && x.camp === sp.camp && !isGone(`${this.mapId}:${x._i}`) && x !== sp && x._i !== sp._i)) {
-      const g = 15 + 12 * (sp.tier || 0); S.gold += g;
+      const R = TUNE.economy.rewards.campRetaken, g = addGold(R[0] + R[1] * (sp.tier || 0), { quiet: true });
       this.time.delayedCall(700, () => bus.emit('toast', `CAMP RETAKEN  +${g} GOLD`, 13));
     }
   },
@@ -36,7 +38,7 @@ export const killMethods = {
   onWorldBossDown(en) {
     const id = en.spec.rid;
     S.flags['rb_' + id] = true;
-    S.gold += 150 + 100 * (en.tier || 0);
+    { const R = TUNE.economy.rewards.worldBoss; addGold(R[0] + R[1] * (en.tier || 0), { quiet: true }); }
     this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem((en.tier || 0) + 1, Math.random, 3) }));
     const unique = { cinder: 'cinder_maul', floe: 'harpoon', lastknight: 'kings_signet', slough: 'lantern_oil', greytusk: 'mammoth_tusk', shardstag: 'antler_crown', lodehulk: 'lode_pick', mossking: 'verdant_mail', sunwyrm: 'sunplate' }[id];
     if (unique) this.pickups.push(new Pickup(this, en.x + 10, en.y - 6, { type: 'item', id: unique }));
@@ -59,7 +61,7 @@ export const killMethods = {
     delete S.nemesis;
     if (S.flags.waypoint && S.flags.waypoint.map === 'forest') delete S.flags.waypoint;
     S.nemesisSlain = (S.nemesisSlain || 0) + 1;
-    S.gold += 80 + 60 * k + 40 * tier;
+    { const R = TUNE.economy.rewards.nemesis; addGold(R[0] + R[1] * k + R[2] * tier, { quiet: true }); }
     this.pickups.push(new Pickup(this, en.x, en.y - 6, { type: 'item', id: makeGenItem(tier + 1, Math.random, k >= 3 ? 3 : 2) }));
     bus.emit('toast', 'NEMESIS VANQUISHED', 13); sfx.play('quest');
     maybeRelic(this, 0.4);
@@ -75,8 +77,7 @@ export const killMethods = {
     if (S.bounty[id]) return;
     S.bounty[id] = true;
     const kind = (this.built.entities.find((x) => x.t === 'bounty' && x.id === id) || {}).kind || 'camp';
-    const gold = Math.round((40 + 30 * tier) * (kind === 'champion' ? 1.6 : 1));
-    S.gold += gold; S.run.camps++;
+    const R = TUNE.economy.rewards, gold = addGold((R.bounty[0] + R.bounty[1] * tier) * (kind === 'champion' ? R.bountyChampion : 1), { quiet: true }); S.run.camps++;
     completeContract(id, this);
     this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(tier + (kind === 'champion' ? 1 : 0), Math.random, kind === 'champion' ? 2 : null) }));
     bus.emit('toast', `${kind.toUpperCase()} CLEARED  +${gold} GOLD`, 13);

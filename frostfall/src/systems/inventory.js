@@ -7,6 +7,10 @@ import { recalc, stats } from './stats.js';
 import { sfx } from '../audio/sfx.js';
 import { tip } from './tips.js';
 import { burden } from './burden.js';
+// ▲ / ▼ on pickup toasts comes from systems/compare.js through setPickupMark (features/economy_hooks.js), so inventory
+// does not import compare (that would put compare, upgrades and ngplus in the stats import cycle).
+let upMark = () => '';
+export function setPickupMark(fn) { upMark = fn; }
 
 export const count = (id) => S.inv[id] || 0;
 
@@ -16,7 +20,7 @@ const warnWeight = () => burden.invalidate();
 export function addItem(id, n = 1, quiet = false) {
   S.inv[id] = (S.inv[id] || 0) + n;
   (S.found ||= {})[id] = true;
-  if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}`, 6);
+  if (!quiet) bus.emit('toast', `+${n > 1 ? n + ' ' : ''}${ITEMS[id].name}${upMark(id)}`, 6);     // ▲ / ▼: better or worse than what you wear (PR-21)
   bus.emit('item:added', id, n);
   warnWeight();
 }
@@ -34,10 +38,13 @@ export function removeItem(id, n = 1) {
   return true;
 }
 
-export function addGold(n) {
-  n = Math.round(n * stats.mul('goldMul') * modMul('goldMul'));
+// Every gold reward goes through here (CH14): gold find from gear (stats.goldFind) and the run's challenge modifiers apply,
+// unless { mul: false } (a flat payment). { quiet: true } skips the toast when the caller shows its own. Returns what was paid.
+export function addGold(n, { mul = true, quiet = false } = {}) {
+  n = Math.round(n * (mul ? stats.goldFind() * modMul('goldMul') : 1));
   S.gold += n;
-  bus.emit('toast', `+${n} GOLD`, 13);
+  if (!quiet) bus.emit('toast', `+${n} GOLD`, 13);
+  return n;
 }
 
 export function addArrows(n) {

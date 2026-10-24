@@ -288,6 +288,40 @@ export const TUNE = {
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
   bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },
   scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 5.2, dmg: 2.9, gold: 2.0, elite: 0.5 },
+  // The economy (PR-03 and on): what shops pay, gold rewards, gold find. Owned by the economy pass.
+  economy: {
+    sellRate: 0.5,             // a shop pays this share of an item's value
+    sellBulk: 0.25,            // ... and this share for bulk goods (items with bulk: true: ingots, ore, lockpicks), which shops sell in bundles
+    critCap: 0.5,              // melee and bow crit chance never go above this (PR-05)
+    goldFindCap: 0.6,          // gold-find bonuses from gear, sets, Pell and blessings add up to at most +60% (PR-25)
+    pellGold: 0.1,             // Pell at your side: +10% gold
+    plenty: [0.1, 0.025],      // the generated "of Plenty" affix: +10% gold, +2.5% per tier step (k = min(2, tier)): 10 / 12.5 / 15%
+    // Gold rewards (CH14): [base, per tier] unless noted. All are paid through addGold, so gold find applies.
+    rewards: {
+      bloodAlpha: [120, 80], campRetaken: [15, 12], worldBoss: [150, 100],
+      nemesis: [80, 60, 40],               // base, per kill it made, per tier
+      bounty: [40, 30], bountyChampion: 1.6, // a champion's bounty pays x1.6
+      wounded: [45, 35], hunt: 20, raid: [60, 40],
+      arenaWave: [20, 12], gauntlet: 1.4,  // base, per wave; the Gauntlet pays x1.4
+      discoverHidden: [20, 12], discover: [4, 4],
+    },
+    deathGoldKeep: 0.9,        // dying keeps this share of your gold
+    // generated loot (PR-10): armour x rarityMult^armorPow, block x rarityMult^blockPow, affix strength grows to tier affixTierCap,
+    // staves: spell power 1 + (staff[0] + staff[1] x tier) x rarityMult, at most staffMax; a Legendary helmet or charm: +legendPools
+    gen: { armorPow: 0.5, blockPow: 0.25, affixTierCap: 3, staff: [0.1, 0.12], staffMax: 1.9, legendPools: 10 },
+    repair: { base: 0.2, perLevel: 0.08, valueDiv: 2000, valueCap: 0.8 },   // gold per point of wear (PR-12; was 0.15 + value / 400)
+    wear: { bowShot: 0.5, staffCast: 0.25 },     // bows wear per shot, staves per spell cast (PR-12; melee: 1 per landed hit)
+    // New Game+ (PR-17): ordinary enemies' progress floor (floor[0] + floor[1] x (ng - 1)); bosses +bossHp / +bossDmg per cycle;
+    // generated loot +lootTiers per cycle; the Mythic rarity's weight per cycle (Legendary is 3)
+    ng: { floor: [0.5, 0.25], bossHp: 0.35, bossDmg: 0.12, lootTiers: 1, mythicWeight: 1.5 },
+    // the Great Anvil's Ascend (PR-26), by the rarity it goes TO: Rare, Legendary, Mythic (NG+ only)
+    ascend: { rare: { gold: 600, ember_ore: 2 }, legend: { gold: 1500, ember_ore: 3, heart_shard: 1 }, mythic: { gold: 3000, ember_ore: 5, winters_echo: 1 } },
+    respec: { base: 150, perPerk: 50 },   // unlearning every perk at a shrine: base + per perk unlearned (PR-18)
+    transferShare: 0.25,       // moving a temper to another item costs this share of the gold its levels cost (PR-19)
+    gemFuse: [60, 180],        // gold to fuse three gems into a Flawless one, three Flawless into a Royal one (PR-23)
+    staffRubyPct: 0.015,
+    xpNear: 180,               // area and utility spells pay skill XP only with an alerted enemy this close (px, PR-15)       // a gem's damage point in a staff adds this much spell power (a Ruby, +3 damage: +4.5% spells) (PR-01)
+  },
   difficulty: {
     // dmgTaken / enemyHp / regen: the core three. windup & chase scale enemy telegraph length and chase speed (bosses keep their own timing);
     // elite: how often elite and champion enemies appear; drops: food and potion drop chance; price: shop buy prices; durability: gear wear (null = the player's own setting, 'hard' = on unless switched off in the Hard setting)

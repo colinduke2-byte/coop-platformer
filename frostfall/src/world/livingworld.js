@@ -7,7 +7,7 @@ import { sfx, music } from '../audio/sfx.js';
 import { tierAt } from './worldgen.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
-import { addItem } from '../systems/inventory.js';
+import { addItem, addGold } from '../systems/inventory.js';
 import { dialogue } from '../systems/dialogue.js';
 import { makeGenItem } from '../systems/genloot.js';
 import Npc from '../entities/Npc.js';
@@ -17,6 +17,7 @@ import { applyStatus } from '../systems/status.js';
 import { ITEMS } from '../data/items.js';
 import { RestSpot } from '../entities/Props.js';
 import Pickup from '../entities/Pickup.js';
+import { TUNE } from '../data/tuning.js';
 
 NPC_DEFS.wounded = { name: 'WOUNDED TRAVELLER', tex: 'spr_trapper' };
 SCRIPTS.wounded = async function wounded() {
@@ -27,8 +28,7 @@ SCRIPTS.wounded = async function wounded() {
   const c = await choose([S.inv.hp_potion > 0 ? 'Give a health potion' : 'You have no potion', 'Leave him']);
   if (c !== 0 || !(S.inv.hp_potion > 0)) { await say(N, 'Then... go carefully.'); return; }
   S.inv.hp_potion--; w.done = true;
-  const gold = 45 + 35 * w.tier;
-  S.gold += gold;
+  const gold = addGold(TUNE.economy.rewards.wounded[0] + TUNE.economy.rewards.wounded[1] * w.tier, { quiet: true });
   addItem(makeGenItem(w.tier, Math.random, w.tier > 1 ? 1 : null));
   S.flags.helped = (S.flags.helped || 0) + 1;
   await say(N, `Bless you. Take this, ${gold} gold and a thing I took from a dead man. Tell them the Hollow Road is not safe.`);
@@ -190,7 +190,7 @@ export const livingMethods = {
       h.life -= dt;
       const alive = h.wolves.filter((x) => x.active && !x.dead);
       if (!alive.length && h.deer.active && !h.deer.dead) {
-        this.huntEvt = null; S.gold += 20; bus.emit('toast', 'THE DEER LIVES  +20 GOLD FROM A GRATEFUL TRAPPER', 13);
+        this.huntEvt = null; const g = addGold(TUNE.economy.rewards.hunt, { quiet: true }); bus.emit('toast', `THE DEER LIVES  +${g} GOLD FROM A GRATEFUL TRAPPER`, 13);
         this.pickups.push(new Pickup(this, h.deer.x, h.deer.y - 6, { type: 'item', id: 'venison' }));
       } else if (h.life <= 0 || !h.deer.active) this.huntEvt = null;
     }
@@ -199,7 +199,7 @@ export const livingMethods = {
       r.life -= dt;
       const live = r.foes.filter((x) => x.active && !x.dead);
       if (!live.length) {
-        this.raidEvt = null; const gold = 60 + 40 * r.tier; S.gold += gold; S.flags.raidsStopped = (S.flags.raidsStopped || 0) + 1;
+        this.raidEvt = null; const gold = addGold(TUNE.economy.rewards.raid[0] + TUNE.economy.rewards.raid[1] * r.tier, { quiet: true }); S.flags.raidsStopped = (S.flags.raidsStopped || 0) + 1;
         this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(r.tier, Math.random, r.tier > 1 ? 1 : null) }));
         bus.emit('toast', `RAID STOPPED  +${gold} GOLD`, 13); sfx.play('levelup');
         if (S.flags.waypoint && S.flags.waypoint.x === r.poi.x) delete S.flags.waypoint;

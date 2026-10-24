@@ -9,11 +9,13 @@ import { QUESTS, TARGETS } from './quests.js';
 import { startQuest, finishQuest } from '../systems/quests.js';
 import { ITEMS } from './items.js';
 import { addItem, removeItem, count, addGold } from '../systems/inventory.js';
-import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines } from './services.js';
+import { buyMenu, sellMenu, repairMenu, reforgeMenu, gearUpgradeMenu, buyUpgrade, enchantMenu, pick, statLines, ascendMenu } from './services.js';
 import { listScreen } from '../scenes/ShopScene.js';
 import { addRep, rep, repTier, FACTIONS, FACTION_IDS } from './factions.js';
-import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune } from '../systems/sockets.js';
+import { socketCount, socketed, insertGem, removeGem, gemList, runeSlot, runeOf, runeList, setRune, unsetRune, nextGrade, fuseCost, fuseGems } from '../systems/sockets.js';
 import { recalc } from '../systems/stats.js';
+import { maxLevel } from '../systems/upgrades.js';
+import { own } from '../systems/instances.js';
 import { companionStory } from './companionquests.js';
 import { setSummary } from '../systems/sets.js';
 import { EMBERHOLD } from './emberhold_map.js';
@@ -242,7 +244,8 @@ export function forgeEmber(id) {
   S.gold -= r.gold; for (const [m, n] of Object.entries(r.mats)) removeItem(m, n);
   addItem(r.id, 1, true);
   // the Great Anvil sometimes sings: a masterwork comes out already tempered twice over
-  if (Math.random() < 0.15 + (S.rep?.anvil >= 45 ? 0.1 : 0) && (S.upgrades[r.id] || 0) < 2) { S.upgrades[r.id] = 2; S.flags.lastMasterwork = r.id; bus.emit('toast', 'MASTERWORK! TEMPERED +2', 13); }
+  // (PR-08: the new copy itself, not one you already had)
+  if (Math.random() < 0.15 + (S.rep?.anvil >= 45 ? 0.1 : 0)) { S.upgrades[own(r.id, false)] = 2; S.flags.lastMasterwork = r.id; bus.emit('toast', 'MASTERWORK! TEMPERED +2', 13); }
   return 'ok';
 }
 export async function emberforgeMenu(who) {
@@ -302,15 +305,15 @@ export function masterTemper(slot) {
   const id = S.equip[slot]; if (!id) return 'none';
   const lv = S.upgrades[id] || 0;
   if (lv < 6) return 'early';
-  if (lv >= 10) return 'max';
+  if (lv >= maxLevel()) return 'max';
   if (rep('anvil') < 45) return 'locked';
-  return buyUpgrade(slot, 10);
+  return buyUpgrade(slot, maxLevel());
 }
 async function masterTemperMenu(who) {
   if (!S.flags.emberforged) { await say(who, 'The Great Anvil is still asleep. Wake it first.'); return; }
   if (rep('anvil') < 45) { await say(who, 'The Anvil Court does not trust you with the Great Anvil yet. Earn their trust first.'); return; }
   await say(who, 'Past +6 the metal needs the Anvil\'s own fire: Ember Ore, and a Heart Shard for the last two. Bring me what is worth tempering.');
-  await gearUpgradeMenu(who, 10);
+  await gearUpgradeMenu(who, maxLevel());
 }
 
 SCRIPTS.brannoch = async function brannoch() {
@@ -334,7 +337,7 @@ SCRIPTS.brannoch = async function brannoch() {
     else if (c === 1) await gearUpgradeMenu(N, 6);
     else if (c === 2) { const s = await choose(['Repair', 'Reforge', 'Back']); if (s === 0) await repairMenu(N); else if (s === 1) await reforgeMenu(N); }
     else if (c === 3) await enchantMenu(N);
-    else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); }
+    else if (c === 4) { const a = await choose(['Faction armoury', 'Master temper', 'Ascend gear', 'Back']); if (a === 0) await armouryMenu(N); else if (a === 1) await masterTemperMenu(N); else if (a === 2) { if (!S.flags.emberforged) await say(N, 'The Great Anvil is still asleep. Wake it first.'); else await ascendMenu(N); } }
     else return;
   }
 };
@@ -347,9 +350,9 @@ export async function socketMenu(who) {
     const labels = slots.map((sl) => { const id = S.equip[sl]; return `${ITEMS[id].name} (${socketed(id).filter(Boolean).length}/${socketCount(id)}${runeSlot(id) ? (runeOf(id) ? ' R' : ' r') : ''})`; });
     const i = await pick(labels, 'Done');
     if (i < 0) return;
-    const id = S.equip[slots[i]];
     for (;;) {
-      const a = socketed(id), opts = a.map((g, k) => (g ? `Remove ${ITEMS[g].name}` : `Set a gem (socket ${k + 1})`));
+      // re-read every time: setting a gem can make the worn copy its own item (PR-08)
+      const id = S.equip[slots[i]], a = socketed(id), opts = a.map((g, k) => (g ? `Remove ${ITEMS[g].name}` : `Set a gem (socket ${k + 1})`));
       if (runeSlot(id)) opts.push(runeOf(id) ? `Remove ${ITEMS[runeOf(id)].name}` : 'Set a rune');
       const k = await pick(opts, 'Back');
       if (k < 0) break;
@@ -370,10 +373,21 @@ export async function socketMenu(who) {
     }
   }
 }
+// PR-23: three gems of a grade become one of the next (Flawless, then Royal)
+async function fuseMenu(who) {
+  const list = () => gemList().filter((g) => nextGrade(g));
+  if (!list().length) { await say(who, 'Three alike and I can make one better. Bring me three.'); return; }
+  await listScreen({
+    title: 'FUSE GEMS', hint: 'E FUSE THREE   ESC DONE', empty: 'NO GEMS TO FUSE',
+    rows: () => list().map((g) => { const nx = nextGrade(g), ok = count(g) >= 3 && S.gold >= fuseCost(g); return { id: g, name: ITEMS[g].name, tag: fuseCost(g) + 'G', ok, tagCol: ok ? 13 : 11, sub: 'INTO ' + ITEMS[nx].name.toUpperCase(), lines: [[`HAVE ${count(g)} / 3`, count(g) >= 3 ? 8 : 11], [ITEMS[nx].desc.toUpperCase().slice(0, 38), 5]] }; }),
+    onSelect: (i, ui) => { const g = list()[i]; if (!g) return; const nx = fuseGems(g); if (!nx) { sfx.play('nostamina'); ui.say('NEED THREE AND THE GOLD', 11); return; } sfx.play('levelup'); ui.say('FUSED: ' + ITEMS[nx].name.toUpperCase(), 15); },
+  });
+}
 SCRIPTS.tamsin = async function tamsin() {
   const N = 'Tamsin';
   await say(N, cyc('tamsinN', ['A stone is a promise the earth made in a hurry. I just remind it.', 'Rubies for the blade, onyx for the plate, sapphires for the mind. Amber if you are tired of being tired.', 'Do not ask me what the runes say. Ask me what they want.']));
-  const c = await choose(['Set or remove gems', 'Buy / sell', 'Leave']);
+  const c = await choose(['Set or remove gems', 'Fuse gems', 'Buy / sell', 'Leave']);
   if (c === 0) await socketMenu(N);
-  else if (c === 1) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }, { id: 'rune_ignite', price: 220 }, { id: 'rune_rime', price: 220 }, { id: 'rune_storm', price: 240 }, { id: 'rune_drain', price: 260 }, { id: 'rune_thorns', price: 240 }, { id: 'rune_ward', price: 240 }]);
+  else if (c === 1) await fuseMenu(N);
+  else if (c === 2) await buyMenu(N, [{ id: 'gem_topaz', price: 150 }, { id: 'gem_amber', price: 110 }, { id: 'gem_sapphire', price: 120 }, { id: 'rune_ignite', price: 220 }, { id: 'rune_rime', price: 220 }, { id: 'rune_storm', price: 240 }, { id: 'rune_drain', price: 260 }, { id: 'rune_thorns', price: 240 }, { id: 'rune_ward', price: 240 }]);
 };

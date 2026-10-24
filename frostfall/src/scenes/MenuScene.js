@@ -11,11 +11,12 @@ import { S } from '../systems/state.js';
 import { ui } from '../systems/ui.js';
 import { bus } from '../systems/bus.js';
 import { ITEMS, SLOT_OF, SLOT_NAMES, iconKey } from '../data/items.js';
-import { upgraded, KIND_OF_TYPE } from '../systems/upgrades.js';
+import { MASTERY } from '../data/perks.js';
+import { compareText, upDown } from '../systems/compare.js';
 import { equip, unequip, removeItem } from '../systems/inventory.js';
 import Pickup from '../entities/Pickup.js';
 import { stats } from '../systems/stats.js';
-import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus } from '../systems/skills.js';
+import { SKILL_DEFS, SKILLS, xpNeeded, MAX_LVL, bonus, nextMastery } from '../systems/skills.js';
 import { sfx } from '../audio/sfx.js';
 import { tabs as extraTabs } from './menuTabs.js';
 import { panel } from '../ui/panel.js';
@@ -274,10 +275,12 @@ export default class MenuScene extends Phaser.Scene {
       const c = S.inv[id];
       // worn things carry a check mark; the offhand weapon says OH (see the description for which slot)
       const tag = S.equip.offhand === id ? 'OH' : Object.values(S.equip).includes(id) ? '✓' : '';
-      const right = tag ? textW(tag) + 6 : c > 1 ? textW('x' + c) + 6 : 0;          // names stop short of the count or the tag
+      const ud = tag ? 0 : upDown(id), mk = ud > 0 ? '▲' : ud < 0 ? '▼' : '';    // PR-21: better / worse than what you wear there
+      const right = (tag ? textW(tag) + 6 : c > 1 ? textW('x' + c) + 6 : 0) + (mk ? textW(mk) + 3 : 0);          // names stop short of the count or the tag
       this.T(30, y + 5, fit(it.name + up, Math.floor((150 - right - 30) / 6)), rc ?? (i === this.cursor ? 6 : 5));
       if (tag) this.T(152 - textW(tag), y + 5, tag, 8);
       else if (c > 1) this.T(150 - textW('x' + c), y + 5, 'x' + c, 4);
+      if (mk) this.T(150 - (c > 1 ? textW('x' + c) + 3 : 0) - textW(mk), y + 5, mk, ud > 0 ? 8 : 11);
     });
     if (list.length > ROWS) {
       const frac = this.scroll / (list.length - ROWS);
@@ -326,15 +329,7 @@ export default class MenuScene extends Phaser.Scene {
       const it = ITEMS[id];
       this.T(rx + 6, 123, fit(it.name, 24), rarityCol(id) ?? 13);
       let line = it.gen ? [it.rarity.toUpperCase(), ...(it.affixLines || [])].join('. ') + '.' : it.desc;
-      const slot = SLOT_OF[it.type];
-      if (slot) {
-        const cur = ITEMS[S.equip[slot]] || {};
-        const diff = (a, b, pct) => { const d = (a || 0) - (b || 0); const f = pct ? Math.round(d * 100) + '%' : Math.round(d * 10) / 10; return d === 0 ? '' : (d > 0 ? ' (+' : ' (') + f + ')'; };
-        const eff = (id2, o, key) => (o[key] ? upgraded(KIND_OF_TYPE[o.type], (S.upgrades && S.upgrades[id2]) || 0, o[key]) : 0);
-        const curId = S.equip[slot];
-        if (it.dmg) line = `DMG ${Math.round(eff(id, it, 'dmg') * 10) / 10}${diff(eff(id, it, 'dmg'), eff(curId, cur, 'dmg'))}. ` + line;
-        if (it.armor) line = `ARMOR ${Math.round(eff(id, it, 'armor') * 100)}%${diff(eff(id, it, 'armor'), eff(curId, cur, 'armor'), true)}. ` + line;
-      }
+      if (SLOT_OF[it.type]) line = compareText(id) + line;          // PR-21: the full comparison with what you wear there
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
       { const w = itemWeight(id); if (w >= 1) line = `WT ${Math.round(w * 10) / 10}. ` + line; }      // what it adds to your load
       const where = Object.entries(S.equip).find(([, v]) => v === id);
@@ -359,7 +354,8 @@ export default class MenuScene extends Phaser.Scene {
       g.fillStyle(C[0]); g.fillRect(13, y + 9, W - 28, 5);
       g.fillStyle(C[1]); g.fillRect(14, y + 10, W - 30, 3);
       g.fillStyle(C[15]); g.fillRect(14, y + 10, Math.round((W - 30) * frac), 3);
-      this.T(14, y + 15, fit(d.perk, 49), 4);
+      const nm = nextMastery(k);                 // PR-20: from level 10 the line shows the next mastery reward
+      this.T(14, y + 15, fit(s.lvl < 10 ? d.perk : nm ? `MASTERY AT ${nm.lvl}: ${nm.text}` : 'MASTERED: ' + MASTERY[k].map((x) => x.text).reverse().join(', '), 49), s.lvl < 10 ? 4 : 13);
     });
     this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
   }

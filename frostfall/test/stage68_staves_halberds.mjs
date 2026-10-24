@@ -56,7 +56,7 @@ await eq('walking_staff');
 const base = await num(() => window.__ff.game.scene.getScene('Game').player.spellPow());
 await eq('hazel_staff'); const hz = await num(() => window.__ff.game.scene.getScene('Game').player.spellPow());
 await eq('winter_staff'); const wn = await num(() => window.__ff.game.scene.getScene('Game').player.spellPow());
-check('a staff multiplies spell power (Hazel +8%, Long Winter +35%)', Math.abs(hz / base - 1.08) < 0.01 && wn / base > 1.3, `${base} ${hz} ${wn}`);
+check('a staff multiplies spell power (Hazel +10%, Long Winter +110%)', Math.abs(hz / base - 1.1) < 0.01 && wn / base > 2, `${base} ${hz} ${wn}`);
 const cost = (id, spell) => G(async ([id, spell]) => { const S = window.__ff.S, { SPELLS } = await import('/src/entities/playerMagic.js'); S.inv[id] = 1; S.equip.weapon = id; S.spell = spell; return window.__ff.game.scene.getScene('Game').player.spellCost(SPELLS[spell]); }, [id, spell]);
 const c0 = await cost('walking_staff', 'frost'), c1 = await cost('frostbirch_staff', 'frost'), n0 = await cost('walking_staff', 'nova'), n1 = await cost('winter_staff', 'nova');
 check('Frostbirch makes frost cost 15% less; the Long Winter staff halves Frost Nova', Math.abs(c1 / c0 - 0.85) < 0.01 && Math.abs(n1 / n0 - 0.5) < 0.01, `${c0} ${c1} ${n0} ${n1}`);

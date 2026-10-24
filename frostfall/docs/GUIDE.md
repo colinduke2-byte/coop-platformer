@@ -62,19 +62,25 @@ Skills level **by use** (five of them), so use what you want to improve:
 
 | Skill | Gets better from | Effect per level |
 |---|---|---|
-| One-Handed | swinging a sword | +7% sword damage, cheaper swings |
-| Archery | shooting the bow | +7% arrow damage, faster draw |
-| Destruction | casting attack spells | +7% spell damage, cheaper mana |
-| Restoration | healing, wards, blocking | stronger heals and wards |
-| Sneak | sneak attacks, pickpocketing | harder to detect, stronger backstabs |
+| One-Handed | swinging any melee weapon | +5% melee damage, swings cost 3% less |
+| Archery | shooting the bow | +5% arrow damage, draws 5% faster |
+| Destruction | casting attack spells | +5% spell damage, spells cost 3% less |
+| Restoration | healing, wards, blocking | +10% healing, wards absorb 12% more |
+| Sneak | sneak attacks, pickpocketing | 3% harder to detect, sneak attacks +0.2x |
 
 - Levels come **slowly on purpose**: level 5 is around 125 sword hits and level 10 around 900. Grinding is real, and it is rewarded.
-- Every two skill levels gained make a **character level**: you get a **perk point** and an attribute choice. Perks (I menu) are in chains of three per skill, unlocked at skill levels 2, 5 and 8 (for example Keen Edge, Duelist, Rending Blow).
+- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu): each skill has a perk at level 2, then a **fork** at 5 and at 8 where you take one of two (for example Duelist or Guardian, then Rending Blow or Cleave). Changed your mind? Any **shrine** will unlearn all your perks for gold and give the points back.
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
+  - A **staff's** forge levels raise your spells, the way a sword's raise its damage; a Ruby in a staff adds spell power.
+  - Found a better weapon than your tempered one? Any smith can **transfer a temper** onto the piece you wear, for a quarter of what the levels cost.
+  - The **Great Anvil** in Emberhold can **ascend** found gear one rank (Magic to Rare to Legendary) for gold, Ember Ore and a Heart Shard.
+  - **Tamsin** fuses three gems into a **Flawless** one, and three Flawless into a **Royal** one.
+  - The pack marks gear that beats what you wear (green up) or not (red down), and the details list what would change.
 - **Sockets**: better weapons and armour have slots for **gems** and **runes**. Runes add effects (burn, chill, shock, life-drain, thorns, warding). Set them at the rune-cutter in Emberhold.
 - **Food and alchemy**: cook meals at campfires for buffs; brew potions. Always carry a few.
 - **Companions**: hire *Ragna* in Hollowfrost, or recruit *Pell* in Emberhold. One at a time. Talk to them and choose *Orders*: stay close, hold the spot, or hunt on their own.
-- **Capstone perks** (page 2 of the perk list) unlock at skill level 12: Unbroken, Deadeye, Archmage, Second Wind and Assassin.
+- **Capstone perks** (the end of the perk list) unlock at skill level 12 after either perk of the fork at 8: Unbroken, Deadeye, Archmage, Second Wind and Assassin.
+- **Mastery**: at skill 15 and 20 every skill gives a reward of its own (cheaper swings, faster draws, cheaper spells, stronger heals, harder to see; then +10% damage and the like). The Skills tab shows the next one from level 10.
 - **Inns and chartmakers** (Reedwick, Skarn Hold): a room heals, saves and sleeps until morning; a rumour names a place you have not found; a chart reveals the map around you.
 - **Dungeon rooms to watch for**: spike halls (the floor glows red before it strikes), flooded halls (slow, with leeches) and ambush rooms (a chest in a suspiciously quiet room).
 
@@ -170,7 +176,7 @@ There are many endings (36 variants in Chapter 3 alone). They depend on:
 4. Your last choice: **Quench the Flame**, **Wear the Ember Crown**, or **Bind it to the Anvil** (needs a house to trust you).
 5. Which faction you stand best with.
 
-After the credits you can **start New Game+** with your progress and stronger enemies. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
+After the credits you can **start New Game+** with your progress and stronger enemies: the early regions keep up, bosses grow, loot rolls higher, **Mythic** gear appears, and every boss leaves a **Winter's Echo** for the Great Anvil's Ascended tempers (+11 and +12). The **Hollow Arena** gives a prize at waves 10, 20 and 30. There is also a **Daily Challenge** on the title screen: a fixed world and two modifiers per day, with a score board.
 
 ## 9. Tips and tricks
 

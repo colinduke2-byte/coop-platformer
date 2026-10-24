@@ -86,6 +86,7 @@ export const OPTIONAL_KINDS = {
   stash: 'object',         // home stash: item id -> count
   tomes: 'object',         // learned spell tomes
   trophies: 'object',      // trophy id -> true
+  inst: 'object',          // per-item instances of handcrafted gear: instance id -> base id (systems/instances, PR-08)
 };
 // New Game+ keeps these top-level fields (everything else starts fresh); flags keep only NG_KEEP_FLAGS. ngPlus counts up.
 // Fields not listed (arena records, fishing records, durability, shout, ammo, companion...) start over: that was the
@@ -93,7 +94,8 @@ export const OPTIONAL_KINDS = {
 export const NG_KEEP = ['skills', 'perks', 'perkPoints', 'charLevel', 'skillUps', 'bonusHp', 'bonusMp', 'bonusSp', 'inv', 'equip', 'upgrades', 'enchants',
   'gold', 'arrows', 'gen', 'hearts', 'lore', 'tips', 'kills', 'seen', 'spell',
   // what you own carries over too: the stash, gems and runes in your gear, learned tomes, trophies, cloak and pet
-  'stash', 'sockets', 'runes', 'tomes', 'trophies', 'cloak', 'pet'];
+  'stash', 'sockets', 'runes', 'tomes', 'trophies', 'cloak', 'pet',
+  'inst'];
 export const NG_KEEP_FLAGS = ['alchemy', 'houseBought', 'emberHouse', 'furn'];
 function withExtras(st) { for (const id of EXTRA_QUEST_IDS) st.quests[id] ||= { status: 'inactive' }; return st; }
 

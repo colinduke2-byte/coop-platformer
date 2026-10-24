@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { progress, hpMul, dmgMul, goldMul } from '../systems/enemyscale.js';
+import { ngProgress, ngBoss } from '../systems/ngplus.js';
 import { diff } from '../systems/difficulty.js';
 import { ENEMIES } from '../data/enemies.js';
 import { dist, norm, rand, facingKind, dir8 } from '../util.js';
@@ -57,16 +58,16 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (cfg.summons) this.summons = cfg.summons;      // a creature that calls for help by nature (elites get theirs from elite.js)
     // the further you are into the game (region and story), the harder and sturdier ordinary enemies are
     if (!cfg.title && !cfg.passive) {
-      const f = progress(this.tier);
+      const f = ngProgress(progress(this.tier));             // PR-17: in NG+ the early regions keep up
       this.progressF = f;
       this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * dmgMul(f)) };
       if (this.cfg.loot?.gold) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * goldMul(f)), Math.round(this.cfg.loot.gold[1] * goldMul(f))] };
       this.maxHp = Math.round(this.maxHp * hpMul(f));
     }
     if (cfg.title) {                             // bosses: their own health and damage tuning (TUNE.bosses)
-      const bt = { ...TUNE.bosses.default, ...(TUNE.bosses[kind] || {}) };
-      this.maxHp = Math.round(this.maxHp * bt.hp);
-      if (bt.dmg !== 1) this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * bt.dmg) };
+      const bt = { ...TUNE.bosses.default, ...(TUNE.bosses[kind] || {}) }, ngb = ngBoss();     // PR-17: bosses scale in NG+ too
+      this.maxHp = Math.round(this.maxHp * bt.hp * ngb.hp);
+      if (bt.dmg * ngb.dmg !== 1) this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * bt.dmg * ngb.dmg) };
     }
     if (cfg.kind !== 'boss') {                  // the difficulty sets telegraph length and chase speed (bosses keep their own timing)
       const D = diff();

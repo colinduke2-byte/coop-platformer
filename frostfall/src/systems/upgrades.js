@@ -1,8 +1,13 @@
-// Gear upgrades, +1 to +10, in three material tiers. Pure maths and tables: no game state in here (see data/services.js for the smiths).
+// Gear upgrades, +1 to +10 (+12 in New Game+), in three material tiers. Pure maths and tables; the only game state read is the
+// NG+ cycle, for the Ascended levels (see data/services.js for the smiths).
+import { ngLevel } from './ngplus.js';
 //   weapons and bows: more damage (a percent of the item's own damage)
 //   body armour, helmets, shields: more armour / block (points)
 // Tier I (+1 to +3) is the village smith, tier II (+4 to +6) the Emberhold smith, tier III (+7 to +10) the Great Anvil. See docs/UPGRADE_PLAN.md.
 export const MAX_LEVEL = 10;
+// New Game+ (PR-17): the Great Anvil's Ascended tempers, +11 and +12, need a Winter's Echo (only NG+ bosses drop it).
+export const ASCENDED_MAX = 12;
+export const maxLevel = (ng = ngLevel()) => (ng > 0 ? ASCENDED_MAX : MAX_LEVEL);
 export const TIER_OF = (lv) => (lv <= 3 ? 1 : lv <= 6 ? 2 : 3);
 
 // What buying level `lv` (1..10) costs: gold, a material and how many, and an optional second material.
@@ -12,13 +17,14 @@ export const UPGRADE_COST = [
   { gold: 220, mat: 'ash_iron', n: 2 }, { gold: 300, mat: 'ash_iron', n: 3 }, { gold: 400, mat: 'ash_iron', n: 4 },
   { gold: 550, mat: 'ember_ore', n: 2 }, { gold: 700, mat: 'ember_ore', n: 3 },
   { gold: 900, mat: 'ember_ore', n: 4, mat2: 'heart_shard', n2: 1 }, { gold: 1200, mat: 'ember_ore', n: 5, mat2: 'heart_shard', n2: 1 },
+  { gold: 1800, mat: 'ember_ore', n: 6, mat2: 'winters_echo', n2: 1 }, { gold: 2500, mat: 'ember_ore', n: 8, mat2: 'winters_echo', n2: 2 },
 ];
 // The highest level each kind of smith can do.
 export const SMITH_CAP = { village: 3, emberhold: 6, anvil: 10 };
 
 // Gain per level in each tier (index 0 = tier I). Weapons: fraction of base damage; the rest: points of armour or block.
 const GAIN = {
-  weapon: [0.05, 0.06, 0.08], bow: [0.05, 0.06, 0.08],
+  weapon: [0.05, 0.06, 0.08], bow: [0.05, 0.06, 0.08], staff: [0.05, 0.06, 0.08],     // staff: spell power (PR-01), the weapon ladder
   armor: [0.015, 0.02, 0.025], helm: [0.005, 0.007, 0.01], shield: [0.015, 0.015, 0.015],
 };
 // Total gain after `level` upgrades.
@@ -26,15 +32,18 @@ export function totalGain(kind, level) {
   const g = GAIN[kind];
   if (!g) return 0;
   let sum = 0;
-  for (let lv = 1; lv <= Math.min(MAX_LEVEL, Math.max(0, level | 0)); lv++) sum += g[TIER_OF(lv) - 1];
+  for (let lv = 1; lv <= Math.min(maxLevel(), Math.max(0, level | 0)); lv++) sum += g[TIER_OF(lv) - 1];
   return sum;
 }
 // The upgrade kind for an item type.
 export const KIND_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', armor: 'armor', helmet: 'helm', shield: 'shield' };
+// The upgrade kind of an item: a staff's forge levels raise its spell power, not its poke (PR-01).
+export const kindOf = (it) => (it?.style === 'staff' ? 'staff' : KIND_OF_TYPE[it?.type] || null);
 // The item's stat after upgrading: weapons and bows scale, armour/helmets/shields add points. `base` is the item's own number.
 export function upgraded(kind, level, base) {
   const g = totalGain(kind, level);
   if (kind === 'weapon' || kind === 'bow') return base * (1 + g);
+  if (kind === 'staff') return base * (1 + g);                  // base = the staff's spell multiplier
   if (kind === 'shield') return Math.min(0.9, base + g);
   return base + g;
 }
@@ -45,11 +54,13 @@ export function gainBeforeAfter(kind, level, base) {
   if (!base) return null;
   const a = upgraded(kind, level, base), b = upgraded(kind, level + 1, base);
   if (kind === 'weapon' || kind === 'bow') return `DAMAGE ${Math.round(a * 10) / 10} -> ${Math.round(b * 10) / 10}`;
+  if (kind === 'staff') return `SPELLS +${Math.round((a - 1) * 100)}% -> +${Math.round((b - 1) * 100)}%`;
   const pct = (v) => (v * 100).toFixed(1).replace('.0', '') + '%';
   return `${kind === 'shield' ? 'BLOCK' : 'ARMOR'} ${pct(a)} -> ${pct(b)}`;
 }
 // A plain-words line for the next level's gain.
 export function gainText(kind, level) {
   const next = totalGain(kind, level + 1) - totalGain(kind, level);
+  if (kind === 'staff') return `+${Math.round(next * 100)}% SPELL POWER`;
   return kind === 'weapon' || kind === 'bow' ? `+${Math.round(next * 100)}% DAMAGE` : kind === 'shield' ? `+${(next * 100).toFixed(1).replace('.0', '')}% BLOCK` : `+${(next * 100).toFixed(1).replace('.0', '')}% ARMOR`;
 }

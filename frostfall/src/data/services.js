@@ -10,12 +10,16 @@ import { TUNE } from './tuning.js';
 import { FURNITURE } from './maps.js';
 import { recalc } from '../systems/stats.js';
 import { sfx } from '../audio/sfx.js';
-import { durOn, durOf, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
+import { durOn, durOf, durShown, durMax, repairCost, repairItem, damaged } from '../systems/durability.js';
 import { noteSold } from './stock.js';
-import { rarityIndex, reforgeGen } from '../systems/genloot.js';
+import { sellPrice } from '../systems/prices.js';
+import { rarityIndex, reforgeGen, ascendGen, RARITY } from '../systems/genloot.js';
+import { ngLevel } from '../systems/ngplus.js';
+import { setOf } from '../systems/sets.js';
+import { own } from '../systems/instances.js';
 import { COOKABLE, cook } from '../systems/food.js';
 import { listScreen, TABS } from '../scenes/ShopScene.js';
-import { MAX_LEVEL, UPGRADE_COST, UPGRADE_SLOTS, KIND_OF_TYPE, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
+import { maxLevel, UPGRADE_COST, UPGRADE_SLOTS, kindOf, upgraded, gainText, gainBeforeAfter } from '../systems/upgrades.js';
 
 // Pick one entry from a long list, four at a time. Returns the index or -1 (back).
 export async function pick(options, back = 'Back') {
@@ -32,25 +36,30 @@ export async function pick(options, back = 'Back') {
   }
 }
 
-const price = (id) => ITEMS[id].value || 1;
 const bp = (w) => Math.max(1, Math.round(w.price * diff().price));   // shop buy price on the current difficulty
-export const sellPrice = (id) => Math.max(1, Math.floor(price(id) * 0.5));
+export { sellPrice };
 
 // Short stat lines for the detail pane of the list screens.
 const CLASS_LINE = { light: 'FAST, QUIET', medium: 'BALANCED', heavy: 'SLOW, +CARRY' };
+// An item's speed with its armour class folded in (body armour in full, a helmet at half, like burden.classMix).
+export function totalMove(it) {
+  const W = TUNE.player.weights[it.weight], cls = W && (it.type === 'armor' || it.type === 'helmet') ? (it.type === 'helmet' ? 1 + (W.move - 1) * 0.5 : W.move) : 1;
+  return (it.moveMul ?? 1) * cls;
+}
 export function statLines(id) {
   const it = ITEMS[id];
   if (!it) return [];
   const out = [];
-  const lv = S.upgrades?.[id] || 0, kd = KIND_OF_TYPE[it.type];
-  if (it.dmg) out.push([`DAMAGE ${Math.round(upgraded(kd, lv, it.dmg) * 10) / 10}${lv ? ' (+' + lv + ')' : ''}`, 6]);
+  const lv = S.upgrades?.[id] || 0, kd = kindOf(it);
+  if (it.dmg) out.push([`DAMAGE ${Math.round((kd === 'staff' ? it.dmg : upgraded(kd, lv, it.dmg)) * 10) / 10}${lv && kd !== 'staff' ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.armor) out.push([`ARMOR ${Math.round(upgraded(kd, lv, it.armor) * 1000) / 10}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.block) out.push([`BLOCKS ${Math.round(upgraded(kd, lv, it.block) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 6]);
   if (it.type === 'weapon2h') out.push(['TWO-HANDED', 15]);
+  { const el = S.enchants?.[id] || it.elem; if (el) out.push([`HITS AS ${el.type.toUpperCase()} +${el.power}${S.enchants?.[id] ? ' (ENCHANT)' : ''}`, el.type === 'fire' ? 12 : el.type === 'frost' ? 15 : 13]); }   // PR-13
   if (it.style === 'dagger') { out.push(['FAST. SNEAK AND BACK HITS HURT', 15]); if (it.pierce) out.push([`4TH HIT PIERCES ${Math.round(it.pierce * 100)}% ARMOUR`, 15]); if (it.assassinate) out.push(['SNEAK KILLS ANY NON-BOSS', 14]); if (it.crit) out.push([`CRIT ${Math.round(it.crit * 100)}%`, 13]); for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}${f.sneakOnly ? ' ON SNEAK ATTACK' : ''}`, 11]); }
   if (it.style === 'staff') {
     out.push(['WEAK IN MELEE. HEAVY ATTACK: FREE BOLT', 15]);
-    if (it.spellMul) out.push([`SPELLS +${Math.round((it.spellMul - 1) * 100)}%`, 8]);
+    if (it.spellMul || lv) out.push([`SPELLS +${Math.round((upgraded('staff', lv, it.spellMul ?? 1) - 1) * 100)}%${lv ? ' (+' + lv + ')' : ''}`, 8]);
     for (const [k, v] of Object.entries(it.elemMul || {})) out.push([`${k.toUpperCase()} SPELLS +${Math.round((v - 1) * 100)}%`, 8]);
     for (const [k, v] of Object.entries(it.spellCost || {})) out.push([`${k.toUpperCase()} COSTS ${v <= 0.5 ? 'HALF' : '-' + Math.round((1 - v) * 100) + '%'}`, 8]);
     if (it.mpRegenMul) out.push([`MANA REGEN +${Math.round((it.mpRegenMul - 1) * 100)}%`, 8]);
@@ -73,10 +82,12 @@ export function statLines(id) {
     for (const f of it.inflict || []) out.push([`${f.type.toUpperCase()}`, 11]);
   }
   if (it.style === 'spear') out.push(['LONG REACH', 15]); else if (it.style === 'mace') out.push(['BREAKS GUARDS', 15]); else if (it.style === 'axe') out.push(['HEAVY CHOPS', 15]);
-  if (durOn() && (it.type === 'weapon' || it.type === 'weapon2h' || it.type === 'armor' || it.type === 'helmet' || it.type === 'shield')) out.push([`DURABILITY ${durOf(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
+  if (durOn() && ['weapon', 'weapon2h', 'bow', 'armor', 'helmet', 'shield'].includes(it.type)) out.push([`DURABILITY ${durShown(id)}/${durMax(id)}`, durOf(id) <= 0 ? 11 : 5]);
   if (it.weight) out.push([`${it.weight.toUpperCase()}${it.type === 'helmet' ? ' HELM' : ''}: ${CLASS_LINE[it.weight]}`, it.weight === 'heavy' ? 11 : it.weight === 'light' ? 8 : 5]);
   if (itemWeight(id) >= 1) out.push([`WEIGHT ${itemWeight(id)}`, 4]);
-  if (it.moveMul) out.push([`SPEED ${it.moveMul > 1 ? '+' : ''}${Math.round((it.moveMul - 1) * 100)}%`, it.moveMul > 1 ? 8 : 11]);
+  // speed: the item's own and its armour class together (PR-09), so a heavy piece shows what it really costs
+  const mv = totalMove(it);
+  if (Math.abs(mv - 1) >= 0.005) out.push([`SPEED ${mv > 1 ? '+' : ''}${Math.round((mv - 1) * 100)}%${it.weight && it.weight !== 'medium' && (it.type === 'armor' || it.type === 'helmet') ? ' WITH CLASS' : ''}`, mv > 1 ? 8 : 11]);
   if (it.detectMul) out.push(['HARDER TO SPOT', 8]);
   if (it.manaCostMul) out.push(['SPELLS COST -15%', 8]);
   if (it.spRegenMul) out.push(['STAMINA REGEN -20%', 11]);
@@ -119,6 +130,8 @@ export async function buyMenu(who, wares) {
 }
 
 // --------------------------------------------------------------------- sell
+// Selling the last of one of these asks first (PR-07): Rare or Legendary, a set piece, a unique, or anything upgraded.
+export const isPrecious = (id) => rarityIndex(ITEMS[id] || {}) >= 2 || !!setOf(id) || !!ITEMS[id]?.unique || (S.upgrades?.[id] || 0) > 0;
 const equippedIds = () => new Set(Object.values(S.equip).filter(Boolean));
 export function sellable() {
   const eq = equippedIds();
@@ -136,7 +149,7 @@ export async function sellMenu(who) {
   const avail = (id) => S.inv[id] - (equippedIds().has(id) ? 1 : 0);
   // value / name / type order (G); and "precious": selling the last of something rare, unique or named asks first
   const sorted = (ui) => { const l = sellable(), k = ui?.sort || 0; return l.sort(k === 0 ? (a, b) => sellPrice(b) - sellPrice(a) : k === 1 ? (a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name) : (a, b) => String(ITEMS[a].type).localeCompare(String(ITEMS[b].type)) || ITEMS[a].name.localeCompare(ITEMS[b].name)); };
-  const precious = (id, n) => n >= avail(id) && (['rare', 'epic', 'legendary'].includes(ITEMS[id].rarity) || ITEMS[id].unique || ITEMS[id].set || (S.upgrades?.[id] || 0) > 0);
+  const precious = (id, n) => n >= avail(id) && isPrecious(id);
   const sellN = (id, n, ui) => {
     S.inv[id] -= n; if (S.inv[id] <= 0) delete S.inv[id];
     S.gold += sellPrice(id) * n; noteSold(id, n, sellPrice(id) * n);
@@ -176,7 +189,7 @@ export async function sellMenu(who) {
 // A requirement line that reads as one: "✓ 50 GOLD (HAVE 2374)" in green, "■ 3 FROST LILY (HAVE 1)" in red.
 export const need = (label, have, n) => [`${have >= n ? '✓' : '■'} ${n} ${label} (HAVE ${have})`, have >= n ? 8 : 11];
 // ---- gear upgrades, +1 to +10 (tables and maths in systems/upgrades.js)
-const slotKind = (id) => KIND_OF_TYPE[ITEMS[id]?.type] || null;
+const slotKind = (id) => kindOf(ITEMS[id]);
 const costReady = (c) => S.gold >= c.gold && count(c.mat) >= c.n && (!c.mat2 || count(c.mat2) >= c.n2);
 const costLines = (c) => [
   need('GOLD', S.gold, c.gold),
@@ -190,12 +203,12 @@ export function buyUpgrade(slot, cap = 3) {
   if (!id || !slotKind(id)) return 'none';
   S.upgrades = S.upgrades || {};
   const lv = S.upgrades[id] || 0;
-  if (lv >= MAX_LEVEL) return 'max';
+  if (lv >= maxLevel()) return 'max';
   if (lv >= cap) return 'cap';
   const c = UPGRADE_COST[lv + 1];
   if (!costReady(c)) return 'short';
   S.gold -= c.gold; removeItem(c.mat, c.n); if (c.mat2) removeItem(c.mat2, c.n2);
-  S.upgrades[id] = lv + 1; recalc();
+  S.upgrades[own(id, slot)] = lv + 1; recalc();            // PR-08: this copy, not every copy of the item
   return 'ok';
 }
 const CAP_LINE = { 3: 'I can go no further. Emberhold smiths can.', 6: 'Only the Great Anvil goes past +6.' };
@@ -204,29 +217,64 @@ export async function upgradeMenu(who, slot, cap = 3) {
   if (!id || !slotKind(id)) { await say(who, 'You have nothing equipped there that I can improve.'); return; }
   S.upgrades = S.upgrades || {};
   const kind = slotKind(id);
-  if ((S.upgrades[id] || 0) >= MAX_LEVEL) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
+  if ((S.upgrades[id] || 0) >= maxLevel()) { await say(who, `That ${ITEMS[id].name} is as good as it will ever be.`); return; }
   if ((S.upgrades[id] || 0) >= cap) { await say(who, CAP_LINE[cap] || 'I cannot take it further.'); return; }
   await listScreen({
     title: 'FORGE: ' + (UPGRADE_SLOTS.find(([k]) => k === slot)?.[1] || 'GEAR'),
     hint: 'E UPGRADE   ESC DONE',
     rows: () => {
-      const cur = S.upgrades[id] || 0;
-      if (cur >= MAX_LEVEL) return [{ id, name: ITEMS[id].name + ` +${MAX_LEVEL}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
+      const id = S.equip[slot], cur = S.upgrades[id] || 0;       // re-read: the first upgrade makes the worn copy its own item (PR-08)
+      if (cur >= maxLevel()) return [{ id, name: ITEMS[id].name + ` +${maxLevel()}`, tag: 'MAX', ok: false, tagCol: 4, sub: 'FULLY UPGRADED', lines: statLines(id) }];
       if (cur >= cap) return [{ id, name: ITEMS[id].name + ` +${cur}`, tag: 'LIMIT', ok: false, tagCol: 4, sub: 'FORGE LIMIT REACHED', lines: statLines(id), desc: CAP_LINE[cap] || '' }];
       const c = UPGRADE_COST[cur + 1], ok = costReady(c);
       return [{
         id, name: `${ITEMS[id].name} +${cur + 1}`, tag: costTag(c), ok, sub: ok ? 'READY' : 'NEED MATERIALS',
-        lines: [[gainBeforeAfter(kind, cur, ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
-        desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
+        lines: [[gainBeforeAfter(kind, cur, kind === 'staff' ? ITEMS[id].spellMul ?? 1 : ITEMS[id].dmg || ITEMS[id].armor || ITEMS[id].block) || gainText(kind, cur), 8], [gainText(kind, cur), 8], ...costLines(c), ...statLines(id)],
+        desc: c.mat === 'iron_ingot' ? 'Bandits carry iron ingots.' : c.mat === 'ash_iron' ? 'Ash iron comes from the Deep Mines.' : c.mat2 === 'winters_echo' ? 'An Ascended temper. A Winter\'s Echo lingers where a boss falls in New Game+.' : 'Ember ore and heart shards come from the deep forges and the fallen guardians.',
       }];
     },
     onSelect: (i, ui) => {
       const r = buyUpgrade(slot, cap);
-      const cur = S.upgrades[id] || 0;
+      const id = S.equip[slot], cur = S.upgrades[id] || 0;
       if (r === 'short') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
       if (r !== 'ok') return;
       sfx.play('levelup'); bus.emit('toast', `${ITEMS[id].name.toUpperCase()} +${cur}`, 13);
       ui.say('UPGRADED TO +' + cur, 8);
+    },
+  });
+}
+// ---- PR-19: transfer a temper. Move every forge level of one item onto the piece you wear in its place (same kind: weapon,
+// bow, staff, armour, helmet, shield), for a share of the gold those levels cost and no materials. The old item drops to +0.
+// A smith only moves levels up to what it can forge itself.
+export const transferCost = (lv, from = 0) => { let g = 0; for (let l = from + 1; l <= lv; l++) g += UPGRADE_COST[l].gold; return Math.ceil(g * TUNE.economy.transferShare); };
+export const transferSources = (slot) => { const to = S.equip[slot], k = slotKind(to); return !to || !k ? [] : Object.keys(S.inv).filter((id) => id !== to && S.inv[id] > 0 && slotKind(id) === k && (S.upgrades?.[id] || 0) > (S.upgrades?.[to] || 0)); };
+export function transferTemper(fromId, slot, cap = 3) {
+  const to = S.equip[slot];
+  if (!to || !transferSources(slot).includes(fromId)) return 'no';
+  const lv = S.upgrades[fromId];
+  if (lv > cap) return 'cap';
+  const cost = transferCost(lv, S.upgrades[to] || 0);
+  if (S.gold < cost) return 'short';
+  S.gold -= cost; S.upgrades[own(to, slot)] = lv; delete S.upgrades[fromId]; recalc();
+  return 'ok';
+}
+async function transferMenu(who, cap) {
+  const slots = UPGRADE_SLOTS.filter(([slot]) => transferSources(slot).length);
+  if (!slots.length) { await say(who, 'Wear the piece you want tempered, and carry the old one I tempered before. Same kind of thing, mind.'); return; }
+  const c = await choose([...slots.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}`), 'Back']);
+  if (c >= slots.length) return;
+  const slot = slots[c][0], to = S.equip[slot];
+  await listScreen({
+    title: 'TRANSFER TO ' + ITEMS[to].name.toUpperCase(), hint: 'E TRANSFER   ESC DONE', empty: 'NOTHING TO TRANSFER',
+    rows: () => transferSources(slot).map((id) => {
+      const lv = S.upgrades[id], cost = transferCost(lv, S.upgrades[to] || 0), ok = lv <= cap && S.gold >= cost;
+      return { id, name: `${ITEMS[id].name} +${lv}`, tag: lv > cap ? 'LIMIT' : cost + 'G', ok, tagCol: ok ? 13 : 11, sub: lv > cap ? `THIS FORGE GOES TO +${cap}` : `${ITEMS[to].name.toUpperCase()} BECOMES +${lv}`, lines: [need('GOLD', S.gold, cost), ['NO MATERIALS. THE OLD PIECE DROPS TO +0', 4], ...statLines(to)] };
+    }),
+    onSelect: (i, ui) => {
+      const id = transferSources(slot)[i]; if (!id) return;
+      const r = transferTemper(id, slot, cap);
+      if (r !== 'ok') { sfx.play('nostamina'); ui.say(r === 'cap' ? 'BEYOND THIS FORGE' : 'NOT ENOUGH GOLD', 11); return; }
+      sfx.play('levelup'); ui.say(`${ITEMS[to].name.toUpperCase()} IS NOW +${S.upgrades[to]}`, 8);
     },
   });
 }
@@ -235,7 +283,9 @@ export async function gearUpgradeMenu(who, cap = 3) {
   for (;;) {
     const have = UPGRADE_SLOTS.filter(([slot]) => S.equip[slot] && slotKind(S.equip[slot]));
     if (!have.length) { await say(who, 'You carry nothing I can improve.'); return; }
-    const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), 'Back']);
+    const canMove = UPGRADE_SLOTS.some(([slot]) => transferSources(slot).length);
+    const c = await choose([...have.map(([slot, name]) => `${name}: ${ITEMS[S.equip[slot]].name}${S.upgrades?.[S.equip[slot]] ? ' +' + S.upgrades[S.equip[slot]] : ''}`), ...(canMove ? ['Transfer a temper'] : []), 'Back']);
+    if (canMove && c === have.length) { await transferMenu(who, cap); continue; }
     if (c >= have.length) return;
     await upgradeMenu(who, have[c][0], cap);
     if (TABS.next != null) return;                 // the player tabbed to another smith screen
@@ -243,9 +293,9 @@ export async function gearUpgradeMenu(who, cap = 3) {
 }
 
 export const ENCHANTS = [
-  { type: 'fire', name: 'Flame', mat: 'bone_dust', n: 3, gold: 90, power: 5, desc: 'burns for +5' },
-  { type: 'frost', name: 'Frost', mat: 'frost_lily', n: 3, gold: 90, power: 4, desc: 'slows foes, +4' },
-  { type: 'shock', name: 'Storm', mat: 'wolf_fang', n: 3, gold: 90, power: 6, desc: 'shocks for +6' },
+  { type: 'fire', name: 'Flame', mat: 'bone_dust', n: 3, gold: 90, power: 5, desc: 'hits count as FIRE (+5)' },
+  { type: 'frost', name: 'Frost', mat: 'frost_lily', n: 3, gold: 90, power: 4, desc: 'hits count as FROST (+4) and slow' },
+  { type: 'shock', name: 'Storm', mat: 'wolf_fang', n: 3, gold: 90, power: 6, desc: 'hits count as SHOCK (+6)' },
 ];
 export async function enchantMenu(who) {
   const id = S.equip.weapon;
@@ -254,8 +304,8 @@ export async function enchantMenu(who) {
     const have = count(e.mat), ok = S.gold >= e.gold && have >= e.n;
     return {
       id: e.mat, name: e.name + ' Enchant', tag: e.gold + 'G', ok,
-      sub: S.enchants[id]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
-      desc: `Your ${ITEMS[id].name} ${e.desc} on every hit. Replaces any other enchant.`,
+      sub: S.enchants[S.equip.weapon]?.type === e.type ? 'ACTIVE' : ok ? 'READY' : 'NEED MATERIALS',
+      desc: `Your ${ITEMS[id].name}: ${e.desc}. An element hits the weak x1.5 and gets through armour far better; some foes resist it.${ITEMS[id].elem && ITEMS[id].elem.type !== e.type ? ' Replaces its own ' + ITEMS[id].elem.type.toUpperCase() + '.' : ' Replaces any other enchant.'}`,
       tagCol: S.gold >= e.gold ? 13 : 11,                      // the price is red only when the gold is what is missing
       lines: [need(ITEMS[e.mat].name.toUpperCase(), have, e.n), need('GOLD', S.gold, e.gold)],
     };
@@ -265,8 +315,10 @@ export async function enchantMenu(who) {
     onSelect: (i, ui) => {
       const e = ENCHANTS[i];
       if (S.gold < e.gold || count(e.mat) < e.n) { sfx.play('nostamina'); ui.say(`NEED ${e.n} ${ITEMS[e.mat].name.toUpperCase()} AND ${e.gold} GOLD`, 11); return; }
+      const ownEl = ITEMS[id].elem;            // PR-13: overwriting the weapon's own element asks first
+      if (ownEl && ownEl.type !== e.type && !S.enchants[S.equip.weapon] && !ui.confirm('ench:' + id + e.type, `REPLACE ITS OWN ${ownEl.type.toUpperCase()}? E AGAIN`)) return;
       S.gold -= e.gold; removeItem(e.mat, e.n);
-      S.enchants[id] = { type: e.type, power: e.power };
+      S.enchants[own(S.equip.weapon, 'weapon')] = { type: e.type, power: e.power };
       sfx.play('levelup');
       bus.emit('toast', `${ITEMS[id].name.toUpperCase()} ENCHANTED: ${e.name.toUpperCase()}`, 15);
       ui.say(e.name.toUpperCase() + ' ENCHANT APPLIED', 15);
@@ -381,7 +433,7 @@ export async function repairMenu(who) {
     title: 'REPAIR', hint: 'E REPAIR   Q REPAIR ALL   ESC DONE', empty: 'EVERYTHING YOU CARRY IS IN GOOD SHAPE',
     rows: () => damaged().map((id) => {
       const c = repairCost(id), ok = S.gold >= c;
-      return { id, name: ITEMS[id].name, tag: c + 'G', ok, tagCol: ok ? 13 : 11, sub: `${durOf(id)}/${durMax(id)}${durOf(id) <= 0 ? '  BROKEN' : ''}`, lines: statLines(id) };
+      return { id, name: ITEMS[id].name, tag: c + 'G', ok, tagCol: ok ? 13 : 11, sub: `${durShown(id)}/${durMax(id)}${durOf(id) <= 0 ? '  BROKEN' : ''}`, lines: statLines(id) };
     }),
     onSelect: (i, ui) => {
       const id = damaged()[i]; if (!id) return;
@@ -414,6 +466,35 @@ export async function reforgeMenu(who) {
       if (S.gold < c.gold || count('iron_ingot') < c.ingots) { sfx.play('nostamina'); ui.say(`NEED ${c.gold} GOLD AND ${c.ingots} INGOT${c.ingots > 1 ? 'S' : ''}`, 11); return; }
       S.gold -= c.gold; removeItem('iron_ingot', c.ingots);
       reforgeGen(id); recalc(); sfx.play('upgrade'); ui.say('REFORGED: ' + ITEMS[id].name.toUpperCase(), 8);
+    },
+  });
+}
+
+// ---- PR-26: Ascend a generated item one rarity at the Great Anvil (Magic -> Rare -> Legendary, and Mythic in New Game+)
+export const ascendCost = (id) => { const nx = RARITY[rarityIndex(ITEMS[id]) + 1]; return nx ? TUNE.economy.ascend[nx.id] || null : null; };
+const ascendable = () => Object.keys(S.inv).filter((id) => ITEMS[id]?.gen && S.inv[id] > 0 && ascendCost(id) && rarityIndex(ITEMS[id]) >= 1 && (!RARITY[rarityIndex(ITEMS[id]) + 1].ngOnly || ngLevel() > 0));
+const costOk = (c) => Object.entries(c).every(([k, n]) => (k === 'gold' ? S.gold : count(k)) >= n);
+export function ascendItem(id) {
+  const c = ascendCost(id);
+  if (!c || !ascendable().includes(id)) return 'no';
+  if (!costOk(c)) return 'short';
+  for (const [k, n] of Object.entries(c)) if (k === 'gold') S.gold -= n; else removeItem(k, n);
+  ascendGen(id); recalc();
+  return 'ok';
+}
+export async function ascendMenu(who) {
+  if (!ascendable().length) { await say(who, 'The Anvil raises found gear a rank: Magic to Rare, Rare to Legendary. Bring me some.'); return; }
+  await listScreen({
+    title: 'ASCEND', hint: 'E ASCEND   ESC DONE',
+    rows: () => ascendable().map((id) => {
+      const c = ascendCost(id), ok = costOk(c), nx = RARITY[rarityIndex(ITEMS[id]) + 1];
+      return { id, name: ITEMS[id].name, tag: `${c.gold}G`, ok, tagCol: ok ? 13 : 11, sub: `TO ${nx.name.toUpperCase()}`, lines: [...Object.entries(c).filter(([k]) => k !== 'gold').map(([k, n]) => need(ITEMS[k].name.toUpperCase(), count(k), n)), need('GOLD', S.gold, c.gold), ...statLines(id)], desc: 'A higher rank and new affixes, rolled again. ' + (ITEMS[id].desc || '') };
+    }),
+    onSelect: (i, ui) => {
+      const id = ascendable()[i]; if (!id) return;
+      const r = ascendItem(id);
+      if (r !== 'ok') { sfx.play('nostamina'); ui.say('NOT ENOUGH GOLD OR MATERIALS', 11); return; }
+      sfx.play('levelup'); ui.say('ASCENDED: ' + ITEMS[id].name.toUpperCase(), 14);
     },
   });
 }

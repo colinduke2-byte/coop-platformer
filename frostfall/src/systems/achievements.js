@@ -51,6 +51,11 @@ export const TROPHIES = [
   { id: 'level10', name: 'Seasoned', desc: 'Reach character level 10.', test: () => (S.charLevel || 1) >= 10 },
   { id: 'nemesis', name: 'Settled Scores', desc: 'Defeat the creature that killed you.', test: () => (S.nemesisSlain || 0) >= 1 },
   { id: 'ngplus', name: 'Another Winter', desc: 'Begin New Game+.', test: () => (S.ngPlus || 0) >= 1 },
+  // PR-17 / PR-24: every NG+ cycle and the deep arena runs have their own trophy (and cloak colour, below)
+  { id: 'ng2', name: 'Third Winter', desc: 'Begin a second New Game+.', test: () => (S.ngPlus || 0) >= 2 },
+  { id: 'ng3', name: 'Endless Winter', desc: 'Begin a third New Game+.', test: () => (S.ngPlus || 0) >= 3 },
+  { id: 'arena20', name: 'Arena Legend', desc: 'Survive 20 waves in the Hollow Arena.', test: () => (S.arena?.best || 0) >= 20 },
+  { id: 'arena30', name: 'Hollow Champion', desc: 'Survive 30 waves in the Hollow Arena.', test: () => (S.arena?.best || 0) >= 30 },
 ];
 
 export const trophyCount = () => TROPHIES.filter((t) => S.trophies?.[t.id]).length;
@@ -77,6 +82,10 @@ export const CLOAKS = [
   { col: 13, name: 'Dragon Gold', trophy: 'dragon' },
   { col: 14, name: 'Heart Violet', trophy: 'hearts4' },
   { col: 6, name: 'Winterwhite', trophy: 'winter' },
+  { col: 3, name: 'Second Winter Steel', trophy: 'ngplus' },
+  { col: 12, name: 'Third Winter Ember', trophy: 'ng2' },
+  { col: 2, name: 'Endless Slate', trophy: 'ng3' },
+  { col: 10, name: 'Arena Sand', trophy: 'arena20' },
 ];
 export const cloakUnlocked = (c) => !c.trophy || !!S.trophies?.[c.trophy];
 export const unlockedCloaks = () => CLOAKS.filter(cloakUnlocked);

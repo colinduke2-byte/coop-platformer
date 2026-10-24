@@ -547,7 +547,7 @@ export default class GameScene extends Phaser.Scene {
     S.bossState = null;                // a mid-fight save does not bring the boss back half-dead after you fall
     this.afterFade(() => {
       S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
-      S.gold = Math.floor(S.gold * 0.9);                         // (the death screen announced this loss)
+      S.gold = Math.floor(S.gold * TUNE.economy.deathGoldKeep);                         // (the death screen announced this loss)
       let r = S.respawn || { map: 'village', spawn: 'start' };
       if (!MAPS[r.map]) r = { map: 'village', spawn: 'start' };          // never respawn into a map that does not exist
       S.map = r.map;

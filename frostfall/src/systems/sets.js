@@ -1,5 +1,6 @@
 // Gear sets: wear two or three pieces of a set together for a bonus. Pure data + lookup; stats.js reads setBonus(key).
 import { S } from './state.js';
+import { baseOf } from './instances.js';
 
 export const SETS = {
   ember: {
@@ -32,7 +33,7 @@ export const SETS = {
   },
 };
 
-export const setOf = (id) => Object.keys(SETS).find((k) => SETS[k].items.includes(id)) || null;
+export const setOf = (id) => Object.keys(SETS).find((k) => SETS[k].items.includes(baseOf(id))) || null;
 
 // How many pieces of each set are worn right now.
 export function wornSets() {

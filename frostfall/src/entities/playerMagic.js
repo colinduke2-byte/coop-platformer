@@ -12,6 +12,8 @@ import { lvl } from '../systems/skills.js';
 import Projectile from './Projectile.js';
 import { TUNE } from '../data/tuning.js';
 import { clearStatus } from '../systems/status.js';
+import { spellGear, spellCostGear, spellPerk } from '../systems/spellpower.js';
+import { wear } from '../systems/durability.js';
 
 // cost = mana. skill/lvl = unlock requirement.
 export const SPELLS = {
@@ -39,13 +41,13 @@ export const magicMethods = {
   // Spell strength: skill, the staff in hand (all spells, plus its favoured element) and its crit chance.
   spellPow() {
     const w = stats.weapon() || {};
-    let m = bonus.spell() * (w.spellMul ?? 1) * (w.elemMul?.[S.spell] ?? 1);
+    let m = bonus.spell() * spellGear(S.spell);
     if (w.spellCrit && Math.random() < w.spellCrit) { m *= 1.6; this.scene.fx.text(this.x, this.y - 22, 'SPELL CRIT', 15, 0.7); }
     return m;
   },
   spellCost(sp) {
     const w = stats.weapon() || {};
-    return sp.cost * (w.manaCostMul ?? 1) * (w.spellCost?.[S.spell] ?? 1) * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
+    return sp.cost * spellCostGear(S.spell, w) * bonus.manaCost() * (S.perks.spellweaver ? 0.8 : 1) * stats.trait('manaCostMul') * modMul('manaMul') * (1 + (this.heat || 0) * TUNE.player.cast.heatCost);
   },
 
   quickCast() {
@@ -75,13 +77,14 @@ export const magicMethods = {
     const freeCast = (S.perks.archmage && ((this.castN = (this.castN || 0) + 1) % 4 === 0)) || (wpn.freeEvery && ((this.castW = (this.castW || 0) + 1) % wpn.freeEvery === 0));
     if (freeCast) this.scene.fx.text(this.x, this.y - 16, 'FREE CAST', 15, 0.6);
     S.mp -= freeCast ? 0 : cost; this.mpDelay = 1.2;
+    if (wpn.style === 'staff') wear(S.equip.weapon, TUNE.economy.wear.staffCast);     // PR-12: staves wear per cast
     this.heat = Math.min(TUNE.player.cast.heatMax, (this.heat || 0) + 1);
     const sc = this.scene, f = this.face;
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
     switch (S.spell) {
       case 'fire':
       case 'frost': {
-        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer && S.spell === 'fire' ? 1.15 : 1 });
+        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk(S.spell) });
         const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, S.spell, f.x * sp.speed, f.y * sp.speed, { dmg, life: S.spell === 'fire' ? 1.1 : 1.3 });
         sc.shots.add(pr);
         pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
@@ -91,20 +94,20 @@ export const magicMethods = {
       }
       case 'shock': this.castShock(sp); break;
       case 'heal': {
-        const amt = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1));
+        const amt = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), hp0 = S.hp;
         S.hp = Math.min(S.maxHp, S.hp + amt);
         sfx.play('heal');
         sc.fx.text(this.x, this.y - 12, '+' + amt, 8);
         sc.fx.puff(this.x, this.y, 8, 10, 30, 0.7, -25);
         sc.fx.ring(this.x, this.y + 4, 0.5, 0.5, 'ring', 0x3f7050);
-        this.gainXp('restoration', 6);
+        this.gainXp('restoration', Math.round(6 * (S.hp - hp0) / amt));     // PR-15: XP for the health actually restored
         break;
       }
       case 'ward': {
         this.ward = { hp: sp.absorb * bonus.ward() * (S.perks.warding ? 1.35 : 1) * (wpn.wardMul ?? 1), t: (sp.time + (S.perks.warding ? 3 : 0)) * (wpn.wardTime ?? 1) };
         sfx.play('ward');
         sc.fx.ring(this.x, this.y + 4, 0.7, 0.5, 'ring', 0x5cc8d8);
-        this.gainXp('restoration', 5);
+        this.ward.max = this.ward.hp;                       // PR-15: Ward pays XP for what it absorbs (tickWard)
         break;
       }
       case 'blink': {
@@ -116,7 +119,7 @@ export const magicMethods = {
         this.body.updateFromGameObject();
         this.iframes = Math.max(this.iframes, 0.3);
         sc.fx.puff(this.x, this.y, 14, 10, 40, 0.4); sc.fx.ring(this.x, this.y + 4, 0.5, 0.3, 'ring', 0x8a5aa8);
-        sfx.play('roll'); this.gainXp('sneak', 5);
+        sfx.play('roll'); this.combatXp('sneak', 5);
         break;
       }
       case 'nova': {
@@ -125,11 +128,11 @@ export const magicMethods = {
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0x5cc8d8); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xeaf2f8);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4, stun: 0.6 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk('nova') }), kx: e.x - this.x, ky: e.y - this.y, kb: 130, src: 'frost', element: 'frost', slow: 4 + (S.perks.frostbite ? 2 : 0), stun: 0.6 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15); sc.fx.puff(e.x, e.y, 15, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
-        this.gainXp('destruction', 6);
+        this.combatXp('destruction', 6);
         break;
       }
       case 'embernova': {
@@ -138,11 +141,11 @@ export const magicMethods = {
         sc.fx.ring(this.x, this.y + 4, R / 32, 0.5, 'ring', 0xf08a30); sc.fx.ring(this.x, this.y + 4, R / 46, 0.35, 'ring', 0xf4d460);
         for (const e of sc.enemies.getChildren()) {
           if (e.dead || Math.hypot(e.x - this.x, e.y - this.y) > R) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 110, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 4, dps: 5 } });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk(S.spell) }), kx: e.x - this.x, ky: e.y - this.y, kb: 110, src: 'fire', element: 'fire', stun: 0.4, status: { type: 'burn', t: 4, dps: 5 } });
           sc.fx.text(e.x, e.y - 10, String(dealt), 12); sc.fx.puff(e.x, e.y, 12, 6, 40, 0.3);
         }
         for (const sh of sc.eshots.getChildren()) if (Math.hypot(sh.x - this.x, sh.y - this.y) < R) sh.finish();
-        this.gainXp('destruction', 7);
+        this.combatXp('destruction', 7);
         break;
       }
       case 'glacier': {
@@ -152,16 +155,16 @@ export const magicMethods = {
         for (const e of sc.enemies.getChildren()) {
           const dx = e.x - this.x, dy = e.y - (this.y + 3), along = dx * f.x + dy * f.y, across = Math.abs(dx * -f.y + dy * f.x);
           if (e.dead || along < 0 || along > LEN || across > W2 / 2) continue;
-          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3, stun: 0.35 });
+          const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk('glacier') }), kx: f.x, ky: f.y, kb: 90, src: 'frost', element: 'frost', slow: 3 + (S.perks.frostbite ? 2 : 0), stun: 0.35 });
           sc.fx.text(e.x, e.y - 10, String(dealt), 15);
         }
         for (const sh of sc.eshots.getChildren()) { const dx = sh.x - this.x, dy = sh.y - this.y; if ((dx * f.x + dy * f.y) > 0 && Math.hypot(dx, dy) < LEN) sh.finish(); }
-        this.gainXp('destruction', 6);
+        this.combatXp('destruction', 6);
         break;
       }
       case 'meteor': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 70, y: this.y + 3 + f.y * 70 };
-        const R = 38, dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
+        const R = 38, dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk(S.spell) });
         sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, R / 32, 0.9, 'ring', 0xf08a30);
         sc.time.delayedCall(900, () => {
           if (!sc.scene.isActive('Game')) return;
@@ -171,19 +174,19 @@ export const magicMethods = {
             const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 190, src: 'fire', element: 'fire', stun: 0.8, forceStun: !e.isBoss, status: { type: 'burn', t: 4, dps: 6 } });
             sc.fx.text(e.x, e.y - 10, String(dealt), 12);
           }
-          this.gainXp('destruction', 10);
+          this.combatXp('destruction', 10);
         });
-        this.gainXp('destruction', 4);
+        this.combatXp('destruction', 4);
         break;
       }
       case 'regrow': {
-        const total = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), ticks = sp.time, per = Math.max(1, Math.round(total / ticks));
+        const total = Math.round(sp.amount * bonus.heal() * (S.perks.mender ? 1.3 : 1)), ticks = sp.time, per = Math.max(1, Math.round(total / ticks)), missing = Math.min(total, S.maxHp - S.hp);
         sfx.play('heal'); sc.fx.ring(this.x, this.y + 4, 0.5, 0.6, 'ring', 0x3f7050); sc.fx.text(this.x, this.y - 12, 'REGROWTH', 8, 0.8);
         for (let i = 1; i <= ticks; i++) sc.time.delayedCall(i * 1000, () => {
           if (!sc.scene.isActive('Game') || S.hp <= 0 || this.mode === 'dead') return;
           S.hp = Math.min(S.maxHp, S.hp + per); sc.fx.text(this.x, this.y - 12, '+' + per, 8, 0.5); sc.fx.puff(this.x, this.y, 8, 5, 20, 0.5, -20);
         });
-        this.gainXp('restoration', 8);
+        this.gainXp('restoration', Math.round(8 * missing / total));
         break;
       }
       case 'thorns': {
@@ -196,7 +199,7 @@ export const magicMethods = {
           const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: 0, ky: 0, kb: 0, src: 'poison', stun: 0.3, status: [{ type: 'root', t: 3 }, { type: 'bleed', t: 4, dps: 3 }] });
           sc.fx.text(e.x, e.y - 10, String(dealt), 8);
         }
-        this.gainXp('restoration', 7);
+        this.combatXp('restoration', 7);
         break;
       }
       case 'sandstorm': {
@@ -208,12 +211,12 @@ export const magicMethods = {
           const dealt = e.takeHit({ dmg: spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: 1 }), kx: e.x - this.x, ky: e.y - this.y, kb: 120, src: 'spell', stun: 0.5, forceStun: !e.isBoss, status: [{ type: 'fear', t: 2.2 }, { type: 'slow', t: 3 }] });
           sc.fx.text(e.x, e.y - 10, String(dealt), 10);
         }
-        this.gainXp('sneak', 8);
+        this.combatXp('sneak', 8);
         break;
       }
       case 'sunbeam': {
         const tg = this.target && !this.target.dead ? { x: this.target.x, y: this.target.y } : { x: this.x + f.x * 60, y: this.y + 3 + f.y * 60 };
-        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: S.perks.pyromancer ? 1.15 : 1 });
+        const dmg = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: spellPerk(S.spell) });
         sfx.play('telegraph'); sc.fx.ring(tg.x, tg.y + 4, sp.r / 32, 0.5, 'ring', 0xf4d460);
         sc.time.delayedCall(500, () => {
           if (!sc.scene.isActive('Game')) return;
@@ -225,14 +228,14 @@ export const magicMethods = {
             const dealt = e.takeHit({ dmg, kx: e.x - tg.x, ky: e.y - tg.y, kb: 100, src: 'fire', element: 'fire', stun: 0.5, status: { type: 'burn', t: 3, dps: 5 } });
             sc.fx.text(e.x, e.y - 10, String(dealt), 13);
           }
-          this.gainXp('destruction', 7);
+          this.combatXp('destruction', 7);
         });
-        this.gainXp('destruction', 3);
+        this.combatXp('destruction', 3);
         break;
       }
       case 'wolf': {
         sc.summonSpiritWolf(this);
-        sfx.play('howl'); this.gainXp('restoration', 6);
+        sfx.play('howl'); this.combatXp('restoration', 6);
         break;
       }
       default: break;
@@ -345,7 +348,7 @@ export const magicMethods = {
     }
     const hitSet = new Set([first]);
     let cur = first, mult = 1;
-    for (let hop = 0; hop < 3 + ((stats.weapon() || {}).chainAdd || 0) && cur; hop++) {
+    for (let hop = 0; hop < 3 + ((stats.weapon() || {}).chainAdd || 0) + (S.perks.conflux ? 1 : 0) && cur; hop++) {
       pts.push({ x: cur.x, y: cur.y + 2 });
       const base = spellDamage({ base: sp.dmg, skill: this.spellPow(), perk: mult });
       const dealt = cur.takeHit({ dmg: base, kx: cur.x - ox, ky: cur.y - oy, kb: 30, src: 'shock', element: 'shock', stun: 0.35 });
@@ -372,7 +375,7 @@ export const magicMethods = {
     const w = stats.weapon() || {}, T = TUNE.player.staff, sc = this.scene, f = this.face;
     if (!this.spend(T.boltCost)) return;
     const kind = w.bolt === 'fire' ? 'fire' : 'frost', sp = SPELLS[kind];
-    const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * (w.spellMul ?? 1), perk: 1 });
+    const dmg = spellDamage({ base: T.boltDmg + (w.dmg || 0) * T.boltWeaponMul, skill: bonus.spell() * spellGear(kind), perk: 1 });
     this.lockT = TUNE.player.cast.lock; this.lockMove = TUNE.player.cast.move;
     const pr = new Projectile(sc, this.x + f.x * 9, this.y + 3 + f.y * 9, kind, f.x * sp.speed, f.y * sp.speed, { dmg, life: 1 });
     sc.shots.add(pr); pr.body.setVelocity(f.x * sp.speed, f.y * sp.speed);
@@ -381,11 +384,16 @@ export const magicMethods = {
     this.gainXp('destruction', 1);
   },
 
+  // PR-15: area and utility spells pay skill XP only with an alerted enemy near (no farming capstones in town)
+  combatXp(skill, n) {
+    const near = this.scene.enemies.getChildren().some((e) => !e.dead && e.alerted && Math.hypot(e.x - this.x, e.y - this.y) < TUNE.economy.xpNear);
+    if (near) this.gainXp(skill, n);
+  },
   tickWard(dt) {
     const w = this.ward;
     if (!w) { this.wardImg?.setVisible(false); return; }
     w.t -= dt;
-    if (w.t <= 0 || w.hp <= 0) { this.ward = null; this.wardImg?.setVisible(false); this.scene.fx.puff(this.x, this.y, 15, 8, 40, 0.3); return; }
+    if (w.t <= 0 || w.hp <= 0) { if (w.max) this.gainXp('restoration', Math.round(5 * Math.min(1, (w.max - Math.max(0, w.hp)) / w.max))); this.ward = null; this.wardImg?.setVisible(false); this.scene.fx.puff(this.x, this.y, 15, 8, 40, 0.3); return; }
     if (!this.wardImg) this.wardImg = this.scene.add.image(this.x, this.y, 'ring_small').setTint(0x5cc8d8);
     const pulse = 0.55 + Math.sin(this.scene.t * 6) * 0.08;
     this.wardImg.setVisible(true).setPosition(this.x, this.y + 3).setScale(0.62).setAlpha(Math.min(1, w.t) * pulse + 0.2).setDepth(this.y + 30);

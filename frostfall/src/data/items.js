@@ -26,17 +26,17 @@ export const ITEMS = {
   nightshade: { name: 'Nightshade', type: 'weapon', style: 'dagger', icon: ['dagger_night', 2], dmg: 34, swing: 0.75, costMul: 0.75, crit: 0.12, sneakBonus: 1, assassinate: true, sockets: 2, value: 1400, desc: 'Black as the Underdeep. A sneak attack kills anything that is not a boss outright.' },
   // ---- staves: a weak poke, but they sharpen spells. spellMul = spell damage, manaCostMul / spellCost = cheaper casts, mpRegenMul = mana regeneration
   walking_staff: { name: 'Walking Staff', type: 'weapon', style: 'staff', icon: ['staff_walking', 9], dmg: 5, swing: 0.9, value: 8, desc: 'A stick for the road. Heavy attack: a weak frost bolt that costs no mana.' },
-  hazel_staff: { name: 'Hazel Staff', type: 'weapon', style: 'staff', icon: ['staff_hazel', 9], dmg: 6, swing: 0.9, spellMul: 1.08, bolt: 'frost', value: 90, desc: 'Forked hazel, favoured by hedge-mages. Spells hit 8% harder.' },
-  frostbirch_staff: { name: 'Frostbirch Staff', type: 'weapon', style: 'staff', icon: ['staff_frostbirch', 15], dmg: 6, swing: 0.9, spellMul: 1.12, spellCost: { frost: 0.85, nova: 0.85 }, slowAdd: 1.5, bolt: 'frost', value: 220, desc: 'White bark and a heart of ice. Spells +12%, frost spells cost 15% less and slow for longer.' },
-  reed_staff: { name: "Reed-Warden's Staff", type: 'weapon', style: 'staff', icon: ['staff_reed', 8], dmg: 7, swing: 0.9, spellMul: 1.15, mpRegenMul: 1.25, rootChance: 0.3, bolt: 'frost', value: 330, desc: 'Bound in marsh reeds. Spells +15%, mana returns 25% faster, and 30% of frost bolts root their target.' },
-  stormcrown_rod: { name: 'Stormcrown Rod', type: 'weapon', style: 'staff', icon: ['staff_rod', 13], dmg: 7, swing: 0.9, spellMul: 1.18, spellCost: { shock: 0.9 }, chainAdd: 1, bolt: 'fire', value: 400, desc: 'An iron rod of the clan shamans. Spells +18%; lightning chains to one more foe.' },
-  prism_staff: { name: 'Prism Staff', type: 'weapon', style: 'staff', icon: ['staff_prism', 15], dmg: 7, swing: 0.9, spellMul: 1.2, spellCrit: 0.08, sockets: 1, bolt: 'frost', value: 520, desc: 'A cluster of living glass. Spells +20% and can crit for 60% more.' },
-  cinder_staff: { name: 'Cinder Staff', type: 'weapon', style: 'staff', icon: ['staff_cinder', 12], dmg: 8, swing: 0.9, spellMul: 1.22, spellCost: { fire: 0.85, embernova: 0.85, meteor: 0.9 }, elemMul: { fire: 1.1 }, sockets: 1, bolt: 'fire', value: 560, desc: 'Charred ash-wood and a caged ember. Spells +22%, fire spells cost 15% less and hit 10% harder.' },
-  tidecaller_staff: { name: "Tidecaller's Staff", type: 'weapon', style: 'staff', icon: ['staff_tide', 15], dmg: 8, swing: 0.9, spellMul: 1.2, wardMul: 1.2, wardTime: 1.5, sockets: 1, bolt: 'frost', value: 540, desc: 'A shell ring on a silver shaft. Spells +20%; your Ward is 20% stronger and lasts half as long again.' },
-  sovereign_scepter: { name: "Sovereign's Scepter", type: 'weapon', style: 'staff', icon: ['staff_scepter', 13], dmg: 9, swing: 0.9, spellMul: 1.28, freeEvery: 4, spellCost: { meteor: 0.9 }, elemMul: { fire: 1.1 }, sockets: 2, bolt: 'fire', value: 1000, desc: 'The sceptre of the first fire. Spells +28%, and every fourth cast is free.' },
-  delver_lodestaff: { name: "Delver's Lodestaff", type: 'weapon', style: 'staff', icon: ['staff_lode', 8], dmg: 9, swing: 0.9, spellMul: 1.25, mpRegenMul: 1.45, sockets: 2, bolt: 'fire', value: 900, desc: 'Amber from the Lode, set in deep iron. Spells +25%; mana returns 45% faster.' },
-  winter_staff: { name: 'Staff of the Long Winter', type: 'weapon', style: 'staff', icon: ['staff_winter', 15], dmg: 10, swing: 0.9, spellMul: 1.35, spellCost: { nova: 0.5, frost: 0.8, glacier: 0.8 }, elemMul: { frost: 1.1 }, sockets: 2, bolt: 'frost', value: 1250, desc: 'A spire of the Winter that would not end. Spells +35%; Frost Nova costs half.' },
-  ember_staff: { name: 'Emberforged Staff', type: 'weapon', style: 'staff', icon: ['staff_ember', 12], dmg: 8, swing: 0.9, spellMul: 1.3, elemMul: { fire: 1.3 }, sockets: 2, bolt: 'fire', value: 700, desc: 'Forged in the Emberhold fires. Spells +30%, fire spells +30% more.' },
+  hazel_staff: { name: 'Hazel Staff', type: 'weapon', style: 'staff', icon: ['staff_hazel', 9], dmg: 6, swing: 0.9, spellMul: 1.1, bolt: 'frost', value: 90, desc: 'Forked hazel, favoured by hedge-mages. Spells hit 10% harder.' },
+  frostbirch_staff: { name: 'Frostbirch Staff', type: 'weapon', style: 'staff', icon: ['staff_frostbirch', 15], dmg: 6, swing: 0.9, spellMul: 1.2, spellCost: { frost: 0.85, nova: 0.85 }, slowAdd: 1.5, bolt: 'frost', value: 220, desc: 'White bark and a heart of ice. Spells +20%, frost spells cost 15% less and slow for longer.' },
+  reed_staff: { name: "Reed-Warden's Staff", type: 'weapon', style: 'staff', icon: ['staff_reed', 8], dmg: 7, swing: 0.9, spellMul: 1.4, mpRegenMul: 1.25, rootChance: 0.3, bolt: 'frost', value: 330, desc: 'Bound in marsh reeds. Spells +40%, mana returns 25% faster, and 30% of frost bolts root their target.' },
+  stormcrown_rod: { name: 'Stormcrown Rod', type: 'weapon', style: 'staff', icon: ['staff_rod', 13], dmg: 7, swing: 0.9, spellMul: 1.45, spellCost: { shock: 0.9 }, chainAdd: 1, bolt: 'fire', value: 400, desc: 'An iron rod of the clan shamans. Spells +45%; lightning chains to one more foe.' },
+  prism_staff: { name: 'Prism Staff', type: 'weapon', style: 'staff', icon: ['staff_prism', 15], dmg: 7, swing: 0.9, spellMul: 1.5, spellCrit: 0.08, sockets: 1, bolt: 'frost', value: 520, desc: 'A cluster of living glass. Spells +50% and can crit for 60% more.' },
+  cinder_staff: { name: 'Cinder Staff', type: 'weapon', style: 'staff', icon: ['staff_cinder', 12], dmg: 8, swing: 0.9, spellMul: 1.45, spellCost: { fire: 0.85, embernova: 0.85, meteor: 0.9 }, elemMul: { fire: 1.1 }, sockets: 1, bolt: 'fire', value: 560, desc: 'Charred ash-wood and a caged ember. Spells +45%, fire spells cost 15% less and hit 10% harder.' },
+  tidecaller_staff: { name: "Tidecaller's Staff", type: 'weapon', style: 'staff', icon: ['staff_tide', 15], dmg: 8, swing: 0.9, spellMul: 1.45, wardMul: 1.2, wardTime: 1.5, sockets: 1, bolt: 'frost', value: 540, desc: 'A shell ring on a silver shaft. Spells +45%; your Ward is 20% stronger and lasts half as long again.' },
+  sovereign_scepter: { name: "Sovereign's Scepter", type: 'weapon', style: 'staff', icon: ['staff_scepter', 13], dmg: 9, swing: 0.9, spellMul: 1.4, freeEvery: 4, spellCost: { meteor: 0.9 }, elemMul: { fire: 1.1 }, sockets: 2, bolt: 'fire', value: 1000, desc: 'The sceptre of the first fire. Spells +40%, and every fourth cast is free.' },
+  delver_lodestaff: { name: "Delver's Lodestaff", type: 'weapon', style: 'staff', icon: ['staff_lode', 8], dmg: 9, swing: 0.9, spellMul: 1.9, mpRegenMul: 1.45, sockets: 2, bolt: 'fire', value: 900, desc: 'Amber from the Lode, set in deep iron. Spells +90%; mana returns 45% faster.' },
+  winter_staff: { name: 'Staff of the Long Winter', type: 'weapon', style: 'staff', icon: ['staff_winter', 15], dmg: 10, swing: 0.9, spellMul: 2.1, spellCost: { nova: 0.5, frost: 0.8, glacier: 0.8 }, elemMul: { frost: 1.1 }, sockets: 2, bolt: 'frost', value: 1250, desc: 'A spire of the Winter that would not end. Spells +110%; Frost Nova costs half.' },
+  ember_staff: { name: 'Emberforged Staff', type: 'weapon', style: 'staff', icon: ['staff_ember', 12], dmg: 8, swing: 0.9, spellMul: 1.5, elemMul: { fire: 1.3 }, sockets: 2, bolt: 'fire', value: 700, desc: 'Forged in the Emberhold fires. Spells +50%, fire spells +30% more.' },
 
   // ---- halberds: two-handed, a wide sweep, a reverse sweep and an overhead plant
   woodsmans_bill: { name: "Woodsman's Bill", type: 'weapon2h', style: 'halberd', icon: ['halberd_bill', 5], dmg: 16, swing: 1.2, costMul: 1.3, sizeAdd: 2, pull: 14, value: 70, desc: 'A hooked bill for brush and for brigands. Sweeps; the hook drags small foes toward you.' },
@@ -79,8 +79,8 @@ export const ITEMS = {
   mana_ring: { name: 'Ring of Insight', type: 'charm', icon: ['charm_manaring', 14], maxMp: 30, value: 60, desc: '+30 max mana.' },
   bear_charm: { name: 'Bear Charm', type: 'charm', icon: ['charm_bear', 10], maxSp: 30, value: 60, desc: '+30 max stamina.' },
 
-  lockpick: { name: 'Lockpick', type: 'misc', icon: ['pick', 5], value: 6, desc: 'For locked chests. Breaks on a bad pick.' },
-  iron_ingot: { name: 'Iron Ingot', type: 'misc', icon: ['ingot', 4], value: 12, desc: 'Smiths use these to temper gear.' },
+  lockpick: { name: 'Lockpick', type: 'misc', bulk: true, icon: ['pick', 5], value: 6, desc: 'For locked chests. Breaks on a bad pick.' },
+  iron_ingot: { name: 'Iron Ingot', type: 'misc', bulk: true, icon: ['ingot', 4], value: 12, desc: 'Smiths use these to temper gear.' },
   wolf_fang: { name: 'Wolf Fang', type: 'ingredient', icon: ['fang', 6], value: 8, desc: 'Alchemy: restores stamina.' },
   bone_dust: { name: 'Bone Dust', type: 'ingredient', icon: ['dust', 5], value: 6, desc: 'Alchemy: used for ward and stamina brews.' },
   snowberry: { name: 'Snowberry', type: 'ingredient', icon: ['berry', 11], value: 4, desc: 'Alchemy: restores health.' },
@@ -158,12 +158,17 @@ export const ITEMS = {
   antler_bow: { name: 'Frostbrow Bow', type: 'bow', icon: ['bow_antler', 6], dmg: 26, crit: 0.06, value: 380, desc: 'Strung with the winter elk\'s sinew, tipped with its antler. Bjorn made it for you.' },
   trollbone_mace: { name: 'Trollbone Mace', type: 'weapon', style: 'mace', icon: ['mace_trollbone', 8], dmg: 27, costMul: 1.25, lifesteal: 0.05, value: 420, desc: 'Hilda\'s masterwork. Breaks guards, and drinks a little of what it spills.' },
   // Emberhold: ores, gems and Emberforged gear
-  ash_iron: { name: 'Ash Iron', type: 'misc', icon: ['ingot', 3], value: 30, desc: 'Dark iron smelted from the Deep Mines. Emberforged gear starts here.' },
+  ash_iron: { name: 'Ash Iron', type: 'misc', bulk: true, icon: ['ingot', 3], value: 30, desc: 'Dark iron smelted from the Deep Mines. Emberforged gear starts here.' },
+  // Hollow Arena prizes (PR-24): best wave 10, 20 and 30. Found nowhere else.
+  arena_token: { name: "Victor's Token", type: 'charm', icon: ['charm_sun', 13], crit: 0.05, maxHp: 20, maxSp: 20, unique: true, value: 420, desc: 'Struck for those who outlast ten waves of the Hollow Arena. +5% crit, +20 health, +20 stamina.' },
+  arena_crown: { name: 'Crown of the Pit', type: 'helmet', weight: 'light', icon: ['helm_cap', 13], armor: 0.07, maxHp: 30, crit: 0.04, unique: true, value: 800, desc: 'Twenty waves, and the crowd stood up. Light. Absorbs 7%, +30 health, +4% crit.' },
+  champion_blade: { name: "Champion's Edge", type: 'weapon', icon: ['sword_nordic', 13], dmg: 44, crit: 0.08, sockets: 2, unique: true, value: 1500, desc: 'The arena keeps one blade for whoever survives thirty waves. Nobody had claimed it in a lifetime.' },
+  winters_echo: { name: "Winter's Echo", type: 'misc', icon: ['ore', 6], value: 300, desc: 'A breath of the Long Winter that never melted. Only in New Game+: the Great Anvil tempers past +10 with it.' },
   heart_shard: { name: 'Heart Shard', type: 'misc', icon: ['ore', 15], value: 150, desc: 'A sliver of a fallen guardian\'s heart, still cold. The Great Anvil needs one for each of the last two tempers.' },
-  ember_ore: { name: 'Emberheart Ore', type: 'misc', icon: ['ore', 12], value: 80, desc: 'Ore that still holds a little of the first fire. Warm to the touch.' },
+  ember_ore: { name: 'Emberheart Ore', type: 'misc', bulk: true, icon: ['ore', 12], value: 80, desc: 'Ore that still holds a little of the first fire. Warm to the touch.' },
   kragnar_core: { name: "Kragnar's Core", type: 'misc', icon: ['ore', 13], value: 200, desc: 'The heart of the miner-king, still glowing. Master smiths pay dearly for it.' },
   cinder_maul: { name: 'Cinderjaw Maul', type: 'weapon', style: 'mace', icon: ['mace_cinder', 12], dmg: 38, costMul: 1.35, elem: { type: 'fire', power: 7 }, sockets: 2, value: 650, desc: 'Torn from the Magma Golem. Heavy, hot, and it breaks guards.' },
-  harpoon: { name: 'Floe Harpoon', type: 'weapon', style: 'spear', icon: ['spear_harpoon', 15], dmg: 26, crit: 0.06, elem: { type: 'frost', power: 4 }, sockets: 2, value: 480, desc: 'A whaler\'s harpoon from the Floe Troll\'s hide. Long reach, cold bite.' },
+  harpoon: { name: 'Floe Harpoon', type: 'weapon', style: 'spear', icon: ['spear_harpoon', 15], dmg: 26, crit: 0.06, elem: { type: 'frost', power: 4 }, sockets: 2, value: 420, desc: 'A whaler\'s harpoon from the Floe Troll\'s hide. Long reach, cold bite.' },
   sealskin_mail: { name: 'Sealskin Mail', type: 'armor', weight: 'medium', icon: ['armor_sealskin', 15], armor: 0.3, moveMul: 1.05, maxSp: 20, sockets: 2, value: 520, desc: 'Coast-made. Absorbs 30%, +5% speed, +20 stamina.' },
   admiral_cutlass: { name: "Admiral's Cutlass", type: 'weapon', icon: ['sword_admiral', 15], dmg: 33, crit: 0.07, elem: { type: 'frost', power: 6 }, sockets: 2, value: 720, desc: 'Veyl never lowered it. Every cut leaves a thin rime.' },
   kings_blade: { name: "The Hollow King's Blade", type: 'weapon2h', style: 'great', icon: ['sword_gs_king', 5], dmg: 50, elem: { type: 'shock', power: 8 }, sockets: 2, value: 1100, desc: 'Two-handed. The sword that sat on the last throne. It still wants a wielder.' },
@@ -206,7 +211,7 @@ export const ITEMS = {
   glowcap: { name: 'Glowcap', type: 'ingredient', icon: ['lily', 8], value: 14, desc: 'Alchemy: a mushroom that lights itself. Sells well.' },
   weaver_silk: { name: 'Weaver Silk', type: 'ingredient', icon: ['dust', 5], value: 26, desc: 'Strong as wire and almost as sharp. Crafting and trade.' },
   lode_heart: { name: 'Heart of the Lode', type: 'quest', icon: ['gem', 12], value: 0, desc: 'A lump of living ore, warm as an oven. It was beating in the Colossus.' },
-  deep_plate: { name: 'Deepforged Plate', type: 'armor', weight: 'heavy', icon: ['armor_deepplate', 12], armor: 0.4, maxHp: 25, moveMul: 0.9, sockets: 2, value: 760, desc: 'Absorbs 40%, +25 health, -10% speed. Cold iron from the bottom of the world.' },
+  deep_plate: { name: 'Deepforged Plate', type: 'armor', weight: 'heavy', icon: ['armor_deepplate', 12], armor: 0.4, maxHp: 25, sockets: 2, value: 760, desc: 'Absorbs 40%, +25 health. Heavy. Cold iron from the bottom of the world.' },
   lode_pick: { name: 'Lode Pick', type: 'weapon2h', style: 'great', icon: ['axe_lodepick', 12], dmg: 52, elem: { type: 'fire', power: 8 }, sockets: 2, value: 1100, desc: 'Two-handed. A mining pick that has seen too much. Every blow rings.' },
   delve_key: { name: 'Delve Key', type: 'quest', icon: ['locket', 13], value: 0, desc: 'An old iron key. It fits the barred gate in front of the deepest hall of this dungeon.' },
   deep_lamp: { name: 'Deep Lamp', type: 'charm', icon: ['charm_lamp', 12], maxSp: 20, maxHp: 15, value: 420, desc: '+20 stamina, +15 health. A delver\'s lamp that does not need oil. Part of the Deepforged set.' },
@@ -257,3 +262,15 @@ let ensureIcon = null, ensureHeld = null;
 export const setArtEnsure = (icon, held) => { ensureIcon = icon; ensureHeld = held; };
 export const iconKey = (id) => { ensureIcon?.(id); return 'icon_' + id; };
 export const heldKey = (id) => { ensureHeld?.(id); return 'held_' + id; };
+
+// PR-23: gem grades. Every gem comes in Flawless (x2 its bonus) and Royal (x3.5); Tamsin in Emberhold fuses three of a grade
+// into one of the next (systems/sockets.js fuseGems). Ids: gem_ruby_f, gem_ruby_r ...
+export const GEM_GRADES = [['f', 'Flawless', 2, 3], ['r', 'Royal', 3.5, 9]];   // suffix, name, bonus x, value x
+for (const base of Object.keys(ITEMS).filter((k) => ITEMS[k].type === 'gem' && !/_[fr]$/.test(k))) {
+  const g = ITEMS[base];
+  for (const [suf, name, mul, vmul] of GEM_GRADES) {
+    const gem = Object.fromEntries(Object.entries(g.gem).map(([k, v]) => [k, v < 1 ? +(v * mul).toFixed(3) : Math.round(v * mul)]));
+    const words = Object.entries(gem).map(([k, v]) => (k === 'dmg' ? `+${v} weapon damage` : k === 'maxHp' ? `+${v} health` : k === 'maxMp' ? `+${v} mana` : k === 'maxSp' ? `+${v} stamina` : k === 'crit' ? `+${Math.round(v * 100)}% critical chance` : k === 'armor' ? `+${Math.round(v * 100)}% damage absorbed` : k === 'lifesteal' ? `heal ${Math.round(v * 100)}% of damage dealt` : `${k} ${v}`)).join(', ');
+    ITEMS[`${base}_${suf}`] = { name: `${name} ${g.name}`, type: 'gem', icon: g.icon, gem, grade: suf, gradeOf: base, value: g.value * vmul, desc: `Socket it: ${words}.` };
+  }
+}

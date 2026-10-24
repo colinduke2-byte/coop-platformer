@@ -1,7 +1,7 @@
 import { C, W } from '../config.js';
 import { S } from '../systems/state.js';
 import { keys } from '../systems/keys.js';
-import { PERKS } from '../data/perks.js';
+import { PERKS, perkById, forkMate } from '../data/perks.js';
 import { SKILL_DEFS, perkState, buyPerk, lvl } from '../systems/skills.js';
 import { wrap, textW, fit } from '../art/font.js';
 import { settings } from '../systems/settings.js';
@@ -13,7 +13,7 @@ export function perksTab(m) {
   return {
     name: 'PERKS',
     badge: () => (S.perkPoints || 0) > 0,
-    get help() { return `W/S MOVE  E BUY PERK${m.paneMore ? '  G MORE' : ''}  A/D TAB`; },
+    get help() { return `W/S MOVE  E BUY PERK${m.paneMore ? '  G MORE' : ''}  A/D TAB  SHRINES UNLEARN`; },
     input() {
       m.cursor = Math.min(m.cursor, PERKS.length - 1);
       m.nav(PERKS.length, ROWS);
@@ -31,8 +31,10 @@ export function perksTab(m) {
         if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 164, 11); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 11); }
         // locked rows stay readable (a lock mark and mid-grey), and the selected row is always bright on its highlight
         const sel = i === m.cursor, hc = settings.highContrast;
-        const col = st === 'owned' ? 8 : st === 'available' ? 13 : st === 'nopoints' ? 5 : sel ? 6 : hc ? 5 : 4;
-        m.T(14, y, (st === 'locked' ? '■ ' : st === 'owned' ? '✓ ' : '') + fit(p.name, 19), col);
+        const col = st === 'owned' ? 8 : st === 'available' ? 13 : st === 'nopoints' ? 5 : st === 'taken' ? (sel ? 5 : 3) : sel ? 6 : hc ? 5 : 4;
+        // a fork's two options sit together; the second is indented under the first (PR-18)
+        const second = p.fork && PERKS.findIndex((q) => q.fork === p.fork) !== PERKS.indexOf(p);
+        m.T(second ? 20 : 14, y, (st === 'locked' ? '■ ' : st === 'owned' ? '✓ ' : st === 'taken' ? '- ' : '') + fit((second ? 'OR ' : '') + p.name, second ? 18 : 19), col);
         const tag = SKILL_DEFS[p.skill].short + ' ' + p.lvl;
         m.T(170 - textW(tag), y, tag, st === 'owned' ? 8 : sel ? 6 : 4);
       });
@@ -45,8 +47,9 @@ export function perksTab(m) {
       m.T(184, y, dl.slice(0, 5).join('\n'), 5); y += Math.min(5, dl.length) * 9 + 3;
       const need = wrap('NEEDS ' + SKILL_DEFS[p.skill].name.toUpperCase() + ' ' + p.lvl, 20).split('\n');
       m.T(184, y, need.join('\n'), lvl(p.skill) >= p.lvl ? 8 : 11); y += need.length * 9;
-      if (p.req) { const af = wrap('AFTER ' + PERKS.find((q) => q.id === p.req).name.toUpperCase(), 20).split('\n'); m.T(184, y, af.join('\n'), S.perks[p.req] ? 8 : 11); y += af.length * 9; }
-      m.T(184, Math.min(112, y + 4), st === 'owned' ? 'OWNED' : st === 'available' ? 'E: BUY' : st === 'nopoints' ? 'NO PERK POINTS' : 'LOCKED', st === 'available' ? 15 : st === 'owned' ? 8 : 4);
+      if (p.req) { const rq = [].concat(p.req), af = wrap('AFTER ' + rq.map((r) => perkById[r].name.toUpperCase()).join(' OR '), 20).split('\n'); m.T(184, y, af.slice(0, 2).join('\n'), rq.some((r) => S.perks[r]) ? 8 : 11); y += Math.min(2, af.length) * 9; }
+      const mate = forkMate(p.id);
+      m.T(184, Math.min(112, y + 4), st === 'owned' ? 'OWNED' : st === 'available' ? 'E: BUY' : st === 'nopoints' ? 'NO PERK POINTS' : st === 'taken' ? 'YOU TOOK ' + fit(perkById[mate].name.toUpperCase(), 11) : mate ? 'LOCKED. ONE OF TWO' : 'LOCKED', st === 'available' ? 15 : st === 'owned' ? 8 : 4);
       m.T(184, 124, 'LEVEL ' + (S.charLevel || 1), 13);
       m.T(184, 133, 'PERK POINTS ' + (S.perkPoints || 0), (S.perkPoints || 0) > 0 ? 15 : 4);
       m.T(184, 142, 'SKILL-UPS ' + (S.skillUps || 0), 4);

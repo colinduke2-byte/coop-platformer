@@ -27,7 +27,7 @@ check('a swing pressed mid-roll is remembered and happens when the roll ends', b
 // capstone perks exist, need the end of their chain and skill 12
 const pk = await G(async () => {
   const P = await import('/src/data/perks.js'), SK = await import('/src/systems/skills.js'), S = window.__ff.S;
-  const caps = P.PERKS.filter((p) => p.lvl === 12), out = { n: caps.length, chain: caps.every((c) => P.perkById[c.req]), states: [] };
+  const caps = P.PERKS.filter((p) => p.lvl === 12), out = { n: caps.length, chain: caps.every((c) => [].concat(c.req).every((r) => P.perkById[r])), states: [] };
   S.perks = {}; S.perkPoints = 10; for (const k of Object.keys(S.skills)) S.skills[k].lvl = 1;
   out.states.push(SK.perkState('deadeye'));                                     // locked: skill too low
   S.skills.archery.lvl = 12; out.states.push(SK.perkState('deadeye'));          // locked: chain missing

@@ -130,7 +130,7 @@ export const combatMethods = {
       s.hit.add(e);
       const sneak = this.sneaking && !e.alerted;
       if (heavy && S.perks.unbroken && !s.refunded) { s.refunded = true; S.sp = Math.min(S.maxSp, S.sp + 12); this.scene.fx.text(this.x, this.y - 16, '+STAMINA', 8, 0.6); }
-      const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1);
+      const perkMult = (S.perks.keenedge ? 1.15 : 1) * (heavy && S.perks.rending ? 1.25 : 1) * (S.perks.cleave && wp.type === 'weapon2h' ? 1.2 : 1) * (S.perks.nightblade && isDagger ? 1.15 : 1);
       let dmg = meleeDamage({
         weapon: stats.weaponDmg() + off * 0.6, skill: bonus.melee(), combo: s.c.dmg, perk: perkMult,
         sneak, sneakBonus: bonus.sneakAttack() + (S.perks.backstab && sneak ? 0.5 : 0) + (S.perks.assassin && sneak ? 1 : 0) + (isDagger ? DG.sneakBonus : 0) + (wp.sneakBonus || 0), noise: 0.9 + Math.random() * 0.2,
@@ -147,7 +147,7 @@ export const combatMethods = {
       dmg *= bl('dmgMul', 1) * (1 + 0.04 * (S.ngPlus || 0)) * (this.counterT > 0 ? P.perfect.mult : 1) * (S.hearts?.iron ? 1.1 : 1) * (this.cryT > 0 ? TUNE.player.shouts.cry.dmgMul : 1) * elixirVal('dmgMul', 1) * foodVal('dmgMul', 1);
       const riposte = this.riposteT > 0;
       if (riposte) dmg *= P.riposte.mult;
-      const crit = Math.random() < stats.sum('crit');
+      const crit = Math.random() < stats.meleeCrit();
       if (crit) dmg *= 1.8;
       if (exec || assassinate) dmg = e.hp + 999;
       const dealt = e.takeHit({

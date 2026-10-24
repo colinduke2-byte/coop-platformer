@@ -3,12 +3,17 @@
 // so they survive saving and loading.
 import { ITEMS } from '../data/items.js';
 import { S, onStateReset } from './state.js';
+import { TUNE } from '../data/tuning.js';
+import { ngLevel, ngLootTiers } from './ngplus.js';
+import { rehydrateInst } from './instances.js';
 
 export const RARITY = [
   { id: 'common', name: 'Common', col: 5, affixes: 0, mult: 1, weight: 58 },
   { id: 'magic', name: 'Magic', col: 15, affixes: 1, mult: 1.12, weight: 28 },
   { id: 'rare', name: 'Rare', col: 13, affixes: 2, mult: 1.25, weight: 11 },
   { id: 'legend', name: 'Legendary', col: 14, affixes: 3, mult: 1.45, weight: 3 },
+  // PR-17: New Game+ only (weight 0 until then): three affixes at full strength, the Legendary signature and a Mythic one
+  { id: 'mythic', name: 'Mythic', col: 12, affixes: 3, mult: 1.7, weight: 0, ngOnly: true },
 ];
 
 // slot -> base templates (stats at tier 0; they grow with tier)
@@ -29,12 +34,12 @@ const BASES = {
   armor: [
     { name: 'Jerkin', type: 'armor', weight: 'light', icon: ['armor_leathers', 9], armor: 0.09 },
     { name: 'Hauberk', type: 'armor', weight: 'medium', icon: ['armor_hauberk', 4], armor: 0.18 },
-    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28, moveMul: 0.94 },
+    { name: 'Plate', type: 'armor', weight: 'heavy', icon: ['armor_plate', 3], armor: 0.28 },              // PR-09: the heavy class already slows
   ],
   helmet: [
     { name: 'Cap', type: 'helmet', weight: 'light', icon: ['helm_cap', 9], armor: 0.03 },
     { name: 'Helm', type: 'helmet', weight: 'medium', icon: ['helm_nasal', 4], armor: 0.06 },
-    { name: 'Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.09, moveMul: 0.97 },
+    { name: 'Greathelm', type: 'helmet', weight: 'heavy', icon: ['helm_great', 3], armor: 0.09 },
   ],
   charm: [{ name: 'Charm', type: 'charm', icon: ['charm_bear', 12] }, { name: 'Ring', type: 'charm', icon: ['charm_manaring', 14] }, { name: 'Amulet', type: 'charm', icon: ['charm_sun', 10] }],
 };
@@ -42,12 +47,12 @@ const SLOT_WEIGHT = [['weapon', 34], ['bow', 12], ['shield', 12], ['armor', 22],
 
 // Affixes: where they may roll, how they change the item, and their name part.
 const AFFIXES = [
-  { id: 'keen', slots: ['weapon', 'bow'], pre: 'Keen', apply: (it, k) => { it.dmg = Math.round(it.dmg * (1.08 + 0.05 * k)); }, line: (it) => `+${Math.round((1.08 - 1) * 100)}%+ DAMAGE` },
+  { id: 'keen', slots: ['weapon', 'bow'], pre: 'Keen', apply: (it, k) => { it.keen = +(0.08 + 0.05 * k).toFixed(2); it.dmg = Math.round(it.dmg * (1 + it.keen)); }, line: (it) => `+${Math.round(it.keen * 100)}% DAMAGE` },
   { id: 'crit', slots: ['weapon', 'bow', 'charm'], suf: 'of Precision', apply: (it, k) => { it.crit = +(0.06 + 0.03 * k).toFixed(2); }, line: (it) => `${Math.round(it.crit * 100)}% CRIT CHANCE` },
   { id: 'vamp', slots: ['weapon', 'charm'], pre: 'Vampiric', apply: (it, k) => { it.lifesteal = +(0.05 + 0.02 * k).toFixed(2); }, line: (it) => `${Math.round(it.lifesteal * 100)}% LIFESTEAL` },
-  { id: 'ember', slots: ['weapon'], suf: 'of Embers', apply: (it, k) => { it.elem = { type: 'fire', power: 3 + 2 * k }; }, line: (it) => `FIRE +${it.elem.power}` },
-  { id: 'rime', slots: ['weapon'], suf: 'of Rime', apply: (it, k) => { it.elem = { type: 'frost', power: 3 + 2 * k }; }, line: (it) => `FROST +${it.elem.power}, SLOWS` },
-  { id: 'storm', slots: ['weapon'], suf: 'of Storms', apply: (it, k) => { it.elem = { type: 'shock', power: 4 + 2 * k }; }, line: (it) => `SHOCK +${it.elem.power}` },
+  { id: 'ember', group: 'elem', slots: ['weapon'], suf: 'of Embers', apply: (it, k) => { it.elem = { type: 'fire', power: 3 + 2 * k }; }, line: (it) => `HITS AS FIRE +${it.elem.power}` },
+  { id: 'rime', group: 'elem', slots: ['weapon'], suf: 'of Rime', apply: (it, k) => { it.elem = { type: 'frost', power: 3 + 2 * k }; }, line: (it) => `HITS AS FROST +${it.elem.power}, SLOWS` },
+  { id: 'storm', group: 'elem', slots: ['weapon'], suf: 'of Storms', apply: (it, k) => { it.elem = { type: 'shock', power: 4 + 2 * k }; }, line: (it) => `HITS AS SHOCK +${it.elem.power}` },
   { id: 'swift', slots: ['weapon'], pre: 'Swift', apply: (it) => { it.swing = +((it.swing || 1) * 0.88).toFixed(2); }, line: () => 'FASTER SWINGS' },
   { id: 'light', slots: ['weapon', 'bow', 'armor', 'helmet'], pre: 'Light', apply: (it) => { it.costMul = +((it.costMul || 1) * 0.85).toFixed(2); it.moveMul = +((it.moveMul || 1) * 1.04).toFixed(2); }, line: () => 'CHEAPER, QUICKER' },
   { id: 'hardy', slots: ['armor', 'charm', 'shield', 'helmet'], pre: 'Hardy', apply: (it, k) => { it.maxHp = (it.maxHp || 0) + 15 + 8 * k; }, line: (it) => `+${it.maxHp} HEALTH` },
@@ -55,7 +60,8 @@ const AFFIXES = [
   { id: 'vigor', slots: ['armor', 'charm', 'helmet'], pre: 'Vigorous', apply: (it, k) => { it.maxSp = (it.maxSp || 0) + 18 + 8 * k; }, line: (it) => `+${it.maxSp} STAMINA` },
   { id: 'ward', slots: ['armor', 'shield', 'helmet'], suf: 'of the Bear', apply: (it, k) => { if (it.armor != null) it.armor = +(it.armor + 0.04 + 0.02 * k).toFixed(2); else it.block = +Math.min(0.9, it.block + 0.06).toFixed(2); }, line: () => 'TOUGHER' },
   { id: 'shadow', slots: ['armor', 'charm', 'helmet'], suf: 'of Shadows', apply: (it) => { it.detectMul = 0.8; }, line: () => 'HARDER TO SPOT' },
-  { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it) => { it.goldMul = 1.25; }, line: () => '+25% GOLD FOUND' },
+  { id: 'steady', slots: ['shield'], pre: 'Steady', apply: (it) => { it.cost = +((it.cost || 1) * 0.8).toFixed(2); }, line: () => 'BLOCKING COSTS LESS' },
+  { id: 'greed', slots: ['charm', 'armor', 'helmet'], suf: 'of Plenty', apply: (it, k) => { it.goldMul = +(1 + TUNE.economy.plenty[0] + TUNE.economy.plenty[1] * k).toFixed(3); }, line: (it) => `+${Math.round((it.goldMul - 1) * 1000) / 10}% GOLD FOUND` },
 ];
 
 const pickW = (list, r) => { let t = list.reduce((a, [, w]) => a + w, 0) * r; for (const [v, w] of list) { t -= w; if (t <= 0) return v; } return list[0][0]; };
@@ -71,30 +77,49 @@ export function genItem(tier = 0, rnd = Math.random, forceRarity = null, opts = 
   // rarity: higher tiers shift odds upward
   let rar = forceRarity != null ? RARITY[forceRarity] : null;
   if (!rar) {
-    const ws = RARITY.map((r, i) => [r, r.weight * (i === 0 ? Math.max(0.3, 1 - 0.2 * tier) : 1 + 0.55 * tier * i)]);
+    const ng = opts.ng ?? ngLevel();
+    const ws = RARITY.map((r, i) => [r, (r.ngOnly ? TUNE.economy.ng.mythicWeight * ng : r.weight) * (i === 0 ? Math.max(0.3, 1 - 0.2 * tier) : 1 + 0.55 * tier * i)]);
     rar = pickW(ws, rnd());
   }
-  const scale = 1 + 0.22 * tier;
+  const scale = 1 + 0.22 * tier, E = TUNE.economy.gen;
   const it = { ...base, rarity: rar.id, gen: true, tier, slot, baseName: base.name };
   if (it.dmg) it.dmg = Math.round(it.dmg * scale * rar.mult);
-  if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * (0.9 + 0.1 * rar.mult)).toFixed(2);
-  if (it.block != null) it.block = +Math.min(0.88, it.block + 0.03 * tier).toFixed(2);
+  // PR-10: rarity matters off weapons too (armour by the square root of the rarity multiplier, block by its fourth root)
+  if (it.armor != null) it.armor = +Math.min(0.5, it.armor * (1 + 0.1 * tier) * Math.pow(rar.mult, E.armorPow)).toFixed(2);
+  if (it.block != null) it.block = +Math.min(0.88, (it.block + 0.03 * tier) * Math.pow(rar.mult, E.blockPow)).toFixed(2);
+  // PR-01 / PR-10: a generated staff's spell power grows with tier and rarity
+  if (it.spellMul) it.spellMul = +Math.min(E.staffMax, 1 + (E.staff[0] + E.staff[1] * tier) * rar.mult).toFixed(2);
   if (slot === 'charm') { const k = ['maxHp', 'maxMp', 'maxSp'][Math.floor(rnd() * 3)]; it[k] = Math.round((20 + 8 * tier) * rar.mult); }
-  // affixes
+  // affixes (PR-02): draw only from affixes whose name part is still free, so every rarity gets its full count. Once the
+  // prefix and the suffix are both taken, a further affix is nameless (shown in the tooltip only). Two elements never stack.
   const pool = AFFIXES.filter((a) => a.slots.includes(slot));
   const used = [];
   const prefixes = [], suffixes = [];
-  for (let i = 0; i < rar.affixes && pool.length; i++) {
-    const a = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
-    if (a.pre && prefixes.length) { if (a.suf && !suffixes.length) { /* fall through */ } else continue; }
-    if (a.suf && suffixes.length && !a.pre) continue;
-    a.apply(it, Math.min(2, tier));
-    used.push(a); if (a.pre && !prefixes.length) prefixes.push(a.pre); else if (a.suf) suffixes.push(a.suf);
+  const k = Math.min(E.affixTierCap, tier) + (rar.id === 'mythic' ? 1 : 0);
+  while (used.length < rar.affixes && pool.length) {
+    const free = (a) => (a.pre ? !prefixes.length : !suffixes.length);
+    const ok = pool.filter((a) => !(a.group && used.some((u) => u.group === a.group)));
+    if (!ok.length) break;
+    const named = ok.filter(free), from = named.length ? named : ok;
+    const a = from[Math.floor(rnd() * from.length)];
+    pool.splice(pool.indexOf(a), 1);
+    a.apply(it, k);
+    used.push(a);
+    if (free(a)) (a.pre ? prefixes : suffixes).push(a.pre || a.suf);
   }
+  // PR-10: a Legendary carries a signature no fixed item has: one more socket (below), or (helmets and charms) +10 to every pool
+  if ((rar.id === 'legend' || rar.id === 'mythic') && (slot === 'helmet' || slot === 'charm')) { for (const p of ['maxHp', 'maxMp', 'maxSp']) it[p] = (it[p] || 0) + E.legendPools; it.signature = `+${E.legendPools} HEALTH, MANA, STAMINA`; }
   it.affixLines = used.map((a) => a.line(it));
   it.name = `${prefixes[0] ? prefixes[0] + ' ' : ''}${it.name}${suffixes[0] ? ' ' + suffixes[0] : ''}`;
   if (slot === 'charm' && !prefixes.length) it.name = `${['Frost', 'Wolf', 'Raven', 'Ember', 'Oak'][Math.floor(rnd() * 5)]} ${it.name}`;
-  it.value = Math.round(((it.dmg || 0) * 6 + (it.armor || 0) * 400 + (it.block || 0) * 120 + (it.maxHp || 0) + (it.maxMp || 0) + (it.maxSp || 0) + 20) * (1 + used.length * 0.5));
+  it.value = Math.round(((it.dmg || 0) * 6 + (it.armor || 0) * 400 + (it.block || 0) * 120 + (it.maxHp || 0) + (it.maxMp || 0) + (it.maxSp || 0) + ((it.spellMul || 1) - 1) * 600 + 20) * (1 + used.length * 0.5));
+  if ((rar.id === 'legend' || rar.id === 'mythic') && slot !== 'helmet' && slot !== 'charm') { it.sockets = (it.value >= 250 ? 2 : it.value >= 90 ? 1 : 0) + 1; it.signature = 'ONE MORE SOCKET'; }
+  // the Mythic mark: what you carry out of another winter (+8% damage, armour, block or spell power on top)
+  if (rar.id === 'mythic') {
+    if (it.dmg) it.dmg = Math.round(it.dmg * 1.08); if (it.armor != null) it.armor = +(it.armor + 0.03).toFixed(2); if (it.block != null) it.block = +Math.min(0.9, it.block + 0.03).toFixed(2); if (it.spellMul) it.spellMul = +(it.spellMul * 1.08).toFixed(2);
+    it.signature = (it.signature ? it.signature + '. ' : '') + 'WINTERBORN';
+    it.value = Math.round(it.value * 1.3);
+  }
   it.icon = [it.icon[0], rar.id === 'common' ? it.icon[1] : rar.col];
   it.desc = describe(it);
   return it;
@@ -104,17 +129,20 @@ function describe(it) {
   const parts = [];
   if (it.dmg) parts.push(`DAMAGE ${it.dmg}`);
   if (it.armor != null) parts.push(`ARMOR ${Math.round(it.armor * 100)}%`);
+  if (it.spellMul) parts.push(`SPELLS +${Math.round((it.spellMul - 1) * 100)}%`);
   if (it.block != null) parts.push(`BLOCKS ${Math.round(it.block * 100)}%`);
   for (const l of it.affixLines || []) parts.push(l);
-  if (it.maxHp && !(it.affixLines || []).some((l) => l.includes('HEALTH'))) parts.push(`+${it.maxHp} HEALTH`);
-  if (it.maxMp && !(it.affixLines || []).some((l) => l.includes('MANA'))) parts.push(`+${it.maxMp} MANA`);
-  if (it.maxSp && !(it.affixLines || []).some((l) => l.includes('STAMINA'))) parts.push(`+${it.maxSp} STAMINA`);
+  if (it.signature) parts.push(it.signature);
+  const said = [...(it.affixLines || []), it.signature || ''];
+  if (it.maxHp && !said.some((l) => l.includes('HEALTH'))) parts.push(`+${it.maxHp} HEALTH`);
+  if (it.maxMp && !said.some((l) => l.includes('MANA'))) parts.push(`+${it.maxMp} MANA`);
+  if (it.maxSp && !said.some((l) => l.includes('STAMINA'))) parts.push(`+${it.maxSp} STAMINA`);
   return `${(RARITY.find((r) => r.id === it.rarity) || RARITY[0]).name.toUpperCase()}. ` + parts.join('. ') + '.';
 }
 
 // Create, register and return the id of a freshly generated item.
 export function makeGenItem(tier = 0, rnd = Math.random, forceRarity = null) {
-  const it = genItem(tier, rnd, forceRarity);
+  const it = genItem(tier + ngLootTiers(), rnd, forceRarity);         // PR-17: NG+ loot rolls higher tiers
   const id = `g_${Date.now().toString(36)}${(counter++).toString(36)}`;
   registerGen(id, it);
   return id;
@@ -130,12 +158,34 @@ export function registerGen(id, def) {
 onStateReset((st) => { for (const id of Object.keys(ITEMS)) if (id.startsWith('g_') && !st.gen?.[id]) delete ITEMS[id]; });
 // Re-register every generated item from a loaded save.
 export function rehydrateGen() {
-  for (const [id, def] of Object.entries(S.gen || {})) { ITEMS[id] = def; iconBuilder?.(id, def); }
+  for (const [id, def] of Object.entries(S.gen || {})) { fixOldHeavy(def); ITEMS[id] = def; iconBuilder?.(id, def); }
+  rehydrateInst();                                    // and the per-item instances of handcrafted gear (PR-08)
+}
+// PR-09: generated Plate and Greathelms from older saves carried their own speed penalty on top of the heavy class's; take it out.
+const OLD_HEAVY = { Plate: 0.94, Greathelm: 0.97 };
+function fixOldHeavy(def) {
+  const was = OLD_HEAVY[def.baseName];
+  if (!was || def.heavyFixed || def.moveMul == null) return;
+  const m = +(def.moveMul / was).toFixed(2);
+  if (Math.abs(m - 1) < 0.005) delete def.moveMul; else def.moveMul = m;
+  def.heavyFixed = true;
 }
 export const rarityOf = (id) => RARITY.find((r) => r.id === ITEMS[id]?.rarity) || null;
 
 const SLOT_OF_TYPE = { weapon: 'weapon', weapon2h: 'weapon', bow: 'bow', shield: 'shield', helmet: 'helmet', armor: 'armor', charm: 'charm' };
 export const rarityIndex = (it) => Math.max(0, RARITY.findIndex((r) => r.id === it.rarity));
+// PR-26: raise a generated item one rarity in place (same id, slot, base and tier), re-rolling its affixes with the higher count.
+// Mythic only in New Game+. Returns false when it cannot go higher.
+export function ascendGen(id) {
+  const old = ITEMS[id];
+  if (!old || !old.gen) return false;
+  const next = rarityIndex(old) + 1;
+  if (next >= RARITY.length || (RARITY[next].ngOnly && !ngLevel())) return false;
+  const fresh = genItem(old.tier || 0, Math.random, next, { slot: old.slot || SLOT_OF_TYPE[old.type], baseName: old.baseName || old.name });
+  fresh.ascended = (old.ascended || 0) + 1; fresh.reforged = old.reforged || 0;
+  registerGen(id, fresh);
+  return true;
+}
 // Re-roll a generated item's stats and affixes in place (same id, slot, base, tier and rarity, so equipment stays equipped).
 export function reforgeGen(id) {
   const old = ITEMS[id];

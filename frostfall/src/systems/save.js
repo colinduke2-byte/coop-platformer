@@ -7,9 +7,10 @@ import { sfx } from '../audio/sfx.js';
 import { settings, saveSettings } from './settings.js';
 import { MAPS } from '../data/maps.js';
 import { rehydrateGen } from './genloot.js';
+import { migrateInstances } from './instances.js';
 
 export const SLOTS = 3;
-export const SAVE_VERSION = 3;           // 3: fog stored run-length encoded, unused generated-item definitions pruned
+export const SAVE_VERSION = 4;           // 3: fog stored run-length encoded, unused generated-item definitions pruned; 4: per-item gear state (PR-08)
 const keyFor = (slot) => (slot === 1 ? 'frostfall_save_v1' : `frostfall_save_s${slot}`);
 const bakFor = (slot) => keyFor(slot) + '_bak';
 const sesFor = (slot) => keyFor(slot) + '_session';
@@ -61,6 +62,7 @@ function serialise() {
 // Older saves are brought up to date here, one version at a time.
 const MIGRATIONS = {
   2: (d) => d,                                            // v2 -> v3: nothing to convert (fog decoding accepts both forms)
+  3: (d) => { if (d.s) migrateInstances(d.s); return d; },  // v3 -> v4: upgrades, enchants, gems and wear move to one copy of the item
 };
 function migrate(d) {
   let v = d.v || 2;
