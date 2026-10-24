@@ -6,9 +6,10 @@ import { bus } from '../systems/bus.js';
 import { TUNE } from '../data/tuning.js';
 import { regionOfMap } from '../data/regions.js';
 import { applyStatus } from '../systems/status.js';
-import { Herb } from '../entities/Props.js';
+import { Herb, Lore } from '../entities/Props.js';
 import { ART_SKY } from '../world/weather.js';
 import { HAMLET_FOLK } from '../world/hamletfolk.js';
+import { freshPages } from '../world/lorepool.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
 import { buyMenu, sellMenu } from '../data/services.js';
@@ -84,3 +85,6 @@ for (const folk of Object.values(HAMLET_FOLK).flat()) {
     }
   };
 }
+
+// ---- WQ11: a lore book you have read shows an unread page of its family instead, when one is left
+registerListener('scene:game', (sc) => freshPages(sc.interactables.filter((i) => i instanceof Lore)));

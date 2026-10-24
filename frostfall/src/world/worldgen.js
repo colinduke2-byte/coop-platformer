@@ -364,6 +364,7 @@ export function buildRegion(def, region, seed) {
       chest(p, 0, -1, p.tier + 1, 'hard');
       add({ t: 'sign', x: p.x - 2, y: p.y + 2, text: ['A SCRAWLED NOTE.', pickOf(['SOMEONE HID THEIR SAVINGS HERE. THEY NEVER CAME BACK.', 'IF YOU FOUND THIS, IT IS YOURS. DO NOT WAKE THE WATCHMAN.', 'THE LAST OF THE WINTER STORES. TAKE ONE AND LEAVE THE REST.'])] });
       for (let i = 0; i < 1 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(m.melee), p.x + (i ? 3 : -3), p.y + 2, p.tier, { camp: p.id });
+      add({ t: 'lore', id: 'hidden' + ((p.x + p.y) % 10), tex: 'book', x: p.x + 2, y: p.y + 1 });
     } else if (p.kind === 'hermit') {
       clearing(p, 9, 7);
       g.set(p.x, p.y + 1, TILE.FIRE);
@@ -378,7 +379,7 @@ export function buildRegion(def, region, seed) {
       for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; g.set(p.x + Math.round(Math.cos(a) * 5), p.y + Math.round(Math.sin(a) * 4), tree[0]); }
       g.set(p.x, p.y - 1, tree[1]);
       add({ t: 'shrine', id: p.id, x: p.x, y: p.y + 1 }); add({ t: 'glow', x: p.x, y: p.y, r: 52, col: 14 });
-      add({ t: 'lore', id: 'stone' + ((p.id.length + p.x) % 3), tex: 'book', x: p.x + 2, y: p.y + 2 });
+      add({ t: 'lore', id: 'hidden' + ((p.id.length + p.x) % 10), tex: 'book', x: p.x + 2, y: p.y + 2 });      // WQ11: hidden places have their own pages
     } else if (p.kind === 'rest') {
       clearing(p, 5, 5);
       g.set(p.x, p.y, TILE.FIRE);

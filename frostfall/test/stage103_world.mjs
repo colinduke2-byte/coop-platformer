@@ -90,6 +90,17 @@ const folk = await G(async () => {
 });
 check('WQ10: hamlets outside the Reach have their own folk with a name and a script', Object.values(folk).flat().every((x) => x.startsWith('hf_') && !x.endsWith('!')) && Object.values(folk).flat().length >= 5, JSON.stringify(folk));
 
+// ---- WQ11: a read page gives way to an unread one of its family
+const pages = await G(async () => {
+  const L = await import('/src/world/lorepool.js'), S = window.__ff.S;
+  S.lore = { stone0: true, stone1: true, hidden0: true };
+  const books = [{ id: 'stone0' }, { id: 'stone1' }, { id: 'hidden0' }, { id: 'ruin0' }];
+  L.freshPages(books);
+  const ids = books.map((b) => b.id); S.lore = {};
+  return ids;
+});
+check('WQ11: a read page gives way to an unread one of its family, never twice the same', pages[0] === 'stone2' && pages[1] === 'stone1' && pages[2].startsWith('hidden') && pages[2] !== 'hidden0' && pages[3] === 'ruin0', JSON.stringify(pages));
+
 // ---- WQ6: a random event marks itself, and never touches the player's waypoint
 await h.open('scene=game&map=forest&spawn=start&seed=8919');
 await h.sleep(1500);
