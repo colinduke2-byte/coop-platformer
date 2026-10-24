@@ -296,3 +296,25 @@ export const TUNE = {
     hard: { dmgTaken: 1.46, enemyHp: 2.15, regen: 0.6, windup: 0.85, chase: 1.08, elite: 1.5, drops: 0.7, price: 1.2, durability: 'hard' },
   },
 };
+
+// ---- W: world
+TUNE.world = {
+  // WQ19: weather per region. roll = weights for the next weather when the weather timer fires (snowy maps keep their old roll).
+  // stealth: enemies' sight multiplier; wind: sideways push on arrows (px/s). Hazards: a telegraphed circle every [min, max]
+  // seconds near you while that weather lasts (ash embers on the Peaks, lightning on the Stormcrown heath, rockfall in the Underdeep).
+  weather: {
+    roll: {
+      ashen: { clear: 0.62, ash: 0.38 }, fens: { clear: 0.45, rain: 0.3, fog: 0.25 }, sunscorch: { clear: 0.72, sandstorm: 0.28 },
+      vale: { clear: 0.7, rain: 0.3 }, glasswood: { clear: 0.68, chime: 0.32 }, kingdom: { clear: 0.7, rain: 0.3 }, underdeep: { clear: 1 },
+    },
+    stormShare: 0.5,               // highlands: share of blizzards that are thunderstorms instead
+    stealth: { blizzard: 0.75, whiteout: 0.5, sandstorm: 0.5, fog: 0.6, rain: 0.9, ash: 0.85, storm: 0.8 },
+    wind: { blizzard: 14, whiteout: 42, sandstorm: 36, storm: 18 },
+    ember: { every: [7, 12], r: 14, delay: 1.1, dmg: 6, perTier: 4 },
+    lightning: { every: [6, 11], r: 18, delay: 1.3, dmg: 10, perTier: 5, safeR: 7 },
+    tremor: { every: [70, 130], rocks: 3, r: 16, delay: 1.2, dmg: 8, perTier: 4 },
+    chime: { every: 6, slow: 1.4, r: 150 },
+    rainRegrow: { every: 14, r: 260, max: 3 },
+    fireInRain: 0.8,               // fire damage multiplier in rain (weatherMul('fire'); for the combat code to use)
+  },
+};

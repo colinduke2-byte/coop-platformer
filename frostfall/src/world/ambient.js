@@ -5,7 +5,7 @@ import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
 
 const SNOWY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT, TILE.SNOWDRIFT, TILE.FROSTBLOOM]);
-const WIND = { blizzard: 14, whiteout: 42 };
+import { windOf } from './weather.js';
 
 export const ambientMethods = {
   initAmbient() {
@@ -19,7 +19,7 @@ export const ambientMethods = {
   },
 
   // Sideways push on arrows and bolts: none in clear weather, strong in a whiteout.
-  windX() { return (this.def.snow || this.def.outdoors) ? (WIND[S.weather] || 0) : 0; },
+  windX() { return (this.def.snow || this.def.outdoors) ? windOf(S.weather) : 0; },
 
   // Towns keep a few hens and a dog, wandering near the houses. They hop away when you run past.
   initCritters() {

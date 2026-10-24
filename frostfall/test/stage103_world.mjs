@@ -71,5 +71,45 @@ const where = await G(async () => {
 check('WQ5: kill and collect quests in the older regions point at the creature or the item', where.none.length === 0 && where.leeches?.map === 'fens' && where.moon?.map === 'forest', JSON.stringify(where));
 check('WQ5: every kill and collect step in the Vale and Sunscorch chains has a marker', where.chainSteps >= 15 && where.chainNull.length === 0, JSON.stringify(where));
 
+// ---- WQ6: a random event marks itself, and never touches the player's waypoint
+await h.open('scene=game&map=forest&spawn=start&seed=8919');
+await h.sleep(1500);
+const ev = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), qm = await import('/src/world/questmarks.js');
+  S.flags.waypoint = { map: 'forest', x: 30, y: 30 };
+  sc.spawnTrader();
+  const during = { wp: { ...S.flags.waypoint }, em: qm.eventMark() };
+  sc.removeTrader();
+  sc.spawnWounded(0); const wounded = qm.eventMark(); sc.removeWounded();
+  return { during, after: S.flags.waypoint, emAfter: qm.eventMark(), wounded: wounded?.tag };
+});
+check('WQ6: a trader marks itself in its own marker and leaves your waypoint alone', ev.during.wp.x === 30 && ev.during.em?.map === 'forest' && ev.after?.x === 30 && !ev.emAfter && ev.wounded === 'wounded', JSON.stringify(ev));
+
+// ---- WQ3 / WQ19: weather belongs to its region
+const reachW = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');
+  const seen = []; const f = (k, r) => seen.push(k + '@' + r); bus.on('weather', f);
+  S.weather = 'blizzard'; sc.applyWeather();
+  bus.off('weather', f);
+  return { w: S.weather, seen };
+});
+check('WQ3: the Reach keeps its blizzards, and says so on the bus', reachW.w === 'blizzard' && reachW.seen.includes('blizzard@reach'), JSON.stringify(reachW));
+for (const [map, allowed] of [['sunscorch', ['clear', 'sandstorm']], ['fens', ['clear', 'rain', 'fog']], ['ashen', ['clear', 'ash']], ['vale', ['clear', 'rain']]]) {
+  await h.open(`scene=game&map=${map}&spawn=entry&seed=8919`);
+  await h.sleep(1500);
+  const r = await G(async (allowed) => {
+    const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');
+    const seen = new Set(); const f = (k) => seen.add(k); bus.on('weather', f);
+    S.weather = 'blizzard'; sc.applyWeather(); const arrived = S.weather;
+    for (let i = 0; i < 60; i++) { sc.weatherT = 0; sc.updateClock(0.001); }
+    S.weather = 'blizzard'; sc._cold = 0; const before = sc.player.statuses?.chill; sc.stormCold(30);
+    bus.off('weather', f);
+    return { arrived, seen: [...seen], chilled: !before && !!sc.player.statuses?.chill, stealth: (S.weather = allowed[1], sc.stealthEnv()) };
+  }, allowed);
+  check(`WQ3/WQ19: ${map} turns a blizzard into its own weather and only rolls ${allowed.join('/')}`, r.arrived === 'clear' && r.seen.every((k) => allowed.includes(k)) && r.seen.length >= 2 && !r.chilled, JSON.stringify(r));
+}
+const sand = await G(() => window.__ff.game.scene.getScene('Game').stealthEnv());
+check('WQ19: a storm of the region hides you (stealth multiplier below 1)', sand < 1, String(sand));
+
 await h.close();
 console.log(failCount() ? 'STAGE 103 FAILED' : 'STAGE 103 PASSED');
