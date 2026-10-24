@@ -136,7 +136,7 @@ I merge in a fixed order, run the full suite, and publish. Each agent:
 are touched by almost every feature (`code.md`, section D). Run agents in parallel before that's fixed and they'll
 fight over the same lines.
 
-### Wave 0: foundation (1 agent, no visible change)
+### Wave 0: foundation (1 agent, no visible change) - DONE
 
 | Agent | Items | Owns |
 |---|---|---|
@@ -145,6 +145,10 @@ fight over the same lines.
 **Done when:**
 - the suite and lint are green;
 - adding a feature means registering it from its own file, not editing GameScene's switch.
+
+Done (2026-10-23): [x] CH1 [x] CH2 [x] CH3 [x] CH4 [x] CH5 [x] CH6 [x] CH7 [x] CH8 [x] CH9 [x] CH10 [x] CH11 [x] CH12
+(two cycles broken, the stats cycle documented) [x] CH13 [x] CH17 [x] CH19 [x] CH20 [x] AU02 [x] status/weather bus events.
+The rules for every later agent are in `docs/AGENT_RULES.md`.
 
 ### Wave 1: fixes (7 agents at once, no design changes)
 
