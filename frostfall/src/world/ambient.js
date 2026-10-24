@@ -3,6 +3,10 @@
 import { W, H, C, TILE } from '../config.js';
 import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
+import { regionOfMap } from '../data/regions.js';
+
+// VX-19: which bird perches and scatters, by region (art in art/sprites.js)
+const BIRD = { coast: 'gull', sunscorch: 'vulture' };
 
 const SNOWY = new Set([TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT, TILE.SNOWDRIFT, TILE.FROSTBLOOM]);
 const WIND = { blizzard: 14, whiteout: 42 };
@@ -70,7 +74,7 @@ export const ambientMethods = {
         const a = Math.random() * Math.PI * 2, d = 130 + Math.random() * 90, x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
         if (!this.solidAt(x, y) && !this.solidAt(x, y + 6)) {
           const n = 1 + Math.floor(Math.random() * 3);
-          for (let i = 0; i < n; i++) this.ravens.push({ img: this.add.image(x + i * 7, y + (i % 2) * 3, 'raven0').setDepth(y + 4), fly: false, t: 0 });
+          for (let i = 0; i < n; i++) { const bird = BIRD[regionOfMap(this.mapId)] || 'raven'; this.ravens.push({ img: this.add.image(x + i * 7, y + (i % 2) * 3, bird + '0').setDepth(y + 4), fly: false, t: 0, bird }); }
         }
       }
     }
@@ -79,7 +83,7 @@ export const ambientMethods = {
       const d = Math.hypot(img.x - p.x, img.y - p.y);
       if (!r.fly && (d < 56 || (p.mode === 'roll' && d < 80))) { r.fly = true; r.vx = (img.x - p.x) / (d || 1) * 60 + (Math.random() - 0.5) * 20; r.vy = -38; sfx.play('caw'); }
       if (r.fly) {
-        r.t += dt; img.x += r.vx * dt; img.y += r.vy * dt; img.setTexture(Math.floor(r.t * 9) % 2 ? 'raven1' : 'raven0').setFlipX(r.vx < 0).setDepth(img.y + 30);
+        r.t += dt; img.x += r.vx * dt; img.y += r.vy * dt; img.setTexture((r.bird || 'raven') + (Math.floor(r.t * 9) % 2 ? '1' : '0')).setFlipX(r.vx < 0).setDepth(img.y + 30);
         img.setAlpha(Math.max(0, 1 - r.t / 1.8));
         if (r.t > 1.8) { img.destroy(); this.ravens.splice(i, 1); }
       } else if (d > 420) { img.destroy(); this.ravens.splice(i, 1); }
@@ -119,9 +123,10 @@ export const ambientMethods = {
     const g = this.auroraG; g.clear();
     if (S.weather !== 'aurora') return;
     this.auroraT += dt;
-    const t = this.auroraT, bands = [[8, 0.2, 22], [14, 0.14, 26], [15, 0.12, 18]];
+    // VX-15: lower (below the HUD bars, y ~20-60) and brighter than before, stepped through palette 15 / 8 / 14
+    const t = this.auroraT, bands = [[15, 0.3, 14], [8, 0.34, 18], [14, 0.26, 16]];
     bands.forEach(([col, a, hgt], i) => {
-      const base = 14 + i * 12;
+      const base = 24 + i * 11;
       for (let x = 0; x < W; x += 4) {
         const y = base + Math.sin(x * 0.03 + t * (0.5 + i * 0.2) + i * 2) * 9 + Math.sin(x * 0.07 - t * 0.8) * 3;
         g.fillStyle(C[col], a * (0.6 + 0.4 * Math.sin(x * 0.05 + t + i)));

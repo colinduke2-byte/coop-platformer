@@ -10,6 +10,7 @@ import { TUNE } from '../data/tuning.js';
 import { music } from '../audio/sfx.js';
 import { saveGame } from '../systems/save.js';
 import Pickup from './Pickup.js';
+import { baseKey } from '../art/tintbake.js';      // a tinted ring wears a baked texture (VX-03): compare its own key
 
 // Jarl Valdrek, the Frostsworn. Two phases (split at 50% HP).
 //  Phase 1: slow; slam (circle), sweep (wide box), frost volley (3 orbs).
@@ -185,8 +186,8 @@ export default class Boss extends Enemy {
     this.blink -= dt;
     if (this.blink <= 0) { this.blink = 0.08; this.blinkOn = !this.blinkOn; }
     for (const t of this.tele) {
-      if (t.texture?.key === 'ring' && this.atk === 'nova') t.setScale(0.3 + k * 2.2).setAlpha(0.9 - k * 0.5);
-      else t.setAlpha((t.texture?.key === 'ring' ? 0.5 : 0.18) + k * 0.4);
+      if (baseKey(t) === 'ring' && this.atk === 'nova') t.setScale(0.3 + k * 2.2).setAlpha(0.9 - k * 0.5);
+      else t.setAlpha((baseKey(t) === 'ring' ? 0.5 : 0.18) + k * 0.4);
     }
     // Tracking: volley/charge keep aiming until the last third
     if (k < 0.6 && (this.atk === 'volley' || this.atk === 'charge')) {

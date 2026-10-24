@@ -15,6 +15,7 @@ import { ui } from '../systems/ui.js';
 import { recalc } from '../systems/stats.js';
 import { bonus } from '../systems/skills.js';
 import { SnowFx } from '../art/snow.js';
+import { tilesetFor, varyGround } from '../art/tileset.js';
 import { Fx } from '../art/fx.js';
 import Player from '../entities/Player.js';
 import Enemy from '../entities/Enemy.js';
@@ -94,8 +95,9 @@ export default class GameScene extends Phaser.Scene {
 
     // --- tilemap (collision from the solid tile list)
     const map = this.make.tilemap({ data: built.grid, tileWidth: T, tileHeight: T });
-    const ts = map.addTilesetImage('tiles', 'tiles', T, T, 0, 0);
+    const ts = map.addTilesetImage('tiles', tilesetFor(this, built), T, T, 0, 0);     // the region's own ground under its props (art/tileset.js)
     this.layer = map.createLayer(0, ts, 0, 0);
+    varyGround(this.layer);
     this.layer.setCollision(SOLID_TILES);
     // solid grid from a lookup table, cached per built map (the Hollow Reach has 204k tiles); doors and gates edit a copy
     if (!built._solid) built._solid = built.grid.map((row) => row.map((t) => SOLID_LUT[t] === 1));

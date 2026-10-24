@@ -1,8 +1,2 @@
-// Humanoid-style large monsters drawn by the shared humanoid renderer (the bosses have their own hand-designed art in bosses_*.js).
-// registerHumanoid(kind, STYLES entry, on-screen scale): native size is round(16 * scale).
-import { registerHumanoid } from './humanoid.js';
-
-registerHumanoid('troll', 'troll', 2);
-registerHumanoid('golem', 'golem', 1.7);
-registerHumanoid('crystalgolem', 'golem', 1.6);
-registerHumanoid('stonegiant', 'stonegiant', 2.2);
+// The golem family (troll, rime golem, crystal golem, stone giant) used to be drawn here by the shared humanoid renderer with
+// one body for all four; each now has its own hand-designed body in bosses_e.js (VX-27).

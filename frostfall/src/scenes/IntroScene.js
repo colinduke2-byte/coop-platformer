@@ -4,6 +4,7 @@ import { txt } from '../art/font.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { padHint } from '../systems/access.js';
+import { IntroVignette } from '../art/scenery.js';
 
 const LINES = [
   'The cold took you first.',
@@ -16,6 +17,7 @@ export default class IntroScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.i = 0; this.n = 0; this.t = 0; this.hold = 0;
+    this.vig = new IntroVignette(this);           // VX-25: a picture over each line
     this.body = txt(this, 0, 70, '', 5);
     // E (or A) moves on a line; holding it skips the whole intro, with a bar that fills while you hold
     this.hint = txt(this, 0, H - 12, padHint('E NEXT   HOLD E SKIP'), 4); this.hint.x = W - 6 - this.hint.width;
@@ -28,6 +30,7 @@ export default class IntroScene extends Phaser.Scene {
     this.holdT = keys.isDown('interact') ? this.holdT + dt : 0;
     this.skipBar.width = Math.min(1, this.holdT / 0.8) * this.hint.width;
     if (this.holdT > 0.8) return this.finish();
+    this.vig.show(this.i); this.vig.update(dt);
     const line = LINES[this.i];
     if (line === undefined) return;
     if (this.n < line.length) {

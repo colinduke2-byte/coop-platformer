@@ -5,6 +5,7 @@ import { hash } from '../util.js';
 import { isGearKind, drawGearIcon, drawGearHeld, gearHeldSize } from './gear.js';
 import { wornStyle, wornExtra, wornHelmet } from './worn.js';
 import { DAG_HI, DAG_LO, iconFromCells, heldFromCells, Cb, col2 } from './cells.js';
+import { installBakedTints } from './tintbake.js';      // tints become palette-remapped textures (VX-03)
 
 const canvas = (w, h) => {
   const c = document.createElement('canvas');
@@ -111,6 +112,50 @@ function humanoid(ctx, ox, dir, frIn, s) {
   }
   if (s.worn) wornExtra(r, dir, s.worn, pose);
   if (s.helmet) wornHelmet(r, dir, s.helmet);
+  if (s.role) roleMark(r, dir, pose, fr, s);
+}
+
+// VX-20: a role you can read from the silhouette, drawn into the sheet: a kite shield (knights, wardens), a two-hander over the
+// shoulder (reavers), a bow on the back (archers), a staff (casters), a spear (sentinels, harpooners), a lantern (delvers).
+// Weapons that the windup already shows (Enemy.updateBlade) are only drawn at rest.
+function roleMark(r, dir, pose, fr, s) {
+  const atk = pose === 'atk', bob = fr === 1 ? -1 : fr === 2 ? 1 : 0;
+  switch (s.role) {
+    case 'shield':                     // steel kite shield with the style's trim as its emblem
+      if (dir === 'down') { r(0, 1, 7, 4, 6); r(3, 1, 7, 3, 5); r(4, 1, 7, 3, 1); r(s.trim === 3 ? 13 : s.trim, 2, 8, 1, 3); r(0, 2, 12, 2, 1); }
+      else if (dir === 'up') { r(0, 5, 6, 6, 7); r(3, 6, 7, 4, 5); r(4, 6, 7, 4, 1); r(0, 7, 12, 2, 1); }
+      else if (dir === 'side') { r(0, 10, 7, 4, 6); r(3, 11, 7, 2, 5); r(4, 11, 7, 2, 1); r(s.trim === 3 ? 13 : s.trim, 11, 9, 1, 2); }
+      break;
+    case 'greatsword':                 // a two-hander resting on the shoulder, blade up behind the head
+      if (atk) break;
+      if (dir === 'down') { for (let i = 0; i < 7; i++) r(5, 13 - (i >> 1), 9 - i, 1, 1); r(0, 14, 2, 1, 1); r(9, 12, 10, 2, 1); r(13, 11, 9, 1, 1); }
+      else if (dir === 'up') { for (let i = 0; i < 7; i++) r(5, 3 + (i >> 1), 9 - i, 1, 1); r(9, 3, 10, 2, 1); }
+      else if (dir === 'side') { for (let i = 0; i < 8; i++) r(5, 4 - (i >> 2), 11 - i, 1, 1); r(9, 4, 12, 2, 1); r(13, 5, 11, 1, 1); }
+      break;
+    case 'bow':                        // a bow slung across the back, string pale
+      if (dir === 'down') { r(9, 12, 3, 1, 2); r(9, 13, 5, 1, 4); r(9, 12, 9, 1, 2); r(6, 11, 4, 1, 6); }
+      else if (dir === 'up') { r(9, 4, 4, 1, 1); r(9, 5, 5, 1, 1); r(9, 6, 6, 4, 1); r(9, 10, 7, 1, 1); r(9, 11, 8, 1, 1); r(6, 5, 5, 6, 1); }
+      else if (dir === 'side') { r(9, 4, 4, 1, 2); r(9, 3, 6, 1, 4); r(9, 4, 10, 1, 2); r(6, 5, 5, 1, 6); }
+      break;
+    case 'staff': {                    // a tall staff in the off hand, its head glowing
+      const gl = s.glow ?? 15;
+      if (atk && dir !== 'down') break;
+      if (dir === 'down') { r(9, 2, 3 + bob, 1, 12); r(gl, 1, 1 + bob, 3, 2); r(6, 2, 1 + bob, 1, 1); }
+      else if (dir === 'up') { r(9, 13, 3 - bob, 1, 12); r(gl, 12, 1 - bob, 3, 2); }
+      else if (dir === 'side') { r(9, 12, 3, 1, 12); r(gl, 11, 1, 3, 2); r(6, 12, 1, 1, 1); }
+      break;
+    }
+    case 'spear':                      // a spear held upright at rest
+      if (atk) break;
+      if (dir === 'down') { r(9, 2, 3 + bob, 1, 12); r(5, 2, 0 + bob, 1, 3); r(6, 2, 0 + bob, 1, 1); r(0, 1, 2 + bob, 1, 1); r(0, 3, 2 + bob, 1, 1); }
+      else if (dir === 'up') { r(9, 13, 3 - bob, 1, 12); r(5, 13, 0 - bob, 1, 3); }
+      else if (dir === 'side') { r(9, 12, 3, 1, 12); r(5, 12, 0, 1, 3); r(6, 12, 0, 1, 1); }
+      break;
+    case 'lantern':                    // a lit lantern swinging from the hand
+      if (dir === 'down') { r(0, 12, 11 - bob, 3, 4); r(13, 13, 12 - bob, 1, 2); r(12, 13, 13 - bob, 1, 1); r(3, 13, 10 - bob, 1, 1); }
+      else if (dir === 'side') { r(0, 11, 11, 3, 4); r(13, 12, 12, 1, 2); r(3, 12, 10, 1, 1); }
+      break;
+  }
 }
 
 export const STYLES = {
@@ -120,26 +165,26 @@ export const STYLES = {
   mirra:  { skin: 10, hair: 14, hood: 14, body: 14, trim: 13, legs: 1, boots: 9, chest: 13 },
   draugr: { skin: 4, hair: 3, body: 2, trim: 1, legs: 1, boots: 0, eye: 0, glow: 15, helm: 3 },
   bandit: { skin: 10, hair: 1, hood: 1, body: 9, trim: 0, legs: 2, boots: 0, chest: 11, mask: 11 },
-  archer: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 9, boots: 0, chest: 10, mask: 9 },
+  archer: { skin: 10, hair: 7, hood: 7, body: 8, trim: 9, legs: 9, boots: 0, chest: 10, mask: 9 , role: 'bow' },
   guard:  { skin: 10, hair: 3, helm: 4, body: 3, trim: 13, legs: 2, boots: 9, chest: 5, beard: 9 },
   child:  { skin: 10, hair: 13, body: 11, trim: 9, legs: 3, boots: 9, chest: 5 },
-  warden: { skin: 4, hair: 3, body: 2, trim: 3, legs: 1, boots: 0, glow: 15, helm: 5, chest: 4 },
+  warden: { skin: 4, hair: 3, body: 2, trim: 3, legs: 1, boots: 0, glow: 15, helm: 5, chest: 4 , role: 'shield' },
   chief:  { skin: 10, hair: 11, body: 11, trim: 13, legs: 2, boots: 0, helm: 3, beard: 9, cape: 1, chest: 13 },
-  conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 },
+  conjurer: { skin: 5, hair: 15, hood: 15, body: 3, trim: 14, legs: 1, boots: 0, glow: 13, chest: 14 , role: 'staff' },
   hilda:  { skin: 10, hair: 12, body: 9, trim: 5, legs: 2, boots: 0, chest: 4, beard: null },
   ragna:  { skin: 10, hair: 13, hood: 8, body: 8, trim: 9, legs: 7, boots: 9, chest: 10 },
   warlord: { skin: 4, hair: 3, body: 3, trim: 13, legs: 2, boots: 0, glow: 12, helm: 4, chest: 11, beard: 3, cape: 11, horns: 4 },
   winter: { skin: 6, hair: 15, body: 15, trim: 6, legs: 3, boots: 0, glow: 15, helm: 6, horns: 5, crown: 15, cape: 5, chest: 6 },
   imp: { skin: 11, hair: 12, body: 11, trim: 12, legs: 11, boots: 0, glow: 13, horns: 12, chest: 12 },
-  necro: { skin: 4, hair: 14, hood: 1, body: 1, trim: 14, legs: 0, boots: 0, glow: 14, chest: 14 },
+  necro: { skin: 4, hair: 14, hood: 1, body: 1, trim: 14, legs: 0, boots: 0, glow: 14, chest: 14 , role: 'staff' },
   golem: { skin: 4, hair: 3, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, helm: 4, chest: 5 },
   trader: { skin: 10, hair: 9, hood: 12, body: 12, trim: 13, legs: 9, boots: 9, chest: 13, cape: 9 },
   ghost:  { skin: 15, hair: 15, hood: 15, body: 15, trim: 14, legs: 14, boots: 14, glow: 14, chest: 14 },
   bogwraith: { skin: 8, hair: 7, hood: 7, body: 7, trim: 8, legs: 1, boots: 0, glow: 15, chest: 8 },
-  boghag: { skin: 8, hair: 14, hood: 1, body: 7, trim: 14, legs: 1, boots: 0, glow: 13, chest: 9, cape: 7 },
+  boghag: { skin: 8, hair: 14, hood: 1, body: 7, trim: 14, legs: 1, boots: 0, glow: 13, chest: 9, cape: 7 , role: 'staff' },
   miremother: { skin: 8, hair: 7, hood: 7, body: 7, trim: 15, legs: 1, boots: 0, glow: 15, chest: 8, crown: 14, cape: 1, horns: 9 },
   nomad: { skin: 10, hair: 9, hood: 10, body: 10, trim: 9, legs: 9, boots: 1, chest: 4, cape: 9 },
-  shaman: { skin: 10, hair: 6, hood: 15, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, chest: 14, horns: 6, cape: 4 },
+  shaman: { skin: 10, hair: 6, hood: 15, body: 3, trim: 15, legs: 2, boots: 1, glow: 15, chest: 14, horns: 6, cape: 4 , role: 'staff' },
   stonegiant: { skin: 3, hair: 2, body: 2, trim: 4, legs: 2, boots: 1, helm: 3, chest: 4, beard: 3, horns: 4 },
   hartking: { skin: 4, hair: 6, body: 15, trim: 5, legs: 3, boots: 1, glow: 15, helm: 5, chest: 15, beard: 6, cape: 5, crown: 15, horns: 15 },
   lodecolossus: { skin: 2, hair: 1, body: 2, trim: 12, legs: 1, boots: 0, glow: 12, helm: 3, chest: 3, beard: 1, horns: 12 },
@@ -149,18 +194,18 @@ export const STYLES = {
   troll:  { skin: 8, hair: 7, body: 9, trim: 1, legs: 7, boots: 0, eye: 11, chest: 10, horns: 10 },
   trapper: { skin: 10, hair: 9, hood: 9, body: 9, trim: 7, legs: 2, boots: 1, chest: 7, cape: 7 },
   fisher: { skin: 10, hair: 6, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4 },
-  prospector: { skin: 10, hair: 11, helm: 3, body: 3, trim: 9, legs: 2, boots: 1, chest: 9, beard: 11 },
+  prospector: { skin: 10, hair: 11, helm: 3, body: 3, trim: 9, legs: 2, boots: 1, chest: 9, beard: 11 , role: 'lantern' },
   // Phase 14 creatures (humanoid)
   cindersmith: { skin: 11, hair: 0, helm: 1, body: 1, trim: 12, legs: 0, boots: 0, glow: 12, chest: 11, beard: 0, cape: 9 },
   lavawraith: { skin: 12, hair: 13, hood: 11, body: 11, trim: 13, legs: 11, boots: 11, glow: 13, chest: 12 },
-  harpooner: { skin: 10, hair: 5, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4, mask: 3 },
-  tidehag: { skin: 8, hair: 7, hood: 7, body: 14, trim: 15, legs: 7, boots: 0, glow: 15, chest: 14 },
+  harpooner: { skin: 10, hair: 5, hood: 15, body: 15, trim: 5, legs: 3, boots: 1, chest: 4, mask: 3 , role: 'spear' },
+  tidehag: { skin: 8, hair: 7, hood: 7, body: 14, trim: 15, legs: 7, boots: 0, glow: 15, chest: 14 , role: 'staff' },
   phantom: { skin: 6, hair: 5, body: 5, trim: 14, legs: 5, boots: 5, glow: 14, crown: 13, chest: 6 },
   herald: { skin: 10, hair: 13, helm: 13, body: 14, trim: 13, legs: 14, boots: 13, glow: 13, chest: 13, cape: 11, crown: 13 },
-  sentinel: { skin: 6, hair: 5, helm: 6, body: 4, trim: 3, legs: 4, boots: 3, glow: 15, chest: 5, horns: 6 },
+  sentinel: { skin: 6, hair: 5, helm: 6, body: 4, trim: 3, legs: 4, boots: 3, glow: 15, chest: 5, horns: 6 , role: 'spear' },
   stalker: { skin: 8, hair: 7, hood: 7, body: 8, trim: 7, legs: 7, boots: 7, chest: 8, mask: 7 },
   // the Embergreen Vale and the Sunscorch Reach
-  hedgeknight: { skin: 8, hair: 7, helm: 8, body: 7, trim: 13, legs: 7, boots: 1, glow: 13, chest: 8, horns: 9 },
+  hedgeknight: { skin: 8, hair: 7, helm: 8, body: 7, trim: 13, legs: 7, boots: 1, glow: 13, chest: 8, horns: 9 , role: 'shield' },
   cutpurse: { skin: 10, hair: 1, hood: 14, body: 14, trim: 13, legs: 1, boots: 0, chest: 1, mask: 1, cape: 14 },
   warchanter: { skin: 10, hair: 13, helm: 13, body: 11, trim: 13, legs: 9, boots: 1, glow: 13, chest: 12, horns: 12, cape: 12 },
   sunsentinel: { skin: 13, hair: 9, helm: 13, body: 10, trim: 12, legs: 9, boots: 9, glow: 12, chest: 13, horns: 13, crown: 12 },
@@ -520,6 +565,20 @@ export function wornHeroKey(scene, armorKind, charmKind, col, helmKind = null) {
   return key;
 }
 
+// A 16px humanoid sheet of a style with a role mark added (VX-20): for kinds that share a sheet but not a role (the Rime Reaver
+// carries a two-hander, the draugr it is drawn from does not). Registered as a scale-1 native in native/scales.js.
+export function roleSheet(scene, key, styleName, role) {
+  const st = { ...STYLES[styleName], role };
+  const frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt', 'dead'];
+  const cv = canvas(16 * frames.length * 3, 16), ctx = cv.getContext('2d');
+  frames.forEach((d, di) => { for (let f = 0; f < 3; f++) humanoid(ctx, (di * 3 + f) * 16, d, f, st); });
+  outline(ctx, cv.width, cv.height);
+  if (scene.textures.exists(key)) scene.textures.remove(key);
+  const tex = scene.textures.addCanvas(key, cv);
+  frames.forEach((d, di) => { for (let f = 0; f < 3; f++) tex.add(`${d}${f}`, 0, (di * 3 + f) * 16, 0, 16, 16); });
+  return tex;
+}
+
 function buildCharacters(scene) {
   const make = (key, fn, frames = ['down', 'up', 'side', 'atkdown', 'atkup', 'atkside', 'hurt', 'dead']) => {
     const cv = canvas(16 * frames.length * 3, 16);
@@ -550,10 +609,10 @@ function buildCharacters(scene) {
   animalSheet(scene, 'spr_bear', bearFrame);
   animalSheet(scene, 'spr_lynx', lynxFrame);
   animalSheet(scene, 'spr_boar', boarFrame);
-  make('spr_wisp', (ctx, x, d, f) => wispFrame(ctx, x, f), ['side']);
-  make('spr_worm', (ctx, x, d, f) => wormFrame(ctx, x, f), ['side']);
-  make('spr_mimic', (ctx, x, d, f) => mimicFrame(ctx, x, f), ['side']);
-  make('spr_wyvern', (ctx, x, d, f) => wyvernFrame(ctx, x, f), ['side']);
+  animalSheet(scene, 'spr_wisp', wispFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_worm', wormFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_mimic', mimicFrame);         // side0-2 + hurt0 + death0 (VX-04)
+  animalSheet(scene, 'spr_wyvern', wyvernFrame);         // side0-2 + hurt0 + death0 (VX-04)
   buildSheet(scene, 'spr_dragon', 48, 32, [
     { name: 'side0', draw: (c, ox) => dragonBig(c, ox, 0) },
     { name: 'side1', draw: (c, ox) => dragonBig(c, ox, 1) },
@@ -568,7 +627,7 @@ function buildCharacters(scene) {
     const tmp = canvas(cw, ch), t = tmp.getContext('2d'); t.putImageData(img, 0, 0);
     ctx.save(); ctx.translate(dx, ch - 1); ctx.scale(1, -1); ctx.drawImage(tmp, 0, 0); ctx.restore();
   });
-  make('spr_shroom', (ctx, x, d, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); }, ['side']);
+  animalSheet(scene, 'spr_shroom', (ctx, x, f) => { const r = (c, xx, y, w, h) => R(ctx, c, x + xx, y, w, h); const p = [0, 1, 0][f]; r(11, 3, 5 - p, 10, 4 + p); r(14, 4, 5 - p, 8, 1); r(13, 5, 7, 2, 1); r(13, 9, 7, 2, 1); r(6, 6, 8, 4, 6); r(5, 7, 9, 2, 4); r(10, 5, 12, 6, 2); r(7, 4, 6, 1, 1); });
   animalSheet(scene, 'spr_ashhound', (c, x, f) => wolfFrame(c, x, f, { fur: 1, dark: 0, light: 12, leg: 0 }));
   // a lava slime (squashes as it creeps), a wreck crab, and a frost barnacle (a turret in a shell)
   animalSheet(scene, 'spr_slime', (ctx, ox, f) => {
@@ -595,10 +654,25 @@ function speckle(ctx, ox, oy, seed, cols, count) {
   }
 }
 
-function drawTile(ctx, id, ox) {
+// Scenery props (trees, rocks, braziers...) are drawn over a ground. In the base tileset that ground is snow (or slate floor
+// for the dungeon props); a region's own tileset (art/tileset.js) passes its ground tile as `bg`, so the same prop stands on
+// ash, sand or moss there instead of in a white square (VX-01). `bg` also picks the roof material.
+export const PROP_TILES = [TILE.PINE, TILE.ROCK, TILE.FENCE, TILE.GRAVE, TILE.DEADTREE, TILE.STUMP, TILE.TUFT, TILE.FROSTBLOOM, TILE.BOULDER, TILE.FIRE, TILE.PILLAR, TILE.BRAZIER, TILE.SARCO, TILE.ROOF,
+  TILE.PINE_B, TILE.PINE_C, TILE.DEADTREE_B, TILE.ROCK_B, TILE.BONES, TILE.POTS, TILE.PALM, TILE.STEAMVENT, TILE.OBSIDIAN, TILE.SNAG, TILE.LANTERNPOST, TILE.STATUE, TILE.STALAGMITE, TILE.BEEHIVE, TILE.LOG];
+const GREEN = [TILE.MEADOW, TILE.FLOWERS, TILE.MOSS, TILE.HEATH, TILE.BOG, TILE.BOARDWALK, TILE.GLADEPATH];
+const DARK = [TILE.ASH, TILE.BASALT, TILE.SLATE, TILE.DEEPSTONE, TILE.CFLOOR, TILE.CFLOOR2, TILE.STONE];
+const SANDY = [TILE.SAND, TILE.DUNE, TILE.GLYPH, TILE.SANDRUIN];
+const ROOF_OF = (bg) => (bg == null ? 'snow' : GREEN.includes(bg) || bg === TILE.GLASSMOSS ? 'thatch' : SANDY.includes(bg) ? 'clay' : DARK.includes(bg) ? 'slate' : 'snow');
+// what the snow on a prop (the white cap on a stump, the lit side of a pine, a rock's top) becomes on a snowless ground:
+// [colour for 6, colour for 5]
+const CAP_OF = (bg) => (bg === TILE.GLASSMOSS || bg === TILE.CRYSTAL ? [15, 4] : GREEN.includes(bg) ? [8, 4] : SANDY.includes(bg) ? [13, 10]
+  : DARK.includes(bg) ? [4, 3] : [6, 5]);
+const CAP_RGB = PAL.map((h) => parseInt(h.slice(1), 16));
+function drawTile(ctx, id, ox, bg = null) {
+  if (bg != null && bg !== -1 && PROP_TILES.includes(id) && id !== TILE.ROOF) { propOver(ctx, id, ox, bg); return; }
   const o = (c, x, y, w = 1, h = 1) => R(ctx, c, ox + x, y, w, h);
-  const snow = () => { o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, id + 1, [6, 6, 4], 7); };
-  const cfloor = () => { o(2, 0, 0, 16, 16); o(1, 0, 15, 16, 1); o(1, 15, 0, 1, 16); speckle(ctx, ox, 0, id + 7, [3, 1], 6); };
+  const snow = () => { if (bg === -1) return; o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, id + 1, [6, 6, 4], 7); };
+  const cfloor = () => { if (bg === -1) return; o(2, 0, 0, 16, 16); o(1, 0, 15, 16, 1); o(1, 15, 0, 1, 16); speckle(ctx, ox, 0, id + 7, [3, 1], 6); };
   switch (id) {
     case TILE.SNOW: snow(); break;
     case TILE.SNOW2: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 99, [6, 6, 6, 4, 3], 14); break;
@@ -623,13 +697,17 @@ function drawTile(ctx, id, ox) {
       }
       break;
     }
-    case TILE.PATH: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 55, [9, 9, 5, 5, 4], 16); o(9, 0, 15, 16, 1); break;
+    case TILE.PATH: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 55, [9, 9, 5, 5, 4], 16); break;
     case TILE.WOODFLOOR: o(10, 0, 0, 16, 16); for (let y = 3; y < 16; y += 4) o(9, 0, y, 16, 1); o(9, 5, 0, 1, 3); o(9, 11, 4, 1, 4); break;
     case TILE.WOODWALL: o(9, 0, 0, 16, 16); for (let x = 3; x < 16; x += 4) o(10, x, 0, 1, 15); o(1, 0, 14, 16, 2); break;
-    case TILE.ROOF:
-      o(5, 0, 0, 16, 16); for (let y = 0; y < 16; y += 4) { o(4, 0, y + 3, 16, 1); o(6, 0, y, 16, 1); }
-      for (let y = 0; y < 16; y += 4) for (let x = (y / 4) % 2 ? 4 : 0; x < 16; x += 8) o(4, x, y, 1, 3);
+    case TILE.ROOF: {
+      // snow-laden shingles in the north; slate in the ash country, thatch in the green lands, clay tiles in the desert
+      const [base, lo, hi] = { snow: [5, 4, 6], slate: [2, 1, 3], thatch: [10, 9, 13], clay: [10, 9, 12] }[ROOF_OF(bg)];
+      o(base, 0, 0, 16, 16); for (let y = 0; y < 16; y += 4) { o(lo, 0, y + 3, 16, 1); o(hi, 0, y, 16, 1); }
+      for (let y = 0; y < 16; y += 4) for (let x = (y / 4) % 2 ? 4 : 0; x < 16; x += 8) o(lo, x, y, 1, 3);
+      if (ROOF_OF(bg) === 'thatch') for (let y = 1; y < 16; y += 4) for (let x = 1 + (y & 2); x < 16; x += 5) o(9, x, y, 1, 2);
       break;
+    }
     case TILE.CFLOOR: cfloor(); break;
     case TILE.CWALL:
       o(1, 0, 0, 16, 16); o(2, 0, 0, 16, 1); o(0, 0, 7, 16, 1); o(0, 0, 15, 16, 1);
@@ -649,7 +727,7 @@ function drawTile(ctx, id, ox) {
     case TILE.DOOR:
       o(9, 0, 0, 16, 16); o(1, 3, 0, 10, 16); o(9, 4, 1, 8, 14); o(10, 5, 2, 1, 12); o(10, 8, 2, 1, 12); o(10, 10, 2, 1, 12); o(13, 10, 8, 2, 2); o(6, 2, 0, 12, 1); break;
     case TILE.FIRE:
-      o(9, 0, 0, 16, 16); o(5, 0, 0, 16, 16); o(3, 2, 6, 12, 8); o(2, 2, 12, 12, 2); o(0, 4, 5, 8, 2); o(1, 4, 5, 8, 6); o(0, 5, 7, 6, 3); o(9, 3, 9, 10, 1); o(10, 4, 9, 8, 1); break;
+      if (bg !== -1) o(5, 0, 0, 16, 16); o(3, 2, 6, 12, 8); o(2, 2, 12, 12, 2); o(0, 4, 5, 8, 2); o(1, 4, 5, 8, 6); o(0, 5, 7, 6, 3); o(9, 3, 9, 10, 1); o(10, 4, 9, 8, 1); break;
     case TILE.WINDOW:
       o(9, 0, 0, 16, 16); for (let x = 3; x < 16; x += 4) o(10, x, 0, 1, 15); o(1, 0, 14, 16, 2);
       o(1, 3, 3, 10, 8); o(13, 4, 4, 8, 6); o(12, 4, 8, 8, 2); o(9, 7, 4, 2, 6); o(9, 4, 6, 8, 1); break;
@@ -659,7 +737,7 @@ function drawTile(ctx, id, ox) {
       cfloor(); o(0, 1, 13, 14, 2); o(4, 1, 3, 14, 10); o(3, 1, 11, 14, 2); o(5, 2, 4, 12, 1); o(2, 6, 6, 4, 1); o(2, 7, 5, 2, 6); break;
     case TILE.SNOW3: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 31, [6, 4], 8); o(4, 3, 10, 3, 2); o(3, 3, 12, 3, 1); o(6, 3, 10, 2, 1); o(4, 11, 4, 2, 2); o(6, 11, 4, 1, 1); o(3, 10, 6, 3, 1); break;
     case TILE.SNOW4: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 41, [6, 6, 4], 9); for (const [x, y] of [[3, 4], [9, 9], [12, 3]]) { o(8, x, y + 1, 1, 2); o(8, x + 2, y, 1, 3); o(7, x + 1, y + 1, 1, 2); } break;
-    case TILE.PATH2: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 61, [9, 9, 4, 5, 3], 20); o(9, 0, 7, 16, 1); o(9, 6, 0, 1, 16); o(5, 8, 3, 2, 1); break;
+    case TILE.PATH2: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 61, [9, 9, 4, 5, 3], 20); o(9, 2, 7, 3, 1); o(9, 3, 8, 1, 1); o(9, 10, 12, 2, 1); o(4, 11, 11, 1, 1); o(5, 8, 3, 2, 1); break;
     case TILE.CFLOOR2: cfloor(); o(1, 4, 3, 1, 5); o(1, 5, 7, 3, 1); o(1, 8, 8, 1, 4); o(1, 9, 11, 3, 1); o(3, 10, 4, 2, 1); break;
     case TILE.CWALL2:
       o(1, 0, 0, 16, 16); o(2, 0, 0, 16, 1); o(0, 0, 7, 16, 1); o(0, 0, 15, 16, 1); o(0, 7, 0, 1, 7); o(0, 3, 8, 1, 7); o(0, 11, 8, 1, 7);
@@ -668,16 +746,16 @@ function drawTile(ctx, id, ox) {
       snow(); o(0, 4, 14, 8, 1); o(9, 7, 6, 2, 8); o(9, 4, 5, 3, 1); o(9, 3, 3, 1, 3); o(9, 9, 7, 4, 1); o(9, 12, 4, 1, 4); o(10, 7, 6, 1, 8); o(9, 7, 2, 1, 4); o(6, 3, 3, 1, 1); o(6, 12, 4, 1, 1); o(6, 7, 2, 2, 1); break;
     case TILE.STUMP:
       snow(); o(0, 3, 13, 10, 2); o(9, 3, 6, 10, 7); o(10, 4, 5, 8, 2); o(9, 5, 7, 6, 1); o(10, 6, 7, 4, 1); o(6, 3, 5, 10, 1); o(6, 4, 4, 8, 1); o(9, 7, 6, 2, 1); break;
-    case TILE.ASH: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 131, [2, 2, 0, 3], 14); speckle(ctx, ox, 0, 132, [11, 12], 2); o(2, 0, 15, 16, 1); break;
+    case TILE.ASH: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 131, [2, 2, 0, 3], 14); speckle(ctx, ox, 0, 132, [11, 12], 2); break;
     case TILE.BASALT: o(0, 0, 0, 16, 16); o(1, 1, 1, 14, 14); o(2, 2, 2, 5, 4); o(2, 8, 7, 6, 5); o(0, 7, 2, 1, 6); o(11, 4, 9, 1, 3); o(12, 5, 11, 2, 1); o(3, 3, 3, 2, 1); break;
     case TILE.LAVA: o(11, 0, 0, 16, 16); o(12, 1, 3, 6, 2); o(12, 8, 9, 7, 2); o(13, 3, 4, 2, 1); o(13, 10, 10, 2, 1); o(0, 0, 7, 5, 1); o(0, 11, 2, 4, 1); o(12, 5, 13, 5, 1); break;
     case TILE.ICESHELF: o(5, 0, 0, 16, 16); o(6, 1, 2, 7, 1); o(4, 0, 8, 16, 1); o(6, 9, 11, 5, 1); o(4, 4, 5, 1, 3); o(15, 11, 4, 2, 1); speckle(ctx, ox, 0, 141, [6, 4], 6); break;
     case TILE.PACKICE: o(3, 0, 0, 16, 16); o(4, 1, 1, 6, 6); o(5, 2, 2, 3, 2); o(6, 2, 2, 1, 1); o(4, 8, 6, 7, 8); o(5, 9, 7, 3, 2); o(2, 0, 7, 8, 1); o(2, 7, 0, 1, 7); o(0, 0, 15, 16, 1); o(15, 11, 9, 1, 1); break;
-    case TILE.SHINGLE: o(3, 0, 0, 16, 16); speckle(ctx, ox, 0, 151, [4, 2, 5, 9], 26); o(2, 0, 15, 16, 1); o(4, 3, 4, 2, 1); o(4, 10, 11, 3, 1); break;
+    case TILE.SHINGLE: o(3, 0, 0, 16, 16); speckle(ctx, ox, 0, 151, [4, 2, 5, 9], 26); o(4, 3, 4, 2, 1); o(4, 10, 11, 3, 1); break;
     case TILE.WRECK: o(9, 0, 0, 16, 16); for (let y = 2; y < 16; y += 4) o(10, 0, y, 16, 1); for (let y = 0; y < 16; y += 4) o(0, 0, y + 3, 16, 1); o(0, 4, 0, 1, 16); o(0, 11, 0, 1, 16); o(1, 0, 14, 16, 2); o(5, 2, 1, 2, 1); break;
     case TILE.MARBLE: o(5, 0, 0, 16, 16); o(6, 0, 0, 15, 1); o(6, 0, 0, 1, 15); o(4, 15, 0, 1, 16); o(4, 0, 15, 16, 1); o(4, 3, 5, 5, 1); o(4, 7, 6, 1, 4); o(6, 10, 10, 4, 1); break;
     case TILE.RUINWALL: o(3, 0, 0, 16, 16); o(4, 0, 0, 16, 1); o(2, 0, 5, 16, 1); o(2, 0, 10, 16, 1); o(2, 6, 0, 1, 5); o(2, 11, 5, 1, 5); o(2, 3, 10, 1, 6); o(8, 1, 1, 4, 3); o(7, 9, 11, 5, 3); o(8, 10, 12, 2, 1); o(0, 0, 15, 16, 1); break;
-    case TILE.MOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 161, [8, 8, 2, 13], 14); o(8, 2, 3, 3, 2); o(8, 9, 10, 4, 2); o(7, 0, 15, 16, 1); break;
+    case TILE.MOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 161, [8, 8, 2, 13], 14); o(8, 2, 3, 3, 2); o(8, 9, 10, 4, 2); break;
     case TILE.BOG: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 171, [1, 9, 8, 1], 22); o(1, 2, 4, 5, 2); o(8, 9, 10, 3, 1); o(9, 11, 3, 2, 1); o(1, 4, 12, 6, 1); break;
     case TILE.BLACKWATER: o(0, 0, 0, 16, 16); o(1, 1, 3, 6, 1); o(1, 8, 9, 7, 1); o(2, 3, 6, 4, 1); o(2, 9, 12, 5, 1); o(3, 10, 4, 2, 1); o(8, 12, 14, 2, 1); break;
     case TILE.BOARDWALK: o(9, 0, 0, 16, 16); for (let x = 0; x < 16; x += 4) { o(10, x, 0, 3, 16); o(1, x + 3, 0, 1, 16); } o(0, 0, 3, 16, 1); o(0, 0, 11, 16, 1); o(9, 1, 3, 1, 1); o(9, 9, 11, 1, 1); break;
@@ -685,7 +763,7 @@ function drawTile(ctx, id, ox) {
     case TILE.SLATE: o(2, 0, 0, 16, 16); speckle(ctx, ox, 0, 191, [3, 1, 2, 4], 22); o(1, 0, 8, 16, 1); o(3, 5, 0, 1, 8); o(1, 11, 9, 1, 7); break;
     case TILE.BOGTREE: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 171, [1, 9, 8, 1], 22); o(0, 4, 14, 8, 1); o(9, 7, 6, 2, 8); o(9, 4, 5, 3, 1); o(9, 3, 3, 1, 3); o(9, 9, 7, 4, 1); o(9, 12, 4, 1, 4); o(10, 7, 6, 1, 8); o(8, 5, 4, 2, 1); o(8, 11, 3, 2, 1); o(8, 6, 11, 4, 1); break;
     case TILE.BOGREED: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 171, [1, 9, 8, 1], 22); for (const [x, h] of [[3, 9], [6, 12], [9, 8], [12, 10]]) { o(8, x, 14 - h, 1, h); o(10, x, 14 - h, 1, 2); o(9, x - 1, 14 - h + 1, 3, 2); } o(0, 2, 14, 12, 1); break;
-    case TILE.GLASSMOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); for (const [x, y] of [[3, 5], [10, 9], [6, 12]]) { o(15, x, y, 1, 2); o(6, x + 1, y + 1, 1, 1); } o(8, 0, 15, 16, 1); break;
+    case TILE.GLASSMOSS: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); for (const [x, y] of [[3, 5], [10, 9], [6, 12]]) { o(15, x, y, 1, 2); o(6, x + 1, y + 1, 1, 1); } break;
     case TILE.CRYSTAL: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); o(0, 3, 14, 10, 1); o(4, 6, 3, 4, 11); o(5, 7, 2, 2, 12); o(15, 7, 1, 1, 8); o(6, 2, 7, 4, 7); o(15, 3, 6, 1, 4); o(5, 10, 6, 4, 8); o(15, 11, 5, 1, 5); o(4, 3, 10, 3, 4); break;
     case TILE.GLADEPATH: o(5, 0, 0, 16, 16); speckle(ctx, ox, 0, 261, [6, 15, 4, 5], 22); o(6, 1, 4, 5, 1); o(4, 9, 11, 5, 1); o(15, 12, 3, 1, 1); break;
     case TILE.DEEPSTONE: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 271, [2, 3, 0, 2], 30); o(0, 2, 5, 5, 1); o(2, 9, 10, 4, 1); o(0, 4, 13, 7, 1); break;
@@ -695,14 +773,14 @@ function drawTile(ctx, id, ox) {
     case TILE.ICE2: o(4, 0, 0, 16, 16); o(5, 2, 3, 6, 1); o(3, 0, 8, 16, 1); o(2, 3, 2, 1, 4); o(2, 4, 5, 3, 1); o(2, 7, 6, 1, 5); o(2, 8, 10, 4, 1); o(6, 11, 3, 2, 1); break;
     case TILE.TUFT: snow(); for (const [x, y] of [[4, 8], [8, 6], [11, 9]]) { o(8, x, y, 1, 3); o(7, x + 1, y + 1, 1, 2); o(8, x - 1, y + 1, 1, 2); } o(6, 4, 7, 1, 1); break;
     // ---- the Embergreen Vale
-    case TILE.MEADOW: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); for (const [x, y] of [[3, 4], [11, 3], [7, 11]]) { o(7, x, y, 1, 2); o(7, x + 1, y + 1, 1, 1); } o(7, 0, 15, 16, 1); break;
+    case TILE.MEADOW: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); for (const [x, y] of [[3, 4], [11, 3], [7, 11]]) { o(7, x, y, 1, 2); o(7, x + 1, y + 1, 1, 1); } break;
     case TILE.FLOWERS: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 302, [7, 7, 8], 18); for (const [x, y, c] of [[2, 3, 13], [7, 2, 6], [12, 4, 14], [4, 9, 11], [10, 10, 13], [13, 13, 6], [6, 13, 14]]) { o(c, x, y, 1, 1); o(c, x + 1, y + 1, 1, 1); o(7, x, y + 2, 1, 2); } break;
     case TILE.BIRCH: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); o(0, 4, 14, 8, 1); o(6, 7, 8, 2, 7); o(5, 8, 8, 1, 7); for (const y of [10, 13]) o(0, 7, y, 2, 1); o(0, 2, 0, 12, 9); o(0, 1, 2, 14, 5); o(7, 3, 1, 10, 7); o(7, 2, 3, 12, 3); o(8, 4, 2, 8, 3); o(8, 3, 6, 4, 1); o(13, 5, 3, 1, 1); o(13, 10, 2, 1, 1); o(13, 8, 5, 1, 1); o(13, 3, 4, 1, 1); o(7, 4, 7, 8, 1); break;
     case TILE.POND: o(15, 0, 0, 16, 16); o(5, 2, 3, 5, 1); o(6, 3, 2, 2, 1); o(5, 9, 9, 5, 1); o(3, 0, 6, 16, 1); o(4, 4, 12, 4, 1); o(3, 10, 3, 3, 1); o(8, 0, 0, 16, 1); o(8, 0, 15, 16, 1); o(7, 1, 1, 1, 3); o(7, 14, 12, 1, 3); break;
     case TILE.HEARTROOT: o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 301, [7, 7, 8, 10], 22); o(0, 1, 14, 14, 1); o(9, 5, 7, 6, 8); o(10, 6, 7, 2, 8); o(1, 9, 8, 1, 7); o(9, 2, 12, 4, 3); o(9, 11, 12, 4, 3); o(0, 0, 0, 16, 9); o(7, 1, 1, 14, 7); o(8, 2, 2, 12, 5); o(13, 3, 3, 1, 1); o(13, 8, 2, 1, 1); o(13, 12, 4, 1, 1); o(13, 6, 5, 1, 1); o(12, 10, 3, 1, 1); o(7, 3, 6, 10, 1); break;
     // ---- the Sunscorch Reach
     case TILE.SAND: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 311, [10, 10, 13, 9], 20); o(13, 3, 5, 1, 1); o(9, 9, 10, 2, 1); break;
-    case TILE.DUNE: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 312, [10, 13, 9], 14); for (let x = 0; x < 16; x++) { o(9, x, 9 + ((x >> 2) & 1) - (x > 8 ? 1 : 0), 1, 1); o(13, x, 5 + ((x >> 2) & 1), 1, 1); } o(9, 0, 15, 16, 1); break;
+    case TILE.DUNE: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 312, [10, 13, 9], 14); for (let x = 0; x < 16; x++) { o(9, x, 9 + ((x >> 2) & 1) - (x > 8 ? 1 : 0), 1, 1); o(13, x, 5 + ((x >> 2) & 1), 1, 1); } break;
     case TILE.SANDSTONE: o(9, 0, 0, 16, 16); o(10, 0, 0, 16, 3); o(12, 0, 3, 16, 1); o(10, 0, 6, 16, 2); o(1, 0, 8, 16, 1); o(10, 0, 10, 16, 2); o(12, 3, 12, 6, 1); o(1, 0, 14, 16, 2); o(13, 2, 1, 3, 1); o(1, 7, 4, 1, 2); o(1, 12, 9, 1, 1); break;
     case TILE.CACTUS: o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 311, [10, 10, 13, 9], 20); o(9, 3, 14, 10, 1); o(7, 6, 3, 4, 12); o(8, 7, 3, 2, 12); o(7, 2, 7, 3, 2); o(7, 2, 4, 2, 4); o(8, 3, 4, 1, 4); o(7, 11, 5, 3, 2); o(7, 12, 3, 2, 3); o(8, 12, 3, 1, 3); o(13, 8, 2, 1, 1); o(6, 8, 6, 1, 1); break;
     case TILE.OASIS: o(15, 0, 0, 16, 16); o(5, 2, 3, 5, 1); o(6, 3, 2, 2, 1); o(5, 9, 9, 5, 1); o(3, 0, 12, 16, 1); o(4, 4, 6, 4, 1); o(10, 0, 0, 16, 1); o(10, 0, 15, 16, 1); o(13, 1, 1, 1, 1); o(13, 14, 14, 1, 1); break;
@@ -717,15 +795,119 @@ function drawTile(ctx, id, ox) {
     case TILE.MARBLEMOSS: o(5, 0, 0, 16, 16); o(6, 0, 0, 15, 1); o(6, 0, 0, 1, 15); o(4, 15, 0, 1, 16); o(4, 0, 15, 16, 1); o(8, 2, 3, 5, 3); o(7, 3, 5, 3, 2); o(8, 9, 9, 5, 4); o(7, 10, 11, 3, 2); o(13, 4, 8, 1, 1); o(13, 12, 3, 1, 1); o(6, 8, 6, 1, 1); break;
     case TILE.GLASSBLOOM: o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 251, [8, 15, 8, 6], 26); for (const [x, y, c] of [[3, 5, 15], [9, 4, 6], [12, 10, 15], [5, 11, 6]]) { o(c, x, y, 1, 3); o(c, x - 1, y + 1, 3, 1); o(8, x, y + 3, 1, 2); } break;
     case TILE.SPORES: o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 271, [2, 3, 0, 2], 30); for (const [x, y, c] of [[3, 6, 15], [9, 4, 14], [12, 10, 8], [5, 12, 14]]) { o(c, x - 1, y, 3, 1); o(c, x, y - 1, 1, 1); o(4, x, y + 1, 1, 2); } break;
+    // ---- A block (VX-16, VX-22): tree and rock variants, then scatter props. All stand on snow() so a region's tileset
+    // composites them onto its own ground.
+    case TILE.PINE_B: case TILE.PINE_C: {           // a tall narrow pine; a squat one heavy with snow
+      snow();
+      const tall = id === TILE.PINE_B, tiers = tall ? 4 : 3, step = tall ? 3 : 4, maxW = tall ? 9 : 14;
+      o(0, 4, 14, 8, 1); o(9, 7, 13, 2, 3);
+      for (let t = 0; t < tiers; t++) for (let r = 0; r < 4; r++) {
+        const w = Math.min(2 + r * 2 + t, maxW), x = 8 - w / 2, y = t * step + r;
+        o(r < (tall ? 1 : 2) ? 8 : 7, x, y, w, 1);
+        if (r < (tall ? 1 : 3)) o(6, x, y, Math.max(1, Math.round(w * (tall ? 0.3 : 0.6))), 1);
+        o(0, x + w - 1, y, 1, 1);
+      }
+      break;
+    }
+    case TILE.BIRCH_B:                             // a birch leaning the other way under a rounder crown
+      o(8, 0, 0, 16, 16); speckle(ctx, ox, 0, 303, [7, 7, 8, 10], 22); o(0, 3, 14, 8, 1);
+      o(6, 6, 9, 2, 6); o(5, 6, 9, 1, 6); o(6, 5, 7, 2, 2); for (const y of [10, 12]) o(0, 6, y, 2, 1);
+      o(0, 1, 1, 12, 8); o(0, 0, 3, 14, 4); o(7, 2, 2, 10, 6); o(7, 1, 3, 12, 3); o(8, 3, 2, 7, 3); o(8, 2, 5, 4, 1);
+      o(13, 4, 3, 1, 1); o(13, 9, 2, 1, 1); o(13, 7, 5, 1, 1); break;
+    case TILE.DEADTREE_B:                          // a split, wind-bent snag
+      snow(); o(0, 5, 14, 7, 1); o(9, 7, 7, 2, 8); o(10, 7, 7, 1, 8); o(9, 5, 4, 2, 4); o(9, 4, 2, 1, 3); o(9, 9, 5, 1, 3); o(9, 10, 3, 3, 1); o(9, 12, 2, 1, 2); o(6, 4, 2, 1, 1); o(6, 12, 2, 1, 1); break;
+    case TILE.BOGTREE_B:                           // a drowned stump with hanging moss
+      o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 172, [1, 9, 8, 1], 22); o(0, 3, 14, 10, 1); o(9, 5, 6, 6, 8); o(10, 6, 6, 1, 8); o(1, 7, 9, 2, 2);
+      o(9, 3, 4, 3, 2); o(9, 11, 3, 3, 2); for (const x of [4, 6, 11, 13]) o(8, x, 5, 1, 3 + (x % 3)); break;
+    case TILE.CRYSTAL_B:                           // three thin glass spires
+      o(7, 0, 0, 16, 16); speckle(ctx, ox, 0, 252, [8, 15, 8, 6], 26); o(0, 2, 14, 12, 1);
+      for (const [x, h] of [[4, 8], [8, 12], [11, 6]]) { o(4, x, 14 - h, 2, h); o(15, x, 14 - h, 1, h - 1); o(6, x, 14 - h, 1, 1); } break;
+    case TILE.CACTUS_B:                            // a barrel cactus in flower
+      o(10, 0, 0, 16, 16); speckle(ctx, ox, 0, 314, [10, 10, 13, 9], 20); o(9, 3, 14, 10, 1); o(7, 4, 7, 8, 7); o(8, 5, 7, 6, 6); o(7, 7, 7, 1, 6); o(7, 10, 7, 1, 6);
+      for (const x of [5, 8, 11]) o(6, x, 9, 1, 1); o(11, 7, 5, 2, 2); o(12, 8, 5, 1, 1); break;
+    case TILE.ROCK_B:                              // two stones leaning together
+      snow(); o(2, 2, 13, 12, 1); o(3, 2, 7, 6, 6); o(4, 3, 7, 4, 2); o(6, 3, 6, 4, 1); o(3, 8, 5, 6, 8); o(4, 9, 5, 4, 3); o(6, 9, 4, 4, 1); o(2, 8, 12, 6, 1); break;
+    case TILE.GLOWCAP_B:                           // a ring of three small glowing caps
+      o(1, 0, 0, 16, 16); speckle(ctx, ox, 0, 272, [2, 3, 0, 2], 30); o(0, 2, 14, 12, 1);
+      for (const [x, y] of [[3, 9], [8, 6], [11, 10]]) { o(5, x + 1, y + 2, 1, 3); o(15, x, y, 3, 2); o(6, x, y, 1, 1); } break;
+    case TILE.BONES:                               // a bleached ribcage half sunk in the ground (walkable)
+      snow(); for (let i = 0; i < 4; i++) { o(6, 4 + i * 2, 6, 1, 5); o(5, 4 + i * 2, 10, 1, 1); } o(6, 3, 6, 9, 1); o(6, 11, 4, 3, 2); o(0, 12, 5, 1, 1); break;
+    case TILE.POTS:                                // two clay jars
+      snow(); o(0, 2, 14, 12, 1); o(12, 2, 6, 6, 8); o(9, 2, 12, 6, 2); o(13, 3, 7, 2, 1); o(9, 3, 4, 4, 2); o(12, 9, 8, 5, 6); o(9, 9, 12, 5, 2); o(13, 10, 9, 1, 1); o(9, 10, 6, 3, 2); break;
+    case TILE.PALM:                                // a palm: a ringed trunk and drooping fronds
+      snow(); o(0, 6, 14, 6, 1); for (let y = 6; y < 15; y++) o(y % 2 ? 9 : 10, 7 + (y < 9 ? 1 : 0), y, 2, 1);
+      for (const [x, y, w] of [[2, 3, 6], [9, 3, 6], [1, 5, 4], [11, 5, 4], [5, 1, 6]]) { o(8, x, y, w, 2); o(7, x, y + 1, w, 1); } o(9, 7, 4, 3, 2); break;
+    case TILE.STEAMVENT:                           // a cracked vent breathing steam (walkable)
+      snow(); o(1, 4, 8, 8, 4); o(0, 5, 9, 6, 2); o(12, 6, 10, 4, 1); o(11, 7, 10, 2, 1); o(2, 3, 9, 1, 2); o(2, 12, 9, 1, 2); for (const [x, y] of [[6, 5], [8, 3], [7, 1]]) o(5, x, y, 2, 1); break;
+    case TILE.OBSIDIAN:                            // a black glass shard
+      snow(); o(0, 3, 14, 10, 1); o(1, 4, 5, 8, 9); o(0, 5, 3, 3, 2); o(2, 9, 7, 2, 7); o(14, 6, 6, 1, 6); o(4, 5, 4, 1, 2); break;
+    case TILE.SNAG:                                // a mossy dead snag in the bog
+      snow(); o(0, 4, 14, 8, 1); o(9, 6, 3, 4, 11); o(10, 7, 3, 1, 11); o(9, 3, 2, 3, 2); o(9, 10, 5, 3, 2); o(8, 5, 3, 2, 3); o(8, 9, 6, 2, 2); o(7, 6, 10, 1, 3); break;
+    case TILE.LANTERNPOST:                         // a post with a hanging lantern
+      snow(); o(0, 5, 14, 5, 1); o(9, 6, 2, 2, 13); o(9, 6, 2, 6, 1); o(1, 10, 3, 1, 2); o(0, 9, 5, 3, 4); o(13, 10, 6, 1, 2); o(12, 10, 7, 1, 1); break;
+    case TILE.STATUE:                              // a weathered statue of a cloaked king
+      snow(); o(2, 3, 13, 10, 3); o(3, 4, 12, 8, 1); o(3, 5, 5, 6, 7); o(4, 6, 5, 3, 7); o(3, 6, 1, 4, 4); o(4, 7, 2, 2, 1); o(8, 4, 8, 2, 3); o(13, 6, 1, 4, 1); break;
+    case TILE.STALAGMITE:                          // a pale cone of dripstone
+      snow(); o(0, 4, 14, 8, 1); o(3, 5, 8, 6, 6); o(3, 6, 4, 4, 4); o(4, 7, 1, 2, 3); o(4, 5, 9, 2, 5); o(15, 7, 2, 1, 1); o(3, 10, 11, 3, 3); break;
+    case TILE.BEEHIVE:                             // a straw skep on a stump
+      snow(); o(0, 4, 14, 8, 1); o(9, 5, 11, 6, 3); o(10, 4, 4, 8, 7); o(13, 5, 3, 6, 1); for (const y of [6, 8]) o(9, 4, y, 8, 1); o(0, 7, 9, 2, 1); o(13, 12, 3, 1, 1); o(13, 2, 6, 1, 1); break;
+    case TILE.LOG:                                 // a fallen log
+      snow(); o(0, 1, 12, 14, 1); o(9, 1, 7, 13, 5); o(10, 1, 7, 13, 1); o(10, 13, 7, 2, 5); o(9, 14, 8, 1, 3); o(8, 4, 6, 3, 1); o(1, 6, 9, 4, 1); break;
     default: o(0, 0, 0, 16, 16);
   }
 }
 
+// A prop on another ground: the ground tile, then the prop drawn on a clear cell with its snow recoloured for that ground.
+let propCv = null;
+function propOver(ctx, id, ox, bg) {
+  drawTile(ctx, bg, ox);
+  propCv ||= canvas(T, T);
+  const p = propCv.getContext('2d', { willReadFrequently: true });
+  p.clearRect(0, 0, T, T);
+  drawTile(p, id, 0, -1);
+  const [c6, c5] = CAP_OF(bg).map((c) => CAP_RGB[c]);
+  const img = p.getImageData(0, 0, T, T), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const rgb = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+    const to = rgb === CAP_RGB[6] ? c6 : rgb === CAP_RGB[5] && id !== TILE.PILLAR && id !== TILE.SARCO ? c5 : -1;
+    if (to >= 0) { d[i] = to >> 16; d[i + 1] = (to >> 8) & 255; d[i + 2] = to & 255; }
+  }
+  p.putImageData(img, 0, 0);
+  ctx.drawImage(propCv, ox, 0);
+}
+
 function buildTiles(scene) {
-  const cv = canvas(T * TILE_COUNT, T);
-  const ctx = cv.getContext('2d');
-  for (let i = 0; i < TILE_COUNT; i++) drawTile(ctx, i, i * T);
-  scene.textures.addCanvas('tiles', cv);
+  buildTileset(scene, 'tiles', null);
+}
+
+// One tileset texture. bg = null: the base set (snow under the props). Otherwise the props and the roof stand on tile `bg`.
+// One tileset texture. bg = null: the base set (snow under the props). Otherwise the props and the roof stand on tile `bg`.
+// combos (VX-21): extra tiles appended after TILE_COUNT, each a ground `b` with a ragged 2-4px fringe of ground `a` along the
+// sides in `mask` (1 N, 2 E, 4 S, 8 W). They are only drawn, never stored in a map grid (art/tileset.js puts them on the layer).
+export function buildTileset(scene, key, bg, combos = []) {
+  const cv = canvas(T * (TILE_COUNT + combos.length), T);
+  const ctx = cv.getContext('2d', { willReadFrequently: combos.length > 0 });
+  for (let i = 0; i < TILE_COUNT; i++) drawTile(ctx, i, i * T, bg != null && PROP_TILES.includes(i) ? bg : null);
+  if (combos.length) {
+    const src = canvas(T, T), sx = src.getContext('2d', { willReadFrequently: true }), cache = new Map();
+    const pix = (id) => { if (!cache.has(id)) { sx.clearRect(0, 0, T, T); drawTile(sx, id, 0); cache.set(id, sx.getImageData(0, 0, T, T).data.slice()); } return cache.get(id); };
+    combos.forEach(({ b, a, mask, prop }, n) => {
+      if (prop != null) { propOver(ctx, prop, (TILE_COUNT + n) * T, b); return; }       // a prop standing on this cell's own ground
+      const ox = (TILE_COUNT + n) * T, pb = pix(b), pa = pix(a), out = ctx.createImageData(T, T), d = out.data;
+      d.set(pb);
+      const depth = (side, u) => 2 + Math.floor(hash(u, a * 4 + side, 11) * 3);
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+        const k = Math.max((mask & 1) ? depth(0, x) - y : -9, (mask & 2) ? depth(1, y) - (T - 1 - x) : -9, (mask & 4) ? depth(2, x) - (T - 1 - y) : -9, (mask & 8) ? depth(3, y) - x : -9);
+        if (k <= 0 || (k === 1 && ((x + y) & 1))) continue;            // inside the band; its last row is dithered
+        const q = (y * T + x) * 4; d[q] = pa[q]; d[q + 1] = pa[q + 1]; d[q + 2] = pa[q + 2]; d[q + 3] = 255;
+      }
+      ctx.putImageData(out, ox, 0);
+    });
+  }
+  if (scene.textures.exists(key)) scene.textures.remove(key);
+  scene.textures.addCanvas(key, cv);
+  return key;
 }
 
 // --------------------------------------------------------- misc / fx / icons
@@ -735,11 +917,13 @@ function tex(scene, key, w, h, fn) {
   scene.textures.addCanvas(key, cv);
 }
 
-function ring(ctx, size, th) {
-  const c = size / 2 - 0.5;
+// A ring of colour `col` with a 1px dark rim inside and out, so a white or frost ring still reads on snow (VX-09).
+export function ring(ctx, size, th, col = 6, rim = 2) {
+  const c = size / 2 - 0.5, ro = size / 2 - 0.3;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const d = Math.hypot(x - c, y - c);
-    if (d <= size / 2 - 0.3 && d >= size / 2 - th) R(ctx, 6, x, y);
+    if (d <= ro - 1 && d >= ro - 1 - th) R(ctx, col, x, y);
+    else if ((d <= ro && d > ro - 1) || (d < ro - 1 - th && d >= ro - 2 - th)) R(ctx, rim, x, y);
   }
 }
 
@@ -762,6 +946,11 @@ function buildFx(scene) {
   tex(scene, 'foot', 4, 4, (g) => { R(g, 3, 0, 0, 2, 3); R(g, 3, 1, 3, 1, 1); });
   tex(scene, 'raven0', 8, 6, (g) => { R(g, 0, 1, 2, 5, 3); R(g, 0, 5, 1, 2, 2); R(g, 0, 0, 2, 2, 1); R(g, 12, 6, 2, 1, 1); R(g, 0, 2, 5, 1, 1); });
   tex(scene, 'raven1', 8, 6, (g) => { R(g, 0, 1, 3, 5, 2); R(g, 0, 5, 2, 2, 1); R(g, 0, 0, 3, 2, 1); R(g, 0, 0, 0, 3, 1); R(g, 0, 5, 0, 3, 1); R(g, 12, 6, 3, 1, 1); });
+  // VX-19: gulls on the Coast, vultures over the Sunscorch (same size and frames as the ravens)
+  tex(scene, 'gull0', 8, 6, (g) => { R(g, 6, 1, 2, 5, 3); R(g, 6, 5, 1, 2, 2); R(g, 4, 1, 2, 3, 1); R(g, 13, 7, 2, 1, 1); R(g, 0, 5, 1, 1, 1); R(g, 3, 0, 3, 2, 1); });
+  tex(scene, 'gull1', 8, 6, (g) => { R(g, 6, 1, 3, 5, 2); R(g, 6, 5, 2, 2, 1); R(g, 4, 0, 1, 3, 1); R(g, 4, 0, 0, 3, 1); R(g, 4, 5, 0, 3, 1); R(g, 13, 7, 3, 1, 1); });
+  tex(scene, 'vulture0', 8, 6, (g) => { R(g, 1, 1, 2, 5, 3); R(g, 9, 2, 2, 3, 2); R(g, 10, 5, 0, 2, 2); R(g, 6, 5, 2, 2, 1); R(g, 13, 7, 1, 1, 1); R(g, 0, 0, 3, 2, 1); });
+  tex(scene, 'vulture1', 8, 6, (g) => { R(g, 1, 1, 3, 5, 2); R(g, 10, 5, 1, 2, 2); R(g, 9, 0, 3, 2, 1); R(g, 1, 0, 1, 3, 1); R(g, 1, 5, 1, 3, 1); R(g, 13, 7, 2, 1, 1); });
   // town critters: a hen and a dog, two frames each
   tex(scene, 'hen0', 7, 6, (g) => { R(g, 12, 1, 2, 4, 3); R(g, 12, 0, 0, 2, 2); R(g, 8, 0, 2, 1, 1); R(g, 3, 1, 1, 5, 1); R(g, 3, 1, 0, 2, 5); R(g, 0, 2, 4, 1, 1); R(g, 0, 5, 5, 1, 1); });
   tex(scene, 'hen1', 7, 6, (g) => { R(g, 12, 1, 2, 4, 3); R(g, 12, 0, 1, 2, 2); R(g, 8, 0, 3, 1, 1); R(g, 3, 1, 1, 5, 1); R(g, 3, 1, 0, 2, 5); R(g, 0, 1, 5, 1, 1); R(g, 0, 4, 5, 1, 1); });
@@ -789,6 +978,7 @@ function buildFx(scene) {
   tex(scene, 'plate_on', 16, 16, (g) => {
     R(g, 0, 2, 2, 12, 12); R(g, 13, 3, 3, 10, 10); R(g, 6, 4, 4, 8, 8); R(g, 13, 5, 5, 6, 6); R(g, 6, 7, 6, 2, 4); R(g, 6, 6, 7, 4, 2);
   });
+  tex(scene, 'pop3', 5, 5, (g) => { R(g, 6, 1, 1, 3, 3); R(g, 6, 2, 0, 1, 5); R(g, 6, 0, 2, 5, 1); });     // a hit's one-frame white pop
   tex(scene, 'slash', 16, 24, (g) => {
     for (let a = -60; a <= 60; a += 2) {
       const rad = (a * Math.PI) / 180;
@@ -804,13 +994,13 @@ function buildFx(scene) {
   tex(scene, 'fireball', 8, 8, (g) => {
     R(g, 11, 1, 1, 6, 6); R(g, 12, 2, 0, 4, 8); R(g, 12, 0, 2, 8, 4); R(g, 13, 2, 2, 4, 4); R(g, 6, 3, 3, 2, 2);
   });
-  tex(scene, 'frostbolt', 8, 8, (g) => {
-    R(g, 3, 3, 0, 2, 8); R(g, 3, 0, 3, 8, 2); R(g, 15, 2, 1, 4, 6); R(g, 15, 1, 2, 6, 4); R(g, 6, 3, 3, 2, 2);
+  tex(scene, 'frostbolt', 8, 8, (g) => {         // a cyan shard in a steel outline (it vanished against snow without one)
+    R(g, 3, 2, 0, 4, 8); R(g, 3, 0, 2, 8, 4); R(g, 3, 1, 1, 6, 6); R(g, 15, 2, 2, 4, 4); R(g, 15, 3, 1, 2, 6); R(g, 15, 1, 3, 6, 2); R(g, 6, 3, 3, 2, 2);
   });
   tex(scene, 'bolt', 6, 6, (g) => { R(g, 4, 1, 0, 4, 6); R(g, 5, 0, 1, 6, 4); R(g, 15, 2, 2, 2, 2); });
   tex(scene, 'ring', 64, 64, (g) => ring(g, 64, 3));
   tex(scene, 'disc', 64, 64, (g) => {
-    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (Math.hypot(x - 31.5, y - 31.5) <= 31.5) R(g, 6, x, y);
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { const d = Math.hypot(x - 31.5, y - 31.5); if (d <= 31.5) R(g, d > 30.2 ? 2 : 6, x, y); }
   });
   tex(scene, 'ring_small', 32, 32, (g) => ring(g, 32, 2));
   for (let i = 0; i < 3; i++) {
@@ -1149,6 +1339,7 @@ export function buildHeld(scene, key, kind, col = 5) {
 
 // --------------------------------------------------------------------- entry
 export function generateArt(scene) {
+  installBakedTints(scene);
   buildCharacters(scene);
   buildTiles(scene);
   buildFx(scene);

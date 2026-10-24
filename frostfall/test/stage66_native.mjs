@@ -24,7 +24,7 @@ const probe = (kind, cls) => h.ev(async ([kind, cls]) => {
   return r;
 }, [kind, cls]);
 
-for (const kind of kinds.filter((k) => !NEWART.has(k) && !['ashwolf', 'bogwolf', 'jackal', 'thornboar', 'marshdraugr', 'sandwight', 'emberknight', 'frostbear', 'mirelynx', 'sunfencer', 'redsula', 'captainkarrow'].includes(k))) {
+for (const kind of kinds.filter((k) => !NEWART.has(k) && !['ashwolf', 'bogwolf', 'jackal', 'thornboar', 'marshdraugr', 'sandwight', 'emberknight', 'frostbear', 'mirelynx', 'sunfencer', 'redsula', 'captainkarrow', 'boss', 'grimfang', 'wyrm'].includes(k))) {   // the three bosses get their scale from their class, not their table entry: stage98 checks them in their lairs
   const cls = BOSS[kind] || null;
   const spec = await h.ev(async (k) => { const r = await import('/src/art/native_registry.js'); const s = r.nativeSpec(k); window.__saved = window.__saved || {}; window.__saved[k] = s; r.unregisterNative(k); return { scale: s.scale, w: s.w, h: s.h, cw: s.cw || 16, ch: s.ch || 16 }; }, kind);
   const before = await probe(kind, cls);
@@ -33,7 +33,7 @@ for (const kind of kinds.filter((k) => !NEWART.has(k) && !['ashwolf', 'bogwolf',
   const ok = !before.native && after.native && after.sx === 1 && after.tex === 'nat_' + kind;
   const sizeOk = Math.abs(after.dw - before.dw) <= 0.75 && Math.abs(after.dh - before.dh) <= 0.75;
   const boxOk = ['bx', 'by', 'bw', 'bh'].every((f) => Math.abs(after[f] - before[f]) < 0.01);
-  const framesOk = after.names === before.names && after.afterSet === after.dw;
+  const framesOk = before.names.split(',').every((n) => after.names.split(',').includes(n)) && after.afterSet === after.dw;   // native art may add frames (the werewolf's swipe and howl)
   check(`${kind}: native ${spec.w}x${spec.h}, same size, same hitbox, same frames`, ok && sizeOk && boxOk && framesOk, JSON.stringify({ before, after }));
 }
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));

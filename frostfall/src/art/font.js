@@ -3,7 +3,7 @@
 import Phaser from 'phaser';
 import { PAL } from '../config.js';
 
-const G = {
+export const G = {        // the glyphs, exported for the title logo (art/scenery.js)
   A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
   B: ['####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.'],
   C: ['.###.', '#...#', '#....', '#....', '#....', '#...#', '.###.'],

@@ -30,7 +30,7 @@ function bearPix(N, f, mammoth) {
   for (const [x, y] of [[4, 6], [6.5, 5], [8, 7.4], [5.2, 9], [10.5, 9.6]]) P(x, y, 4, Math.max(1, Math.round(k * 0.6)), 1);
   return render(g, BEAR_R, { dither: [1] });
 }
-function bearSheet(mammoth) {
+export function bearSheet(mammoth) {
   return (scene, key, N) => {
     const a = bearPix(N, 0, mammoth), b = bearPix(N, 1, mammoth), c = bearPix(N, 2, mammoth);
     sheet(scene, key, N, [['side0', a], ['side1', b], ['side2', c], ['hurt0', jolt(b, N, -Math.round(N / 16), -Math.round(N / 16))], ['death0', flippedV(jolt(a, N, 0, 0), N, N)]]);
@@ -79,7 +79,10 @@ function wyvernPix(N, f) {
   P(13.5, 5.7, 11, 1, 1);
   return render(g, WYV_R, { dither: [1] });
 }
-function wyvernSheet(scene, key, N) { sheet(scene, key, N, [['side0', wyvernPix(N, 0)], ['side1', wyvernPix(N, 1)], ['side2', wyvernPix(N, 2)]]); }
+function wyvernSheet(scene, key, N) {
+  const a = wyvernPix(N, 0), b = wyvernPix(N, 1), u = Math.round(N / 16);
+  sheet(scene, key, N, [['side0', a], ['side1', b], ['side2', wyvernPix(N, 2)], ['hurt0', jolt(b, N, -u, -u)], ['death0', flippedV(jolt(a, N, 0, -2 * u), N, N)]]);
+}
 
 // ------------------------------------------------------------------ frost worm
 // ids: 1 body, 2 belly plate, 3 head, 4 fang, 5 ridge, 6 crest
@@ -97,7 +100,10 @@ function wormPix(N, f) {
   R(5, 13, 2.4, 1.6, 2);
   return render(g, WORM_R, { dither: [1, 3] });
 }
-function wormSheet(scene, key, N) { sheet(scene, key, N, [['side0', wormPix(N, 0)], ['side1', wormPix(N, 1)], ['side2', wormPix(N, 2)]]); }
+function wormSheet(scene, key, N) {
+  const a = wormPix(N, 0), b = wormPix(N, 1), u = Math.round(N / 16);
+  sheet(scene, key, N, [['side0', a], ['side1', b], ['side2', wormPix(N, 2)], ['hurt0', jolt(b, N, -u, -u)], ['death0', flippedV(a, N, N)]]);
+}
 
 const reg = (kind, scale, build) => { const N = Math.round(16 * scale); registerNative(kind, { scale, w: N, h: N, build: (scene, key) => build(scene, key, N) }); };
 reg('bear', 1.5, bearSheet(false));

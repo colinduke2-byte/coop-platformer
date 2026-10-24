@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Projectile from './Projectile.js';
 import { S } from '../systems/state.js';
 import { sfx } from '../audio/sfx.js';
-import { norm, dist, facingKind, dir8 } from '../util.js';
+import { norm, dist, facingKind, dir8, walkFrame } from '../util.js';
 import { runScript } from '../systems/dialogue.js';
 import { SCRIPTS } from '../data/dialogue.js';
 
@@ -74,9 +74,9 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
     }
     b.setVelocity(vx, vy);
     const sp = Math.hypot(vx, vy);
-    if (sp > 6) this.phase += sp * dt * 0.16;
+    if (sp > 6) this.phase += sp * dt * 0.24;
     const k = facingKind(this.face.x, this.face.y);
-    this.setFrame(k + (sp > 6 ? 1 + (Math.floor(this.phase) % 2) : 0)).setFlipX(k === 'side' && this.face.x < 0);
+    this.setFrame(k + (sp > 6 ? walkFrame(this.phase) : 0)).setFlipX(k === 'side' && this.face.x < 0);     // the four-beat walk (VX-17)
     this.setDepth(this.y + 8);
     this.shadow.setPosition(this.x, this.y + 7).setDepth(this.y + 6);
   }
