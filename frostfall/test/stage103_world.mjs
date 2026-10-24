@@ -154,6 +154,24 @@ const finds = await G(async () => {
 });
 check('WQ17: the Reach has minor finds; a cairn rests you once a day and a freed fox pays', finds.cairns + finds.snares + finds.packs >= 20 && finds.rested && finds.again === false && finds.gold > 0, JSON.stringify(finds));
 
+// ---- WQ18: each landmark has a secret: a riddle answered right pays, a wrong one does not; a fire spell thaws the Frozen Fall
+const sec = await G(async () => {
+  const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), dlg = await import('/src/systems/dialogue.js'), real = dlg.dialogue.hud;
+  const all = sc.interactables.filter((i) => i.s && i.e?.lm), kinds = all.map((i) => i.e.lm);
+  const out = { kinds };
+  const statue = all.find((i) => i.e.lm === 'fallenstatue');
+  if (statue) {
+    let answer = 0; dlg.dialogue.hud = { say: async () => {}, choose: async () => answer, hideBox() {}, scene: real.scene };
+    const g0 = S.gold; await statue.interact(); out.wrong = S.gold - g0;
+    answer = statue.s.right; await statue.interact(); out.right = S.gold - g0;
+    dlg.dialogue.hud = real;
+  }
+  const fall = all.find((i) => i.e.lm === 'frozenfall');
+  if (fall) { const g0 = S.gold; const fake = { kind: 'fire', x: fall.ix + 10, y: fall.iy }; const orig = sc.shots.getChildren; sc.shots.getChildren = () => [fake]; fall.tick(0.1, sc); sc.shots.getChildren = orig; out.thaw = S.gold - g0; }
+  return out;
+});
+check('WQ18: the Reach\'s landmarks carry secrets; a riddle pays only for the right answer; fire thaws the Frozen Fall', sec.kinds.length >= 4 && (sec.wrong ?? 0) === 0 && (sec.right ?? 1) > 0 && (sec.thaw ?? 1) > 0, JSON.stringify(sec));
+
 // ---- WQ3 / WQ19: weather belongs to its region
 const reachW = await G(async () => {
   const S = window.__ff.S, sc = window.__ff.game.scene.getScene('Game'), { bus } = await import('/src/systems/bus.js');

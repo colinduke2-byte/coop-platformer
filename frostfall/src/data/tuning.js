@@ -321,4 +321,6 @@ TUNE.world = {
   survey: { half: [120, 40], landmarks: [150, 50], full: [400, 120] },
   // WQ17: minor finds. A cairn makes you rested (+25 max health) for cairnSecs, once a day; a freed fox pays foxGold
   minor: { cairnSecs: 120, foxGold: 15 },
+  // WQ18: a landmark's secret pays gold + perTier per tier (and a rare piece of gear for the bigger ones); a warming one lasts warmSecs
+  secret: { gold: 90, perTier: 60, warmSecs: 300 },
 };

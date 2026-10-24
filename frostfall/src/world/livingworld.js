@@ -157,7 +157,7 @@ export const livingMethods = {
     this._cold = (this._cold || 0) + dt;
     if (this._cold < (w === 'whiteout' ? 5 : 9)) return;
     this._cold = 0;
-    if (ITEMS[S.equip.armor]?.warm || ITEMS[S.equip.head]?.warm || this.nearFire(70)) return;
+    if (ITEMS[S.equip.armor]?.warm || ITEMS[S.equip.head]?.warm || S.flags.warmUntil > (S.playtime || 0) || this.nearFire(70)) return;   // WQ18: a landmark can warm you
     const c = this.player.statuses?.chill;
     if (!c || c.stacks < 2) { applyStatus(this.player, 'chill', { t: 8 }); bus.emit('toast', 'THE STORM CHILLS YOU: WEAR WARM ARMOUR OR FIND A FIRE', 15); }
   },
