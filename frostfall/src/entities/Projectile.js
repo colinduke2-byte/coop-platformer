@@ -7,6 +7,7 @@ import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { bl } from '../systems/bless.js';
 import { applyStatus } from '../systems/status.js';
+import { warpable } from './bulletTime.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -32,6 +33,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(y + 20);
     this.done = false;
     this.t = 0;
+    if (this.enemyOwned) warpable(this);              // CB27: enemy shots slow down in a perfect dodge too
   }
 
   update(dt) {

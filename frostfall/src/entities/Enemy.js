@@ -21,6 +21,7 @@ import { nativeSpec, ensureNative } from '../art/native_registry.js';
 import '../art/native/index.js';
 import { applyStatus, clearStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
 import { tip } from '../systems/tips.js';
+import { warpable } from './bulletTime.js';
 
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -101,6 +102,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.blink = 0;
     this.pathT = 0;
     this.wp = null;
+    warpable(this);                                   // CB27: slowed by a perfect dodge
   }
 
   // Native-pixel art is already at its on-screen size, so scale requests (bosses call setScale) are ignored.

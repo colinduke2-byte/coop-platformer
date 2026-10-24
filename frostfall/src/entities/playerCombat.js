@@ -24,6 +24,7 @@ import { settings } from '../systems/settings.js';
 import { bl } from '../systems/bless.js';
 import { classMix } from '../systems/burden.js';
 import Projectile from './Projectile.js';
+import { startWarp } from './bulletTime.js';
 const P = TUNE.player;
 const styleOf = (w) => w?.style || (w?.type === 'weapon2h' ? 'great' : 'sword');
 
@@ -33,7 +34,7 @@ export const combatMethods = {
     rumble(120, 0.4, 0.6);
     this.lastPerfect = sc.t; this.counterT = P.perfect.counter;
     S.sp = Math.min(S.maxSp, S.sp + P.perfect.refund);
-    sc.slowmo(P.perfect.slow, P.perfect.slowMs);
+    startWarp(sc, P.perfect.slow, P.perfect.slowMs / 1000);       // CB27: the foes slow down, you do not
     sc.fx.text(this.x, this.y - 22, 'PERFECT DODGE', 15, 1.1);
     sc.fx.ring(this.x, this.y + 4, 1.1, 0.5, 'ring', 0x5cc8d8);
     sfx.play('parry');

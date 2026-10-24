@@ -10,6 +10,7 @@ export const settings = {
   durabilityHard: true,   // the same switch for Hard, where gear wear starts on
   dmgNumbers: true,       // floating damage numbers
   hitStop: true,          // brief freeze on landed hits
+  padLayout: 'modern',    // CB17: 'modern' (LB block, RB heavy) or 'classic' (L3 block, right stick heavy)
   flashes: true,          // screen flashes
   intScale: false,        // integer pixel scaling
   mouse: false,           // mouse controls (click = sword, right-click = bow)

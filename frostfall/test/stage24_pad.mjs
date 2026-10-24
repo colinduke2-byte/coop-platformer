@@ -8,6 +8,8 @@ await h.page.addInitScript(() => {
 await h.open('scene=game&map=village&spawn=start');
 await h.sleep(800);
 const G = (fn, a) => h.ev(fn, a);
+// this file checks the CLASSIC pad layout (d-pad moves, right stick up = heavy); the MODERN default is in stage101_combat_upgrades
+await G(async () => { (await import('/src/systems/settings.js')).settings.padLayout = 'classic'; });
 const pl = () => G(() => { const p = window.__ff.game.scene.getScene('Game').player; return { x: p.x, y: p.y, mode: p.mode }; });
 const setPad = (o) => G((o) => { window.__pads = o ? [window.__mk(o)] : []; }, o);
 const free = () => G(() => { const g = window.__ff.game.scene.getScene('Game'); g.player.setPosition(300, 250); g.player.mode = 'free'; g.player.rollCd = 0; g.player.invuln = 0; window.__ff.S.sp = 100; window.__ff.S.flags.introDone = true; });

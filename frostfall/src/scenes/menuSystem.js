@@ -51,7 +51,7 @@ const HINTS = {
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'SCREEN FLASHES AND THE LOW-HEALTH PULSE', 'PIXEL SCALE': 'INTEGER IS CRISP. FIT FILLS THE WINDOW',
   'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD SWORD TO KEEP THE COMBO GOING',
   'LARGE UI': 'BIGGER HUD BARS, NUMBERS AND TARGET BAR', 'ROTATE VIEW': 'PHONE HELD UPRIGHT: TURN THE PICTURE',
-  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
+  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'PAD LAYOUT': 'MODERN: LB BLOCK, RB HEAVY. CLASSIC: L3, STICK', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES',
   'DURABILITY': 'GEAR WEARS OUT. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES',
   'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD, SEE WHAT IT SENDS', 'QUIT TO TITLE': 'SAVES, THEN GOES BACK TO THE TITLE',
   'REDUCE MOTION': 'STILL MARKERS, NO BLINKING, LESS SNOW', 'HIGH CONTRAST': 'BRIGHTER TEXT ON THE DARK PANELS', 'BAR NUMBERS': 'NUMBERS ON THE HEALTH, MAGIC, STAMINA BARS',
@@ -64,7 +64,7 @@ export function systemTab(m) {
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
     ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT']],
     ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'CLOAK']],
-    ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'CONTROLS', 'CONTROLLER']]];
+    ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'PAD LAYOUT', 'CONTROLS', 'CONTROLLER']]];
   const rows = PAGES.flatMap(([, l]) => l).filter((r) => !(S.quick || S.daily) || !['SAVE GAME', 'LOAD GAME', 'SLOT'].includes(r));   // no saving inside Arena or a Daily run
   let armed = null;           // 'LOAD GAME' / 'QUIT TO TITLE' wait for a second press
   const VISIBLE = 9;
@@ -132,6 +132,7 @@ export function systemTab(m) {
       case 'FULLSCREEN': m.scale.toggleFullscreen(); break;
       case 'FLASHES': toggle('flashes'); break;
       case 'HIT STOP': toggle('hitStop'); break;
+      case 'PAD LAYOUT': settings.padLayout = settings.padLayout === 'classic' ? 'modern' : 'classic'; saveSettings(); sfx.play('select'); m.dirty = true; break;
       case 'DURABILITY': if (settings.difficulty !== 'easy') toggle(settings.difficulty === 'hard' ? 'durabilityHard' : 'durability'); break;
       case 'DAMAGE NUMBERS': toggle('dmgNumbers'); break;
       case 'PIXEL SCALE': toggle('intScale'); window.__applyScaling?.(); break;
@@ -300,6 +301,7 @@ export function systemTab(m) {
         else if (r === 'SCREEN SHAKE') v = settings.shake === 0 ? 'OFF' : settings.shake === 0.5 ? 'LOW' : 'FULL';
         else if (r === 'CLOAK') { v = currentCloak().name.toUpperCase(); vc = currentCloak().col; }
         else if (r === 'DURABILITY') { const on = durOn(); v = settings.difficulty === 'easy' ? 'OFF (EASY)' : on ? 'ON' : 'OFF'; vc = on ? 13 : 4; }
+        else if (r === 'PAD LAYOUT') { v = settings.padLayout === 'classic' ? 'CLASSIC' : 'MODERN'; vc = 13; }
         else if (r === 'HIT STOP') { v = settings.hitStop === false ? 'OFF' : 'ON'; vc = settings.hitStop === false ? 11 : 8; }
         else if (r === 'DAMAGE NUMBERS') { v = settings.dmgNumbers === false ? 'OFF' : 'ON'; vc = settings.dmgNumbers === false ? 11 : 8; }
         else if (r === 'FLASHES') { v = settings.flashes ? 'ON' : 'OFF'; vc = settings.flashes ? 8 : 11; }
