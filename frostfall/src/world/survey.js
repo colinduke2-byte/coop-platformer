@@ -7,6 +7,8 @@ import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { LANDMARKS } from './discovery.js';
 import { tierIn } from './worldgen.js';
 import { TUNE } from '../data/tuning.js';
+import { ITEMS } from '../data/items.js';
+import { defineOnce } from '../util.js';
 
 export const MILESTONES = ['half', 'landmarks', 'full'];
 export function surveyOf(rid) {
@@ -36,3 +38,11 @@ export function payOf(rid, m) {
 }
 export const markPaid = (rid, m) => { book()[rid][m] = 'paid'; };
 export const fullySurveyed = () => Object.values(book()).filter((b) => b.full).length;
+
+// WQ24: the finished chart of each fully surveyed region, framed: a keepsake item the chartmaker hands over with the full
+// survey's pay, hung on the house Trophy Wall (features/world.js draws it there). One colour per region for the frame.
+export const CHART_COL = { reach: 8, ashen: 11, coast: 15, kingdom: 2, fens: 9, highlands: 3, glasswood: 14, underdeep: 12, vale: 13, sunscorch: 10 };
+export const chartId = (rid) => 'chart_' + rid;
+for (const rid of REGION_ORDER) defineOnce(ITEMS, chartId(rid), { name: `Chart: ${REGIONS[rid].name.replace(/^The /, '')}`, type: 'quest', icon: ['scroll', CHART_COL[rid]], value: 0, desc: `The finished chart of ${REGIONS[rid].name}, every place on it, framed in a chartmaker's frame. It hangs on the Trophy Wall at home.` }, 'ITEMS');
+// regions whose chart hangs on the wall: you hold the chart, or a full survey was paid (an older save, before charts were given)
+export const framedCharts = () => REGION_ORDER.filter((rid) => (S.inv?.[chartId(rid)] || 0) > 0 || book()[rid]?.full === 'paid');

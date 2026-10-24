@@ -29,5 +29,29 @@ await wait(1500);
 const brz2 = await G(() => { const sc = window.__ff.game.scene.getScene('Game'), P = sc.brz; return { solved: P.solved, open: !sc.solid[P.wy][P.wx], lit: P.braziers.every((b) => b.lit) }; });
 check('WQ23: a solved brazier puzzle stays solved', brz2.solved && brz2.open && brz2.lit, JSON.stringify(brz2));
 
+// ---- WQ24: a full survey pays a framed chart, and it hangs on the house Trophy Wall
+async function stub() {
+  const dlg = await import('/src/systems/dialogue.js'), real = dlg.dialogue.hud;
+  window.__said = [];
+  dlg.dialogue.hud = { say: async (n, t) => { window.__said.push(t); }, choose: async () => 99, hideBox() {}, scene: real.scene };
+  window.__talk = async (id) => { const D = await import('/src/data/dialogue.js'); await D.SCRIPTS[id](); };
+}
+await h.open('scene=game&map=reedwick&spawn=entry&seed=8919');
+await wait(1500); await G(stub);
+const chart = await G(async () => {
+  const S = window.__ff.S; S.flags.survey = { fens: { half: 'paid', landmarks: 'paid', full: 'owed' } };
+  try { await window.__talk('wick_map'); } catch (e) { /* the map menu after the pay is not stubbed */ }
+  return { item: S.inv.chart_fens || 0, paid: S.flags.survey.fens.full };
+});
+await G(() => { const S = window.__ff.S; S.flags.furn = { ...(S.flags.furn || {}), trophywall: true }; window.__ff.game.scene.getScene('Game').scene.restart({ map: 'cottage', spawn: 'in' }); });
+await wait(1500); await G(stub);
+const wall = await G(async () => {
+  const sc = window.__ff.game.scene.getScene('Game'), P = await import('/src/entities/Props.js'), w = sc.interactables.find((i) => i instanceof P.TrophyWall);
+  await w.interact(); await new Promise((r) => setTimeout(r, 300));
+  return { charts: sc.wq24?.charts, said: window.__said.join(' | ') };
+});
+check('WQ24: the full survey of the Fens pays a framed chart, and it hangs by the Trophy Wall, which names it',
+  chart.item === 1 && chart.paid === 'paid' && wall.charts === 1 && /framed chart beside it: Weeping Fens/.test(wall.said), JSON.stringify({ chart, wall }));
+
 await h.close();
 console.log(failCount() ? 'STAGE 111 FAILED' : 'STAGE 111 PASSED');

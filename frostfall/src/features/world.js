@@ -1,24 +1,24 @@
 // World agent (W) features that hook into GameScene without editing it (see docs/AGENT_RULES.md, section 2).
 import { registerTicker, registerListener } from '../scenes/gameHooks.js';
-import { T } from '../config.js';
+import { T, C } from '../config.js';
 import { S } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { TUNE } from '../data/tuning.js';
 import { applyStatus } from '../systems/status.js';
-import { Herb, Lore } from '../entities/Props.js';
+import { Herb, Lore, TrophyWall } from '../entities/Props.js';
 import { ART_SKY } from '../world/weather.js';
 import { HAMLET_FOLK } from '../world/hamletfolk.js';
 import { freshPages } from '../world/lorepool.js';
 import '../world/regionquests.js';
 import { onPlaceDiscovered } from '../world/discovery.js';
 import { REGIONS, regionOfMap } from '../data/regions.js';
-import { newMilestones, owed, payOf, markPaid, surveyOf, reached, fullySurveyed } from '../world/survey.js';
-import { addGold, addItem } from '../systems/inventory.js';
+import { newMilestones, owed, payOf, markPaid, surveyOf, reached, fullySurveyed, chartId, framedCharts, CHART_COL } from '../world/survey.js';
+import { addGold, addItem, count } from '../systems/inventory.js';
 import { makeGenItem } from '../systems/genloot.js';
 import { sfx } from '../audio/sfx.js';
 import { TROPHIES } from '../systems/achievements.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
-import { say, choose } from '../systems/dialogue.js';
+import { say, choose, runScript } from '../systems/dialogue.js';
 import { buyMenu, sellMenu } from '../data/services.js';
 import { restRoom } from '../data/services2.js';
 import { dailyWares } from '../data/stock.js';
@@ -107,9 +107,9 @@ async function paySurveys(who) {
     const pay = payOf(rid, m), name = REGIONS[rid].name;
     await say(who, { half: `Half of ${name} walked and noted. That is worth paper and coin.`, landmarks: `Every landmark of ${name}. You have the eye for it.`, full: `All of ${name}, every place, charted. I will frame a copy. Take this, and the finished chart.` }[m]);
     addGold(pay.gold);
-    if (pay.gear) addItem(makeGenItem(pay.tier + 1, Math.random, 2));
+    if (pay.gear) { addItem(makeGenItem(pay.tier + 1, Math.random, 2)); if (!count(chartId(rid))) addItem(chartId(rid)); }
     markPaid(rid, m);
-    bus.emit('toast', `SURVEY PAID: +${pay.gold} GOLD${pay.gear ? ' AND A RARE FIND' : ''}`, 13); sfx.play('quest');
+    bus.emit('toast', `SURVEY PAID: +${pay.gold} GOLD${pay.gear ? ', A RARE FIND AND THE FRAMED CHART' : ''}`, 13); sfx.play('quest');
   }
 }
 const CHARTMAKERS = { vale_map: 'Thistle', dune_map: 'Ibrahim', wick_map: 'Joss', skarn_map: 'Kelda', glade_map: 'Spindle', fall_map: 'Quill', salt_map: 'Isolde', hermit: 'Hermit' };
@@ -125,6 +125,23 @@ registerListener('scene:game', () => {
     };
   }
 }, 'worldSurveyWrap');
+// WQ24: the framed charts hang round the Trophy Wall at home (two rows of five on the wall above it), and the wall names them
+registerListener('scene:game', (sc) => {
+  const wall = sc.interactables.find((i) => i instanceof TrophyWall); if (!wall) return;
+  const charts = framedCharts(), g = sc.add.graphics().setDepth(wall.iy + 7);
+  charts.forEach((rid, k) => {
+    const x = wall.ix - 17 + (k % 5) * 7, y = wall.iy - 27 + Math.floor(k / 5) * 7;
+    g.fillStyle(C[0]); g.fillRect(x - 1, y - 1, 7, 6); g.fillStyle(C[9]); g.fillRect(x, y, 5, 4);
+    g.fillStyle(C[6]); g.fillRect(x + 1, y + 1, 3, 2); g.fillStyle(C[CHART_COL[rid]]); g.fillRect(x + 1, y + 2, 2, 1); g.fillRect(x + 3, y + 1, 1, 1);
+  });
+  sc.wq24 = { charts: charts.length };
+  const base = wall.interact.bind(wall);
+  wall.interact = async () => {
+    await base();
+    const now = framedCharts();
+    if (now.length) await runScript(async () => { await say('Trophy Wall', now.length <= 4 ? `${now.length} framed ${now.length === 1 ? 'chart' : 'charts'} beside it: ${now.map((r) => REGIONS[r].name.replace(/^The /, '')).join(', ')}.` : `${now.length} framed charts beside it, each region you walked end to end in its own colour.`); });
+  };
+}, 'worldChartWall');
 TROPHIES.push(
   { id: 'surveyor', name: 'Surveyor', desc: 'Chart every place of one region.', test: () => fullySurveyed() >= 1 },
   { id: 'cartographer', name: 'Cartographer', desc: 'Chart every place of five regions.', test: () => fullySurveyed() >= 5 },
