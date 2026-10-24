@@ -20,7 +20,8 @@ for (const f of ['index.html', 'sw.js', 'manifest.webmanifest', 'icon-192.png', 
 const index = fs.readFileSync(path.join(out, 'index.html'), 'utf8'), art = fs.readFileSync(artifact, 'utf8');
 const sw = fs.readFileSync(path.join(out, 'sw.js'), 'utf8');
 check('index.html is a full document with the manifest link', index.startsWith('<!doctype html>') && index.includes('<link rel="manifest" href="manifest.webmanifest">'));
-check('the artifact copy has no manifest link', art.startsWith('<!doctype html>') && !art.includes('rel="manifest"'));
+// a <link> tag, not any text: the game's own code looks for link[rel="manifest"] to tell the artifact copy apart (fin-ui)
+check('the artifact copy has no manifest link', art.startsWith('<!doctype html>') && !/<link[^>]*rel="manifest"/.test(art));
 check('the worker carries the build id', sw.includes(JSON.stringify(pub.build)) && !sw.includes("'__BUILD__'"));
 const mf = JSON.parse(fs.readFileSync(path.join(out, 'manifest.webmanifest'), 'utf8'));
 check('manifest: fullscreen landscape, navy, 192+512 icons', mf.display === 'fullscreen' && mf.orientation === 'landscape' && mf.background_color === '#0b0e1a' && mf.icons.some((i) => i.sizes === '512x512'));
