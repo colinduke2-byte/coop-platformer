@@ -310,6 +310,9 @@ TUNE.hud = {
   // NP5: the sneak tip fires when an unaware foe is this close (px); NP24: foes name themselves in their danger colour
   // up to this character level (DANGER NAMES: AUTO), for this many seconds
   sneakTipR: 140, dangerNamesLevel: 5, dangerNameLife: 1.5,
+  nemesisLevel: 3,               // NP10: a killer becomes your nemesis only from this character level on
+  // NP11: below this character level, foes within safeR px of a village exit are moved out to that radius on arrival
+  safeLevel: 3, safeR: 400, safeWindow: 1.5,
   storyNudgeRuns: 3,             // NP26: Arena runs before the title points a player with no story save at NEW GAME
   shopTip: 7,                    // seconds a first-visit tip stays on a crafting service's message line (NP16)
 };

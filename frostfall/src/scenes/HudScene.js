@@ -47,7 +47,7 @@ export default class HudScene extends Phaser.Scene {
 
   create() {
     // Scene instances are reused on relaunch, but their display objects are not: drop every lazily created text from the last run.
-    this.quickTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = null;
+    this.quickTxt = null; this.clockTxt = null; this.lockTxt = this.statTxt = this.qm = this.ammoTxt = this.cdTxt = this.tgtTxt = this.sneakTxt = this.slotKeys = null;
     this.g = this.add.graphics();
     this.flash = { hp: 0, mp: 0, sp: 0 };
     this.labels = BARS.map((b, i) => txt(this, 3, 3 + i * 8, b.label, 5));
@@ -145,8 +145,8 @@ export default class HudScene extends Phaser.Scene {
     this.dead.add(this.add.rectangle(0, 0, W, H, 0x0b0e1a, 0.6).setOrigin(0));
     const d1 = txt(this, W / 2, 60, 'YOU DIED', 11).setScale(3).setOrigin(0.5, 0);
     // what happened and what it costs: who did it, the gold you drop, where you wake
-    this.deadWhy = txt(this, 0, 92, '', 6); this.deadCost = txt(this, 0, 104, '', 12); this.deadWake = txt(this, 0, 116, '', 4);
-    this.dead.add([d1, this.deadWhy, this.deadCost, this.deadWake]);
+    this.deadWhy = txt(this, 0, 92, '', 6); this.deadCost = txt(this, 0, 104, '', 12); this.deadWake = txt(this, 0, 116, '', 4); this.deadNem = txt(this, 0, 128, '', 11);
+    this.dead.add([d1, this.deadWhy, this.deadCost, this.deadWake, this.deadNem]);
     this.deadShown = false;
 
     // boss intro card: letterbox bars slide in and the boss's name appears
@@ -458,6 +458,14 @@ export default class HudScene extends Phaser.Scene {
     if (it.t >= T) { this.intro = null; for (const [t, c] of this.toastHold.splice(0)) this.onToast(t, c); }
   }
 
+  nextStep() {
+    const Q = S.quests;
+    if (Q.king?.status === 'inactive') return 'NEXT: TALK TO ELDER SIGRID';
+    if (Q.wolves?.status === 'inactive') return 'NEXT: BJORN NEEDS A HUNTER';
+    if (Q.herbs?.status === 'inactive') return 'NEXT: MIRRA NEEDS HERBS';
+    return 'NEXT: EXPLORE. CAMPFIRES ARE SAFE';
+  }
+
   // A fight is on when an alerted foe is close (or you are locked on); it lingers a moment so the hint does not jump about.
   inFight(pl, dt) {
     const gs = this.gs, R = TUNE.hud.fightR;
@@ -498,6 +506,9 @@ export default class HudScene extends Phaser.Scene {
       this.deadShown = true;
       const by = pl?.lastHitBy, loss = S.quick ? 0 : S.gold - Math.floor(S.gold * 0.9), r = S.respawn || { map: 'village' };
       const lines = [[this.deadWhy, by ? fit('SLAIN BY ' + String(by).toUpperCase(), 48) : 'YOU FELL'], [this.deadCost, S.quick ? '' : loss > 0 ? `YOU DROP ${loss} GOLD (10%)` : ''], [this.deadWake, S.quick ? 'THE RUN IS OVER' : fit('YOU WAKE AT ' + (r.x != null ? 'THE LAST BRAZIER IN ' : '') + (MAPS[r.map]?.name || 'THE VILLAGE').toUpperCase(), 48)]];
+      // NP10: when the killer becomes (or feeds) your nemesis, the card says so
+      const nm = S.nemesis, nemNew = nm && !S.quick && by && String(by).toUpperCase() === String(nm.name || '').toUpperCase();
+      lines.push([this.deadNem, nemNew ? fit(nm.kills > 1 ? `YOUR NEMESIS GROWS STRONGER (${nm.kills})` : `THE ${String(nm.name).toUpperCase()} REMEMBERS YOU. IT WILL WAIT, STRONGER.`, 52) : '']);
       for (const [t, v] of lines) { t.setText(v); t.x = Math.round((W - t.width) / 2); }
     } else if (!dead) this.deadShown = false;
     if (S.quick) {
@@ -652,6 +663,13 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
       shownQ = i + 1;
     });
+    // NP20: the tracker is never empty: with nothing active it suggests a next step
+    if (!shownQ && !S.quick && !S.daily && !ui.modal && !dead && S.flags.tutDone) {
+      const t = this.questTxt[0], line = fit(this.nextStep(), 32);
+      t.setText(line).setFont(fontKey(4)); t.x = W - 4 - t.width; t.y = ty0;
+      g.fillStyle(C[0], 0.5); g.fillRect(t.x - 2, t.y - 1, t.width + 4, 9);
+      shownQ = 1;
+    }
     this.trackBottom = shownQ ? ty0 + shownQ * 9 : 0;
     this.drawQuestMarker(g, tid, dt);
     const wp = S.flags.waypoint;

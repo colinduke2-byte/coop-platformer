@@ -66,7 +66,8 @@ export function loreTab(m) {
       panel(g, 6, 22, 116, 134, 2);
       panel(g, 126, 22, W - 132, 134, 2);
       let fx = 10;
-      FILTERS.forEach(([n], i) => { if (i === filter) { g.fillStyle(C[13]); g.fillRect(fx - 1, 25, textW(n) + 2, 9); } m.T(fx, 26, n, i === filter ? 0 : 4); fx += textW(n) + 3; });
+      // the row fits four names: on the guide it names just that one (Q still cycles all five)
+      (filter === 4 ? [['FIELD GUIDE', 4]] : FILTERS.slice(0, 4).map(([n], i) => [n, i])).forEach(([n, i]) => { if (i === filter) { g.fillStyle(C[13]); g.fillRect(fx - 1, 25, textW(n) + 2, 9); } m.T(fx, 26, n, i === filter ? 0 : 4); fx += textW(n) + 3; });
       if (!l.length) { m.T(14, 40, 'NOTHING YET.', 4); m.T(14, 52, 'READ BOOKS AND', 4); m.T(14, 61, 'MEET CREATURES.', 4); return; }
       const KIND = { book: ['', 6], beast: ['', 15], item: ['', 8], guide: ['', 13] };
       l.slice(m.scroll, m.scroll + ROWS).forEach((e, k) => {

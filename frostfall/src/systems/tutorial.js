@@ -41,6 +41,7 @@ export function updateTutorial(gs, dt) {
         S.flags.tut = 'done'; S.flags.tutDone = true; tut.wolf = null;
         bus.emit('toast', 'YOU ARE READY. SEE SIGRID AND BJORN', 13);
         bus.emit('hint', fill(TEXT.ready), true);
+        bus.emit('tutorial:done');            // features/hud_starter.js starts the starter quest (NP3)
         return;
       }
       // spawn the lone wolf a short way off, weakened so the first fight is about learning
