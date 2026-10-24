@@ -1,6 +1,7 @@
 import PatternBoss from './PatternBoss.js';
 import { TUNE } from '../data/tuning.js';
 import { sfx } from '../audio/sfx.js';
+import { enemyTimer } from './bulletTime.js';
 import { addItem } from '../systems/inventory.js';
 import { bus } from '../systems/bus.js';
 import { S } from '../systems/state.js';
@@ -106,7 +107,7 @@ export class EmberDragon extends PatternBoss {
     super.fireAttack(player);
     this.setState('attack', 0.95);
     const sc = this.scene, aim = Math.atan2(this.dir.y, this.dir.x);
-    [0.3, 0.6].forEach((t, i) => sc.time.delayedCall(t * 1000, () => {
+    [0.3, 0.6].forEach((t, i) => enemyTimer(sc, t * 1000, () => {      // slowed by a perfect dodge
       if (this.dead || !this.scene) return;
       const base = aim + (i ? 0.24 : -0.24), n = this.B.breath.count;          // CB14: rakes a fixed arc around the telegraphed line
       for (let k = 0; k < n; k++) this.orb(base + (k - (n - 1) / 2) * this.B.breath.spread, this.B.breath.speed + (k % 2) * 14, this.B.breath.dmg);

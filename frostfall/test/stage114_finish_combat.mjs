@@ -36,6 +36,27 @@ const dg = await G(async () => {
   e.destroy(); return out;
 });
 check('CB22: a late foe\'s danger colour includes its faster attacks (never lower, a band up near each edge)', dg.f > 0.6 && dg.same && dg.up && dg.never, JSON.stringify(dg));
+// ---- perfect-dodge slow motion: enemy zones, enemy tweens and enemy delayed blows slow down; the rest does not
+await G(async () => {
+  const B = await import('/src/entities/bulletTime.js'), g = window.__ff.game.scene.getScene('Game'), p = g.player;
+  p.invuln = 99; window.__w = { fired: 0, plain: 0 };
+  const e = g.addEnemy('draugr', p.x + 150, p.y + 100, { tier: 0 }); e.update = () => {}; window.__we = e;
+  window.__wz = [g.zones.length, g.zones.length + 1];
+  g.addZone(p.x + 120, p.y, 10, 1.0, 1, e); g.addZone(p.x - 120, p.y, 10, 1.0, 1, null);
+  window.__wt = g.tweens.add({ targets: e, alpha: 0.2, duration: 1000 });
+  window.__wc = { v: 0 }; window.__wct = g.tweens.add({ targets: window.__wc, v: 1, duration: 1000 });
+  B.enemyTimer(g, 700, () => { window.__w.fired++; }); g.time.delayedCall(400, () => { window.__w.plain++; });
+  B.startWarp(g, 0.3, 0.8);
+});
+await h.frames(30);
+const sw = await G(() => {
+  const g = window.__ff.game.scene.getScene('Game'), [a, b] = window.__wz, zo = g.zones[a], zn = g.zones[b];
+  return { owned: zo?.t, plain: zn?.t, foeTween: window.__wt.progress, other: window.__wct.progress, fired: window.__w.fired, plainT: window.__w.plain, ts: window.__wt.timeScale };
+});
+await h.frames(60);
+const sw2 = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const r = { ts: window.__wt.timeScale, fired: window.__w.fired }; window.__we.destroy(); g.player.invuln = 0; return r; });
+check('slow motion: an enemy zone, an enemy tween and an enemy delayed blow run at 0.3x; a weather zone, other tweens and timers do not', sw.owned > 0.8 && sw.plain < 0.6 && sw.foeTween < 0.25 && sw.other > 0.4 && sw.fired === 0 && sw.plainT === 1 && Math.abs(sw.ts - 0.3) < 1e-6, JSON.stringify(sw));
+check('after the slow motion the enemy tween runs at full speed again', sw2.ts === 1, JSON.stringify(sw2));
 //@@MORE@@
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
