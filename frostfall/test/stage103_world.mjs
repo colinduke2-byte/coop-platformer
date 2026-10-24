@@ -236,6 +236,15 @@ await h.open('scene=game&map=reedwick&spawn=entry&seed=8919');
 await h.sleep(1500);
 const hubBoard = await G(() => window.__ff.game.scene.getScene('Game').interactables.filter((i) => i.rid === 'fens' && i.label?.() === 'E: BOUNTY BOARD').length);
 check('WQ20: Reedwick has a bounty board for the Fens', hubBoard === 1, String(hubBoard));
+const hours = await G(async () => {
+  const sc = window.__ff.game.scene.getScene('Game'), S = window.__ff.S;
+  const smith = sc.npcs.find((n) => n.id === 'wick_smith'), inn = sc.npcs.find((n) => n.id === 'wick_inn'), child = sc.npcs.find((n) => n.id === 'wick_child');
+  const day = { x: smith.x, y: smith.y };
+  S.time = 22 * 60; sc.hoursT = 0;
+  await new Promise((r) => setTimeout(r, 9000));
+  return { moved: Math.hypot(smith.x - day.x, smith.y - day.y), nearInn: Math.hypot(smith.x - inn.x, smith.y - inn.y), childAway: child.away, talk: smith.canInteract() };
+});
+check('WQ25: at night the Reedwick smith walks over to the inn (and can still be talked to); the child goes home', hours.moved > 20 && hours.nearInn < 60 && hours.childAway && hours.talk, JSON.stringify(hours));
 
 // ---- WQ23: a cracked wall in a barrow breaks open when struck
 await h.open('scene=game&map=barrow0&spawn=entry&seed=8919');

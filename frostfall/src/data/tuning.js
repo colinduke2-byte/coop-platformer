@@ -325,6 +325,8 @@ TUNE.world = {
   secret: { gold: 90, perTier: 60, warmSecs: 300 },
   // WQ20: every everyDays game days perRegion cleared places per region are retaken (crew one tier up and a lieutenant);
   // clearing them again pays clearGold [base, per tier]; a hub board contract pays boardGold [base, per tier] on top
+  // WQ25: hub people check the clock every `every` seconds (dusk 20:30 to the inn, dawn 5:30 back)
+  hours: { every: 2 },
   // WQ21: what each new-shape regional quest pays (gold, and a rare piece of gear of this tier)
   rquest: { gold: 450, tier: 3 },
   retake: { everyDays: 4, perRegion: 1, clearGold: [80, 50], boardGold: [70, 50] },
