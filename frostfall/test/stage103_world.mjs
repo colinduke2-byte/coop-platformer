@@ -209,9 +209,11 @@ for (const [map, allowed] of [['sunscorch', ['clear', 'sandstorm']], ['fens', ['
     for (let i = 0; i < 60; i++) { sc.weatherT = 0; sc.updateClock(0.001); }
     S.weather = 'blizzard'; sc._cold = 0; const before = sc.player.statuses?.chill; sc.stormCold(30);
     bus.off('weather', f);
-    return { arrived, seen: [...seen], chilled: !before && !!sc.player.statuses?.chill, stealth: (S.weather = allowed[1], sc.stealthEnv()) };
+    const evKinds = []; for (const k of { sunscorch: ['caravan'], fens: ['wisplure'], ashen: ['ashhunt'], vale: ['hivewar'] }[location.search.match(/map=(\w+)/)[1]] || []) { sc.raidEvt = null; sc.spawnLocal(k, 1); evKinds.push(sc.raidEvt?.foes.map((e) => e.kind).join('+')); sc.raidEvt = null; }
+    return { evKinds, arrived, seen: [...seen], chilled: !before && !!sc.player.statuses?.chill, stealth: (S.weather = allowed[1], sc.stealthEnv()) };
   }, allowed);
   check(`WQ3/WQ19: ${map} turns a blizzard into its own weather and only rolls ${allowed.join('/')}`, r.arrived === 'clear' && r.seen.every((k) => allowed.includes(k)) && r.seen.length >= 2 && !r.chilled, JSON.stringify(r));
+  check(`WQ27: ${map} has its own event with its own creatures`, r.evKinds.length === 1 && !!r.evKinds[0], JSON.stringify(r.evKinds));
 }
 const sand = await G(() => window.__ff.game.scene.getScene('Game').stealthEnv());
 check('WQ19: a storm of the region hides you (stealth multiplier below 1)', sand < 1, String(sand));

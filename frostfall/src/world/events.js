@@ -19,6 +19,8 @@ import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
 import { prompt } from '../systems/access.js';
+import { regionOfMap } from '../data/regions.js';
+import { REGION_DEFS } from './worldgen.js';
 import { setEventMark, clearEventMark } from './questmarks.js';
 import { fadeOut } from '../systems/fade.js';
 
@@ -71,7 +73,8 @@ export const eventMethods = {
   spawnAmbush() {
     const tier = this.tierHere(this.player.x / T, this.player.y / T);
     const night = this.isNight();                      // the gameplay night (CH4), not how dark it looks
-    const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : ['wolf', 'bandit', 'wolf', 'fencer'];
+    const rid = regionOfMap(this.mapId), M = rid !== 'reach' && REGION_DEFS[rid]?.mobs?.[Math.min(3, tier)];     // WQ27: the region's own creatures by day
+    const kinds = night ? (isFull() ? ['werewolf', 'draugr', 'werewolf', 'reaver'] : ['draugr', 'wight', 'draugr', 'reaver']) : M ? [M.wild[0], M.melee[0], M.wild[1] || M.wild[0], M.melee[1] || M.melee[0]] : ['wolf', 'bandit', 'wolf', 'fencer'];
     const n = 2 + Math.min(3, tier) + (night ? 1 : 0);
     let made = 0;
     for (let i = 0; i < n; i++) {

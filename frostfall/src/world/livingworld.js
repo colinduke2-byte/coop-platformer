@@ -7,7 +7,7 @@ import { sfx, music } from '../audio/sfx.js';
 import { tierIn } from './worldgen.js';
 import { chills } from './weather.js';
 import { setEventMark, clearEventMark } from './questmarks.js';
-import { regionOfMap } from '../data/regions.js';
+import { regionOfMap, REGIONS } from '../data/regions.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
 import { addItem } from '../systems/inventory.js';
@@ -34,7 +34,7 @@ SCRIPTS.wounded = async function wounded() {
   S.gold += gold;
   addItem(makeGenItem(w.tier, Math.random, w.tier > 1 ? 1 : null));
   S.flags.helped = (S.flags.helped || 0) + 1;
-  await say(N, `Bless you. Take this, ${gold} gold and a thing I took from a dead man. Tell them the Hollow Road is not safe.`);
+  await say(N, `Bless you. Take this, ${gold} gold and a thing I took from a dead man. Tell them the ${regionOfMap(sc.mapId) === 'reach' ? 'Hollow Road is' : 'roads of ' + REGIONS[regionOfMap(sc.mapId)].name + ' are'} not safe.`);
   bus.emit('toast', `HELPED A TRAVELLER  +${gold} GOLD`, 13); sfx.play('quest');
 };
 
@@ -57,6 +57,22 @@ SCRIPTS.ghost_merchant = async function ghostMerchant() {
   } else await say(N, 'Another night, then.');
 };
 
+// WQ27: each region's own events. LOCAL_EVENTS: region -> event kinds; HUNTER: who hunts the deer there.
+const LOCAL = {
+  caravan: { kinds: ['duneraider', 'duneraider', 'warchanter'], n: 3, alert: false, toast: 'A CARAVAN IS UNDER ATTACK!', done: 'THE CARAVAN IS SAFE' },
+  cutpurses: { kinds: ['cutpurse'], n: 3, alert: true, toast: 'CUTPURSES IN THE SAND! HOLD ON TO YOUR PURSE', done: 'THE CUTPURSES ARE DOWN' },
+  wisplure: { kinds: ['bogwraith', 'wisp'], n: 2, alert: false, toward: 'hagshut', toast: 'A LITTLE LIGHT BOBS AWAY OVER THE BOG...', done: 'THE LIGHTS GO OUT' },
+  stampede: { kinds: ['glassstag'], n: 4, alert: true, toast: 'A GLASS-STAG STAMPEDE!', done: 'THE HERD SCATTERS' },
+  cavein: { kinds: ['caveweaver'], n: 2, alert: true, zones: 4, toast: 'A CAVE-IN! THE ROCK COMES DOWN', done: 'THE DUST SETTLES' },
+  ashhunt: { kinds: ['ashhound'], n: 3, alert: true, toast: 'ASH HOUNDS ON THE RIDGE!', done: 'THE HOUNDS ARE DOWN' },
+  hivewar: { kinds: ['hornet', 'thornling'], n: 3, alert: false, toast: 'HORNETS ARE SWARMING A GROVE', done: 'THE SWARM BREAKS' },
+  phantoms: { kinds: ['phantom', 'knight'], n: 2, alert: false, toast: 'A PHANTOM PATROL WALKS THE OLD ROAD', done: 'THE PATROL IS LAID TO REST' },
+  stormbirds: { kinds: ['thunderbird'], n: 3, alert: true, toast: 'THUNDERBIRDS DIVE FROM THE CLOUDS!', done: 'THE BIRDS ARE DOWN' },
+  wreckers: { kinds: ['harpooner', 'wreckcrab'], n: 3, alert: false, toast: 'WRECKERS ARE PICKING OVER A BEACHED BOAT', done: 'THE WRECKERS ARE DOWN' },
+};
+const LOCAL_EVENTS = { sunscorch: ['caravan', 'cutpurses'], fens: ['wisplure'], glasswood: ['stampede'], underdeep: ['cavein'], ashen: ['ashhunt'], vale: ['hivewar'], kingdom: ['phantoms'], highlands: ['stormbirds'], coast: ['wreckers'] };
+const HUNTER = { sunscorch: 'jackal', ashen: 'ashhound', vale: 'thornboar', glasswood: 'lynx', fens: 'mudlurker' };
+
 // Remembered across maps (not on the scene, which forgets its fields on every map load): the day a Blood Moon Alpha
 // already hunted, so leaving and re-entering the region does not raise a second one that night.
 const memory = { bloodDay: null };
@@ -72,11 +88,32 @@ export const livingMethods = {
     const r = Math.random(), tier = this.tierHere(this.player.x / T, this.player.y / T), night = this.isNight();   // CH4: the same night that later sends the Pale Merchant away
     if (night && isBlood() && this.bloodDay !== Math.floor(S.days)) return this.spawnBloodAlpha(tier);
     if (night && !this.ghostEvt && r < 0.2) return this.spawnGhostMerchant();
+    const rid = regionOfMap(this.mapId), local = LOCAL_EVENTS[rid];
+    if (rid === 'sunscorch' && S.weather === 'sandstorm' && r < 0.4) return this.spawnLocal('cutpurses', tier);     // WQ19/27: the sand hides thieves
     if (r < 0.28) return this.spawnAmbush();
     if (r < 0.50 && !this.trader) return this.spawnTrader();
     if (r < 0.66 && !night) return this.spawnWounded(tier);
-    if (r < 0.82 && !night) return this.spawnHunt(tier);
+    if (r < 0.82 && !night && rid !== 'underdeep') return this.spawnHunt(tier);
+    if (local && (Math.random() < 0.6 || !this.built?.pois?.some((q) => q.kind === 'hamlet'))) return this.spawnLocal(local[Math.floor(Math.random() * local.length)], tier);   // WQ27
     if (!this.spawnRaid(tier)) this.spawnAmbush();
+  },
+  // WQ27: events that belong to a region, with its own creatures. A crew around a spot, marked on the map; clearing it pays.
+  spawnLocal(kind, tier) {
+    if (this.raidEvt) return this.spawnAmbush();
+    const E = LOCAL[kind], p = this.freeSpotNear(90, 140); if (!p) return;
+    let at = p;
+    if (E.toward) { const px = this.player.x / T, py = this.player.y / T, q = (this.built?.pois || []).filter((o) => o.kind === E.toward).sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py))[0]; if (q && Math.hypot(q.x - px, q.y - py) < 120) at = { x: (q.x + 0.5) * T, y: (q.y + 3.5) * T }; }
+    const made = [];
+    for (let i = 0; i < E.n + Math.min(2, tier); i++) {
+      const a = Math.random() * 6.28, x = at.x + Math.cos(a) * (24 + Math.random() * 40), y = at.y + Math.sin(a) * (20 + Math.random() * 30);
+      if (this.solidAt(x, y)) continue;
+      const e = this.addEnemy(E.kinds[i % E.kinds.length], x, y, { tier, roam: true }); if (E.alert) e.alert?.(true); made.push(e);
+    }
+    if (!made.length) return;
+    if (E.zones) for (let i = 0; i < E.zones; i++) { const q = this.freeSpotNear(20, 90); if (q) this.addZone(q.x, q.y, 16, 1.1 + i * 0.3, 8 + 4 * tier); }
+    this.raidEvt = { foes: made, poi: { x: Math.floor(at.x / T), y: Math.floor(at.y / T) }, tier, life: 240, local: kind };
+    setEventMark(this.mapId, Math.floor(at.x / T), Math.floor(at.y / T), 'raid');
+    bus.emit('toast', E.toast, 11); sfx.play('alert'); if (E.alert) music.stinger();
   },
   // The blood moon: a great wolf hunts the roads once per blood night. Big bounty.
   spawnBloodAlpha(tier) {
@@ -124,10 +161,10 @@ export const livingMethods = {
   spawnHunt(tier) {
     const p = this.freeSpotNear(100, 150); if (!p) return;
     const d = this.addEnemy('deer', p.x, p.y, { roam: true });
-    const wolves = [];
-    for (let i = 0; i < 2 + (tier > 1 ? 1 : 0); i++) wolves.push(this.addEnemy('wolf', p.x + 24 + i * 8, p.y + i * 6, { tier, roam: true }));
+    const wolves = [], hunter = HUNTER[regionOfMap(this.mapId)] || 'wolf';      // WQ27: the region's own predator
+    for (let i = 0; i < 2 + (tier > 1 ? 1 : 0); i++) wolves.push(this.addEnemy(hunter, p.x + 24 + i * 8, p.y + i * 6, { tier, roam: true }));
     this.huntEvt = { deer: d, wolves, life: 90 };
-    bus.emit('toast', 'WOLVES ARE HUNTING A DEER NEARBY', 13);
+    bus.emit('toast', (HUNTER[regionOfMap(this.mapId)] || 'wolf') === 'wolf' ? 'WOLVES ARE HUNTING A DEER NEARBY' : 'SOMETHING IS HUNTING A DEER NEARBY', 13);
   },
   // Raiders hit the nearest hamlet if you are within reach; clear them for the villagers' thanks.
   spawnRaid(tier) {
@@ -205,7 +242,7 @@ export const livingMethods = {
       if (!live.length) {
         this.raidEvt = null; const gold = 60 + 40 * r.tier; S.gold += gold; S.flags.raidsStopped = (S.flags.raidsStopped || 0) + 1;
         this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(r.tier, Math.random, r.tier > 1 ? 1 : null) }));
-        bus.emit('toast', `RAID STOPPED  +${gold} GOLD`, 13); sfx.play('levelup');
+        bus.emit('toast', `${r.local ? LOCAL[r.local].done : 'RAID STOPPED'}  +${gold} GOLD`, 13); sfx.play('levelup');
         clearEventMark('raid');
       } else if (r.life <= 0) { this.raidEvt = null; for (const e of live) e.despawn?.(); bus.emit('toast', 'THE RAIDERS HAVE MOVED ON', 8); clearEventMark('raid'); }
       else if (live.some((x) => !x.alerted) && Math.hypot(r.poi.x * T - this.player.x, r.poi.y * T - this.player.y) < 150) for (const e of live) e.alert?.(true);
