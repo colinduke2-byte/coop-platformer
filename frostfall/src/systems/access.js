@@ -45,7 +45,7 @@ export function applyCvd() {
 }
 
 // Controller button names (standard layout) for prompts.
-const PAD_NAME = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'BACK', b9: 'START', b10: 'L3', b11: 'R3', hu: 'D-PAD UP', hd: 'D-PAD DOWN', hl: 'D-PAD LEFT', hr: 'D-PAD RIGHT', 'a2-': 'R-STICK LEFT', 'a2+': 'R-STICK RIGHT', 'a3-': 'R-STICK UP', 'a3+': 'R-STICK DOWN' };
+const PAD_NAME = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'BACK', b9: 'START', b10: 'L3', b11: 'R3', b12: 'D-PAD UP', b13: 'D-PAD DOWN', b14: 'D-PAD LEFT', b15: 'D-PAD RIGHT', hu: 'D-PAD UP', hd: 'D-PAD DOWN', hl: 'D-PAD LEFT', hr: 'D-PAD RIGHT', 'a2-': 'R-STICK LEFT', 'a2+': 'R-STICK RIGHT', 'a3-': 'R-STICK UP', 'a3+': 'R-STICK DOWN' };
 // The key the player actually uses for what `code` did by default (rebinding and keyboard layouts both honoured).
 export function keyLabel(code) {
   const act = actionOfDefault(code);
@@ -62,6 +62,8 @@ export function padLabel(code) {
   const id = Object.keys(m).filter((k) => m[k] === code).sort((a, b) => (/^b\d+$/.test(a) ? 0 : 1) - (/^b\d+$/.test(b) ? 0 : 1))[0];
   return id ? (PAD_NAME[id] || id.toUpperCase()) : VIA_START[code] || null;
 }
+// A button name squeezed into three characters for the HUD's slot corners: "RS<", "D▲", "LB".
+export const tinyPad = (n) => String(n).replace(/^([RL])-STICK /, '$1S').replace(/^D-PAD /, 'D').replace(/UP$/, '▲').replace(/DOWN$/, '▼').replace(/LEFT$/, '<').replace(/RIGHT$/, '>');
 // What to show the player for a virtual key right now: the pad button if a controller was used last, else the key.
 export function prompt(code) { return (padActive() && padLabel(code)) || keyLabel(code); }
 // Text with {KeyC}-style tokens (speech, item descriptions) filled in with the keys the player actually uses.
@@ -72,7 +74,7 @@ export const keyText = (s) => String(s).replace(/\{(\w+)\}/g, (_, c) => prompt(c
 const PAIR = { 'W/S': 'UP/DOWN', 'A/D': 'LEFT/RIGHT', 'WASD': 'L-STICK', 'W/S/A/D': 'D-PAD' };
 const PAIR_FOR = (tok, rest) => (tok === 'A/D' && /^\s*TAB/.test(rest) && inMenu() ? 'LB/RB' : PAIR[tok]);
 const codeOf = (tok) => (tok === 'ESC' ? 'Escape' : tok === 'SPACE' ? 'Space' : tok === 'ENTER' ? 'Enter' : /^[A-Z]$/.test(tok) ? 'Key' + tok : /^[0-9]$/.test(tok) ? 'Digit' + tok : null);
-const SHORT = (n) => n.replace('R-STICK ', 'RS ').replace('D-PAD ', 'DP ').replace(/\b(UP|DOWN|LEFT|RIGHT)$/, (d) => d[0]);
+const SHORT = (n) => (/^D-PAD /.test(n) ? tinyPad(n) : n.replace('R-STICK ', 'RS ').replace(/\b(UP|DOWN|LEFT|RIGHT)$/, (d) => d[0]));   // "D<", "RS L"
 export function padKey(tok, short = false) {
   if (PAIR[tok]) return PAIR[tok];
   if (tok.includes('/')) return tok.split('/').map((t) => padKey(t, short)).join('/');

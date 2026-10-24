@@ -80,6 +80,16 @@ export async function copyText(text, title = 'Copy this') {
   return false;
 }
 
+// The claude.ai artifact copy of the game (tools/publish.mjs writes it without the manifest link) runs framed inside a
+// viewer that silently blocks downloads, so a download button there does nothing. The Pages build (github.io, or any
+// page with the manifest link) and a page opened on its own keep downloads. window.__ffArtifact overrides (tests).
+export function inArtifact() {
+  try {
+    if (window.__ffArtifact != null) return !!window.__ffArtifact;
+    if (/\.github\.io$/i.test(location.hostname) || document.querySelector('link[rel="manifest"]')) return false;
+    return window.top !== window;
+  } catch { return true; }
+}
 // Offer a text file to save; returns false when the browser or frame does not allow downloads.
 export function downloadText(name, text) {
   try {

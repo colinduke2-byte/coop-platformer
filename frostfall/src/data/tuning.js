@@ -415,6 +415,10 @@ TUNE.hud = {
   safeLevel: 3, safeR: 400, safeWindow: 1.5,
   storyNudgeRuns: 3,             // NP26: Arena runs before the title points a player with no story save at NEW GAME
   shopTip: 7,                    // seconds a first-visit tip stays on a crafting service's message line (NP16)
+  // A1 LARGE TEXT: line height (px) and characters per line of the 2x font, toasts kept at once, the menu help line's
+  // page time (s)
+  bigLine: 16, bigChars: 26, bigToasts: 3, bigHelpPage: 2.5,
+  introWhiteOut: 900, introWhiteIn: 1800,   // VX-25: ms the intro takes to fade to white, and the village to fade in from it
 };
 
 // ---- C: combat (feel numbers for the combat pass; see docs/audit/combat.md)

@@ -5,6 +5,9 @@ import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { padHint } from '../systems/access.js';
 import { IntroVignette } from '../art/scenery.js';
+import { settings } from '../systems/settings.js';
+import { TUNE } from '../data/tuning.js';
+import { SNOW_WHITE } from '../features/hud_intro.js';
 
 const LINES = [
   'The cold took you first.',
@@ -49,7 +52,9 @@ export default class IntroScene extends Phaser.Scene {
   finish() {
     if (this.done) return;
     this.done = true;
-    this.cameras.main.fadeOut(700, 11, 14, 26);
+    // VX-25: the last line fades to snow-white, and the village fades in from it (features/hud_intro.js); FLASHES off keeps it dark
+    if (settings.flashes === false) this.cameras.main.fadeOut(700, 11, 14, 26);
+    else this.cameras.main.fadeOut(TUNE.hud.introWhiteOut, ...SNOW_WHITE);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game', { map: 'village', spawn: 'start', intro: true }));
   }
 }

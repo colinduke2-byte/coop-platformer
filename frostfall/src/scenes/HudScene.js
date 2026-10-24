@@ -6,8 +6,8 @@ import { STATUS as STATUS_INFO } from '../systems/status.js';
 import { copyDebugInfo } from '../systems/debug.js';
 import Phaser from 'phaser';
 import { W, H, C } from '../config.js';
-import { txt, textW, wrap, normText, fit, fontKey } from '../art/font.js';
-import { padHint, prompt, keyText } from '../systems/access.js';
+import { txt, textW, wrap, normText, fit, fontKey, bigKey, largeText, BIG_W } from '../art/font.js';
+import { padHint, prompt, keyText, tinyPad } from '../systems/access.js';
 import { logLine } from '../systems/msglog.js';
 import { keys } from '../systems/keys.js';
 import { ui } from '../systems/ui.js';
@@ -41,6 +41,10 @@ const SHOP_TIPS = [[/^CAMPFIRE/, 'cook'], [/^ALCHEMY/, 'brew'], [/^FORGE/, 'forg
 // a cancelled line that nobody awaited must not show up as an unhandled rejection (awaiting it still sees Cancelled)
 const quiet = (p) => { p.catch(() => {}); return p; };
 const POTIONS = [['hp_potion', '1'], ['mp_potion', '2'], ['sp_potion', '3']];
+// A1: LARGE TEXT. The font key, line height and characters per line of the important HUD text in the current mode.
+const fk = (col) => (largeText() ? bigKey(col) : fontKey(col));
+const LH = () => (largeText() ? TUNE.hud.bigLine : 9);
+const FS = () => (largeText() ? BIG_W : 6);        // a bitmap text keeps its old size when its font changes, so pass it
 
 export default class HudScene extends Phaser.Scene {
   constructor() { super('Hud'); }
@@ -75,9 +79,10 @@ export default class HudScene extends Phaser.Scene {
     this.onToast = (text, col = 6) => {
       if (this.intro) { this.toastHold.push([text, col]); return; }    // VX-13: news waits until the boss card has gone
       const same = this.toasts.find((ts) => ts.text === text && ts.life > 0.3);
-      if (same) { same.n++; same.life = 2.4; same.t.setText(`${text} X${same.n}`); return; }
-      this.toasts.push({ t: txt(this, 4, 0, text, col), life: 2.4, text, n: 1 });
-      if (this.toasts.length > 5) this.toasts.shift().t.destroy();
+      const big = largeText(), show = (s) => wrap(s, big ? TUNE.hud.bigChars - 1 : 52);      // a long one takes two lines
+      if (same) { same.n++; same.life = 2.4; same.t.setText(show(`${text} X${same.n}`)); return; }
+      this.toasts.push({ t: txt(this, 4, 0, show(text), col).setFont(fk(col), FS()), life: 2.4, text, n: 1 });
+      if (this.toasts.length > (big ? TUNE.hud.bigToasts : 5)) this.toasts.shift().t.destroy();
     };
     // the place name on arrival: snow-white on a dark plate with thin rules, readable over snow and dark ground alike (VX-14)
     this.onArea = (name) => {
@@ -117,19 +122,23 @@ export default class HudScene extends Phaser.Scene {
     this.input.on('pointerdown', (p) => {
       const d = this.dlg; if (!d || this.lock || d.age < 3) return;
       if (d.choices) {
-        const hit = (this.choiceRows || []).find((r) => p.y >= r.y - 1 && p.y < r.y + 9);
+        const hit = (this.choiceRows || []).find((r) => p.y >= r.y - 1 && p.y < r.y + (r.h || 9));
         if (!hit) return;
         if (d.sel !== hit.i) { d.sel = hit.i; sfx.play('move'); return; }
       }
       keys._press('V:KeyE'); setTimeout(() => keys._release('V:KeyE'), 60);
     });
     this.questTxt = [txt(this, 0, 26, '', 4), txt(this, 0, 35, '', 4)];
-    this.hint = null;
+    this.hint = null; this.hintRect = null;
     // tips wait their turn instead of replacing one another; they sit under the status row, clear of the bars and the purse.
     // An urgent hint (the tutorial's steps, the low-health potion tip) replaces what is showing at once (NP1): a tip it
     // pushes aside comes back after it, and an older urgent line still waiting in the queue is dropped (it is stale).
     this.hintQ = [];
-    this.showHint = (text, urgent = false) => { this.hint?.destroy(); this.hint = txt(this, 0, 0, text, 5); this.hint.x = Math.round((W - this.hint.width) / 2); this.hintT = TUNE.hud.hintLife; this.hintH = text.split('\n').length * 9 + 3; this.hintText = text; this.hintUrgent = !!urgent; };
+    this.showHint = (text, urgent = false) => {
+      const shown = wrap(text, largeText() ? TUNE.hud.bigChars - 1 : 52);     // LARGE TEXT: twice the size (A1); never off the screen
+      this.hint?.destroy(); this.hint = txt(this, 0, 0, shown, 5).setFont(fk(5), FS()); this.hint.x = Math.round((W - this.hint.width) / 2);
+      this.hintT = TUNE.hud.hintLife; this.hintH = shown.split('\n').length * LH() + 3; this.hintText = text; this.hintUrgent = !!urgent;
+    };
     this.onHint = (text, urgent = false) => {
       if (this.hint && this.hintText === text) { this.hintT = TUNE.hud.hintLife; return; }
       if (urgent) {
@@ -190,9 +199,10 @@ export default class HudScene extends Phaser.Scene {
     this.lastSay = text;
     logLine('talk', (name ? name + ': ' : '') + text, 6);
     return quiet(new Promise((res, rej) => {
-      const lines = wrap(normText(text), 47).split('\n');
+      const big = largeText(), per = big ? 2 : 3;                         // LARGE TEXT: two big lines a page (A1)
+      const lines = wrap(normText(text), big ? TUNE.hud.bigChars - 2 : 47).split('\n');
       const pages = [];
-      for (let i = 0; i < lines.length; i += 3) pages.push(lines.slice(i, i + 3).join('\n'));
+      for (let i = 0; i < lines.length; i += per) pages.push(lines.slice(i, i + per).join('\n'));
       this.name = name;
       this.dlg = { name, pages, p: 0, n: 0, t: 0, res, rej, choices: null, age: 0 };
     }));
@@ -202,7 +212,7 @@ export default class HudScene extends Phaser.Scene {
     this.skipTalk = false;
     return quiet(new Promise((res, rej) => {
       // long options wrap with a hanging indent; the window scrolls when there are more than fit
-      const rows = opts.map((o) => wrap(normText(String(o)), 44).split('\n'));
+      const rows = opts.map((o) => wrap(normText(String(o)), largeText() ? TUNE.hud.bigChars - 5 : 44).split('\n'));
       const q = this.lastSay ? fit(normText(this.lastSay).replace(/\s+/g, ' '), 47) : '';
       this.dlg = { name: this.name || '', pages: [''], p: 0, n: 0, t: 0, res, choices: opts, rows, q, sel: 0, top: 0, age: 0, rej };
     }));
@@ -329,10 +339,18 @@ export default class HudScene extends Phaser.Scene {
     const sx = wx - cam.x, sy = wy - cam.y;
     const bob = settings.reduceMotion ? 0 : Math.sin(this.time.now / 220) * 2;
     if (sx > 6 && sx < W - 6 && sy > 14 && sy < H - 6) {
-      const x = Math.round(sx), y = Math.round(sy - 16 + bob);
+      const x = Math.round(sx);
+      let y = Math.round(sy - 16 + bob);
+      // never hidden under the hint plate: the diamond steps just below it (or above it, near the bottom of the screen)
+      const hr = this.hintRect;
+      if (hr && x + 5 > hr.x && x - 4 < hr.x + hr.w && y + 11 > hr.y && y - 4 < hr.y + hr.h) {
+        const below = hr.y + hr.h + 5, above = hr.y - 12;
+        y = below + 12 <= H - 24 && (above < 14 || Math.abs(below - y) <= Math.abs(above - y)) ? below : above;
+      }
       g.fillStyle(C[0]); g.fillRect(x - 4, y - 1, 9, 9); g.fillRect(x - 1, y - 4, 3, 15);
       g.fillStyle(C[col]); g.fillRect(x - 3, y, 7, 7); g.fillRect(x - 1, y - 3, 3, 13);
       g.fillStyle(C[6]); g.fillRect(x - 1, y + 1, 2, 2);
+      return { x, y };
     } else {
       const cx = W / 2, cy = H / 2, dx = sx - cx, dy = sy - cy;
       const k = Math.min((W / 2 - 14) / Math.abs(dx || 1e-6), (H / 2 - 14) / Math.abs(dy || 1e-6));
@@ -362,24 +380,26 @@ export default class HudScene extends Phaser.Scene {
     g.clear();
     if (!d) { this.dMore.setVisible(false); this.dQ.setText(''); this.dKeys.setText(''); this.dArrows.forEach((a) => a.setVisible(false)); return; }
     d.age++;
-    const VIS = 5;                                          // choice lines shown at once (the window scrolls past that)
-    let h = 52, lines = 0;
+    const big = largeText(), RH = LH();
+    const VIS = big ? 3 : 5;                                // choice lines shown at once (the window scrolls past that)
+    let h = big ? 56 : 52, lines = 0;
     if (d.choices) {
       const all = d.rows.flat().length;
       lines = Math.min(VIS, all);
-      h = 16 + (d.q ? 10 : 0) + lines * 9;
+      h = 16 + (d.q ? 10 : 0) + lines * RH;
     }
     const top = H - 6 - h;
     g.fillStyle(C[0]); g.fillRect(6, top, W - 12, h);
     g.fillStyle(C[3]); g.fillRect(7, top + 1, W - 14, h - 2);
     g.fillStyle(C[1]); g.fillRect(8, top + 2, W - 16, h - 4);
+    const nh = big ? 18 : 12;                               // the name tab (taller for the big font)
     if (d.name) {
-      const w = textW(d.name) + 10;
-      g.fillStyle(C[0]); g.fillRect(10, top - 8, w, 12);
-      g.fillStyle(C[3]); g.fillRect(11, top - 7, w - 2, 10);
-      g.fillStyle(C[2]); g.fillRect(12, top - 6, w - 4, 8);
+      const w = (big ? d.name.length * BIG_W : textW(d.name)) + 10;
+      g.fillStyle(C[0]); g.fillRect(10, top + 4 - nh, w, nh);
+      g.fillStyle(C[3]); g.fillRect(11, top + 5 - nh, w - 2, nh - 2);
+      g.fillStyle(C[2]); g.fillRect(12, top + 6 - nh, w - 4, nh - 4);
     }
-    this.dName.setText(d.name || '').setPosition(15, top - 5);
+    this.dName.setText(d.name || '').setFont(fk(13), FS()).setPosition(15, top + 7 - nh);
     if (d.choices) {
       this.dBody.setText('');
       this.dMore.setVisible(false);
@@ -396,11 +416,11 @@ export default class HudScene extends Phaser.Scene {
       this.dChoice.forEach((c, k) => {
         const f = flat[d.top + k];
         if (!f || k >= VIS) { c.setText(''); return; }
-        c.setText(f.text).setFont(f.i === d.sel ? 'f13' : 'f6').setPosition(14, y0 + k * 9);
-        this.choiceRows.push({ y: y0 + k * 9, i: f.i });
+        c.setText(f.text).setFont(fk(f.i === d.sel ? 13 : 6), FS()).setPosition(14, y0 + k * RH);
+        this.choiceRows.push({ y: y0 + k * RH, i: f.i, h: RH });
       });
       this.dArrows[0].setVisible(d.top > 0).setPosition(W - 20, y0);
-      this.dArrows[1].setVisible(d.top + VIS < flat.length).setPosition(W - 20, y0 + (VIS - 1) * 9);
+      this.dArrows[1].setVisible(d.top + VIS < flat.length).setPosition(W - 20, y0 + (VIS - 1) * RH + (big ? 8 : 0));
       this.dKeys.setText('');
       if (d.age < 3) return;
       if (keys.repeat('down')) { d.sel = (d.sel + 1) % d.choices.length; sfx.play('move'); }
@@ -433,7 +453,7 @@ export default class HudScene extends Phaser.Scene {
         else { const r = d.res; this.dlg = null; this.dMore.setVisible(false); this.dKeys.setText(''); r(); }
       }
     }
-    this.dBody.setText(page.slice(0, d.n)).setPosition(15, top + 6);
+    this.dBody.setText(page.slice(0, d.n)).setFont(fk(6), FS()).setPosition(15, top + 6);
     if (d.n < page.length) this.dMore.setVisible(false);
   }
 
@@ -441,17 +461,24 @@ export default class HudScene extends Phaser.Scene {
   // Spoken lines: a name and a sentence over the bottom of the screen for a few seconds.
   updateSub(dt) {
     const s = this.sub;
-    if (!s || S.hp <= 0 || this.intro) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }   // a line waits for the boss card (VX-13)
+    this.subRect = null;
+    // a line waits for the boss card (VX-13), and for a conversation box to close (it would print over the box)
+    if (!s || S.hp <= 0 || this.intro || this.dlg) { this.subTxt.setVisible(false); this.subWho.setVisible(false); return; }
     s.t += dt;
-    const lines = wrap(s.text, 52);
-    this.subTxt.setVisible(true).setText(lines); this.subWho.setVisible(true).setText(s.who).setFont(fontKey(s.col));
-    const h = lines.split('\n').length * 9;
+    const big = largeText(), lines = wrap(s.text, big ? TUNE.hud.bigChars - 1 : 52);
+    this.subTxt.setVisible(true).setText(lines).setFont(fk(6), FS()); this.subWho.setVisible(true).setText(s.who).setFont(fk(s.col), FS());
+    const h = lines.split('\n').length * LH();
     // above the boss bar and above the newest toasts, so the three never print over each other
-    const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? H - 36 - (this.hintDock || 0) - (this.toasts.length - 1) * 9 - 4 : H, this.hintDock ? (this.bossOn ? H - 26 : H - 22) - this.hintDock : H);
-    this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = floor - 10 - h;
+    const floor = Math.min(this.bossOn ? H - 30 : H - 24, this.toasts.length ? (this.toastTop ?? H - 36) - 4 : H, this.hintDock ? (this.bossOn ? H - 26 : H - 22) - this.hintDock : H);
+    this.subWho.x = Math.round((W - this.subWho.width) / 2); this.subWho.y = floor - (big ? 19 : 10) - h;
     this.subTxt.x = Math.round((W - this.subTxt.width) / 2); this.subTxt.y = floor - h;
     const a = s.t < 0.3 ? s.t / 0.3 : s.t > 3.4 ? Math.max(0, (3.8 - s.t) / 0.4) : 1;
     this.subTxt.setAlpha(a); this.subWho.setAlpha(a);
+    if (big) {           // LARGE TEXT: a dark plate behind the line, as the hints and toasts have (A1)
+      const pw = Math.max(this.subTxt.width, this.subWho.width) + 8;
+      this.introG.fillStyle(C[0], 0.6 * a); this.introG.fillRect(Math.round((W - pw) / 2), this.subWho.y - 2, pw, floor - this.subWho.y + 2);
+      this.subRect = { x: Math.round((W - pw) / 2), y: this.subWho.y - 2, w: pw, h: floor - this.subWho.y + 2 };
+    }
     if (s.t > 3.8) this.sub = null;
   }
 
@@ -619,7 +646,7 @@ export default class HudScene extends Phaser.Scene {
     if (!this.slotKeys) this.slotKeys = [0, 1, 2, 3, 4].map(() => txt(this, 0, 0, '', 13));
     [[4, 'KeyL'], [25, 'KeyR'], ...this.potIcons.map((p, i) => [p.x + 1, 'Digit' + (i + 1)])].forEach(([x, code], i) => {
       const t = this.slotKeys[i];
-      t.setText(fit(prompt(code), 3)).setVisible(!dead); t.x = x; t.y = H - 20;
+      t.setText(fit(tinyPad(prompt(code)), 3)).setVisible(!dead); t.x = x; t.y = H - 20;
       if (t.visible) { g.fillStyle(C[0], 0.8); g.fillRect(x - 1, H - 21, t.width + 2, 8); }
     });
 
@@ -629,13 +656,21 @@ export default class HudScene extends Phaser.Scene {
       ts.life -= dt;
       if (ts.life <= 0) { ts.t.destroy(); this.toasts.splice(i, 1); }
     }
-    this.toasts.forEach((ts, i) => {
+    // newest at the bottom; a LARGE TEXT toast can take two lines, so each one is as tall as its text (A1)
+    let tBase = H - 27 - (this.hintDock || 0);
+    for (let i = this.toasts.length - 1; i >= 0; i--) {
+      const ts = this.toasts[i];
       ts.t.setVisible(!dead);
-      if (dead) return;
-      ts.t.y = H - 36 - (this.hintDock || 0) - (this.toasts.length - 1 - i) * 9;
+      if (dead) continue;
+      const th = String(ts.t._raw).split('\n').length * LH();
+      ts.t.y = tBase - th; tBase = ts.t.y;
+      // LARGE TEXT: a big hint can reach down to the toasts; an older toast that would run into it waits off screen
+      const hr = this.hintRect;
+      if (hr && largeText() && ts.t.y < hr.y + hr.h + 1 && ts.t.y + th > hr.y && ts.t.width + 6 > hr.x) { ts.t.setVisible(false); continue; }
       ts.t.setAlpha(Math.min(1, ts.life * 2.5));
-      g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, 9);
-    });
+      g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, th);
+    }
+    this.toastTop = tBase;
     if (this.area) {
       if (!this.bannerObj) this.areaT -= dt;          // waits while a level-up banner holds the middle of the screen
       this.area.setVisible(!this.bannerObj && !dead);
@@ -699,12 +734,15 @@ export default class HudScene extends Phaser.Scene {
       const fight = this.fightNow;
       const hy = fight ? (this.bossOn ? H - 26 : H - 22) - this.hintH : this.bannerObj ? 88 : Math.max(statBottom + 3, this.trackBottom + 2, 46);
       this.hintDock = fight ? this.hintH + 2 : 0;
-      const show = !dead && !this.lock && !this.intro;
+      const sr = this.subRect, under = !!sr && hy < sr.y + sr.h && hy + this.hintH > sr.y;   // LARGE TEXT: a spoken line goes first
+      const show = !dead && !this.lock && !this.intro && !under;
+      if (under) this.hintT += dt;                 // and the hint waits for it
       this.hint.y = hy + 2; this.hint.setVisible(show);
       if (show) { g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, hy, this.hint.width + 8, this.hintH); }
+      this.hintRect = show ? { x: this.hint.x - 4, y: hy, w: this.hint.width + 8, h: this.hintH } : null;
       this.hint.setAlpha(Math.min(1, this.hintT));
-      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; this.hintUrgent = false; this.hintDock = 0; const nx = this.hintQ.shift(); if (nx) this.showHint(nx.text, nx.urgent); }
-    } else this.hintDock = 0;
+      if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; this.hintUrgent = false; this.hintDock = 0; this.hintRect = null; const nx = this.hintQ.shift(); if (nx) this.showHint(nx.text, nx.urgent); }
+    } else { this.hintDock = 0; this.hintRect = null; }
     // the "saved" mark
     if (this.savedT > 0) {
       this.savedT -= dt;

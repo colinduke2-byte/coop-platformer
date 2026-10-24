@@ -43,19 +43,19 @@ const shortPad = (n) => (n || '-').replace('R-STICK ', 'RS ').replace('D-PAD ', 
 const padControls = () => [['L-STICK', 'MOVE'], ...PAD_CONTROLS.map(([codes, what]) => [codes.map((c) => shortPad(padLabel(c))).join('/'), what])];
 const DIFFS = ['easy', 'normal', 'hard'];
 // One line about each row, shown in the help bar while it is selected.
-const HINTS = {
-  'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK? MOVES YOU TO THE NEAREST OPEN SPOT', 'SAVE GAME': 'SAVE TO THIS SLOT. FIRES AND BEDS SAVE TOO',
-  'LOAD GAME': 'RELOAD THIS SLOT. UNSAVED PROGRESS IS LOST', 'SAVES & BUG REPORT': 'EXPORT OR IMPORT SAVES, COPY A BUG REPORT',
+export const HINTS = {
+  'RESUME': 'BACK TO THE GAME', 'UNSTUCK': 'STUCK? MOVES YOU TO AN OPEN SPOT NEARBY', 'SAVE GAME': 'SAVE HERE. FIRES AND BEDS SAVE TOO',
+  'LOAD GAME': 'LOAD THIS SLOT. UNSAVED PLAY IS LOST', 'SAVES & BUG REPORT': 'EXPORT, IMPORT SAVES, COPY A BUG REPORT',
   'VOLUME': 'MASTER VOLUME', 'MUSIC': 'MUSIC ON OR OFF', 'MUSIC LVL': 'MUSIC LOUDNESS', 'SFX LVL': 'EFFECTS LOUDNESS', 'AMBIENT': 'WIND, CRYPT AND TOWN SOUNDS', 'HEARTBEAT': 'A HEARTBEAT WHEN HEALTH RUNS LOW',
   'FULLSCREEN': 'FILL THE SCREEN (ALSO F11)', 'SLOT': 'THREE SAVE SLOTS', 'DIFFICULTY': 'CHANGES ENEMIES, PRICES AND DROPS',
   'SCREEN SHAKE': 'OFF, LOW OR FULL', 'FLASHES': 'SCREEN FLASHES AND THE LOW-HEALTH PULSE', 'PIXEL SCALE': 'INTEGER IS CRISP. FIT FILLS THE WINDOW',
   'MOUSE': 'AIM AND ATTACK WITH THE MOUSE', 'SNEAK MODE': 'HOLD THE SNEAK KEY, OR TOGGLE IT', 'HOLD TO CHAIN': 'HOLD SWORD TO KEEP THE COMBO GOING',
-  'LARGE UI': 'BIGGER HUD BARS, NUMBERS AND TARGET BAR', 'ROTATE VIEW': 'PHONE HELD UPRIGHT: TURN THE PICTURE',
-  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'PAD LAYOUT': 'MODERN: LB BLOCK, RB HEAVY. CLASSIC: L3, STICK', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES', 'DANGER NAMES': 'NAME A FOE IN ITS DANGER COLOUR WHEN IT SEES YOU',
+  'LARGE UI': 'BIGGER HUD BARS, NUMBERS AND TARGET BAR', 'LARGE TEXT': 'TIPS, NEWS, TALK AND HELP TWICE AS BIG', 'ROTATE VIEW': 'PHONE HELD UPRIGHT: TURN THE PICTURE',
+  'COLOUR MODE': 'COLOUR-BLIND FRIENDLY PALETTES', 'HIT STOP': 'THE TINY PAUSE WHEN A BLOW LANDS', 'PAD LAYOUT': 'BLOCK ON LB (MODERN) OR L3 (CLASSIC)', 'DAMAGE NUMBERS': 'SHOW DAMAGE ABOVE ENEMIES', 'DANGER NAMES': "SHOW A FOE'S NAME IN ITS DANGER COLOUR",
   'DURABILITY': 'GEAR WEARS OUT. ALWAYS ON IN HARD', 'CLOAK': 'CLOAKS COME FROM TROPHIES',
   'CONTROLS': 'REBIND EVERY KEY', 'CONTROLLER': 'REBIND THE GAMEPAD, SEE WHAT IT SENDS', 'QUIT TO TITLE': 'SAVES, THEN GOES BACK TO THE TITLE',
-  'REDUCE MOTION': 'STILL MARKERS, NO BLINKING, LESS SNOW', 'HIGH CONTRAST': 'BRIGHTER TEXT ON THE DARK PANELS', 'BAR NUMBERS': 'NUMBERS ON THE HEALTH, MAGIC, STAMINA BARS',
-  'TEXT SPEED': 'HOW FAST DIALOGUE TYPES OUT', 'FRAME RATE': 'LOWER SAVES BATTERY ON LAPTOPS AND PHONES', 'STICK DEADZONE': 'HOW FAR A STICK MOVES BEFORE IT COUNTS',
+  'REDUCE MOTION': 'STILL MARKERS, NO BLINKING, LESS SNOW', 'HIGH CONTRAST': 'BRIGHTER TEXT ON THE DARK PANELS', 'BAR NUMBERS': 'NUMBERS ON THE HP, MP AND SP BARS',
+  'TEXT SPEED': 'HOW FAST DIALOGUE TYPES OUT', 'FRAME RATE': 'LOWER SAVES BATTERY ON LAPTOPS, PHONES', 'STICK DEADZONE': 'HOW FAR A STICK MOVES BEFORE IT COUNTS',
 };
 const SHAKES = [0, 0.5, 1];
 
@@ -63,7 +63,7 @@ export function systemTab(m) {
   // The list is long, so it is grouped into pages, in this order. Q jumps to the first row of the next page.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
     ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'HEARTBEAT']],
-    ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DANGER NAMES', 'CLOAK']],
+    ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'LARGE TEXT', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DANGER NAMES', 'CLOAK']],
     ['INPUT', ['MOUSE', 'SNEAK MODE', 'HOLD TO CHAIN', 'STICK DEADZONE', 'PAD LAYOUT', 'CONTROLS', 'CONTROLLER']]];
   const rows = PAGES.flatMap(([, l]) => l).filter((r) => !(S.quick || S.daily) || !['SAVE GAME', 'LOAD GAME', 'SLOT'].includes(r));   // no saving inside Arena or a Daily run
   let armed = null;           // 'LOAD GAME' / 'QUIT TO TITLE' wait for a second press
@@ -145,6 +145,7 @@ export function systemTab(m) {
       case 'HIGH CONTRAST': toggle('highContrast'); setContrast(settings.highContrast); bus.emit('uiscale'); break;
       case 'BAR NUMBERS': toggle('hudNumbers'); break;
       case 'LARGE UI': toggle('largeUi'); bus.emit('uiscale'); break;
+      case 'LARGE TEXT': toggle('largeText'); bus.emit('uiscale'); break;
       case 'ROTATE VIEW': settings.autoRotate = settings.autoRotate === false; saveSettings(); m.dirty = true; sfx.play('select'); break;
       case 'CONTROLLER': mode = 'pad'; pc.cursor = 0; pc.scroll = 0; m.dirty = true; sfx.play('select'); break;
       case 'CONTROLS': mode = 'controls'; ctrl.cursor = 0; ctrl.scroll = 0; m.dirty = true; sfx.play('select'); break;
@@ -315,6 +316,7 @@ export function systemTab(m) {
         else if (r === 'COLOUR MODE') { v = settings.cvd.toUpperCase(); vc = settings.cvd === 'off' ? 4 : 8; }
         else if (r === 'ROTATE VIEW') { v = settings.autoRotate === false ? 'OFF' : 'AUTO'; vc = settings.autoRotate === false ? 4 : 8; }
         else if (r === 'LARGE UI') { v = settings.largeUi ? 'ON' : 'OFF'; vc = settings.largeUi ? 8 : 4; }
+        else if (r === 'LARGE TEXT') { v = settings.largeText ? 'ON' : 'OFF'; vc = settings.largeText ? 8 : 4; }
         else if (r === 'REDUCE MOTION') { v = settings.reduceMotion ? 'ON' : 'OFF'; vc = settings.reduceMotion ? 8 : 4; }
         else if (r === 'HEARTBEAT') { v = settings.heartbeat !== false ? 'ON' : 'OFF'; vc = settings.heartbeat !== false ? 4 : 8; }
         else if (r === 'HIGH CONTRAST') { v = settings.highContrast ? 'ON' : 'OFF'; vc = settings.highContrast ? 8 : 4; }

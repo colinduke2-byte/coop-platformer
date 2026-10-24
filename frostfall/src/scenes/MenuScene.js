@@ -3,7 +3,7 @@ import { burden, itemWeight } from '../systems/burden.js';
 import { TUNE } from '../data/tuning.js';
 import { padHint } from '../systems/access.js';
 import { W, H, C, BINDINGS } from '../config.js';
-import { txt, wrap, textW, fit } from '../art/font.js';
+import { txt, wrap, textW, fit, bigKey, largeText, BIG_W } from '../art/font.js';
 import { overlayOpen } from '../ui/overlay.js';
 import { settings } from '../systems/settings.js';
 import { keys } from '../systems/keys.js';
@@ -26,6 +26,7 @@ import { readTome } from '../systems/tomes.js';
 import { drinkElixir } from '../systems/elixir.js';
 import { readMap } from '../systems/treasure.js';
 import { readNote } from '../systems/notes.js';
+import { socketCount, socketed } from '../systems/sockets.js';
 
 const TYPE_ORDER = ['weapon', 'weapon2h', 'shield', 'bow', 'helmet', 'armor', 'charm', 'potion', 'elixir', 'food', 'tome', 'ammo', 'ingredient', 'misc', 'quest'];
 const ROWS = 6;
@@ -42,6 +43,31 @@ function navHelp(h, special) {
   if (!esc) h += !tab && h.length + 20 <= 51 ? '  A/D TAB  ESC CLOSE' : '  ESC CLOSE';
   else if (!tab && h.length + 9 <= 51) h = h.replace(/(\s+ESC\b)/, '  A/D TAB$1');
   return h;
+}
+
+// NP18: a help line too long for the bottom row closes its gaps, then drops the sort name, then the hints just before the
+// last (so "ESC CLOSE" always stays), before anything is cut
+export function squeezeHelp(h, max = 51) {
+  if (h.length <= max) return h;
+  let segs = h.split(/\s{2,}/).filter(Boolean);
+  const join = () => segs.join(' ');
+  if (join().length > max) segs = segs.map((x) => x.replace(/^(\S+ SORT) \S+$/, '$1'));
+  while (join().length > max && segs.length > 2) segs.splice(segs.length - 2, 1);
+  return join();
+}
+
+// A1: with LARGE TEXT the help line is drawn twice as big; what does not fit on one line is split into pages that take
+// turns (whole hints, never cut words).
+const BIG_HELP = 23;
+export function helpPages(h) {
+  const segs = String(h).split(/\s{2,}/).filter(Boolean).map((seg) => (seg === 'ESC' ? 'ESC CLOSE' : seg)).flatMap((seg) => (seg.length > BIG_HELP ? wrap(seg, BIG_HELP).split('\n') : [seg]));
+  const pages = [];
+  for (const seg of segs) {
+    const last = pages[pages.length - 1];
+    if (last != null && (last + '  ' + seg).length <= BIG_HELP) pages[pages.length - 1] = last + '  ' + seg;
+    else pages.push(seg);
+  }
+  return pages.length ? pages : [''];
 }
 
 export default class MenuScene extends Phaser.Scene {
@@ -75,7 +101,20 @@ export default class MenuScene extends Phaser.Scene {
     this.mouse = { x: -1, y: -1 };
     this.input.on('pointermove', (p) => this.onMove(p));
     this.input.on('pointerdown', (p) => this.onClick(p));
+    this.helpG = this.add.graphics().setDepth(4);
+    this.helpBig = txt(this, 8, H - 17, '', 4).setDepth(5).setVisible(false);       // A1: the big help line (LARGE TEXT)
+    this.helpPg = txt(this, 0, H - 12, '', 3).setDepth(5).setVisible(false);
+    this.helpList = null;
     this.events.once('shutdown', release);
+  }
+
+  // A1: the big help line shows one page at a time and turns the page every few seconds
+  updateBigHelp() {
+    const L = this.helpList;
+    if (!L) { this.helpBig.setVisible(false); this.helpPg.setVisible(false); return; }
+    const i = Math.floor(this.time.now / 1000 / TUNE.hud.bigHelpPage) % L.length;
+    this.helpBig.setVisible(true).setFont(bigKey(this.helpBigCol), BIG_W).setText(L[i]);
+    this.helpPg.setVisible(L.length > 1).setText(`${i + 1}/${L.length}`); this.helpPg.x = W - 8 - this.helpPg.width;
   }
 
   // ------------------------------------------------------------- mouse
@@ -123,6 +162,7 @@ export default class MenuScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- input
   update() {
+    this.updateBigHelp();
     if (this.warm > 0) { this.warm--; return; }
     if (overlayOpen()) return;                    // an HTML panel (save tools, bug report) has the keys
     if (this.tabs[this.tab].busy?.()) { this.tabs[this.tab].input(); if (this.dirty) { this.dirty = false; this.draw(); } return; }
@@ -208,7 +248,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   // ----------------------------------------------------------------- draw
-  clear() { this.dyn.removeAll(true); this.bg.clear(); }
+  clear() { this.dyn.removeAll(true); this.bg.clear(); this.helpG?.clear(); }
   T(x, y, s, col = 6) { const t = txt(this, x, y, s, col); this.dyn.add(t); return t; }
   // A text box that scrolls when its text is longer than it is tall: G (BACK on a pad) pages through, arrows show
   // there is more. Each tab keeps one pane; its scroll resets when the selection changes.
@@ -245,8 +285,16 @@ export default class MenuScene extends Phaser.Scene {
     g.fillStyle(C[3]); g.fillRect(4, 18, W - 8, 1);
     this.help = null; this.helpCol = null; this.paneMore = 0;
     this.tabs[this.tab].render();
-    const help = padHint(navHelp(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', !!this.helpCol), 51);
-    this.T(8, H - 12, fit(help, 51), this.helpCol || (settings.highContrast ? 6 : 4));
+    const big = largeText(), hcol = this.helpCol || (settings.highContrast ? 6 : 4);
+    const help = padHint(navHelp(this.help || this.tabs[this.tab].help || 'A/D TAB  W/S MOVE  E SELECT  ESC CLOSE', !!this.helpCol), big ? Infinity : 51);
+    if (big) {
+      // a dark strip over the bottom edge of the panels holds the big line
+      const hg = this.helpG; hg.fillStyle(C[0]); hg.fillRect(4, H - 20, W - 8, 18); hg.fillStyle(C[3]); hg.fillRect(4, H - 20, W - 8, 1);
+      this.helpList = helpPages(help); this.helpBigCol = hcol;
+    } else {
+      this.helpList = null;
+      this.T(8, H - 12, fit(squeezeHelp(help), 51), hcol);
+    }
   }
 
   renderItems() {
@@ -339,6 +387,8 @@ export default class MenuScene extends Phaser.Scene {
       this.T(rx + 6, 123, fit(it.name, 24), rarityCol(id) ?? 13);
       let line = it.gen ? [it.rarity.toUpperCase(), ...(it.affixLines || [])].join('. ') + '.' : it.desc;
       if (SLOT_OF[it.type]) line = compareText(id) + line;          // PR-21: the full comparison with what you wear there
+      // NP16: how many sockets, and until the first gem is ever set, what a socket is and where gems go in
+      { const n = socketCount(id); if (n) { const used = Object.values(S.sockets || {}).some((a) => a?.some?.(Boolean)); line = `SOCKETS ${socketed(id).filter(Boolean).length}/${n}${used ? '' : ': A SET GEM ADDS A BONUS WHILE WORN. TAMSIN SETS THEM IN EMBERHOLD'}. ` + line; } }
       if (S.enchants && S.enchants[id]) line = `${S.enchants[id].type.toUpperCase()} ENCHANT +${S.enchants[id].power}. ` + line;
       { const w = itemWeight(id); if (w >= 1) line = `WT ${Math.round(w * 10) / 10}. ` + line; }      // what it adds to your load
       const where = Object.entries(S.equip).find(([, v]) => v === id);
@@ -366,6 +416,7 @@ export default class MenuScene extends Phaser.Scene {
       const nm = nextMastery(k);                 // PR-20: from level 10 the line shows the next mastery reward
       this.T(14, y + 15, fit(s.lvl < 10 ? d.perk : nm ? `MASTERY AT ${nm.lvl}: ${nm.text}` : 'MASTERED: ' + MASTERY[k].map((x) => x.text).reverse().join(', '), 49), s.lvl < 10 ? 4 : 13);
     });
-    this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
+    if (largeText()) this.help = 'SKILLS GROW AS YOU USE THEM  A/D TAB  ESC CLOSE';      // the big help strip covers the line below
+    else this.T(8, H - 22, 'SKILLS IMPROVE THE MORE YOU USE THEM.', 5);
   }
 }

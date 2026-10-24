@@ -369,6 +369,7 @@ SCRIPTS.brannoch = async function brannoch() {
 export async function socketMenu(who) {
   const slots = ['weapon', 'offhand', 'bow', 'armor'].filter((sl) => S.equip[sl] && (socketCount(S.equip[sl]) > 0 || runeSlot(S.equip[sl])));
   if (!slots.length) { await say(who, 'Nothing you carry has a socket worth the name. Wear something with some steel in it.'); return; }
+  bus.emit('tip', 'socket');                                       // NP16: the first visit explains sockets (bus 'tip', features/hud_tips.js)
   for (;;) {
     const labels = slots.map((sl) => { const id = S.equip[sl]; return `${ITEMS[id].name} (${socketed(id).filter(Boolean).length}/${socketCount(id)}${runeSlot(id) ? (runeOf(id) ? ' R' : ' r') : ''})`; });
     const i = await pick(labels, 'Done');

@@ -136,7 +136,7 @@ export default class ShopScene extends Phaser.Scene {
     rows.slice(this.scroll, this.scroll + ROWS).forEach((r, k) => {
       const i = this.scroll + k, y = TOP + k * RH, sel = i === this.cursor;
       if (sel) { g.fillStyle(C[3]); g.fillRect(LX, y, LW, RH - 1); g.fillStyle(C[13]); g.fillRect(LX, y, 2, RH - 1); }
-      if (r.id) this.I(LX + 4, y, iconKey(r.id), 1, r.ok ? 1 : 0.35);
+      if (r.id && this.textures.exists(iconKey(r.id))) this.I(LX + 4, y, iconKey(r.id), 1, r.ok ? 1 : 0.35);     // a placeholder row ('none') has no icon
       const tagW = r.tag != null ? textW(String(r.tag)) + 6 : 0;
       this.T(LX + 24, y + 5, fit(r.name, Math.floor((LW - 28 - tagW) / 6)), r.ok ? (sel ? 6 : 5) : 4);
       if (r.tag != null) this.T(LX + LW - 4 - textW(String(r.tag)), y + 5, String(r.tag), r.tagCol ?? (r.ok ? 13 : 11));
@@ -149,14 +149,17 @@ export default class ShopScene extends Phaser.Scene {
     panel(g, 186, 22, W - 192, 8 + ROWS * RH, 2);
     const r = rows[this.cursor];
     if (r) {
-      if (r.id) { g.fillStyle(C[0]); g.fillRect(192, 28, 36, 36); g.fillStyle(C[3]); g.fillRect(193, 29, 34, 34); this.I(196, 32, iconKey(r.id), 1.6, r.ok ? 1 : 0.4); }
-      // the name gets the full width under the icon (two lines); the short status sits beside the icon
-      if (r.sub) this.T(234, 30, wrap(r.sub, 13).split('\n').slice(0, 3).join('\n'), r.subCol ?? 4);
+      const icon = r.id && this.textures.exists(iconKey(r.id));
+      if (icon) { g.fillStyle(C[0]); g.fillRect(192, 28, 36, 36); g.fillStyle(C[3]); g.fillRect(193, 29, 34, 34); this.I(196, 32, iconKey(r.id), 1.6, r.ok ? 1 : 0.4); }
+      // the name gets the full width under the icon (two lines); the short status sits beside the icon (under the name without one)
+      const subL = r.sub ? wrap(r.sub, icon ? 13 : 19).split('\n').slice(0, 3) : [];
+      if (icon && subL.length) this.T(234, 30, subL.join('\n'), r.subCol ?? 4);
       const nm = wrap(r.name, 19).split('\n').slice(0, 2);
       // the description gives way to the stat lines, and nothing is drawn past the bottom of the pane
       const bottom = 22 + 8 + ROWS * RH - 9, stat = (r.lines || []).flatMap(([text, col]) => wrap(text, 19).split('\n').map((ln) => [ln, col]));
-      let y = r.id ? 68 : 30;
+      let y = icon ? 68 : 30;
       this.T(192, y, nm.join('\n'), 6); y += nm.length * 9 + 2;
+      if (!icon && subL.length) { this.T(192, y, subL.join('\n'), r.subCol ?? 4); y += subL.length * 9 + 2; }
       const desc = r.desc || (r.id && ITEMS[r.id]?.desc) || '';
       const room = Math.max(1, Math.min(4, Math.floor((bottom - y - 3 - stat.length * 9) / 9) + 1));
       for (const ln of wrap(desc, 19).split('\n').slice(0, room)) { this.T(192, y, ln, 5); y += 9; }

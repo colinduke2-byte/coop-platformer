@@ -17,6 +17,13 @@ import { TIPS, tipText, tipGroup, GROUP_ORDER, TIP_TITLE, controlsCard } from '.
 const DANGER_TEXT = 'NAME COLOURS SHOW HOW HARD A FOE IS FOR YOU NOW: GREEN EASY, WHITE FAIR, YELLOW TOUGH, ORANGE DEADLY, RED HOPELESS.';
 
 // Lore tab: books you have read, then a bestiary that fills in as you meet and defeat creatures.
+// The controls card's hints packed into lines of the pane's width, so a key never parts from its action ("C" / "SNEAK")
+const packHints = (card, n) => card.split('\n').map((l) => l.split(/\s{2,}/).reduce((out, seg) => {
+  const last = out[out.length - 1];
+  if (last != null && (last + '  ' + seg).length <= n) out[out.length - 1] = last + '  ' + seg; else out.push(seg);
+  return out;
+}, []).join('\n')).join('\n\n');
+
 export function loreTab(m) {
   const entries = () => {
     const out = [];
@@ -29,7 +36,7 @@ export function loreTab(m) {
       out.push({ k: 'beast', id, title: b.name, text });
     }
     // the Field Guide (NP21): the controls, the danger colours and every tip you have seen, grouped, to read again
-    out.push({ k: 'guide', id: 'controls', title: 'CONTROLS', group: 'BASICS', text: controlsCard().replace(/\n/g, '\n\n') });
+    out.push({ k: 'guide', id: 'controls', title: 'CONTROLS', group: 'BASICS', text: packHints(controlsCard(), Math.floor((W - 144) / 6)) });
     out.push({ k: 'guide', id: 'danger', title: 'DANGER COLOURS', group: 'BASICS', text: DANGER_TEXT });
     const seen = Object.keys(TIPS).filter((id) => S.tips?.[id] && id !== 'danger');
     seen.sort((a, b) => GROUP_ORDER.indexOf(tipGroup(a)) - GROUP_ORDER.indexOf(tipGroup(b)));
