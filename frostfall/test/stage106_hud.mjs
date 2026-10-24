@@ -42,7 +42,7 @@ const dock = await G(() => { const hd = window.__ff.game.scene.getScene('Hud'); 
 check('during a fight the hint sits at the bottom of the screen (VX-05)', dock.y > 120 && dock.dock > 0, JSON.stringify(dock));
 await h.shot('s106_fight_hint');
 // bars only for the target or a foe hit in the last moments
-const bars = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = window.__w; e.hp = Math.round(e.maxHp * 0.6); return true; });
+const bars = await G(() => { const e = window.__w; e.hp = Math.round(e.maxHp * 0.6); return true; });
 await h.frames(2);
 const barT1 = await G(() => window.__w.barT);
 await h.frames(150);

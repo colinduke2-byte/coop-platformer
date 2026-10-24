@@ -307,4 +307,9 @@ TUNE.hud = {
   // VX-05: at most this many floating combat texts at once; an enemy's small HP bar shows for `barHold` s after it is hit
   // (always while it is your lock-on target)
   maxTexts: 12, barHold: 2,
+  // NP5: the sneak tip fires when an unaware foe is this close (px); NP24: foes name themselves in their danger colour
+  // up to this character level (DANGER NAMES: AUTO), for this many seconds
+  sneakTipR: 140, dangerNamesLevel: 5, dangerNameLife: 1.5,
+  storyNudgeRuns: 3,             // NP26: Arena runs before the title points a player with no story save at NEW GAME
+  shopTip: 7,                    // seconds a first-visit tip stays on a crafting service's message line (NP16)
 };

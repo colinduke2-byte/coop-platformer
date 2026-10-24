@@ -28,12 +28,14 @@ import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { BLESSINGS } from '../systems/bless.js';
 import { quickScore } from '../arena/heroes.js';
+import { tip, takeTip } from '../systems/tips.js';
 
 const BARS = [
   { key: 'hp', max: 'maxHp', col: 11, hi: 12, label: 'HP', flash: 'nohp' },
   { key: 'mp', max: 'maxMp', col: 15, hi: 6, label: 'MP', flash: 'nomana' },
   { key: 'sp', max: 'maxSp', col: 8, hi: 5, label: 'SP', flash: 'nostamina' },
 ];
+const SHOP_TIPS = [[/^CAMPFIRE/, 'cook'], [/^ALCHEMY/, 'brew'], [/^FORGE/, 'forge'], [/^ENCHANT/, 'enchant'], [/^REFORGE/, 'reforge'], [/^FLETCHING/, 'fletch'], [/^FURNISH/, 'furnish'], [/^REPAIR/, 'repair']];
 // a cancelled line that nobody awaited must not show up as an unhandled rejection (awaiting it still sees Cancelled)
 const quiet = (p) => { p.catch(() => {}); return p; };
 const POTIONS = [['hp_potion', '1'], ['mp_potion', '2'], ['sp_potion', '3']];
@@ -163,6 +165,11 @@ export default class HudScene extends Phaser.Scene {
     listen(this, 'boss:engaged', this.onBossIntro);
     this.handlers = {};
     for (const b of BARS) { this.handlers[b.flash] = () => { this.flash[b.key] = 0.3; }; listen(this, b.flash, this.handlers[b.flash]); }
+    // NP16: the first visit to a crafting service explains it, once, on that service's own message line
+    const shop = this.scene.get('Shop');
+    const onShop = (sh) => { const hit = SHOP_TIPS.find(([re]) => re.test(sh.cfg?.title || '')); const t = hit && takeTip(hit[1]); if (t) { sh.say(t, 13); sh.msgT = TUNE.hud.shopTip; } };
+    shop?.events.on('create', onShop);
+    this.events.once('shutdown', () => shop?.events.off('create', onShop));
     // bus handlers above go through listen(), which removes them on shutdown by itself (CH13): never bus.on in a scene
     this.events.once('shutdown', () => { if (dialogue.hud === this) dialogue.hud = null; window.removeEventListener('keydown', this.onKey); });
   }
@@ -673,7 +680,8 @@ export default class HudScene extends Phaser.Scene {
     } else this.savedTxt.setVisible(false);
 
     // level-up banner (queue)
-    if (!this.bannerObj && this.banners.length) {
+    // one thing at a time (NP9): a banner waits while a conversation or choice box is open, and pauses if one opens
+    if (!this.bannerObj && this.banners.length && !this.dlg) {
       const b = this.banners.shift();
       const d = b.custom ? { name: b.title, perk: b.line } : SKILL_DEFS[b.skill];
       const c = this.add.container(0, 0);
@@ -685,8 +693,8 @@ export default class HudScene extends Phaser.Scene {
     }
     if (this.bannerObj) {
       const b = this.bannerObj;
-      b.t -= dt;
-      const a = Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
+      if (!this.dlg) b.t -= dt;
+      const a = this.dlg ? 0 : Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
       b.c.setAlpha(dead ? 0 : a);
       g.fillStyle(C[0], 0.7 * a); g.fillRect((W - b.w) / 2, 40, b.w, 44);
       g.fillStyle(C[13], a); g.fillRect((W - b.w) / 2, 40, b.w, 1); g.fillRect((W - b.w) / 2, 83, b.w, 1);
@@ -720,6 +728,7 @@ export default class HudScene extends Phaser.Scene {
       g.fillStyle(C[12]); g.fillRect(tx, 12 + oy, Math.round(tw * frac), 1);
       if (!this.tgtTxt) this.tgtTxt = txt(this, 0, 3, '', 6);
       const dg = tg.isBoss ? 0 : dangerOfEnemy(tg);
+      if (dg && dg !== 2) tip('danger');            // the first foe that is not a fair fight explains the colours (NP6)
       this.tgtTxt.setText(((tg.displayName || tg.cfg.name) + (dg && dg !== 2 ? '  ' + dangerName(dg) : '')).toUpperCase()).setFont(fontKey(dg ? DANGER_COL[dg] : 6)).setVisible(true);
       this.tgtTxt.x = Math.round(tx + (tw - this.tgtTxt.width) / 2); this.tgtTxt.y = 3 + oy;
     } else this.tgtTxt?.setVisible(false);

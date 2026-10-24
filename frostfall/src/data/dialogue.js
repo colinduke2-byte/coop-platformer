@@ -142,7 +142,7 @@ export async function bjorn() {
 
   if (q.status === 'inactive') {
     await say(BJORN, 'Hah. You are the one we dragged out of the snow. You look better than you smell.');
-    await say(BJORN, 'Wolves. Three of them, big as ponies, hunting the north trail. They took my best dog. Kill them for me and I will make it worth your while.');
+    await say(BJORN, 'Wolves. Three of them, big as ponies, hunting the forest trail east of here. They took my best dog. Kill them for me and I will make it worth your while.');
     const c = await choose(['I will hunt them.', 'Any advice?', 'Not now.']);
     if (c === 0) {
       startQuest('wolves');
@@ -237,7 +237,7 @@ export async function mirra() {
   }
   await say(MIRRA, S.flags.ending === 'give' ? 'Business is booming now that people can feel their fingers!' : 'Potions, arrows, and the occasional bargain. What do you need?');
   for (;;) {
-    const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (learn first)', 'Buy back', 'Leave'];
+    const opts = ['Buy', 'Sell', S.flags.alchemy ? 'Brew potions' : 'Brew (bring herbs first)', 'Buy back', 'Leave'];
     const c = await choose(opts);
     if (c === 0) await buyMenu(MIRRA, [...MIRRA_WARES, ...dailyWares('Mirra', 3)]);
     else if (c === 1) await sellMenu(MIRRA);

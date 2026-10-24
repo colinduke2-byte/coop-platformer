@@ -9,6 +9,21 @@ import { randInt } from '../util.js';
 import { txtS, textW } from '../art/font.js';
 import { facingKind } from '../util.js';
 
+// NP8: a villager's name sits on a dark plate, so it reads on snow and pale roofs as well as on dark ground
+function plated(scene, o) {
+  const p = scene.add.rectangle(0, 0, o.width + 4, 9, 0x0b0e1a, 0.6).setOrigin(0);
+  const base = { setPosition: o.setPosition, setDepth: o.setDepth, setVisible: o.setVisible, setAlpha: o.setAlpha, destroy: o.destroy, setText: o.setText };
+  o.plate = p;
+  o.setPosition = (x, y) => { p.setPosition(x - 2, y - 1); return base.setPosition(x, y); };
+  o.setDepth = (d) => { p.setDepth(d - 0.01); return base.setDepth(d); };
+  o.setVisible = (v) => { p.setVisible(v); return base.setVisible(v); };
+  o.setAlpha = (a) => { p.setAlpha(a); return base.setAlpha(a); };
+  o.setText = (t) => { const r = base.setText(t); p.setSize(o.width + 4, 9); return r; };
+  o.destroy = () => { p.destroy(); base.destroy(); };
+  o.setPosition(o.x, o.y);
+  return o;
+}
+
 export default class Npc extends Phaser.GameObjects.Sprite {
   constructor(scene, x, y, id) {
     const def = NPC_DEFS[id];
@@ -21,7 +36,7 @@ export default class Npc extends Phaser.GameObjects.Sprite {
     this.face = { x: 0, y: 1 };
     this.t = Math.random() * 6;
     this.shadow = scene.add.image(x, y + 7, 'shadow');
-    this.nameTxt = txtS(scene, Math.round(x - textW(def.name) / 2), Math.round(y - 20), def.name, 4, 0);
+    this.nameTxt = plated(scene, txtS(scene, Math.round(x - textW(def.name) / 2), Math.round(y - 20), def.name, 6, 0));
     this.setDepth(y + 8); this.shadow.setDepth(y + 6); this.nameTxt.setDepth(99300);
     this.walking = false;
     this.angryT = 0;

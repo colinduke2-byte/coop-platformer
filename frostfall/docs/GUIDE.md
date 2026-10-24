@@ -62,9 +62,9 @@ Skills level **by use** (five of them), so use what you want to improve:
 
 | Skill | Gets better from | Effect per level |
 |---|---|---|
-| One-Handed | swinging a sword | +7% sword damage, cheaper swings |
-| Archery | shooting the bow | +7% arrow damage, faster draw |
-| Destruction | casting attack spells | +7% spell damage, cheaper mana |
+| One-Handed | swinging a sword | +5% sword damage, cheaper swings |
+| Archery | shooting the bow | +5% arrow damage, faster draw |
+| Destruction | casting attack spells | +5% spell damage, cheaper mana |
 | Restoration | healing, wards, blocking | stronger heals and wards |
 | Sneak | sneak attacks, pickpocketing | harder to detect, stronger backstabs |
 
@@ -105,7 +105,7 @@ Three open as the story progresses (see section 6). **The Weeping Fens, the Stor
 | **Saltmarket** | The Frozen Coast's harbour city, two guilds (Tide and Smugglers: they are rivals), a tailor and sea quests. **Seaweed Cove** below ends in **Captain Brinegut**. |
 | **The Stormcrown Highlands** | Windswept heath under a storm that never leaves. **Skarn Hold** is a clan ring with an inn, a smith and a chartmaker; the **Stormspire** ends in the **Storm Giant**. Lightning everywhere; frost works well. |
 
-**Armour classes and carry weight.** Light armour is quick and quiet (+6% speed, harder to spot, cheaper spells) but easy to knock back; heavy armour is slow and loud (-8% speed) but hard to knock back and carries more; helmets add half of their class. Every item has a weight: the pack screen shows `WT carried/capacity` and a weight bar with how much you can still carry (180 to start, more with stamina, heavy armour and the pony). Over the limit you are **Burdened** (slower), far over you are **Overloaded** (much slower, no rolling). Potions, arrows and quest items weigh almost nothing; equipped gear counts half. Sell, stash extras at home, or **drop** them from the pack (V twice; the stack stays on the ground until you leave the area).
+**Armour classes and carry weight.** Light armour is quick and quiet (+6% speed, harder to spot, cheaper spells) but easy to knock back; heavy armour is slow and loud (-8% speed) but hard to knock back and carries more; helmets add half of their class. Every item has a weight: the pack screen shows `WT carried/capacity` and a weight bar with how much you can still carry (180 base, more with stamina, heavy armour and the pony; light armour carries less, so in the starting fur tunic you begin at 170). Over the limit you are **Burdened** (slower), far over you are **Overloaded** (much slower, no rolling). Potions, arrows and quest items weigh almost nothing; equipped gear counts half. Sell, stash extras at home, or **drop** them from the pack (V twice; the stack stays on the ground until you leave the area).
 
 **Upgrades go to +10.** The village smith does +1 to +3, Emberhold's smith to +6, and the Great Anvil (Anvil Court reputation 45) to +10, using iron, ash iron, ember ore and the Heart Shards that region bosses drop.
 

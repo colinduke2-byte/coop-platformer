@@ -9,7 +9,7 @@ export const SKILL_DEFS = {
   archery: { name: 'Archery', short: 'ARC', perk: 'Arrow damage +5%, bow draws 5% faster' },
   destruction: { name: 'Destruction', short: 'DES', perk: 'Spell damage +5%, spells cost 3% less mana' },
   restoration: { name: 'Restoration', short: 'RES', perk: 'Healing +10%, wards absorb 12% more' },
-  sneak: { name: 'Sneak', short: 'SNK', perk: 'Detection range -3%, sneak attacks hit 0.2x harder' },
+  sneak: { name: 'Sneak', short: 'SNK', perk: 'Spotted 3% later, sneak attacks +0.2x damage' },
 };
 // A steep curve: level 5 is ~125 sword hits, level 10 ~900, level 20 several thousand. Mastery is earned.
 export const xpNeeded = (lvl) => Math.round(25 + 12 * Math.pow(lvl, 1.6));
