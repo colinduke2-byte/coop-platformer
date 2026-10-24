@@ -3,6 +3,62 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## The big improvement pass (docs/IMPROVEMENT_PLAN.md, 204 items from an 8-area audit)
+Full lists: `docs/STORY_CHANGES.md` (every changed line), `docs/ECONOMY_CHANGES.md` (every number), `docs/LORE_CANON.md`,
+`docs/BALANCE_TABLE.md` (boss results before/after).
+- **Combat:**
+  - Each weapon lands its blow at its own moment (a hammer later and harder), and each class has its own heavy (U / RB).
+  - Trolls and mini-bosses can't be stun-locked.
+  - Every boss has a signature move, and three-phase bosses now get *harder* in phase 3.
+  - Parry has a lockout and deflects arrows. The perfect dodge slows enemies, not you.
+  - Arrows and spells fly straight at your lock-on target, and lock-on can switch targets.
+  - Every attack gives at least 0.4 s of warning. Hard means faster, more aggressive foes.
+  - A new controller layout (LB block, RB heavy); CLASSIC is in Settings.
+- **Economy and builds:**
+  - Spells scale with your staff and the forge: a late enemy takes about 6-7 Fireballs, not 16.
+  - Perks fork at skill 5 and 8, with a respec at shrines and mastery rewards at 15 and 20.
+  - Upgrades belong to each item. A smith can transfer a temper between items.
+  - No more gold loops, and Legendaries roll their 3 affixes.
+  - Full gear comparison in the pack.
+  - New Game+: bosses grow each cycle, a Mythic rarity, a +12 forge cap, and the Great Anvil can raise an item's rarity.
+- **World and quests:**
+  - Weather belongs to each region: sandstorms, rain, fog and ash, and no more blizzards in the desert.
+  - Fast travel from any fire, or from the map (F).
+  - Quest markers point at the nearest place, and kill and collect steps get markers.
+  - Towns sit near their gates. Every landmark has a secret, and the empty stretches have small finds.
+  - Cleared camps are retaken, and every hub has a bounty board.
+  - Four new kinds of quest: an investigation, a night defence, an escort and a tracking hunt. Plus a treasure trail per region, secret rooms in dungeons, and hub folk who keep hours.
+- **Story:**
+  - One canon. Chapter 1's boss is now Jarl Valdrek the Frostsworn.
+  - Chapter 1 and 2 end with "CHAPTER COMPLETE", and New Game+ waits for the real end.
+  - New quest: The Missing Page.
+  - A Crown of Memory ending explains the Dreamer.
+  - Companions talk through the story, and many continuity fixes.
+  - The shout is now "HROM!". Key names in speech follow your bindings.
+- **First hour:**
+  - The title steers a first-time player to NEW GAME, and tutorial steps appear the moment they matter.
+  - A starter quest, "A Stranger in Hollowfrost", and optional drills with Bjorn.
+  - A Field Guide of tips you can re-read (Lore > Q).
+  - A safe first trip, with no nemesis before level 3.
+  - Danger names show when a foe notices you.
+- **Look:**
+  - Props stand on each region's own ground, so no white squares.
+  - Hits, statuses and boss danger zones look right without WebGL. Status effects show on enemies, and sparks follow the element.
+  - Native art for Jarl Valdrek, Grimfang, the Rime Wyrm, the werewolf and the golems.
+  - Dusk and dawn have colour.
+  - A new title screen, intro pictures, ending tableaux, and region title cards.
+- **Sound:**
+  - Every region has night, dungeon and boss versions of its music. Loops are longer and varied, with melodies in key.
+  - Crossfades, and combat drums that don't flap.
+  - Ambience per region and weather.
+  - Separate sounds for each weapon, crit, spell and enemy family.
+  - A heartbeat at low health, music that ducks during talk, and positional sound.
+- **Under the hood:**
+  - Arena trials and scene state no longer leak between maps.
+  - Shops can't unfreeze conversations.
+  - The save is now version 5, and old saves convert.
+  - Registries let features plug in from their own files. 122 test files run in parallel.
+
 ## Runs better, smoother UI (docs/RUN_AND_UI_IMPROVEMENTS.md)
 - **Never freezes:** if something breaks, the game keeps running. If it keeps breaking, a crash card writes a rescue save and offers to copy a bug report.
 - **Saves:**
