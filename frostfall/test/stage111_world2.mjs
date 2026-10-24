@@ -53,5 +53,21 @@ const wall = await G(async () => {
 check('WQ24: the full survey of the Fens pays a framed chart, and it hangs by the Trophy Wall, which names it',
   chart.item === 1 && chart.paid === 'paid' && wall.charts === 1 && /framed chart beside it: Weeping Fens/.test(wall.said), JSON.stringify({ chart, wall }));
 
+// ---- WQ26: after the Mire Mother, Reedwick's child has something new to say (every other visit)
+await h.open('scene=game&map=reedwick&spawn=entry&seed=8919');
+await wait(1500); await G(stub);
+const after = await G(async () => {
+  const S = window.__ff.S, A = await import('/src/world/aftermath.js');
+  await window.__talk('wick_child'); const before = window.__said.pop();
+  S.flags.mireMotherDead = true;
+  await window.__talk('wick_child'); const one = window.__said.pop();
+  await window.__talk('wick_child'); const two = window.__said.pop();
+  await window.__talk('wick_child'); const three = window.__said.pop();
+  const lines = A.AFTER_BOSS.wick_child[2], regions = new Set(Object.values(A.AFTER_BOSS).map((v) => v[1]));
+  return { newBefore: lines.includes(before), one: lines.indexOf(one), two: lines.includes(two), three: lines.indexOf(three), flags: regions.size };
+});
+check('WQ26: hub people talk about a fallen boss on every other visit (9 regions\' bosses covered)',
+  !after.newBefore && after.one === 0 && !after.two && after.three === 1 && after.flags === 9, JSON.stringify(after));
+
 await h.close();
 console.log(failCount() ? 'STAGE 111 FAILED' : 'STAGE 111 PASSED');
