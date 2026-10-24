@@ -19,3 +19,12 @@ export function nearestOf(list, from) {
   for (const p of list) { const d = Math.hypot(p.x - from.x, p.y - from.y); if (d < bd) { bd = d; best = p; } }
   return best;
 }
+
+// WQ6: a random event (trader, wounded traveller, raid) marks itself here, never on the player's own waypoint. Not saved;
+// cleared on every map load. The HUD and the map draw it in its own colour (EVENT_MARK_COL).
+export const EVENT_MARK_COL = 12;
+let evMark = null;
+onStateReset(() => { evMark = null; });
+export const eventMark = () => evMark;
+export function setEventMark(map, x, y, tag) { evMark = { map, x, y, tag }; }
+export function clearEventMark(tag) { if (!tag || evMark?.tag === tag) evMark = null; }

@@ -18,6 +18,7 @@ import { finishQuest } from '../systems/quests.js';
 import { tip } from '../systems/tips.js';
 import { advanceTime, isFull } from '../systems/moon.js';
 import { hasMod } from '../data/mods.js';
+import { setEventMark, clearEventMark } from './questmarks.js';
 import { fadeOut } from '../systems/fade.js';
 
 export const eventMethods = {
@@ -94,7 +95,7 @@ export const eventMethods = {
     });
     this.traderWares.push({ id: 'hp_potion_g', price: 90 }, { id: 'arrows', price: 12, n: 8, name: 'Arrows x8' });
     this.trader = { npc, life: 200 };
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T), evt: true };
+    setEventMark(this.mapId, Math.floor(p.x / T), Math.floor(p.y / T), 'trader');      // WQ6: its own marker, never the player's waypoint
     bus.emit('toast', 'A TRAVELLING TRADER IS NEARBY', 13); sfx.play('quest');
     this.fx.puff(p.x, p.y, 13, 8, 30, 0.5);
   },
@@ -105,7 +106,7 @@ export const eventMethods = {
     this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
     this.fx.puff(npc.x, npc.y, 13, 8, 30, 0.5);
     npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
-    if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
+    clearEventMark('trader');
   },
   freeSpotNear(minD, maxD) {
     for (let i = 0; i < 160; i++) {

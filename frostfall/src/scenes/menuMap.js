@@ -3,6 +3,7 @@ import { PLACE_COL, placeName } from '../world/discovery.js';
 import { S } from '../systems/state.js';
 import { MAPS } from '../data/maps.js';
 import { TARGETS, trackedId } from '../data/quests.js';
+import { eventMark, EVENT_MARK_COL } from '../world/questmarks.js';
 import { panel } from '../ui/panel.js';
 import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
@@ -213,6 +214,8 @@ export function mapTab(m) {
       if (tg && tg.map === vid) marker(tg, 15);
       const wp = S.flags.waypoint;
       if (wp && wp.map === vid) marker(wp, 8);
+      const em = eventMark();
+      if (em && em.map === vid) marker(em, EVENT_MARK_COL);
       const pxp = ox + Math.floor(p.x / T * sc), pyp = oy + Math.floor((p.y + 3) / T * sc);
       // you: a yellow dot inside a white ring that gently pulses (still with Reduce Motion), always visible
       if (vw.here && inView(pxp - 3, pyp - 3, 8, 8)) {

@@ -5,6 +5,8 @@ import { S, onStateReset } from '../systems/state.js';
 import { bus } from '../systems/bus.js';
 import { sfx, music } from '../audio/sfx.js';
 import { tierIn } from './worldgen.js';
+import { chills } from './weather.js';
+import { setEventMark, clearEventMark } from './questmarks.js';
 import { regionOfMap } from '../data/regions.js';
 import { NPC_DEFS, SCRIPTS } from '../data/dialogue.js';
 import { say, choose } from '../systems/dialogue.js';
@@ -94,7 +96,7 @@ export const livingMethods = {
     this.woundedEvt = { npc, tier, life: 180, done: false };
     // the wolves that hurt him are still near
     for (let i = 0; i < 2; i++) { const q = this.freeSpotNear(30, 60); if (q) this.addEnemy('wolf', p.x + (q.x - this.player.x) * 0.2, p.y + (q.y - this.player.y) * 0.2, { tier, roam: true }); }
-    S.flags.waypoint = { map: this.mapId, x: Math.floor(p.x / T), y: Math.floor(p.y / T), evt: true };
+    setEventMark(this.mapId, Math.floor(p.x / T), Math.floor(p.y / T), 'wounded');
     bus.emit('toast', 'SOMEONE CALLS FOR HELP NEARBY', 13); sfx.play('quest');
   },
   removeWounded() {
@@ -102,7 +104,7 @@ export const livingMethods = {
     const npc = w.npc;
     this.npcs = this.npcs.filter((n) => n !== npc); this.interactables = this.interactables.filter((i) => i !== npc);
     npc.shadow.destroy(); npc.nameTxt.destroy(); npc.body.enable = false; npc.destroy();
-    if (S.flags.waypoint && S.flags.waypoint.map === this.mapId) delete S.flags.waypoint;
+    clearEventMark('wounded');
   },
   spawnGhostMerchant() {
     const p = this.freeSpotNear(70, 120); if (!p) return;
@@ -144,15 +146,14 @@ export const livingMethods = {
     }
     if (!made.length) return false;
     this.raidEvt = { foes: made, poi: best, tier, life: 240 };
-    S.flags.waypoint = { map: this.mapId, x: best.x, y: best.y, evt: true };
+    setEventMark(this.mapId, best.x, best.y, 'raid');
     bus.emit('toast', 'RAIDERS ARE ATTACKING A HAMLET!', 11); sfx.play('alert'); music.stinger();
     return true;
   },
   // Storms bite: in a blizzard or whiteout you slowly chill unless you wear warm armour or stand by a fire.
   stormCold(dt) {
     const w = S.weather;
-    if (w !== 'blizzard' && w !== 'whiteout') { this._cold = 0; return; }
-    if (!this.def.snow && !this.def.outdoors) return;
+    if (!chills(w, this.def.snow)) { this._cold = 0; return; }      // WQ3: only where it snows (no storm chill in the desert)
     this._cold = (this._cold || 0) + dt;
     if (this._cold < (w === 'whiteout' ? 5 : 9)) return;
     this._cold = 0;
@@ -205,8 +206,8 @@ export const livingMethods = {
         this.raidEvt = null; const gold = 60 + 40 * r.tier; S.gold += gold; S.flags.raidsStopped = (S.flags.raidsStopped || 0) + 1;
         this.pickups.push(new Pickup(this, this.player.x, this.player.y - 10, { type: 'item', id: makeGenItem(r.tier, Math.random, r.tier > 1 ? 1 : null) }));
         bus.emit('toast', `RAID STOPPED  +${gold} GOLD`, 13); sfx.play('levelup');
-        if (S.flags.waypoint && S.flags.waypoint.x === r.poi.x) delete S.flags.waypoint;
-      } else if (r.life <= 0) { this.raidEvt = null; for (const e of live) e.despawn?.(); bus.emit('toast', 'THE RAIDERS HAVE MOVED ON', 8); if (S.flags.waypoint && S.flags.waypoint.x === r.poi.x) delete S.flags.waypoint; }
+        clearEventMark('raid');
+      } else if (r.life <= 0) { this.raidEvt = null; for (const e of live) e.despawn?.(); bus.emit('toast', 'THE RAIDERS HAVE MOVED ON', 8); clearEventMark('raid'); }
       else if (live.some((x) => !x.alerted) && Math.hypot(r.poi.x * T - this.player.x, r.poi.y * T - this.player.y) < 150) for (const e of live) e.alert?.(true);
     }
   },

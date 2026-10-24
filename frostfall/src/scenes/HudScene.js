@@ -14,6 +14,7 @@ import { ui } from '../systems/ui.js';
 import { dialogue, Cancelled } from '../systems/dialogue.js';
 import { sfx } from '../audio/sfx.js';
 import { QUESTS, activeQuestIds, TARGETS, trackedId } from '../data/quests.js';
+import { eventMark, EVENT_MARK_COL } from '../world/questmarks.js';
 import { MAPS } from '../data/maps.js';
 import { removeItem, count } from '../systems/inventory.js';
 import { S } from '../systems/state.js';
@@ -606,6 +607,8 @@ export default class HudScene extends Phaser.Scene {
       if (Math.hypot(this.gs.player.x - (wp.x + 0.5) * 16, this.gs.player.y - (wp.y + 0.5) * 16) < 20) { delete S.flags.waypoint; bus.emit('toast', 'WAYPOINT REACHED', 8); }
       else this.markerAt(g, { map: wp.map, x: wp.x, y: wp.y }, 8, dt);
     }
+    const em = eventMark();                       // WQ6: a trader / traveller / raid, in its own colour
+    if (em && em.map === this.gs.mapId && !ui.modal && !this.dlg) this.markerAt(g, em, EVENT_MARK_COL, dt);
     if (this.hint) {
       this.hintT -= dt;
       // under the status row and the quest tracker; below the banner while one is showing
