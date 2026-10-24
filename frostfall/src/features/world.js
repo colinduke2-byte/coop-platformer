@@ -9,6 +9,7 @@ import { Herb, Lore } from '../entities/Props.js';
 import { ART_SKY } from '../world/weather.js';
 import { HAMLET_FOLK } from '../world/hamletfolk.js';
 import { freshPages } from '../world/lorepool.js';
+import '../world/regionquests.js';
 import { onPlaceDiscovered } from '../world/discovery.js';
 import { REGIONS, regionOfMap } from '../data/regions.js';
 import { newMilestones, owed, payOf, markPaid, surveyOf, reached, fullySurveyed } from '../world/survey.js';
