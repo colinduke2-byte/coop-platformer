@@ -74,7 +74,7 @@ await h.sleep(500);
 const sent = await G(() => { const g = window.gs(), S = window.__ff.S; return { f: !!g.follower, flag: S.follower, npc: g.npcs.some((n) => n.id === 'pell') }; });
 check('talking to Pell lets you send him home, and he is back at his post', !sent.f && !sent.flag && sent.npc, JSON.stringify(sent));
 // swap with Ragna
-await G(async () => { const { setCompanion } = await import('/src/systems/companion.js'); window.__set = setCompanion; const S = window.__ff.S; setCompanion('ragna'); });
+await G(async () => { const { setCompanion } = await import('/src/systems/companion.js'); window.__set = setCompanion; setCompanion('ragna'); });
 await h.sleep(400);
 const r1 = await G(() => ({ k: window.gs().follower?.kind }));
 await G(() => window.__set('pell')); await h.sleep(400);

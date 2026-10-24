@@ -30,7 +30,7 @@ const audit = (tag) => G(([tag, W]) => {
   return bad;
 }, [tag, W]);
 const problems = [];
-const tabs = await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.openMenu(0); return true; });
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.openMenu(0); return true; });
 await h.sleep(500);
 const names = await G(() => window.__ff.game.scene.getScene('Menu').tabs.map((t) => t.name));
 for (let i = 0; i < names.length; i++) {

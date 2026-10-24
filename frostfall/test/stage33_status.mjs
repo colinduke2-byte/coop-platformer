@@ -5,7 +5,7 @@ await h.sleep(700);
 const G = (fn, a) => h.ev(fn, a);
 await G(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.__ff.S.flags.introDone = true; });
 await G(() => { const g = window.gs(); g.enemies.getChildren().forEach((e) => e.destroy()); g.pend && (g.pend.length = 0); g.player.setPosition(300, 100); const e = g.addEnemy('bandit', 360, 100); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0, dmg: 0 }; window.__e = e; });
-const st = (s) => G(async (s) => { const m = await import('/src/systems/status.js'); const e = window.__e; return s(m, e); }, null);
+
 
 // ---- enemy statuses
 let r = await G(async () => { const m = await import('/src/systems/status.js'); const e = window.__e; const hp = e.hp; m.applyStatus(e, 'burn', { t: 2, dps: 10 }); return { has: m.hasStatus(e, 'burn'), dot: !!e.dot, hp }; });

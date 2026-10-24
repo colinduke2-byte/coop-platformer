@@ -64,7 +64,7 @@ check('each road home lands on a matching spawn', gates.back.coast === 'coastroa
 
 // ---- caves and boss dungeons
 const delves = await G(async () => {
-  const M = await import('/src/data/maps.js'), St = window.__ff.S, out = [];
+  const M = await import('/src/data/maps.js'), out = [];
   for (const rid of ['ashen', 'coast', 'kingdom']) {
     const b = M.getRegion(rid);
     for (const p of b.pois.filter((q) => q.kind === 'cave')) { const m = M.MAPS[p.id]; const d = m?.build(); out.push({ id: p.id, ok: !!d, back: d?.entities.some((e) => e.t === 'exit' && e.to === ({ ashen: 'ashen', coast: 'coast', kingdom: 'kingdom' })[rid] && e.spawn === p.id), spawn: b.entities.some((e) => e.t === 'spawn' && e.name === p.id), foes: d?.entities.filter((e) => e.t === 'enemy').length }); }

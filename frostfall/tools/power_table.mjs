@@ -1,5 +1,5 @@
 // Prints the power-curve tables used by docs/POWER_CURVE.md.   node tools/power_table.mjs
-import { GEAR, EXPECTED, costFor, playerOf, fightCost, dangerFromCost } from '../src/systems/powercurve.js';
+import { GEAR, EXPECTED, costFor, playerOf, fightCost } from '../src/systems/powercurve.js';
 const pc = (x) => `${Math.round(x * 100)}%`;
 const rows = [];
 rows.push('| Region tier | Expected gear | Level | Normal | Easy | Hard | +5 levels | -5 levels | Gear -1 | Gear +1 |');

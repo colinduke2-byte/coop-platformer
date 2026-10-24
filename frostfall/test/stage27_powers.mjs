@@ -74,7 +74,7 @@ const dag = await comboOf('g_dag', 5, 120);
 check('daggers chain a four-hit flurry', Math.max(...dag) === 3, JSON.stringify(dag));
 const axe = await comboOf('g_axe', 4, 260);
 check('axes have a two-hit combo', Math.max(...axe) === 1, JSON.stringify(axe));
-const dagTime = await G(() => 0);
+await G(() => 0);
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'POWERS FAILED' : 'POWERS PASSED');

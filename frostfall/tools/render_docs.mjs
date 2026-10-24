@@ -9,7 +9,7 @@ await h.sleep(800);
 const out = await h.ev(async (seed) => {
   const M = await import('/src/data/maps.js'), CF = await import('/src/config.js'), E = await import('/src/data/enemies.js'), S = window.__ff.S;
   S.seed = seed;
-  const r = M.getReach(), { T, C, TILE } = CF, hex = (i) => '#' + (C[i] ?? 0).toString(16).padStart(6, '0');
+  const r = M.getReach(), { C, TILE } = CF, hex = (i) => '#' + (C[i] ?? 0).toString(16).padStart(6, '0');
   const COL = { [TILE.SNOW]: 5, [TILE.SNOW2]: 5, [TILE.SNOW3]: 5, [TILE.SNOW4]: 5, [TILE.TUFT]: 5, [TILE.ICE]: 4, [TILE.ICE2]: 4, [TILE.STONE]: 3, [TILE.PINE]: 7, [TILE.PATH]: 10, [TILE.PATH2]: 10, [TILE.WOODFLOOR]: 10, [TILE.WOODWALL]: 9, [TILE.ROOF]: 6, [TILE.CFLOOR]: 3, [TILE.CFLOOR2]: 3, [TILE.CWALL]: 1, [TILE.CWALL2]: 1, [TILE.ROCK]: 4, [TILE.PILLAR]: 5, [TILE.FENCE]: 9, [TILE.DEADTREE]: 9, [TILE.STUMP]: 9, [TILE.GRAVE]: 4, [TILE.SARCO]: 4, [TILE.FIRE]: 12 };
   // ---------------- world map
   const Z = r.w > 250 ? 4 : 6, W = r.w * Z, H = r.h * Z, TOP = 40, LEG = 150;
@@ -34,7 +34,7 @@ const out = await h.ev(async (seed) => {
   for (const [k, d] of Object.entries(POI)) { if (!counts[k]) continue; x.fillStyle = d[0]; x.beginPath(); x.arc(W + 16, ly + 6, 6, 0, 7); x.fill(); x.fillStyle = '#fff'; x.fillText(`${d[2]} x${counts[k]}`, W + 28, ly + 10); ly += 20; }
   const map = c.toDataURL();
   // ---------------- creature sheet
-  const tex = window.__ff.game.textures, S2 = 5, cells = [];
+  const tex = window.__ff.game.textures, cells = [];
   const seen = new Map();
   for (const [k, cfg] of Object.entries(E.ENEMIES)) { const t = cfg.tex; if (seen.has(t)) { seen.get(t).names.push(cfg.name || k); continue; } const cell = { tex: t, names: [cfg.name || k], side: !!cfg.sideOnly || tex.get(t).has('side0') && !tex.get(t).has('down0'), kind: cfg.kind }; seen.set(t, cell); cells.push(cell); }
   cells.sort((a, b) => (a.kind === 'boss') - (b.kind === 'boss'));

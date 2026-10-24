@@ -4,7 +4,7 @@ const G = (fn, a) => h.ev(fn, a);
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
 const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel(c); await h.sleep(70); };
-const scene = () => `window.__ff.game.scene.getScene('Game')`;
+
 const S = (k) => G((k) => k.split('.').reduce((o, p) => o?.[p], window.__ff.S), k);
 const stub = (answers) => G((a) => {
   const dlg = window.__dlg;
@@ -56,7 +56,7 @@ check('at night villagers go indoors (hidden outside)', away.length >= 3 && away
 await restart('hall', 'in');
 const hallN = await G(() => window.__ff.game.scene.getScene('Game').npcs.map((n) => n.id));
 check('...and Sigrid is in her hall at night', hallN.includes('sigrid'), hallN.join());
-const amb = await G(() => 0);
+await G(() => 0);
 await restart('village', 'start');
 await h.shot('s13_night');
 const nightAmb = await G(() => window.__ff.game.scene.getScene('Game').ambient().alpha);

@@ -27,7 +27,7 @@ check('fishing: cast, too-early spooks, bite, reel', fish.st1 === 'wait' && fish
 
 // ---- cooking and food buffs
 const food = await G(async () => {
-  const S = window.__ff.S, f = await import('/src/systems/food.js'), st = await import('/src/systems/stats.js');
+  const S = window.__ff.S, f = await import('/src/systems/food.js');
   S.inv.raw_trout = 2; S.inv.venison = 1; S.inv.snowberry = 1;
   const opts = f.COOKABLE().map((r) => r.to);
   f.cook(f.COOKABLE().find((r) => r.to === 'grilled_trout'));
@@ -37,7 +37,7 @@ const food = await G(async () => {
   f.eatFood('grilled_trout', window.gs());
   const after = { max: S.maxHp - base, hp: S.hp };
   f.eatFood('hunters_stew', window.gs());
-  S.hp = 50; window.gs().player.update(1, null); 
+  S.hp = 50; window.gs().player.update(1, null);
   S.flags.foodUntil = 0; f.foodTick();
   return { opts, have, after, ended: !S.flags.food, maxBack: S.maxHp === base };
 });
@@ -58,7 +58,7 @@ const dug = await G(async () => {
   g.player.setPosition(S.flags.treasure.x * 16 + 8, S.flags.treasure.y * 16 + 8); await new Promise((r) => setTimeout(r, 1500));
   const ts = g.interactables.find((i) => i.constructor.name === 'TreasureSpot');
   if (!ts) return { found: false };
-  const gold = S.gold, gen = Object.keys(S.inv).length;
+  const gen = Object.keys(S.inv).length;
   ts.interact();
   return { found: true, done: S.flags.treasure.done, items: Object.keys(S.inv).length - gen, maps: S.fish.maps };
 });

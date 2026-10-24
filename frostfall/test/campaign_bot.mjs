@@ -125,7 +125,7 @@ const equipBest = () => G(async () => {
 });
 await G(() => window.gs().changeMap('forest', 'west', 'door'));
 await h.sleep(2200);
-const pois = await G(async () => { const M = await import('/src/data/maps.js'), S = window.__ff.S; return M.getReach().pois.filter((p) => ['camp', 'den', 'ruin', 'champion', 'beardn'].includes(p.kind) && p.tier === 0).sort((a, b) => Math.hypot(a.x - 30, a.y - 20) - Math.hypot(b.x - 30, b.y - 20)).slice(0, 10).map((p) => [p.x, p.y, p.kind]); });
+const pois = await G(async () => { const M = await import('/src/data/maps.js'); return M.getReach().pois.filter((p) => ['camp', 'den', 'ruin', 'champion', 'beardn'].includes(p.kind) && p.tier === 0).sort((a, b) => Math.hypot(a.x - 30, a.y - 20) - Math.hypot(b.x - 30, b.y - 20)).slice(0, 10).map((p) => [p.x, p.y, p.kind]); });
 let farmed = 0, farmDeaths = 0;
 for (const [px, py] of pois) {
   const gold0 = await G(() => window.__ff.S.gold);
@@ -214,7 +214,7 @@ if (!fought.ok) {
 }
 check('Jarl Valdrek falls and the crypt gives up its prize', await G(() => { const b = window.gs().boss; return !b || b.dead || b.yieldDone; }));
 await h.sleep(3000);
-const loot = await G(() => {
+await G(() => {
   const g = window.gs(), p = g.player; let n = 0;
   for (const pk of g.pickups.slice()) { if (pk.active !== false && pk.x) { p.setPosition(pk.x, pk.y); n++; } }
   return n;

@@ -93,8 +93,8 @@ const lw = await G(async () => {
 check('Sunbreaker: the Long Winter strikes 10% faster in every phase', Math.abs(lw.c1 - 0.9) < 1e-6 && Math.abs(lw.c2 - 0.63) < 1e-6 && Math.abs(lw.c3 - 0.45) < 1e-6, JSON.stringify(lw));
 
 // ---- the pack: V twice drops the selected stack at your feet; it is not sucked straight back; equipped items stay
-const drop = await G(async () => {
-  const S = window.__ff.S, g = window.gs(); const { addItem } = await import('/src/systems/inventory.js');
+await G(async () => {
+  const S = window.__ff.S, g = window.gs(); const { } = await import('/src/systems/inventory.js');
   for (const pk of g.pickups.slice()) if (pk.scene && !pk.done) pk.collect?.();     // skip ones already collected (the list is pruned next frame)
   S.inv = { iron_ingot: 7, rusty_sword: 1 }; S.equip.weapon = 'rusty_sword';
   g.openMenu(0); return true;
@@ -146,7 +146,7 @@ for (let i = 0; i < 3; i++) {
 check('every death respawns you at full health, not just the first', falls.every((f) => f.hp > 0 && f.mode === 'free' && f.map === 'village'), JSON.stringify(falls));
 
 // ---- the final choices come back if the game was closed between the boss and the choice
-const fin = await G(async () => { const S = window.__ff.S; S.flags.winterDead = true; delete S.flags.finale; window.__said = []; return true; });
+await G(async () => { const S = window.__ff.S; S.flags.winterDead = true; delete S.flags.finale; window.__said = []; return true; });
 await G(() => window.__ff.game.scene.getScene('Game').changeMap('village', 'start'));
 await h.wait(5000);
 const fin2 = await G(() => ({ modal: (window.__ff.game.scene.getScene('Hud')?.dlg ? true : false) || !!window.__ffModal, ui: true }));

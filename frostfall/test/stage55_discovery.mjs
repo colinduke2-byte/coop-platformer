@@ -8,7 +8,7 @@ check('nothing starts discovered (except what you stand beside)', info.disc <= 2
 
 // walking up to a place discovers it, once
 const d = await G(() => {
-  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, ev = []; const bus = window.__ff.bus;
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S;
   window.__events = []; (window.__bus = window.__bus) ;
   const p = g.built.pois.find((q) => q.kind === 'camp'); S.gold = 0;
   g.player.setPosition(p.x * 16, p.y * 16 + 20);
@@ -25,7 +25,7 @@ check('a hidden cache is only found by getting close', hid.farMiss && hid.near, 
 
 // the hermit's rumour
 const rum = await G(async () => {
-  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, dlg = await import('/src/systems/dialogue.js'), { SCRIPTS } = await import('/src/data/dialogue.js');
+  const S = window.__ff.S, dlg = await import('/src/systems/dialogue.js'), { SCRIPTS } = await import('/src/data/dialogue.js');
   const real = dlg.dialogue.hud; let step = 0; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => (step++ === 0 ? 0 : o.length - 1), hideBox() {}, scene: real.scene };
   const before = Object.keys(S.discovered).length; delete S.flags.waypoint;
   await SCRIPTS.hermit(); dlg.dialogue.hud = real;

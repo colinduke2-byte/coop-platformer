@@ -49,7 +49,7 @@ check('all eight barrows exist, with a way out and foes inside', bar.length === 
 
 // ---- the map tab: whole-map overview from a baked texture, zoom steps, region fog
 await G(async () => {
-  const S = window.__ff.S, M = await import('/src/data/maps.js'), b = M.getReach(), W = await import('/src/scenes/menuMap.js');
+  const S = window.__ff.S, M = await import('/src/data/maps.js'), b = M.getReach();
   const cw = Math.ceil(b.w / 2), ch = Math.ceil(b.h / 2); S.fog = S.fog || {}; S.fog.forest = '1'.repeat(cw * ch);
   window.__ff.game.scene.getScene('Game').openMenu(-1, 'MAP');
 });

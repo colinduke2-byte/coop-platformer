@@ -4,7 +4,7 @@ await h.open('scene=game&map=village&spawn=start&seed=424242');
 await h.sleep(700);
 const G = (fn, a) => h.ev(fn, a);
 await G(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.__ff.S.flags.introDone = true; window.__ff.S.weather = 'snow'; window.__ff.S.time = 12 * 60; });
-const imp = (p) => `await import('${p}')`;
+
 
 // ---- relics
 const rel = await G(async () => {
@@ -30,7 +30,7 @@ const elx = await G(async () => {
 });
 check('elixirs buff and cost: damage/taken, speed, status immunity, and wear off', elx.dmg === 1.3 && elx.taken === 1.2 && elx.left === 0 && elx.move && elx.immune && elx.over, JSON.stringify(elx));
 const hurt = await G(async () => {
-  const S = window.__ff.S, g = window.gs(), p = g.player, E = await import('/src/systems/elixir.js');
+  const S = window.__ff.S, g = window.gs(), p = g.player;
   const take = (id) => { S.flags.elixir = id; S.flags.elixirUntil = 1e9; S.hp = S.maxHp; p.invuln = 0; p.iframes = 0; p.mode = 'free'; p.stunT = 0; p.hurt(30, p.x + 30, p.y, {}); return S.maxHp - S.hp; };
   const a = take('ironhide_brew'), b = take('berserker_draught'); delete S.flags.elixir; return { a, b };
 });
@@ -55,9 +55,9 @@ check('Meteor lands after a delay and burns what it hits', met.mp >= 40 && (awai
 
 // ---- daily stock
 const stock = await G(async () => {
-  const D = await import('/src/data/stock.js'), S = window.__ff.S, B = await import('/src/systems/bless.js');
+  const D = await import('/src/data/stock.js'), S = window.__ff.S; await import('/src/systems/bless.js');
   const a = D.dailyWares('Hilda', 3).map((w) => w.id).join(), b = D.dailyWares('Hilda', 3).map((w) => w.id).join();
-  const real = B.today; const days = new Set();
+  const days = new Set();
   // the rotation is a pure function of (seed, day, shopkeeper): sample a few different seeds as a stand-in for different days
   for (const sd of [1, 2, 3, 4, 5, 6]) { S.seed = sd; days.add(D.dailyWares('Mirra', 3).map((w) => w.id).join()); }
   return { same: a === b, varied: days.size >= 3, mirra: D.dailyWares('Mirra', 3).length };
@@ -72,7 +72,7 @@ check('buy-back remembers the last 8 sold items', bb.len === 8, JSON.stringify(b
 
 // ---- durability
 const dur = await G(async () => {
-  const D = await import('/src/systems/durability.js'), S = window.__ff.S, st = (await import('/src/systems/stats.js')).stats, s = (await import('/src/systems/settings.js')).settings, T = await import('/src/data/items.js');
+  const D = await import('/src/systems/durability.js'), S = window.__ff.S, st = (await import('/src/systems/stats.js')).stats, s = (await import('/src/systems/settings.js')).settings;
   const out = {};
   s.durability = false; D.wear('rusty_sword', 999); out.offBroken = D.isBroken('rusty_sword'); const full = st.weaponDmg();
   // (PR-08: wear belongs to the worn copy, which becomes its own item: read it through S.equip.weapon)
@@ -101,8 +101,8 @@ const cook = await G(async () => {
   return { t, valid: ['fish_stew', 'berry_tart', 'pike_feast', 'spiced_venison', 'ember_chowder', 'hunters_stew'].every((k) => t.includes(k)), foods: ['fish_stew', 'berry_tart', 'spiced_venison', 'ember_chowder', 'pike_feast'].every((k) => I[k]?.food) };
 });
 check('five more recipes: stew, tart, spiced venison, chowder, pike feast', cook.valid && cook.foods, JSON.stringify(cook));
-const home = await G(async () => {
-  const g = window.gs(), S = window.__ff.S;
+await G(async () => {
+  const g = window.gs();
   g.changeMap('cottage', 'in', 'door'); return 1;
 });
 await h.sleep(1400);
@@ -113,7 +113,7 @@ const hm = await G(async () => {
   const ids = M.FURNITURE.map((f) => f.id);
   const garden = g.interactables.find((i) => i.constructor.name === 'GardenPlot');
   const b0 = S.inv.snowberry || 0; garden.interact(); const b1 = S.inv.snowberry || 0; garden.interact(); const b2 = S.inv.snowberry || 0;
-  S.trophies = {}; for (let i = 0; i < 9; i++) S.trophies['t' + i] = true; const st = await import('/src/systems/stats.js'); const hp0 = S.maxHp; st.recalc(); const hp1 = S.maxHp;
+  S.trophies = {}; for (let i = 0; i < 9; i++) S.trophies['t' + i] = true; const st = await import('/src/systems/stats.js'); st.recalc(); const hp1 = S.maxHp;
   S.trophies = {}; st.recalc(); const hp2 = S.maxHp;
   return { has: ['StashChest', 'GardenPlot', 'TrophyWall', 'CookPot'].every((n) => names.includes(n)), ids: ids.length, gardenOnce: b1 > b0 && b2 === b1, wall: hp1 - hp2 };
 });
@@ -123,7 +123,7 @@ const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel2 = (c) => h.ev((c) => window.__ff.keys._release(c), c);
 for (const name of ['repairMenu', 'reforgeMenu', 'buybackMenu']) {
   await G(async (name) => {
-    const S = window.__ff.S, L = await import('/src/systems/genloot.js'), set = (await import('/src/systems/settings.js')).settings, D = await import('/src/systems/durability.js');
+    const S = window.__ff.S, L = await import('/src/systems/genloot.js'), set = (await import('/src/systems/settings.js')).settings;
     const id = L.makeGenItem(1, Math.random, 1); S.inv[id] = 1; S.gold = 500; S.inv.iron_ingot = 5; set.durability = true; S.dur = { [S.equip.weapon]: 3 }; S.buyback = [{ id: 'hand_axe', n: 1, paid: 30 }];
     const sv = await import('/src/data/services.js'), dlg = await import('/src/systems/dialogue.js');
     window.__done = false; dlg.runScript(async () => { await sv[name]('Hilda'); window.__done = true; });

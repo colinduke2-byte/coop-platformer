@@ -12,7 +12,7 @@ for (const [map, spawn, mode] of [['village', 'start'], ['forest', 'west'], ['cr
   await h.ev(() => { window.__ff.S.flags.introDone = true; });
   if (mode === 'deep') await h.ev(() => { const g = window.__ff.game.scene.getScene('Game'); const p = g.built.pois.filter((q) => q.tier >= 2 && q.kind === 'camp')[0] || g.built.pois.filter((q) => q.tier >= 2)[0]; g.player.setPosition(p.x * 16, (p.y + 6) * 16); window.__ff.S.maxHp = 400; window.__ff.S.hp = 400; });
   const t0 = Date.now();
-  let n = 0, deaths = 0;
+  let n = 0;
   while (Date.now() - t0 < seconds * 1000) {
     const k = KEYS[Math.floor(Math.random() * KEYS.length)];
     const hold = Math.random() < 0.7;

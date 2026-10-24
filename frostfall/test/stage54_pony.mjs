@@ -4,7 +4,7 @@ await h.open('scene=game&map=forest&spawn=west&seed=424242'); await h.sleep(1200
 const G = (fn, a) => h.ev(fn, a);
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
-const gs = () => window.__ff.game.scene.getScene('Game');
+
 check('no pony without the whistle', await G(() => !window.__ff.game.scene.getScene('Game').pony));
 // buy the whistle (Hilda's list) then reload the scene
 await G(() => { window.__ff.S.inv.pony_whistle = 1; window.__ff.S.flags.introDone = true; window.__ff.game.scene.getScene('Game').scene.restart({ map: 'forest', spawn: 'west' }); });

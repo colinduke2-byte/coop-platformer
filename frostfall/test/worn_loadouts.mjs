@@ -31,7 +31,6 @@ const url = await h.ev(async () => {
   c.fillStyle = '#10141f'; c.fillRect(0, 0, cv.width, cv.height);
   c.fillStyle = '#e8eef5'; c.font = 'bold 26px monospace'; c.fillText('FROSTFALL: the hero in full gear', 20, 36);
   c.fillStyle = '#93a5b3'; c.font = '13px monospace'; c.fillText('Real worn armour and helmet sprites, with the real held weapons and shields.', 20, 58);
-  const hero = sc.textures.get('spr_player'), hf = hero.get('down0');
   const icon = (id) => { const t = sc.textures.get(iconKey(id)), img = t.getSourceImage(); const cc = document.createElement('canvas'); cc.width = 16; cc.height = 16; const x = cc.getContext('2d'); x.drawImage(img, 0, 0); const d = x.getImageData(0, 0, 16, 16).data; let x0 = 16, y0 = 16, x1 = -1, y1 = -1; for (let y = 0; y < 16; y++) for (let xx = 0; xx < 16; xx++) if (d[(y * 16 + xx) * 4 + 3]) { x0 = Math.min(x0, xx); x1 = Math.max(x1, xx); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return { cc, x0, y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }; };
   const held = (id) => sc.textures.exists('held_' + id) ? sc.textures.get('held_' + id).getSourceImage() : null;
   LOADOUTS.forEach((L, i) => {

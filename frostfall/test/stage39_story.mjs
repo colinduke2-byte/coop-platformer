@@ -52,7 +52,7 @@ const rv = await G(() => { const S = window.__ff.S; return { q: S.quests.company
 check('with the Warlord down, Ragna lays her company to rest and gets stronger', rv.q === 'done' && rv.vet && rv.banner, JSON.stringify(rv));
 await unstub();
 const twice = await G(async () => {
-  const g = window.gs(), P = (await import('/src/entities/Projectile.js')).default; g.enemies.getChildren().forEach((e) => e.destroy());
+  const g = window.gs(); g.enemies.getChildren().forEach((e) => e.destroy());
   const e = g.addEnemy('draugr', g.follower.x + 60, g.follower.y); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0, dmg: 0 }; e.alert(true); g.follower.cd = 0;
   const n0 = g.shots.getLength(); g.follower.update(0.1, g.player); return { n0, n1: g.shots.getLength() };
 });

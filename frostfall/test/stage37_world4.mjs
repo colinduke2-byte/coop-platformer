@@ -41,11 +41,11 @@ check('the cub heals you, and the whistle swaps cub and hound', pet.a === 'cub' 
 
 // ---- roaming bosses: deterministic position, spawn on route, walk, fall
 const roam = await G(async () => {
-  const g = window.gs(), S = window.__ff.S, R = await import('/src/world/roamers.js');
+  const g = window.gs(), R = await import('/src/world/roamers.js');
   const e = g.built.entities.find((x) => x.t === 'roamboss' && x.id === 'elk');
   const a = R.routePos(e.route, 0, e.phase), b = R.routePos(e.route, 100, e.phase), c = R.routePos(e.route, 100, e.phase);
   const moved = [10, 20, 30, 40, 60].some((t) => { const q = R.routePos(e.route, t, e.phase); return Math.hypot(a.x - q.x, a.y - q.y) > 100; }),   // it walks away (a corner can bring it back near the start for a while)
-    q = 0, same = b.x === c.x && b.y === c.y;
+    same = b.x === c.x && b.y === c.y;
   const wrap = R.routePos(e.route, R.loopLength(e.route) / R.ROAM_SPEED, e.phase);
   return { moved, same, closed: Math.hypot(wrap.x - R.routePos(e.route, 0, e.phase).x, wrap.y - R.routePos(e.route, 0, e.phase).y) < 2 };
 });
@@ -53,7 +53,7 @@ check('a roaming boss route is a closed, deterministic loop', roam.moved && roam
 await clear();
 const spawn = await G(async () => {
   const g = window.gs(), S = window.__ff.S, R = await import('/src/world/roamers.js');
-  const p = g.pend.length; g.pend.length = 0; for (const e of g.built.entities.filter((x) => x.t === 'roamboss')) g.spawnEntity(e);
+  g.pend.length = 0; for (const e of g.built.entities.filter((x) => x.t === 'roamboss')) g.spawnEntity(e);
   const item = g.pend.find((q) => q.spec.rid === 'elk'); const pos = R.routePos(item.spec.roamRoute, S.playtime || 0, item.spec.roamPhase);
   g.player.setPosition(pos.x + 100, pos.y); g.player.invuln = 999;
   return { has: !!item, pos };
@@ -72,7 +72,7 @@ check('a killed world boss does not return', await G(async () => { const g = win
 
 // ---- hot spring
 await clear();
-const spr = await G(async () => {
+await G(async () => {
   const g = window.gs(), S = window.__ff.S, m = await import('/src/systems/status.js');
   const sp = g.springs[0]; g.player.setPosition(sp.x, sp.y + 16); g.player.invuln = 0; S.hp = 20; m.applyStatus(g.player, 'bleed', { t: 30, dps: 1 }); m.applyStatus(g.player, 'poison', { t: 30, dps: 1 });
   sp.interact();
@@ -88,7 +88,7 @@ await h.sleep(700);
 let rv = await G(() => window.gs().ravens.length);
 for (let i = 0; i < 6 && !rv; i++) { await G(() => { window.gs().raventT = 0; }); await h.sleep(500); rv = await G(() => window.gs().ravens.length); }
 check('ravens perch in the snow by day', rv >= 1, String(rv));
-const flee = await G(() => { const g = window.gs(), r = g.ravens[0]; if (!r) return null; g.player.setPosition(r.img.x - 20, r.img.y); return true; });
+await G(() => { const g = window.gs(), r = g.ravens[0]; if (!r) return null; g.player.setPosition(r.img.x - 20, r.img.y); return true; });
 await h.sleep(500);
 check('ravens scatter when you come close', await G(() => window.gs().ravens.some((r) => r.fly) || window.gs().ravens.length === 0));
 const prints = await G(async () => {

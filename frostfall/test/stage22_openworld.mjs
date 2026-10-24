@@ -6,7 +6,7 @@ const G = (fn, a) => h.ev(fn, a);
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
 const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel(c); await h.sleep(70); };
-const gs = `window.__ff.game.scene.getScene('Game')`;
+
 const tp = (x, y) => G(([x, y]) => { const g = window.__ff.game.scene.getScene('Game'); g.player.setPosition(x * 16 + 8, y * 16 + 8); g.player.mode = 'free'; g.player.invuln = 999; g.player.body.setVelocity(0, 0); window.__ff.S.hp = window.__ff.S.maxHp; }, [x, y]);
 
 const info = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return { w: g.built.w, h: g.built.h, pend: g.pend.length, live: g.enemies.getLength() }; });
@@ -24,7 +24,7 @@ check('walking away removes them again', far === 0, String(far));
 
 // ---- clear the camp: bounty is paid, kills persist across a scene reload
 await tp(camp.x, camp.y + 9); await h.sleep(800);
-const g0 = await G(() => window.__ff.S.gold);
+await G(() => window.__ff.S.gold);
 await G(([id]) => { const g = window.__ff.game.scene.getScene('Game'); g.enemies.getChildren().filter((e) => e.spec && e.spec.camp === id).forEach((e) => { e.takeHit({ dmg: 9999, kx: 0, ky: 0, kb: 0, src: 'melee', stun: 0.1 }); }); }, [camp.id]);
 await h.sleep(1600);
 check('clearing a camp pays a bounty', (await G(([id]) => !!window.__ff.S.bounty[id], [camp.id])) === true);
@@ -65,7 +65,7 @@ await G(() => window.__ff.game.scene.getScene('Game').scene.restart({ map: 'fore
 await h.sleep(900);
 const deer = await spot('deer');
 await tp(deer.x, deer.y + 3); await h.sleep(900);
-const dr = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const d = g.enemies.getChildren().find((e) => e.kind === 'deer'); if (!d) return null; const before = window.__ff.S.inv.venison || 0; d.takeHit({ dmg: 999, kx: 1, ky: 0, kb: 0, src: 'arrow' }); return { alerted: d.alerted }; });
+const dr = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const d = g.enemies.getChildren().find((e) => e.kind === 'deer'); if (!d) return null; d.takeHit({ dmg: 999, kx: 1, ky: 0, kb: 0, src: 'arrow' }); return { alerted: d.alerted }; });
 check('a deer exists, is not hostile, and can be hunted', dr && dr.alerted === false);
 await h.sleep(1500);
 check('hunting drops venison', await G(() => window.__ff.game.scene.getScene('Game').pickups.some((p) => p.spec.id === 'venison') || (window.__ff.S.inv.venison || 0) > 0));

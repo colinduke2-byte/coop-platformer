@@ -27,7 +27,7 @@ const url = await h.ev(async () => {
   const cells = items.map((it) => { const f = it.spec.w * Z; const fh = it.spec.h * Z; return { it, cw: Math.max(f * 2 + PAD * 3, 200), ch: LABEL + fh * 2 + PAD * 3 }; });
   const rows = []; let row = [], used = 0;
   let curTitle = null;
-  const out = [];
+
   for (const c of cells) {
     if (c.it.title !== curTitle) { if (row.length) rows.push({ cells: row }); row = []; used = 0; rows.push({ title: c.it.title }); curTitle = c.it.title; }
     if (used + c.cw > W && row.length) { rows.push({ cells: row }); row = []; used = 0; }

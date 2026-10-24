@@ -128,7 +128,7 @@ check('a dying slimeling shows its death frame (not a rotated sprite)', r.dead =
 
 // ---- VX-10 / VX-11: the werewolf is a native wolf-man; no creature from the audit's list is shown at a stretched scale
 r = await G(async () => {
-  const { ENEMIES } = await import('/src/data/enemies.js'); await import('/src/data/enemies4.js');
+  const { } = await import('/src/data/enemies.js'); await import('/src/data/enemies4.js');
   const reg = await import('/src/art/native_registry.js');
   const g = window.gs(), list = ['werewolf', 'shroom', 'gloomcap', 'prism', 'caveweaver', 'lodeling', 'sunsentinel', 'redsula', 'captainkarrow', 'bearcub', 'imp', 'slimeling'];
   const p = g.player, bad = [];

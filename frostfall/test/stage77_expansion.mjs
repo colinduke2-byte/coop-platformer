@@ -63,7 +63,7 @@ const trick = await G(async () => {
   const t = sc.addEnemy('cutpurse', p.x + 14, p.y, { tier: 2 }); t.alert(true);
   t.attackStart?.(p, { x: -1, y: 0 });
   p.invuln = 0; t.hitDone = false; t.state = 'attack';
-  const landed = p.hurt(1, t.x, t.y, { attacker: t });
+
   t.hitDone = true;
   // simulate the steal hook directly through attackTick
   t.hitDone = false; t.setPosition(p.x + 4, p.y); t.body.reset(p.x + 4, p.y); t.face = { x: -1, y: 0 };

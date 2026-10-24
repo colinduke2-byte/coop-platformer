@@ -1,6 +1,6 @@
 // The power curve: levels never make you overpowered, gear and preparation matter most, and each difficulty has its own promise.
 import assert from 'node:assert/strict';
-import { EXPECTED, GEAR, costFor, playerOf, fightCost, dangerFromCost, readyTier, pace, costAgainst } from '../../src/systems/powercurve.js';
+import { EXPECTED, costFor, playerOf, fightCost, dangerFromCost, readyTier, pace, costAgainst } from '../../src/systems/powercurve.js';
 let n = 0, failed = 0;
 const t = (name, fn) => { try { fn(); n++; console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message.split('\n')[0]); } };
 

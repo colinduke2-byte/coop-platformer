@@ -16,7 +16,7 @@ check('a starter character finds a tier-3 golem far more dangerous than a wolf',
 check('good gear makes a wolf easy and raises the tier you are ready for', r.wolfGeared <= 2 && r.readyGeared > r.readyStart, JSON.stringify(r));
 // the warning fires once for a place beyond you
 const w = await G(async () => {
-  const D = await import('/src/systems/danger.js'), S = window.__ff.S, g = window.__ff.game.scene.getScene('Game');
+  const D = await import('/src/systems/danger.js'), S = window.__ff.S;
   S.equip.weapon = 'rusty_sword'; S.equip.armor = 'fur_tunic'; S.skills.oneHanded.lvl = 1; delete S.flags['warned_forest_3'];
   const fake = { def: { stream: true }, built: { entities: Array.from({ length: 20 }, (_, i) => ({ t: 'enemy', x: 10 + i, y: 10, tier: 3 })) }, player: { x: 160, y: 160 }, mapId: 'forest' };
   const a = D.dangerWarning(fake), b = D.dangerWarning(fake);

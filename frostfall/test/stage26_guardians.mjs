@@ -36,7 +36,7 @@ for (const d of DUNGEONS) {
   await G(() => { window.gs().pickups.length = 0; });
 }
 // Heart powers
-const pow = await G(() => { const S = window.__ff.S; const st = window.__ff.stats; return { hearts: Object.keys(S.hearts).sort().join() }; });
+const pow = await G(() => { const S = window.__ff.S; return { hearts: Object.keys(S.hearts).sort().join() }; });
 check('three more Hearts held', pow.hearts.includes('iron') && pow.hearts.includes('root') && pow.hearts.includes('tide'), JSON.stringify(pow));
 const armor = await G(async () => { const { stats } = await import('/src/systems/stats.js'); return stats.armor(); });
 check('the Iron Heart adds 8% armour', armor >= 0.08, String(armor));

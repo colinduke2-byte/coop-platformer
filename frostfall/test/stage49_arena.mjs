@@ -59,7 +59,7 @@ check('clearing wave 1 is counted with its kills', cl.cleared === 1 && cl.kills 
 // die -> results card
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.player.invuln = 0; g.player.iframes = 0; g.player.mode = 'free'; window.__ff.S.hp = 1; g.player.hurt(500, g.player.x + 10, g.player.y, {}); });
 await h.sleep(4200);
-const res = await G(() => { const s = window.__ff.game.scene.getScene('ArenaResults'); return { active: window.__ff.game.scene.isActive('ArenaResults'), hud: window.__ff.game.scene.isActive('Hud') }; });
+const res = await G(() => { return { active: window.__ff.game.scene.isActive('ArenaResults'), hud: window.__ff.game.scene.isActive('Hud') }; });
 check('falling ends the run and shows the results card', res.active && !res.hud, JSON.stringify(res));
 await h.shot('s49_results');
 const rec = await G(() => JSON.parse(localStorage.getItem('frostfall_arena_records') || '{}'));

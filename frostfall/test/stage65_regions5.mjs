@@ -200,7 +200,7 @@ const after = await G(async () => { const F = await import('/src/data/factions.j
 check('the Smugglers pay for salt crystals, and the Guild notices', after.q === 'done' && after.sm >= 20 && after.tide < before, JSON.stringify([before, after]));
 // guild ranks and armoury
 const rank = await G(async () => {
-  const S = window.__ff.S, F = await import('/src/data/factions.js'), R = await import('/src/data/regions3_story.js'), E = await import('/src/data/emberhold.js'), dlg = await import('/src/systems/dialogue.js');
+  const S = window.__ff.S, R = await import('/src/data/regions3_story.js'), E = await import('/src/data/emberhold.js'), dlg = await import('/src/systems/dialogue.js');
   const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene };
   S.rep.tide = 50; S.gold = 2000; S.flags.rankGifts = {};
   const g0 = S.gold; await R.guildRankMenu('Anneke', 'tide');
@@ -222,7 +222,7 @@ const tl = await G(async () => {
 });
 check('every hub has a tailor', Object.values(tl).every(Boolean), JSON.stringify(tl));
 const bed = await G(async () => {
-  const S = window.__ff.S, D = await import('/src/data/dialogue.js'), dlg = await import('/src/systems/dialogue.js'), seen = [];
+  const D = await import('/src/data/dialogue.js'), dlg = await import('/src/systems/dialogue.js'), seen = [];
   await import('/src/data/hamlets.js');
   const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => { seen.push(o.join('|')); return o.length - 1; }, hideBox() {}, scene: real.scene };
   await D.SCRIPTS.trapper(); dlg.dialogue.hud = real;

@@ -6,7 +6,7 @@ await h.sleep(900);
 const G = (fn, a) => h.ev(fn, a);
 const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
 const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
-const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel(c); await h.sleep(60); };
+
 
 const sane = await G(() => {
   const g = window.__ff.game.scene.getScene('Game');
@@ -29,7 +29,7 @@ check('boss engages when the player crosses the gate', b.eng && b.gate && b.soli
 await h.sleep(2300);
 await h.shot('s7_boss');
 // boss can't be hurt during roar; after the roar it attacks and telegraphs
-const seenAtk = new Set(); let tele = false, hurtBoss = false;
+const seenAtk = new Set(); let tele = false;
 await G(() => { window.__ff.game.scene.getScene('Game').player.invuln = 999; });
 for (let i = 0; i < 500 && !(tele && seenAtk.size >= 2); i++) {
   const r = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const bs = g.boss; return { st: bs.state, atk: bs.atk, hp: bs.hp, tele: bs.tele.length, ph: bs.bphase }; });

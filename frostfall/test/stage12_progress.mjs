@@ -35,7 +35,7 @@ for (let i = 0; i < 40 && (await S('pendingStat')) > 0; i++) {
   await h.sleep(120);
 }
 check('attribute choice applied (+6 magic each)', (await S('bonusMp')) >= 6 && (await S('maxMp')) >= 106, `mp=${await S('maxMp')}`);
-await G(() => { const g = window.__ff.game.scene.getScene('Game'); window.__ff.S.perkPoints = 3; });
+await G(() => { window.__ff.S.perkPoints = 3; });
 const before = await G(() => window.__ff.S.perks.keenedge || false);
 const bought = await G(() => window.__sk.buyPerk('keenedge'));
 check('Keen Edge perk: needs level 2 in One-Handed', before === false && (bought === false || (await S('perks.keenedge')) === true));

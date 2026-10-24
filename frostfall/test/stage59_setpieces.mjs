@@ -55,7 +55,7 @@ check('wading through a flooded hall slows you to 55%', mire.before === 1 && Mat
 
 // the ambush springs once
 const amb = await G(async () => {
-  const g = window.gs(), p = g.player, S = window.__ff.S;
+  const g = window.gs(), p = g.player;
   const x = Math.floor(p.x / 16) - 3, y = Math.floor(p.y / 16) - 3;
   g.enemies.getChildren().slice().forEach((e) => e.destroy());
   g.addSetPiece({ t: 'ambush', x, y, w: 7, h: 7, kinds: ['draugr', 'wight'], n: 4, tier: 1 });

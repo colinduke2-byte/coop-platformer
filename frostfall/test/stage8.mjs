@@ -34,7 +34,7 @@ await h.sleep(300);
 let mt = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return m && m.tabs[m.tab].name; });
 check('Esc opens the pause menu on the SYSTEM tab', mt === 'SYSTEM', mt);
 await h.shot('s8_pause');
-const frozen = await G(() => window.__ff.game.scene.getScene('Game').physics.world.isPaused);
+await G(() => window.__ff.game.scene.getScene('Game').physics.world.isPaused);
 // move to SAVE GAME and confirm
 await tap('KeyS'); await tap('KeyE');
 await h.sleep(200);

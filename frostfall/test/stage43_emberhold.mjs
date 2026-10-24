@@ -134,7 +134,7 @@ await unstub();
 await G(() => { window.__ff.S.flags.kragnarDead = false; window.__ff.S.inv = {}; });
 await S(() => { window.gs().changeMap('mines2', 'entry', 'door'); });
 await h.sleep(1800);
-await S(() => { const g = window.gs(); g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy()); const b = g.boss; g.player.invuln = 999; const r = b; g.player.setPosition(b.x, b.y + 90); });
+await S(() => { const g = window.gs(); g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy()); const b = g.boss; g.player.invuln = 999; g.player.setPosition(b.x, b.y + 90); });
 await h.sleep(1500);
 const kr = await S(() => { const g = window.gs(), b = g.boss; return { has: !!b, engaged: !!b?.engaged, name: b?.cfg?.name, hp: b?.maxHp }; });
 check('walking into the lair wakes Kragnar', kr.has && kr.engaged && kr.name === 'Kragnar', JSON.stringify(kr));
@@ -146,7 +146,7 @@ await S(() => { const g = window.gs(); g.enemies.getChildren().filter((e) => !e.
 await h.sleep(2500);
 const dead = await S(() => ({ flag: !!window.__ff.S.flags.kragnarDead }));
 check('defeating Kragnar sets the flag', dead.flag, JSON.stringify(dead));
-const stand = await S(() => { const S0 = window.__ff.S; S0.rep = { anvil: 30, delvers: 50, wardens: 5 }; const g = window.gs(); g.openMenu(-1, 'FEATS'); return true; });
+await S(() => { const S0 = window.__ff.S; S0.rep = { anvil: 30, delvers: 50, wardens: 5 }; const g = window.gs(); g.openMenu(-1, 'FEATS'); return true; });
 await h.sleep(600); await h.shot('s43_standing');
 
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join('\n'));

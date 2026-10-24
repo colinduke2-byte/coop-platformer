@@ -53,7 +53,7 @@ s = await st();
 check('Esc closes the menu', !s.scenes.includes('Menu'));
 
 // ---- skill leveling through use
-const dmgBefore = await G(() => { const g = window.__ff.game.scene.getScene('Game'); return g.player ? 1 : 0; });
+await G(() => { const g = window.__ff.game.scene.getScene('Game'); return g.player ? 1 : 0; });
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.addEnemy('draugr', g.player.x + 50, g.player.y).cfg = { ...g.enemies.getChildren()[0]?.cfg, hp: 9999 }; });
 const lv0 = (await st()).skills.oneHanded.lvl;
 // swing at a dummy repeatedly: each hit gives xp

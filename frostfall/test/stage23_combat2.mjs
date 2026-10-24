@@ -8,8 +8,8 @@ const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
 const wait = (ms) => h.frames(F(ms));
 await wait(700);
 const G = (fn, a) => h.ev(fn, a);
-const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
-const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
+
+
 const tap = (c, ms = 80) => h.tap(c, F(ms), F(70));
 const reset = () => G(() => {
   const g = window.__ff.game.scene.getScene('Game'); const S = window.__ff.S;

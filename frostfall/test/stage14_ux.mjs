@@ -1,8 +1,8 @@
 import { launch, check, failCount, FRAME_MS } from './harness.mjs';
 const h = await launch();
 const G = (fn, a) => h.ev(fn, a);
-const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
-const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
+
+
 // Every load() pauses the real game loop: time only moves through h.frames, so menu taps are never merged or dropped
 // when the machine is busy (two taps of the same key between two frames used to count as one).
 const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));

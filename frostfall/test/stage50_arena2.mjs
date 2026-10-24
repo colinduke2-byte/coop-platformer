@@ -60,7 +60,7 @@ check('the combo multiplier rises with chained kills and breaks when you are hit
 // ---- twists
 const tw = await G(async () => {
   const g = gs(), a = g.arena, out = {}; a.active = true;
-  const orig = Math.random; let hit = null;
+  let hit = null;
   for (let k = 0; k < 40 && !hit; k++) { a.wave = 3; const foes = [{ kind: 'wolf', tier: 0 }, { kind: 'draugr', tier: 0 }]; g.quickWaveHook(a, foes); if (a.twist) hit = { t: a.twist, n: foes.length }; }
   out.twist = !!hit;
   a.twist = 'fast'; const e = g.addEnemy('wolf', 100, 100, { tier: 0 }); const sp = e.cfg.speed; g.quickApplyTwist(e); out.fast = e.cfg.speed > sp * 1.3;

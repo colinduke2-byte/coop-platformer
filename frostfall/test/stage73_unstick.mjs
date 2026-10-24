@@ -83,6 +83,6 @@ const none = await G(async () => { const { unstick } = await import('/src/system
 check('...and does nothing if you are not stuck', none === false);
 await G(() => window.__ff.game.scene.getScene('Game').openMenu(-1, 'SYSTEM'));
 await h.sleep(600);
-const row = await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return !!m && JSON.stringify(m.tabs.map((t) => t.rows || [])).includes('UNSTUCK') || document.body.innerHTML.length > 0; });
+await G(() => { const m = window.__ff.game.scene.getScene('Menu'); return !!m && JSON.stringify(m.tabs.map((t) => t.rows || [])).includes('UNSTUCK') || document.body.innerHTML.length > 0; });
 check('no page errors', h.errors.length === 0, h.errors.join(' | '));
 await h.close();

@@ -10,7 +10,7 @@ const tap = async (c, ms = 80) => { await press(c); await h.sleep(ms); await rel
 // ---- daily challenge: deterministic seed and modifiers
 const dd = await G(async () => {
   const D = await import('/src/systems/daily.js'), M = await import('/src/data/mods.js');
-  const a = D.dailyMods(20260101), b = D.dailyMods(20260101), c = D.dailyMods(20260102);
+  const a = D.dailyMods(20260101), b = D.dailyMods(20260101);
   return { same: a.join() === b.join(), two: a.length === 2 && a[0] !== a[1] && a.every((m) => M.MODS[m]), seed: D.dailySeed(20260101) === D.dailySeed(20260101) && D.dailySeed(20260101) !== D.dailySeed(20260102), varied: [1, 2, 3, 4, 5, 6, 7].map((i) => D.dailyMods(20260100 + i).join()).filter((v, i, ar) => ar.indexOf(v) === i).length >= 3 };
 });
 check('the daily seed and its two modifiers are fixed for a day and change daily', dd.same && dd.two && dd.seed && dd.varied, JSON.stringify(dd));
@@ -47,7 +47,7 @@ check('Endless Winter keeps the blizzard up', await G(async () => { const g = wi
 const sc = await G(async () => {
   const S = window.__ff.S, D = await import('/src/systems/daily.js'); localStorage.removeItem('frostfall_board');
   S.run = { kills: 10, camps: 0, barrows: 1, champions: 2, chests: 3, deaths: 0 }; S.gold = 100; S.flags.wyrmDead = true; S.hearts = { rime: true };
-  const s1 = D.runScore(); const row = D.submitScore(); S.run.kills = 50; const s2 = D.runScore(); D.submitScore(); S.run.kills = 5; D.submitScore();
+  const s1 = D.runScore(); D.submitScore(); S.run.kills = 50; const s2 = D.runScore(); D.submitScore(); S.run.kills = 5; D.submitScore();
   const board = D.loadBoard();
   S.run.deaths = 3; const s3 = D.runScore();
   return { s1, s2, s3, rows: board.length, best: board[0].score === s2, today: D.todaysBest() === s2 };
@@ -64,7 +64,7 @@ check('the Champion Gauntlet sends one elite per wave with a growing escort', ar
 await G(() => window.__ff.game.scene.getScene('Game').changeMap('arena', 'in', 'door'));
 await h.sleep(1500);
 const boon = await G(async () => {
-  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, M = await import('/src/data/mods.js'), dlg = await import('/src/systems/dialogue.js');
+  const g = window.__ff.game.scene.getScene('Game'), dlg = await import('/src/systems/dialogue.js');
   const real = dlg.dialogue.hud; window.__real = real; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => 0, hideBox() {}, scene: real.scene };
   g.player.invuln = 999; g.startArena('boon'); const a = g.arena;
   a.wave = 2; a.cleared = 0; a.foes = []; a.t = 0; g.arenaTick(0.1);       // wave 1 cleared -> offers boons

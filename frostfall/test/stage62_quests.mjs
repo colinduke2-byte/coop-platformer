@@ -29,16 +29,16 @@ check('every quest has text, a state and working step text and markers in every 
 
 // every quest giver is a person who exists in the world
 const givers = await G(async () => {
-  const Q = await import('/src/data/quests.js'), D = await import('/src/data/dialogue.js'), out = [];
-  const names = new Set(Object.values(D.NPC_DEFS).map((n) => n.name.toLowerCase().replace(/^(elder|captain|matriarch|chief|shaman|scout|warden-mother|keeper|the) /, '')));
+  const Q = await import('/src/data/quests.js'); await import('/src/data/dialogue.js'); const out = [];
+
   for (const [id, q] of Object.entries(Q.QUESTS)) { const g = q.giver.toLowerCase().split(',')[0].replace(/^(elder|captain hesper|matriarch|chief|shaman|the|mirra the|a note|asta the|maren|maud the|brann the|halldor the) /, ''); out.push([id, g]); }
   return out.length;
 });
 check('quest givers are listed', givers >= 25, String(givers));
 
 // the smuggler's note: a quest that starts from something you find
-const note = await G(async () => {
-  const g = window.gs(), St = window.__ff.S, N = await import('/src/systems/notes.js'), D = await import('/src/world/discovery.js');
+await G(async () => {
+  const g = window.gs();
   g.scene.restart({ map: 'forest', spawn: 'west' }); return true;
 });
 await h.sleep(1500);

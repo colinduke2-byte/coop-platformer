@@ -16,7 +16,7 @@ check('moon phases cycle and the clock counts days', m.new0 && m.full4 && m.bloo
 
 // creature swaps
 const sw = await G(async () => {
-  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, N = await import('/src/world/nightlife.js'), M = await import('/src/systems/moon.js');
+  const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S, N = await import('/src/world/nightlife.js');
   let wolves = 0, were = 0, ghosts = 0, deer = 0;
   S.time = 22 * 60; S.days = 4;                         // full moon, deep night
   for (let i = 0; i < 100; i++) { const k = N.nightKind(g, 'wolf', { spec: { tier: 2 }, key: 'k' + i }); if (k === 'werewolf') were++; else wolves++; if (N.nightKind(g, 'deer', { spec: {}, key: 'd' + i }) === 'deer') deer++; if (N.nightKind(g, 'draugr', { spec: {}, key: 'g' + i }) === 'ghost') ghosts++; }

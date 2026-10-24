@@ -26,7 +26,7 @@ check('the board never breaks and offers a mix of jobs', Object.keys(er).length 
 
 // lost satchel completes when you reach it; escort completes when the pilgrim arrives with you
 const done = await G(async () => {
-  const C = await import('/src/data/contracts.js'), S = window.__ff.S, g = window.__ff.game.scene.getScene('Game');
+  const S = window.__ff.S, g = window.__ff.game.scene.getScene('Game');
   const out = {}; g.PickupClass = g.PickupClass || (await import('/src/entities/Pickup.js')).default;
   const T = 16;
   S.contracts = { day: (await import('/src/systems/bless.js')).today(), active: ['lost_x', 'escort_y'], done: {}, offers: [

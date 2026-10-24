@@ -87,7 +87,7 @@ check('the Storm Giant wakes, changes phase and falls', sg.has && sg.engaged && 
 
 // ---- creatures
 const mk = await G(async () => {
-  const g = window.gs(), E = await import('/src/data/enemies.js'), out = {};
+  const g = window.gs(), out = {};
   window.__ff.S.flags.introDone = true;
   await new Promise((r) => setTimeout(r, 300));
   for (const k of ['bogwraith', 'boghag', 'leech', 'mudlurker', 'thunderbird', 'mammoth', 'nomad', 'nomadshaman', 'stonegiant', 'werewolf', 'ghost']) { const e = g.addEnemy(k, g.player.x + 60, g.player.y + 20, { tier: 1 }); out[k] = !!e && e.maxHp > 0; e.destroy(); }
@@ -134,15 +134,15 @@ for (const n of ['wick_trader', 'wick_smith', 'wick_fisher', 'wick_child', 'wick
 check('every villager has something to say', true);
 
 // ---- round 7: inn, cartographer, full-service smith, sell-all-junk
-const svc = await G(async () => {
-  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js');
+await G(async () => {
+
   await import('/src/data/regions2_story.js');
   window.gs().changeMap('fens', 'entry', 'door');
   return true;
 });
 await h.sleep(2200);
 const rum = await G(async () => {
-  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
+  const St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
   const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async () => 0, hideBox() {}, scene: real.scene };
   St.gold = 100; delete St.flags.waypoint; const before = Object.keys(St.discovered || {}).length;
   const ok = await SV.rumour('Marit', 30);
@@ -160,7 +160,7 @@ const chart = await G(async () => {
 });
 check('a chart reveals the map and marks the places inside its radius', chart.fog > 100 && chart.places >= 2, JSON.stringify(chart));
 const inn = await G(async () => {
-  const g = window.gs(), St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
+  const St = window.__ff.S, SV = await import('/src/data/services2.js'), dlg = await import('/src/systems/dialogue.js');
   const real = dlg.dialogue.hud; dlg.dialogue.hud = { say: async () => {}, choose: async (o) => (o.some((x) => /Room/.test(x)) ? 0 : 3), hideBox() {}, scene: real.scene };
   St.gold = 100; St.hp = 5; St.time = 14 * 60; const day0 = St.days || 0;
   await SV.innMenu('Marit', { room: 22 });
@@ -169,7 +169,7 @@ const inn = await G(async () => {
 });
 check('a room heals, saves, sets the respawn point and sleeps until morning', inn.hp === inn.max && Math.abs(inn.t - 420) < 10 && inn.days === 1 && inn.gold === 78 && inn.resp === 'fens', JSON.stringify(inn));
 const junk = await G(async () => {
-  const St = window.__ff.S, SV = await import('/src/data/services.js'), { ITEMS } = await import('/src/data/items.js');
+  const St = window.__ff.S, SV = await import('/src/data/services.js'), { } = await import('/src/data/items.js');
   St.inv = { hide: 3, mammoth_tusk: 2, hp_potion: 2 }; St.gold = 0;
   const j = SV.junkItems(); const r = SV.sellJunk();
   return { j, r, left: Object.keys(St.inv).sort().join(), gold: St.gold };

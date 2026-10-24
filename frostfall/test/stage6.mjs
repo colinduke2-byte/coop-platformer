@@ -2,14 +2,14 @@ import { launch, check, failCount, FRAME_MS } from './harness.mjs';
 
 const h = await launch();
 const G = (fn, a) => h.ev(fn, a);
-const press = (c) => h.ev((c) => window.__ff.keys._press(c), c);
-const rel = (c) => h.ev((c) => window.__ff.keys._release(c), c);
+
+
 // The real game loop is paused after the page opens: time only moves through h.frames, so every step of a
 // conversation sees exactly the same number of frames however busy the machine is.
 const F = (ms) => Math.max(1, Math.round(ms / FRAME_MS));
 const wait = (ms) => h.frames(F(ms));
 const tap = (c, ms = 80) => h.tap(c, F(ms), F(70));
-const game = () => `window.__ff.game.scene.getScene('Game')`;
+
 const dlg = () => G(() => { const hud = window.__ff.game.scene.getScene('Hud'); return hud.dlg ? { name: hud.dlg.name, choices: hud.dlg.choices, text: hud.dlg.pages?.[hud.dlg.p] } : null; });
 
 // advance a conversation to its end; picks[i] = choice index for the i-th choice prompt
@@ -69,7 +69,7 @@ await goNear('bjorn');
 await wait(200);
 await tap('KeyE');
 await wait(200);
-let s1 = await talk([0]);
+await talk([0]);
 check('Bjorn gives the wolf quest', await S('quests.wolves.status') === 'active');
 check('Bjorn gave arrows', await S('arrows') === 25, await S('arrows'));
 for (let i = 0; i < 3; i++) await G(() => window.__ff.bus?.emit?.('x'));

@@ -26,7 +26,7 @@ check('prompts name keys by default and pad buttons by the learned map', pr.key 
 check('tips fill in the right button names', pr.raw && pr.got.includes('HOLD C'), pr.got);
 
 // ---- bestiary and item index
-const ix = await G(async () => {
+await G(async () => {
   const S = window.__ff.S, g = window.__ff.game.scene.getScene('Game');
   S.seen = {}; S.kills = {}; S.found = {}; S.inv = {};
   g.openMenu(-1, 'LORE'); return true;

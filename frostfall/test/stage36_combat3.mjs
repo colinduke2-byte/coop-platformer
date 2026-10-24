@@ -57,7 +57,7 @@ check('a mace breaks a knight\'s guard and bites through armour', mace.iron_mace
 // ---- riposte after a parry
 await arena();
 const rip = await G(() => {
-  const g = window.gs(), p = g.player, S = window.__ff.S; const R0 = Math.random; Math.random = () => 0.5;      // no damage noise, no crits
+  const g = window.gs(), p = g.player; const R0 = Math.random; Math.random = () => 0.5;      // no damage noise, no crits
   const e = g.addEnemy('draugr', 300 + 14, 250); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0, dmg: 0 }; e.statuses = {}; e.alerted = true;
   p.onParry(e, e.x, e.y);
   const armed = p.riposteT > 0;
@@ -73,7 +73,7 @@ check('a parry arms a riposte that hits much harder, once', rip.armed && rip.use
 // ---- guard crush
 await arena();
 const crush = await G(async () => {
-  const g = window.gs(), p = g.player, S = window.__ff.S, I = (await import('/src/data/items.js')).ITEMS;
+  const g = window.gs(), p = g.player, S = window.__ff.S;
   S.equip.offhand = 'iron_shield'; S.inv.iron_shield = 1;
   p.invuln = 0; p.iframes = 0; p.mode = 'free'; p.blocking = true; p.blockT = 1; S.hp = S.maxHp; S.sp = S.maxSp;
   const bear = g.addEnemy('bear', p.x + 20, p.y); bear.cfg = { ...bear.cfg, speed: 0, chase: 0, detect: 0 };
@@ -99,7 +99,7 @@ check('running dry of stamina leaves you winded (slower)', wind.winded && wind.s
 
 // ---- armour weight
 const weights = await G(async () => {
-  const g = window.gs(), p = g.player, S = window.__ff.S; const out = {};
+  const S = window.__ff.S; const out = {};
   for (const a of ['hunter_garb', 'iron_cuirass', 'bulwark_plate']) { S.equip.armor = a; S.inv[a] = 1; const st = (await import('/src/systems/stats.js')).stats; const T = (await import('/src/data/tuning.js')).TUNE.player; out[a] = [st.weight(), T.weights[st.weight()].roll, T.weights[st.weight()].knock]; }
   S.equip.armor = 'fur_tunic';
   return out;
@@ -108,7 +108,7 @@ check('light armour rolls cheaply and slides; heavy rolls dearly and stands firm
 
 // ---- AI: flanking wolves take opposite sides
 await arena();
-const flank = await G(async () => {
+await G(async () => {
   const g = window.gs(), p = g.player; const ws = [];
   for (let i = 0; i < 3; i++) { const w = g.addEnemy('wolf', p.x + 90 + i * 4, p.y + (i - 1) * 6); w.statuses = {}; w.alert(true); ws.push(w); }
   return 1;
@@ -125,7 +125,7 @@ check('knights standing together form a shield wall (take less damage)', await G
 
 // ---- AI: a hurt bandit slips away and drinks
 await arena();
-const drink = await G(() => { const g = window.gs(), p = g.player; const b = g.addEnemy('bandit', p.x + 60, p.y); b.alert(true); b.hp = Math.round(b.maxHp * 0.2); window.__b = b; return true; });
+await G(() => { const g = window.gs(), p = g.player; const b = g.addEnemy('bandit', p.x + 60, p.y); b.alert(true); b.hp = Math.round(b.maxHp * 0.2); window.__b = b; return true; });
 await h.sleep(500);
 await G(() => { const b = window.__b; b.stateT = 0.05; });
 await h.sleep(900);

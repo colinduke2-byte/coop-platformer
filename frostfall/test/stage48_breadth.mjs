@@ -14,7 +14,7 @@ const NEW = ['ashhound', 'cindersmith', 'magmaslime', 'slimeling', 'lavawraith',
 
 // ---- the new creatures exist: sprites, definitions, bestiary pages, and they run
 const roster = await G(async (names) => {
-  const E = await import('/src/data/enemies.js'), L = await import('/src/data/lore.js'), R = await import('/src/data/registry.js'), tex = window.__ff.game.textures, g = window.gs(), out = [];
+  const E = await import('/src/data/enemies.js'), L = await import('/src/data/lore.js'), R = await import('/src/data/registry.js'), tex = window.__ff.game.textures, out = [];
   for (const k of names) {
     const c = E.ENEMIES[k]; const problems = [];
     if (!c) { out.push([k, 'missing']); continue; }
@@ -89,7 +89,7 @@ const harp = await G(async () => {
   const Pj = (await import('/src/entities/Projectile.js')).default;
   const pr = new Pj(g, 380, 250, 'arrow', 0, 0, { dmg: 5, life: 2 }); pr.enemyOwned = true; pr.pull = true; pr.org = { x: 300, y: 250 };
   g.eshots.add(pr);
-  const x0 = p.x; p.hurt(5, 2 * p.x - 300, 2 * p.y - 250, { kb: 150 });
+  p.hurt(5, 2 * p.x - 300, 2 * p.y - 250, { kb: 150 });
   for (let i = 0; i < 8; i++) { p.body.velocity.x += 0; }
   return { vx: p.body.velocity.x, cfg: !!e.cfg.pull };
 });
@@ -110,7 +110,7 @@ check('each region fields its own new creatures', has(spawns.ashen, ['ashhound',
 // ---- crossbow
 await reset();
 const xb = await G(async () => {
-  const g = window.gs(), p = g.player, S = window.__ff.S, ST = await import('/src/systems/stats.js');
+  const g = window.gs(), p = g.player, S = window.__ff.S;
   S.equip.bow = 'crossbow'; S.arrows = 20; p.face = { x: 1, y: 0 };
   const a0 = S.arrows;
   p.drawing = true; p.drawT = 0.3; p.releaseBow(0.5);                    // half wound: nothing happens

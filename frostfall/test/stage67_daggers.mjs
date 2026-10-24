@@ -6,7 +6,7 @@ await h.sleep(700);
 const G = (fn, a) => h.ev(fn, a);
 const press = (c) => G((c) => window.__ff.keys._press(c), c);
 const rel = (c) => G((c) => window.__ff.keys._release(c), c);
-const tap = async (c, ms = 60) => { await press(c); await h.sleep(ms); await rel(c); };
+
 await G(() => window.__ff.game.scene.getScene('Game').addEnemy('draugr', 380, 250));
 
 const IDS = ['hunting_knife', 'skinning_knife', 'bone_shiv', 'grimfang_bite', 'reed_stiletto', 'clan_dirk', 'smuggler_knife', 'glass_dagger', 'tide_kris', 'court_misericorde', 'ember_dagger', 'nightshade'];

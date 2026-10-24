@@ -39,7 +39,7 @@ const c = await spawn('bandit', 3, {});
 check('the same region before the story is 70% of the way along the curve', Math.abs(c.mul - 1.3 * (1 + curveT.hp * Math.pow(0.7, curveT.curve || 1))) < 0.3, JSON.stringify(c));
 check('gold drops grow with progress too', b.gold && a.gold && b.gold[1] > a.gold[1] * 2.5, JSON.stringify({ a: a.gold, b: b.gold }));
 const boss = await spawn('boss', 3, allFlags);
-const bossBase = await G(async () => { const { ENEMIES } = await import('/src/data/enemies.js'); return ENEMIES.boss.hp; });
+await G(async () => { const { ENEMIES } = await import('/src/data/enemies.js'); return ENEMIES.boss.hp; });
 check('bosses are not scaled by this system', boss.mul < 1.3 && boss.dmg === boss.baseDmg, JSON.stringify(boss));
 const deer = await spawn('deer', 3, allFlags);
 check('passive animals are left alone', deer.dmg === deer.baseDmg && deer.mul < 1.2, JSON.stringify(deer));

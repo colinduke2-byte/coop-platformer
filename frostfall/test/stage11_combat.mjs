@@ -121,7 +121,7 @@ check('arrows can be recovered', rec.arrows > 9 || rec.pk > 0, JSON.stringify(re
 
 // ---- difficulty scaling
 await reset();
-const norm = await G(() => { const g = window.__ff.game.scene.getScene('Game'); window.__sd = (d) => { localStorage.setItem('x', 1); }; return 1; });
+await G(() => { window.__sd = (d) => { localStorage.setItem('x', 1); }; return 1; });
 await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'hard'; });
 const hardHp = await dummy('draugr', 200);
 await G(async () => { (await import('/src/systems/settings.js')).settings.difficulty = 'easy'; });
