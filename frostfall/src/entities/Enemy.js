@@ -17,6 +17,7 @@ import { settings } from '../systems/settings.js';
 import { walkFrame } from '../util.js';
 import { modMul } from '../data/mods.js';
 import { routePos } from '../world/roamers.js';
+import { weatherMul } from '../world/weather.js';
 import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { nativeSpec, ensureNative } from '../art/native_registry.js';
 import '../art/native/index.js';
@@ -712,7 +713,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (duel(this, info)) return 0;                  // CB22: a Duellist turns your third combo blow aside
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
-    const em = elementMult(this.cfg, info.element);
+    // world's weather (WQ19): rain weakens fire blows (spells, fire arrows) on maps that have weather; burns keep their ticks
+    const wet = info.src !== 'dot' && (sc.def?.snow || sc.def?.outdoors || sc.def?.stream) ? weatherMul(info.element, S.weather) : 1;
+    const em = elementMult(this.cfg, info.element) * wet;
     let dmg = Math.max(1, Math.round(info.dmg / modMul('foeHpMul') * em * this.takenMul * (this.wallMul || 1) * (info.src === 'dot' ? 1 : modMul('dealMul'))));
     // armour: only a parry (or a guard-break) opens a knight up; everything else mostly bounces
     if (this.cfg.armored && info.src !== 'shout') {

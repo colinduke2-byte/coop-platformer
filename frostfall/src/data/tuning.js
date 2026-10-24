@@ -371,7 +371,7 @@ TUNE.world = {
     tremor: { every: [70, 130], rocks: 3, r: 16, delay: 1.2, dmg: 8, perTier: 4 },
     chime: { every: 6, slow: 1.4, r: 150 },
     rainRegrow: { every: 14, r: 260, max: 3 },
-    fireInRain: 0.8,               // fire damage multiplier in rain (weatherMul('fire'); for the combat code to use)
+    fireInRain: 0.8,               // fire damage multiplier in rain (weatherMul('fire'); Enemy.takeHit applies it to fire blows)
   },
   // WQ12 / WQ24: what a chartmaker or hermit pays per region milestone: [gold, + gold per tier of the region's entrance]
   survey: { half: [120, 40], landmarks: [150, 50], full: [400, 120] },
