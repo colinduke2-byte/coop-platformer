@@ -54,4 +54,8 @@ t('WQ7: Amberwell, Lanternfall and Greenhollow sit near their gate, nearer than 
   }
 });
 
+t('WQ16: roads meet at crossroads stones that name each way', () => {
+  for (const rid of ['reach', 'fens', 'ashen']) { S.seed = 8919; const c = getRegion(rid).entities.filter((e) => e.t === 'sign' && e.text[0] === 'A CROSSROADS STONE.'); assert.ok(c.length >= 4 && c.every((e) => e.text.length >= 4), `${rid}: ${c.length}`); }
+});
+
 console.log(`${n} world WQ tests passed`);
