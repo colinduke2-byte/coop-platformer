@@ -65,7 +65,7 @@ export const quickMethods = {
     if (this.player.lastHurt !== q.seenHurt) { q.seenHurt = this.player.lastHurt; if (q.combo >= 5) bus.emit('toast', 'COMBO LOST', 11); q.combo = 0; }
     if (q.combo > 0) { q.comboT -= dt; if (q.comboT <= 0) q.combo = 0; }
     if (q.rageT > 0) { q.rageT -= dt; if (q.rageT <= 0) { q.rageT = 0; bus.emit('toast', 'RAGE ENDS', 4); } }
-    if (this.def.hazard === 'embers') this.emberTick(dt);
+    if (this.def.hazard === 'embers' || q.mod === 'emberfall') this.emberTick(dt);     // PR-24: the Emberfall modifier, any room
   },
 
   // ---- a foe fell: combo, score and orbs
@@ -104,9 +104,10 @@ export const quickMethods = {
   quickWaveHook(a, foes) {
     a.twist = null;
     if (!S.quick) return;
-    if (a.mode === 'gauntlet' || a.wave < 3) return;
+    const chaos = S.quick.mod === 'chaos';     // PR-24: the Chaos modifier twists every wave from wave 2
+    if (a.mode === 'gauntlet' || a.wave < (chaos ? 2 : 3)) return;
     const rnd = a.rnd || Math.random;
-    if (a.wave % 3 !== 0 && rnd() > 0.25) return;
+    if (!chaos && a.wave % 3 !== 0 && rnd() > 0.25) return;
     a.twist = TWIST_IDS[Math.floor(rnd() * TWIST_IDS.length)];
     const tier = Math.min(3, Math.floor((a.wave - 1) / 3));
     if (a.twist === 'swarm') for (let i = 0; i < Math.min(6, 2 + Math.floor(a.wave / 3)); i++) foes.push({ kind: foes[Math.floor(rnd() * foes.length)].kind, tier, elite: false });

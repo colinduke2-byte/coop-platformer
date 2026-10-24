@@ -1,7 +1,7 @@
 // Arena Mode screens: hero pick and the results card. Both are plain scenes; the fight itself runs in GameScene on the 'pit' map.
 import Phaser from 'phaser';
 import { W, H } from '../config.js';
-import { txt } from '../art/font.js';
+import { txt, fontKey } from '../art/font.js';
 import { padHint } from '../systems/access.js';
 import { SnowFx } from '../art/snow.js';
 import { keys } from '../systems/keys.js';
@@ -9,6 +9,7 @@ import { S } from '../systems/state.js';
 import { sfx, music } from '../audio/sfx.js';
 import { HEROES, MODES, dailyArena, beginQuickRun, hasOwnHero, loadRecords, submitRecord, heroById, modeById, recordKey, arenaUnlocked, nextRoomAt, ARENA_UNLOCK } from './heroes.js';
 import { ARENAS, arenaById } from './arenas.js';
+import { ARENA_CLOAKS, ARENA_MODS, cloakOpen, modOpen, lockHint, lastPick, savePick, openUnlocks } from './unlocks.js';
 
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
@@ -26,8 +27,11 @@ export class ArenaSetupScene extends Phaser.Scene {
     if (this.list.at(-1).off) txt(this, 24, 52 + (this.list.length - 1) * 16, 'NEEDS A STORY SAVE', 3);    // why it is greyed (NP17)
     this.cursor = txt(this, 12, 44, '▶', 13);
     this.panel = this.add.rectangle(104, 42, 208, 118, 0x0b0e1a, 0.7).setOrigin(0);
-    this.info = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => txt(this, 110, 47 + i * 11, '', 6));
+    this.info = Array.from({ length: 11 }, (_, i) => txt(this, 110, 46 + i * 10, '', 6));
     this.foot = txt(this, 0, 168, '', 4); this.footPad = null;     // centred, and in controller buttons when a pad is in use
+    // PR-24: the cloak and the run modifier start on the ones you used last
+    const pick = lastPick();
+    this.cloakI = Math.max(0, ARENA_CLOAKS.findIndex((c) => c.col === pick.cloak)); this.modI = Math.max(0, ARENA_MODS.findIndex((m) => m.id === pick.mod));
     this.sel = 0; this.modeI = 0; this.arenaI = 0; this.warm = 6; this.t = 0; this.go = false;
     this.input.on('pointermove', (p) => { if (this.warm > 0) return; const i = this.list.findIndex((_, k) => p.y >= 42 + k * 16 && p.y <= 56 + k * 16 && p.x < 100); if (i >= 0 && !this.list[i].off && i !== this.sel) { this.sel = i; sfx.play('move'); } });
     this.input.on('pointerdown', (p) => { if (this.warm > 0 || p.x >= 100) return; const i = this.list.findIndex((_, k) => p.y >= 42 + k * 16 && p.y <= 56 + k * 16); if (i >= 0 && !this.list[i].off) { this.sel = i; this.begin(); } });
@@ -42,16 +46,24 @@ export class ArenaSetupScene extends Phaser.Scene {
     // each hero card names its key moves in the keys or buttons in use (NP17)
     const lines = h.id === 'own' ? [['YOUR HERO', 13], [h.off ? 'NO SAVE FOUND.' : 'YOUR CURRENT SAVE,', 6], [h.off ? 'START A GAME FIRST.' : 'GEAR AND LEVELS AS THEY ARE.', 6], ['NOTHING IS SAVED OR LOST.', 4]] : [[hero.name, hero.col], ...hero.blurb.map((b) => [b, 6]), [padHint(hero.keys, 34), 15]];
     const locked = mode.id !== 'daily' && !arenaUnlocked(arena.id);
-    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}   ${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : 'NO RECORD YET', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, locked ? 4 : 8], [locked ? `LOCKED: REACH WAVE ${ARENA_UNLOCK[arena.id]}` : nextRoomAt() ? `A NEW ARENA OPENS AT WAVE ${nextRoomAt()}` : '', locked ? 12 : 4]);
-    const ft = padHint('W/S HERO  A/D MODE  Q ARENA  E GO', 52);
+    // PR-24: cloak (best score) and run modifier (best wave); a locked one is shown with what opens it
+    const cloak = ARENA_CLOAKS[this.cloakI], cl = !cloakOpen(cloak, this.rec), md = mode.id === 'daily' ? null : ARENA_MODS[this.modI], ml = md && !modOpen(md, this.rec);
+    const hint = locked ? [`LOCKED: REACH WAVE ${ARENA_UNLOCK[arena.id]}`, 12] : cl ? [`CLOAK ${lockHint(cloak)}`, 12] : ml ? [`MOD ${lockHint(md)}`, 12]
+      : md && md.id !== 'none' ? [md.desc, 4] : nextRoomAt() ? [`A NEW ARENA OPENS AT WAVE ${nextRoomAt()}`, 4] : ['', 4];
+    lines.push([r ? `BEST ${r.score}   ${mode.id === 'rush' ? 'BOSSES' : 'WAVE'} ${r.waves}   ${r.runs} RUN${r.runs > 1 ? 'S' : ''}` : 'NO RECORD YET', 4], [`MODE   < ${mode.name} >`, 12], [mode.blurb, 4], [`ARENA  < ${arena.name} >${mode.id === 'daily' ? ' TODAY' : ''}`, locked ? 4 : 8],
+      [`CLOAK  < ${cloak.name} >`, cl ? 4 : cloak.col], [md ? `MOD    < ${md.name} >${md.mul > 1 ? ` X${md.mul}` : ''}` : 'MOD    THE DAILY TWO', ml || !md ? 4 : md.id === 'none' ? 6 : 13], hint);
+    const ft = padHint('W/S HERO  A/D MODE  Q ARENA  U CLOAK  F MOD  E GO', 52);
     if (ft !== this.footText) { this.footText = ft; this.foot.setText(ft); this.foot.x = Math.floor((W - this.foot.width) / 2); }
-    this.info.forEach((o, i) => { const l = lines[i] || ['', 6]; o.setText(l[0]); o.setFont(i === 0 ? 'f13' : l[1] === 15 ? 'f15' : l[1] === 4 ? 'f4' : l[1] === 12 ? 'f12' : l[1] === 8 ? 'f8' : 'f6'); });
+    this.info.forEach((o, i) => { const l = lines[i] || ['', 6]; o.setText(l[0]); o.setFont(fontKey(i === 0 ? 13 : l[1])); });
   }
   begin() {
     if (this.go) return;
     const h = this.list[this.sel]; if (h.off) return;
     const mode = MODES[this.modeI], opts = { mode: mode.id, arena: ARENAS[this.arenaI].id };
     if (mode.id !== 'daily' && !arenaUnlocked(opts.arena)) { sfx.play('nostamina'); return; }     // locked arenas are shown, with what opens them
+    const cloak = ARENA_CLOAKS[this.cloakI], md = ARENA_MODS[this.modI];
+    if (!cloakOpen(cloak) || (mode.id !== 'daily' && !modOpen(md))) { sfx.play('nostamina'); return; }      // so are locked cloaks and modifiers
+    opts.cloak = cloak.col; opts.mod = md.id; savePick({ cloak: cloak.col, mod: md.id });
     if (!beginQuickRun(h.id, opts)) return;
     this.go = true; sfx.play('select');
     this.scene.start('Game', { map: arenaById(S.quick.arena).map, spawn: 'in' });
@@ -67,6 +79,8 @@ export class ArenaSetupScene extends Phaser.Scene {
     }
     if (keys.pressed('left') || keys.pressed('right')) { this.modeI = (this.modeI + (keys.pressed('right') ? 1 : MODES.length - 1)) % MODES.length; sfx.play('move'); }
     if (keys.pressed('swap')) { this.arenaI = (this.arenaI + 1) % ARENAS.length; sfx.play('move'); }
+    if (keys.pressed('heavy') || keys.tabRight()) { this.cloakI = (this.cloakI + 1) % ARENA_CLOAKS.length; sfx.play('move'); }
+    if (keys.pressed('block') || keys.tabLeft()) { this.modI = (this.modI + 1) % ARENA_MODS.length; sfx.play('move'); }
     this.refresh();
     if (keys.pressed('pause')) { sfx.play('back'); this.go = true; this.scene.start('Title'); return; }
     if (keys.pressed('interact') || keys.pressed('roll')) this.begin();
@@ -77,14 +91,18 @@ export class ArenaResultsScene extends Phaser.Scene {
   constructor() { super('ArenaResults'); }
   init(data) { this.res = data; }
   create() {
+    const had = openUnlocks();
     const r = this.res, rec = submitRecord(r.hero, r.score, r.waves, r.mode || 'survival');
+    const opened = openUnlocks().filter((u) => !had.includes(u));      // PR-24: what this run unlocked
     this.cameras.main.setBackgroundColor(0x0b0e1a);
     this.add.rectangle(0, 0, W, H, 0x2a0f18).setOrigin(0).setAlpha(0.5);
     this.snow = new SnowFx(this, 40);
     txt(this, W / 2, 12, 'YOU FELL', 11).setScale(3).setOrigin(0.5, 0);
     const name = r.hero === 'own' ? 'YOUR HERO' : heroById(r.hero).name;
     const rows = [[`${name}  ${modeById(r.mode || 'survival').name}`, 13], [`${r.mode === 'rush' ? 'BOSSES FELLED' : 'WAVES CLEARED'}  ${r.waves}`, 6], [`FOES DEFEATED  ${r.kills}`, 6], [`CHAMPIONS  ${r.champions}`, 6], [`TIME  ${fmtTime(r.time)}`, 6], [`SCORE  ${r.score}`, 13], [rec.isBest ? 'NEW PERSONAL BEST!' : `BEST ${rec.best.score}   WAVE ${rec.best.waves}`, rec.isBest ? 15 : 4]];
-    rows.forEach(([s, c], i) => { const o = txt(this, 0, 56 + i * 13, s, c); o.x = Math.floor((W - o.width) / 2); });
+    if (opened.length) rows.push([`UNLOCKED: ${opened[0]}${opened.length > 1 ? ` +${opened.length - 1}` : ''}`, 13]);
+    rows.forEach(([s, c], i) => { const o = txt(this, 0, 54 + i * 12, s, c); o.x = Math.floor((W - o.width) / 2); });
+    this.opened = opened;
     const h = txt(this, 0, 164, padHint('E AGAIN   Q CHANGE HERO   ESC TITLE', 52), 4); h.x = Math.floor((W - h.width) / 2);
     // NP26: no story save yet? the way into the campaign, from the screen a new Arena player sees most
     if (!hasOwnHero()) { const st = txt(this, 0, 151, 'TRY THE STORY: A FROZEN NORTH, A HOLLOW KING', 15); st.x = Math.floor((W - st.width) / 2); }

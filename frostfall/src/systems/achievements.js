@@ -2,6 +2,7 @@
 import { S } from './state.js';
 import { bus } from './bus.js';
 import { sfx } from '../audio/sfx.js';
+import { bestWave as arenaModeBest } from '../arena/records.js';
 
 const kills = (k) => S.kills?.[k] || 0;
 const total = () => Object.values(S.kills || {}).reduce((a, b) => a + b, 0);
@@ -86,7 +87,9 @@ export const CLOAKS = [
   { col: 12, name: 'Third Winter Ember', trophy: 'ng2' },
   { col: 2, name: 'Endless Slate', trophy: 'ng3' },
   { col: 10, name: 'Arena Sand', trophy: 'arena20' },
+  { col: 5, name: "Champion's Pale", trophy: null, arenaWave: 15 },   // PR-24: won in Arena Mode (quick play), a cosmetic only
 ];
-export const cloakUnlocked = (c) => !c.trophy || !!S.trophies?.[c.trophy];
+// an Arena Mode run wears the cloak its player picked there (S.quick.cloak; arena/unlocks.js)
+export const cloakUnlocked = (c) => S.quick?.cloak === c.col || (c.arenaWave ? arenaModeBest() >= c.arenaWave : !c.trophy || !!S.trophies?.[c.trophy]);
 export const unlockedCloaks = () => CLOAKS.filter(cloakUnlocked);
 export const currentCloak = () => { const c = CLOAKS.find((x) => x.col === S.cloak); return c && cloakUnlocked(c) ? c : CLOAKS[0]; };
