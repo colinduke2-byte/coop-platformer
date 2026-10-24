@@ -11,6 +11,7 @@ import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { ITEMS } from '../data/items.js';
 import { panel } from '../ui/panel.js';
+import { crushNote } from '../entities/enemyMoves.js';
 import { TIPS, tipText, tipGroup, GROUP_ORDER, TIP_TITLE, controlsCard } from '../systems/tips.js';
 
 // the danger-colour legend (NP6), in the bestiary and the Field Guide
@@ -25,7 +26,8 @@ export function loreTab(m) {
       if (!S.seen[id] && !(S.kills[id] > 0)) continue;
       const kills = S.kills[id] || 0;
       const cfgE = ENEMIES[id], dg = cfgE && kills > 0 ? dangerName(dangerOf(cfgE.hp * TUNE.difficulty[settings.difficulty].enemyHp * (cfgE.title ? 1 : TUNE.mobs.hp * hpMul(progress(readyTierNow()))), cfgE.dmg * (cfgE.title ? 1 : TUNE.mobs.dmg * dmgMul(progress(readyTierNow()))))) : '';
-      const text = `${b.desc}\n\n${kills >= 3 ? 'WEAK TO: ' + b.weak : 'DEFEAT 3 TO LEARN ITS WEAKNESS.'}${dg ? '\n\nDANGER TO YOU NOW: ' + dg : ''}\n\nDEFEATED: ${kills}\n\n${DANGER_TEXT}`;
+      const crush = crushNote(id, cfgE);      // CB13
+      const text = `${b.desc}${crush ? '\n\n' + crush : ''}\n\n${kills >= 3 ? 'WEAK TO: ' + b.weak : 'DEFEAT 3 TO LEARN ITS WEAKNESS.'}${dg ? '\n\nDANGER TO YOU NOW: ' + dg : ''}\n\nDEFEATED: ${kills}\n\n${DANGER_TEXT}`;
       out.push({ k: 'beast', id, title: b.name, text });
     }
     // the Field Guide (NP21): the controls, the danger colours and every tip you have seen, grouped, to read again
