@@ -16,6 +16,10 @@ const THEMES = [
 
 export const THEME_HELM = { vale: 'leaf_cowl', dune: 'veil_helm', draugr: 'nordic_helm', rime: 'rime_helm', wolf: 'pale_cowl', bandit: 'hunter_hood', warren: 'clan_skull' };
 export const THEME_UNIQUE = { draugr: 'grave_brand', wolf: 'packbreaker', bandit: 'smuggler_cloak', rime: 'rimebound_mail', mine: 'delvers_charm', warren: 'bearclaw_charm', cinder: 'cinder_brooch', sea: 'tide_talisman', royal: 'court_ring', bog: 'bogfire_ring', storm: 'stormglass_amulet', vale: 'bloom_charm', dune: 'scarab_charm' };
+// WQ23: the brazier puzzle's beasts and the carving that gives their order
+export const BRAZIER_BEASTS = ['hawk', 'stag', 'serpent'];
+const BEAST_LINE = { hawk: 'THE HAWK SAW THE DAWN', stag: 'THE STAG CALLED THE HERD', serpent: 'THE SERPENT WOKE' };
+export const brazierCarving = (o) => ['A CARVING OF THREE FIRES:', `FIRST ${BEAST_LINE[o[0]]}, THEN ${BEAST_LINE[o[1]]}, AND LAST ${BEAST_LINE[o[2]]}.`];
 export function barrowTheme(seed, idx) { return THEMES[(Math.abs(seed) + idx * 7) % THEMES.length]; }
 // Themes for the delves of the other regions (chosen by the region, not the seed).
 export const EXTRA_THEMES = {
@@ -136,6 +140,21 @@ export function buildBarrow(seed, idx, tier, o = {}) {
     if (a) {
       add({ t: 'crackwall', id: `cw_${theme.id}${idx}_${tier}_${secretRoom.cy}`, x: a.wx, y: secretRoom.cy });
       add({ t: 'chest', id: `bt${idx}_9`, x: a.ax + 1, y: secretRoom.cy, loot: [{ gen: tier + 1, rarity: 2 }, { gold: 60 + tier * 40 }] });
+    }
+  }
+  // WQ23: a brazier puzzle. Three braziers in a fight room, each carved with a beast; a carving in the room before tells the
+  // order to light them (a blow, a fire spell or a torch); frost puts one out, and a wrong order wakes a guardian. The right
+  // order opens a sealed alcove. No random draws here, so every other room of the delve comes out as before.
+  const brzRoom = rooms.find((r, i) => i > 0 && r.kind === 'fight' && r.w >= 11);
+  if (brzRoom) {
+    const a = alcove(brzRoom), prev = rooms[rooms.indexOf(brzRoom) - 1], sp = prev && openCell(prev);
+    if (a && sp) {
+      const id = `bz_${theme.id}${idx}_${tier}_${brzRoom.cy}`, k0 = (Math.abs(seed) + idx) % 6;
+      const order = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]][k0].map((k) => BRAZIER_BEASTS[k]);
+      add({ t: 'brazierorder', id, order, wx: a.wx, wy: brzRoom.cy, guard: mobs[k0 % mobs.length], tier });
+      BRAZIER_BEASTS.forEach((beast, k) => add({ t: 'brazier', id, beast, x: brzRoom.x + 3 + Math.floor(k * (brzRoom.w - 7) / 2), y: brzRoom.y + 2 }));
+      add({ t: 'sign', x: sp.x, y: sp.y, text: brazierCarving(order) });
+      add({ t: 'chest', id: `bt${idx}_bz`, x: a.ax + 1, y: brzRoom.cy, loot: [{ gen: tier + 1, rarity: 1 }, { gold: 50 + tier * 30 }, { item: 'sp_potion' }] });
     }
   }
   const boss = rooms[rooms.length - 1];

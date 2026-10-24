@@ -71,4 +71,20 @@ t('WQ23: delves have a shortcut out of the boss room, often a barred side room w
   assert.ok(branch > all * 0.5 && crack > all * 0.5, `branches ${branch}/${all}, cracked walls ${crack}/${all}`);
 });
 
+t('WQ23: about half the delves have a brazier puzzle: three carved braziers, the order carved a room earlier, a sealed alcove', () => {
+  let n23 = 0, all = 0;
+  for (let seed = 1; seed <= 60; seed++) for (let idx = 0; idx < 3; idx++) {
+    const b = buildBarrow(seed * 977, idx, 1); all++;
+    const o = b.entities.find((e) => e.t === 'brazierorder'); if (!o) continue;
+    n23++;
+    const brs = b.entities.filter((e) => e.t === 'brazier'), carv = b.entities.find((e) => e.t === 'sign' && e.text[0] === 'A CARVING OF THREE FIRES:');
+    assert.equal(brs.length, 3); assert.ok(carv && carv.y > brs[0].y, 'the carving is in the room before');
+    const at = (k) => carv.text[1].indexOf(k.toUpperCase());
+    assert.ok(at(o.order[0]) < at(o.order[1]) && at(o.order[1]) < at(o.order[2]), 'the carving tells the order');
+    assert.ok(b.grid[o.wy][o.wx] === TILE.CWALL || b.grid[o.wy][o.wx] === TILE.CWALL2, 'the alcove is sealed by a wall');
+    assert.ok(brs.every((e) => b.grid[e.y][e.x] !== TILE.CWALL), 'the braziers stand on floor');
+  }
+  assert.ok(n23 > all * 0.3, `brazier puzzles ${n23}/${all}`);
+});
+
 console.log(`${n} world WQ tests passed`);
