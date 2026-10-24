@@ -7,6 +7,7 @@ import { TUNE } from '../data/tuning.js';
 import { stats } from '../systems/stats.js';
 import { bl } from '../systems/bless.js';
 import { applyStatus } from '../systems/status.js';
+import { warpable } from './bulletTime.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -20,6 +21,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.charge = opts.charge ?? 0;
     this.pierceLeft = opts.pierce || 0;
     this.ally = !!opts.ally;
+    this.owner = opts.owner || null;          // CB8: who fired it (perfect dodges, parries, thorns and "slain by" need it)
     this.ammo = opts.ammo || 'arrow';
     if (this.ammo === 'fire_arrow') this.setTint(0xf08a30); else if (this.ammo === 'bleed_arrow') this.setTint(0xc8383c);
     this.life = opts.life ?? 1.4;
@@ -31,6 +33,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(y + 20);
     this.done = false;
     this.t = 0;
+    if (this.enemyOwned) warpable(this);              // CB27: enemy shots slow down in a perfect dodge too
   }
 
   update(dt) {
@@ -48,7 +51,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   fizzle() {
     if (this.done) return;
     if (this.kind === 'fire') return this.explode();
-    if (this.kind === 'arrow' && Math.random() < 0.5) this.scene.spawnLoot(this.x, this.y, null, [['arrows', 1, [1, 1]]]);
+    if (this.kind === 'arrow' && !this.noLoot && Math.random() < 0.5) this.scene.spawnLoot(this.x, this.y, null, [['arrows', 1, [1, 1]]]);
     this.finish();
   }
 
@@ -63,7 +66,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     if (this.kind === 'fire') return this.explode();
     if (this.kind === 'arrow' || this.kind === 'bolt') {
       sfx.play('arrowhit', this); this.scene.fx.puff(this.x, this.y, 5, 3, 25, 0.25);
-      if (this.kind === 'arrow' && Math.random() < 0.55) this.scene.spawnLoot(this.x - this.body.velocity.x * 0.02, this.y - this.body.velocity.y * 0.02, null, [['arrows', 1, [1, 1]]]);
+      if (this.kind === 'arrow' && !this.noLoot && Math.random() < 0.55) this.scene.spawnLoot(this.x - this.body.velocity.x * 0.02, this.y - this.body.velocity.y * 0.02, null, [['arrows', 1, [1, 1]]]);
     }
     if (this.kind === 'frost' || this.kind === 'eshot') this.scene.fx.puff(this.x, this.y, 15, 6, 35, 0.3);
     this.finish();
@@ -143,6 +146,6 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     if (this.done || !this.enemyOwned) return;
     // a harpoon drags you toward the one who threw it: aim the knock-back from a point beyond you
     const sx = this.pull ? 2 * p.x - this.org.x : this.x - this.body.velocity.x, sy = this.pull ? 2 * p.y - this.org.y : this.y - this.body.velocity.y;
-    if (p.hurt(this.dmg, sx, sy, { kb: this.pull ? 150 : 70, inflict: this.inflict })) this.finish();
+    if (p.hurt(this.dmg, sx, sy, { kb: this.pull ? 150 : 70, inflict: this.inflict, attacker: this.owner, ranged: true, proj: this })) this.finish();
   }
 }

@@ -105,10 +105,10 @@ export class EmberDragon extends PatternBoss {
     if (this.atk !== 'breath') { super.fireAttack(player); return; }
     super.fireAttack(player);
     this.setState('attack', 0.95);
-    const sc = this.scene;
+    const sc = this.scene, aim = Math.atan2(this.dir.y, this.dir.x);
     [0.3, 0.6].forEach((t, i) => sc.time.delayedCall(t * 1000, () => {
       if (this.dead || !this.scene) return;
-      const p = sc.player.body.center, base = Math.atan2(p.y - this.cy, p.x - this.cx) + (i ? 0.24 : -0.24), n = this.B.breath.count;
+      const base = aim + (i ? 0.24 : -0.24), n = this.B.breath.count;          // CB14: rakes a fixed arc around the telegraphed line
       for (let k = 0; k < n; k++) this.orb(base + (k - (n - 1) / 2) * this.B.breath.spread, this.B.breath.speed + (k % 2) * 14, this.B.breath.dmg);
       sfx.play('frost_enemy'); sc.shake(140, 0.006);
       sc.fx.puff(this.x + (this.flipX ? -1 : 1) * 26, this.y - 8, 12, 9, 60, 0.45); sc.fx.puff(this.x + (this.flipX ? -1 : 1) * 30, this.y - 8, 13, 6, 70, 0.35);

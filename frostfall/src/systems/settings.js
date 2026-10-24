@@ -12,6 +12,7 @@ export const settings = {
   dmgNumbers: true,       // floating damage numbers
   dangerNames: 'auto',    // a foe's name in its danger colour when it notices you: auto (early levels) | always | off (NP24)
   hitStop: true,          // brief freeze on landed hits
+  padLayout: 'modern',    // CB17: 'modern' (LB block, RB heavy) or 'classic' (L3 block, right stick heavy)
   flashes: true,          // screen flashes
   intScale: false,        // integer pixel scaling
   mouse: false,           // mouse controls (click = sword, right-click = bow)

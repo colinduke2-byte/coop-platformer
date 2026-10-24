@@ -90,7 +90,7 @@ await tap('KeyJ', 60); await h.wait(250);
 check('Draugr Warden blocks frontal sword hits', (await enemy()).hp === (await enemy()).max);
 await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; e.guardBroken = 0; window.__ff.S.sp = 100; const p = window.__ff.game.scene.getScene('Game').player; p.lockT = 0; p.swing = null; });
 await h.wait(500);
-await G(() => { const e = window.__ff.game.scene.getScene('Game').enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; });
+await G(() => { const g = window.__ff.game.scene.getScene('Game'), e = g.enemies.getChildren()[0]; e.face = { x: 1, y: 0 }; e.stun = 2; e.setPosition(g.player.x + 14, g.player.y); e.body.reset(e.x, e.y); });   // it may have walked into you meanwhile
 await tap('KeyJ', 60); await h.wait(250);
 check('...but takes damage from behind', (await enemy()).hp < (await enemy()).max);
 

@@ -9,7 +9,7 @@ export const TUNE = {
   roll: { cost: 22, time: 0.34, speed: 152, iframes: 0.27, cooldown: 0.12 },
   sword: { cost: 14, total: 0.3, hitStart: 0.06, hitEnd: 0.2, move: 0.3, kb: 120, reach: 13, size: 18, xp: 3, chain: 0.4, rollCancel: 0.55 },
   lock: { range: 150, drop: 190 },
-  perfect: { window: 0.17, counter: 2.0, mult: 1.6, refund: 24, slow: 0.3, slowMs: 480 },
+  perfect: { window: 0.17, counter: 2.0, mult: 1.6, refund: 24, slow: 0.3, slowMs: 500 },
   heavy: { cost: 30, windup: 0.3, total: 0.62, dmg: 2.3, kb: 300, size: 30, stun: 1.0, poise: 3 },
   // 3-hit combo: tap J again inside the chain window. The third swing is a heavy finisher.
   combo: [
@@ -288,8 +288,8 @@ export const TUNE = {
   art: { status: { burn: 0.11, drip: 0.28, chill: 0.2, shock: 0.32 } },
   // Ordinary enemies grow with progress (see systems/enemyscale.js): f blends region tier and story milestones; at f = 1 health is x3.5, damage x2.2 (with the +10 gear upgrades of systems/upgrades.js, late fights stay fair).
   // Per-boss health and damage multipliers on top of the difficulty setting, set from the balance bot (test/balance.mjs) so each boss is hard but fair for the gear and upgrades expected where it stands.
-  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.92 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.62 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.5 }, blightmother: { hp: 0.5 }, vaultsovereign: { hp: 0.65 } },
-  scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 5.2, dmg: 2.9, gold: 2.0, elite: 0.5 },
+  bosses: { default: { hp: 1, dmg: 1 }, boss: { hp: 0.8 }, grimfang: { hp: 0.95 }, kragnar: { hp: 0.55 }, sovereign: { hp: 0.42 }, admiral: { hp: 1.25 }, hollowking: { hp: 0.36 }, blightmother: { hp: 0.46 }, vaultsovereign: { hp: 0.6 }, winter: { hp: 1.1 } },
+  scaling: { regionW: 0.7, storyW: 0.3, curve: 1.6, hp: 4.4, dmg: 2.9, gold: 2.0, elite: 0.5 },
   // The economy (PR-03 and on): what shops pay, gold rewards, gold find. Owned by the economy pass.
   economy: {
     sellRate: 0.5,             // a shop pays this share of an item's value
@@ -406,4 +406,43 @@ TUNE.hud = {
   safeLevel: 3, safeR: 400, safeWindow: 1.5,
   storyNudgeRuns: 3,             // NP26: Arena runs before the title points a player with no story save at NEW GAME
   shopTip: 7,                    // seconds a first-visit tip stays on a crafting service's message line (NP16)
+};
+
+// ---- C: combat (feel numbers for the combat pass; see docs/audit/combat.md)
+TUNE.combat = {
+  aimAssist: { deg: 12, range: 150 },
+  parryLockout: 0.4,                           // CB10: seconds after a parry that caught nothing before the next raise can parry again
+  deflect: { mul: 1, bossMul: 0.5, speed: 160, life: 1.2 },   // CB25: a parried shot flies back with this share of its damage
+  sword: { riposteAdd: 0.4 },                  // CB24: a sword's riposte window is longer
+  // CB3: when each style's blow lands, as fractions of the swing's length (start, end); the blade art crosses its middle at the start
+  hitWin: { dagger: [0.25, 0.6], sword: [0.2, 0.6], staff: [0.2, 0.6], spear: [0.3, 0.6], axe: [0.35, 0.65], mace: [0.35, 0.65], halberd: [0.35, 0.65], great: [0.4, 0.7], hammer: [0.5, 0.75] },
+  hitStopCap: 0.09,                            // CB4: hit-stop of an ordinary (non-finisher) hit never exceeds this
+  namedExec: 0.1,                              // CB9: a named foe is only executed below this share of health, and only while staggered
+  // CB24: each style's heavy attack (over TUNE.player.heavy); arc = half-angle in degrees, r = radius, shock = ground shock ahead
+  heavy: {
+    dagger: { cost: 22, windup: 0.12, total: 0.4, dmg: 1.9, kb: 120, size: 20, stun: 0.6, range: 52, step: 14 },
+    axe: { windup: 0.34, total: 0.7, dmg: 2.0, arc: 135, r: 30, stun: 0.8 },
+    spear: { windup: 0.28, total: 0.6, dmg: 2.1, size: 30, reach: 34, narrow: 0.45, root: 0.6, lunge: 170, stun: 0.6 },
+    halberd: { windup: 0.36, total: 0.76, dmg: 1.9, arc: 180, r: 36, tip: 0.65, tipMul: 1.3, kb: 260 },
+    mace: { windup: 0.36, total: 0.7, dmg: 2.1, shock: { r: 28, ahead: 14 }, stun: 0.9 },
+    hammer: { windup: 0.42, total: 0.82, dmg: 2.4, shock: { r: 34, ahead: 16 }, stun: 1.0, crushGuard: true },
+  },
+  minWindup: { easy: 0.4, normal: 0.4, hard: 0.36 },       // CB12: no regular enemy's tell is shorter than this
+  windupArmor: 0.12, armorKb: 0.6,                          // CB1: foes with kbResist >= armorKb (and mini-bosses) keep their swing unless one hit's poise passes this share of max health
+  namedPoise: 2,                                            // CB9: mini-bosses need this much more poise damage to stagger
+  strafeFlip: 0.5,                                          // CB19: seconds between turns when a waiting foe circles into a wall
+  camInset: 6,
+  relock: 0.4,                                              // CB16: seconds after a kill in which the lock moves to the next foe                                              // CB15: a ranged foe only starts its tell this far inside the screen
+  // CB23: second moves of key enemies (every Nth attack); slam = a crushing ground zone, string / bash = a crushing blow
+  alt: { every: 3, slamRange: 40, slamR: 30, slamDelay: 0.45, slamDmg: 1.1, slamWind: 1.15, crushWind: 1.15, feintWind: 0.7, feintCd: 0.35, ringN: 6, ringR: 30 },
+  // CB22: late foes (progress f from systems/enemyscale.js): three attack slots past slotsAt, cooldown x(1 - cooldown*f),
+  // a follow-up swing past followAt (chance rises to `follow` at f = 1), behaviour affixes past affixAt
+  late: { slotsAt: 0.6, cooldown: 0.25, followAt: 0.4, follow: 0.35, followWind: 0.75, affixAt: 0.4, duelStun: 0.45 },
+  // CB21 / CB26: boss signatures (first use `first` s after the fight starts, then every `cd` s, from phase `fromPhase`;
+  // phase 1 on Hard), the chance that a pick starts a scripted string, and the phase-3 echo / trail burst delays
+  sig: { windup: 0.7, recover: 0.8, first: 7, cd: 13, fromPhase: 2, string: 0.15, stringHard: 0.4, echo: 0.5, trail: 0.7, pull: 150 },
+  great: { charge: [0.45, 0.9], hold: 0.6, mult: [1, 1.35, 1.75], move: 0.3 },     // CB24: hold heavy to charge (seconds per level, damage per level)
+  axe: { keep: 2.5, maxStacks: 5, bleedT: 4, dpsPerStack: 1.5 },                   // CB24: axe blows on one foe stack its bleeding          // CB6: arrows and bolts bend toward a foe this many degrees off your facing
+  // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
+  bossPhase: { windup: [1, 0.8, 0.75], recover: [1, 0.75, 0.7], floor: 0.38, meleeFloor: 0.4, MELEE: ['slam', 'sweep', 'tail', 'charge'], hardWindup: 0.9, hardPhase2: 0.6 },
 };

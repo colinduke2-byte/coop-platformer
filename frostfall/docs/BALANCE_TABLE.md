@@ -55,3 +55,21 @@ level about right; worth a look if the late game feels easy.
 The Blight Mother is a fight you learn: a player who ignores the pods will not win; one who destroys them each time she roots
 wins with a few tries. If that first wall feels unfair, the knobs are her rooted damage taken (`takenMul = 0.25` in
 `entities/Guardians4.js`) and her root timer (12-14 s, 10 s in phase 2).
+
+## Combat pass (CB28), 2026-10-24
+
+Balance bot (`node test/balance.mjs N "name"`, Normal), before the combat pass and after it (signatures, strings, phase-3 rules,
+phase-2 melee tell floor 0.4 s, hyper-armour, then the boss HP retune below). The bot is noisy at these trial counts.
+
+| Fight | Before | After |
+|---|---|---|
+| Jarl Valdrek (iron) | 2/4 | 4/6 |
+| Blight Mother (nordic +5) | 3/6 | 2/6 (boss 17% left) |
+| Ashen Sovereign (ember) | 0/6 (boss 26% left) | 4/6 |
+| Hollow King (ember) | 2/4 | 2/6 |
+| Vault Sovereign (forged +7) | 1/6 | 2/4 |
+| tier 2 patrol (forged +6) | 1/4 | 1/4 |
+
+Boss HP: boss 0.92 -> 0.8, sovereign 0.62 -> 0.42, hollowking 0.5 -> 0.36, blightmother 0.5 -> 0.46, vaultsovereign 0.65 -> 0.6,
+winter (new) 1.1: the Long Winter is the late spike (no bot scenario yet). The bot only reacts to wind-ups, not to ground
+zones, so the zone-based signatures cost it more than they cost a player.

@@ -8,6 +8,7 @@ import { TUNE } from '../data/tuning.js';
 import { elementMult } from '../systems/damage.js';
 import { dist, norm } from '../util.js';
 import { saveGame } from '../systems/save.js';
+import { dangerMark } from './danger.js';
 import { say, choose, runScript } from '../systems/dialogue.js';
 import { baseKey } from '../art/tintbake.js';      // a tinted ring wears a baked texture (VX-03): compare its own key
 
@@ -78,8 +79,7 @@ export default class Grimfang extends Boss {
     } else if (a === 'leap') {
       const pc = sc.player.body.center;
       this.leapTo = { x: pc.x, y: pc.y };
-      this.tele.push(sc.add.image(pc.x, pc.y, 'disc').setTint(C[11]).setAlpha(0.22).setScale(this.B.leap.r / 32).setDepth(5));
-      this.tele.push(sc.add.image(pc.x, pc.y, 'ring').setTint(C[11]).setAlpha(0.8).setScale(this.B.leap.r / 32).setDepth(6));
+      this.tele.push(...dangerMark(sc, pc.x, pc.y, this.B.leap.r, C[11], 0.22));
     } else if (a === 'howl') {
       this.tele.push(sc.add.image(this.cx, this.cy, 'ring').setTint(C[13]).setAlpha(0.8).setScale(0.3).setDepth(6));
     }
@@ -91,7 +91,7 @@ export default class Grimfang extends Boss {
     if (this.blink <= 0) { this.blink = 0.08; this.blinkOn = !this.blinkOn; }
     for (const t of this.tele) {
       if (this.atk === 'howl') t.setScale(0.3 + k * 2.5).setAlpha(0.9 - k * 0.5);
-      else t.setAlpha((baseKey(t) === 'ring' ? 0.5 : 0.18) + k * 0.4);
+      else t.setAlpha((t.ringy || baseKey(t) === 'ring' ? 0.5 : 0.18) + k * 0.4);
     }
     if ((this.atk === 'bite' || this.atk === 'claw') && k < 0.55) {            // keeps aiming until late
       const p = this.scene.player.body.center, n = norm(p.x - this.cx, p.y - this.cy), dc = this.B[this.atk], len = dc.speed * dc.time;

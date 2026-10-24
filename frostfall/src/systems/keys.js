@@ -19,6 +19,7 @@ let menuMode = () => false;
 export const setMenuMode = (fn) => { menuMode = fn; };
 export const inMenu = () => { try { return menuMode(); } catch { return false; } };
 const MENU_FACE = { b0: 'V:KeyE', b1: 'PadBack2', b4: 'PadTabL', b5: 'PadTabR' };
+const MENU_DPAD = { hu: 'V:KeyW', hd: 'V:KeyS', hl: 'V:KeyA', hr: 'V:KeyD' };
 export const virt = (code) => 'V:' + code;
 function rebuild() {
   codeToActions = {};
@@ -107,26 +108,36 @@ export const keys = {
 // Gamepads (USB or Bluetooth, incl. 8BitDo in X-input / Switch / D-input modes).
 // Every physical input gets an id: b<N> = button N, a<N>+ / a<N>- = axis N pushed one way, h<udlr> = hat / d-pad.
 // A map from input id -> virtual key code drives the game; players can re-learn it in Pause > System > Controller.
-export const PAD_DEFAULT = {
+// CB17: the default layout puts block / parry on LB and the heavy attack on RB (never on a stick you are steering with);
+// spells move to the d-pad. The old layout stays as Settings > Input > PAD LAYOUT: CLASSIC.
+export const PAD_MODERN = {
+  b0: 'Space', b1: 'KeyE', b2: 'KeyJ', b3: 'KeyK', b4: 'KeyF', b5: 'KeyU', b6: 'KeyC', b7: 'KeyR', b8: 'KeyG', b9: 'Escape', b11: 'KeyT',
+  b12: 'KeyL', b13: 'KeyQ', b14: 'KeyV', b15: 'Digit3',
+  hu: 'KeyL', hd: 'KeyQ', hl: 'KeyV', hr: 'Digit3',                        // d-pad: cast / swap spell / switch arrows / stamina potion
+  'a2-': 'Digit1', 'a2+': 'Digit2',                                         // right stick: health potion / mana potion
+};
+export const PAD_CLASSIC = {
   b0: 'Space', b1: 'KeyE', b2: 'KeyJ', b3: 'KeyK', b4: 'KeyQ', b5: 'KeyL', b6: 'KeyC', b7: 'KeyR', b8: 'KeyG', b9: 'Escape', b10: 'KeyF', b11: 'KeyT',
   b12: 'KeyW', b13: 'KeyS', b14: 'KeyA', b15: 'KeyD',
   hu: 'KeyW', hd: 'KeyS', hl: 'KeyA', hr: 'KeyD',
   'a3-': 'KeyU', 'a3+': 'KeyV', 'a2-': 'Digit1', 'a2+': 'Digit2',          // right stick: heavy / ammo / health potion / mana potion
 };
+export let PAD_DEFAULT = PAD_MODERN;
+const padBase = () => (PAD_DEFAULT = settings.padLayout === 'classic' ? PAD_CLASSIC : PAD_MODERN);
 export const PAD_ACTIONS = [
   ['Space', 'DODGE ROLL'], ['KeyJ', 'SWORD'], ['KeyK', 'BOW'], ['KeyL', 'CAST SPELL'], ['KeyQ', 'SWAP SPELL'], ['KeyR', 'SHOUT'], ['KeyG', 'SWAP SHOUT'],
   ['KeyU', 'HEAVY ATTACK'], ['KeyT', 'LOCK ON'], ['KeyF', 'BLOCK'], ['KeyC', 'SNEAK'], ['KeyE', 'INTERACT'], ['KeyV', 'SWITCH ARROWS'],
   ['Digit1', 'HEALTH POTION'], ['Digit2', 'MANA POTION'], ['Digit3', 'STAMINA POTION'], ['KeyI', 'PACK'], ['KeyM', 'MAP'], ['KeyO', 'JOURNAL'], ['Escape', 'PAUSE'],
 ];
 // cached until the learned map changes (pollPad reads it every frame)
-let mapCache = null, mapSrc;
+let mapCache = null, mapSrc, mapLay;
 export const padMap = () => {
-  if (mapCache && mapSrc === settings.padMap) return mapCache;
-  const m = { ...PAD_DEFAULT, ...(settings.padMap || {}) }; for (const k of Object.keys(m)) if (!m[k]) delete m[k];
-  mapSrc = settings.padMap; mapCache = m; return m;
+  if (mapCache && mapSrc === settings.padMap && mapLay === settings.padLayout) return mapCache;
+  const m = { ...padBase(), ...(settings.padMap || {}) }; for (const k of Object.keys(m)) if (!m[k]) delete m[k];
+  mapSrc = settings.padMap; mapLay = settings.padLayout; mapCache = m; return m;
 };
 export function setPadBinding(code, inputId) {
-  const map = { ...PAD_DEFAULT, ...(settings.padMap || {}) };
+  const map = { ...padBase(), ...(settings.padMap || {}) };
   for (const k of Object.keys(map)) if (map[k] === code && !/^h[udlr]$/.test(k)) map[k] = null;      // null = explicitly unbound
   map[inputId] = code;
   settings.padMap = map; saveSettings();
@@ -218,6 +229,7 @@ export function pollPad() {
       const menu = pad.mapping === 'standard' && inMenu();
       for (const id of act) {
         if (menu && MENU_FACE[id]) { want.add(MENU_FACE[id]); continue; }
+        if (menu && MENU_DPAD[id]) { want.add(MENU_DPAD[id]); continue; }      // CB17: the d-pad always navigates menus
         const c = map[id]; if (c) want.add(V(c));
       }
       if (act.has('b5') && !menu) want.add('PadBack');

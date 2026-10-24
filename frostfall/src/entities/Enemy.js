@@ -21,6 +21,9 @@ import { hasClips, clipFrame, clipOf } from '../art/anim.js';
 import { nativeSpec, ensureNative } from '../art/native_registry.js';
 import '../art/native/index.js';
 import { applyStatus, clearStatus, tickStatuses, statusMods, ELEMENT_STATUS } from '../systems/status.js';
+import { tip } from '../systems/tips.js';
+import { warpable } from './bulletTime.js';
+import { chooseAlt, altAttack, shotDir, followUp, duel } from './enemyMoves.js';
 
 const BEASTS_NOSE = new Set(['werewolf', 'wolf', 'bear', 'lynx', 'boar', 'alpha', 'grimfang']);
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -63,6 +66,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.cfg = { ...this.cfg, dmg: Math.round(this.cfg.dmg * dmgMul(f)) };
       if (this.cfg.loot?.gold) this.cfg.loot = { ...this.cfg.loot, gold: [Math.round(this.cfg.loot.gold[0] * goldMul(f)), Math.round(this.cfg.loot.gold[1] * goldMul(f))] };
       this.maxHp = Math.round(this.maxHp * hpMul(f));
+      if (this.cfg.cooldown) this.cfg = { ...this.cfg, cooldown: this.cfg.cooldown * (1 - TUNE.combat.late.cooldown * f) };   // CB22: late foes attack more often
     }
     if (cfg.title) {                             // bosses: their own health and damage tuning (TUNE.bosses)
       const bt = { ...TUNE.bosses.default, ...(TUNE.bosses[kind] || {}) }, ngb = ngBoss();     // PR-17: bosses scale in NG+ too
@@ -72,7 +76,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (cfg.kind !== 'boss') {                  // the difficulty sets telegraph length and chase speed (bosses keep their own timing)
       const D = diff();
       if (D.windup !== 1 || D.chase !== 1) this.cfg = { ...this.cfg, windup: this.cfg.windup * D.windup, chase: (this.cfg.chase || 0) * D.chase };
+      const floor = TUNE.combat.minWindup[settings.difficulty] ?? TUNE.combat.minWindup.normal;        // CB12: every tell can be read
+      if (!cfg.passive && this.cfg.windup < floor) this.cfg = { ...this.cfg, windup: floor };
     }
+    // CB1 / CB9: big creatures and named foes keep their swing through light blows (a share of max health in one hit's poise breaks it)
+    this.windupArmor = cfg.kind === 'boss' ? 0 : cfg.poiseWindup ?? ((cfg.kbResist ?? 0) >= TUNE.combat.armorKb || cfg.mini ? TUNE.combat.windupArmor : 0);
     this.hp = this.maxHp;
     if (this.cfg.regenRate) this.regen = this.cfg.regenRate;
     this.displayName = this.cfg.name;
@@ -97,6 +105,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.blink = 0;
     this.pathT = 0;
     this.wp = null;
+    warpable(this);                                   // CB27: slowed by a perfect dodge
   }
 
   // Native-pixel art is already at its on-screen size, so scale requests (bosses call setScale) are ignored.
@@ -139,6 +148,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   setState(s, t = 0) { this.state = s; this.stateT = t; }
+  // CB9: bosses, titled foes and the named mini-bosses
+  get named() { return !!(this.isBoss || this.cfg.title || this.cfg.mini); }
 
   update(dt, player) {
     if (this.dead) return;
@@ -417,7 +428,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
           const vx = -to.y * this.orbitDir + to.x * radial * 0.9, vy = to.x * this.orbitDir + to.y * radial * 0.9;
           const nn = norm(vx, vy);
           b.setVelocity(nn.x * cfg.chase * slow, nn.y * cfg.chase * slow);
-          if (this.cd <= 0 && d < cfg.range && sc.takeToken(this)) this.startWindup(to);
+          if (this.cd <= 0 && d < cfg.range && this.onCamera() && sc.takeToken(this)) this.startWindup(to);
           break;
         }
         // approach: straight if the way is clear, else follow the tile path
@@ -455,14 +466,16 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       case 'windup': {
         b.setVelocity(0, 0);
         this.blink -= dt;
-        if (this.blink <= 0) { this.blink = 0.07; this.blinkOn = !this.blinkOn; }
+        if (this.blink <= 0) { this.blink = this.cfg.crush ? 0.11 : 0.07; this.blinkOn = !this.blinkOn; }
         // roll-punishers hold the swing while you are mid-roll and strike as you land
         if (cfg.punishRoll && this.stateT <= 0.08 && player.mode === 'roll' && (this.holdT = (this.holdT || 0) + dt) < 0.8) { this.stateT = 0.08; break; }
+        if (this.stateT <= 0 && this.feint) { this.feint = false; this.setState('chase'); this.cd = TUNE.combat.alt.feintCd; this.mark('?', 13, 0.4); break; }   // CB23: a feint
         if (this.stateT <= 0) { this.holdT = 0; this.startAttack(player, to); }
         break;
       }
       case 'attack': {
         this.attackTick(dt, player);
+        if (this.stateT <= 0 && followUp(this, player)) break;          // CB22 / CB23: a second swing
         if (this.stateT <= 0) { this.setState('recover', cfg.recover); b.setVelocity(0, 0); this.cd = cfg.cooldown; }
         break;
       }
@@ -475,16 +488,25 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   canAttack() { return true; }
+  attackSlots() { return (this.progressF || 0) > TUNE.combat.late.slotsAt ? 3 : 2; }      // CB22: late in the game three may strike at once
+  // inside the camera's view, a few pixels in from the edge
+  onCamera() {
+    const v = this.scene.cameras.main.worldView, m = TUNE.combat.camInset;
+    return this.x > v.x + m && this.x < v.right - m && this.y > v.y + m && this.y < v.bottom - m;
+  }
 
   strafe(to, d, slow) {
     if (!this.strafeDir) this.strafeDir = Math.random() < 0.5 ? 1 : -1;
     const want = 36;                       // keep a ring around the player
     const radial = d > want + 6 ? 0.8 : d < want - 6 ? -0.8 : 0;
-    const vx = (-to.y * this.strafeDir + to.x * radial), vy = (to.x * this.strafeDir + to.y * radial);
+    const sc = this.scene, walled = this.body.blocked.none === false;
+    // CB19: turn back from a wall at most every half second, and step out from it, instead of reversing every frame
+    if (walled && sc.t - (this.strafeFlipT ?? -9) > TUNE.combat.strafeFlip) { this.strafeDir *= -1; this.strafeFlipT = sc.t; }
+    const out = walled ? -0.6 : 0;
+    const vx = (-to.y * this.strafeDir + to.x * (radial + out)), vy = (to.x * this.strafeDir + to.y * (radial + out));
     const n = norm(vx, vy);
     const sp = this.cfg.chase * 0.65 * slow;
     this.body.setVelocity(n.x * sp, n.y * sp);
-    if (this.body.blocked.none === false) this.strafeDir *= -1;
   }
 
   archerMove(dt, player, d, to, slow) {
@@ -493,8 +515,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (d < cfg.keep && clear) { // back away
       b.setVelocity(-to.x * cfg.chase * 0.9 * slow, -to.y * cfg.chase * 0.9 * slow);
       if (b.blocked.none === false) b.setVelocity(-to.y * cfg.chase * 0.6, to.x * cfg.chase * 0.6);
-      if (this.cd <= 0 && d > 30) this.startWindup(to);
-    } else if (d <= cfg.range && clear) {
+      if (this.cd <= 0 && d > 30 && this.onCamera()) this.startWindup(to);
+    } else if (d <= cfg.range && clear && this.onCamera()) {      // CB15: never shoot from off screen; walk in until it can be seen
       b.setVelocity(0, 0);
       if (this.cd <= 0) this.startWindup(to);
     } else {
@@ -516,16 +538,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     return sum > 0 ? -1 : sum < 0 ? 1 : (Math.random() < 0.5 ? 1 : -1);
   }
 
-  startWindup(to) {
+  startWindup(to, wind = null) {
+    wind ??= chooseAlt(this, Math.hypot(this.scene.player.x - this.x, this.scene.player.y - this.y));      // CB23: maybe the second move
     if (this.cfg.flank) for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && o.alerted && o.cfg.flank && o.cd > 0.25 && Math.hypot(o.x - this.x, o.y - this.y) < 80) o.cd = 0.25;   // the pack pounces together
-    this.setState('windup', this.cfg.windup);
+    this.setState('windup', wind);
     this.face = dir8(to.x, to.y);
     this.dashDir = to;
     this.castTarget = { x: this.scene.player.x, y: this.scene.player.y + 3 };
     this.hitDone = false;
     this.blinkOn = true; this.blink = 0.07;
-    this.mark('!', 11, this.cfg.windup + 0.1);
-    sfx.play('telegraph', this);
+    const crush = (!!this.cfg.crush || this.altCrush) && this.cfg.kind !== 'shoot' && this.cfg.kind !== 'cast';
+    this.mark(crush ? '!!' : '!', crush ? 12 : 11, wind + 0.1);       // CB13: a shield-crushing blow has its own mark, tint and sound
+    sfx.play('telegraph', this); if (crush) { sfx.play('smash', this); tip('crush'); }
   }
 
   startAttack(player, to) {
@@ -543,6 +567,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.explodes = false; this.dead = false; this.hp = 0; this.die({ suicide: true });
       return;
     }
+    if (altAttack(this, player)) return;                 // CB23: the ground slam and the ring of bursts
     if (cfg.kind === 'cast') {
       const zn = cfg.zoneN || 1;
       for (let i = 0; i < zn; i++) {
@@ -555,9 +580,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     if (cfg.kind === 'shoot') {
-      const f = this.dashDir;
       const spd = cfg.projSpeed || 125;
-      const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2 });
+      const f = shotDir(this, player, spd);              // CB23: every third shot (always for a Marksman) leads you
+      const pr = new Projectile(this.scene, this.x + f.x * 8, this.y + 3 + f.y * 8, cfg.proj || 'bolt', f.x * spd, f.y * spd, { dmg: cfg.dmg, life: 2.2, owner: this });
       pr.inflict = cfg.inflicts;
       if (cfg.pull) { pr.pull = true; pr.org = { x: this.x, y: this.y }; }
       this.scene.eshots.add(pr);
@@ -586,7 +611,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (Phaser.Geom.Intersects.RectangleToRectangle(r, player.hurtRect)) {
       this.hitDone = true;
       const hp0 = S.hp;
-      const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this });
+      const landed = player.hurt(Math.round(this.cfg.dmg * (this.auraT > 0 ? 1.25 : 1)), this.x, this.y, { attacker: this, crush: this.altCrush });
       if (landed && this.leech) this.hp = Math.min(this.maxHp, this.hp + this.cfg.dmg * this.leech);
       // a thief only steals on a clean hit: not through a parry, a block or a ward, and not if the hit's thorns killed it
       if (landed && S.hp < hp0 && !this.dead && this.cfg.steals && !this.stolen && S.gold > 0) {
@@ -630,7 +655,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(k === 'side' && this.face.x < 0);
     }
     if (this.flashT > 0) this.setTintFill(0xffffff);
-    else if (this.state === 'windup' && this.blinkOn) this.setTint(0xff8080);
+    else if (this.state === 'windup' && this.blinkOn) this.setTint(this.cfg.crush ? 0xffb040 : 0xff8080);
     else if (this.slowT > 0) this.setTint(0x8fe0f0);
     else if (this.stateTint) this.setTint(this.stateTint);
     else if (this.cfg.tint) this.setTint(this.cfg.tint);
@@ -684,6 +709,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       }
     }
     if (this.hidden) return 0;                       // a burrowed worm cannot be hit
+    if (duel(this, info)) return 0;                  // CB22: a Duellist turns your third combo blow aside
     // dodging: nothing touches a fencer mid-sidestep
     if (this.evade > 0) { sc.fx.text(this.x, this.y - 18, 'MISS', 4, 0.6); return 0; }
     const em = elementMult(this.cfg, info.element);
@@ -706,7 +732,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!this.isBoss && !this.cfg.passive && (info.src === 'melee' || info.src === 'arrow' || info.src === 'fire' || info.src === 'shock')) {
       this.poise = (this.poise || 0) + dmg * (info.poise || 1) * modMul('poiseMul') * (info.src === 'melee' ? 1 : 0.6);
       this.poiseT = 1.6;
-      if (this.poise >= this.maxHp * 0.42 && this.staggerT <= 0 && this.hp > 0) {
+      if (this.poise >= this.maxHp * 0.42 * (this.cfg.mini ? TUNE.combat.namedPoise : 1) && this.staggerT <= 0 && this.hp > 0) {
         this.poise = 0; this.staggerT = 1.5; this.stun = Math.max(this.stun, 1.5); this.openT = Math.max(this.openT || 0, 1.5);
         this.setState('recover', 1.5); this.marker?.destroy(); this.marker = null;
         sc.fx.text(this.x, this.y - 24, 'STAGGERED', 13, 1); sfx.play('guardbreak'); sc.fx.ring(this.x, this.y + 4, 0.8, 0.4, 'ring', 0xf4d460);
@@ -723,7 +749,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       const n = norm(info.kx, info.ky);
       this.body.setVelocity(n.x * info.kb * (1 - resist), n.y * info.kb * (1 - resist));
     }
-    if (!this.superArmor || info.forceStun) {
+    const held = this.windupArmor > 0 && this.state === 'windup' && !info.heavy && !info.forceStun && dmg * (info.poise || 1) < this.maxHp * this.windupArmor;
+    if (held) sc.fx.text(this.x, this.y - 22, 'UNFLINCHING', 4, 0.5);            // CB1: the swing still comes
+    else if (!this.superArmor || info.forceStun) {
       this.stun = Math.max(this.stun, info.stun ?? 0.22);
       if (this.state === 'windup') { this.setState('chase'); this.marker?.destroy(); this.marker = null; this.cd = 0.3; }
     }
