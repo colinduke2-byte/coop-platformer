@@ -57,7 +57,7 @@ await wait(900);
 // ---- CB6: an arrow locked on a target 30 degrees off the 8-way line hits it
 await reset(); await add('draugr', 90, 52);   // atan(52/90) = 30 degrees
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); const e = g.enemies.getChildren()[0]; e.hp = e.maxHp = 500; g.player.target = e; window.__ff.S.inv.hunting_bow = 1; window.__ff.S.equip.bow = 'hunting_bow'; });
-await h.tap('KeyK', F(500), 0);
+await h.tap('KeyK', F(500), 2);
 const aim = await G(() => {
   const g = window.__ff.game.scene.getScene('Game'), s = g.shots.getChildren()[0], e = g.enemies.getChildren()[0];
   if (!s) return null;

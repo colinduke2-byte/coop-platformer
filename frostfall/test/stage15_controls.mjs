@@ -40,7 +40,7 @@ check('pressing lock-on again clears it', !(await P()).target);
 await tap('KeyT');
 await G(() => { const p = window.__ff.game.scene.getScene('Game').player; p.target.hp = 0; p.target.dead = true; });
 await wait(120);
-check('lock clears when the target dies', !(await P()).target);
+check('lock leaves the dead target (and moves to a living foe, CB16)', await G(() => { const t = window.__ff.game.scene.getScene('Game').player.target; return !t || !t.dead; }));
 
 // ---- bow aims at the lock
 await reset(); await dummy(0, -80);
