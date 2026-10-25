@@ -280,9 +280,12 @@ const bossFight = async (map, spawn, label, flag) => {
   }
   await h.sleep(3000);
   for (let i = 0; i < 12 && (await G(() => !!window.hud()?.dlg)); i++) await tap('KeyE', 40);
-  await G(() => { const g = window.gs(), p = g.player; for (const pk of g.pickups.slice()) if (pk.active !== false && pk.x) p.setPosition(pk.x, pk.y); });
-  await h.sleep(800);
-  for (let i = 0; i < 12 && (await G(() => !!window.hud()?.dlg)); i++) await tap('KeyE', 40);
+  // the prize (a Frostheart, a Heart) falls a few seconds after the guardian: walk over everything for up to 8 s
+  for (let i = 0; i < 10; i++) {
+    await G(() => { const g = window.gs(), p = g.player; for (const pk of g.pickups.slice()) if (pk.active !== false && pk.x) p.setPosition(pk.x, pk.y); });
+    await h.sleep(800);
+    for (let k = 0; k < 12 && (await G(() => !!window.hud()?.dlg)); k++) await tap('KeyE', 40);
+  }
   return { ...tot, tries, won };
 };
 let r = await dungeon('crypt', 'entry', 'crypt');
