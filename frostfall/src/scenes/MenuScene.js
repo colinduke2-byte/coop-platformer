@@ -104,6 +104,7 @@ export default class MenuScene extends Phaser.Scene {
     ];
     this.groups = GROUPS.map(([name, pages]) => ({ name, pages: pages.map((p) => this.tabs.findIndex((t) => t.name === p)).filter((i) => i >= 0) }));
     this.openAt(this.openName, this.tab);
+    memory.page[this.groups[this.groupOf()].name] = this.tabs[this.tab].name;
     this.bg = this.add.graphics();
     this.dyn = this.add.container(0, 0);
     this.dirty = true;

@@ -12,6 +12,7 @@ import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { settings } from '../systems/settings.js';
+import { padHint } from '../systems/access.js';
 import { getRegion } from '../data/maps.js';
 import { REGIONS, unlockedRegions, regionOfMap } from '../data/regions.js';
 
@@ -85,7 +86,7 @@ export function mapTab(m) {
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,
-    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : `E CURSOR  F TRAVEL  W/S ZOOM${unlockedRegions().length > 1 ? '  R REGION' : ''}`; },
+    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'E CURSOR  F TRAVEL  W/S ZOOM'; },
     captureLR: () => curMode,
     busy: () => curMode,                            // in cursor mode ESC (or B) leaves the cursor, not the whole menu
     input() {
@@ -261,6 +262,7 @@ export function mapTab(m) {
       const zl = sc < 1 ? 'OVERVIEW' : sc + 'X';
       m.T(10, 26, (MAPS[vid].name.toUpperCase().slice(0, 28) + '  ' + zl), 13);
       if (MAPS[vid].stream) { const ft = 'FOUND ' + found.length + '/' + (b.pois || []).length; m.T(310 - ft.length * 6, 26, ft, 4); }
+      if (unlockedRegions().length > 1) { const rt = padHint('R: NEXT REGION'); m.T(310 - rt.length * 6, MAPS[vid].stream ? 35 : 26, rt, 4); }   // the key shown where it acts
       // legend, two rows, each mark drawn as it appears on the map
       const LEG = [[['you', 13, 'YOU'], ['quest', 15, 'QUEST'], ['quest', 8, 'WAYPOINT'], ['hollow', 15, 'EXIT'], ['sq', 12, 'FIRE']], [['sq', 14, 'SHRINE'], ['sq', 11, 'FOE SITE'], ['sq', 6, 'PERSON'], ['sq', 13, 'CHEST'], ['sq', 4, 'SEEN FAR OFF']]];
       LEG.forEach((row, ri) => {
