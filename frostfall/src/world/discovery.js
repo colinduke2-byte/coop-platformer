@@ -43,6 +43,7 @@ export const discoveryMethods = {
     // landmarks seen from afar are marked at once, but their toast waits until the region's title card has gone, then
     // speaks as one line, not a stack under the card
     const sighted = (this.sightQueue ||= []);
+    this.sightHoldUntil ??= this.time.now + TUNE.sweep.sightDelay * 1000;      // per map: the first tick after a map load starts the wait
     for (const p of pois) {
       const id = this.mapId + ':' + p.id;
       const d = Math.hypot(p.x - px, p.y - py);
