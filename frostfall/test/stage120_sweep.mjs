@@ -56,6 +56,19 @@ const sight = await G(async () => {
 });
 check('landmarks are sighted at once but stay quiet under the title card', sight.marked >= 1 && sight.during === 0, JSON.stringify(sight));
 check('then one toast names them (it fits)', sight.after === 1 && sight.text.length <= 47, JSON.stringify(sight));
+// ---- a camp that notices you at once: its floating names stack instead of printing over each other
+const names = await G(async () => {
+  const g = window.__ff.game.scene.getScene('Game'), { settings } = await import('/src/systems/settings.js');
+  const old = settings.dangerNames; settings.dangerNames = 'always';
+  const es = g.enemies.getChildren().filter((e) => !e.dead && !e.isBoss && !e.cfg.passive).slice(0, 3);
+  g.dangerNamesShown = [];
+  for (const e of es) { e.setPosition(g.player.x + 60, g.player.y); e.alerted = true; e.hudNamed = false; }
+  await new Promise((r) => setTimeout(r, 300));
+  settings.dangerNames = old;
+  const ys = (g.dangerNamesShown || []).map((n) => Math.round(n.y));
+  return { n: es.length, ys };
+});
+check('floating foe names never print on top of each other', names.n >= 2 && names.ys.length >= 2 && new Set(names.ys).size === names.ys.length, JSON.stringify(names));
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join(' | '));
 await h.close();
 console.log(failCount() ? 'SWEEP FAILED' : 'SWEEP OK');
