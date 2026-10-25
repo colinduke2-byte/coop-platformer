@@ -224,7 +224,11 @@ export function buildRegion(def, region, seed) {
     const dir = dirOf(spot, p), paces = Math.round(Math.hypot(p.x - spot.x, p.y - spot.y) / 5) * 5;
     add({ t: 'sign', x: spot.x, y: spot.y, text: ['A WAYSTONE ON THE ROAD.', `${dir}: ${nameOf(p)}, ABOUT ${paces} PACES.`] });
   }
-  // keep forest/lake/mountain from covering roads
+  // keep forest/lake/mountain from covering roads; a lone cell left with road on all four sides (where two diagonal roads
+  // cross) becomes road too, so no rock or tree is ever planted in the middle of a crossing
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (g.t[y][x] !== TILE.PATH && Math.min(x, y, W - 1 - x, H - 1 - y) > 3 && g.t[y - 1][x] === TILE.PATH && g.t[y + 1][x] === TILE.PATH && g.t[y][x - 1] === TILE.PATH && g.t[y][x + 1] === TILE.PATH) g.t[y][x] = TILE.PATH;
+  }
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g.t[y][x] === TILE.PATH) g.res[y][x] = true;
 
   const pickOf = (list) => list[Math.floor(R() * list.length)];
@@ -232,7 +236,27 @@ export function buildRegion(def, region, seed) {
   const enemy = (kind, x, y, tier, extra = {}) => add({ t: 'enemy', kind, x, y, tier, ...extra });
   const clearing = (p, w, h, tile = def.clear ?? TILE.SNOW2) => g.rect(p.x - (w >> 1), p.y - (h >> 1), w, h, tile);
   const chest = (p, dx, dy, tier, lock) => add({ t: 'chest', id: `${p.id}_c${dx}${dy}`, x: p.x + dx, y: p.y + dy, lock, tier, mimic: tier >= 1 && R() < 0.1, loot: [{ gen: tier }, { gold: 20 + tier * 25 }, ...(R() < 0.6 ? [{ item: 'hp_potion', n: 1 + tier }] : [])] });
-  const potsAround = (p, n, rad, skin = 'pot') => { for (let i = 0; i < n; i++) add({ t: 'pot', x: p.x + Math.round((R() - 0.5) * rad * 2), y: p.y + Math.round((R() - 0.5) * rad * 2), skin }); };
+  // the nearest open cell outside every building (locked cells), for things that would land in a wall or on a door step
+  const freeNear = (x, y) => {
+    const ok = (cx, cy) => cx > 2 && cy > 2 && cx < W - 3 && cy < H - 3 && !g.isLocked(cx, cy) && !SOLID_SET.has(g.t[cy][cx]);
+    if (!g.isLocked(x, y)) return { x, y };
+    for (let r = 1; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && ok(x + dx, y + dy)) return { x: x + dx, y: y + dy };
+    return { x, y };
+  };
+  const potsAround = (p, n, rad, skin = 'pot') => { for (let i = 0; i < n; i++) add({ t: 'pot', ...freeNear(p.x + Math.round((R() - 0.5) * rad * 2), p.y + Math.round((R() - 0.5) * rad * 2)), skin }); };
+  // a house: roof rows over wall rows, windows on the top wall row, the door in the bottom one. The house and the step in
+  // front of its door are locked (Grid.lock), so no later pass (clearings, roads, props, the open-ground pass) can eat them.
+  const building = (x, y, w, rows, walls, doorX, winXs = [], roof = TILE.ROOF, wall = TILE.WOODWALL) => {
+    g.rect(x, y, w, rows, roof); g.rect(x, y + rows, w, walls, wall);
+    for (const wx of winXs) g.set(wx, y + rows, TILE.WINDOW);
+    g.lock(x, y, w, rows + walls);
+    if (doorX == null) return;
+    const dy = y + rows + walls - 1;
+    g.locked.delete(dy * W + doorX); g.set(doorX, dy, TILE.DOOR); g.lock(doorX, dy, 1, 1);
+    if (SOLID_SET.has(g.t[dy + 1]?.[doorX])) g.set(doorX, dy + 1, def.clear ?? TILE.SNOW2);
+    g.lock(doorX, dy + 1, 1, 1);
+  };
+  const lockStructure = (x, y, w, h) => g.lock(x, y, w, h);
 
   for (const p of pois) {
     const m = mobs(p.tier);
@@ -292,6 +316,7 @@ export function buildRegion(def, region, seed) {
       g.rect(p.x - 5, p.y - 4, 11, 3, TILE.STONE);
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
+      lockStructure(p.x - 5, p.y - 4, 11, 4);
       for (const dx of [-3, 4]) g.set(p.x + dx, p.y + 2, TILE.ROCK);
       add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: 'maw', spawn: 'entry', fx: 'door' });
       add({ t: 'spawn', name: 'maw', x: p.x, y: p.y });
@@ -323,6 +348,7 @@ export function buildRegion(def, region, seed) {
       g.rect(p.x - 5, p.y - 4, 11, 3, D.stone);
       g.set(p.x, p.y - 2, TILE.STAIRS); g.set(p.x + 1, p.y - 2, TILE.STAIRS);
       for (const dx of [-4, -2, 3, 5]) g.set(p.x + dx, p.y - 1, TILE.PILLAR);
+      lockStructure(p.x - 5, p.y - 4, 11, 4);
       add({ t: 'exit', x: p.x, y: p.y - 2, w: 2, h: 1, to: D.to, spawn: p.kind === 'city' ? 'gate' : 'entry', fx: 'door', needs: { throne: 'hearts4', peakroad: 'chapter3', coastroad: 'chapter3', forge: 'forgeOpen', kingroad: 'sovereignDead' }[p.kind] || null });
       add({ t: 'spawn', name: { fort: 'keep', temple: 'chapel', rootvault: 'rootvault', nest: 'nest', city: 'emberhold', peakroad: 'peakroad', forge: 'forge', coastroad: 'coastroad', kingroad: 'kingroad', tidebreak: 'tidebreak', sepulchre: 'sepulchre', fenroad: 'fenroad', stormroad: 'stormroad', reedwick: 'reedwick', mirebarrow: 'mirebarrow', skarnhold: 'skarnhold', stormspire: 'stormspire' }[p.kind] || EXTRA_GATES[p.kind]?.spawn || 'throne', x: p.x, y: p.y });
       add({ t: 'glow', x: p.x, y: p.y - 2, r: 44, col: D.col }); add({ t: 'glow', x: p.x - 4, y: p.y - 1, r: 22, col: D.col }); add({ t: 'glow', x: p.x + 5, y: p.y - 1, r: 22, col: D.col });
@@ -373,6 +399,7 @@ export function buildRegion(def, region, seed) {
       clearing(p, 14, 8);
       g.rect(p.x - 5, p.y - 2, 11, 4, TILE.WRECK); g.rect(p.x - 4, p.y - 1, 9, 2, TILE.ICESHELF); g.set(p.x - 5, p.y, TILE.ICESHELF);
       g.set(p.x + 1, p.y - 3, TILE.WRECK); g.set(p.x + 1, p.y - 4, TILE.WRECK);
+      lockStructure(p.x - 5, p.y - 2, 11, 4); lockStructure(p.x + 1, p.y - 4, 1, 2);
       for (let i = 0; i < 3 + (p.tier > 1 ? 1 : 0); i++) enemy(pickOf(['draugr', 'warden', 'wight'].concat(m.melee)), p.x - 3 + i * 3, p.y, p.tier, { camp: p.id });
       chest(p, 1, 0, p.tier + 1, 'med'); chest(p, -2, 1, p.tier, 'med');
       add({ t: 'lore', id: 'wreck' + (Number((p.id.match(/\d+$/) || ['0'])[0]) % 3), tex: 'book', x: p.x + 3, y: p.y });
@@ -380,7 +407,7 @@ export function buildRegion(def, region, seed) {
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     } else if (p.kind === 'lighthouse') {    // a lamp that never went out, and the keeper who tends it
       clearing(p, 11, 10);
-      g.rect(p.x - 1, p.y - 4, 3, 3, TILE.RUINWALL); g.set(p.x, p.y - 4, TILE.BRAZIER);
+      g.rect(p.x - 1, p.y - 4, 3, 3, TILE.RUINWALL); g.set(p.x, p.y - 4, TILE.BRAZIER); lockStructure(p.x - 1, p.y - 4, 3, 3);
       add({ t: 'npc', id: 'keeper', x: p.x, y: p.y });
       add({ t: 'fire', x: p.x + 3, y: p.y + 1, rest: true, id: p.id }); g.set(p.x + 3, p.y + 1, TILE.FIRE);
       add({ t: 'glow', x: p.x, y: p.y - 4, r: 70, col: 15 });
@@ -402,7 +429,7 @@ export function buildRegion(def, region, seed) {
       const num = Number((p.id.match(/\d+$/) || ['0'])[0]), folk = hamletFolk(def.id, num);       // WQ10: the region's own hamlet folk
       const who = folk ? folk.id : ['trapper', 'fisher', 'prospector'][num % 3];
       clearing(p, 18, 12);
-      for (const dx of [-7, 3]) { g.rect(p.x + dx, p.y - 5, 5, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 3, 5, 2, TILE.WOODWALL); g.set(p.x + dx + 2, p.y - 3, TILE.WINDOW); g.set(p.x + dx + 2, p.y - 2, TILE.DOOR); }
+      for (const dx of [-7, 3]) building(p.x + dx, p.y - 5, 5, 2, 2, p.x + dx + 2, [p.x + dx + 2]);
       g.set(p.x, p.y + 1, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y + 1, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y + 1, r: 56, col: 12 });
       add({ t: 'npc', id: who, x: p.x + 2, y: p.y + 3 });
@@ -451,7 +478,7 @@ export function buildRegion(def, region, seed) {
       chest(p, 0, -3, p.tier + 1, 'med');
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'champion' });
     } else if (def.dressers?.[p.kind]) {
-      def.dressers[p.kind]({ p, g, add, enemy, chest, clearing, potsAround, pickOf, R, m, bio, FL, ORE });
+      def.dressers[p.kind]({ p, g, add, enemy, chest, clearing, potsAround, pickOf, R, m, bio, FL, ORE, building, lockStructure });
     }
   }
 
@@ -477,14 +504,17 @@ export function buildRegion(def, region, seed) {
 
   def.extras?.({ g, R, W, H, START, add, pois, bio, entities });
 
-  // keep every placed thing on open ground
-  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'hound', 'spring', 'pot', 'sign', 'spawn']);
+  // keep every placed thing on open ground. Anything that landed inside a building (a crossroads stone placed before the
+  // hamlet, a creature in the wilds) steps out of it first: the clearing below never touches a locked building.
+  const PLACED = new Set(['enemy', 'chest', 'shrine', 'node', 'dig', 'herb', 'deer', 'fish', 'hound', 'spring', 'pot', 'sign', 'spawn', 'cairn', 'snare']);
+  const outOfBuildings = () => { for (const e of entities) if (PLACED.has(e.t) && e.x != null && g.isLocked(e.x, e.y) && SOLID_SET.has(g.t[e.y][e.x])) Object.assign(e, freeNear(e.x, e.y)); };
+  outOfBuildings();
   for (const e of entities) {
     if (!PLACED.has(e.t) || e.x < rw && e.y < rh) continue;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       if (Math.abs(dx) + Math.abs(dy) > 1 && e.t !== 'enemy') continue;
       const x = e.x + dx, y = e.y + dy;
-      if (x > 2 && y > 2 && x < W - 3 && y < H - 3 && SOLID_SET.has(g.t[y][x]) && g.t[y][x] !== TILE.PILLAR && g.t[y][x] !== TILE.GRAVE && g.t[y][x] !== TILE.BRAZIER && g.t[y][x] !== TILE.FIRE) g.t[y][x] = def.clear ?? TILE.SNOW2;
+      if (x > 2 && y > 2 && x < W - 3 && y < H - 3 && SOLID_SET.has(g.t[y][x]) && g.t[y][x] !== TILE.PILLAR && g.t[y][x] !== TILE.GRAVE && g.t[y][x] !== TILE.BRAZIER && g.t[y][x] !== TILE.FIRE && !g.isLocked(x, y)) g.t[y][x] = def.clear ?? TILE.SNOW2;
     }
     g.res[e.y][e.x] = true;
   }
@@ -527,7 +557,7 @@ export function buildRegion(def, region, seed) {
         const x = i % W, y = (i / W) | 0;
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const nx = x + dx, ny = y + dy;
-          if (nx < 1 || ny < 1 || nx >= W - 1 || ny >= H - 1) continue;
+          if (nx < 1 || ny < 1 || nx >= W - 1 || ny >= H - 1 || (g.isLocked(nx, ny) && SOLID_SET.has(g.t[ny][nx]))) continue;     // never carve through a building
           const cost = Math.min(nx, ny, W - 1 - nx, H - 1 - ny) < 3 ? 60 : SOLID_SET.has(g.t[ny][nx]) ? 5 : 1, ni = ny * W + nx;
           if (d + cost < dist[ni]) { dist[ni] = d + cost; prev[ni] = i; push(d + cost, ni); }
         }
@@ -541,6 +571,8 @@ export function buildRegion(def, region, seed) {
     }
   }
 
+  // put back any building tile a pass wrote straight into the grid, and step anything out of it again
+  g.relock(); outOfBuildings();
   // drop anything that ended up sealed off from the entrance (mountain pockets, tree knots)
   const seen = new Uint8Array(W * H), q = [[START.x, START.y]];
   seen[START.y * W + START.x] = 1;
