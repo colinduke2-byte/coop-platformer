@@ -5,11 +5,18 @@
 // PROFILE=masher (CB28): a second bot that mashes the sword key and never rolls or blocks, only drinking potions. It is the
 // floor under the floor: where the masher wins as often as the normal bot, the fight does not ask for dodging, and stun-lock
 // exploits (hitting a foe out of every wind-up) show up as masher wins.
+// PROFILE=careful (playtest pass): the "careful player" of the targets. Like the normal bot, but it times its roll to the end
+// of a tell (the last 0.22 s of a wind-up it has watched for at least 0.28 s) instead of rolling as soon as it reacts, and it
+// keeps a roll's worth of stamina in reserve instead of swinging itself dry.
 import { launch } from './harness.mjs';
 
 const trials = Number(process.argv[2] || 4);
 const only = process.argv[3] || '';
-const profile = process.env.PROFILE === 'masher' ? 'masher' : 'normal';
+const profile = ['masher', 'careful'].includes(process.env.PROFILE) ? process.env.PROFILE : 'normal';
+// Stepped (playtest pass): the bot thinks every 4 frames on the harness's stepped clock instead of a wall-clock timer, so a
+// result no longer depends on how busy the machine is, and each trial is reproducible (trial n reseeds Math.random with n).
+// REALTIME=1 brings back the old wall-clock loop for comparison.
+const stepped = !process.env.REALTIME;
 console.log(`balance bot: profile ${profile}, ${trials} trials, ${process.env.DIFF || 'normal'}`);
 
 const SCENARIOS = [
@@ -63,19 +70,43 @@ const SCENARIOS = [
   { name: 'tier 3 patrol (legendary +9)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 120, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead', 'rootDead', 'kragnarDead', 'sovereignDead', 'admiralDead', 'hollowKingDead', 'mireMotherDead'],
     setup: `S.inv.dragonbone_blade=1; S.equip.weapon='dragonbone_blade'; S.inv.dragonscale_armor=1; S.equip.armor='dragonscale_armor'; S.inv.ember_bulwark=1; S.equip.offhand='ember_bulwark'; S.inv.scale_helm=1; S.equip.head='scale_helm'; S.inv.hp_potion=8; S.bonusHp=100; S.skills.oneHanded.lvl=15; S.upgrades={dragonbone_blade:9,dragonscale_armor:9,ember_bulwark:9,scale_helm:9};`,
     enemies: [['knight', 5, -2, 3], ['reaver', 6, 2, 3], ['conjurer', 9, 0, 3], ['wight', 7, 3, 3], ['fencer', 8, -3, 3]] },
+  // PLAYTEST (stage125-129 pass): the first Heart and the three after it, with the kit a player realistically carries there.
+  // After the crypt: Valdrek's Nordic Blade and Horned Helm, the crypt vault's Nordic Shield, a bought Iron Cuirass; level about 5.
+  { name: 'Maw hall (nordic +1, tier 2 foes)', map: 'maw', spawn: 'entry', pos: [17.5, 40], limit: 100, story: ['bossDead', 'grimfangDone'],
+    setup: `S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.iron_cuirass=1; S.equip.armor='iron_cuirass'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=12; S.skills.oneHanded.lvl=5; S.upgrades={nordic_blade:1,iron_cuirass:2,nordic_shield:1,nordic_helm:1};`,
+    enemies: [['reaver', 5, -2, 2], ['wight', 8, 2, 2], ['wolf', 6, 3, 2]] },
+  { name: 'Rime Wyrm (nordic +1)', map: 'maw', spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone'],
+    setup: `S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.iron_cuirass=1; S.equip.armor='iron_cuirass'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=12; S.skills.oneHanded.lvl=5; S.upgrades={nordic_blade:1,iron_cuirass:2,nordic_shield:1,nordic_helm:1};`,
+    enemies: [] },
+  { name: 'Keep yard (nordic +3, rime)', map: 'keep', spawn: 'entry', pos: [20, 40], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+    enemies: [['knight', 5, -2, 2], ['bandit', 6, 2, 2], ['warden', 8, 0, 2]] },
+  { name: 'Warlord (nordic +3, rime)', map: 'keep', spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+    enemies: [] },
+  { name: 'Tide (nordic +4, 2 hearts)', map: 'chapel', spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead'],
+    setup: `S.hearts={rime:true,iron:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=24; S.skills.oneHanded.lvl=8; S.upgrades={nordic_blade:4,nordic_plate:4,nordic_shield:4,nordic_helm:4};`,
+    enemies: [] },
+  { name: 'Rootvault wound (nordic +5, 3 hearts)', map: 'rootvault', spawn: 'entry', pos: [20, 40], limit: 110, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'],
+    setup: `S.hearts={rime:true,iron:true,tide:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=30; S.skills.oneHanded.lvl=9; S.upgrades={nordic_blade:5,nordic_plate:5,nordic_shield:5,nordic_helm:5};`,
+    enemies: [['reaver', 5, -2, 3], ['knight', 6, 2, 3], ['alpha', 8, 0, 3]] },
+  { name: 'Root (nordic +5, 3 hearts)', map: 'rootvault', spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'],
+    setup: `S.hearts={rime:true,iron:true,tide:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=30; S.skills.oneHanded.lvl=9; S.upgrades={nordic_blade:5,nordic_plate:5,nordic_shield:5,nordic_helm:5};`,
+    enemies: [] },
 ];
 
-const h = await launch();
+const h = await launch({ paused: stepped });
 const rows = [];
 for (const sc of SCENARIOS) {
-  if (only && !sc.name.includes(only)) continue;
+  if (only && !only.split('|').some((o) => sc.name.includes(o))) continue;     // several names: 'Maw|Wyrm'
   const results = [];
   for (let t = 0; t < trials; t++) {
-    await h.open(`scene=game&map=${sc.map}&spawn=${sc.spawn}`);
-    await h.sleep(700);
+    await h.open(`scene=game&map=${sc.map}&spawn=${sc.spawn}`).catch(() => h.open(`scene=game&map=${sc.map}&spawn=${sc.spawn}`));   // a source edit mid-run reloads the page
+    if (stepped) await h.frames(42); else await h.sleep(700);
     await h.page.evaluate(async (d) => { (await import('/src/systems/settings.js')).settings.difficulty = d; }, process.env.DIFF || 'normal');
-    const r = await h.page.evaluate(async ({ sc, trial, profile }) => {
+    const r = await h.page.evaluate(async ({ sc, trial, profile, stepped }) => {
       const S = window.__ff.S;
+      if (stepped) { let a = (0x9e3779b9 * (trial + 1)) >>> 0; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
       S.flags.introDone = true;
       new Function('S', sc.setup)(S); for (const f of sc.story || []) S.flags[f] = true;
       const g = window.__ff.game.scene.getScene('Game');
@@ -87,10 +118,13 @@ for (const sc of SCENARIOS) {
       else g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy());
       for (const [k, dx, dy, tr] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16, { tier: tr || 0 }); e.alerted = true; (window.__dbg = window.__dbg || []).push([k, tr, e.maxHp, e.cfg.dmg]); (window.__en = window.__en || []).push(e); if (!window.__wrapped) { window.__wrapped = 1; const P = e.constructor.prototype, o = P.takeHit; window.__hits = []; P.takeHit = function (i) { const d = o.call(this, i); if (window.__hits.length < 12) window.__hits.push([this.cfg.name || "", i.src, Math.round(i.dmg), d]); return d; }; } e.state = 'chase'; e.cd = 0.5; }
       const keys = window.__ff.keys;
-      const tapK = (c, ms = 70) => { keys._press(c); setTimeout(() => keys._release(c), ms); };
+      let tick = 0; const pending = [];
+      const tapK = (c, ms = 70) => { keys._press(c); if (stepped) pending.push([c, tick + Math.max(1, Math.round(ms / 67))]); else setTimeout(() => keys._release(c), ms); };
       let bossEngaged = false, t0 = performance.now(), potions = 0, lastPot = 0;
       return await new Promise((res) => {
-        const iv = setInterval(() => {
+        let iv = null;
+        const clearInterval = () => { iv = 'done'; };
+        const think = () => {
           const hpOK = S.hp > 0;
           const foes = g.enemies.getChildren().filter((e) => !e.dead && !e.yieldDone);
           const elapsed = (performance.now() - t0) / 1000;
@@ -107,13 +141,13 @@ for (const sc of SCENARIOS) {
           { const pod = foes.filter((e) => e.kind === 'blightpod').sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (pod) { tgt = pod; td = Math.hypot(pod.x - p.x, pod.y - p.y); } }   // do what the game says: destroy the pods
           if (!tgt) return;
           const now2 = performance.now();
-          if (S.hp < S.maxHp * 0.4 && (S.inv.hp_potion > 0 || S.inv.hp_potion_g > 0) && now2 - lastPot > 1200) { keys._press('Digit1'); setTimeout(() => keys._release('Digit1'), 40); potions++; lastPot = now2; }
+          if (S.hp < S.maxHp * 0.4 && (S.inv.hp_potion > 0 || S.inv.hp_potion_g > 0) && now2 - lastPot > 1200) { tapK('Digit1', 40); potions++; lastPot = now2; }
           const dx = tgt.x - p.x, dy = tgt.y - p.y, d = td, nx = dx / (d || 1), ny = dy / (d || 1);
           // human-like reaction: only react once a telegraph has been visible for 0.28s
           const now = performance.now();
           let telegraph = false;
           for (const e of foes) {
-            if (e.state === 'windup') { e.__w = e.__w || now; if (now - e.__w > 280 && Math.hypot(e.x - p.x, e.y - p.y) < (e.isBoss ? 80 : 40)) telegraph = true; }
+            if (e.state === 'windup') { e.__w = e.__w || now; if (now - e.__w > 280 && Math.hypot(e.x - p.x, e.y - p.y) < (e.isBoss ? 80 : 40) && (profile !== 'careful' || e.stateT <= 0.22)) telegraph = true; }
             else e.__w = 0;
           }
           const move = (vx, vy) => { keys[vx < -0.3 ? '_press' : '_release']('KeyA'); keys[vx > 0.3 ? '_press' : '_release']('KeyD'); keys[vy < -0.3 ? '_press' : '_release']('KeyW'); keys[vy > 0.3 ? '_press' : '_release']('KeyS'); };
@@ -129,20 +163,29 @@ for (const sc of SCENARIOS) {
             move(0, 0);
             p.face = { x: Math.abs(nx) > 0.38 ? Math.sign(nx) : 0, y: Math.abs(ny) > 0.38 ? Math.sign(ny) : 0 };
             if (p.face.x === 0 && p.face.y === 0) p.face = { x: 1, y: 0 };
-            if (S.sp > 14 && p.lockT <= 0) tapK('KeyJ', 50);
+            if (S.sp > (profile === 'careful' ? 14 + 22 : 14) && p.lockT <= 0) tapK('KeyJ', 50);
           }
           // raise the shield while waiting for a telegraph
           if (S.sp > 10 && telegraph) { keys._press('KeyF'); } else keys._release('KeyF');
-        }, 60);
+        };
+        if (!stepped) { const handle = setInterval(() => { think(); if (iv === 'done') window.clearInterval(handle); }, 60); return; }
+        (async () => {
+          while (iv !== 'done') {
+            await window.__ffStep.frames(4, 1000 / 60);
+            tick++;
+            for (let i = pending.length - 1; i >= 0; i--) if (pending[i][1] <= tick) { keys._release(pending[i][0]); pending.splice(i, 1); }
+            think();
+          }
+        })();
       });
-    }, { sc, trial: t, profile }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
+    }, { sc, trial: t, profile, stepped }).catch((e) => /navigation|destroyed/.test(String(e)) ? { won: true, hp: 0, time: 0, potions: 0, left: 0, nav: true } : Promise.reject(e));
     results.push(r); if (process.env.BALDBG) console.log("  dbg", JSON.stringify(r.dbg), "maxHp", r.maxHp, "fin", JSON.stringify(r.fin), r.px, "hits", JSON.stringify(r.hits));
   }
   const wins = results.filter((r) => r.won).length;
   const avgHp = Math.round(results.filter((r) => r.won).reduce((a, r) => a + r.hp, 0) / Math.max(1, wins));
   const avgT = Math.round(results.reduce((a, r) => a + r.time, 0) / results.length);
   rows.push({ name: sc.name, wins, trials, avgHp, avgT, potions: Math.round(results.reduce((a, r) => a + r.potions, 0) / results.length * 10) / 10 });
-  const bl = results.filter((r) => r.bossLeft != null); const bossNote = bl.length ? `  boss HP left ${Math.round(bl.reduce((a, r) => a + r.bossLeft, 0) / bl.length)}%` : '';
+  const bl = sc.boss ? results.filter((r) => r.bossLeft != null) : []; const bossNote = bl.length ? `  boss HP left ${Math.round(bl.reduce((a, r) => a + r.bossLeft, 0) / bl.length)}%` : '';
   console.log(`  ${sc.name.padEnd(30)} wins ${wins}/${trials}  avg HP left (wins) ${avgHp}  avg time ${avgT}s  avg potions ${rows.at(-1).potions}${bossNote}`);
 }
 await h.close();
