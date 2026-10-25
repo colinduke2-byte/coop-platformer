@@ -13,6 +13,7 @@ import { bus } from '../systems/bus.js';
 import { PAD_ACTIONS, padMap, setPadBinding, resetPadMap, getPadInfo, capturePad } from '../systems/keys.js';
 import { textW } from '../art/font.js';
 import { panel } from '../ui/panel.js';
+import { LAYOUT } from '../ui/menuLayout.js';
 import { MAPS } from '../data/maps.js';
 import { CVD_MODES, applyCvd, padLabel } from '../systems/access.js';
 import { padActive } from '../systems/keys.js';
@@ -40,7 +41,7 @@ const CONTROLS = () => {
 const PAD_CONTROLS = [[['Space'], 'DODGE ROLL'], [['KeyJ'], 'SWORD COMBO'], [['KeyK'], 'BOW (HOLD)'], [['KeyL', 'KeyQ'], 'SPELL / SWAP'], [['KeyR', 'KeyG'], 'SHOUT / SWAP'],
   [['KeyU', 'KeyT'], 'HEAVY / LOCK'], [['KeyF'], 'BLOCK, PARRY'], [['KeyC'], 'SNEAK'], [['KeyE'], 'TALK/OPEN/REST'], [['Digit1', 'Digit2'], 'HP / MP POTION'], [['Escape'], 'MENU']];
 const shortPad = (n) => (n || '-').replace('R-STICK ', 'RS ').replace('D-PAD ', 'DP ').replace('LEFT', 'L').replace('RIGHT', 'R').replace('UP', 'U').replace('DOWN', 'D');
-const padControls = () => [['L-STICK', 'MOVE'], ...PAD_CONTROLS.map(([codes, what]) => [codes.map((c) => shortPad(padLabel(c))).join('/'), what])];
+const padControls = () => [['L-STICK', 'MOVE'], ...PAD_CONTROLS.map(([codes, what]) => [codes.map((c) => shortPad(padLabel(c, true))).join('/'), what])];
 const DIFFS = ['easy', 'normal', 'hard'];
 // One line about each row, shown in the help bar while it is selected.
 export const HINTS = {
@@ -60,7 +61,8 @@ export const HINTS = {
 const SHAKES = [0, 0.5, 1];
 
 export function systemTab(m) {
-  // The list is long, so it is grouped into pages, in this order. Q jumps to the first row of the next page.
+  // The list is long, so it is grouped into pages, in this order: the sub-pages of SYSTEM. Q (or a click on the strip)
+  // jumps to the first row of the next page.
   const PAGES = [['GAME', ['RESUME', 'SAVE GAME', 'LOAD GAME', 'SLOT', 'SAVES & BUG REPORT', 'DIFFICULTY', 'DURABILITY', 'TEXT SPEED', 'UNSTUCK', 'QUIT TO TITLE']],
     ['SOUND', ['VOLUME', 'MUSIC', 'MUSIC LVL', 'SFX LVL', 'AMBIENT', 'HEARTBEAT']],
     ['SCREEN', ['FULLSCREEN', 'FRAME RATE', 'SCREEN SHAKE', 'FLASHES', 'REDUCE MOTION', 'PIXEL SCALE', 'LARGE UI', 'LARGE TEXT', 'BAR NUMBERS', 'HIGH CONTRAST', 'ROTATE VIEW', 'COLOUR MODE', 'HIT STOP', 'DAMAGE NUMBERS', 'DANGER NAMES', 'CLOAK']],
@@ -97,17 +99,15 @@ export function systemTab(m) {
   const toggle = (key) => { settings[key] = !settings[key]; saveSettings(); sfx.play('select'); m.dirty = true; };
 
   const pageOf = (row) => Math.max(0, PAGES.findIndex(([, l]) => l.includes(row)));
-  function nextPage() {
-    const to = (pageOf(rows[m.cursor]) + 1) % PAGES.length;
+  function toPage(to) {
     const i = rows.findIndex((r) => PAGES[to][1].includes(r));
     if (i < 0) return;
-    m.cursor = i; m.scroll = Math.max(0, Math.min(i, rows.length - VISIBLE)); sfx.play('select'); m.dirty = true;
+    m.cursor = i; m.scroll = Math.max(0, Math.min(i, rows.length - VISIBLE)); armed = null; m.dirty = true;
   }
   function mainInput() {
     const was = m.cursor;
     m.nav(rows.length, VISIBLE);
     if (m.cursor !== was) armed = null;
-    if (keys.pressed('swap')) { nextPage(); armed = null; }
     if (SLIDERS.includes(rows[m.cursor])) {
       if (keys.pressed('left')) adjust(-1);
       if (keys.pressed('right')) adjust(1);
@@ -222,7 +222,7 @@ export function systemTab(m) {
   }
 
   const row = (g, i, y, label, value, vcol = 5) => {
-    if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 124, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
+    if (i === m.cursor) m.hi(8, y - 2, 124, 12);
     m.T(14, y, label, i === m.cursor ? 6 : 5);
     if (value != null) m.T(128 - textW(String(value)), y, String(value), vcol);
   };
@@ -230,13 +230,16 @@ export function systemTab(m) {
   return {
     name: 'SYSTEM',
     help: 'W/S MOVE  E SELECT  A/D ADJUST  ESC RESUME',
+    subs: PAGES.map(([n]) => n),
+    getSub: () => pageOf(rows[m.cursor]),
+    setSub: (i) => toPage(i),
     rowIndex: (name) => rows.indexOf(name),          // for tests and tools: where a row is in the current list
     busy: () => mode === 'controls' || mode === 'pad' || !!waiting || capturing(),
     captureLR: () => mode === 'controls' || mode === 'pad' || SLIDERS.includes(rows[m.cursor]),
     cursorOf: () => (mode === 'controls' ? ctrl.cursor : m.cursor),
     rowAt: (x, y) => {
-      if (mode === 'pad' || waiting || x < 8 || x > (mode === 'controls' ? W - 8 : 132) || y < 26) return -1;
-      const k = Math.floor((y - 26) / 13);
+      if (mode === 'pad' || waiting || x < 8 || x > (mode === 'controls' ? W - 8 : 132) || y < 32) return -1;
+      const k = Math.floor((y - 32) / 13);
       if (k >= VISIBLE) return -1;
       const i = (mode === 'controls' ? ctrl.scroll : m.scroll) + k;
       return i < (mode === 'controls' ? ctrlRows : rows.length) ? i : -1;
@@ -247,18 +250,18 @@ export function systemTab(m) {
       if (mode === 'controls') ctrlInput(); else if (mode === 'pad') padInput(); else mainInput();
     },
     render() {
-      const g = m.bg;
+      const g = m.bg, T0 = LAYOUT.top, D = T0 - 22;     // D: how far below the old top the pages start now
       if (mode === 'pad') {
         const info = getPadInfo();
         m.help = waitingPad ? 'PRESS A BUTTON ON THE CONTROLLER  (ESC CANCELS)' : 'E LEARN BUTTON  ESC BACK';
-        panel(g, 6, 22, W - 12, 134, 2);
-        m.T(12, 26, info.id ? fit(info.id, 34) : 'NO PAD - PRESS A BUTTON ON IT', info.id ? 13 : 11);
-        m.T(12, 35, info.id ? 'MODE: ' + info.mapping.toUpperCase() + '   LIVE: ' + (info.live.map(niceId).join(' ').slice(0, 30) || '-') : 'PAIR IT IN YOUR SYSTEM SETTINGS FIRST', 4);
-        m.T(W - 14 - textW('L-STICK: MOVE'), 26, 'L-STICK: MOVE', 5);        // movement is fixed to the left stick and d-pad
-        g.fillStyle(C[3]); g.fillRect(8, 44, W - 16, 1);
+        panel(g, 6, T0, W - 12, LAYOUT.bottom - T0, 2);
+        m.T(12, 26 + D, info.id ? fit(info.id, 34) : 'NO PAD - PRESS A BUTTON ON IT', info.id ? 13 : 11);
+        m.T(12, 35 + D, info.id ? 'MODE: ' + info.mapping.toUpperCase() + '   LIVE: ' + (info.live.map(niceId).join(' ').slice(0, 30) || '-') : 'PAIR IT IN YOUR SYSTEM SETTINGS FIRST', 4);
+        m.T(W - 14 - textW('L-STICK: MOVE'), 26 + D, 'L-STICK: MOVE', 5);        // movement is fixed to the left stick and d-pad
+        g.fillStyle(C[3]); g.fillRect(8, 44 + D, W - 16, 1);
         PAD_ACTIONS.concat([['reset', 'RESET TO DEFAULTS']]).slice(pc.scroll, pc.scroll + 7).forEach(([code, name], k) => {
-          const i = pc.scroll + k, y = 48 + k * 14;
-          if (i === pc.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, W - 16, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
+          const i = pc.scroll + k, y = 48 + D + k * 14;
+          if (i === pc.cursor) m.hi(8, y - 2, W - 16, 12);
           m.T(14, y, name, i === pc.cursor ? 6 : 5);
           if (code !== 'reset') { const t = waitingPad === code ? '...' : boundTo(code); m.T(W - 14 - textW(t), y, t, waitingPad === code ? 13 : 15); }
         });
@@ -266,10 +269,10 @@ export function systemTab(m) {
       }
       if (mode === 'controls') {
         m.help = waiting ? 'PRESS THE NEW KEY  (ESC CANCELS)' : 'E REBIND  ESC BACK';
-        panel(g, 6, 22, W - 12, 134, 2);
+        panel(g, 6, T0, W - 12, LAYOUT.bottom - T0, 2);
         ACTION_NAMES.concat([['reset', 'RESET TO DEFAULTS']]).slice(ctrl.scroll, ctrl.scroll + VISIBLE).forEach(([act, name], k) => {
-          const i = ctrl.scroll + k, y = 28 + k * 13;
-          if (i === ctrl.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, W - 16, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
+          const i = ctrl.scroll + k, y = 28 + D + k * 13;
+          if (i === ctrl.cursor) m.hi(8, y - 2, W - 16, 12);
           m.T(14, y, name, i === ctrl.cursor ? 6 : 5);
           if (act !== 'reset') {
             // mouse buttons only matter (and are only shown) with mouse controls on
@@ -279,19 +282,19 @@ export function systemTab(m) {
         });
         if (ctrlRows > VISIBLE) {          // scrollbar: where you are in the list
           const frac = ctrl.scroll / (ctrlRows - VISIBLE), hgt = VISIBLE * 13;
-          g.fillStyle(C[3]); g.fillRect(W - 10, 26, 2, hgt); g.fillStyle(C[13]); g.fillRect(W - 10, 26 + frac * (hgt - 12), 2, 12);
+          g.fillStyle(C[3]); g.fillRect(W - 10, 26 + D, 2, hgt); g.fillStyle(C[13]); g.fillRect(W - 10, 26 + D + frac * (hgt - 12), 2, 12);
         }
         return;
       }
       m.help = armed === 'LOAD GAME' ? 'E AGAIN TO LOAD. UNSAVED PROGRESS IS LOST' : armed === 'QUIT TO TITLE' ? (S.quick || S.daily ? 'E AGAIN TO QUIT THIS RUN' : 'E AGAIN TO SAVE AND QUIT') : HINTS[rows[m.cursor]] || null;
       m.helpCol = armed ? 12 : null;
-      panel(g, 6, 22, 128, 134, 2);
+      panel(g, 6, T0, 128, LAYOUT.bottom - T0, 2);
       rows.slice(m.scroll, m.scroll + VISIBLE).forEach((r, k) => {
-        const i = m.scroll + k, y = 28 + k * 13;
+        const i = m.scroll + k, y = 28 + D + k * 13;
         let v = null, vc = 5;
         if (r === 'VOLUME' || CHANNEL[r]) {
           const n = Math.round((r === 'VOLUME' ? settings.volume : (settings[CHANNEL[r][1]] ?? 1)) * 10);
-          if (i === m.cursor) { g.fillStyle(C[3]); g.fillRect(8, y - 2, 124, 12); g.fillStyle(C[13]); g.fillRect(8, y - 2, 2, 12); }
+          if (i === m.cursor) m.hi(8, y - 2, 124, 12);
           m.T(14, y, r, i === m.cursor ? 6 : 5);
           g.fillStyle(C[0]); g.fillRect(70, y, 56, 7); g.fillStyle(C[1]); g.fillRect(71, y + 1, 54, 5); g.fillStyle(C[15]); g.fillRect(71, y + 1, n * 5.4, 5);
           return;
@@ -328,23 +331,23 @@ export function systemTab(m) {
         else if (r === 'SAVES & BUG REPORT') { v = storage.ok ? null : '!'; vc = 11; }
         row(g, i, y, r, v, vc);
       });
-      m.T(12, 146, `${PAGES[pageOf(rows[m.cursor])][0]} ${pageOf(rows[m.cursor]) + 1}/${PAGES.length}  Q NEXT`, 13);
       if (rows.length > VISIBLE) {
         const frac = m.scroll / (rows.length - VISIBLE);
-        g.fillStyle(C[3]); g.fillRect(131, 24, 2, 128); g.fillStyle(C[13]); g.fillRect(131, 24 + frac * 116, 2, 12);
+        g.fillStyle(C[3]); g.fillRect(131, T0 + 2, 2, 124); g.fillStyle(C[13]); g.fillRect(131, T0 + 2 + frac * 112, 2, 12);
       }
       // right: info + controls
-      panel(g, 138, 22, W - 144, 134, 2);
+      panel(g, 138, T0, W - 144, LAYOUT.bottom - T0, 2);
       const info = saveInfo();
-      m.T(144, 27, fit(MAPS[S.map]?.name || '', 28), 13);
+      m.T(144, 31, fit(MAPS[S.map]?.name || '', 28), 13);
       // how long ago progress was last written, in a colour that says whether that is a worry
       const at = Math.max(lastSaveTime(), info?.t || 0), mins = at ? Math.floor((Date.now() - at) / 60000) : null;
       const saveLine = S.quick ? 'ARENA RUNS ARE NOT SAVED' : S.daily ? 'DAILY ' + runScore() + '  (NOT SAVED)' : tabs.other ? 'OTHER TAB OPEN: NOT SAVING' : !storage.ok ? 'SAVING IS BLOCKED HERE' : at ? `${fmtTime(S.playtime)}  SAVED ${mins < 1 ? 'JUST NOW' : mins + ' MIN AGO'}` : `${fmtTime(S.playtime)}  NOT SAVED YET`;
-      m.T(144, 36, fit(saveLine, 28), !at || !storage.ok || tabs.other ? 12 : 5);
-      g.fillStyle(C[3]); g.fillRect(144, 44, W - 156, 1);
+      m.T(144, 40, fit(saveLine, 28), !at || !storage.ok || tabs.other ? 12 : 5);
+      g.fillStyle(C[3]); g.fillRect(144, 48, W - 156, 1);
       (padActive() ? padControls() : CONTROLS()).forEach(([k, v], i) => {      // controller in hand: its buttons
-        m.T(144, 48 + i * 9, fit(k, 10), 6);
-        m.T(208, 48 + i * 9, fit(v, 17), 4);
+        const y = 50 + i * 9;
+        m.T(144, y, fit(k, 10), 6);
+        m.T(208, y, fit(v, 17), 4);
       });
     },
   };

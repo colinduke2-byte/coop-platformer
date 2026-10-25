@@ -459,3 +459,15 @@ TUNE.combat = {
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
   bossPhase: { windup: [1, 0.8, 0.75], recover: [1, 0.75, 0.7], floor: 0.38, meleeFloor: 0.4, MELEE: ['slam', 'sweep', 'tail', 'charge'], hardWindup: 0.9, hardPhase2: 0.6 },
 };
+
+// ---- H: menus (the gear comparison in the pack)
+// Each stat's weight in the overall verdict, and the size of change that counts in full for stats compared by amount
+// (crit 0.20 = twenty points of crit). Damage, spell power, armour and block count by how much they change (rel).
+// The build lean scales a weight by how much you use it (skill levels), never below buildMin. MIXED needs both better
+// and worse rows and a score within +-mixedBand; minor rows that did not change are dropped after quietAfter rows.
+TUNE.hud.compare = {
+  w: { dmg: 1, spell: 1, block: 1, armor: 1, speed: 0.5, cost: 0.25, bcost: 0.3, reach: 0.2, crit: 0.5, leech: 0.4, elem: 0.4, epow: 0.3, status: 0.3, hp: 0.4, mp: 0.3, sp: 0.3, move: 0.3, stealth: 0.2, mpcost: 0.2, warm: 0.1, gold: 0.15, sockets: 0.2, weight: 0.05, dur: 0.1, set: 0.4, hands: 0.3 },
+  scale: { reach: 3, crit: 0.2, leech: 0.05, epow: 5, hp: 30, mp: 30, sp: 30, move: 0.1, stealth: 0.2, mpcost: 0.2, warm: 2, gold: 0.15, sockets: 2, weight: 5, dur: 50, speed: 0.25, cost: 0.3, bcost: 0.3 },
+  rel: ['dmg', 'spell', 'block', 'armor'],
+  buildMin: 0.4, mixedBand: 0.08, quietAfter: 6,
+};

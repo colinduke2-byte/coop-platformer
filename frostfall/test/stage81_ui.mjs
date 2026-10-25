@@ -24,7 +24,7 @@ const audit = (tag) => G(([tag, W]) => {
     if (t.type !== 'BitmapText' && t.type !== 'Text' && t.text == null) continue;
     const b = t.getBounds ? t.getBounds() : null; if (!b || !t.text) continue;
     if (b.right > W - 3) bad.push(`${tag}: "${String(t.text).slice(0, 30)}" ends at ${Math.round(b.right)} (screen ${W})`);
-    const split = { ITEMS: 157, LORE: 123, QUESTS: 119 }[tag.split('+')[0]];          // where the left panel ends on two-column tabs
+    const page = tag.split('+')[0], split = page === 'QUESTS/LOG' ? null : { ITEMS: 147, LORE: 123, QUESTS: 119 }[page.split('/')[0]];   // the log is one wide panel          // where the left panel ends on two-column tabs
     if (split && b.x < split && b.x > 6 && b.y > 22 && b.y < 156 && b.right > split + 1) bad.push(`${tag}: "${String(t.text).slice(0, 30)}" runs from the left column into the right (${Math.round(b.right)})`);
   }
   return bad;
@@ -33,12 +33,17 @@ const problems = [];
 await G(() => { const g = window.__ff.game.scene.getScene('Game'); g.openMenu(0); return true; });
 await h.sleep(500);
 const names = await G(() => window.__ff.game.scene.getScene('Menu').tabs.map((t) => t.name));
+// every page, and every sub-page of a page that has them (the pack's filters, the journal's views, the SYSTEM pages)
 for (let i = 0; i < names.length; i++) {
-  await G((i) => { const m = window.__ff.game.scene.getScene('Menu'); m.go(i); m.draw(); }, i);
-  await h.sleep(150);
-  problems.push(...await audit(names[i]));
-  // a few rows down too, so the description panes show long entries
-  for (let k = 0; k < 6; k++) { await G(() => { const m = window.__ff.game.scene.getScene('Menu'); m.cursor = (m.cursor || 0) + 3; m.dirty = true; m.draw(); }); problems.push(...await audit(names[i] + '+' + k)); }
+  const subs = await G((i) => window.__ff.game.scene.getScene('Menu').subsOf(i), i);
+  for (let s = 0; s < Math.max(1, subs.length); s++) {
+    const tag = names[i] + (subs.length ? '/' + subs[s] : '');
+    await G(([i, s, n]) => { const m = window.__ff.game.scene.getScene('Menu'); m.go(i); if (n) m.setSub(i, s, true); m.draw(); }, [i, s, subs.length]);
+    await h.sleep(150);
+    problems.push(...await audit(tag));
+    // a few rows down too, so the description panes show long entries
+    for (let k = 0; k < 6; k++) { await G(() => { const m = window.__ff.game.scene.getScene('Menu'); m.cursor = (m.cursor || 0) + 3; m.dirty = true; m.draw(); }); problems.push(...await audit(tag + '+' + k)); }
+  }
 }
 await G(() => window.__ff.game.scene.stop('Menu'));
 check('no menu text runs off the screen or across into the other column', problems.length === 0, '\n    ' + [...new Set(problems)].slice(0, 25).join('\n    '));

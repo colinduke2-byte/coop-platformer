@@ -85,7 +85,7 @@ export function mapTab(m) {
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,
-    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'Q ZOOM  R REGION  E CURSOR  F TRAVEL  ESC'; },
+    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : `E CURSOR  F TRAVEL  W/S ZOOM${unlockedRegions().length > 1 ? '  R REGION' : ''}`; },
     captureLR: () => curMode,
     busy: () => curMode,                            // in cursor mode ESC (or B) leaves the cursor, not the whole menu
     input() {
@@ -102,7 +102,9 @@ export function mapTab(m) {
           zoom = null; sfx.play('select');
         }
       }
-      if (keys.pressed('swap')) { zoom = ((zoom ?? 0) + 1) % scalesOf(b).length; sfx.play('select'); }
+      // W / S zoom in and out (Q too, as before); in cursor mode they move the cursor
+      if (keys.pressed('swap') || (!curMode && keys.pressed('up'))) { zoom = ((zoom ?? 0) + 1) % scalesOf(b).length; sfx.play('select'); }
+      if (!curMode && keys.pressed('down')) { const n = scalesOf(b).length; zoom = ((zoom ?? 0) + n - 1) % n; sfx.play('select'); }
       if (keys.pressed('interact')) {
         if (!curMode) { curMode = true; sfx.play('select'); }
         else {
