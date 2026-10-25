@@ -93,6 +93,13 @@ const SCENARIOS = [
   { name: 'Root (nordic +5, 3 hearts)', map: 'rootvault', spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'],
     setup: `S.hearts={rime:true,iron:true,tide:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=30; S.skills.oneHanded.lvl=9; S.upgrades={nordic_blade:5,nordic_plate:5,nordic_shield:5,nordic_helm:5};`,
     enemies: [] },
+  // the Reach on the way to the next Hearts (most worlds put them in tier 2-3 land), with the kit a player has after the Maw
+  { name: 'Reach t2 camp (nordic +3, rime)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+    enemies: [['reaver', 5, -2, 2], ['warden', 6, 2, 2], ['wight', 9, 0, 2]] },
+  { name: 'Reach t3 camp (nordic +3, rime)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+    enemies: [['reaver', 5, -2, 3], ['knight', 6, 2, 3], ['wight', 9, 0, 3]] },
 ];
 
 const h = await launch({ paused: stepped });

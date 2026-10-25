@@ -141,7 +141,7 @@ for (let i = 0; i < 160 && (await G(() => window.__ff.S.flags.drill)) === 'sneak
 await G(() => ['KeyC', 'KeyA', 'KeyD', 'KeyW', 'KeyS'].forEach((c) => window.__ff.keys._release(c)));
 if ((await G(() => window.__ff.S.flags.drill)) === 'sneak') { note('the sneak drill was not passed by creeping up and striking'); }
 // drill 3: a full draw
-if ((await G(() => window.__ff.S.flags.drill)) === 'bow') { await G(() => window.__ff.keys._press('KeyK')); await h.sleep(1300); await G(() => window.__ff.keys._release('KeyK')); await h.sleep(500); }
+if ((await G(() => window.__ff.S.flags.drill)) === 'bow') { await h.sleep(2500); await G(() => window.__ff.keys._press('KeyK')); await h.sleep(1300); await G(() => window.__ff.keys._release('KeyK')); await h.sleep(500); }
 const drillEnd = await G(() => window.__ff.S.flags.drill);
 await row('drills', {}, drillEnd === 'done' ? 'ok' : 'DRILLS STUCK AT ' + drillEnd);
 await talk('mirra', [0]);

@@ -51,6 +51,10 @@ const sneak = async (sneaking) => {
 check('drill 2: creeping up on the sleeping wolf and striking passes the sneak drill', await sneak(true), await G(() => window.__ff.S.flags.drill));
 const det = await G(() => { const g = window.__ff.game.scene.getScene('Game'); const w = g.enemies.getChildren().find((e) => e.drill && !e.dead); return w ? w.cfg.detect : null; });
 check('the next drill (the bow) is up', await G(() => window.__ff.S.flags.drill === 'bow'), String(det));
+// drill 3: a full draw, then loose (after a breath: the sneak drill's swings can leave too little stamina to draw)
+await h.frames(120);
+await h.hold('KeyK', 90, 6);
+check('drill 3: a full draw passes the bow drill', await G(() => window.__ff.S.flags.drill === 'done'), await G(() => JSON.stringify({ d: window.__ff.S.flags.drill, a: window.__ff.S.arrows })));
 check('no page errors', h.errors.length === 0, h.errors.join('\n'));
 await h.close();
 console.log(failCount() ? 'PLAYTEST DRILLS FAILED' : 'PLAYTEST DRILLS PASSED');
