@@ -169,7 +169,7 @@ export const TARGETS = {
   company: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 12 } : { map: 'keep', x: 20, y: 4 }),
   trail: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : roamTarget('elk')),
   toll: (q) => (q.status === 'ready' ? { map: 'village', x: 10, y: 16 } : roamTarget('troll')),
-  alpha: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'pass', x: 36, y: 8 }),
+  alpha: (q) => (q.status === 'ready' ? { map: 'village', x: 7, y: 11 } : { map: 'pass', x: 24, y: 6 }),     // Grimfang's den at the top of the pass (was 36, 8: the east side corridor)
 };
 
 // Which quest the HUD arrow follows: the one you pinned, else the first active.

@@ -190,7 +190,7 @@ export async function bjorn() {
     if (c === 0) { startQuest('alpha'); await say(BJORN, 'The pass opens north of the forest, past the wolf den. Take plenty of arrows. And do not corner him; a cornered wolf is the worst kind.'); }
     return;
   }
-  if (aq.status === 'active') { await say(BJORN, 'Frostwind Pass, north of the forest. Grimfang will be near the old watchtower.'); return; }
+  if (aq.status === 'active') { await say(BJORN, 'Frostwind Pass, north of the forest. Grimfang dens at the top of the pass, past the old watchtower.'); return; }
   await say(BJORN, S.flags.ending === 'give' ? 'Warm hearth, full pelts. Life is good.' : S.flags.alphaSpared ? 'Odd. The wolves watch me from the treeline now and do not come closer.' : 'Wolves are quiet. The draugr, less so. Keep your blade sharp.');
 }
 

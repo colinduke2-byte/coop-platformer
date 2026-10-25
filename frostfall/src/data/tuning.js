@@ -477,3 +477,8 @@ TUNE.hud.compare = {
   buildMin: 0.4, mixedBand: 0.08, quietAfter: 6,
 };
 TUNE.hud.dropHold = 0.5;        // seconds X is held on a pad, in the pack, to drop the selected stack (V on a keyboard)
+
+// ---- playtest pass (stage125-129): small fixes found by playing the opening
+TUNE.playtest = {
+  drillSleep: 0.55,      // Bjorn's sleeping drill wolf notices you at this share of a wolf's sight range (at 1 a sneaking approach always woke it)
+};

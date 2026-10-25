@@ -236,15 +236,15 @@ function buildKeep() {
   g.add({ t: 'fire', x: 16, y: 56, rest: true, id: 'keepin' }); g.set(16, 56, TILE.BRAZIER);
   for (const [x, y, r, col] of [[16, 56, 44, 12], [20, 50, 36, 12], [12, 36, 44, 12], [28, 36, 44, 12], [20, 40, 50, 12], [12, 19, 44, 12], [28, 19, 44, 12], [20, 5, 70, 12], [3, 38, 28, 12], [36, 38, 28, 12]]) g.add({ t: 'glow', x, y, r, col });
   g.add({ t: 'sign', x: 17, y: 55, text: ['IRONWATCH KEEP.', 'THE WARDEN HROLF SWORE TO HOLD THIS GATE UNTIL RELIEVED. NO RELIEF CAME.'] });
-  // courtyard garrison
-  for (const [k, x, y] of [['bandit', 12, 34], ['bandit', 26, 35], ['knight', 20, 38], ['draugr', 11, 44], ['draugr', 29, 44], ['warden', 20, 43]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
-  for (const [x, y] of [[3, 38], [36, 38], [3, 40], [36, 40]]) g.add({ t: 'enemy', kind: 'archer', x, y, tier: 2 });
+  // courtyard garrison (playtest: tier 1, was 2, so the Keep ramps up: the barracks and the Warlord keep tier 2)
+  for (const [k, x, y] of [['bandit', 12, 34], ['bandit', 26, 35], ['knight', 20, 38], ['draugr', 11, 44], ['draugr', 29, 44], ['warden', 20, 43]]) g.add({ t: 'enemy', kind: k, x, y, tier: 1 });
+  for (const [x, y] of [[3, 38], [36, 38], [3, 40], [36, 40]]) g.add({ t: 'enemy', kind: 'archer', x, y, tier: 1 });
   g.add({ t: 'chest', id: 'keep1', x: 20, y: 33, lock: 'med', loot: [{ gen: 2 }, { item: 'iron_ingot', n: 3 }, { gold: 80 }] });
   // barracks
   for (const [k, x, y] of [['reaver', 12, 18], ['reaver', 28, 18], ['knight', 14, 23], ['warden', 26, 23], ['conjurer', 20, 16], ['fencer', 20, 21]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
   g.add({ t: 'chest', id: 'keep2', x: 2, y: 19, lock: 'hard', loot: [{ gen: 3 }, { item: 'iron_greatsword' }, { gold: 100 }] });
   g.add({ t: 'chest', id: 'keep3', x: 37, y: 19, loot: [{ item: 'hp_potion', n: 3 }, { item: 'sp_potion', n: 2 }, { arrows: 14 }] });
-  g.add({ t: 'enemy', kind: 'chief', x: 8, y: 36, tier: 2 });
+  g.add({ t: 'enemy', kind: 'chief', x: 8, y: 36, tier: 1 });
   g.set(21, 12, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 12, auto: true });
   g.add({ t: 'boss', kind: 'warlord', x: 20, y: 5 });
   g.add({ t: 'bossgate', x: 19, y: 11, w: 2 });
@@ -315,10 +315,10 @@ function buildRootvault() {
   g.add({ t: 'fire', x: 17, y: 56, rest: true, id: 'rootin' }); g.set(17, 56, TILE.BRAZIER);
   for (const [x, y, r, col] of [[17, 56, 44, 12], [20, 48, 30, 8], [12, 40, 44, 8], [28, 40, 44, 8], [12, 22, 50, 8], [28, 22, 50, 8], [20, 6, 80, 8], [20, 14, 36, 12]]) g.add({ t: 'glow', x, y, r, col });
   g.add({ t: 'sign', x: 18, y: 55, text: ['THE ROOTVAULT.', 'SOMETHING BELOW IS GROWING. THE TREES HERE HAVE STOPPED BEING TREES.'] });
-  for (const [k, x, y] of [['wolf', 10, 38], ['wolf', 28, 38], ['alpha', 20, 41], ['fencer', 14, 43], ['bandit', 26, 43], ['wolf', 8, 41]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  for (const [k, x, y] of [['wolf', 10, 38], ['wolf', 28, 38], ['alpha', 20, 41], ['fencer', 14, 43], ['bandit', 26, 43], ['wolf', 8, 41]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });   // playtest: tier 2 (was 3), the kit a player can have before Emberhold
   g.add({ t: 'chest', id: 'root1', x: 4, y: 41, lock: 'med', loot: [{ gen: 3 }, { item: 'snowberry', n: 4 }, { gold: 80 }] });
   g.add({ t: 'chest', id: 'root2', x: 35, y: 41, loot: [{ item: 'hp_potion', n: 3 }, { item: 'frost_lily', n: 3 }, { arrows: 12 }] });
-  for (const [k, x, y] of [['reaver', 10, 20], ['reaver', 29, 20], ['knight', 14, 24], ['wight', 25, 24], ['conjurer', 20, 20], ['alpha', 20, 25]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  for (const [k, x, y] of [['reaver', 10, 20], ['reaver', 29, 20], ['knight', 14, 24], ['wight', 25, 24], ['conjurer', 20, 20], ['alpha', 20, 25]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
   for (const [x, y] of [[9, 18], [30, 18], [20, 26], [11, 26], [28, 18]]) g.add({ t: 'herb', item: 'frost_lily', x, y });
   g.add({ t: 'chest', id: 'root3', x: 20, y: 18, lock: 'hard', loot: [{ gen: 3 }, { gen: 2 }, { gold: 110 }, { item: 'hp_potion_g', n: 2 }] });
   g.set(21, 14, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 14, auto: true });
