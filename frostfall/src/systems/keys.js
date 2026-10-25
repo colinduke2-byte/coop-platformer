@@ -20,6 +20,10 @@ export const setMenuMode = (fn) => { menuMode = fn; };
 export const inMenu = () => { try { return menuMode(); } catch { return false; } };
 const MENU_FACE = { b0: 'V:KeyE', b1: 'PadBack2', b4: 'PadTabL', b5: 'PadTabR' };
 const MENU_DPAD = { hu: 'V:KeyW', hd: 'V:KeyS', hl: 'V:KeyA', hr: 'V:KeyD' };
+// The pause menu adds its own buttons while it is open (LT / RT sub-pages, X / Y its second actions): MenuScene sets them.
+let menuPad = null;
+export const setMenuPad = (m) => { menuPad = m || null; };
+export const menuPadButton = (code) => (menuPad ? Object.keys(menuPad).find((k) => menuPad[k] === 'V:' + code) || null : null);
 export const virt = (code) => 'V:' + code;
 function rebuild() {
   codeToActions = {};
@@ -84,6 +88,9 @@ export const keys = {
   // controller bumpers in menus
   tabLeft() { return pressedSet.has('PadTabL'); },
   tabRight() { return pressedSet.has('PadTabR'); },
+  // controller triggers in the pause menu: the sub-pages of a tab
+  subLeft() { return pressedSet.has('PadSubL'); },
+  subRight() { return pressedSet.has('PadSubR'); },
   released(act) { return anyIn(BINDINGS[act], releasedSet) || anyIn(VIRT[act], releasedSet); },
   // Raw access for text-less menus (e.g. any key to continue).
   anyPressed() { return pressedSet.size > 0; },
@@ -228,6 +235,7 @@ export function pollPad() {
       padDown.clear(); act.forEach((x) => padDown.add(x));
       const menu = pad.mapping === 'standard' && inMenu();
       for (const id of act) {
+        if (menu && menuPad?.[id]) { want.add(menuPad[id]); continue; }
         if (menu && MENU_FACE[id]) { want.add(MENU_FACE[id]); continue; }
         if (menu && MENU_DPAD[id]) { want.add(MENU_DPAD[id]); continue; }      // CB17: the d-pad always navigates menus
         const c = map[id]; if (c) want.add(V(c));

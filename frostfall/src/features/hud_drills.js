@@ -47,7 +47,7 @@ function finish(sc, step) {
   drill.foe?.active && !drill.foe.dead && (drill.foe.hp = 0, drill.foe.dead = true, drill.foe.destroy());
   drill.foe = null; drill.shown = '';
   bus.emit('toast', S.flags.drill === 'done' ? 'DRILLS DONE. BJORN NODS.' : 'GOOD. NEXT DRILL', 8);
-  if (S.flags.drill === 'done') bus.emit('hint', 'DRILLS DONE. THE GUIDE (LORE > GUIDE) KEEPS EVERY TIP.', true);
+  if (S.flags.drill === 'done') bus.emit('hint', 'DRILLS DONE. THE GUIDE (JOURNAL > GUIDE) KEEPS EVERY TIP.', true);
 }
 
 function spawn(sc, sleeping) {

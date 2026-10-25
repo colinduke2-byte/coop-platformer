@@ -60,10 +60,11 @@ check('a full draw passes drill 3 and pays arrows', await G(() => window.__ff.S.
 // ---- NP21: the Field Guide lists the controls and seen tips
 const guide = await G(async () => {
   const S = window.__ff.S; S.tips.block = true;
-  const g = window.__ff.game.scene.getScene('Game'); g.openMenu(0);
+  const g = window.__ff.game.scene.getScene('Game'); g.openMenu(-1, 'LORE');
   await window.__ffStep.frames(10, 16.7);
-  const m = window.__ff.game.scene.getScene('Menu'); m.tab = m.tabs.findIndex((t) => t.name === 'LORE'); m.dirty = true;
-  for (let i = 0; i < 4; i++) { window.__ff.keys._press('KeyQ'); await window.__ffStep.frames(2, 16.7); window.__ff.keys._release('KeyQ'); await window.__ffStep.frames(2, 16.7); }
+  const m = window.__ff.game.scene.getScene('Menu');
+  // JOURNAL's strip: LORE -> BEASTS -> GUIDE (two presses of Q)
+  for (let i = 0; i < 2; i++) { window.__ff.keys._press('KeyQ'); await window.__ffStep.frames(2, 16.7); window.__ff.keys._release('KeyQ'); await window.__ffStep.frames(2, 16.7); }
   await window.__ffStep.frames(4, 16.7);
   const texts = m.dyn.list.map((o) => o.text || o._raw || '').join('|');
   return texts;

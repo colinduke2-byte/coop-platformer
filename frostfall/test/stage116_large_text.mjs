@@ -27,8 +27,8 @@ const auditMenu = (big) => G(async ([big, W, H]) => {
   await window.__ffStep.frames(4, 16.7);
   const m = window.__ff.game.scene.getScene('Menu'), bad = [], helps = [];
   const { helpPages } = await import('/src/scenes/MenuScene.js');
-  for (let i = 0; i < m.tabs.length; i++) {
-    m.go(i); m.draw();
+  for (let i = 0; i < m.tabs.length; i++) for (let s = 0; s < Math.max(1, m.subsOf(i).length); s++) {
+    m.go(i); if (m.subsOf(i).length) m.setSub(i, s, true); m.draw();
     for (let k = 0; k < 3; k++) {
       if (k) { m.cursor = (m.cursor || 0) + 4; m.draw(); }
       for (const t of m.dyn.list) {
@@ -75,7 +75,7 @@ const perks = await G(async () => {
   const m = window.__ff.game.scene.getScene('Menu');
   m.go(m.tabs.findIndex((t) => t.name === 'PERKS')); m.draw();
   const perksText = m.dyn.list.map((t) => t.text || '').join('|');
-  m.go(0); const l = m.inventory(); m.cursor = l.indexOf('bramble_blade'); m.scroll = Math.max(0, m.cursor - 2); m.draw();
+  m.go(0); m.setSub(0, 0, true); const l = m.inventory(); m.cursor = l.indexOf('bramble_blade'); m.scroll = Math.max(0, m.cursor - 2); m.info = true; m.draw();   // its description (G)
   const before = m.dyn.list.map((t) => t.text || '').join(' ');
   window.__ff.S.sockets = { some_sword: ['gem_ruby', null] }; m.draw();
   const after = m.dyn.list.map((t) => t.text || '').join(' ');

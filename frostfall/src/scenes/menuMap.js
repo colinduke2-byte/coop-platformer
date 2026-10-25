@@ -12,6 +12,7 @@ import { keys } from '../systems/keys.js';
 import { sfx } from '../audio/sfx.js';
 import { bus } from '../systems/bus.js';
 import { settings } from '../systems/settings.js';
+import { padHint } from '../systems/access.js';
 import { getRegion } from '../data/maps.js';
 import { REGIONS, unlockedRegions, regionOfMap } from '../data/regions.js';
 
@@ -85,7 +86,7 @@ export function mapTab(m) {
   return {
     name: 'MAP',
     viewId: () => view || m.gs.mapId,
-    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'Q ZOOM  R REGION  E CURSOR  F TRAVEL  ESC'; },
+    get help() { return curMode ? 'W/A/S/D MOVE  E WAYPOINT  T NEXT FIRE  F TRAVEL  ESC DONE' : 'E CURSOR  F TRAVEL  W/S ZOOM'; },
     captureLR: () => curMode,
     busy: () => curMode,                            // in cursor mode ESC (or B) leaves the cursor, not the whole menu
     input() {
@@ -102,7 +103,9 @@ export function mapTab(m) {
           zoom = null; sfx.play('select');
         }
       }
-      if (keys.pressed('swap')) { zoom = ((zoom ?? 0) + 1) % scalesOf(b).length; sfx.play('select'); }
+      // W / S zoom in and out (Q too, as before); in cursor mode they move the cursor
+      if (keys.pressed('swap') || (!curMode && keys.pressed('up'))) { zoom = ((zoom ?? 0) + 1) % scalesOf(b).length; sfx.play('select'); }
+      if (!curMode && keys.pressed('down')) { const n = scalesOf(b).length; zoom = ((zoom ?? 0) + n - 1) % n; sfx.play('select'); }
       if (keys.pressed('interact')) {
         if (!curMode) { curMode = true; sfx.play('select'); }
         else {
@@ -259,6 +262,7 @@ export function mapTab(m) {
       const zl = sc < 1 ? 'OVERVIEW' : sc + 'X';
       m.T(10, 26, (MAPS[vid].name.toUpperCase().slice(0, 28) + '  ' + zl), 13);
       if (MAPS[vid].stream) { const ft = 'FOUND ' + found.length + '/' + (b.pois || []).length; m.T(310 - ft.length * 6, 26, ft, 4); }
+      if (unlockedRegions().length > 1) { const rt = padHint('R: NEXT REGION'); m.T(310 - rt.length * 6, MAPS[vid].stream ? 35 : 26, rt, 4); }   // the key shown where it acts
       // legend, two rows, each mark drawn as it appears on the map
       const LEG = [[['you', 13, 'YOU'], ['quest', 15, 'QUEST'], ['quest', 8, 'WAYPOINT'], ['hollow', 15, 'EXIT'], ['sq', 12, 'FIRE']], [['sq', 14, 'SHRINE'], ['sq', 11, 'FOE SITE'], ['sq', 6, 'PERSON'], ['sq', 13, 'CHEST'], ['sq', 4, 'SEEN FAR OFF']]];
       LEG.forEach((row, ri) => {

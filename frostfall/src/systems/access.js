@@ -1,6 +1,6 @@
 // Accessibility helpers: colour-blind assist filter and controller-aware button prompts.
 import { settings } from './settings.js';
-import { padActive, padMap, inMenu, getPadInfo, codeName, actionOfDefault } from './keys.js';
+import { padActive, padMap, inMenu, getPadInfo, codeName, actionOfDefault, menuPadButton } from './keys.js';
 import { BINDINGS } from '../config.js';
 
 export const CVD_MODES = ['off', 'deutan', 'protan', 'tritan'];
@@ -56,8 +56,10 @@ export function keyLabel(code) {
 const MENU_LABEL = { KeyE: 'A', Enter: 'A', Escape: 'B' };
 // Pack, journal and map have no button of their own: START opens the menu on the last tab used.
 const VIA_START = { KeyI: 'START', KeyO: 'START', KeyM: 'START' };
-export function padLabel(code) {
-  if (inMenu() && getPadInfo().mapping !== 'non-standard' && MENU_LABEL[code]) return MENU_LABEL[code];
+// field: the button in play, even while a menu is open (the controls list in SYSTEM)
+export function padLabel(code, field = false) {
+  if (!field && inMenu() && getPadInfo().mapping !== 'non-standard' && MENU_LABEL[code]) return MENU_LABEL[code];
+  { const mb = !field && inMenu() && getPadInfo().mapping !== 'non-standard' && menuPadButton(code); if (mb) return PAD_NAME[mb] || mb.toUpperCase(); }   // the pause menu's own X / Y
   const m = padMap();
   const id = Object.keys(m).filter((k) => m[k] === code).sort((a, b) => (/^b\d+$/.test(a) ? 0 : 1) - (/^b\d+$/.test(b) ? 0 : 1))[0];
   return id ? (PAD_NAME[id] || id.toUpperCase()) : VIA_START[code] || null;
@@ -72,7 +74,7 @@ export const keyText = (s) => String(s).replace(/\{(\w+)\}/g, (_, c) => prompt(c
 // Keyboard hints like "E USE  F OFFHAND  ESC CLOSE" or "E: TALK", rewritten for the controller when it was used last:
 // each hint's leading key becomes the button that sends it ("A USE  X OFFHAND  START CLOSE"). Mouse-only hints are dropped.
 const PAIR = { 'W/S': 'UP/DOWN', 'A/D': 'LEFT/RIGHT', 'WASD': 'L-STICK', 'W/S/A/D': 'D-PAD' };
-const PAIR_FOR = (tok, rest) => (tok === 'A/D' && /^\s*TAB/.test(rest) && inMenu() ? 'LB/RB' : PAIR[tok]);
+const PAIR_FOR = (tok, rest) => (tok === 'A/D' && /^\s*TAB/.test(rest) && inMenu() ? 'LB/RB' : tok === 'Q' && /^\s*PAGE/.test(rest) && inMenu() ? 'LT/RT' : PAIR[tok]);
 const codeOf = (tok) => (tok === 'ESC' ? 'Escape' : tok === 'SPACE' ? 'Space' : tok === 'ENTER' ? 'Enter' : /^[A-Z]$/.test(tok) ? 'Key' + tok : /^[0-9]$/.test(tok) ? 'Digit' + tok : null);
 const SHORT = (n) => (/^D-PAD /.test(n) ? tinyPad(n) : n.replace('R-STICK ', 'RS ').replace(/\b(UP|DOWN|LEFT|RIGHT)$/, (d) => d[0]));   // "D<", "RS L"
 export function padKey(tok, short = false) {

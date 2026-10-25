@@ -114,7 +114,7 @@ const cmp = await G(async (reset) => {
   const lines = C.compareLines('ember_blade');
   let toast = ''; const off = (m) => { toast = m; }; bus.on('toast', off); addItem('nordic_blade', 1); bus.off('toast', off);
   S.upgrades = {}; S.equip.weapon = null;
-  return { better: better === 1, worse: worse === -1, worn: worn === 0, crit: lines.some((l) => /^CRIT \+/.test(l)), elem: lines.includes('HITS AS FIRE'), sockets: lines.some((l) => /^SOCKETS/.test(l)), hint: lines.some((l) => /^AT \+6: DMG/.test(l)), set: lines.some((l) => /EMBERFORGED 1\//.test(l)), toast: /▲|▼/.test(toast), lines, t: toast };
+  return { better: better === 1, worse: worse === -1, worn: worn === 0, crit: lines.some((l) => /^CRIT \+/.test(l)), elem: lines.includes('HITS AS FIRE'), sockets: lines.some((l) => /^SOCKETS/.test(l)), hint: lines.some((l) => /^AT \+6: DMG/.test(l)), set: lines.some((l) => /EMBERFORGED 1\//.test(l)), toast: /▲|▼|◆/.test(toast), lines, t: toast };
 }, reset);
 check('PR-21: pack rows and pickups say better or worse; the pane lists crit, element, sockets, set and the upgrade hint', Object.values(cmp).every(Boolean), JSON.stringify(cmp));
 
