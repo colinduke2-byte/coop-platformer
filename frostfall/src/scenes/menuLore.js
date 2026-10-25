@@ -81,7 +81,7 @@ export function loreTab(m) {
         if (i === m.cursor) m.hi(8, y - 2, 112, 11);
         const unread = e.k !== 'item' && !read()[e.k + ':' + e.id];
         if (unread) { g.fillStyle(C[13]); g.fillRect(11, y + 2, 2, 2); }
-        m.T(14, y, fit(e.title, 17), e.dim ? 3 : KIND[e.k][1]);
+        m.T(14, y, fit(e.title, 17), i === m.cursor ? 6 : e.dim ? 3 : KIND[e.k][1]);        // the selected row is always white on its bar
       });
       if (l.length > ROWS) { const frac = m.scroll / (l.length - ROWS); g.fillStyle(C[3]); g.fillRect(119, T0 + 2, 2, 124); g.fillStyle(C[13]); g.fillRect(119, T0 + 2 + Math.round(frac * 112), 2, 12); }
       const e = l[m.cursor];

@@ -53,7 +53,9 @@ Keys can be rebound in **Pause > System > Controls**. A gamepad and touch contro
   - TEXT SPEED; FRAME RATE (cap at 60 or 30 to save battery); REDUCE MOTION; HIGH CONTRAST; BAR NUMBERS.
   - STICK DEADZONE, and CONTROLS / CONTROLLER to rebind.
   - SAVES & BUG REPORT exports your save as a code you can paste on another device.
-- **Controller in menus:** A confirms, B goes back, LB/RB switch tabs, START opens the last tab you used.
+- **The menu** has five tabs: **GEAR** (the pack, with ALL / ARMS / USE / OTHER and WORN), **CHARACTER** (skills, perks), **JOURNAL** (quests, the message log, lore, beasts, the Field Guide, feats), **MAP** and **SYSTEM**. A/D change tab, Q (or Tab) steps through the small strip of sub-pages under the tabs, E confirms, Esc closes. I opens GEAR, O the quests, M the map, Esc SYSTEM. The menu reopens on the tab and sub-page you left.
+- **Comparing gear:** select a weapon or armour in GEAR and the card on the right compares it, stat by stat, with what you wear in that slot (or bare hands / no armour): green rows are better, red worse, and the badge sums it up (BETTER, WORSE, MIXED, SAME or EQUIPPED), weighted toward what your build uses. The ▲ / ▼ / ◆ marks in the list say the same. G shows the item's description.
+- **Controller in menus:** A confirms, B goes back, LB/RB switch tabs, LT/RT step through sub-pages, X is the second action (off hand, fast travel), Y sorts the pack (or changes region on the map). START opens the last tab you used.
 - **Read the name colours.** An enemy's name is coloured by how dangerous it is *to you right now* (your gear and level), and arriving somewhere far beyond you gives a warning. If it says DEADLY, come back stronger.
 
 ## 4. Getting stronger
@@ -69,7 +71,7 @@ Skills level **by use** (five of them), so use what you want to improve:
 | Sneak | sneak attacks, pickpocketing | 3% harder to detect, sneak attacks +0.2x |
 
 - Levels come **slowly on purpose**: level 5 is around 125 sword hits and level 10 around 900. Grinding is real, and it is rewarded.
-- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (I menu): each skill has a perk at level 2, then a **fork** at 5 and at 8 where you take one of two (for example Duelist or Guardian, then Rending Blow or Cleave). Changed your mind? Any **shrine** will unlearn all your perks for gold and give the points back.
+- Every three skill levels gained (in any skills) make a **character level**, up to 25: you get a **perk point** and +6 to an attribute. Perks (CHARACTER > PERKS): each skill has a perk at level 2, then a **fork** at 5 and at 8 where you take one of two (for example Duelist or Guardian, then Rending Blow or Cleave). Changed your mind? Any **shrine** will unlearn all your perks for gold and give the points back.
 - **Gear** matters as much as levels. Upgrade at the **forge** (reforge, temper, enchant). Armour has weight classes; heavy armour protects more.
   - A **staff's** forge levels raise your spells, the way a sword's raise its damage; a Ruby in a staff adds spell power.
   - Found a better weapon than your tempered one? Any smith can **transfer a temper** onto the piece you wear, for a quarter of what the levels cost.

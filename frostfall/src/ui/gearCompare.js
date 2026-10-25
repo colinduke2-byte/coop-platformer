@@ -129,7 +129,7 @@ export function compareGear(id) {
     if (k === 'elem' && !worn && A.elem && A.elem === B.elem) continue;     // same element: the power row says it
     if (k === 'dur' && A[k] == null) continue;
     const row = { key: k, label: k === 'epow' ? A.elem : label, short: k === 'epow' ? A.elem : short, dir: 0, dText: '' };
-    if (worn) { row.aText = fmt(k, A[k] ?? NEUTRAL[k] ?? 0); rows.push(row); continue; }
+    if (worn) { if (k in NEUTRAL && A[k] === NEUTRAL[k]) continue; row.aText = fmt(k, A[k] ?? NEUTRAL[k] ?? 0); rows.push(row); continue; }
     if (f === 'text') {
       row.aText = A[k] ?? '-'; row.bText = B[k] ?? '-';
       if (row.aText !== row.bText && better) {

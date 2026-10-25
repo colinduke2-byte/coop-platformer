@@ -497,7 +497,7 @@ export class OrphanCub extends Phaser.GameObjects.Image {
       const c = await choose(['Take it with you', 'Leave it']);
       if (c !== 0) return;
       S.flags.cubOwned = true; S.pet = 'cub';
-      if (S.flags.houndOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (ITEMS TAB)', 13); }
+      if (S.flags.houndOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (GEAR TAB)', 13); }
       bus.emit('toast', 'A BEAR CUB JOINS YOU!', 15); sfx.play('quest');
       sc.spawnHound(true);
       this.sh.destroy(); sc.interactables = sc.interactables.filter((i) => i !== this); this.destroy();
@@ -525,7 +525,7 @@ export class WoundedHound extends Phaser.GameObjects.Image {
       const food = S.inv.venison ? 'venison' : S.inv.hunters_stew ? 'hunters_stew' : 'grilled_trout';
       S.inv[food]--; if (S.inv[food] <= 0) delete S.inv[food];
       S.flags.houndOwned = true; if (!S.pet) S.pet = 'hound';
-      if (S.flags.cubOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (ITEMS TAB)', 13); }
+      if (S.flags.cubOwned) { addItem('pet_whistle'); bus.emit('toast', 'PET WHISTLE: SWAP COMPANIONS (GEAR TAB)', 13); }
       await say('Hound', 'It wolfs the meal down, then presses its cold nose into your palm. It rises to follow.');
       bus.emit('toast', 'A FROST HOUND JOINS YOU!', 15);
       sfx.play('quest');

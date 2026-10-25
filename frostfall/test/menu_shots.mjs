@@ -19,13 +19,14 @@ await G(async () => {
   S.equip.weapon = 'iron_sword'; S.equip.armor = 'verdant_mail';
   (await import('/src/systems/stats.js')).recalc();
 });
-const PAGES = ['ITEMS', 'SKILLS', 'PERKS', 'QUESTS', 'LORE', 'FEATS', 'MAP', 'SYSTEM'];
+const PAGES = ['ITEMS', 'WORN', 'SKILLS', 'PERKS', 'QUESTS', 'LORE', 'FEATS', 'MAP', 'SYSTEM'];
 for (const mode of ['kb', 'kb_large', 'pad', 'pad_large']) {
   await G((big) => { window.__set.largeText = big; }, mode.endsWith('large'));
   if (mode.startsWith('pad')) { await G(() => { window.__pads = [window.__mk([10])]; }); await h.sleep(150); await G(() => { window.__pads = [window.__mk([])]; }); await h.sleep(150); }
   for (const p of PAGES) {
     await G((n) => { const g = window.__ff.game.scene.getScene('Game'); if (window.__ff.game.scene.isActive('Menu')) window.__ff.game.scene.stop('Menu'); g.openMenu(-1, n); }, p);
     await h.sleep(400);
+    if (p === 'ITEMS') await G(async () => { const m = window.__ff.game.scene.getScene('Menu'); if (m.setSub) m.setSub(0, 0, true); });
     if (p === 'ITEMS') await G(() => { const m = window.__ff.game.scene.getScene('Menu'); const l = m.inventory(); m.cursor = Math.max(0, l.indexOf('ember_dagger')); m.dirty = true; });
     await h.sleep(250);
     await h.shot(`${pre}_${mode}_${p.toLowerCase()}`);

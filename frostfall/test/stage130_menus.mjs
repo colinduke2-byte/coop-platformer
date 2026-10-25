@@ -147,7 +147,7 @@ const info = await G(async () => {
 });
 await tap('KeyG'); const infoOn = await texts();
 await tap('KeyG'); const infoOff = await texts();
-check('G shows the description in place of the rows, and G goes back', /MORE INFO/.test(info) && /EMBERHOLD FIRES|EDGE FLICKERS/.test(infoOn.replace(/\n/g, ' ')) && !/\|DAMAGE\|/.test(infoOn) && /\|DAMAGE\|/.test(infoOff), infoOn.slice(0, 300));
+check('G shows the description in place of the rows, and G goes back', /G DETAILS/.test(info) && /EMBERHOLD FIRES|EDGE FLICKERS/.test(infoOn.replace(/\n/g, ' ')) && !/\|DAMAGE\|/.test(infoOn) && /\|DAMAGE\|/.test(infoOff), infoOn.slice(0, 300));
 // WORN lists every slot; E there takes the piece off
 await open('WORN');
 const worn = await texts();

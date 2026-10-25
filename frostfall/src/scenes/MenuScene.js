@@ -517,7 +517,7 @@ export default class MenuScene extends Phaser.Scene {
       // G: the description in place of the numbers, paged when long
       this.pane(x0, y, w, yEnd - y - 10, line, 5);
       this.infoMore = this.paneMore; this.paneMore = 0;
-      { const t = padHint(`G ${this.infoMore && this.paneOff + this.infoMore < wrap(line, chars).split('\n').length ? 'MORE' : 'NUMBERS'}`); this.T(x0 + w - textW(t), yEnd - 8, t, 13); }
+      { const t = padHint(`G ${this.infoMore && this.paneOff + this.infoMore < wrap(line, chars).split('\n').length ? 'MORE' : 'STATS'}`); this.T(x0 + w - textW(t), yEnd - 8, t, 13); }
       return;
     }
     // one row per stat: LABEL  OLD > NEW  DELTA. Full words where they fit, short ones where they do not
@@ -545,7 +545,7 @@ export default class MenuScene extends Phaser.Scene {
     // the description below the numbers when there is room, else G shows it
     const rest = yEnd - ny - 3, lines = wrap(line, chars).split('\n');
     if (line && rest >= 18 && lines.length <= Math.floor(rest / 9)) { g.fillStyle(C[3]); g.fillRect(x0, ny + 1, w, 1); this.T(x0, ny + 3, lines.join('\n'), 4); }
-    else if (line) { const t = padHint('G MORE INFO'); this.T(x0 + w - textW(t), yEnd - 8, t, 3); }
+    else if (line) { const t = padHint('G DETAILS'); this.T(x0 + w - textW(t), yEnd - 8, t, 3); }
   }
 
   renderSkills() {
