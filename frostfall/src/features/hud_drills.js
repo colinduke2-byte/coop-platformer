@@ -12,6 +12,7 @@ import { bus } from '../systems/bus.js';
 import { prompt } from '../systems/access.js';
 import { addItem, addArrows, equip } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
+import { TUNE } from '../data/tuning.js';
 
 const TEXT = {
   parry: 'DRILL 1/3: HOLD {KeyF} TO BLOCK. RAISE IT JUST BEFORE\nTHE WOLF LANDS ITS BITE TO PARRY.',
@@ -57,6 +58,7 @@ function spawn(sc, sleeping) {
   const w = sc.addEnemy('wolf', x, y);
   w.maxHp = Math.round(w.maxHp * 0.6); w.hp = w.maxHp; w.tutorial = true; w.drill = true;
   if (!sleeping) w.alert(true);
+  else w.cfg = { ...w.cfg, detect: Math.round(w.cfg.detect * TUNE.playtest.drillSleep) };   // asleep: it only hears you close up
   return w;
 }
 

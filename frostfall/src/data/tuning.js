@@ -459,3 +459,8 @@ TUNE.combat = {
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
   bossPhase: { windup: [1, 0.8, 0.75], recover: [1, 0.75, 0.7], floor: 0.38, meleeFloor: 0.4, MELEE: ['slam', 'sweep', 'tail', 'charge'], hardWindup: 0.9, hardPhase2: 0.6 },
 };
+
+// ---- playtest pass (stage125-129): small fixes found by playing the opening
+TUNE.playtest = {
+  drillSleep: 0.55,      // Bjorn's sleeping drill wolf notices you at this share of a wolf's sight range (at 1 a sneaking approach always woke it)
+};
