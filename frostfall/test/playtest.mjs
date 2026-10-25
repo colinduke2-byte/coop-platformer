@@ -10,6 +10,8 @@ const h = await launch();
 const G = (fn, a) => h.ev(fn, a);
 const rows = [], notes = [];
 const note = (s) => { notes.push(s); console.log('  ! ' + s); };
+// what is on screen when something got stuck: the dialogue box, the holds on the world, the scenes that run
+const diag = () => h.ev(async () => { const ui = (await import('/src/systems/ui.js')).ui, d = await import('/src/systems/dialogue.js'), hud = window.__ff.game.scene.getScene('Hud'); return JSON.stringify({ holds: ui.holdTags(), running: d.scriptRunning(), dlg: hud.dlg ? { name: hud.dlg.name, text: String(hud.dlg.pages?.[hud.dlg.p] || '').slice(0, 90), choices: hud.dlg.choices?.map?.((c) => String(c.label || c.text || c).slice(0, 30)), sel: hud.dlg.sel } : null, scenes: window.__ff.game.scene.getScenes(true).map((x) => x.scene.key), map: window.__ff.game.scene.getScene('Game').mapId, mode: window.__ff.game.scene.getScene('Game').player?.mode }); });
 const T0 = Date.now();
 
 await h.open('');
@@ -81,13 +83,18 @@ const talk = async (id, picks = []) => {
     const d = await import('/src/systems/dialogue.js'), dd = await import('/src/data/dialogue.js');
     window.__picks = [...picks]; window.__talk = d.runScript(() => dd.SCRIPTS[id]()).then(() => 'ok', (e) => 'err ' + e);
   }, [id, picks]);
+  let shopEsc = 0;
   for (let i = 0; i < 200; i++) {
     const st = await G(async () => { const d = await import('/src/systems/dialogue.js'); const dl = window.hud().dlg; if (dl?.choices && !dl.__picked) { dl.__picked = 1; dl.sel = window.__picks.length ? window.__picks.shift() : 0; } return d.scriptRunning(); });
     if (!st) break;
-    if (await G(() => window.__ff.game.scene.isActive('Shop'))) { await tap('Escape', 40); continue; }
+    if (await G(() => window.__ff.game.scene.isActive('Shop'))) {
+      shopEsc++; await tap('Escape', 60); await h.sleep(250);
+      if (shopEsc === 6) { note(`${id}: Escape did not close the shop: ${await diag()}`); await G(() => window.__ff.game.scene.getScene('Shop').leave()); }
+      continue;
+    }
     await tap('KeyE', 30);
   }
-  if (await G(async () => (await import('/src/systems/dialogue.js')).scriptRunning())) note(`talking to ${id} never ended`);
+  if (await G(async () => (await import('/src/systems/dialogue.js')).scriptRunning())) note(`talking to ${id} never ended: ${await diag()} / ${await G(() => window.__talkLog || '')}`);
 };
 const Q = (id) => G((i) => window.__ff.S.quests[i]?.status, id);
 const go = async (map, spawn) => { await G(([m, s]) => window.gs().changeMap(m, s, 'door'), [map, spawn]); await h.sleep(2300); };
@@ -260,6 +267,7 @@ const bossFight = async (map, spawn, label, flag) => {
     const r = await G(() => window.__fight(() => { const b = window.gs().boss; return !b || b.dead || b.yieldDone; }, 170));
     if (r.died) { deaths++; await h.sleep(3500); }
     const left = await G(() => { const b = window.gs().boss; return b ? Math.round(100 * Math.max(0, b.hp) / b.maxHp) : 0; });
+    if (!r.lost && !r.ok) console.log('    (no fight happened) ' + (await diag()));
     console.log(`    ${label} try ${tries + 1}: ${r.ok ? 'WON' : 'lost'} in ${r.t}s, lost ${r.lost} hp, ${r.pots} potions, boss ${left}% left`);
     tot = { t: tot.t + r.t, lost: tot.lost + r.lost, deaths: tot.deaths + deaths - d0, pots: tot.pots + r.pots };
     won = r.ok || (await G((f) => !!window.__ff.S.flags[f], flag));

@@ -7,7 +7,9 @@
 // exploits (hitting a foe out of every wind-up) show up as masher wins.
 // PROFILE=careful (playtest pass): the "careful player" of the targets. Like the normal bot, but it times its roll to the end
 // of a tell (the last 0.22 s of a wind-up it has watched for at least 0.28 s) instead of rolling as soon as it reacts, and it
-// keeps a roll's worth of stamina in reserve instead of swinging itself dry.
+// keeps a roll's worth of stamina in reserve instead of swinging itself dry. It fights unarmoured foes first and parries an
+// armoured one (shield up in the last 0.1 s of its wind-up), as the game teaches (a Rime Knight shrugs off plain blows), and
+// opens a shield-bearer's guard with a heavy blow.
 import { launch } from './harness.mjs';
 
 const trials = Number(process.argv[2] || 4);
@@ -19,6 +21,8 @@ const profile = ['masher', 'careful'].includes(process.env.PROFILE) ? process.en
 const stepped = !process.env.REALTIME;
 console.log(`balance bot: profile ${profile}, ${trials} trials, ${process.env.DIFF || 'normal'}`);
 
+// the kit a player really carries after n Hearts (see the REAL scenarios)
+const realKit = (hearts) => `S.hearts={${['rime', 'iron', 'tide'].slice(0, hearts).map((k) => k + ':true').join(',')}}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.iron_cuirass=1; S.equip.armor='iron_cuirass'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=${12 + 6 * hearts}; S.skills.oneHanded.lvl=${5 + 2 * hearts}; S.upgrades={nordic_blade:3,iron_cuirass:3,nordic_shield:3,nordic_helm:3};`;
 const SCENARIOS = [
   { name: 'wolf pack (start gear)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 40,
     setup: `S.equip.armor='fur_tunic'; S.inv.hp_potion=2;`,
@@ -94,12 +98,24 @@ const SCENARIOS = [
     setup: `S.hearts={rime:true,iron:true,tide:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=6; S.bonusHp=30; S.skills.oneHanded.lvl=9; S.upgrades={nordic_blade:5,nordic_plate:5,nordic_shield:5,nordic_helm:5};`,
     enemies: [] },
   // the Reach on the way to the next Hearts (most worlds put them in tier 2-3 land), with the kit a player has after the Maw
-  { name: 'Reach t2 camp (nordic +3, rime)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
-    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+  { name: 'Reach t2 camp REAL', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: realKit(1),
     enemies: [['reaver', 5, -2, 2], ['warden', 6, 2, 2], ['wight', 9, 0, 2]] },
-  { name: 'Reach t3 camp (nordic +3, rime)', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
-    setup: `S.hearts={rime:true}; S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.nordic_plate=1; S.equip.armor='nordic_plate'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=5; S.bonusHp=18; S.skills.oneHanded.lvl=7; S.upgrades={nordic_blade:3,nordic_plate:3,nordic_shield:3,nordic_helm:3};`,
+  { name: 'Reach t3 camp REAL', map: 'forest', spawn: 'west', pos: [10.5, 10], limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead'],
+    setup: realKit(1),
     enemies: [['reaver', 5, -2, 3], ['knight', 6, 2, 3], ['wight', 9, 0, 3]] },
+  // ... and the kit a player can really have there: the village smith stops at +3 and Nordic Plate is not sold or dropped
+  // before Emberhold, so the body armour is an Iron Cuirass (Bulwark Plate only unlocks at 30% of the story)
+  ...[['Keep yard REAL t2', 'keep', [20, 40], 2, 1, [['knight', 5, -2], ['bandit', 6, 2], ['warden', 8, 0]]],
+    ['Keep yard REAL t1', 'keep', [20, 40], 1, 1, [['knight', 5, -2], ['bandit', 6, 2], ['warden', 8, 0]]],
+    ['Chapel nave REAL t2', 'chapel', [18, 38], 2, 2, [['draugr', 5, -2], ['wight', 7, 2], ['reaver', 6, 0]]],
+    ['Chapel nave REAL t1', 'chapel', [18, 38], 1, 2, [['draugr', 5, -2], ['wight', 7, 2], ['reaver', 6, 0]]],
+    ['Rootvault wound REAL t3', 'rootvault', [20, 40], 3, 3, [['reaver', 5, -2], ['knight', 6, 2], ['alpha', 8, 0]]],
+    ['Rootvault wound REAL t2', 'rootvault', [20, 40], 2, 3, [['reaver', 5, -2], ['knight', 6, 2], ['alpha', 8, 0]]]].map(([name, map, pos, tier, hearts, en]) => ({
+    name, map, spawn: 'entry', pos, limit: 100, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'].slice(0, 2 + hearts),
+    setup: realKit(hearts), enemies: en.map((e) => [...e, tier]) })),
+  ...[['Warlord REAL', 'keep', 1], ['Tide REAL', 'chapel', 2], ['Root REAL', 'rootvault', 3]].map(([name, map, hearts]) => ({
+    name, map, spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'].slice(0, 2 + hearts), setup: realKit(hearts), enemies: [] })),
 ];
 
 const h = await launch({ paused: stepped });
@@ -127,17 +143,19 @@ for (const sc of SCENARIOS) {
       const keys = window.__ff.keys;
       let tick = 0; const pending = [];
       const tapK = (c, ms = 70) => { keys._press(c); if (stepped) pending.push([c, tick + Math.max(1, Math.round(ms / 67))]); else setTimeout(() => keys._release(c), ms); };
-      let bossEngaged = false, t0 = performance.now(), potions = 0, lastPot = 0;
+      let bossEngaged = false, t0 = performance.now(), potions = 0, lastPot = 0, parryHold = 0;
       return await new Promise((res) => {
         let iv = null;
         const clearInterval = () => { iv = 'done'; };
+        let parries = 0, wasRip = 0;
         const think = () => {
+          if (p.riposteT > 0 && !(wasRip > 0)) parries++; wasRip = p.riposteT;
           const hpOK = S.hp > 0;
           const foes = g.enemies.getChildren().filter((e) => !e.dead && !e.yieldDone);
           const elapsed = (performance.now() - t0) / 1000;
           if (!hpOK || (!foes.length && elapsed > 2) || elapsed > sc.limit || (sc.boss && g.boss && (g.boss.dead || g.boss.yieldDone))) {
             clearInterval(iv); ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((c) => keys._release(c));
-            res({ hits: window.__hits, dbg: window.__dbg, fin: (window.__en||[]).map((e)=>[e.dead, Math.round(e.hp), e.active, Math.round(e.x), Math.round(e.y)]), px: [Math.round(p.x), Math.round(p.y)], maxHp: Math.round(S.maxHp), won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, left: foes.length, bossLeft: g.boss ? Math.round(100 * Math.max(0, g.boss.hp) / g.boss.maxHp) : null });
+            res({ hits: window.__hits, dbg: window.__dbg, fin: (window.__en||[]).map((e)=>[e.dead, Math.round(e.hp), e.active, Math.round(e.x), Math.round(e.y)]), px: [Math.round(p.x), Math.round(p.y)], maxHp: Math.round(S.maxHp), won: hpOK && (sc.boss ? !!(g.boss && (g.boss.dead || g.boss.yieldDone)) : !foes.length), hp: Math.round(S.hp), time: Math.round(elapsed), potions, parries, left: foes.length, bossLeft: g.boss ? Math.round(100 * Math.max(0, g.boss.hp) / g.boss.maxHp) : null });
             return;
           }
           if (p.mode === 'dead' || ['lying'].includes(p.mode)) return;
@@ -145,6 +163,10 @@ for (const sc of SCENARIOS) {
           // nearest threat
           let tgt = null, td = 1e9;
           for (const e of foes) { const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < td) { td = d; tgt = e; } }
+          if (profile === 'careful') {     // a careful player fights the soft foes first and leaves an armoured one until it opens up
+            const soft = foes.filter((e) => !e.cfg.armored || e.openT > 0 || e.staggerT > 0).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+            if (soft && Math.hypot(soft.x - p.x, soft.y - p.y) < 140) { tgt = soft; td = Math.hypot(soft.x - p.x, soft.y - p.y); }
+          }
           { const pod = foes.filter((e) => e.kind === 'blightpod').sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (pod) { tgt = pod; td = Math.hypot(pod.x - p.x, pod.y - p.y); } }   // do what the game says: destroy the pods
           if (!tgt) return;
           const now2 = performance.now();
@@ -163,6 +185,14 @@ for (const sc of SCENARIOS) {
             else { move(0, 0); p.face = { x: Math.abs(nx) > 0.38 ? Math.sign(nx) : 0, y: Math.abs(ny) > 0.38 ? Math.sign(ny) : 0 }; if (p.face.x === 0 && p.face.y === 0) p.face = { x: 1, y: 0 }; if (p.lockT <= 0) tapK('KeyJ', 50); }
             return;
           }
+          // careful: an armoured foe's blow is parried (the shield raised in its last 0.1 s), which opens its armour
+          if (profile === 'careful' && S.equip.offhand) {
+            const ar = foes.find((e) => e.cfg.armored && e.state === 'windup' && e.stateT <= 0.1 && Math.hypot(e.x - p.x, e.y - p.y) < 34);
+            if (ar || parryHold > 0) {
+              if (ar) { parryHold = 4; const ux = ar.x - p.x, uy = ar.y - p.y, l = Math.hypot(ux, uy) || 1; p.face = { x: Math.abs(ux / l) > 0.38 ? Math.sign(ux) : 0, y: Math.abs(uy / l) > 0.38 ? Math.sign(uy) : 0 }; }
+              parryHold--; move(0, 0); keys._press('KeyF'); return;
+            }
+          }
           if (telegraph && p.rollCd <= 0 && S.sp >= 22 && p.mode === 'free') {
             move(-ny * (trial % 2 ? 1 : -1), nx * (trial % 2 ? 1 : -1)); tapK('Space', 60);       // roll sideways
           } else if (d > 20) move(nx, ny);
@@ -170,7 +200,8 @@ for (const sc of SCENARIOS) {
             move(0, 0);
             p.face = { x: Math.abs(nx) > 0.38 ? Math.sign(nx) : 0, y: Math.abs(ny) > 0.38 ? Math.sign(ny) : 0 };
             if (p.face.x === 0 && p.face.y === 0) p.face = { x: 1, y: 0 };
-            if (S.sp > (profile === 'careful' ? 14 + 22 : 14) && p.lockT <= 0) tapK('KeyJ', 50);
+            if (profile === 'careful' && tgt.cfg.shield && !(tgt.guardBroken > 0)) { if (S.sp > 30 + 22 && p.lockT <= 0) tapK('KeyU', 50); }   // a heavy blow breaks a raised shield
+            else if (S.sp > (profile === 'careful' ? 14 + 22 : 14) && p.lockT <= 0) tapK('KeyJ', 50);
           }
           // raise the shield while waiting for a telegraph
           if (S.sp > 10 && telegraph) { keys._press('KeyF'); } else keys._release('KeyF');
@@ -193,6 +224,7 @@ for (const sc of SCENARIOS) {
   const avgT = Math.round(results.reduce((a, r) => a + r.time, 0) / results.length);
   rows.push({ name: sc.name, wins, trials, avgHp, avgT, potions: Math.round(results.reduce((a, r) => a + r.potions, 0) / results.length * 10) / 10 });
   const bl = sc.boss ? results.filter((r) => r.bossLeft != null) : []; const bossNote = bl.length ? `  boss HP left ${Math.round(bl.reduce((a, r) => a + r.bossLeft, 0) / bl.length)}%` : '';
-  console.log(`  ${sc.name.padEnd(30)} wins ${wins}/${trials}  avg HP left (wins) ${avgHp}  avg time ${avgT}s  avg potions ${rows.at(-1).potions}${bossNote}`);
+  const par = Math.round(results.reduce((a, r) => a + (r.parries || 0), 0) / results.length * 10) / 10;
+  console.log(`  ${sc.name.padEnd(30)} wins ${wins}/${trials}  avg HP left (wins) ${avgHp}  avg time ${avgT}s  avg potions ${rows.at(-1).potions}${bossNote}${par ? `  parries ${par}` : ''}`);
 }
 await h.close();
