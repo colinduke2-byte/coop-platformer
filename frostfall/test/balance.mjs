@@ -116,6 +116,15 @@ const SCENARIOS = [
     setup: realKit(hearts), enemies: en.map((e) => [...e, tier]) })),
   ...[['Warlord REAL', 'keep', 1], ['Tide REAL', 'chapel', 2], ['Root REAL', 'rootvault', 3]].map(([name, map, hearts]) => ({
     name, map, spawn: 'entry', nearBoss: true, limit: 170, boss: true, story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead', 'tideDead'].slice(0, 2 + hearts), setup: realKit(hearts), enemies: [] })),
+  // Grimfang as most players meet him: after the crypt, with Valdrek's blade and helm and the crypt vault's shield
+  { name: 'Grimfang REAL (after Valdrek)', map: 'pass', spawn: 'south', pos: [24, 9.5], limit: 150, boss: true, story: ['bossDead'],
+    setup: `S.inv.nordic_blade=1; S.equip.weapon='nordic_blade'; S.inv.iron_cuirass=1; S.equip.armor='iron_cuirass'; S.inv.nordic_shield=1; S.equip.offhand='nordic_shield'; S.inv.nordic_helm=1; S.equip.head='nordic_helm'; S.inv.hp_potion=4; S.bonusHp=6; S.skills.oneHanded.lvl=4; S.upgrades={nordic_blade:1,iron_cuirass:1};`,
+    enemies: [] },
+  // the Keep's whole courtyard as the map has it (bandits, a knight, draugr, a warden, four archers on the towers, a chief)
+  { name: 'Keep courtyard MAP', map: 'keep', spawn: 'entry', pos: [20, 47], limit: 150, rows: [32, 46], story: ['bossDead', 'grimfangDone', 'wyrmDead'], setup: realKit(1), enemies: [] },
+  { name: 'Keep barracks MAP', map: 'keep', spawn: 'entry', pos: [20, 27], limit: 150, rows: [14, 25], story: ['bossDead', 'grimfangDone', 'wyrmDead'], setup: realKit(1), enemies: [] },
+  { name: 'Maw chamber MAP', map: 'maw', spawn: 'entry', pos: [17.5, 44], limit: 150, rows: [32, 42], story: ['bossDead', 'grimfangDone'], setup: realKit(0), enemies: [] },
+  { name: 'Chapel nave MAP', map: 'chapel', spawn: 'entry', pos: [17.5, 45], limit: 150, rows: [32, 43], story: ['bossDead', 'grimfangDone', 'wyrmDead', 'warlordDead'], setup: realKit(2), enemies: [] },
 ];
 
 const h = await launch({ paused: stepped });
@@ -137,7 +146,8 @@ for (const sc of SCENARIOS) {
       recalc(); S.hp = S.maxHp; S.mp = S.maxMp; S.sp = S.maxSp;
       const p = g.player;
       if (sc.nearBoss) { const b = g.enemies.getChildren().find((e) => e.isBoss); if (b) { let best = null; for (let r = 6; r <= 10 && !best; r++) for (let a = 0; a < 16 && !best; a++) { const x = b.x + Math.cos(a * Math.PI / 8) * r * 16, y = b.y + Math.sin(a * Math.PI / 8) * r * 16; if (!g.solidAt(x, y) && !g.solidAt(x + 8, y) && !g.solidAt(x - 8, y) && !g.solidAt(x, y + 8) && !g.solidAt(x, y - 8)) best = { x, y }; } if (best) p.setPosition(best.x, best.y); } } else p.setPosition(sc.pos[0] * 16, sc.pos[1] * 16);
-      if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; }
+      if (sc.rows) { for (const e of g.enemies.getChildren().slice()) { const ty = e.y / 16; if (e.isBoss || ty < sc.rows[0] || ty > sc.rows[1]) e.destroy(); else { e.alert?.(true); (window.__en = window.__en || []).push(e); } } }   // fight the map's own guards in these rows
+      else if (!sc.boss) { g.enemies.getChildren().slice().forEach((e) => e.destroy()); g.enemies.clear(); g.pend.length = 0; }
       else g.enemies.getChildren().filter((e) => !e.isBoss).forEach((e) => e.destroy());
       for (const [k, dx, dy, tr] of sc.enemies) { const e = g.addEnemy(k, p.x + dx * 16, p.y + dy * 16, { tier: tr || 0 }); e.alerted = true; (window.__dbg = window.__dbg || []).push([k, tr, e.maxHp, e.cfg.dmg]); (window.__en = window.__en || []).push(e); if (!window.__wrapped) { window.__wrapped = 1; const P = e.constructor.prototype, o = P.takeHit; window.__hits = []; P.takeHit = function (i) { const d = o.call(this, i); if (window.__hits.length < 12) window.__hits.push([this.cfg.name || "", i.src, Math.round(i.dmg), d]); return d; }; } e.state = 'chase'; e.cd = 0.5; }
       const keys = window.__ff.keys;
