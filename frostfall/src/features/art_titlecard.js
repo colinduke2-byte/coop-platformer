@@ -34,7 +34,7 @@ registerListener('area', (sc, name) => {
   const card = { t: 0, life: first ? 2.6 : 1.2, parts, line, band, txt: t, fx: sc.add.graphics().setScrollFactor(0).setDepth(99997), y0, hgt,
     done() { band.destroy(); line.destroy(); t.destroy(); this.fx.destroy(); cards.delete(sc); } };
   cards.set(sc, card);
-  bus.emit('titlecard', name);          // the HUD drops its place-name plate for this arrival (no double banner)
+  bus.emit('titlecard', name, card.life);     // the HUD drops its place-name plate for this arrival (no double banner) and holds its news until the card goes
 }, 'artTitleCard');
 
 registerTicker('artTitleCard', (sc, dt) => {

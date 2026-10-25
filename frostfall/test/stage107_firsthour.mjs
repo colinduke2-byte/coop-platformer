@@ -100,7 +100,7 @@ check('villager names have a dark plate (NP8)', await G(() => window.__ff.game.s
 
 // ---- NP11 + NP25: the first trip out
 await G(() => { const S = window.__ff.S; S.flags.firstTrip = false; S.charLevel = 1; delete S.flags.waypoint; window.__ff.game.scene.getScene('Game').changeMap('forest', 'west'); });
-await h.frames(150);
+await h.frames(220);          // the region's title card (2.6 s) goes first; the warning follows it
 const trip = await G(() => { const g = window.__ff.game.scene.getScene('Game'), p = g.player; return { map: g.mapId, wp: window.__ff.S.flags.waypoint, hint: window.__ff.game.scene.getScene('Hud').hintText, near: Math.min(9999, ...g.enemies.getChildren().filter((e) => !e.dead && !e.cfg.passive).map((e) => Math.hypot(e.x - p.x, e.y - p.y))) }; });
 check('the first trip warns and marks the nearest campfire (NP25)', trip.map === 'forest' && /STAY ON THE ROAD/.test(trip.hint || '') && trip.wp?.map === 'forest', JSON.stringify(trip));
 check('no foe waits within 300 px of the village exit for a newcomer (NP11)', trip.near > 300, String(trip.near));

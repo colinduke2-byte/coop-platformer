@@ -77,7 +77,7 @@ export default class HudScene extends Phaser.Scene {
     // the same message twice in a row stacks ("x2") instead of pushing older news off the screen
     this.toastHold = [];
     this.onToast = (text, col = 6) => {
-      if (this.intro) { this.toastHold.push([text, col]); return; }    // VX-13: news waits until the boss card has gone
+      if (this.intro || this.cardT > 0) { this.toastHold.push([text, col]); return; }    // VX-13: news waits until the boss card (or a region's title card) has gone
       const same = this.toasts.find((ts) => ts.text === text && ts.life > 0.3);
       const big = largeText(), show = (s) => wrap(s, big ? TUNE.hud.bigChars - 1 : 52);      // a long one takes two lines
       if (same) { same.n++; same.life = 2.4; same.t.setText(show(`${text} X${same.n}`)); return; }
@@ -91,7 +91,11 @@ export default class HudScene extends Phaser.Scene {
     };
     // a region's title card (features/art_titlecard.js, bus 'titlecard') replaces the plate: one banner on arrival, whichever
     // of the two 'area' listeners runs first
-    this.onCard = (name) => { if (this.area && this.areaName === name) { this.area.destroy(); this.area = null; } else this.cardFor = name; };
+    // While the card shows, the discovery banner, hints and toasts wait (nothing prints over the card or over each other);
+    // when it goes, an urgent hint comes first, then the waiting toasts (holdCard / releaseCard).
+    this.cardT = 0;
+    this.onCard = (name, life = 2.6) => { if (this.area && this.areaName === name) { this.area.destroy(); this.area = null; } else this.cardFor = name; this.cardT = Math.max(this.cardT, life);
+      this.bannerObj?.c.setAlpha(0); this.hint?.setVisible(false); this.hintRect = null; for (const ts of this.toasts) ts.t.setVisible(false); };
     listen(this, 'titlecard', this.onCard);
     // a small "saved" mark (top right, under the clock) whenever progress is written, quiet autosaves included
     this.savedT = 0; this.savedTxt = txt(this, 0, 35, 'SAVED', 8).setVisible(false);
@@ -137,10 +141,16 @@ export default class HudScene extends Phaser.Scene {
     this.showHint = (text, urgent = false) => {
       const shown = wrap(text, largeText() ? TUNE.hud.bigChars - 1 : 52);     // LARGE TEXT: twice the size (A1); never off the screen
       this.hint?.destroy(); this.hint = txt(this, 0, 0, shown, 5).setFont(fk(5), FS()); this.hint.x = Math.round((W - this.hint.width) / 2);
-      this.hintT = TUNE.hud.hintLife; this.hintH = shown.split('\n').length * LH() + 3; this.hintText = text; this.hintUrgent = !!urgent;
+      this.hintT = TUNE.hud.hintLife; this.hintH = shown.split('\n').length * LH() + 3; this.hintText = text; this.hintUrgent = !!urgent; this.hintNew = true;
     };
     this.onHint = (text, urgent = false) => {
       if (this.hint && this.hintText === text) { this.hintT = TUNE.hud.hintLife; return; }
+      if (this.cardT > 0) {             // under a region's title card: wait, an urgent line at the front
+        this.hintQ = this.hintQ.filter((q) => q.text !== text);
+        if (urgent) this.hintQ = [{ text, urgent: true }, ...this.hintQ.filter((q) => !q.urgent)]; else this.hintQ.push({ text, urgent: false });
+        if (this.hintQ.length > TUNE.hud.hintQueue + 1) this.hintQ.splice(urgent ? -1 : 0, 1);
+        return;
+      }
       if (urgent) {
         this.hintQ = this.hintQ.filter((q) => !q.urgent && q.text !== text);
         if (this.hint && !this.hintUrgent && this.hintT > TUNE.hud.hintKeep) this.hintQ.unshift({ text: this.hintText, urgent: false });
@@ -482,6 +492,21 @@ export default class HudScene extends Phaser.Scene {
     if (s.t > 3.8) this.sub = null;
   }
 
+  // a region's title card is up (features/art_titlecard.js): count it down, then let the held news out in order
+  updateCard(dt) {
+    if (!(this.cardT > 0)) return;
+    this.cardT -= dt;
+    if (this.cardT > 0) return;
+    this.cardT = 0;
+    const nx = this.hintQ[0];
+    if (nx && (!this.hint || nx.urgent)) {          // an urgent line that waited replaces what shows, as it would have at once
+      this.hintQ.shift();
+      if (this.hint && !this.hintUrgent && this.hintT > TUNE.hud.hintKeep) this.hintQ.unshift({ text: this.hintText, urgent: false });
+      this.showHint(nx.text, nx.urgent);
+    }
+    if (!this.intro) for (const [t, c] of this.toastHold.splice(0)) this.onToast(t, c);
+  }
+
   updateIntro(dt) {
     const g = this.introG; g.clear();
     const it = this.intro;
@@ -534,7 +559,7 @@ export default class HudScene extends Phaser.Scene {
 
   update(_, ms) {
     const dt = ms / 1000;
-    this.updateIntro(dt); this.updateSub(dt);
+    this.updateIntro(dt); this.updateCard(dt); this.updateSub(dt);
     if (this.lock) this.updateLock(dt); else { if (this.lockTxt && this.lockTxt[0]._raw) this.lockTxt.forEach((t) => t.setText('')); this.updateDialogue(dt); }
     const g = this.g;
     const pl = this.gs.player;
@@ -653,20 +678,22 @@ export default class HudScene extends Phaser.Scene {
     // toasts stack above the bottom-left slots
     for (let i = this.toasts.length - 1; i >= 0; i--) {
       const ts = this.toasts[i];
-      ts.life -= dt;
+      if (!(this.cardT > 0)) ts.life -= dt;
       if (ts.life <= 0) { ts.t.destroy(); this.toasts.splice(i, 1); }
     }
     // newest at the bottom; a LARGE TEXT toast can take two lines, so each one is as tall as its text (A1)
     let tBase = H - 27 - (this.hintDock || 0);
     for (let i = this.toasts.length - 1; i >= 0; i--) {
       const ts = this.toasts[i];
-      ts.t.setVisible(!dead);
-      if (dead) continue;
+      ts.t.setVisible(!dead && !(this.cardT > 0));
+      if (dead || this.cardT > 0) continue;
       const th = String(ts.t._raw).split('\n').length * LH();
       ts.t.y = tBase - th; tBase = ts.t.y;
       // LARGE TEXT: a big hint can reach down to the toasts; an older toast that would run into it waits off screen
-      const hr = this.hintRect;
-      if (hr && largeText() && ts.t.y < hr.y + hr.h + 1 && ts.t.y + th > hr.y && ts.t.width + 6 > hr.x) { ts.t.setVisible(false); continue; }
+      const hr = this.hintRect, bn = this.bannerObj ?? (this.banners.length && !this.dlg ? { w: W } : null);
+      if (this.hintNew) { ts.t.setVisible(false); continue; }        // a hint just shown is laid out below: one frame's wait
+      if (hr && ts.t.y < hr.y + hr.h + 1 && ts.t.y + th > hr.y && ts.t.width + 6 > hr.x) { ts.t.setVisible(false); continue; }
+      if (bn && ts.t.y < 87 && ts.t.width + 6 > (W - bn.w) / 2) { ts.t.setVisible(false); continue; }      // nor into the banner
       ts.t.setAlpha(Math.min(1, ts.life * 2.5));
       g.fillStyle(C[0], 0.5 * Math.min(1, ts.life * 2.5)); g.fillRect(2, ts.t.y - 1, ts.t.width + 4, th);
     }
@@ -732,14 +759,14 @@ export default class HudScene extends Phaser.Scene {
       // under the status row and the quest tracker; below the banner while one is showing. During a fight it docks at the
       // bottom, clear of the action and the telegraphs (VX-05); it stays hidden under the lockpick panel (NP15).
       const fight = this.fightNow;
-      const hy = fight ? (this.bossOn ? H - 26 : H - 22) - this.hintH : this.bannerObj ? 88 : Math.max(statBottom + 3, this.trackBottom + 2, 46);
+      const hy = fight ? (this.bossOn ? H - 26 : H - 22) - this.hintH : (this.bannerObj || (this.banners.length && !this.dlg && !(this.cardT > 0))) ? 88 : Math.max(statBottom + 3, this.trackBottom + 2, 46);
       this.hintDock = fight ? this.hintH + 2 : 0;
       const sr = this.subRect, under = !!sr && hy < sr.y + sr.h && hy + this.hintH > sr.y;   // LARGE TEXT: a spoken line goes first
-      const show = !dead && !this.lock && !this.intro && !under;
-      if (under) this.hintT += dt;                 // and the hint waits for it
+      const card = this.cardT > 0, show = !dead && !this.lock && !this.intro && !under && !card;
+      if (under || card) this.hintT += dt;         // and the hint waits for it
       this.hint.y = hy + 2; this.hint.setVisible(show);
       if (show) { g.fillStyle(C[0], 0.6 * Math.min(1, this.hintT)); g.fillRect(this.hint.x - 4, hy, this.hint.width + 8, this.hintH); }
-      this.hintRect = show ? { x: this.hint.x - 4, y: hy, w: this.hint.width + 8, h: this.hintH } : null;
+      this.hintRect = show ? { x: this.hint.x - 4, y: hy, w: this.hint.width + 8, h: this.hintH } : null; this.hintNew = false;
       this.hint.setAlpha(Math.min(1, this.hintT));
       if (this.hintT <= 0) { this.hint.destroy(); this.hint = null; this.hintText = null; this.hintUrgent = false; this.hintDock = 0; this.hintRect = null; const nx = this.hintQ.shift(); if (nx) this.showHint(nx.text, nx.urgent); }
     } else { this.hintDock = 0; this.hintRect = null; }
@@ -752,7 +779,7 @@ export default class HudScene extends Phaser.Scene {
 
     // level-up banner (queue)
     // one thing at a time (NP9): a banner waits while a conversation or choice box is open, and pauses if one opens
-    if (!this.bannerObj && this.banners.length && !this.dlg) {
+    if (!this.bannerObj && this.banners.length && !this.dlg && !(this.cardT > 0)) {
       const b = this.banners.shift();
       const d = b.custom ? { name: b.title, perk: b.line } : SKILL_DEFS[b.skill];
       const c = this.add.container(0, 0);
@@ -764,8 +791,9 @@ export default class HudScene extends Phaser.Scene {
     }
     if (this.bannerObj) {
       const b = this.bannerObj;
-      if (!this.dlg) b.t -= dt;
-      const a = this.dlg ? 0 : Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
+      const wait = this.dlg || this.cardT > 0;
+      if (!wait) b.t -= dt;
+      const a = wait ? 0 : Math.max(0, Math.min(1, b.t * 2, (3.2 - b.t) * 4));
       b.c.setAlpha(dead ? 0 : a);
       g.fillStyle(C[0], 0.7 * a); g.fillRect((W - b.w) / 2, 40, b.w, 44);
       g.fillStyle(C[13], a); g.fillRect((W - b.w) / 2, 40, b.w, 1); g.fillRect((W - b.w) / 2, 83, b.w, 1);

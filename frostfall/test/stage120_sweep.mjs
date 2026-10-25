@@ -60,15 +60,61 @@ check('then one toast names them (it fits)', sight.after === 1 && sight.text.len
 const names = await G(async () => {
   const g = window.__ff.game.scene.getScene('Game'), { settings } = await import('/src/systems/settings.js');
   const old = settings.dangerNames; settings.dangerNames = 'always';
-  const es = g.enemies.getChildren().filter((e) => !e.dead && !e.isBoss && !e.cfg.passive).slice(0, 3);
+  const es = [0, 1, 2].map(() => g.addEnemy('wolf', g.player.x + 60, g.player.y));
   g.dangerNamesShown = [];
   for (const e of es) { e.setPosition(g.player.x + 60, g.player.y); e.alerted = true; e.hudNamed = false; }
   await new Promise((r) => setTimeout(r, 300));
   settings.dangerNames = old;
+  for (const e of es) e.destroy();                        // (and they must not bite: a low-health tip would jump the hint queue below)
+  window.__ff.S.hp = window.__ff.S.maxHp; g.player.invuln = 999;
   const ys = (g.dangerNamesShown || []).map((n) => Math.round(n.y));
   return { n: es.length, ys };
 });
 check('floating foe names never print on top of each other', names.n >= 2 && names.ys.length >= 2 && new Set(names.ys).size === names.ys.length, JSON.stringify(names));
+// ---- arriving in a region: while the title card shows, the banner, hints and toasts wait; then an urgent hint first,
+// then the toasts; nothing overlaps on any frame, in normal and LARGE TEXT
+for (const big of [false, true]) {
+  const r = await G(async (big) => {
+    const hd = window.__ff.game.scene.getScene('Hud'), S = window.__ff.S;
+    const { bus } = await import('/src/systems/bus.js'), { settings } = await import('/src/systems/settings.js');
+    const oldBig = settings.largeText; settings.largeText = big;
+    hd.hint?.destroy(); hd.hint = null; hd.hintQ = []; hd.toasts.forEach((t) => t.t.destroy()); hd.toasts = []; hd.toastHold = [];
+    S.flags.regionCards = {};
+    bus.emit('area', 'THE HOLLOW REACH');
+    bus.emit('discover', { name: 'HAMLET', top: 'DISCOVERED', line: '+12 GOLD  1 PLACES FOUND' });
+    bus.emit('hint', 'A QUIET TIP ABOUT SNEAKING');
+    bus.emit('toast', 'CAMPFIRE FOUND: TRAVEL BY FIRE OR MAP (M) > F', 12);
+    bus.emit('toast', 'FAR BEYOND YOU. GEAR UP FIRST.', 12);
+    bus.emit('hint', 'URGENT: DRINK A POTION', true);
+    bus.emit('toast', 'SOMETHING TALL ON THE HORIZON... (WATCHTOWER?)', 15);
+    const hit = (a, b) => a && b && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const out = { card: hd.cardT, frames: 0, during: 0, overlaps: [], firstHint: null, toastsBeforeHint: false };
+    await new Promise((done) => {
+      const t0 = performance.now();
+      const step = () => {
+        const cardUp = hd.cardT > 0, rects = [];
+        if (cardUp) rects.push(['card', { x: 0, y: 104, w: 320, h: 34 }]);
+        if (hd.bannerObj && hd.bannerObj.c.alpha > 0) rects.push(['banner', { x: (320 - hd.bannerObj.w) / 2, y: 40, w: hd.bannerObj.w, h: 45 }]);
+        if (hd.hint?.visible && hd.hintRect) rects.push(['hint', hd.hintRect]);
+        for (const ts of hd.toasts) if (ts.t.visible) rects.push(['toast', { x: 2, y: ts.t.y - 1, w: ts.t.width + 4, h: ts.t.height }]);
+        if (cardUp && rects.length > 1) out.during++;
+        for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) if (hit(rects[i][1], rects[j][1])) out.overlaps.push(rects[i][0] + '/' + rects[j][0] + '@' + out.frames);
+        if (!cardUp && out.firstHint === null && hd.hint?.visible) out.firstHint = hd.hintText;
+        if (!cardUp && out.firstHint === null && hd.toasts.some((t) => t.t.visible)) out.toastsBeforeHint = true;
+        out.frames++;
+        if (performance.now() - t0 < 4500) requestAnimationFrame(step); else done();
+      };
+      step();
+    });
+    settings.largeText = oldBig;
+    out.overlaps = out.overlaps.slice(0, 5);
+    return out;
+  }, big);
+  const tag = big ? ' (LARGE TEXT)' : '';
+  check('under the title card no banner, hint or toast shows' + tag, r.card > 0 && r.frames > 30 && r.during === 0, JSON.stringify(r));
+  check('after it the urgent hint comes first, before the toasts' + tag, r.firstHint === 'URGENT: DRINK A POTION' && !r.toastsBeforeHint, JSON.stringify(r));
+  check('nothing overlaps on any frame' + tag, r.overlaps.length === 0, JSON.stringify(r));
+}
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join(' | '));
 await h.close();
 console.log(failCount() ? 'SWEEP FAILED' : 'SWEEP OK');
