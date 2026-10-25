@@ -60,7 +60,7 @@ function buildVillage() {
   for (let y = 2; y < 24; y++) for (let x = 2; x < 38; x++) g.res[y][x] = ![TILE.SNOW, TILE.SNOW2, TILE.SNOW3, TILE.SNOW4, TILE.TUFT].includes(g.t[y][x]);
   for (let y = 9; y <= 18; y++) for (let x = 14; x <= 26; x++) g.res[y][x] = true;
   for (let x = 24; x < 38; x++) { g.res[12][x] = true; g.res[13][x] = true; g.res[14][x] = true; g.res[15][x] = true; }
-  for (const [x, y] of [[36, 11], [34, 12], [24, 19], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9], [10, 16], [11, 16], [10, 12], [13, 20], [21, 21]]) g.clear(x, y);
+  for (const [x, y] of [[36, 11], [34, 12], [26, 21], [16, 8], [22, 8], [4, 10], [10, 9], [31, 11], [34, 10], [13, 16], [26, 16], [27, 10], [24, 9], [10, 16], [11, 16], [10, 12], [13, 20], [21, 21]]) g.clear(x, y);
   g.scatter(TILE.PINE, 34, 3);
   g.scatter(TILE.STUMP, 4, 8);
   g.scatter(TILE.ROCK, 8, 4);
@@ -90,7 +90,7 @@ function buildVillage() {
   g.add({ t: 'npc', id: 'ragna', x: 10, y: 12 });
   g.add({ t: 'herb', item: 'snowberry', x: 13, y: 20 });
   g.add({ t: 'herb', item: 'snowberry', x: 21, y: 21 });
-  g.add({ t: 'npc', id: 'child', x: 24, y: 19 });
+  g.add({ t: 'npc', id: 'child', x: 26, y: 21 });            // beside the cottage door (24,19 was its front wall)
   g.add({ t: 'sign', x: 36, y: 11, text: ['PINE FOREST, EAST.', 'WOLVES ON THE TRAIL. TRAVEL ARMED. - BJORN'] });
   for (const [x, y, skin] of [[16, 8, 'pot'], [22, 8, 'barrel'], [4, 10, 'pot'], [10, 9, 'barrel'], [31, 11, 'pot'], [34, 10, 'barrel'], [13, 16, 'pot'], [26, 16, 'pot'], [27, 10, 'barrel'], [24, 9, 'pot']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'exit', x: 38, y: 12, w: 2, h: 3, to: 'forest', spawn: 'west' });

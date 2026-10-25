@@ -117,4 +117,18 @@ t('every seed places all five dungeon entrances, and each dungeon is fully reach
     assert.equal(ex.to, 'forest');
   }
 });
+t('hand-built maps: every NPC stands on open ground with somewhere to walk (not inside a wall or a building)', () => {
+  const solid = new Set(SOLID_TILES), bad = [];
+  for (const [id, def] of Object.entries(MAPS)) {
+    if (typeof def.build !== 'function') continue;
+    const { grid, entities } = def.build();
+    const open = (x, y) => grid[y]?.[x] != null && !solid.has(grid[y][x]);
+    for (const e of entities) {
+      if (e.t !== 'npc') continue;
+      const around = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => open(e.x + dx, e.y + dy)).length;
+      if (!open(e.x, e.y) || around === 0) bad.push(`${id}:${e.id}@${e.x},${e.y}`);
+    }
+  }
+  assert.deepEqual(bad, [], 'NPCs walled in: ' + bad.join(' '));
+});
 console.log(`${n} world tests passed`);
