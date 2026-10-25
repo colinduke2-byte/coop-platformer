@@ -3,6 +3,25 @@
 The first version (stages 1-8) was the core game: village, forest and crypt, melee / bow / magic / shout,
 skills, inventory, 3 NPCs, 2 quests, one boss, save/load, sound. This list covers everything added on top of it.
 
+## World sweep, playtest and menus
+- **Broken houses fixed:** hamlet houses in every region had roof and wall pieces erased by scattered barrels. Buildings are now protected while the world is built. A new check builds all 97 maps on 6 seeds; it found 287 faults before the fix and finds none now.
+- **Other map fixes:**
+  - the hag's hut door;
+  - highland tents with no walls;
+  - Reedwick boardwalks and doors;
+  - an Emberhold street through a building, and the house you reappeared inside;
+  - the Saltmarket innkeeper inside his own wall;
+  - the Lanternfall hut door onto the lake;
+  - Asta inside her cottage wall.
+- **Arriving in a region:** the title card shows alone, then hints and messages follow one at a time with no overlaps. Small rooms are centred on screen.
+- **Menus:** 5 tabs (GEAR, CHARACTER, JOURNAL, MAP, SYSTEM), with sub-pages on Q / RT, the same keys everywhere, and short help lines.
+- **Gear card:** compares the selected item with what you wear, one row per stat ("DAMAGE 13 > 30 +17" in green or red), with a BETTER / WORSE / MIXED / SAME / EQUIPPED badge that matches the list marks and pickup messages. On a pad, hold X to drop.
+- **Playtest fixes:**
+  - the sneak drill can now be passed;
+  - Grimfang's marker points at his den;
+  - Ironwatch Keep's courtyard goes from tier 2 to tier 1, so the Keep ramps up;
+  - the Rootvault guards go from tier 3 to tier 2.
+
 ## Finishing pass
 - **Five more new quests**, one per region that still lacked one:
   - The Wall Fires (Corvin, Emberhold): a timed beacon relay across the Ashen Peaks.
