@@ -315,10 +315,10 @@ function buildRootvault() {
   g.add({ t: 'fire', x: 17, y: 56, rest: true, id: 'rootin' }); g.set(17, 56, TILE.BRAZIER);
   for (const [x, y, r, col] of [[17, 56, 44, 12], [20, 48, 30, 8], [12, 40, 44, 8], [28, 40, 44, 8], [12, 22, 50, 8], [28, 22, 50, 8], [20, 6, 80, 8], [20, 14, 36, 12]]) g.add({ t: 'glow', x, y, r, col });
   g.add({ t: 'sign', x: 18, y: 55, text: ['THE ROOTVAULT.', 'SOMETHING BELOW IS GROWING. THE TREES HERE HAVE STOPPED BEING TREES.'] });
-  for (const [k, x, y] of [['wolf', 10, 38], ['wolf', 28, 38], ['alpha', 20, 41], ['fencer', 14, 43], ['bandit', 26, 43], ['wolf', 8, 41]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  for (const [k, x, y] of [['wolf', 10, 38], ['wolf', 28, 38], ['alpha', 20, 41], ['fencer', 14, 43], ['bandit', 26, 43], ['wolf', 8, 41]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });   // playtest: tier 2 (was 3), the kit a player can have before Emberhold
   g.add({ t: 'chest', id: 'root1', x: 4, y: 41, lock: 'med', loot: [{ gen: 3 }, { item: 'snowberry', n: 4 }, { gold: 80 }] });
   g.add({ t: 'chest', id: 'root2', x: 35, y: 41, loot: [{ item: 'hp_potion', n: 3 }, { item: 'frost_lily', n: 3 }, { arrows: 12 }] });
-  for (const [k, x, y] of [['reaver', 10, 20], ['reaver', 29, 20], ['knight', 14, 24], ['wight', 25, 24], ['conjurer', 20, 20], ['alpha', 20, 25]]) g.add({ t: 'enemy', kind: k, x, y, tier: 3 });
+  for (const [k, x, y] of [['reaver', 10, 20], ['reaver', 29, 20], ['knight', 14, 24], ['wight', 25, 24], ['conjurer', 20, 20], ['alpha', 20, 25]]) g.add({ t: 'enemy', kind: k, x, y, tier: 2 });
   for (const [x, y] of [[9, 18], [30, 18], [20, 26], [11, 26], [28, 18]]) g.add({ t: 'herb', item: 'frost_lily', x, y });
   g.add({ t: 'chest', id: 'root3', x: 20, y: 18, lock: 'hard', loot: [{ gen: 3 }, { gen: 2 }, { gold: 110 }, { item: 'hp_potion_g', n: 2 }] });
   g.set(21, 14, TILE.BRAZIER); g.add({ t: 'fire', x: 21, y: 14, auto: true });

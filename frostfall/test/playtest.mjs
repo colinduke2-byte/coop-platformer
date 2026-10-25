@@ -77,7 +77,7 @@ await G(() => {
     }, 60);
   });
 });
-// talk to someone through the real dialogue box: E on every line, `picks` for the choices (then the first option)
+// talk to someone through the real dialogue box: E on every line, `picks` for the choices (then the last option: Leave / No)
 const talk = async (id, picks = []) => {
   await G(async ([id, picks]) => {
     const d = await import('/src/systems/dialogue.js'), dd = await import('/src/data/dialogue.js');
@@ -85,7 +85,7 @@ const talk = async (id, picks = []) => {
   }, [id, picks]);
   let shopEsc = 0;
   for (let i = 0; i < 200; i++) {
-    const st = await G(async () => { const d = await import('/src/systems/dialogue.js'); const dl = window.hud().dlg; if (dl?.choices && !dl.__picked) { dl.__picked = 1; dl.sel = window.__picks.length ? window.__picks.shift() : 0; } return d.scriptRunning(); });
+    const st = await G(async () => { const d = await import('/src/systems/dialogue.js'); const dl = window.hud().dlg; if (dl?.choices && !dl.__picked) { dl.__picked = 1; dl.sel = window.__picks.length ? window.__picks.shift() : dl.choices.length - 1; } return d.scriptRunning(); });
     if (!st) break;
     if (await G(() => window.__ff.game.scene.isActive('Shop'))) {
       shopEsc++; await tap('Escape', 60); await h.sleep(250);
