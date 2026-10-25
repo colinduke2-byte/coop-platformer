@@ -40,6 +40,9 @@ export const discoveryMethods = {
     if (!pois || !this.def.stream) return;
     S.discovered = S.discovered || {};
     const px = this.player.x / 16, py = this.player.y / 16;
+    // landmarks seen from afar are marked at once, but their toast waits until the region's title card has gone, then
+    // speaks as one line, not a stack under the card
+    const sighted = (this.sightQueue ||= []);
     for (const p of pois) {
       const id = this.mapId + ':' + p.id;
       const d = Math.hypot(p.x - px, p.y - py);
@@ -47,12 +50,16 @@ export const discoveryMethods = {
       if (d > rangeOf(p)) {
         if (LANDMARKS.has(p.kind) && d < SIGHT_RANGE && !S.sighted?.[id]) {
           (S.sighted ||= {})[id] = 1;
-          bus.emit('toast', 'SOMETHING TALL ON THE HORIZON... (' + placeName(p) + '?)', 15);
+          sighted.push(placeName(p));
         }
         continue;
       }
       this.discover(p, id);
     }
+    if (this.sightHoldUntil > this.time.now) return;
+    this.sightQueue = [];
+    if (sighted.length === 1) bus.emit('toast', 'SOMETHING TALL ON THE HORIZON... (' + sighted[0] + '?)', 15);
+    else if (sighted.length > 1) bus.emit('toast', `ON THE HORIZON: ${sighted[0]}? (+${sighted.length - 1} MORE)`, 15);
   },
   discover(p, id = this.mapId + ':' + p.id, how = 'DISCOVERED') {
     S.discovered = S.discovered || {};
