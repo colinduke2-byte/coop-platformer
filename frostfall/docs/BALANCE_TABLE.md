@@ -145,6 +145,26 @@ around them). Three changes to the tools first, because they change how to read 
 | Maw hall (tier 2 reavers, wights, wolves) | nordic +1 | 6/6 | 6/6 | 6/6 | ok, easy in a group of three |
 | Rime Wyrm | nordic +1 | 3/6 (16%) | 4/6 (1%) | 6/6 | ok: a careful player beats it |
 
+### One run of the playtest bot (`node test/playtest.mjs`, title screen to the Rime Heart, Normal)
+
+The walking is teleported and the bot is crude in dungeons (it charges the nearest guard and pulls whole groups, never uses
+the smith), so deaths in the crypt and the Maw halls are high; the boss rows are the meaningful ones.
+
+| Step | Level | Gold | Potions | Gear | Fight | Deaths |
+|---|---|---|---|---|---|---|
+| Tutorial wolf, drills, starter quest | 1 | 4 | 4 | Rusty Sword, Fur Tunic, Wooden Shield | 1 s | 0 |
+| Wolf hunt, Mirra's herbs | 1 | 128 | 8 | same | 43 s, 77 HP lost | 0 |
+| 8 tier-0 camps and dens | 2 | 196 | 8 | same | 27 s, 162 HP | 0 |
+| Hilda | 2 | 66 | 8 | Iron Sword, Iron Cuirass | | |
+| Crypt guards | 2 | 95 | 0 | same | 199 s, 1092 HP | 5 |
+| Jarl Valdrek | 3 | 210 | 2 | Nordic Blade and Helm (his drops) | won on try 2 | 1 |
+| Grimfang | 3 | 158 | 3 | + Iron Shield | won on try 1, 27 s | 0 |
+| Maw guards | 3 | 64 | 0 | Pale Pelt Mantle | 116 s, 814 HP | 5 |
+| Rime Wyrm | 3 | 183 | 3 | same | won on try 2 | 1 |
+
+No soft-lock, no page error, every quest step advanced (starter quest, drills, wolves, herbs, the crypt, the Frostheart, the
+Hearts quest, the Rime Heart), and the first trip warned and marked a campfire with no foe within 300 px of the exit.
+
 ### The next stretch
 
 | Fight | normal | careful | Verdict / change |
