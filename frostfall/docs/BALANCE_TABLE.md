@@ -111,3 +111,76 @@ camp, Valdrek, Hollow King, Sunscorch). Mashing still pays: hits interrupt wind-
 than it saves. Only the Ashen Sovereign clearly rewards dodging. The knobs are `TUNE.combat.windupArmor` (hyper-armour share,
 now 0.12) and `armorKb`, so more foes keep their swing through a flurry. The tier 3 patrol needs a longer limit in the bot (or a
 bot that chases casters) before its numbers mean anything.
+
+## Playtest pass (stage125-127), 2026-10-25
+
+Where Colin is (the first Heart taken) and the next stretch (Ironwatch Keep, the Drowned Chapel, the Rootvault, the Reach
+around them). Three changes to the tools first, because they change how to read every number above:
+
+- **The balance bot now runs on a stepped clock.** It thinks every 4 frames of the harness's stepped time instead of on a
+  60 ms wall-clock timer, so a busy machine (7 agents on 4 cores) no longer drops frames under it. `REALTIME=1` brings back
+  the old loop. The machine's load had been flattering the masher: see "Mashing" below.
+- **A third profile, `PROFILE=careful`**: rolls in the last 0.22 s of a tell it has watched for 0.28 s (the normal bot rolls
+  as soon as it reacts, and its 0.27 s of i-frames often end before the blow lands), keeps a roll's stamina in reserve,
+  fights unarmoured foes first, parries an armoured one (shield up in the last 0.1 s of its wind-up) and breaks a raised
+  shield with a heavy blow. It is the "careful player" of the targets. It still never kites, shoots or casts.
+- **"REAL" kit**: the earlier Heart scenarios assumed Nordic Plate +4/+5, but nothing sells or drops Nordic Plate before
+  Emberhold and the village smith stops at +3. The REAL scenarios use what a player can have: Nordic Blade, Shield and Helm
+  +3, Iron Cuirass +3, 6 potions, the Hearts taken so far.
+
+6 trials each unless noted, Normal. normal / masher / careful.
+
+### The opening (where Colin is)
+
+| Fight | Kit | normal | masher | careful | Verdict |
+|---|---|---|---|---|---|
+| Wolf pack | start | 6/6 | 3/6 | 5/6 | ok, gentle |
+| Bandit camp | iron | 6/6 | 2/6 | 6/6 | ok |
+| Crypt hall | steel | 6/6 | 6/6 | 6/6 | ok, easy in steel; hard in iron (playtest bot: 5 deaths in iron + Fur Tunic) |
+| Jarl Valdrek | iron | 4/6 (12% left) | 0/6 (32%) | 3/6 (15%) | ok, first boss: a few tries |
+| Grimfang | iron (before the crypt) | 2/6 (26%) | 0/6 (45%) | 1/6 (43%) | hard if you go before the crypt |
+| Grimfang REAL | Valdrek's drops (most players) | 6/6 (12%) | | 5/6 | ok |
+| Tier 1 patrol | nordic +3 | 3/6 | 0/6 | 3/6 | ok |
+| Vale patrol | nordic +4 | 4/6 | 4/6 | 3/6 | ok |
+| Maw hall (tier 2 reavers, wights, wolves) | nordic +1 | 6/6 | 6/6 | 6/6 | ok, easy in a group of three |
+| Rime Wyrm | nordic +1 | 3/6 (16%) | 4/6 (1%) | 6/6 | ok: a careful player beats it |
+
+### The next stretch
+
+| Fight | normal | careful | Verdict / change |
+|---|---|---|---|
+| Keep yard (knight, warden, bandit), tier 2, REAL | 0/4 | 1/4, then 2/8 | **a spike**: the Maw's hall 6/6, the Chapel's nave 4/4 |
+| same at tier 1 | 0/4 | 4/4 | **changed: the Keep's courtyard is tier 1** (the barracks and the Warlord stay tier 2) |
+| Warlord REAL | 1/4 (21%) | 5/6 | ok |
+| Chapel nave (draugr, wight, reaver), tier 2, REAL | 4/4 | 4/4 | ok |
+| Tide REAL | 3/4 (3%) | 5/6 | ok |
+| Rootvault wound (reaver, knight, alpha), tier 3, REAL | 0/4 | 0/4 | **a wall** (dead in 13-46 s) |
+| same at tier 2 | 0/4 | 4/4 (7.5 potions a fight) | **changed: the Rootvault's guards are tier 2** |
+| Root REAL | 1/4 (17%) | 5/6 | ok |
+| Reach tier 2 camp (reaver, warden, wight), REAL + Rime Heart | 0/4 | 4/4 | ok for a careful player |
+| Reach tier 3 camp (reaver, knight, wight), REAL + Rime Heart | 0/4 | 0/4 | **a wall: flagged, not changed** (see below) |
+
+The normal bot cannot beat a Rime Knight or a Draugr Warden at any tier (it never parries or uses heavies), so read its 0s
+against those as "this fight asks for the parry", not as "too hard". Whole-room fights (every guard of a room alerted at
+once) are lost by every profile in every Heart dungeon (the Maw's first chamber 1/4 careful): pull two or three at a time.
+
+### Mashing
+
+Measured on the stepped clock, **mashing does not pay** and no feel change was made: the masher loses Valdrek 0/6 (normal
+4/6), Grimfang 0/6 (2/6), the tier 1 patrol 0/6 (3/6), the bandit camp 2/6 (6/6), the Warlord 0/6 (1/6). It only matches the
+dodging bots in soft rooms (crypt hall, Maw hall) and against the two slowest bosses (Rime Wyrm 4/6, Tide 4/6). The old table's
+"masher as good as the dodging bot" came from the wall-clock loop on a loaded machine; even on the old loop today the masher
+loses (bandit camp 1/4 vs 3/4, Valdrek 0/4 vs 1/4, Grimfang 0/4 vs 2/4). If mashing still feels strong in play, the knobs are
+the same as before (`TUNE.combat.windupArmor`, `armorKb`).
+
+### Flagged for Colin (not changed)
+
+- **The Heart sites sit in tier 2-3 land.** Over 24 world seeds: the Maw is tier 1 in 14, tier 2 in 5 and **tier 3 in 5**;
+  Ironwatch Keep tier 2 in 9, tier 3 in 15; the Drowned Chapel tier 2 in 6, tier 3 in 18; the Rootvault tier 3 in all 24. With
+  the kit a player can have before Emberhold, a tier-3 camp kills even the careful bot in 13 s. The marker sends you there
+  anyway. Options: place the Heart sites at tier 1-2 in worldgen (the world agent's file; it moves the Reach hash), or lean
+  ordinary-enemy scaling more on the story (`TUNE.scaling` regionW 0.7 / storyW 0.3, for example 0.6 / 0.4: about 12% less
+  health and damage in tier-3 land early, the same at the end).
+- **Order of the Hearts.** The marker and Sigrid follow a fixed order (Maw, Keep, Chapel, Rootvault). In 4 of 24 worlds the
+  Keep is in tier-3 land while the Chapel is tier 2; sorting the remaining Hearts by the tier of their land would send players
+  to the easier one first.

@@ -11,7 +11,7 @@ const G = (fn, a) => h.ev(fn, a);
 const rows = [], notes = [];
 const note = (s) => { notes.push(s); console.log('  ! ' + s); };
 // what is on screen when something got stuck: the dialogue box, the holds on the world, the scenes that run
-const diag = () => h.ev(async () => { const ui = (await import('/src/systems/ui.js')).ui, d = await import('/src/systems/dialogue.js'), hud = window.__ff.game.scene.getScene('Hud'); return JSON.stringify({ holds: ui.holdTags(), running: d.scriptRunning(), dlg: hud.dlg ? { name: hud.dlg.name, text: String(hud.dlg.pages?.[hud.dlg.p] || '').slice(0, 90), choices: hud.dlg.choices?.map?.((c) => String(c.label || c.text || c).slice(0, 30)), sel: hud.dlg.sel } : null, scenes: window.__ff.game.scene.getScenes(true).map((x) => x.scene.key), map: window.__ff.game.scene.getScene('Game').mapId, mode: window.__ff.game.scene.getScene('Game').player?.mode }); });
+const diag = () => h.ev(async () => { const ui = (await import('/src/systems/ui.js')).ui, d = await import('/src/systems/dialogue.js'), hud = window.__ff.game.scene.getScene('Hud'); return JSON.stringify({ holds: ui.holdTags(), running: d.scriptRunning(), dlg: hud.dlg ? { name: hud.dlg.name, text: String(hud.dlg.pages?.[hud.dlg.p] || '').slice(0, 90), choices: hud.dlg.choices?.map?.((c) => String(c.label || c.text || c).slice(0, 30)), sel: hud.dlg.sel } : null, scenes: window.__ff.game.scene.getScenes(true).map((x) => x.scene.key), scriptFrom: (window.__holdLog || []).filter((r) => r.open).map((r) => r.st.slice(0, 600)), map: window.__ff.game.scene.getScene('Game').mapId, mode: window.__ff.game.scene.getScene('Game').player?.mode }); });
 const T0 = Date.now();
 
 await h.open('');
@@ -30,6 +30,12 @@ for (let i = 0; i < 60 && !(await active()).includes('Game'); i++) await tap('Ke
 if (!(await active()).includes('Game')) note('NEW GAME did not reach the village: ' + JSON.stringify(await active()));
 await h.sleep(1500);
 await G(() => { window.gs = () => window.__ff.game.scene.getScene('Game'); window.hud = () => window.__ff.game.scene.getScene('Hud'); });
+// remember where every 'script' hold came from, so a conversation that never ends can be traced
+await G(async () => {
+  const ui = (await import('/src/systems/ui.js')).ui; window.__holdLog = [];
+  const o = ui.hold.bind(ui);
+  ui.hold = (tag) => { const rel = o(tag); if (tag !== 'script') return rel; const rec = { st: new Error().stack.split('\n').slice(2, 9).map((l) => l.trim().replace(/https?:\/\/[^/]+/, '').replace(/\?[^:)]*/, '')).join(' < '), open: true }; window.__holdLog.push(rec); if (window.__holdLog.length > 40) window.__holdLog.shift(); return () => { rec.open = false; rel(); }; };
+});
 // the intro conversation: E through it, first answer
 for (let i = 0; i < 80 && !(await G(() => window.__ff.S.flags.introDone)); i++) await tap('KeyE', 40);
 if (!(await G(() => window.__ff.S.flags.introDone))) note('the intro conversation did not end');
@@ -80,12 +86,13 @@ await G(() => {
 // talk to someone through the real dialogue box: E on every line, `picks` for the choices (then the last option: Leave / No)
 const talk = async (id, picks = []) => {
   await G(async ([id, picks]) => {
+    window.__talkLog = [];
     const d = await import('/src/systems/dialogue.js'), dd = await import('/src/data/dialogue.js');
     window.__picks = [...picks]; window.__talk = d.runScript(() => dd.SCRIPTS[id]()).then(() => 'ok', (e) => 'err ' + e);
   }, [id, picks]);
   let shopEsc = 0;
   for (let i = 0; i < 200; i++) {
-    const st = await G(async () => { const d = await import('/src/systems/dialogue.js'); const dl = window.hud().dlg; if (dl?.choices && !dl.__picked) { dl.__picked = 1; dl.sel = window.__picks.length ? window.__picks.shift() : dl.choices.length - 1; } return d.scriptRunning(); });
+    const st = await G(async () => { const d = await import('/src/systems/dialogue.js'); const dl = window.hud().dlg; if (dl) { const line = (dl.choices ? 'CHOICE ' + dl.choices.map((c) => c.label || c).join('/') : (dl.name + ': ' + (dl.pages?.[dl.p] || ''))).slice(0, 90); window.__talkLog = window.__talkLog || []; if (window.__talkLog.at(-1) !== line) window.__talkLog.push(line); } if (dl?.choices && !dl.__picked) { dl.__picked = 1; dl.sel = window.__picks.length ? window.__picks.shift() : dl.choices.length - 1; } return d.scriptRunning(); });
     if (!st) break;
     if (await G(() => window.__ff.game.scene.isActive('Shop'))) {
       shopEsc++; await tap('Escape', 60); await h.sleep(250);
@@ -306,7 +313,7 @@ if (ch2.hearts !== 'active') note('the Hearts quest did not start after the Fros
 // ---- 6. Grimfang in Frostwind Pass
 if ((await Q('alpha')) !== 'active') await talk('bjorn', [0]);
 console.log('  grimfang quest', await Q('alpha'));
-if ((await Q('alpha')) !== 'active') note('Bjorn did not give the Grimfang quest after chapter one: ' + (await Q('alpha')));
+if ((await Q('alpha')) !== 'active') note('Bjorn did not give the Grimfang quest after chapter one: ' + (await Q('alpha')) + ' wolves ' + (await Q('wolves')) + ' said ' + JSON.stringify(await G(() => window.__talkLog)));
 await shopRound();
 b = await bossFight('pass', 'south', 'Grimfang', 'grimfangDone');
 await row('Grimfang', b, b.won ? `bot won on try ${b.tries}` : 'bot lost 4 tries');
