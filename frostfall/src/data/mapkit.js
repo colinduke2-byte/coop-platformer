@@ -11,7 +11,7 @@ export class Grid {
     this.n = 0;
   }
   inb(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
-  set(x, y, t) { if (this.inb(x, y)) this.t[y][x] = t; }
+  set(x, y, t) { if (this.inb(x, y) && !this.locked?.has(y * this.w + x)) this.t[y][x] = t; }
   get(x, y) { return this.inb(x, y) ? this.t[y][x] : -1; }
   rect(x, y, w, h, t, reserve = true) {
     for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) { this.set(i, j, t); if (reserve && this.inb(i, j)) this.res[j][i] = true; }
@@ -46,7 +46,15 @@ export class Grid {
     }
   }
   // Force a walkable tile and protect it from scatter (for props / signs / NPC spots).
-  clear(x, y, t = TILE.SNOW2) { if (this.inb(x, y)) { this.t[y][x] = t; this.res[y][x] = true; } }
+  clear(x, y, t = TILE.SNOW2) { if (this.inb(x, y)) { if (!this.locked?.has(y * this.w + x)) this.t[y][x] = t; this.res[y][x] = true; } }
+  // Buildings: lock() keeps the tiles of a rectangle as they are now. set / rect / clear leave locked cells alone, and
+  // relock() puts back anything a later pass wrote straight into t[][], so no road, clearing, prop or tree can eat a house.
+  lock(x, y, w, h) {
+    this.locked ||= new Map();
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (this.inb(i, j)) { this.locked.set(j * this.w + i, this.t[j][i]); this.res[j][i] = true; }
+  }
+  isLocked(x, y) { return !!this.locked?.has(y * this.w + x); }
+  relock() { if (this.locked) for (const [k, t] of this.locked) this.t[(k / this.w) | 0][k % this.w] = t; }
   // Sprinkle visual variety: snow pebbles / frozen tufts, worn paths, cracked ice or floors.
   dress(kind) {
     const T_ = TILE;

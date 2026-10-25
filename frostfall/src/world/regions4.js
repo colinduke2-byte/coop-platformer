@@ -206,7 +206,7 @@ export const SUNSCORCH = {
     // the thieves' den: Red Sula and her crew
     thiefden({ p, g, add, enemy, chest, clearing, m }) {
       clearing(p, 13, 10, TILE.SAND);
-      for (const dx of [-5, 5]) { g.rect(p.x + dx, p.y - 4, 3, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 2, 3, 2, TILE.SANDRUIN); }
+      for (const dx of [-5, 5]) { g.rect(p.x + dx, p.y - 4, 3, 2, TILE.ROOF); g.rect(p.x + dx, p.y - 2, 3, 2, TILE.SANDRUIN); g.lock(p.x + dx, p.y - 4, 3, 4); }
       enemy('redsula', p.x, p.y + 1, p.tier + 1, { camp: p.id });
       for (let i = 0; i < 3; i++) enemy('cutpurse', p.x - 4 + i * 4, p.y + 3, p.tier, { camp: p.id });
       chest(p, 0, 4, p.tier + 1, 'hard');

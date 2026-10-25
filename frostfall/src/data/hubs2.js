@@ -21,8 +21,10 @@ export function buildReedwick() {
   g.rect(52, 24, 16, 3, TILE.BOARDWALK); g.rect(8, 30, 3, 12, TILE.BOARDWALK); g.rect(8, 40, 12, 3, TILE.BOARDWALK);
   // huts around the plaza
   hut(g, 22, 8, 9, 26); hut(g, 42, 8, 9, 46); hut(g, 24, 41, 9, 28); hut(g, 44, 41, 9, 48); hut(g, 56, 14, 8, 59); hut(g, 56, 33, 8, 59);
-  g.rect(26, 12, 2, 3, TILE.BOARDWALK); g.rect(46, 12, 2, 3, TILE.BOARDWALK); g.rect(28, 40, 2, 2, TILE.BOARDWALK); g.rect(48, 40, 2, 2, TILE.BOARDWALK);
-  g.rect(59, 18, 2, 8, TILE.BOARDWALK); g.rect(59, 27, 2, 7, TILE.BOARDWALK);
+  // spurs to the doors: the south and east huts face away from the plaza, so their boards wrap round to the door step
+  // (they used to run into the back of the roof)
+  g.rect(26, 12, 2, 3, TILE.BOARDWALK); g.rect(46, 12, 2, 3, TILE.BOARDWALK); g.rect(28, 45, 7, 2, TILE.BOARDWALK); g.rect(38, 45, 12, 2, TILE.BOARDWALK);
+  g.rect(59, 18, 2, 8, TILE.BOARDWALK); g.rect(64, 27, 2, 12, TILE.BOARDWALK); g.rect(59, 37, 5, 2, TILE.BOARDWALK);
   // the well and a few crates; lantern poles along the boards
   g.set(36, 26, TILE.BRAZIER); g.set(37, 26, TILE.BRAZIER);
   for (const [x, y] of [[20, 18], [20, 34], [51, 18], [51, 34], [10, 26], [18, 26], [60, 25], [66, 25], [36, 8], [36, 44]]) { g.set(x, y, TILE.BRAZIER); g.add({ t: 'glow', x, y, r: 36, col: 8 }); }

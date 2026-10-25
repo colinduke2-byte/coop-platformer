@@ -59,9 +59,9 @@ export const FENS = {
       add({ t: 'bounty', id: p.id, x: p.x, y: p.y, kind: 'ruin' });
     },
     // the hag's hut: a champion hag, her leeches, and a cauldron of ruined notes
-    hagshut({ p, g, add, enemy, chest, clearing, potsAround, pickOf, m }) {
+    hagshut({ p, add, enemy, chest, clearing, potsAround, pickOf, m, building }) {
       clearing(p, 12, 9, TILE.BOARDWALK);
-      g.rect(p.x - 3, p.y - 4, 7, 2, TILE.ROOF); g.rect(p.x - 3, p.y - 2, 7, 2, TILE.WOODWALL); g.set(p.x, p.y - 2, TILE.DOOR); g.set(p.x - 2, p.y - 2, TILE.WINDOW);
+      building(p.x - 3, p.y - 4, 7, 2, 2, p.x, [p.x - 2]);          // the door sits in the bottom wall row, on the boards
       add({ t: 'enemy', kind: 'boghag', x: p.x, y: p.y + 1, tier: p.tier + 1, elite: true, camp: p.id, champion: true });
       for (let i = 0; i < 3; i++) enemy('leech', p.x - 3 + i * 3, p.y + 3, p.tier, { camp: p.id });
       for (let i = 0; i < 2; i++) enemy(pickOf(m.melee), p.x + (i ? 5 : -5), p.y + 2, p.tier, { camp: p.id });
@@ -139,11 +139,11 @@ export const HIGHLANDS = {
   },
   dressers: {
     // a clan hearth: a fire, a trader's tent, a few clanfolk and a shaman who knows the weather
-    hearthcamp({ p, g, add, enemy, chest, clearing, potsAround, m }) {
+    hearthcamp({ p, g, add, enemy, chest, clearing, potsAround, m, building }) {
       clearing(p, 13, 9, TILE.SLATE);
       g.set(p.x, p.y, TILE.FIRE);
       add({ t: 'fire', x: p.x, y: p.y, rest: true, id: p.id }); add({ t: 'glow', x: p.x, y: p.y, r: 56, col: 12 });
-      g.rect(p.x - 5, p.y - 4, 4, 2, TILE.ROOF); g.rect(p.x + 3, p.y - 4, 4, 2, TILE.ROOF);
+      building(p.x - 5, p.y - 4, 4, 2, 1, p.x - 3); building(p.x + 3, p.y - 4, 4, 2, 1, p.x + 4);     // two hide tents, like Skarn Hold's
       add({ t: 'npc', id: 'clantrader', x: p.x + 2, y: p.y + 2 });
       chest(p, -4, 3, p.tier, 'med');
       potsAround(p, 3, 5, 'barrel');

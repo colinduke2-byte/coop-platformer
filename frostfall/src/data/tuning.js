@@ -459,3 +459,8 @@ TUNE.combat = {
   // CB7 / CB26 / CB28: boss tells and recovery per phase (1, 2, 3); a shortened tell never goes below the floor
   bossPhase: { windup: [1, 0.8, 0.75], recover: [1, 0.75, 0.7], floor: 0.38, meleeFloor: 0.4, MELEE: ['slam', 'sweep', 'tail', 'charge'], hardWindup: 0.9, hardPhase2: 0.6 },
 };
+
+// ---- W: world sweep
+TUNE.sweep = {
+  sightDelay: 3,           // seconds after arriving on a map before "something tall on the horizon" speaks (the title card shows first)
+};

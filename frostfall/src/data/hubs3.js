@@ -29,7 +29,7 @@ export function buildLanternGlade() {
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'glasswood', spawn: 'lanternglade', fx: 'door' });
   g.add({ t: 'sign', x: 8, y: 24, text: ['LANTERN GLADE.', 'THE TREES HERE SING IN THE WIND. DO NOT SING BACK; THEY ARE VERY SENSITIVE.'] });
-  people(g, [['glade_warden', 36, 19], ['glade_trader', 30, 28], ['glade_smith', 44, 28], ['glade_hunter', 24, 33], ['glade_herbalist', 48, 20], ['glade_child', 33, 31], ['glade_watch', 12, 26], ['glade_tailor', 40, 34], ['glade_inn', 26, 13], ['glade_map', 46, 12], ['glade_sage', 40, 22]]);
+  people(g, [['glade_warden', 36, 19], ['glade_trader', 30, 28], ['glade_smith', 44, 28], ['glade_hunter', 24, 33], ['glade_herbalist', 48, 20], ['glade_child', 33, 31], ['glade_watch', 12, 26], ['glade_tailor', 40, 34], ['glade_inn', 26, 13], ['glade_map', 48, 12], ['glade_sage', 40, 22]]);
   for (const [x, y, skin] of [[24, 20, 'barrel'], [46, 22, 'pot'], [40, 33, 'barrel'], [30, 20, 'pot'], [54, 30, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 46, y: 31 });
   g.add({ t: 'lore', id: 'glade', tex: 'book', x: 34, y: 31 });
@@ -50,6 +50,7 @@ export function buildLanternfall() {
   g.rect(20, 14, 28, 22, TILE.CFLOOR2);
   g.rect(35, 5, 3, 10, TILE.CFLOOR2); g.rect(52, 24, 14, 3, TILE.CFLOOR2);
   for (const [x, y, w] of [[22, 8, 8], [42, 8, 8], [22, 40, 8], [56, 14, 8], [56, 34, 8]]) hut(g, x, y, w, x + (w >> 1), TILE.ROOF, TILE.STONE);
+  g.rect(55, 36, 1, 3, TILE.BOARDWALK); g.rect(55, 38, 6, 1, TILE.BOARDWALK);       // the lakeside hut's door opens onto a little pier, not the water
   lamps(g, [[20, 18], [20, 34], [47, 18], [47, 34], [10, 26], [18, 26], [60, 25], [36, 8]], 12);
   g.set(34, 24, TILE.FIRE); g.add({ t: 'fire', x: 34, y: 24, rest: true, id: 'fallfire' }); g.add({ t: 'glow', x: 34, y: 24, r: 70, col: 12 });
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
@@ -81,13 +82,13 @@ export function buildSaltmarket() {
   for (const [x, y, w] of [[24, 6, 9], [44, 6, 9], [24, 14, 0], [8, 12, 8], [8, 33, 8], [20, 33, 8], [52, 30, 6]]) if (w) hut(g, x, y, w, x + (w >> 1), TILE.ROOF, TILE.STONE);
   // the market square, a fountain of salt-stone and lanterns
   g.rect(30, 22, 8, 6, TILE.MARBLE); g.set(33, 24, TILE.PILLAR); g.set(34, 25, TILE.PILLAR);
-  lamps(g, [[22, 18], [22, 34], [55, 18], [55, 34], [10, 26], [18, 26], [40, 12], [40, 36], [30, 26], [38, 26]], 13);
+  lamps(g, [[22, 18], [29, 34], [55, 18], [58, 34], [10, 26], [18, 26], [40, 12], [40, 36], [30, 26], [38, 26]], 13);   // none in a roof or on a door step
   g.set(37, 30, TILE.FIRE); g.add({ t: 'fire', x: 37, y: 30, rest: true, id: 'saltfire' }); g.add({ t: 'glow', x: 37, y: 30, r: 70, col: 12 });
   g.add({ t: 'spawn', name: 'entry', x: 6, y: 26 });
   g.add({ t: 'exit', x: 3, y: 25, w: 1, h: 3, to: 'coast', spawn: 'saltgate', fx: 'door' });
   g.add({ t: 'sign', x: 8, y: 24, text: ['SALTMARKET.', 'THE COAST\'S ONLY HARBOUR THAT THE ICE LETS IN. GUILDS TO THE NORTH, DOCKS TO THE SOUTH, AND WHAT THE GUARDS DO NOT SEE TO THE EAST.'] });
   g.add({ t: 'sign', x: 55, y: 28, text: ['THE SMUGGLERS\' STAIRS.', 'DOWN TO SEAWEED COVE. NOBODY LIVES THERE. A LOT OF PEOPLE WORK THERE.'] });
-  people(g, [['salt_harbourmaster', 32, 18], ['salt_trader', 28, 30], ['salt_smith', 46, 28], ['salt_tailor', 18, 30], ['salt_guildmaster', 36, 14], ['salt_smuggler', 52, 27], ['salt_sailor', 34, 42], ['salt_inn', 26, 9], ['salt_map', 48, 10], ['salt_child', 40, 28], ['salt_watch', 12, 26], ['salt_bard', 38, 20]]);
+  people(g, [['salt_harbourmaster', 32, 18], ['salt_trader', 28, 30], ['salt_smith', 46, 28], ['salt_tailor', 18, 30], ['salt_guildmaster', 36, 14], ['salt_smuggler', 52, 27], ['salt_sailor', 34, 42], ['salt_inn', 26, 10], ['salt_map', 50, 10], ['salt_child', 40, 28], ['salt_watch', 12, 26], ['salt_bard', 38, 20]]);
   for (const [x, y, skin] of [[26, 18, 'barrel'], [50, 22, 'pot'], [42, 34, 'barrel'], [34, 12, 'pot'], [44, 40, 'barrel'], [14, 38, 'barrel']]) g.add({ t: 'pot', x, y, skin });
   g.add({ t: 'prop', tex: 'anvil', x: 47, y: 30 });
   g.add({ t: 'lore', id: 'saltmarket', tex: 'book', x: 36, y: 32 });

@@ -46,8 +46,8 @@ export function buildEmberhold() {
   // wardens' post by the gate and the house for sale
   house(g, 8, 34, 12, 3, 13, [10, 16]);
   house(g, 26, 42, 10, 2, 30, [28, 33]);
-  g.rect(13, 38, 2, 8, TILE.PATH); g.rect(30, 45, 2, 6, TILE.PATH);
-  g.rect(13, 28, 2, 7, TILE.PATH);
+  g.rect(13, 39, 2, 7, TILE.PATH); g.rect(30, 46, 2, 5, TILE.PATH);       // the paths stop at the door step and the back wall, not through the house
+  g.rect(13, 28, 2, 6, TILE.PATH);
   // the shrine of the First Flame
   g.rect(58, 8, 10, 9, TILE.CFLOOR2);
   for (const [dx, dy] of [[0, 0], [9, 0], [0, 8], [9, 8]]) g.set(58 + dx, 8 + dy, TILE.PILLAR);
@@ -68,7 +68,7 @@ export function buildEmberhold() {
   door(59, 42, 'guildhall', "E: DELVERS' HALL");
   door(79, 42, 'lantern', 'E: THE LAST LANTERN');
   door(13, 38, 'wardpost', "E: WARDENS' POST");
-  door(30, 44, 'emberhouse', 'E: ENTER HOUSE', { price: 500, flag: 'emberHouse', house: 'HOUSE', houseName: 'A HOUSE ON ASHFALL STREET' });
+  door(30, 45, 'emberhouse', 'E: ENTER HOUSE', { price: 500, flag: 'emberHouse', house: 'HOUSE', houseName: 'A HOUSE ON ASHFALL STREET' });
   g.add({ t: 'spawn', name: 'gate', x: 6, y: 29 });
   g.add({ t: 'spawn', name: 'mines', x: 70, y: 52 });
   g.add({ t: 'exit', x: 3, y: 28, w: 1, h: 3, to: 'ashen', spawn: 'emberhold', fx: 'door' });

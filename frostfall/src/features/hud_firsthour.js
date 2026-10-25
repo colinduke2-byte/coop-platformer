@@ -37,8 +37,16 @@ registerTicker('hudDangerNames', (sc) => {
     e.hudNamed = true;
     const dg = dangerNameOn(e);
     if (!dg) continue;
-    const name = (e.displayName || e.cfg.name || '').toUpperCase();
-    sc.fx.text(e.x, e.y - 30, dg === 2 ? name : name + ' ' + dangerName(dg), DANGER_COL[dg], TUNE.hud.dangerNameLife);
+    const name = (e.displayName || e.cfg.name || '').toUpperCase(), label = dg === 2 ? name : name + ' ' + dangerName(dg);
+    // a camp that notices you all at once used to print its names on top of each other: a name that would overlap one
+    // still on screen moves up a line, and a fourth in the same spot is left out
+    const now = sc.time.now, life = TUNE.hud.dangerNameLife * 1000, shown = (sc.dangerNamesShown ||= []).filter((n) => now - n.at < life);
+    let y = e.y - 30, tries = 0;
+    while (tries < 3 && shown.some((n) => Math.abs(n.y - y) < 8 && Math.abs(n.x - e.x) < (n.w + label.length * 6) / 2 + 4)) { y -= 8; tries++; }
+    sc.dangerNamesShown = shown;
+    if (tries >= 3) continue;
+    shown.push({ x: e.x, y, w: label.length * 6, at: now });
+    sc.fx.text(e.x, y, label, DANGER_COL[dg], TUNE.hud.dangerNameLife);
     if (dg !== 2) tip('danger');
   }
 }, CORE_ORDER.enemies + 20);

@@ -151,7 +151,7 @@ export const eventMethods = {
     for (const f of this.fires) {
       if (S.flags.fires[f.key] || Math.hypot(this.player.x - f.x, this.player.y - f.y) > 64) continue;
       S.flags.fires[f.key] = true;
-      bus.emit('toast', `CAMPFIRE FOUND: TRAVEL FROM ANY FIRE, OR MAP (${prompt('KeyM')}) > ${prompt('KeyF')}`, 12); sfx.play('discover');
+      bus.emit('toast', `CAMPFIRE FOUND: TRAVEL BY FIRE OR MAP (${prompt('KeyM')}) > ${prompt('KeyF')}`, 12); sfx.play('discover');
     }
   },
   fastTravel(f) {
