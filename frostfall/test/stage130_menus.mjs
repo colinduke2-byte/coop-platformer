@@ -200,10 +200,27 @@ check('pad prompts: LB / RB on the tab bar, LT/RT on the strip, A EQUIP, X OFFHA
 await h.shot('s130_gear_pad');
 await padTap(2);
 check('X puts a one-handed weapon in the off hand', (await G(() => window.__ff.S.equip.offhand)) === 'ember_dagger');
+// holding X drops (the pad has no V): once to ask, again to drop; the help line says so
+const padHold = async (b, ms) => { await G((b) => { window.__pads = [window.__mk([b])]; }, b); await wait(ms); await G(() => { window.__pads = [window.__mk([])]; }); await wait(80); };
+const dropHelp = await G(() => { const m = window.__ff.game.scene.getScene('Menu'), l = m.inventory(); m.cursor = l.indexOf('rusty_sword'); m.draw(); return m.dyn.list.filter((t) => t.y === 168).map((t) => t.text).join(' '); });
+const rusty0 = await G(() => window.__ff.S.inv.rusty_sword || 0);
+await padHold(2, 650);
+const armed = await G(() => window.__ff.game.scene.getScene('Menu').dropArm);
+await padHold(2, 650);
+const rusty1 = await G(() => window.__ff.S.inv.rusty_sword || 0);
+check('pad: holding X asks, holding it again drops; the help line says HOLD: DROP', /X OFFHAND, HOLD: DROP/.test(dropHelp) && armed === 'rusty_sword' && rusty1 < rusty0 && (await G(() => window.__ff.S.equip.offhand)) === 'ember_dagger', JSON.stringify({ dropHelp, armed, rusty0, rusty1 }));
 await padTap(1); await wait(100);
 check('B closes the menu', (await menu()) === null);
 check('the pad buttons belong to the game again once the menu is shut (X swings, no sub-page keys)', (await G(async () => (await import('/src/systems/keys.js')).menuPadButton('KeyF'))) === null);
 
+// the pickup toast's mark is the card's verdict
+const toast = await G(async () => {
+  const { bus } = await import('/src/systems/bus.js'), { addItem } = await import('/src/systems/inventory.js'), C = await import('/src/ui/gearCompare.js');
+  const out = [];
+  for (const id of ['steel_sword', 'rusty_sword', 'verdant_mail']) { let t = ''; const f = (m) => { t = m; }; bus.on('toast', f); addItem(id, 1); bus.off('toast', f); out.push({ id, t, mark: C.gearMark(id) }); }
+  return out;
+});
+check('pickup toasts carry the same ▲ / ▼ / ◆ as the card\'s verdict', toast.every((x) => (x.mark === 1 ? /▲$/ : x.mark === -1 ? /▼$/ : x.mark === 2 ? /◆$/ : /[^▲▼◆]$/).test(x.t)), JSON.stringify(toast));
 check('no page errors', h.errors.length === 0, h.errors.slice(0, 5).join('\n'));
 await h.close();
 console.log(failCount() ? 'MENUS FAILED' : 'MENUS PASSED');

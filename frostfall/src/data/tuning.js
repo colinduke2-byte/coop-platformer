@@ -471,3 +471,4 @@ TUNE.hud.compare = {
   rel: ['dmg', 'spell', 'block', 'armor'],
   buildMin: 0.4, mixedBand: 0.08, quietAfter: 6,
 };
+TUNE.hud.dropHold = 0.5;        // seconds X is held on a pad, in the pack, to drop the selected stack (V on a keyboard)

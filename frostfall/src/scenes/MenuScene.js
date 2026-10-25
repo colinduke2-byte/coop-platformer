@@ -277,7 +277,14 @@ export default class MenuScene extends Phaser.Scene {
       this.dirty = true; sfx.play('move');
     }
     // V: drop the selected stack at your feet (press twice; equipped and quest items stay). For when the pack is too heavy.
-    if (keys.pressed('ammo') && id0) {
+    // a pad has no drop button in menus: holding X (the offhand button) for TUNE.hud.dropHold s does what V does; a short
+    // press of X still means the off hand, on release
+    let padDrop = false, padOff = false;
+    if (padActive()) {
+      if (keys.isDown('block')) { const was = this.xHeld || 0; this.xHeld = was + this.game.loop.delta / 1000; padDrop = was < TUNE.hud.dropHold && this.xHeld >= TUNE.hud.dropHold; }
+      else { padOff = keys.released('block') && (this.xHeld || 0) < TUNE.hud.dropHold; this.xHeld = 0; }
+    } else this.xHeld = 0;
+    if ((keys.pressed('ammo') || padDrop) && id0) {
       const id = id0, it = ITEMS[id], n = S.inv[id] || 0;
       if (it.type === 'quest' || it.type === 'note' || Object.values(S.equip).includes(id)) { bus.emit('toast', Object.values(S.equip).includes(id) ? 'TAKE IT OFF FIRST' : 'YOU CANNOT DROP THAT', 11); sfx.play('nostamina'); }
       else if (this.dropArm !== id) { this.dropArm = id; this.dropN = n; sfx.play('move'); }          // asks in the description panel
@@ -295,7 +302,7 @@ export default class MenuScene extends Phaser.Scene {
       if (keys.pressed('left')) { this.dropN = Math.max(1, (this.dropN || n) - 1); this.dirty = true; sfx.play('move'); }
       if (keys.pressed('right')) { this.dropN = Math.min(n, (this.dropN || n) + 1); this.dirty = true; sfx.play('move'); }
     }
-    const wantEquip = keys.pressed('interact'), wantOff = keys.pressed('block');
+    const wantEquip = keys.pressed('interact'), wantOff = padActive() ? padOff : keys.pressed('block');
     if ((wantEquip || wantOff) && id0) {
       const id = id0, it = ITEMS[id];
       if (SLOT_OF[it.type]) {
@@ -407,8 +414,11 @@ export default class MenuScene extends Phaser.Scene {
       const eq = sid && Object.values(S.equip).includes(sid);
       const verb = !sit ? '' : SLOT_OF[sit.type] ? (eq ? 'E TAKE OFF' : 'E EQUIP') + (sit.type === 'weapon' && !eq ? '  F OFFHAND' : '')
         : { potion: 'E DRINK', elixir: 'E DRINK', food: 'E EAT', tome: 'E READ', note: 'E READ', map: 'E READ', whistle: 'E CALL' }[sit.type] || '';
-      const drop = sit && !eq && sit.type !== 'quest' && sit.type !== 'note' && sit.type !== 'weapon' ? '  V DROP' : '';
-      this.help = this.dropArm ? 'V AGAIN TO DROP  A/D HOW MANY  W/S CANCEL' : `${verb}${drop}${worn ? '' : `  R SORT ${SORTS[this.sort]}`}`.trim();
+      const canDrop = sit && !eq && sit.type !== 'quest' && sit.type !== 'note', pad = padActive();
+      // on a pad the drop is "hold X", folded into the off-hand hint for one-handed weapons so the line keeps four hints
+      const verbP = pad && canDrop && sit.type === 'weapon' ? verb.replace('F OFFHAND', 'F OFFHAND, HOLD: DROP') : verb;
+      const drop = !canDrop || (pad && sit.type === 'weapon') ? '' : pad ? '  F HOLD: DROP' : sit.type !== 'weapon' ? '  V DROP' : '';
+      this.help = this.dropArm ? (pad ? 'F HOLD AGAIN TO DROP  A/D HOW MANY  W/S CANCEL' : 'V AGAIN TO DROP  A/D HOW MANY  W/S CANCEL') : `${verbP}${drop}${worn ? '' : `  R SORT ${SORTS[this.sort]}`}`.trim();
       if (this.dropArm) this.helpCol = 12;
     }
     // gold at the right end of the strip
@@ -488,7 +498,7 @@ export default class MenuScene extends Phaser.Scene {
     y += 10;
     if (this.dropArm === id) {
       const n = S.inv[id] || 1, k = Math.max(1, Math.min(n, this.dropN || n));
-      this.T(x0, y + 2, `DROP ${k} OF ${n}?`, 12); this.T(x0, y + 12, 'V AGAIN TO DROP', 6); this.T(x0, y + 22, n > 1 ? 'A/D: HOW MANY' : 'W/S: CANCEL', 4);
+      this.T(x0, y + 2, `DROP ${k} OF ${n}?`, 12); this.T(x0, y + 12, padActive() ? 'HOLD X AGAIN TO DROP' : 'V AGAIN TO DROP', 6); this.T(x0, y + 22, n > 1 ? 'A/D: HOW MANY' : 'W/S: CANCEL', 4);
       return;
     }
     // the words: what it is, its upgrades, sockets and enchantment
