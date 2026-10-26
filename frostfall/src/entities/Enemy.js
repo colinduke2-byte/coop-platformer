@@ -154,6 +154,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   update(dt, player) {
     if (this.dead) return;
+    if (this.foe) { if (this.alerted && this.foe.active && this.foe.mode !== 'dead') player = this.foe; else this.foe = null; }   // turned on a companion (features/companions.js)
     const b = this.body;
     const sc = this.scene;
     this.cd -= dt;
@@ -540,12 +541,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   startWindup(to, wind = null) {
-    wind ??= chooseAlt(this, Math.hypot(this.scene.player.x - this.x, this.scene.player.y - this.y));      // CB23: maybe the second move
+    const tg = this.foe || this.scene.player;                    // you, or the companion it turned on
+    wind ??= chooseAlt(this, Math.hypot(tg.x - this.x, tg.y - this.y));      // CB23: maybe the second move
     if (this.cfg.flank) for (const o of this.scene.enemies.getChildren()) if (o !== this && !o.dead && o.alerted && o.cfg.flank && o.cd > 0.25 && Math.hypot(o.x - this.x, o.y - this.y) < 80) o.cd = 0.25;   // the pack pounces together
     this.setState('windup', wind);
     this.face = dir8(to.x, to.y);
     this.dashDir = to;
-    this.castTarget = { x: this.scene.player.x, y: this.scene.player.y + 3 };
+    this.castTarget = { x: tg.x, y: tg.y + 3 };
     this.hitDone = false;
     this.blinkOn = true; this.blink = 0.07;
     const crush = (!!this.cfg.crush || this.altCrush) && this.cfg.kind !== 'shoot' && this.cfg.kind !== 'cast';
@@ -684,7 +686,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       .setDepth(this.y + (f.y < 0 ? 4 : 12));
   }
 
-  // info: { dmg, kx, ky, kb, src, stun, slow, sneak }  -> returns damage dealt
+  // info: { dmg, kx, ky, kb, src, stun, slow, sneak, from, ally, noFlinch }  -> returns damage dealt (from / ally: who struck, for a companion)
   takeHit(info) {
     if (this.dead) return 0;
     if (this.spec?.cub && !this.cubCried) {                            // hurt a cub and the mother comes for you
@@ -758,7 +760,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     const held = this.windupArmor > 0 && this.state === 'windup' && !info.heavy && !info.forceStun && dmg * (info.poise || 1) < this.maxHp * this.windupArmor;
     if (held) sc.fx.text(this.x, this.y - 22, 'UNFLINCHING', 4, 0.5);            // CB1: the swing still comes
-    else if (!this.superArmor || info.forceStun) {
+    else if ((!this.superArmor || info.forceStun) && !info.noFlinch) {          // noFlinch: a companion's blow while its stagger is on cooldown
       this.stun = Math.max(this.stun, info.stun ?? 0.22);
       if (this.state === 'windup') { this.setState('chase'); this.marker?.destroy(); this.marker = null; this.cd = 0.3; }
     }

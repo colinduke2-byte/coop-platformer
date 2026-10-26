@@ -482,3 +482,31 @@ TUNE.hud.dropHold = 0.5;        // seconds X is held on a pad, in the pack, to d
 TUNE.playtest = {
   drillSleep: 0.55,      // Bjorn's sleeping drill wolf notices you at this share of a wolf's sight range (at 1 a sneaking approach always woke it)
 };
+
+// ---- companions: Ragna, Pell, the hound / cub and the Spirit Wolf (entities/companionAI.js, features/companions.js)
+// A companion should add roughly 15-25% to your own damage in a typical fight (measured by test/stage139_companion_budget).
+TUNE.companion = {
+  numCol: 8,                  // palette colour of a companion's damage numbers (yours are white)
+  staggerCd: 2.5,             // seconds: companions may stun / stagger the same foe at most this often (no stun-lock)
+  sep: { enemy: 4, player: 12, ally: 12, push: 150 },   // gap kept beyond the bodies, and how hard the soft push is (px/s)
+  out: 14,                    // how far outside striking reach a skirmisher circles
+  aggro: {                    // foes that turn on a companion instead of you
+    every: 0.7,               // seconds between a foe's rethinks
+    base: 0.05, near: 0.08, hit: 0.15,  // chance per rethink; + when the companion is closer than you; + when it just hit the foe
+    hitWindow: 2,             // seconds a companion's blow counts as "just hit"
+    hold: 3,                  // seconds a foe keeps after a companion once it picks one
+    range: 110,               // only a companion this close is a candidate
+    max: 2,                   // at most this many foes after one companion at a time
+    named: 0.3,               // titled / mini-boss foes turn far less often; bosses never do
+  },
+  down: { t: 10, upHp: 0.5, invuln: 1.5 },   // a companion at 0 HP is down this long, then gets up with this share of its HP
+  hurtT: 0.25,                // seconds of flinch after a blow lands on a companion
+  dmgTaken: 0.6,              // share of a foe's blow a companion takes (foes hit hard enough for a hero)
+  bark: { chance: 0.3, gap: 9 },             // chance a moment gets a line, and the least seconds between two lines
+  // per companion: hp = share of your max HP; reach = px beyond the bodies a blow lands; wind = crouch / tell (s);
+  // dash / back = px/s of the dart in and the spring out; backPx = how far it springs out; cd = s between attacks
+  pell: { hp: 0.7, dmg: 9, reach: 6, wind: 0.2, dash: 170, back: 150, backPx: 30, cd: 0.9, speed: 92, stun: 0.18, kb: 40 },
+  wolf: { hp: 0.4, dmgMul: 1, reach: 4, wind: 0.28, dash: 200, back: 170, backPx: 30, cd: 1.0, speed: 112, stun: 0.2, kb: 70 },
+  hound: { hp: 0.7, reach: 4, wind: 0.24, dash: 180, back: 160, backPx: 28, cd: 0.9, speed: 106, stun: 0.15, kb: 50 },
+  ragna: { hp: 0.7, dmg: 8, cd: 1.3, keep: 70, near: 40, speed: 64, arrow: 220, lineClear: 12 },
+};

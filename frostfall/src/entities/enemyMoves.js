@@ -94,6 +94,7 @@ export const lateAffixesFor = (e) => ((e.progressF || 0) > TUNE.combat.late.affi
 export function duel(e, info) {
   if (!e.duellist || info.src !== 'melee' || info.heavy || e.stun > 0 || e.state === 'attack') return false;
   const p = e.scene.player;
+  if (info.ally || (info.from && info.from !== p)) return false;     // only your own combo: a companion's blow is never parried
   if (!p || p.comboN !== 2) return false;
   const k = norm(p.x - e.x, p.y - e.y);
   if (e.face.x * k.x + e.face.y * k.y < 0.3) return false;
