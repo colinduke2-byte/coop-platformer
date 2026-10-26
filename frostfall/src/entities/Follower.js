@@ -62,7 +62,7 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
         ({ st, ...v } = skirmish(this, dt, tgt, P, (e, dir) => {
           sfx.play(sfx.swing('dagger'), this);
           const dealt = allyHit(this, e, { dmg: P.dmg, kx: dir.x, ky: dir.y, kb: P.kb, stun: P.stun });
-          if (dealt > 0) { sfx.play(sfx.hitOn(e), this); bark(this, 'strike'); }
+          if (dealt > 0) sfx.play(sfx.hitOn(e), this);
         }, { back: true }));
         if (st === 'circle') this.face = dir8(to.x, to.y);
       } else v = this.archer(dt, tgt, td, to, mode, player);

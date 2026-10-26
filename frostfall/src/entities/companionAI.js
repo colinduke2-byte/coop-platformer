@@ -35,7 +35,7 @@ export function allyHit(c, e, info, from = c) {
   const dealt = e.takeHit(hit);
   if (!cool && ((e.stun || 0) > stun0 + 0.01 || (e.staggerT || 0) > stag0)) e.allyStaggerT = sc.t + T.staggerCd;
   e.allyHitAt = sc.t; e.allyHitBy = from;
-  if (dealt > 0) sc.fx.text(e.x, e.y - 10, String(Math.min(dealt, 999)), T.numCol);
+  if (dealt > 0) { sc.fx.text(e.x, e.y - 10, String(Math.min(dealt, 999)), T.numCol); if (from.active) bark(from, 'strike'); }
   return dealt;
 }
 
@@ -183,7 +183,7 @@ export function tickVitals(c, dt) {
   const s = Math.max(0, Math.ceil(c.downT));
   if (c.downLabel) {
     if (c.downLabel.n !== s) { c.downLabel.n = s; c.downLabel.setText('DOWN ' + s); }
-    c.downLabel.setPosition(Math.round(c.x - c.downLabel.width / 2), Math.round(c.y - 20)).setDepth(99300);
+    c.downLabel.setPosition(Math.round(c.x - c.downLabel.width / 2), Math.round(c.y - 13)).setDepth(99300);
   }
   if (c.downT <= 0) getUp(c);
   return c.downed;
