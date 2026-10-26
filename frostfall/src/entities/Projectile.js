@@ -8,6 +8,7 @@ import { stats } from '../systems/stats.js';
 import { bl } from '../systems/bless.js';
 import { applyStatus } from '../systems/status.js';
 import { warpable } from './bulletTime.js';
+import { allyHit } from './companionAI.js';
 
 // kind: arrow | fire | frost (player)   bolt | eshot (enemy)
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -79,8 +80,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     const kx = this.body.velocity.x, ky = this.body.velocity.y;
     if (this.kind === 'arrow') {
       if (this.ally) {
-        const d = e.takeHit({ dmg: this.dmg, kx, ky, kb: 50, src: 'arrow', stun: 0.15 });
-        if (d > 0) { sc.fx.text(e.x, e.y - 10, String(d), 5); sfx.play('hit', e); }
+        const d = allyHit(this, e, { dmg: this.dmg, kx, ky, kb: 50, src: 'arrow', stun: 0.15 }, this.owner || this);   // a companion's arrow (Ragna)
+        if (d > 0) sfx.play('arrowhit', e);
         this.finish();
         return;
       }

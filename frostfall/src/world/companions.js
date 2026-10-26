@@ -9,6 +9,7 @@ import { bonus } from '../systems/skills.js';
 import Hound from '../entities/Hound.js';
 import Follower from '../entities/Follower.js';
 import SpiritWolf from '../entities/SpiritWolf.js';
+import { getUp } from '../entities/companionAI.js';
 import { sfx } from '../audio/sfx.js';
 
 export const companionMethods = {
@@ -36,6 +37,7 @@ export const companionMethods = {
   },
   reviveByFollower() {
     const p = this.player, f = this.follower;
+    if (f.downed) getUp(f);                    // knocked down herself: she struggles up to reach you
     S.flags.reviveAt = S.playtime;
     this.deadT = 0;
     S.hp = Math.round(S.maxHp * TUNE.follower.reviveHp);
@@ -43,7 +45,7 @@ export const companionMethods = {
     for (const e of this.enemies.getChildren()) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 40) e.takeHit({ dmg: 1, kx: e.x - p.x, ky: e.y - p.y, kb: 220, src: 'shout', stun: 0.8, forceStun: !e.isBoss });
     this.fx.puff(p.x, p.y, 8, 10, 50, 0.5); this.fx.ring(p.x, p.y + 4, 1.2, 0.5, 'ring', 0xf4d460);
     sfx.play('potion'); this.shake(200, 0.006);
-    bus.emit('toast', 'RAGNA PULLS YOU UP!', 13);
+    bus.emit('toast', `${f.kind === 'pell' ? 'PELL' : 'RAGNA'} PULLS YOU UP!`, 13);
   },
   summonSpiritWolf(pl) {
     this.spirit?.fade();
