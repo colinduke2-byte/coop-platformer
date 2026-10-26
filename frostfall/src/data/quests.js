@@ -6,6 +6,18 @@ import { getReach } from './maps.js';
 import { routePos } from '../world/roamers.js';
 import { fromOn, nearestOf } from '../world/questmarks.js';
 
+// The Heart to go for next: of those you do not hold, the one whose site lies in the easiest land of this world
+// (lowest danger tier), so the marker never sends you into tier-3 country while a gentler Heart is waiting.
+// Ties keep the story order.
+export function nextHeart() {
+  if (!S.hearts?.rime) return 'rime';                     // the story starts at the Maw (Sigrid sends you there first)
+  const left = HEART_ORDER.filter((k) => !S.hearts?.[k]);
+  if (left.length < 2) return left[0];
+  const pois = getReach()?.pois || [];
+  const tier = (k) => pois.find((p) => p.id === HEART_SITE[k].poi)?.tier ?? 9;
+  return left.reduce((best, k) => (tier(k) < tier(best) ? k : best));
+}
+
 export const QUESTS = {
   tornmap: {
     title: 'Half a Map', giver: 'A torn map',
@@ -38,11 +50,11 @@ export const QUESTS = {
     short: () => {
       if (S.flags.finale) return 'The Winter has been decided';
       if (heartsHeld() >= 4) return 'Open the Winter Throne';
-      const n = HEART_ORDER.find((k) => !S.hearts?.[k]);
+      const n = nextHeart();
       return `Hearts ${heartsHeld()}/${HEART_COUNT}  -  ${HEARTS[n].place}`;
     },
     objectives: () => [
-      ...HEART_ORDER.map((k) => ({ t: `${HEARTS[k].name}: ${HEARTS[k].place}${S.hearts?.[k] ? '' : (k === 'rime' || S.hearts?.[HEART_ORDER[HEART_ORDER.indexOf(k) - 1]] || S.flags['seen_' + HEART_SITE[k].map]) ? '' : ' (not yet marked)'}`, done: !!S.hearts?.[k] })),
+      ...HEART_ORDER.map((k) => ({ t: `${HEARTS[k].name}: ${HEARTS[k].place}${S.hearts?.[k] ? '' : (k === 'rime' || k === nextHeart() || S.hearts?.[HEART_ORDER[HEART_ORDER.indexOf(k) - 1]] || S.flags['seen_' + HEART_SITE[k].map]) ? '' : ' (not yet marked)'}`, done: !!S.hearts?.[k] })),
       { t: 'Break into the Winter Throne and face the Long Winter', done: !!S.flags.winterDead },
       { t: 'Decide what becomes of the Winter', done: !!S.flags.finale },
     ],
@@ -155,8 +167,8 @@ export const TARGETS = {
     const reach = getReach();
     const ARENA = { maw: [18, 4], keep: [20, 4], chapel: [18, 4], rootvault: [20, 4], throne: [20, 6] };
     if (S.flags.finale) return { map: 'village', x: 19, y: 9 };
-    // next site in story order that you do not hold yet (the throne once you have all four)
-    const next = HEART_ORDER.find((k) => !S.hearts?.[k]);
+    // the easiest remaining Heart's site (the throne once you have all four)
+    const next = nextHeart();
     const site = next ? HEART_SITE[next] : { poi: 'throne0', map: 'throne' };
     if (S.flags['seen_' + site.map]) return { map: site.map, x: ARENA[site.map][0], y: ARENA[site.map][1] };
     const p = reach.pois.find((x) => x.id === site.poi);

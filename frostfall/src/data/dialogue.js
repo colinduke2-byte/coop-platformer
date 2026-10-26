@@ -2,7 +2,8 @@
 import { S } from '../systems/state.js';
 import { say, choose, dialogue } from '../systems/dialogue.js';
 import { dailyWares } from './stock.js';
-import { heartsHeld, HEART_ORDER } from './hearts.js';
+import { heartsHeld } from './hearts.js';
+import { nextHeart } from './quests.js';
 import { startQuest, finishQuest, checkHerbs } from '../systems/quests.js';
 import { addItem, addGold, addArrows, removeItem, count } from '../systems/inventory.js';
 import { sfx } from '../audio/sfx.js';
@@ -61,14 +62,14 @@ async function heartsTalk() {
       await say(SIGRID, 'Its door opens only to someone who holds all four. Go. And whatever the Winter asks of you... remember that it is older than mercy.');
     } else if (n === 0) await say(SIGRID, 'The Glacial Maw lies far to the east, where the ice meets the mountains. Follow the roads and the fires. The marker on your map will help.');
     else {
-      // the first Heart you do not hold yet, whatever order you took the others in
+      // the easiest Heart you do not hold yet (the same one the marker points to)
       const lead = { 1: 'The cold bends around you now.', 2: 'Two Hearts. The ground trembles less, I think.', 3: 'Three. I can hear them when the fire is low.' }[n];
       const site = {
         rime: 'The Glacial Maw still waits far to the east, where the ice meets the mountains. A serpent of rime sleeps there.',
         iron: 'My maps show Ironwatch Keep. A company held its gate when the cold came, and the gate is holding them still. Look for black stone and old banners.',
         tide: 'The Drowned Chapel still waits under the lakes, where a congregation prayed until the water took them.',
         root: 'The Rootvault still waits in the blight, where the trees have died and keep growing anyway. It is the largest of the guardians.',
-      }[HEART_ORDER.find((k) => !S.hearts?.[k])];
+      }[nextHeart()];
       await say(SIGRID, lead + ' ' + (site || 'The old maps are blurring. Follow your marker.'));
     }
     return true;
