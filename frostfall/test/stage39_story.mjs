@@ -53,11 +53,16 @@ check('with the Warlord down, Ragna lays her company to rest and gets stronger',
 await unstub();
 const twice = await G(async () => {
   const g = window.gs(); g.enemies.getChildren().forEach((e) => e.destroy());
-  const e = g.addEnemy('draugr', g.follower.x + 60, g.follower.y); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0, dmg: 0 }; e.alert(true); g.follower.cd = 0;
-  const n0 = g.shots.getLength(); g.follower.update(0.1, g.player); return { n0, n1: g.shots.getLength() };
+  // the foe stands on Ragna's far side from you, so you are not in her line of fire (she holds fire then)
+  const f = g.follower, p = g.player, dx = f.x - p.x, dy = f.y - p.y, l = Math.hypot(dx, dy) || 1;
+  const e = g.addEnemy('draugr', f.x + (dx / l) * 60, f.y + (dy / l) * 60); e.cfg = { ...e.cfg, speed: 0, chase: 0, detect: 0, dmg: 0 }; e.alert(true); f.cd = 0;
+  // count arrows as they are loosed (the first may already have hit and gone by the time the second flies)
+  window.__loosed = 0; const add = g.shots.add.bind(g.shots); g.shots.add = (o, ...r) => { window.__loosed++; return add(o, ...r); };
+  const n0 = 0; f.update(0.1, p); return { n0, n1: window.__loosed };
 });
 await h.sleep(300);
-check('a veteran Ragna fires a second arrow', (await G(() => window.gs().shots.getLength() + 20)) >= 0 && twice.n1 - twice.n0 >= 1);
+const after = await G(() => window.__loosed);
+check('a veteran Ragna fires a second arrow', twice.n1 - twice.n0 >= 1 && after - twice.n0 >= 2, JSON.stringify({ ...twice, after }));
 
 // ---- Asta and the hound
 await G(() => { const S = window.__ff.S; S.flags.houndOwned = true; S.pet = 'hound'; S.quests.locket.status = 'done'; S.flags.houndResolved = false; S.inv.hound_collar = 0; });

@@ -55,8 +55,12 @@ const ft = await G(async () => {
   const ok = g.fastTravel(f);
   return { ok, fx: e.x, fy: e.y };
 });
-await h.sleep(2500);
-const arrived = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; return { map: g.mapId, px: Math.round(g.player.x / 16), py: Math.round(g.player.y / 16), smap: S.map }; });
+// read where you land the moment the new map is up (a foe near the fire may knock you about if we wait longer)
+let arrived = null;
+for (let i = 0; i < 60 && !(arrived && arrived.map === 'ashen' && arrived.ready); i++) {
+  await h.sleep(100);
+  arrived = await G(() => { const g = window.__ff.game.scene.getScene('Game'), S = window.__ff.S; return { map: g.mapId, ready: !!g.player && !g.leaving, px: Math.round(g.player.x / 16), py: Math.round(g.player.y / 16), smap: S.map }; });
+}
 check('fast travel crosses regions and lands at the campfire', ft.ok && arrived.map === 'ashen' && Math.abs(arrived.px - ft.fx) <= 3 && Math.abs(arrived.py - ft.fy) <= 3, JSON.stringify({ ft, arrived }));
 
 // ---- time passes outdoors, saves and loads inside a region, the Reach still streams enemies

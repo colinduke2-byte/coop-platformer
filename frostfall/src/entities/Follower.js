@@ -60,7 +60,7 @@ export default class Follower extends Phaser.Physics.Arcade.Sprite {
       if (this.kind === 'pell') {                                  // the scout darts in and stabs, from behind if he can
         const P = TUNE.companion.pell;
         ({ st, ...v } = skirmish(this, dt, tgt, P, (e, dir) => {
-          sfx.play(sfx.swing('dagger'), this);
+          sfx.play('swing_dagger', this);
           const dealt = allyHit(this, e, { dmg: P.dmg, kx: dir.x, ky: dir.y, kb: P.kb, stun: P.stun });
           if (dealt > 0) sfx.play(sfx.hitOn(e), this);
         }, { back: true }));
