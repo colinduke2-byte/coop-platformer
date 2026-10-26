@@ -78,9 +78,15 @@ function bakeTerrain(m, vid, b, scIn, fog) {
 
 export function mapTab(m) {
   const layers = () => {
-    if (m.mapOver) return;
+    // the Menu scene object is reused each time the menu opens, but its game objects are destroyed when it closes: build the
+    // layers again whenever the old ones are gone (checking only that they exist left every reopened map blank)
+    if (m.mapOver?.scene && m.mapTerrain?.scene) return;
     m.mapTerrain = m.add.container(0, 0).setDepth(0.5); m.mapOver = m.add.graphics().setDepth(0.8); m.dyn.setDepth(1);
-    const oc = m.clear.bind(m); m.clear = () => { oc(); m.mapTerrain.removeAll(true); m.mapOver.clear(); };
+    if (!m._mapClearWrapped) {
+      const oc = m.clear.bind(m);
+      m.clear = () => { oc(); if (m.mapTerrain?.scene) m.mapTerrain.removeAll(true); if (m.mapOver?.scene) m.mapOver.clear(); };
+      m._mapClearWrapped = true;
+    }
   };
   let zoom = null, cur = null, curMode = false, rep = 0, view = null;     // zoom null: pick a readable start the first time
   return {
@@ -252,7 +258,7 @@ export function mapTab(m) {
         const lw = text.length * 6, lx = Math.max(VX, Math.min(VX + VW - lw, px - lw / 2));
         let ly = py - 10;                                     // above the exit, or below it near the top edge
         if (ly < VY) ly = py + sc + 2;
-        if (ly + 8 > VY + VH) continue;
+        if (ly < VY || ly + 8 > VY + VH) continue;           // only labels that fit inside the map box (never over the tabs)
         if (vw.here && Math.abs(lx + lw / 2 - pxp) < lw / 2 + 4 && Math.abs(ly + 4 - pyp) < 8) continue;   // never over your own marker
         if (placed.some((r) => lx < r.x + r.w + 4 && lx + lw + 4 > r.x && Math.abs(ly - r.y) < 10)) continue;   // nor over another label
         placed.push({ x: lx, y: ly, w: lw });
